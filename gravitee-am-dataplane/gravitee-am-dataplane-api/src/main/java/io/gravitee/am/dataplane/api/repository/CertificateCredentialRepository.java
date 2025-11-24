@@ -37,20 +37,13 @@ public interface CertificateCredentialRepository extends CrudRepository<Certific
      */
     Maybe<CertificateCredential> findByThumbprint(ReferenceType referenceType, String referenceId, String thumbprint);
 
-    /**
-     * Find certificate credentials by Subject DN (CN matching)
-     */
-    Flowable<CertificateCredential> findBySubjectDN(ReferenceType referenceType, String referenceId, String subjectDN);
 
     /**
-     * Find certificate credential by serial number
+     * Find certificate credentials by username
      */
-    Maybe<CertificateCredential> findBySerialNumber(ReferenceType referenceType, String referenceId, String serialNumber);
+    Flowable<CertificateCredential> findByUsername(ReferenceType referenceType, String referenceId, String username);
 
-    /**
-     * Find expired certificate credentials
-     */
-    Flowable<CertificateCredential> findExpiredCertificates(ReferenceType referenceType, String referenceId);
+
 
     /**
      * Delete all certificate credentials for a user

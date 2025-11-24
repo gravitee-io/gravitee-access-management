@@ -33,14 +33,8 @@ public interface SpringCertificateCredentialRepository extends RxJava3CrudReposi
     @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and certificate_thumbprint = :thumbprint")
     Flowable<JdbcCertificateCredential> findByThumbprint(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("thumbprint") String thumbprint);
 
-    @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and certificate_subject_dn = :subjectDN")
-    Flowable<JdbcCertificateCredential> findBySubjectDN(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("subjectDN") String subjectDN);
-
-    @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and certificate_serial_number = :serialNumber")
-    Flowable<JdbcCertificateCredential> findBySerialNumber(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("serialNumber") String serialNumber);
-
-    @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and certificate_expires_at < :now")
-    Flowable<JdbcCertificateCredential> findExpiredCertificates(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("now") java.time.LocalDateTime now);
+    @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and username = :username")
+    Flowable<JdbcCertificateCredential> findByUsername(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("username") String username);
 
     @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and user_id = :userId and id = :id")
     io.reactivex.rxjava3.core.Maybe<JdbcCertificateCredential> findByReferenceTypeAndReferenceIdAndUserIdAndId(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("userId") String userId, @Param("id") String id);

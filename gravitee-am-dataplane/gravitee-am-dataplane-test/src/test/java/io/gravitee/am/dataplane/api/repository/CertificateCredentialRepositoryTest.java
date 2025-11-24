@@ -58,6 +58,27 @@ public class CertificateCredentialRepositoryTest extends AbstractDataPlaneTest {
     }
 
     @Test
+    public void testFindByUsername() {
+        // create credential
+        CertificateCredential credential = buildCertificateCredential();
+        CertificateCredential credentialCreated = certificateCredentialRepository.create(credential).blockingGet();
+
+        // fetch credential
+        var testObserver = certificateCredentialRepository.findByUsername(ReferenceType.DOMAIN, credential.getReferenceId(), credential.getUsername()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(c -> c.getId().equals(credentialCreated.getId()));
+        testObserver.assertValue(c -> c.getCertificateThumbprint().equals(credential.getCertificateThumbprint()));
+        testObserver.assertValue(c -> c.getCertificatePem().equals(credential.getCertificatePem()));
+        testObserver.assertValue(c -> c.getReferenceId().equals(credential.getReferenceId()));
+        testObserver.assertValue(c -> c.getReferenceType().equals(credential.getReferenceType()));
+        testObserver.assertValue(c -> c.getUserId().equals(credential.getUserId()));
+        testObserver.assertValue(c -> c.getUsername().equals(credential.getUsername()));
+    }
+
+    @Test
     public void testNotFoundById() {
         var observer = certificateCredentialRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
@@ -153,61 +174,6 @@ public class CertificateCredentialRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(c -> c.getCertificateThumbprint().equals(credential.getCertificateThumbprint()));
-    }
-
-    @Test
-    public void findBySubjectDN() {
-        // create credential
-        CertificateCredential credential = buildCertificateCredential();
-        certificateCredentialRepository.create(credential).blockingGet();
-
-        // fetch credentials
-        TestSubscriber<CertificateCredential> testSubscriber = certificateCredentialRepository
-                .findBySubjectDN(credential.getReferenceType(), credential.getReferenceId(), credential.getCertificateSubjectDN()).test();
-        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
-
-        testSubscriber.assertComplete();
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertValueCount(1);
-    }
-
-    @Test
-    public void findBySerialNumber() {
-        // create credential
-        CertificateCredential credential = buildCertificateCredential();
-        certificateCredentialRepository.create(credential).blockingGet();
-
-        // fetch credential
-        TestObserver<CertificateCredential> testObserver = certificateCredentialRepository
-                .findBySerialNumber(credential.getReferenceType(), credential.getReferenceId(), credential.getCertificateSerialNumber()).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(c -> c.getCertificateSerialNumber().equals(credential.getCertificateSerialNumber()));
-    }
-
-    @Test
-    public void findExpiredCertificates() {
-        // create expired credential
-        CertificateCredential expiredCredential = buildCertificateCredential();
-        expiredCredential.setCertificateExpiresAt(new Date(System.currentTimeMillis() - 86400000)); // Yesterday
-        certificateCredentialRepository.create(expiredCredential).blockingGet();
-
-        // create valid credential
-        CertificateCredential validCredential = buildCertificateCredential();
-        validCredential.setCertificateExpiresAt(new Date(System.currentTimeMillis() + 86400000)); // Tomorrow
-        certificateCredentialRepository.create(validCredential).blockingGet();
-
-        // fetch expired credentials
-        TestSubscriber<CertificateCredential> testSubscriber = certificateCredentialRepository
-                .findExpiredCertificates(expiredCredential.getReferenceType(), expiredCredential.getReferenceId()).test();
-        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
-
-        testSubscriber.assertComplete();
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertValueCount(1);
-        testSubscriber.assertValue(c -> c.getCertificateThumbprint().equals(expiredCredential.getCertificateThumbprint()));
     }
 
     @Test
@@ -414,7 +380,7 @@ public class CertificateCredentialRepositoryTest extends AbstractDataPlaneTest {
         String randomStr = UUID.randomUUID().toString();
         Date expirationDate = new Date(System.currentTimeMillis() + 86400000); // Tomorrow
 
-        Map<String, Object> metadata = new HashMap<>();
+        Map<String, String> metadata = new HashMap<>();
         metadata.put("issuerDN", "CN=CA, O=Example Corp");
         metadata.put("keyUsage", "digitalSignature, keyEncipherment");
 

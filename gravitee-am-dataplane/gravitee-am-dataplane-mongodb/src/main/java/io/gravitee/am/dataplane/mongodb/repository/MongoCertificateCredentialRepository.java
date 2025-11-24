@@ -52,6 +52,7 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
 
     private static final String COLLECTION_NAME = "cert_credentials";
     private static final String FIELD_USER_ID = "userId";
+    private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CERTIFICATE_THUMBPRINT = "certificateThumbprint";
     private static final String FIELD_CERTIFICATE_SUBJECT_DN = "certificateSubjectDN";
     private static final String FIELD_CERTIFICATE_SERIAL_NUMBER = "certificateSerialNumber";
@@ -67,14 +68,8 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
         final var indexes = new HashMap<Document, IndexOptions>();
         // Index for findByUserId
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1uid1"));
-        // Index for findByThumbprint
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("rt1ri1uname1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_THUMBPRINT, 1), new IndexOptions().name("rt1ri1ct1"));
-        // Index for findBySubjectDN
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SUBJECT_DN, 1), new IndexOptions().name("rt1ri1csdn1"));
-        // Index for findBySerialNumber
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SERIAL_NUMBER, 1), new IndexOptions().name("rt1ri1csn1"));
-        // Index for findExpiredCertificates
-        indexes.put(new Document(FIELD_CERTIFICATE_EXPIRES_AT, 1), new IndexOptions().name("cea1"));
 
         super.createIndex(certificateCredentialsCollection, indexes);
     }
@@ -143,45 +138,15 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
     }
 
     @Override
-    public Flowable<CertificateCredential> findBySubjectDN(ReferenceType referenceType, String referenceId, String subjectDN) {
+    public Flowable<CertificateCredential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
         return Flowable.fromPublisher(
-                certificateCredentialsCollection.find(
-                        and(
-                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_CERTIFICATE_SUBJECT_DN, subjectDN)
-                        )
-                ))
-                .map(this::convert)
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Maybe<CertificateCredential> findBySerialNumber(ReferenceType referenceType, String referenceId, String serialNumber) {
-        return Observable.fromPublisher(
-                certificateCredentialsCollection.find(
-                        and(
-                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_CERTIFICATE_SERIAL_NUMBER, serialNumber)
-                        )
-                ).first())
-                .firstElement()
-                .map(this::convert)
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Flowable<CertificateCredential> findExpiredCertificates(ReferenceType referenceType, String referenceId) {
-        Date now = new Date();
-        return Flowable.fromPublisher(
-                certificateCredentialsCollection.find(
-                        and(
-                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                lt(FIELD_CERTIFICATE_EXPIRES_AT, now)
-                        )
-                ))
+                        certificateCredentialsCollection.find(
+                                and(
+                                        eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                        eq(FIELD_REFERENCE_ID, referenceId),
+                                        eq(FIELD_USERNAME, username)
+                                )
+                        ))
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
     }
@@ -252,8 +217,8 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
 
         // Convert Document metadata to Map
         if (credentialMongo.getMetadata() != null) {
-            Map<String, Object> metadata = new HashMap<>();
-            credentialMongo.getMetadata().forEach(metadata::put);
+            Map<String, String> metadata = new HashMap<>();
+            credentialMongo.getMetadata().forEach((key, value) -> metadata.put(key, (String) value));
             credential.setMetadata(metadata);
         }
 

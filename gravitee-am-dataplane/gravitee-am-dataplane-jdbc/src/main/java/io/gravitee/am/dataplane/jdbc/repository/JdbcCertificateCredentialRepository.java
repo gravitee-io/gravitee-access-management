@@ -17,6 +17,8 @@ package io.gravitee.am.dataplane.jdbc.repository;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
+import io.gravitee.am.dataplane.jdbc.mapper.LocalDateConverter;
+import io.gravitee.am.dataplane.jdbc.mapper.MapToStringConverter;
 import io.gravitee.am.dataplane.jdbc.repository.model.JdbcCertificateCredential;
 import io.gravitee.am.dataplane.jdbc.repository.spring.SpringCertificateCredentialRepository;
 import io.gravitee.am.model.CertificateCredential;
@@ -46,13 +48,6 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
     @Autowired
     private SpringCertificateCredentialRepository certificateCredentialRepository;
 
-    protected CertificateCredential toEntity(JdbcCertificateCredential entity) {
-        return mapper.map(entity, CertificateCredential.class);
-    }
-
-    protected JdbcCertificateCredential toJdbcEntity(CertificateCredential entity) {
-        return mapper.map(entity, JdbcCertificateCredential.class);
-    }
 
     @Override
     public Maybe<CertificateCredential> findById(String id) {
@@ -127,30 +122,13 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Flowable<CertificateCredential> findBySubjectDN(ReferenceType referenceType, String referenceId, String subjectDN) {
-        LOGGER.debug("findBySubjectDN({},{},{})", referenceType, referenceId, subjectDN);
-        return certificateCredentialRepository.findBySubjectDN(referenceType.name(), referenceId, subjectDN)
+    public Flowable<CertificateCredential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
+        LOGGER.debug("findByUsername({},{},{})", referenceType, referenceId, username);
+        return certificateCredentialRepository.findByUsername(referenceType.name(), referenceId, username)
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
     }
 
-    @Override
-    public Maybe<CertificateCredential> findBySerialNumber(ReferenceType referenceType, String referenceId, String serialNumber) {
-        LOGGER.debug("findBySerialNumber({},{},{})", referenceType, referenceId, serialNumber);
-        return Observable.fromPublisher(certificateCredentialRepository.findBySerialNumber(referenceType.name(), referenceId, serialNumber))
-                .firstElement()
-                .map(this::toEntity)
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Flowable<CertificateCredential> findExpiredCertificates(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("findExpiredCertificates({},{})", referenceType, referenceId);
-        LocalDateTime now = LocalDateTime.now();
-        return certificateCredentialRepository.findExpiredCertificates(referenceType.name(), referenceId, now)
-                .map(this::toEntity)
-                .observeOn(Schedulers.computation());
-    }
 
     @Override
     public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
@@ -197,6 +175,66 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete certificate credentials for reference {} - {}", referenceType.name(), referenceId, error))
                 .observeOn(Schedulers.computation());
+    }
+
+    private JdbcCertificateCredential toJdbcEntity(CertificateCredential credential) {
+        LocalDateConverter localDateConverter = new LocalDateConverter();
+        MapToStringConverter mapToStringConverter = new MapToStringConverter();
+
+        JdbcCertificateCredential credentialJdbc = new JdbcCertificateCredential();
+        credentialJdbc.setId(credential.getId());
+        credentialJdbc.setReferenceType(credential.getReferenceType().toString());
+        credentialJdbc.setReferenceId(credential.getReferenceId());
+        credentialJdbc.setUserId(credential.getUserId());
+        credentialJdbc.setUsername(credential.getUsername());
+        credentialJdbc.setIpAddress(credential.getIpAddress());
+        credentialJdbc.setUserAgent(credential.getUserAgent());
+        credentialJdbc.setDeviceName(credential.getDeviceName());
+        credentialJdbc.setCertificatePem(credential.getCertificatePem());
+        credentialJdbc.setCertificateThumbprint(credential.getCertificateThumbprint());
+        credentialJdbc.setCertificateSubjectDN(credential.getCertificateSubjectDN());
+        credentialJdbc.setCertificateSerialNumber(credential.getCertificateSerialNumber());
+
+        credentialJdbc.setCertificateExpiresAt(localDateConverter.convertTo(credential.getCertificateExpiresAt()));
+        credentialJdbc.setCreatedAt(localDateConverter.convertTo(credential.getCreatedAt()));
+        credentialJdbc.setUpdatedAt(localDateConverter.convertTo(credential.getUpdatedAt()));
+        credentialJdbc.setAccessedAt(localDateConverter.convertTo(credential.getAccessedAt()));
+
+        if (credential.getMetadata() != null) {
+            credentialJdbc.setMetadata(mapToStringConverter.convertTo(credential.getMetadata()));
+        }
+
+        return credentialJdbc;
+    }
+
+    private CertificateCredential toEntity(JdbcCertificateCredential credentialJdbc) {
+        LocalDateConverter localDateConverter = new LocalDateConverter();
+        MapToStringConverter mapToStringConverter = new MapToStringConverter();
+
+        CertificateCredential credential = new CertificateCredential();
+        credential.setId(credentialJdbc.getId());
+        credential.setReferenceType(ReferenceType.valueOf(credentialJdbc.getReferenceType()));
+        credential.setReferenceId(credentialJdbc.getReferenceId());
+        credential.setUserId(credentialJdbc.getUserId());
+        credential.setUsername(credentialJdbc.getUsername());
+        credential.setIpAddress(credentialJdbc.getIpAddress());
+        credential.setUserAgent(credentialJdbc.getUserAgent());
+        credential.setDeviceName(credentialJdbc.getDeviceName());
+        credential.setCertificatePem(credentialJdbc.getCertificatePem());
+        credential.setCertificateThumbprint(credentialJdbc.getCertificateThumbprint());
+        credential.setCertificateSubjectDN(credentialJdbc.getCertificateSubjectDN());
+        credential.setCertificateSerialNumber(credentialJdbc.getCertificateSerialNumber());
+        credential.setCertificateExpiresAt(localDateConverter.convertFrom(credentialJdbc.getCertificateExpiresAt()));
+        credential.setCreatedAt(localDateConverter.convertFrom(credentialJdbc.getCreatedAt()));
+        credential.setUpdatedAt(localDateConverter.convertFrom(credentialJdbc.getUpdatedAt()));
+        credential.setAccessedAt(localDateConverter.convertFrom(credentialJdbc.getAccessedAt()));
+
+        // Convert Document metadata to Map
+        if (credentialJdbc.getMetadata() != null) {
+            credential.setMetadata(mapToStringConverter.convertFrom(credentialJdbc.getMetadata()));
+        }
+
+        return credential;
     }
 }
 

@@ -59,6 +59,15 @@ public interface CertificateCredentialService {
     Maybe<CertificateCredential> findById(Domain domain, String id);
 
     /**
+     * Find a certificate credential by username.
+     *
+     * @param domain the domain
+     * @param username the username
+     * @return maybe certificate credential
+     */
+    Flowable<CertificateCredential> findByDomainAndUsername(Domain domain, String username);
+
+    /**
      * Delete a certificate credential.
      *
      * @param domain the domain

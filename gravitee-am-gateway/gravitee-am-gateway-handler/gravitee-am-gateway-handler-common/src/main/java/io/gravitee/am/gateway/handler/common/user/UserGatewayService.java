@@ -40,7 +40,6 @@ public interface UserGatewayService {
 
     /**
      * Find a user by its domain, its external id and its identity provider
-     * @param domain user security domain
      * @param externalId user external id
      * @param source user identity provider
      * @return end user
@@ -49,7 +48,6 @@ public interface UserGatewayService {
 
     /**
      * Find a user by its domain, its username and its identity provider
-     * @param domain user security domain
      * @param username user username
      * @param source user identity provider
      * @return end user
@@ -60,7 +58,6 @@ public interface UserGatewayService {
 
     /**
      * Find users by security domain and email
-     * @param domain user security domain
      * @param criteria search criteria
      * @return
      */
