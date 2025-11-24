@@ -63,7 +63,7 @@ public class CertificateCredential {
     private Date certificateExpiresAt; // Certificate expiration date (required)
 
     // Optional/extensible fields
-    private Map<String, Object> metadata; // For optional attributes (issuerDN, keyUsage, extendedKeyUsage, subjectAlternativeNames, certificateChain, etc.)
+    private Map<String, String> metadata; // For optional attributes (issuerDN, keyUsage, extendedKeyUsage, subjectAlternativeNames, certificateChain, etc.)
 
     // Timestamps
     @Schema(type = "java.lang.Long")

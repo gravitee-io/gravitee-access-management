@@ -45,8 +45,6 @@ beforeAll(async () => {
   expect(createdDomain.id).toBeDefined();
 
   const domainStarted = await startDomain(createdDomain.id, accessToken)
-    .then((domain) => waitForDomainStart(domain))
-    .then((result) => result.domain);
   expect(domainStarted).toBeDefined();
   expect(domainStarted.id).toEqual(createdDomain.id);
 

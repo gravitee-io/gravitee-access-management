@@ -22,15 +22,10 @@ import io.gravitee.am.model.CertificateCredential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.management.api.CertificateCredentialRepository;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificateCredentialService;
-import io.gravitee.am.service.exception.CertificateExpiredException;
-import io.gravitee.am.service.exception.CertificateLimitExceededException;
-import io.gravitee.am.service.exception.CredentialNotFoundException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.DuplicateCertificateException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CertificateCredentialAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
@@ -58,12 +53,12 @@ import java.util.Map;
 @Component
 public class CertificateCredentialServiceImpl implements CertificateCredentialService {
 
-    @Lazy
-    @Autowired
-    private CertificateCredentialRepository certificateCredentialRepository;
-
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    @Lazy
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Value("${users.certificate.maxCertificatesPerUser:20}")
     private int maxCertificatesPerUser;
@@ -72,19 +67,21 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     public Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, String deviceName, User principal) {
         log.debug("Enroll certificate for domain {} and user {}", domain.getId(), userId);
         try {
-            CertificateFields certFields = parseCertificate(certificatePem, domain.getId(), userId);
-            
-            return validateCertificateNotExpired(certFields.expiresAt, domain, userId)
-                    .andThen(Single.defer(() -> checkDuplicateCertificate(certFields.thumbprint, domain.getId())
-                            .switchIfEmpty(
-                                    checkCertificateLimit(domain.getId(), userId)
-                                            .flatMap(count -> createAndStoreCredential(
-                                                    domain, userId, certificatePem, deviceName, certFields))
-                                            .toMaybe()
-                            )
-                            .toSingle()))
-                    .doOnSuccess(credential -> reportAuditSuccess(principal, credential))
-                    .doOnError(throwable -> reportAuditError(principal, domain.getId(), throwable));
+            CertificateFields certFields = parseCertificate(certificatePem);
+            return dataPlaneRegistry.getUserRepository(domain)
+                    .findById(userId)
+                    .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                    .concatMap(user -> validateCertificateNotExpired(certFields.expiresAt, domain, userId)
+                            .andThen(Single.defer(() -> checkDuplicateCertificate(certFields.thumbprint, domain)
+                                    .switchIfEmpty(
+                                            checkCertificateLimit(domain, userId)
+                                                    .flatMap(count -> createAndStoreCredential(
+                                                            domain, user, certificatePem, deviceName, certFields))
+                                                    .toMaybe()
+                                    )
+                                    .toSingle()))
+                            .doOnSuccess(credential -> reportAuditSuccess(principal, credential))
+                            .doOnError(throwable -> reportAuditError(principal, domain.getId(), throwable)));
         } catch (CertificateEncodingException | NoSuchAlgorithmException e) {
             log.error("Failed to calculate certificate thumbprint", e);
             return Single.error(new TechnicalManagementException("Failed to calculate certificate thumbprint: " + e.getMessage()));
@@ -94,10 +91,9 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
         }
     }
 
-    private CertificateFields parseCertificate(String certificatePem, String domainId, String userId) throws CertificateException, NoSuchAlgorithmException {
+    private CertificateFields parseCertificate(String certificatePem) throws CertificateException, NoSuchAlgorithmException {
         X509Certificate cert = X509CertUtils.parseWithException(certificatePem);
         if (cert == null) {
-            log.error("Failed to parse certificate for domain {} and user {}", domainId, userId);
             throw new CertificateException("Failed to parse certificate");
         }
 
@@ -128,12 +124,12 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
      * Checks if a certificate with the given thumbprint already exists.
      * Returns Maybe.empty() if no duplicate (chain continues), or Maybe.error() if duplicate found.
      */
-    private Maybe<CertificateCredential> checkDuplicateCertificate(String thumbprint, String domainId) {
-        return certificateCredentialRepository
-                .findByThumbprint(ReferenceType.DOMAIN, domainId, thumbprint)
+    private Maybe<CertificateCredential> checkDuplicateCertificate(String thumbprint, Domain domain) {
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
+                .findByThumbprint(ReferenceType.DOMAIN, domain.getId(), thumbprint)
                 .flatMapSingle(existing -> {
                     log.warn("Certificate enrollment rejected - duplicate thumbprint for domain {} (thumbprint: {})", 
-                            domainId, thumbprint);
+                            domain, thumbprint);
                     return Single.<CertificateCredential>error(
                             new DuplicateCertificateException("Certificate with this thumbprint already exists"));
                 });
@@ -147,15 +143,15 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
      * could exceed the limit by 1. This is acceptable for this use case and consistent
      * with similar patterns in the codebase (e.g., OrganizationUserServiceImpl.generateAccountAccessToken).
      */
-    private Single<Long> checkCertificateLimit(String domainId, String userId) {
-        return certificateCredentialRepository
-                .findByUserId(ReferenceType.DOMAIN, domainId, userId)
+    private Single<Long> checkCertificateLimit(Domain domain, String userId) {
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
+                .findByUserId(ReferenceType.DOMAIN, domain.getId(), userId)
                 .count()
                 .flatMap(count -> {
                     log.debug("Current certificate count for user {}: {}, limit: {}", userId, count, maxCertificatesPerUser);
                     if (count >= maxCertificatesPerUser) {
-                        log.warn("Certificate enrollment rejected - limit exceeded for domain {} and user {} (count: {}, limit: {})", 
-                                domainId, userId, count, maxCertificatesPerUser);
+                        log.warn("Certificate enrollment rejected - limit exceeded for domain {} and user {} (count: {}, limit: {})",
+                                domain.getId(), userId, count, maxCertificatesPerUser);
                         return Single.error(new CertificateLimitExceededException(
                                 String.format("Maximum number of certificates (%d) exceeded for user", maxCertificatesPerUser)));
                     }
@@ -164,24 +160,25 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     }
 
     private Single<CertificateCredential> createAndStoreCredential(
-            Domain domain, String userId, String certificatePem, String deviceName, CertificateFields certFields) {
+            Domain domain, io.gravitee.am.model.User user, String certificatePem, String deviceName, CertificateFields certFields) {
         CertificateCredential credential = buildCertificateCredential(
-                domain, userId, certificatePem, deviceName, certFields);
+                domain, user, certificatePem, deviceName, certFields);
         
         log.debug("Creating certificate credential for domain {} and user {} with thumbprint {}", 
-                domain.getId(), userId, certFields.thumbprint);
+                domain.getId(), user.getId(), certFields.thumbprint);
         
-        return certificateCredentialRepository.create(credential)
-                .doOnSuccess(created -> log.debug("Certificate credential created successfully with ID {} for domain {} and user {}", 
-                        created.getId(), domain.getId(), userId));
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain).create(credential)
+                .doOnSuccess(created -> log.debug("Certificate credential created successfully with ID {} for domain {} and user {}",
+                        created.getId(), domain.getId(), user.getId()));
     }
 
     private CertificateCredential buildCertificateCredential(
-            Domain domain, String userId, String certificatePem, String deviceName, CertificateFields certFields) {
+            Domain domain, io.gravitee.am.model.User user, String certificatePem, String deviceName, CertificateFields certFields) {
         CertificateCredential credential = new CertificateCredential();
         credential.setReferenceType(ReferenceType.DOMAIN);
         credential.setReferenceId(domain.getId());
-        credential.setUserId(userId);
+        credential.setUserId(user.getId());
+        credential.setUsername(user.getUsername());
         credential.setCertificatePem(certificatePem);
         credential.setCertificateThumbprint(certFields.thumbprint);
         credential.setCertificateSubjectDN(certFields.subjectDN);
@@ -189,7 +186,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
         credential.setCertificateExpiresAt(certFields.expiresAt);
         credential.setDeviceName(deviceName);
 
-        Map<String, Object> metadata = new HashMap<>();
+        Map<String, String> metadata = new HashMap<>();
         metadata.put("issuerDN", certFields.issuerDN);
         credential.setMetadata(metadata);
 
@@ -235,7 +232,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     @Override
     public Flowable<CertificateCredential> findByUserId(Domain domain, String userId) {
         log.debug("Find certificate credentials for domain {} and user {}", domain.getId(), userId);
-        return certificateCredentialRepository
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
                 .findByUserId(ReferenceType.DOMAIN, domain.getId(), userId)
                 .onErrorResumeNext(error -> {
                     log.error("Failed to find certificate credentials for user {}", userId, error);
@@ -246,7 +243,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     @Override
     public Maybe<CertificateCredential> findById(Domain domain, String id) {
         log.debug("Find certificate credential by ID {} for domain {}", id, domain.getId());
-        return certificateCredentialRepository
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
                 .findById(id)
                 .filter(cred -> cred.getReferenceType() == ReferenceType.DOMAIN && cred.getReferenceId().equals(domain.getId()))
                 .onErrorResumeNext(error -> {
@@ -256,9 +253,20 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     }
 
     @Override
+    public Flowable<CertificateCredential> findByDomainAndUsername(Domain domain, String username) {
+        log.debug("Find certificate credentials for domain {} and username {}", domain.getId(), username);
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
+                .findByUsername(ReferenceType.DOMAIN, domain.getId(), username)
+                .onErrorResumeNext(error -> {
+                    log.error("Failed to find certificate credentials for username {}", username, error);
+                    return Flowable.error(new TechnicalManagementException("Failed to find certificate credentials", error));
+                });
+    }
+
+    @Override
     public Completable delete(Domain domain, String id) {
         log.debug("Delete certificate credential {} for domain {}", id, domain.getId());
-        return certificateCredentialRepository
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
                 .delete(id)
                 .doOnComplete(() -> log.debug("Certificate credential {} deleted successfully for domain {}", id, domain.getId()))
                 .onErrorResumeNext(error -> {
@@ -270,7 +278,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     @Override
     public Maybe<CertificateCredential> deleteByDomainAndUserAndId(Domain domain, String userId, String credentialId, User principal) {
         log.debug("Delete certificate credential {} for domain {} and user {}", credentialId, domain.getId(), userId);
-        return certificateCredentialRepository
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
                 .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, domain.getId(), userId, credentialId)
                 .doOnSuccess(credential -> {
                     log.debug("Certificate credential {} deleted successfully for domain {} and user {}",
@@ -301,7 +309,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     @Override
     public Completable deleteByUserId(Domain domain, String userId) {
         log.debug("Delete all certificate credentials for domain {} and user {}", domain.getId(), userId);
-        return certificateCredentialRepository
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
                 .deleteByUserId(ReferenceType.DOMAIN, domain.getId(), userId)
                 .doOnComplete(() -> log.debug("All certificate credentials deleted successfully for domain {} and user {}",
                         domain.getId(), userId))
@@ -314,7 +322,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     @Override
     public Completable deleteByDomain(Domain domain) {
         log.debug("Delete all certificate credentials for domain {}", domain.getId());
-        return certificateCredentialRepository
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
                 .deleteByReference(ReferenceType.DOMAIN, domain.getId())
                 .doOnComplete(() -> log.debug("All certificate credentials deleted successfully for domain {}", domain.getId()))
                 .onErrorResumeNext(error -> {

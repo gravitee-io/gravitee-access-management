@@ -86,7 +86,6 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
                 "entrypoints",
                 "emails",
                 "webauthn_credentials",
-                "cert_credentials",
                 "certificates",
                 "uma_access_policies",
                 "domains",

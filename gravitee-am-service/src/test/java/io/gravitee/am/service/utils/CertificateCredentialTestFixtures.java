@@ -48,7 +48,7 @@ public final class CertificateCredentialTestFixtures {
         String randomStr = UUID.randomUUID().toString();
         Date expirationDate = new Date(System.currentTimeMillis() + 86400000); // Tomorrow
 
-        Map<String, Object> metadata = new HashMap<>();
+        Map<String, String> metadata = new HashMap<>();
         metadata.put("issuerDN", "CN=CA, O=Example Corp");
         metadata.put("keyUsage", "digitalSignature, keyEncipherment");
 

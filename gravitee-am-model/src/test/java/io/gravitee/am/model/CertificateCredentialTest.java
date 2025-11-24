@@ -85,7 +85,7 @@ class CertificateCredentialTest {
     @Test
     void shouldSetAndGetMetadataField() {
         CertificateCredential credential = new CertificateCredential();
-        Map<String, Object> metadata = new HashMap<>();
+        Map<String, String> metadata = new HashMap<>();
         metadata.put("issuerDN", "CN=CA, O=Example Corp");
         metadata.put("keyUsage", "digitalSignature, keyEncipherment");
         metadata.put("subjectAlternativeNames", "DNS:example.com, DNS:www.example.com");

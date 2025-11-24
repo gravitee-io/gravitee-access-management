@@ -18,12 +18,14 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.model.CertificateCredential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.management.api.CertificateCredentialRepository;
 import io.gravitee.am.service.exception.CertificateExpiredException;
 import io.gravitee.am.service.exception.CertificateLimitExceededException;
 import io.gravitee.am.service.exception.DuplicateCertificateException;
@@ -41,11 +43,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
@@ -77,11 +81,19 @@ public class CertificateCredentialServiceTest {
     // Test domain (initialized in @Before)
     private static final Domain DOMAIN = new Domain(DOMAIN_ID);
 
+    private static final io.gravitee.am.model.User USER = new io.gravitee.am.model.User();
+
     @InjectMocks
     private CertificateCredentialService certificateCredentialService = new CertificateCredentialServiceImpl();
 
     @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
+
+    @Mock
     private CertificateCredentialRepository certificateCredentialRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private AuditService auditService;
@@ -96,8 +108,15 @@ public class CertificateCredentialServiceTest {
         DOMAIN.setId(DOMAIN_ID);
         DOMAIN.setReferenceType(ReferenceType.DOMAIN);
         DOMAIN.setReferenceId(DOMAIN_ID);
+        USER.setId(USER_ID);
+        USER.setUsername(USER_ID);
         ReflectionTestUtils.setField(certificateCredentialService, "maxCertificatesPerUser", MAX_CERTIFICATES_PER_USER);
         ReflectionTestUtils.setField(certificateCredentialService, "auditService", auditService);
+        Mockito.when(dataPlaneRegistry.getCertificateCredentialRepository(Mockito.argThat(d -> d.getId().equals(DOMAIN_ID))))
+                .thenReturn(certificateCredentialRepository);
+        Mockito.when(dataPlaneRegistry.getUserRepository(Mockito.argThat(d -> d.getId().equals(DOMAIN_ID))))
+                .thenReturn(userRepository);
+        Mockito.when(userRepository.findById(USER_ID)).thenReturn(Maybe.just(USER));
     }
 
     @Test
@@ -311,6 +330,27 @@ public class CertificateCredentialServiceTest {
         testObserver.assertNoErrors();
 
         verify(certificateCredentialRepository, times(1)).delete("credential-id");
+    }
+
+    @Test
+    public void shouldFindByDomainAndUsername() {
+        CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
+                DOMAIN, USER_ID, VALID_PEM_CERT);
+        credential.setId("credential-id");
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId(DOMAIN_ID);
+
+        when(certificateCredentialRepository.findByUsername(ReferenceType.DOMAIN, DOMAIN_ID, "credential-id"))
+                .thenReturn(Flowable.just(credential));
+
+        TestSubscriber<CertificateCredential> testObserver = certificateCredentialService
+                .findByDomainAndUsername(DOMAIN, "credential-id")
+                .test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(cred -> cred.getId().equals("credential-id"));
     }
 
     @Test
