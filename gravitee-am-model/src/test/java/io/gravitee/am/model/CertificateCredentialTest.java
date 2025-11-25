@@ -38,7 +38,6 @@ class CertificateCredentialTest {
         credential.setUsername("testuser");
         credential.setIpAddress("192.168.1.1");
         credential.setUserAgent("Mozilla/5.0");
-        credential.setDeviceName("My Laptop");
         
         assertThat(credential.getId()).isEqualTo("credential-id");
         assertThat(credential.getReferenceType()).isEqualTo(ReferenceType.DOMAIN);
@@ -47,7 +46,6 @@ class CertificateCredentialTest {
         assertThat(credential.getUsername()).isEqualTo("testuser");
         assertThat(credential.getIpAddress()).isEqualTo("192.168.1.1");
         assertThat(credential.getUserAgent()).isEqualTo("Mozilla/5.0");
-        assertThat(credential.getDeviceName()).isEqualTo("My Laptop");
     }
 
     @Test

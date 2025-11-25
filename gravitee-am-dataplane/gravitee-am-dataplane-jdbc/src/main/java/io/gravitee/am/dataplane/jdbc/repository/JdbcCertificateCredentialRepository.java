@@ -189,7 +189,6 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
         credentialJdbc.setUsername(credential.getUsername());
         credentialJdbc.setIpAddress(credential.getIpAddress());
         credentialJdbc.setUserAgent(credential.getUserAgent());
-        credentialJdbc.setDeviceName(credential.getDeviceName());
         credentialJdbc.setCertificatePem(credential.getCertificatePem());
         credentialJdbc.setCertificateThumbprint(credential.getCertificateThumbprint());
         credentialJdbc.setCertificateSubjectDN(credential.getCertificateSubjectDN());
@@ -219,7 +218,6 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
         credential.setUsername(credentialJdbc.getUsername());
         credential.setIpAddress(credentialJdbc.getIpAddress());
         credential.setUserAgent(credentialJdbc.getUserAgent());
-        credential.setDeviceName(credentialJdbc.getDeviceName());
         credential.setCertificatePem(credentialJdbc.getCertificatePem());
         credential.setCertificateThumbprint(credentialJdbc.getCertificateThumbprint());
         credential.setCertificateSubjectDN(credentialJdbc.getCertificateSubjectDN());

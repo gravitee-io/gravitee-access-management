@@ -12384,8 +12384,6 @@ components:
           type: string
         userAgent:
           type: string
-        deviceName:
-          type: string
         certificatePem:
           type: string
         certificateThumbprint:
@@ -13661,10 +13659,6 @@ components:
             -----BEGIN CERTIFICATE-----
             ...
             -----END CERTIFICATE-----
-        deviceName:
-          type: string
-          description: Optional device name for the certificate
-          example: My Laptop
     NewClientSecret:
       required:
       - name

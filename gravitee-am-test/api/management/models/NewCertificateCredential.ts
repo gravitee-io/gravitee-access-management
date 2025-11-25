@@ -38,12 +38,6 @@ export interface NewCertificateCredential {
    * @memberof NewCertificateCredential
    */
   certificatePem: string;
-  /**
-   * Optional device name for the certificate
-   * @type {string}
-   * @memberof NewCertificateCredential
-   */
-  deviceName?: string;
 }
 
 /**
@@ -64,7 +58,6 @@ export function NewCertificateCredentialFromJSONTyped(json: any, ignoreDiscrimin
   }
   return {
     certificatePem: json['certificatePem'],
-    deviceName: json['deviceName'] == null ? undefined : json['deviceName'],
   };
 }
 
@@ -79,6 +72,5 @@ export function NewCertificateCredentialToJSONTyped(value?: NewCertificateCreden
 
   return {
     certificatePem: value['certificatePem'],
-    deviceName: value['deviceName'],
   };
 }

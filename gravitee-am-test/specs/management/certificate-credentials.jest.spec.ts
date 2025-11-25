@@ -80,7 +80,6 @@ describe('Certificate Credential Enrollment', () => {
     const certPem = generateUniqueCertificatePEM(1);
     const newCredential: NewCertificateCredential = {
       certificatePem: certPem,
-      deviceName: 'My Laptop',
     };
     const credential = await enrollCertificate(domain.id, user.id, accessToken, newCredential);
 
@@ -91,7 +90,6 @@ describe('Certificate Credential Enrollment', () => {
     expect(credential.certificateSubjectDN).toBeDefined();
     expect(credential.certificateSerialNumber).toBeDefined();
     expect(credential.certificateExpiresAt).toBeDefined();
-    expect(credential.deviceName).toBe('My Laptop');
   });
 
   it('should reject expired certificate', async () => {
@@ -102,7 +100,6 @@ describe('Certificate Credential Enrollment', () => {
     const expiredCertPem = generateExpiredCertificatePEM();
     const newCredential: NewCertificateCredential = {
       certificatePem: expiredCertPem,
-      deviceName: 'Expired Device',
     };
 
     // Then: Enrollment fails with error
@@ -117,7 +114,6 @@ describe('Certificate Credential Enrollment', () => {
     const certPem = generateUniqueCertificatePEM(2);
     const newCredential: NewCertificateCredential = {
       certificatePem: certPem,
-      deviceName: 'First Device',
     };
     const firstCredential = await enrollCertificate(domain.id, user.id, accessToken, newCredential);
     expect(firstCredential.id).toBeDefined();
@@ -125,7 +121,6 @@ describe('Certificate Credential Enrollment', () => {
     // When: Admin enrolls the same certificate again
     const duplicateCredential: NewCertificateCredential = {
       certificatePem: certPem, // Same certificate PEM
-      deviceName: 'Duplicate Device',
     };
 
     // Then: Enrollment fails with error (409 Conflict)
@@ -145,7 +140,6 @@ describe('Certificate Credential Enrollment', () => {
       const certPem = generateUniqueCertificatePEM(i);
       const newCredential: NewCertificateCredential = {
         certificatePem: certPem,
-        deviceName: `Device ${i + 1}`,
       };
       const credential = await enrollCertificate(domain.id, user.id, accessToken, newCredential);
       expect(credential.id).toBeDefined();
@@ -159,7 +153,6 @@ describe('Certificate Credential Enrollment', () => {
     const limitExceededCertPem = generateUniqueCertificatePEM(CERTIFICATE_LIMIT);
     const limitExceededCredential: NewCertificateCredential = {
       certificatePem: limitExceededCertPem,
-      deviceName: 'Limit Exceeded Device',
     };
 
     // Then: Enrollment fails with error (400 Bad Request)
@@ -196,11 +189,9 @@ describe('Certificate Credential Management', () => {
 
     const credential1 = await enrollCertificate(domain.id, user.id, accessToken, {
       certificatePem: cert1,
-      deviceName: 'Device 1',
     });
     const credential2 = await enrollCertificate(domain.id, user.id, accessToken, {
       certificatePem: cert2,
-      deviceName: 'Device 2',
     });
 
     // When: Admin lists certificates
@@ -212,8 +203,6 @@ describe('Certificate Credential Management', () => {
     expect(credentials.length).toBe(2);
     expect(credentials.some((c) => c.id === credential1.id)).toBe(true);
     expect(credentials.some((c) => c.id === credential2.id)).toBe(true);
-    expect(credentials.find((c) => c.id === credential1.id)?.deviceName).toBe('Device 1');
-    expect(credentials.find((c) => c.id === credential2.id)?.deviceName).toBe('Device 2');
   });
 
   it('should list empty certificate credentials for a user with no certificates', async () => {
@@ -235,7 +224,6 @@ describe('Certificate Credential Management', () => {
     const certPem = generateUniqueCertificatePEM(200);
     const credential = await enrollCertificate(domain.id, user.id, accessToken, {
       certificatePem: certPem,
-      deviceName: 'Test Device',
     });
 
     // When: Admin gets certificate by ID
@@ -249,7 +237,6 @@ describe('Certificate Credential Management', () => {
     expect(retrieved.certificateSubjectDN).toBe(credential.certificateSubjectDN);
     expect(retrieved.certificateSerialNumber).toBe(credential.certificateSerialNumber);
     expect(retrieved.certificateExpiresAt).toBeDefined();
-    expect(retrieved.deviceName).toBe('Test Device');
     expect(retrieved.userId).toBe(user.id);
   });
 
@@ -271,7 +258,6 @@ describe('Certificate Credential Management', () => {
     const certPem = generateUniqueCertificatePEM(300);
     const credential = await enrollCertificate(domain.id, user.id, accessToken, {
       certificatePem: certPem,
-      deviceName: 'Device to Delete',
     });
 
     // Verify certificate exists before deletion

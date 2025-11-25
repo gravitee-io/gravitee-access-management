@@ -130,7 +130,7 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Single.just(createdCredential));
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name", principal)
+                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -159,7 +159,7 @@ public class CertificateCredentialServiceTest {
         // No mocks needed - service fails early on expiration check before repository calls
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, EXPIRED_PEM_CERT, "device-name", principal)
+                .enrollCertificate(DOMAIN, USER_ID, EXPIRED_PEM_CERT, principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -193,7 +193,7 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Flowable.empty());
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name", principal)
+                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -222,7 +222,7 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Flowable.fromIterable(existingCredentials));
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name", principal)
+                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);

@@ -64,7 +64,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     private int maxCertificatesPerUser;
 
     @Override
-    public Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, String deviceName, User principal) {
+    public Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, User principal) {
         log.debug("Enroll certificate for domain {} and user {}", domain.getId(), userId);
         try {
             CertificateFields certFields = parseCertificate(certificatePem);
@@ -76,7 +76,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
                                     .switchIfEmpty(
                                             checkCertificateLimit(domain, userId)
                                                     .flatMap(count -> createAndStoreCredential(
-                                                            domain, user, certificatePem, deviceName, certFields))
+                                                            domain, user, certificatePem, certFields))
                                                     .toMaybe()
                                     )
                                     .toSingle()))
@@ -160,9 +160,9 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     }
 
     private Single<CertificateCredential> createAndStoreCredential(
-            Domain domain, io.gravitee.am.model.User user, String certificatePem, String deviceName, CertificateFields certFields) {
+            Domain domain, io.gravitee.am.model.User user, String certificatePem, CertificateFields certFields) {
         CertificateCredential credential = buildCertificateCredential(
-                domain, user, certificatePem, deviceName, certFields);
+                domain, user, certificatePem, certFields);
         
         log.debug("Creating certificate credential for domain {} and user {} with thumbprint {}", 
                 domain.getId(), user.getId(), certFields.thumbprint);
@@ -173,7 +173,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     }
 
     private CertificateCredential buildCertificateCredential(
-            Domain domain, io.gravitee.am.model.User user, String certificatePem, String deviceName, CertificateFields certFields) {
+            Domain domain, io.gravitee.am.model.User user, String certificatePem, CertificateFields certFields) {
         CertificateCredential credential = new CertificateCredential();
         credential.setReferenceType(ReferenceType.DOMAIN);
         credential.setReferenceId(domain.getId());
@@ -184,7 +184,6 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
         credential.setCertificateSubjectDN(certFields.subjectDN);
         credential.setCertificateSerialNumber(certFields.serialNumber);
         credential.setCertificateExpiresAt(certFields.expiresAt);
-        credential.setDeviceName(deviceName);
 
         Map<String, String> metadata = new HashMap<>();
         metadata.put("issuerDN", certFields.issuerDN);

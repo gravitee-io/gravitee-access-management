@@ -128,7 +128,6 @@ public class UserCertCredentialsResource extends AbstractResource {
                                 domain,
                                 userId,
                                 newCertificateCredential.getCertificatePem(),
-                                newCertificateCredential.getDeviceName(),
                                 authenticatedUser))
                         .map(credential -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domainId + "/users/" + userId + "/cert-credentials/" + credential.getId()))

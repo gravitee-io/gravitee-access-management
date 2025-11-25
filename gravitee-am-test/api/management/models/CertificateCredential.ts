@@ -79,12 +79,6 @@ export interface CertificateCredential {
    * @type {string}
    * @memberof CertificateCredential
    */
-  deviceName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CertificateCredential
-   */
   certificatePem?: string;
   /**
    *
@@ -173,7 +167,6 @@ export function CertificateCredentialFromJSONTyped(json: any, ignoreDiscriminato
     username: json['username'] == null ? undefined : json['username'],
     ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
     userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
-    deviceName: json['deviceName'] == null ? undefined : json['deviceName'],
     certificatePem: json['certificatePem'] == null ? undefined : json['certificatePem'],
     certificateThumbprint: json['certificateThumbprint'] == null ? undefined : json['certificateThumbprint'],
     certificateSubjectDN: json['certificateSubjectDN'] == null ? undefined : json['certificateSubjectDN'],
@@ -203,7 +196,6 @@ export function CertificateCredentialToJSONTyped(value?: CertificateCredential |
     username: value['username'],
     ipAddress: value['ipAddress'],
     userAgent: value['userAgent'],
-    deviceName: value['deviceName'],
     certificatePem: value['certificatePem'],
     certificateThumbprint: value['certificateThumbprint'],
     certificateSubjectDN: value['certificateSubjectDN'],

@@ -52,7 +52,6 @@ public class CertificateCredential {
     private String username;
     private String ipAddress;
     private String userAgent;
-    private String deviceName;
 
     // X.509 certificate-specific fields (PEM format)
     private String certificatePem; // PEM-encoded certificate (required)

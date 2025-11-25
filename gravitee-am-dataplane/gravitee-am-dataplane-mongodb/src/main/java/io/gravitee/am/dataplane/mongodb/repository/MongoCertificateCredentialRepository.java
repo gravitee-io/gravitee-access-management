@@ -205,7 +205,6 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
         credential.setUsername(credentialMongo.getUsername());
         credential.setIpAddress(credentialMongo.getIpAddress());
         credential.setUserAgent(credentialMongo.getUserAgent());
-        credential.setDeviceName(credentialMongo.getDeviceName());
         credential.setCertificatePem(credentialMongo.getCertificatePem());
         credential.setCertificateThumbprint(credentialMongo.getCertificateThumbprint());
         credential.setCertificateSubjectDN(credentialMongo.getCertificateSubjectDN());
@@ -238,7 +237,6 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
         credentialMongo.setUsername(credential.getUsername());
         credentialMongo.setIpAddress(credential.getIpAddress());
         credentialMongo.setUserAgent(credential.getUserAgent());
-        credentialMongo.setDeviceName(credential.getDeviceName());
         credentialMongo.setCertificatePem(credential.getCertificatePem());
         credentialMongo.setCertificateThumbprint(credential.getCertificateThumbprint());
         credentialMongo.setCertificateSubjectDN(credential.getCertificateSubjectDN());

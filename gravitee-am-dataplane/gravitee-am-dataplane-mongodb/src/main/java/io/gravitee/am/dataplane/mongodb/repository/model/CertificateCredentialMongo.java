@@ -37,7 +37,6 @@ public class CertificateCredentialMongo extends Auditable {
     private String username;
     private String ipAddress;
     private String userAgent;
-    private String deviceName;
 
     // Certificate-specific fields
     private String certificatePem;

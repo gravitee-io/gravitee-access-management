@@ -774,6 +774,7 @@ public class ProvisioningUserServiceTest {
         verify(userRepository, times(1)).delete(userId);
         verify(identityProviderManager, times(1)).getUserProvider(anyString());
         verify(userProvider, times(1)).delete(anyString());
+        verify(credentialService, times(1)).deleteByUserId(domain, userId);
     }
 
     @Test
@@ -803,6 +804,7 @@ public class ProvisioningUserServiceTest {
         verify(userRepository, times(1)).delete(userId);
         verify(identityProviderManager, times(1)).getUserProvider(anyString());
         verify(userProvider, never()).delete(anyString());
+        verify(credentialService, times(1)).deleteByUserId(domain, userId);
     }
 
     @Test
