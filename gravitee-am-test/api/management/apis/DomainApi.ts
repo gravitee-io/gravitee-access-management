@@ -11771,7 +11771,7 @@ export class DomainApi extends runtime.BaseAPI {
   async listDomainsRaw(
     requestParameters: ListDomainsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<DomainPage>>> {
+  ): Promise<runtime.ApiResponse<DomainPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -11822,17 +11822,14 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DomainPageFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => DomainPageFromJSON(jsonValue));
   }
 
   /**
    * List all the security domains accessible to the current user. User must have DOMAIN[LIST] permission on the specified environment or organization AND either DOMAIN[READ] permission on each security domain or DOMAIN[READ] permission on the specified environment or DOMAIN[READ] permission on the specified organization.Each returned domain is filtered and contains only basic information such as id, name and description and isEnabled.
    * List security domains for an environment
    */
-  async listDomains(
-    requestParameters: ListDomainsRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<DomainPage>> {
+  async listDomains(requestParameters: ListDomainsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<DomainPage> {
     const response = await this.listDomainsRaw(requestParameters, initOverrides);
     return await response.value();
   }

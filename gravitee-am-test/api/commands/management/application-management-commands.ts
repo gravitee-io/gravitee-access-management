@@ -15,6 +15,13 @@
  */
 
 import { getApplicationApi } from './service/utils';
+import { ApplicationPage } from '../../management/models/ApplicationPage';
+
+export type ApplicationListOptions = {
+  page?: number;
+  size?: number;
+  q?: string;
+};
 
 export const createApplication = (domainId, accessToken, body) =>
   getApplicationApi(accessToken).createApplication({
@@ -32,19 +39,19 @@ export const getApplication = (domainId, accessToken, applicationId) =>
     application: applicationId,
   });
 
-export const getAllApplications = (domainId, accessToken) => getApplicationPage(domainId, accessToken);
-
-export const getApplicationPage = (domainId, accessToken, page: number = null, size: number = null) => {
-  const params = {
+export const listApplications = (
+  domainId: string,
+  accessToken: string,
+  options?: ApplicationListOptions,
+): Promise<ApplicationPage> =>
+  getApplicationApi(accessToken).listApplications({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-  };
-  if (page !== null && size != null) {
-    return getApplicationApi(accessToken).listApplications({ ...params, page: page, size: size });
-  }
-  return getApplicationApi(accessToken).listApplications(params);
-};
+    page: options?.page,
+    size: options?.size,
+    q: options?.q,
+  });
 
 export const patchApplication = (domainId, accessToken, body, applicationId) =>
   getApplicationApi(accessToken).patchApplication({

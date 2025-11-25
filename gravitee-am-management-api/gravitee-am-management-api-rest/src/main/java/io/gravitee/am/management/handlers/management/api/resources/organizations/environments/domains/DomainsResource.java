@@ -88,7 +88,7 @@ public class DomainsResource extends AbstractDomainResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List accessible security domains for current user",
                     content = @Content(mediaType =  "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = DomainPage.class)))),
+                            schema = @Schema(implementation = DomainPage.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,

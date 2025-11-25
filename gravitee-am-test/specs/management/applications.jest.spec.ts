@@ -15,73 +15,164 @@
  */
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
   createApplication,
   deleteApplication,
-  getAllApplications,
   getApplication,
-  getApplicationPage,
+  listApplications,
   patchApplication,
   renewApplicationSecrets,
   updateApplication,
 } from '@management-commands/application-management-commands';
 import { Domain } from '@management-models/Domain';
+import { Application } from '@management-models/Application';
 import { uniqueName } from '@utils-commands/misc';
+import { ClientSecret } from '@management-models/ClientSecret';
 
 global.fetch = fetch;
+
+const SMALL_BATCH_SIZE = 5;
+const LARGE_BATCH_SIZE = 55;
+const WILDCARD_BATCH_SIZE = 8;
+const SECOND_DOMAIN_BATCH_SIZE = 4;
+const DEFAULT_PAGE_SIZE = 50;
+const RUN_PREFIX = `${Date.now()}`;
+const SMALL_PREFIX = `${RUN_PREFIX}-small`;
+const LARGE_PREFIX = `${RUN_PREFIX}-large`;
+const WILDCARD_PREFIX = `${RUN_PREFIX}-shared`;
+const SEEDED_APPLICATION_COUNT = SMALL_BATCH_SIZE + LARGE_BATCH_SIZE;
+const UNIQUE_APP_NAME = `${RUN_PREFIX}-unique123`;
+const UNIQUE_CLIENT_ID = `${RUN_PREFIX}-client-unique123`;
+const CLIENT_ID_WILDCARD_PREFIX = `${RUN_PREFIX}-client-shared`;
 
 jest.setTimeout(200000);
 
 let accessToken: string;
-let domain: Domain;
-let application;
-let secret;
+let primaryDomain: Domain;
+let secondaryDomain: Domain;
+const createdApplicationIds: { [domainId: string]: string[] } = {};
+const smallBatch: Application[] = [];
+const largeBatch: Application[] = [];
+const wildcardBatch: Application[] = [];
+const clientIdWildcardBatch: Application[] = [];
+let uniqueClientIdApp: Application | undefined;
+
+const recordApplicationForCleanup = (app?: Application, domainId?: string) => {
+  if (app?.id && domainId) {
+    if (!createdApplicationIds[domainId]) {
+      createdApplicationIds[domainId] = [];
+    }
+    createdApplicationIds[domainId].push(app.id);
+  }
+};
+
+const createApp = async (domainId: string, name?: string, clientId?: string): Promise<Application> => {
+  const app: any = {
+    name: name ?? faker.commerce.productName(),
+    type: 'service',
+    description: faker.lorem.paragraph(),
+    metadata: {
+      key1: faker.lorem.paragraph(),
+      key2: faker.lorem.paragraph(),
+      key3: faker.lorem.paragraph(),
+      key4: faker.lorem.paragraph(),
+    },
+  };
+  if (clientId) {
+    app.clientId = clientId;
+  }
+  const createdApp = await createApplication(domainId, accessToken, app);
+  recordApplicationForCleanup(createdApp, domainId);
+  return createdApp;
+};
+
+type BatchOptions = {
+  buildName?: (index: number) => string;
+  onAppCreated?: (app: Application, index: number) => void;
+};
+
+const seedBatch = async (domainId: string, count: number, store: Application[], options: BatchOptions = {}) => {
+  for (let i = 0; i < count; i++) {
+    const name = options?.buildName?.(i);
+    expect(name).toBeDefined();
+    const createdApp = await createApp(domainId, name!);
+    store.push(createdApp);
+    options?.onAppCreated?.(createdApp, i);
+  }
+};
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('applications', true), { accessToken }).then((it) => it.domain);
-});
+  primaryDomain = await setupDomainForTest(uniqueName('applications-primary', true), { accessToken }).then((it) => it.domain);
+  secondaryDomain = await setupDomainForTest(uniqueName('applications-secondary', true), { accessToken }).then((it) => it.domain);
 
-describe('when creating applications', () => {
-  for (let i = 0; i < 10; i++) {
-    it('must create new application: ' + i, async () => {
-      const app = {
-        name: faker.commerce.productName(),
-        type: 'service',
-        description: faker.lorem.paragraph(),
-        metadata: {
-          key1: faker.lorem.paragraph(),
-          key2: faker.lorem.paragraph(),
-          key3: faker.lorem.paragraph(),
-          key4: faker.lorem.paragraph(),
-        },
-      };
+  // Seed primary domain with applications
+  await seedBatch(primaryDomain.id!, SMALL_BATCH_SIZE, smallBatch, {
+    buildName: (index) => `${SMALL_PREFIX}-${index}-${uniqueName('app', true)}`,
+  });
 
-      const createdApp = await createApplication(domain.id, accessToken, app);
-      expect(createdApp).toBeDefined();
-      expect(createdApp.id).toBeDefined();
-      expect(createdApp.name).toEqual(app.name);
-      expect(createdApp.description).toEqual(app.description);
-      expect(createdApp.type).toEqual(app.type);
-      application = createdApp;
-      secret = createdApp.secrets[0];
-    });
+  await seedBatch(
+    primaryDomain.id!,
+    LARGE_BATCH_SIZE,
+    largeBatch,
+    {
+      buildName: (index) =>
+        index < WILDCARD_BATCH_SIZE
+          ? `${WILDCARD_PREFIX}-${index}-${uniqueName('app', true)}`
+          : `${LARGE_PREFIX}-${index}-${uniqueName('app', true)}`,
+      onAppCreated: (app, index) => {
+        if (index < WILDCARD_BATCH_SIZE) {
+          wildcardBatch.push(app);
+        }
+      },
+    },
+  );
+
+  // Create unique app in primary domain
+  await createApp(primaryDomain.id!, UNIQUE_APP_NAME);
+
+  // Create applications with specific client IDs for client ID search testing
+  uniqueClientIdApp = await createApp(primaryDomain.id!, `${RUN_PREFIX}-app-for-client-id`, UNIQUE_CLIENT_ID);
+
+  // Create applications with wildcard client ID prefix
+  for (let i = 0; i < WILDCARD_BATCH_SIZE; i++) {
+    const clientId = `${CLIENT_ID_WILDCARD_PREFIX}-${i}-${uniqueName('client', true)}`;
+    const app = await createApp(primaryDomain.id!, `${RUN_PREFIX}-app-client-${i}`, clientId);
+    clientIdWildcardBatch.push(app);
   }
+
+  // Create applications in secondary domain with matching names to test domain-scoped filtering
+  await seedBatch(secondaryDomain.id!, SECOND_DOMAIN_BATCH_SIZE, [], {
+    buildName: (index) => {
+      if (index === 0) {
+        return UNIQUE_APP_NAME; // Same name as primary domain's unique app
+      }
+      return `${WILDCARD_PREFIX}-${index}-${uniqueName('app', true)}`; // Matching wildcard prefix
+    },
+  });
 });
 
 describe('after creating applications', () => {
-  it('must find Application', async () => {
-    const foundApp = await getApplication(domain.id, accessToken, application.id);
+  let application: Application;
+  let secret: ClientSecret;
+
+  beforeAll(async () => {
+    application = await createApp(primaryDomain.id!);
+    secret = application.secrets[0];
+  });
+
+  it('must find application by ID', async () => {
+    const foundApp = await getApplication(primaryDomain.id!, accessToken, application.id!);
     expect(foundApp).toBeDefined();
     expect(application.id).toEqual(foundApp.id);
   });
 
   it('must update application', async () => {
     const updatedApp = await updateApplication(
-      domain.id,
+      primaryDomain.id!,
       accessToken,
       { ...application, name: faker.commerce.productName() },
       application.id,
@@ -91,49 +182,84 @@ describe('after creating applications', () => {
   });
 
   it('must patch application', async () => {
-    const patchedApp = await patchApplication(domain.id, accessToken, { name: 'application name' }, application.id);
+    const patchedApp = await patchApplication(primaryDomain.id!, accessToken, { name: 'application name' }, application.id);
     expect(patchedApp.name === application.name).toBeFalsy();
     application = patchedApp;
   });
 
   it('must renew application secrets', async () => {
-    const renewedSecret = await renewApplicationSecrets(domain.id, accessToken, application.id, secret.id);
+    const renewedSecret = await renewApplicationSecrets(primaryDomain.id!, accessToken, application.id, secret.id);
     expect(renewedSecret.secret).not.toEqual(secret.secret);
     secret = renewedSecret;
   });
 
-  it('must find all Applications', async () => {
-    const applicationPage = await getAllApplications(domain.id, accessToken);
+  it('must delete application', async () => {
+    await deleteApplication(primaryDomain.id!, accessToken, application.id);
+    const applicationPage = await listApplications(primaryDomain.id!, accessToken, { size: SEEDED_APPLICATION_COUNT + 1 });
 
-    expect(applicationPage.currentPage).toEqual(0);
-    expect(applicationPage.totalCount).toEqual(10);
-    expect(applicationPage.data.length).toEqual(10);
-  });
-
-  it('must find application page', async () => {
-    const applicationPage = await getApplicationPage(domain.id, accessToken, 1, 3);
-
-    expect(applicationPage.currentPage).toEqual(1);
-    expect(applicationPage.totalCount).toEqual(10);
-    expect(applicationPage.data.length).toEqual(3);
-  });
-
-  it('must find last application page', async () => {
-    const applicationPage = await getApplicationPage(domain.id, accessToken, 3, 3);
-
-    expect(applicationPage.currentPage).toEqual(3);
-    expect(applicationPage.totalCount).toEqual(10);
-    expect(applicationPage.data.length).toEqual(1);
-  });
-
-  it('Must delete application', async () => {
-    await deleteApplication(domain.id, accessToken, application.id);
-    const applicationPage = await getAllApplications(domain.id, accessToken);
-
-    expect(applicationPage.currentPage).toEqual(0);
-    expect(applicationPage.totalCount).toEqual(9);
-    expect(applicationPage.data.length).toEqual(9);
     expect(applicationPage.data.find((app) => app.id === application.id)).toBeFalsy();
+  });
+});
+
+describe('application search and pagination', () => {
+  it('returns a small page without a query', async () => {
+    const pageResponse = await listApplications(primaryDomain.id!, accessToken, { size: SMALL_BATCH_SIZE });
+
+    expect(pageResponse.data?.length).toBeLessThanOrEqual(SMALL_BATCH_SIZE);
+    expect(pageResponse.totalCount).toBeGreaterThanOrEqual(SEEDED_APPLICATION_COUNT);
+  });
+
+  it('defaults to 50 results per page when many applications exist', async () => {
+    const pageResponse = await listApplications(primaryDomain.id!, accessToken);
+
+    expect(pageResponse.data?.length).toBe(DEFAULT_PAGE_SIZE);
+    expect(pageResponse.totalCount).toBeGreaterThanOrEqual(SEEDED_APPLICATION_COUNT);
+  });
+
+  it('paginates results when requesting a custom page and size', async () => {
+    const firstPageApps = (await listApplications(primaryDomain.id!, accessToken, { page: 0, size: 10 })).data;
+    const secondPageApps = (await listApplications(primaryDomain.id!, accessToken, { page: 1, size: 10 })).data;
+
+    expect(firstPageApps.length).toBe(10);
+    expect(secondPageApps.length).toBe(10);
+
+    const firstPageIds = new Set(firstPageApps.map((app) => app.id));
+    const overlap = secondPageApps.filter((app) => firstPageIds.has(app.id));
+    expect(overlap).toHaveLength(0);
+  });
+
+  it('finds an application when searching by its name (targeted domain only)', async () => {
+    const pageResponse = await listApplications(primaryDomain.id!, accessToken, { q: UNIQUE_APP_NAME });
+
+    expect(pageResponse.data?.length).toBe(1);
+    expect(pageResponse.data?.[0].name).toEqual(UNIQUE_APP_NAME);
+  });
+
+  it('supports wildcard searching by name (targeted domain only)', async () => {
+    const wildcardQuery = `${WILDCARD_PREFIX}*`;
+    const pageResponse = await listApplications(primaryDomain.id!, accessToken, { q: wildcardQuery, size: 100 });
+    const expectedIds = wildcardBatch.map((app) => app.id);
+
+    expect(pageResponse.data).toHaveLength(expectedIds.length);
+    expect(pageResponse.data?.find((app) => !app.name?.startsWith(WILDCARD_PREFIX))).toBeUndefined();
+    expect(pageResponse.data?.map((app) => app.id).sort()).toEqual([...expectedIds].sort());
+  });
+
+  it('finds an application when searching by its client ID (targeted domain only)', async () => {
+    expect(uniqueClientIdApp?.settings?.oauth?.clientId).toBeDefined();
+    const pageResponse = await listApplications(primaryDomain.id!, accessToken, { q: UNIQUE_CLIENT_ID });
+
+    expect(pageResponse.data?.length).toBe(1);
+    expect(pageResponse.data?.[0].id).toEqual(uniqueClientIdApp!.id);
+  });
+
+  it('supports wildcard searching by client ID (targeted domain only)', async () => {
+    const wildcardQuery = `${CLIENT_ID_WILDCARD_PREFIX}*`;
+    const pageResponse = await listApplications(primaryDomain.id!, accessToken, { q: wildcardQuery, size: 100 });
+    const expectedIds = clientIdWildcardBatch.map((app) => app.id);
+
+    expect(pageResponse.data).toHaveLength(expectedIds.length);
+    expect(pageResponse.data?.map((app) => app.id).sort()).toEqual([...expectedIds].sort());
   });
 });
 
@@ -146,10 +272,11 @@ describe('Entrypoints: User accounts', () => {
       redirectUris: ['https://callback'],
     };
 
-    const createdApp = await createApplication(domain.id, accessToken, app);
+    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
+    recordApplicationForCleanup(createdApp, primaryDomain.id!);
 
     const patchedApplication = await patchApplication(
-      domain.id,
+      primaryDomain.id!,
       accessToken,
       {
         settings: {
@@ -171,7 +298,7 @@ describe('Entrypoints: User accounts', () => {
 
 describe('Redirect URI', () => {
   it('Should not turn dynamic params when any application contains redirect uris with same hostname and path', async () => {
-    expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+    expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
     const app = {
       name: faker.commerce.productName(),
       type: 'browser',
@@ -179,10 +306,11 @@ describe('Redirect URI', () => {
       redirectUris: ['https://callback/?param=test', 'https://callback/?param2=test2'],
     };
 
-    const createdApp = await createApplication(domain.id, accessToken, app);
+    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
+    recordApplicationForCleanup(createdApp, primaryDomain.id!);
 
     await expect(
-      patchDomain(domain.id, accessToken, {
+      patchDomain(primaryDomain.id!, accessToken, {
         oidc: {
           clientRegistrationSettings: {
             allowRedirectUriParamsExpressionLanguage: true,
@@ -193,21 +321,21 @@ describe('Redirect URI', () => {
       response: { status: 400 }
     });
 
-    expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+    expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
 
-    await deleteApplication(domain.id, accessToken, createdApp.id);
+    await deleteApplication(primaryDomain.id!, accessToken, createdApp.id);
   });
 
   it('Should turn on dynamic parameters evaluation', async () => {
-    expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
-    domain = await patchDomain(domain.id, accessToken, {
+    expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+    primaryDomain = await patchDomain(primaryDomain.id!, accessToken, {
       oidc: {
         clientRegistrationSettings: {
           allowRedirectUriParamsExpressionLanguage: true,
         },
       },
     });
-    expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(true);
+    expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(true);
   });
   it('Should create app with redirect URI with EL', async () => {
     const app = {
@@ -217,7 +345,8 @@ describe('Redirect URI', () => {
       redirectUris: ["https://callback/?param={#context.attributes['test']}"],
     };
 
-    const createdApp = await createApplication(domain.id, accessToken, app);
+    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
+    recordApplicationForCleanup(createdApp, primaryDomain.id!);
     expect(createdApp.settings.oauth.redirectUris).toStrictEqual(["https://callback/?param={#context.attributes['test']}"]);
   });
 
@@ -237,9 +366,10 @@ describe('Redirect URI', () => {
       },
     };
 
-    const createdApp = await createApplication(domain.id, accessToken, app).then((app) =>
-      patchApplication(domain.id, accessToken, patch, app.id),
-    );
+    const createdApp = await createApplication(primaryDomain.id!, accessToken, app).then((app) => {
+      recordApplicationForCleanup(app, primaryDomain.id!);
+      return patchApplication(primaryDomain.id!, accessToken, patch, app.id);
+    });
 
     expect(createdApp.settings.oauth.redirectUris).toStrictEqual([
       "https://callback2/?param={#context.attributes['test']}",
@@ -266,9 +396,10 @@ describe('Redirect URI', () => {
       },
     };
 
-    const createdApp = await createApplication(domain.id, accessToken, app).then((app) =>
-      patchApplication(domain.id, accessToken, patch, app.id),
-    );
+    const createdApp = await createApplication(primaryDomain.id!, accessToken, app).then((app) => {
+      recordApplicationForCleanup(app, primaryDomain.id!);
+      return patchApplication(primaryDomain.id!, accessToken, patch, app.id);
+    });
 
     expect(createdApp.settings.oauth.redirectUris).toStrictEqual([
       "https://callback/?param={#context.attributes['test']}",
@@ -295,10 +426,11 @@ describe('Redirect URI', () => {
       },
     };
 
-    let createdApp = await createApplication(domain.id, accessToken, app);
+    let createdApp = await createApplication(primaryDomain.id!, accessToken, app);
+    recordApplicationForCleanup(createdApp, primaryDomain.id!);
 
     try {
-      createdApp = await patchApplication(domain.id, accessToken, patch, createdApp.id);
+      createdApp = await patchApplication(primaryDomain.id!, accessToken, patch, createdApp.id);
     } catch (ex) {
       expect(ex.response.status).toEqual(400);
     }
@@ -322,29 +454,41 @@ describe('Redirect URI', () => {
       },
     };
 
-    const createdApp = await createApplication(domain.id, accessToken, app);
+    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
+    recordApplicationForCleanup(createdApp, primaryDomain.id!);
 
     try {
-      await patchApplication(domain.id, accessToken, patch, createdApp.id);
+      await patchApplication(primaryDomain.id!, accessToken, patch, createdApp.id);
     } catch (ex) {
       expect(ex.response.status).toEqual(400);
     }
   });
 
   it('Should turn off dynamic parameters evaluation', async () => {
-    domain = await patchDomain(domain.id, accessToken, {
+    primaryDomain = await patchDomain(primaryDomain.id!, accessToken, {
       oidc: {
         clientRegistrationSettings: {
           allowRedirectUriParamsExpressionLanguage: false,
         },
       },
     });
-    expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+    expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
   });
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
-    await safeDeleteDomain(domain.id, accessToken);
+  for (const domainId of Object.keys(createdApplicationIds)) {
+    for (const appId of createdApplicationIds[domainId]) {
+      try {
+        await deleteApplication(domainId, accessToken, appId);
+      } catch (err) {
+      }
+    }
+  }
+  if (primaryDomain?.id) {
+    await safeDeleteDomain(primaryDomain.id, accessToken);
+  }
+  if (secondaryDomain?.id) {
+    await safeDeleteDomain(secondaryDomain.id, accessToken);
   }
 });
