@@ -26,6 +26,7 @@ import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -103,6 +104,9 @@ public class OrganizationUserServiceTest {
     private VerifyAttemptService verifyAttemptService;
 
     @Mock
+    private CredentialService credentialService;
+
+    @Mock
     private AccessTokenRepository accessTokenRepository;
 
     @Spy
@@ -131,12 +135,14 @@ public class OrganizationUserServiceTest {
         when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(Completable.complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(credentialService.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
 
         organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(commonUserService, times(1)).delete(any());
+        verify(credentialService, times(1)).deleteByUserId(ReferenceType.ORGANIZATION, organization, userId);
         verify(membershipService, never()).delete(anyString());
     }
 
@@ -167,12 +173,14 @@ public class OrganizationUserServiceTest {
         when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(Completable.complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(credentialService.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
 
         organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(commonUserService, times(1)).delete(any());
+        verify(credentialService, times(1)).deleteByUserId(ReferenceType.ORGANIZATION, organization, userId);
         verify(membershipService, times(3)).delete(anyString());
     }
 
