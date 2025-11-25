@@ -17,6 +17,9 @@ package io.gravitee.am.reporter.kafka;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+
+import java.util.Set;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,9 +44,17 @@ public class KafkaReporterConfiguration implements ReporterConfiguration {
   private String username;
   private String password;
   private String schemaRegistryUrl;
+  private Set<String> auditTypes = Set.of();
   private List<Map<String, String>> additionalProperties;
 
-  public String hash(){
+  /**
+   * This hash is used to reuse KafkaProducers for multiple reporters (e.g. for AM users who have a lot of domains).
+   * It's based on fields that identify single kafka Broker (or single connection to the broker, or single producer...)
+   * It should not include fields like topic or auditTypes.
+   *
+   * @return hash calculated from "static" fields, used to map multiple reporters to a single kafka producer instance.
+   */
+  public String hash() {
     return "hash-" + Objects.hash(bootstrapServers, acks, username, password, schemaRegistryUrl, additionalProperties);
   }
 

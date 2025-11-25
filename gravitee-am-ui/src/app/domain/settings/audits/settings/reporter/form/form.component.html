@@ -20,6 +20,7 @@
   [schema]="reporterSchema"
   [data]="data"
   [options]="{ formDefaults: { orderable: false }, addSubmit: false }"
+  [widgets]="customWidgets"
   (isValid)="isValid($event)"
   (onChanges)="onChanges($event)"
   framework="material-design"

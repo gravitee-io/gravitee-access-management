@@ -44,6 +44,19 @@
       "description": "When username and password is not empty, the following producer configuration will be created: \nsasl.jaas.config = org.apache.kafka.common.security.plain.PlainLoginModule \nrequired username=\"your-username\" password=\"your-username-secret\";",
       "sensitive" : true
     },
+    "auditTypes": {
+      "title": "Events to report",
+      "description": "List of event types accepted by this reporter. If empty, reporter will accept all event types.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "x-schema-form": {
+        "type": "graviteeMultiselect",
+        "itemsDictionaryEndpoint": "/platform/audits/events",
+        "onEmptySelectionMessage": "Reporter accepts all event types"
+      }
+    },
     "additionalProperties": {
       "title": "Producer properties",
       "type": "array",

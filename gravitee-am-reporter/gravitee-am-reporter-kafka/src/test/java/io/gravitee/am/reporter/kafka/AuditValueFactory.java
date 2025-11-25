@@ -60,6 +60,12 @@ public class AuditValueFactory {
         return audit;
     }
 
+    public static Audit createAuditOfType(String type) {
+        var audit = createAudit();
+        audit.setType(type);
+        return audit;
+    }
+
     public static AuditEntity createAuditEntity(final String prefix) {
         AuditEntity actor = new AuditEntity();
         actor.setId(prefix + " id");

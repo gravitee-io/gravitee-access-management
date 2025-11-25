@@ -15,6 +15,8 @@
  */
 import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 
+import { MaterialMultiselectComponent } from '../../../../../../components/json-schema-form/material-multiselect.component';
+
 @Component({
   selector: 'reporter-form',
   templateUrl: './form.component.html',
@@ -28,6 +30,9 @@ export class ReporterFormComponent implements OnChanges {
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};
+  customWidgets = {
+    graviteeMultiselect: MaterialMultiselectComponent,
+  };
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.reporterSchema) {

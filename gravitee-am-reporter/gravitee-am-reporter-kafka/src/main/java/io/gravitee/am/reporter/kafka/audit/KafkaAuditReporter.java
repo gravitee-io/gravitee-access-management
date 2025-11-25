@@ -88,7 +88,7 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
 
     @Override
     public boolean canHandle(Reportable reportable) {
-        return reportable instanceof Audit;
+        return reportable instanceof Audit audit && (config.getAuditTypes().isEmpty() || config.getAuditTypes().contains(audit.getType()));
     }
 
     @Override
