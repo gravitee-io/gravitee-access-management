@@ -382,4 +382,30 @@ public class CredentialServiceTest {
         verify(credentialRepository, times(1)).update(any(Credential.class));
     }
 
+    @Test
+    public void shouldDeleteByUserId() {
+        String userId = "user-id";
+        when(credentialRepository.deleteByUserId(ReferenceType.DOMAIN, DOMAIN, userId)).thenReturn(Completable.complete());
+
+        TestObserver testObserver = credentialService.deleteByUserId(domain, userId).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(credentialRepository, times(1)).deleteByUserId(ReferenceType.DOMAIN, DOMAIN, userId);
+    }
+
+    @Test
+    public void shouldDeleteByUserId_technicalException() {
+        String userId = "user-id";
+        when(credentialRepository.deleteByUserId(ReferenceType.DOMAIN, DOMAIN, userId)).thenReturn(Completable.error(TechnicalException::new));
+
+        TestObserver testObserver = credentialService.deleteByUserId(domain, userId).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+        verify(credentialRepository, times(1)).deleteByUserId(ReferenceType.DOMAIN, DOMAIN, userId);
+    }
+
 }

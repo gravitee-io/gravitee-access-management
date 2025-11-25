@@ -25,6 +25,13 @@ import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+<<<<<<< HEAD:gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/src/test/java/io/gravitee/am/gateway/handler/scim/service/UserServiceTest.java
+=======
+import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+>>>>>>> 4b5ae7d12 (fix: am-6085 delete WebAuthn credentials on user deletion):gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/src/test/java/io/gravitee/am/gateway/handler/scim/service/ProvisioningUserServiceTest.java
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
@@ -168,6 +175,9 @@ public class UserServiceTest {
 
     @Mock
     private TokenService tokenService;
+
+    @Mock
+    private CredentialGatewayService credentialService;
 
     @Before
     public void setUp() {
@@ -756,6 +766,7 @@ public class UserServiceTest {
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(userId)).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
+        when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
 
 
         var testObserver = userService.delete(userId, null).test();
@@ -785,6 +796,7 @@ public class UserServiceTest {
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
+        when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
 
         var testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();

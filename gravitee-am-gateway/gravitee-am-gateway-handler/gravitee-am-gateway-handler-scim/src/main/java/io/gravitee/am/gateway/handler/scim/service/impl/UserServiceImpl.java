@@ -24,6 +24,13 @@ import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+<<<<<<< HEAD:gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/src/main/java/io/gravitee/am/gateway/handler/scim/service/impl/UserServiceImpl.java
+=======
+import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+>>>>>>> 4b5ae7d12 (fix: am-6085 delete WebAuthn credentials on user deletion):gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/src/main/java/io/gravitee/am/gateway/handler/scim/service/impl/ProvisioningUserServiceImpl.java
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -153,7 +160,22 @@ public class UserServiceImpl implements UserService {
     private PasswordPolicyManager passwordPolicyManager;
 
     @Autowired
+<<<<<<< HEAD:gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/src/main/java/io/gravitee/am/gateway/handler/scim/service/impl/UserServiceImpl.java
     private TokenService tokenService;
+=======
+    private RevokeTokenGatewayService tokenService;
+
+    @Autowired
+    private CredentialGatewayService credentialService;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.userRepository = dataPlaneRegistry.getUserRepository(domain);
+    }
+
+    @Autowired
+    private EmailService emailService;
+>>>>>>> 4b5ae7d12 (fix: am-6085 delete WebAuthn credentials on user deletion):gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/src/main/java/io/gravitee/am/gateway/handler/scim/service/impl/ProvisioningUserServiceImpl.java
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int startIndex, int size, String baseUrl) {
@@ -478,6 +500,7 @@ public class UserServiceImpl implements UserService {
                         .andThen(rateLimiterService.deleteByUser(user))
                         .andThen(passwordHistoryService.deleteByUser(userId))
                         .andThen(verifyAttemptService.deleteByUser(user))
+                        .andThen(credentialService.deleteByUserId(domain, userId))
                         .andThen(userRepository.delete(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                                 .principal(principal)

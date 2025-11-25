@@ -532,7 +532,51 @@ public class UserServiceTest {
                 .assertComplete()
                 .assertNoErrors();
 
+<<<<<<< HEAD:gravitee-am-management-api/gravitee-am-management-api-service/src/test/java/io/gravitee/am/management/service/UserServiceTest.java
         verify(tokenService).deleteByUser(any());
+=======
+        verify(tokenService).deleteByUser(any(), any());
+    }
+
+    @Test
+    void should_delete_user() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setExternalId("ext-user-id");
+        user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(ReferenceType.DOMAIN);
+
+        when(userRepository.findById(any(Reference.class), any(UserId.class))).thenReturn(Maybe.just(user));
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.delete(any())).thenReturn(Completable.complete());
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userActivityManagementService.deleteByDomainAndUser(any(), any())).thenReturn(Completable.complete());
+        when(userRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
+        when(certificateCredentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+        when(credentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
+        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
+
+        userService.delete(domain, user.getId(), null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        // Verify that both certificate and WebAuthn credentials are deleted
+        verify(certificateCredentialService, times(1)).deleteByUserId(domain, user.getId());
+        verify(credentialService, times(1)).deleteByUserId(domain, user.getId());
+
+        verify(tokenService).deleteByUser(any(), any());
+        verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus() == Status.SUCCESS));
+        verify(eventService).create(argThat(arg -> arg.getType() == Type.USER && arg.getPayload().getId().equals(user.getId())));
+>>>>>>> 4b5ae7d12 (fix: am-6085 delete WebAuthn credentials on user deletion):gravitee-am-management-api/gravitee-am-management-api-service/src/test/java/io/gravitee/am/management/service/ManagementUserServiceTest.java
     }
 
     @Test

@@ -619,4 +619,181 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
         return null;
     }
 
+<<<<<<< HEAD:gravitee-am-management-api/gravitee-am-management-api-service/src/main/java/io/gravitee/am/management/service/impl/UserServiceImpl.java
+=======
+    @Override
+    public Single<User> updateUsername(Domain domain, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
+        final var repository = dataPlaneRegistry.getUserRepository(domain);
+        return new UpdateUsernameDomainRule(userValidator,
+                repository::update,
+                repository::findByUsernameAndSource,
+                auditService,
+                credentialService,
+                loginAttemptService::reset)
+                .updateUsername(domain, username, principal,
+                        (User user) -> identityProviderManager.getUserProvider(user.getSource())
+                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
+                        () -> repository.findById(domain.asReference(), UserId.internal(id)).switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(id)))));
+    }
+
+    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
+    @Override
+    public Single<User> delete(Domain domain, String userId, io.gravitee.am.identityprovider.api.User principal) {
+        final var repository = dataPlaneRegistry.getUserRepository(domain);
+        final var eventPayload = new Payload(userId, Reference.domain(domain.getId()), Action.DELETE);
+        final var deleteUseEvent = new Event(Type.USER, eventPayload);
+        return repository.findById(domain.asReference(), UserId.internal(userId))
+                .switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(userId))))
+                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
+                        .map(Optional::ofNullable)
+                        .flatMapCompletable(optUserProvider -> {
+                            // no user provider found, continue
+                            if (optUserProvider.isEmpty()) {
+                                return Completable.complete();
+                            }
+                            // user has never been created in the identity provider, continue
+                            if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
+                                return Completable.complete();
+                            }
+                            return optUserProvider.get().delete(user.getExternalId())
+                                    .onErrorResumeNext(ex -> {
+                                        if (ex instanceof UserNotFoundException) {
+                                            // idp user does not exist, continue
+                                            return Completable.complete();
+                                        }
+                                        return Completable.error(ex);
+                                    });
+                        })
+                        // Delete trace of user activity
+                        .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
+                        .andThen(passwordHistoryService.deleteByUser(domain, userId))
+                        // Delete certificate credentials for the user
+                        .andThen(certificateCredentialService.deleteByUserId(domain, userId))
+                        // Delete WebAuthn credentials for the user
+                        .andThen(credentialService.deleteByUserId(domain, userId))
+                        .andThen(repository.delete(userId))
+                        .andThen(eventService.create(deleteUseEvent).ignoreElement())
+                        .toSingleDefault(user))
+                .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(domain.asReference()).throwable(throwable)))
+                .flatMap(user -> tokenService.deleteByUser(domain, user).toSingleDefault(user));
+    }
+
+
+    protected io.gravitee.am.identityprovider.api.User convert(AbstractNewUser newUser) {
+        DefaultUser user = new DefaultUser(newUser.getUsername());
+        user.setCredentials(newUser.getPassword());
+
+        Map<String, Object> additionalInformation = new HashMap<>();
+        if (newUser.getFirstName() != null) {
+            user.setFirstName(newUser.getFirstName());
+            additionalInformation.put(StandardClaims.GIVEN_NAME, newUser.getFirstName());
+        }
+        if (newUser.getLastName() != null) {
+            user.setLastName(newUser.getLastName());
+            additionalInformation.put(StandardClaims.FAMILY_NAME, newUser.getLastName());
+        }
+        if (newUser.getEmail() != null) {
+            user.setEmail(newUser.getEmail());
+            additionalInformation.put(StandardClaims.EMAIL, newUser.getEmail());
+        }
+        if (newUser.getAdditionalInformation() != null) {
+            newUser.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
+        }
+        user.setAdditionalInformation(additionalInformation);
+
+        return user;
+    }
+
+    protected User transform(AbstractNewUser newUser, ReferenceType referenceType, String referenceId) {
+        User user = new User();
+        user.setId(RandomString.generate());
+        user.setExternalId(newUser.getExternalId());
+        user.setReferenceId(referenceId);
+        user.setReferenceType(referenceType);
+        user.setClient(newUser.getClient());
+        user.setEnabled(newUser.isEnabled());
+        user.setUsername(newUser.getUsername());
+        user.setFirstName(newUser.getFirstName());
+        user.setLastName(newUser.getLastName());
+        user.setEmail(newUser.getEmail());
+        user.setSource(newUser.getSource());
+        user.setInternal(newUser.isInternal());
+        user.setPreRegistration(newUser.isPreRegistration());
+        user.setRegistrationCompleted(newUser.isRegistrationCompleted());
+        user.setPreferredLanguage(newUser.getPreferredLanguage());
+        user.setAdditionalInformation(newUser.getAdditionalInformation());
+        user.setForceResetPassword(newUser.getForceResetPassword());
+        user.setCreatedAt(new Date());
+        user.setUpdatedAt(user.getCreatedAt());
+        if (newUser.getLastPasswordReset() != null) {
+            if (newUser.getLastPasswordReset().toInstant().isAfter(Instant.now())) {
+                throw new UserInvalidException("lastPasswordReset cannot be in the future");
+            }
+            user.setLastPasswordReset(newUser.getLastPasswordReset());
+        } else if(!newUser.isPreRegistration()){
+            user.setLastPasswordReset(user.getCreatedAt());
+        }
+        user.setServiceAccount(false);
+        return user;
+    }
+
+    protected void updateInfos(User user, AbstractNewUser newUser) {
+        user.setFirstName(newUser.getFirstName());
+        user.setLastName(newUser.getLastName());
+        user.setEmail(newUser.getEmail());
+        user.setAdditionalInformation(newUser.getAdditionalInformation());
+    }
+
+    protected io.gravitee.am.identityprovider.api.User convert(String username, UpdateUser updateUser) {
+        // update additional information
+        DefaultUser user = new DefaultUser(username);
+        Map<String, Object> additionalInformation = new HashMap<>();
+        if (updateUser.getFirstName() != null) {
+            user.setFirstName(updateUser.getFirstName());
+            additionalInformation.put(StandardClaims.GIVEN_NAME, updateUser.getFirstName());
+        }
+        if (updateUser.getLastName() != null) {
+            user.setLastName(updateUser.getLastName());
+            additionalInformation.put(StandardClaims.FAMILY_NAME, updateUser.getLastName());
+        }
+        if (updateUser.getEmail() != null) {
+            user.setEmail(updateUser.getEmail());
+            additionalInformation.put(StandardClaims.EMAIL, updateUser.getEmail());
+        }
+        if (updateUser.getAdditionalInformation() != null) {
+            updateUser.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
+        }
+        user.setAdditionalInformation(additionalInformation);
+        if (updateUser.getForceResetPassword() != null) {
+            user.setForceResetPassword(updateUser.getForceResetPassword());
+        }
+        return user;
+    }
+
+    protected io.gravitee.am.identityprovider.api.User convert(User user) {
+        DefaultUser idpUser = new DefaultUser(user.getUsername());
+        idpUser.setCredentials(user.getPassword());
+
+        Map<String, Object> additionalInformation = new HashMap<>();
+        if (user.getFirstName() != null) {
+            idpUser.setFirstName(user.getFirstName());
+            additionalInformation.put(StandardClaims.GIVEN_NAME, user.getFirstName());
+        }
+        if (user.getLastName() != null) {
+            idpUser.setLastName(user.getLastName());
+            additionalInformation.put(StandardClaims.FAMILY_NAME, user.getLastName());
+        }
+        if (user.getEmail() != null) {
+            idpUser.setEmail(user.getEmail());
+            additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
+        }
+        if (user.getAdditionalInformation() != null) {
+            user.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
+        }
+        idpUser.setAdditionalInformation(additionalInformation);
+        idpUser.setForceResetPassword(Boolean.FALSE);
+        return idpUser;
+    }
+>>>>>>> 4b5ae7d12 (fix: am-6085 delete WebAuthn credentials on user deletion):gravitee-am-management-api/gravitee-am-management-api-service/src/main/java/io/gravitee/am/management/service/impl/ManagementUserServiceImpl.java
 }
