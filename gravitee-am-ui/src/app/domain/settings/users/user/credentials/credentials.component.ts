@@ -45,7 +45,6 @@ export interface CertificateCredential {
   certificateThumbprint?: string;
   certificatePem?: string;
   certificateExpiresAt?: string;
-  deviceName?: string;
   createdAt?: string;
   [key: string]: any;
 }
@@ -240,7 +239,7 @@ export class UserCredentialsComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(
         filter((result) => !!result),
-        mergeMap((result) => this.userService.enrollCertificate(this.domainId, this.user.id, result.certificatePem, result.deviceName)),
+        mergeMap((result) => this.userService.enrollCertificate(this.domainId, this.user.id, result.certificatePem)),
         tap(() => {
           this.snackbarService.open('Certificate enrolled successfully');
           this.loadCredentials();

@@ -33,8 +33,5 @@ public class NewCertificateCredential {
     @NotBlank
     @Schema(description = "The certificate in PEM format", required = true, example = "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----")
     private String certificatePem;
-
-    @Schema(description = "Optional device name for the certificate", example = "My Laptop")
-    private String deviceName;
 }
 

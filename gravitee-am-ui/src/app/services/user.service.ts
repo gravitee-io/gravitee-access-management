@@ -163,10 +163,9 @@ export class UserService {
     return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/cert-credentials');
   }
 
-  enrollCertificate(domainId, userId, certificatePem, deviceName?): Observable<any> {
+  enrollCertificate(domainId, userId, certificatePem): Observable<any> {
     return this.http.post<any>(this.usersURL + domainId + '/users/' + userId + '/cert-credentials', {
       certificatePem,
-      deviceName,
     });
   }
 

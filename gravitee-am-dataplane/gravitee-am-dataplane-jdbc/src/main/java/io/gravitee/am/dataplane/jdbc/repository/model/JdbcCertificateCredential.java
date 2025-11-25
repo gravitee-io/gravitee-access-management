@@ -43,8 +43,6 @@ public class JdbcCertificateCredential {
     private String ipAddress;
     @Column("user_agent")
     private String userAgent;
-    @Column("device_name")
-    private String deviceName;
 
     // Certificate-specific fields
     @Column("certificate_pem")

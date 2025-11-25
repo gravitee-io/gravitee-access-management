@@ -55,7 +55,6 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
     // Test constants
     private static final String DOMAIN_ID = "domain-1";
     private static final String USER_ID = "user-1";
-    private static final String DEVICE_NAME = "My Laptop";
     private static final String VALID_PEM_CERT = CertificateTestUtils.generateValidCertificatePEM();
     
     @BeforeEach
@@ -105,11 +104,11 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
                 DOMAIN_ID, USER_ID);
         mockCredential.setId("credential-id");
 
-        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT, DEVICE_NAME);
+        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.just(mockCredential)).when(certificateCredentialService).enrollCertificate(
-                any(Domain.class), eq(USER_ID), eq(VALID_PEM_CERT), eq(DEVICE_NAME), any());
+                any(Domain.class), eq(USER_ID), eq(VALID_PEM_CERT), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
@@ -118,12 +117,12 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
         assertNotNull(response.getLocation());
         // Verify service was called with principal parameter (audit logging is tested in service layer tests)
         verify(certificateCredentialService, times(1)).enrollCertificate(
-                any(Domain.class), eq(USER_ID), eq(VALID_PEM_CERT), eq(DEVICE_NAME), any());
+                any(Domain.class), eq(USER_ID), eq(VALID_PEM_CERT), any());
     }
 
     @Test
     void shouldEnrollCertificateCredential_domainNotFound() {
-        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT, null);
+        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT);
 
         doReturn(Maybe.empty()).when(domainService).findById(DOMAIN_ID);
 
@@ -132,58 +131,58 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
         // Verify service was not called (domain not found before service call)
-        verify(certificateCredentialService, never()).enrollCertificate(any(), any(), any(), any(), any());
+        verify(certificateCredentialService, never()).enrollCertificate(any(), any(), any(), any());
     }
 
     @Test
     void shouldEnrollCertificateCredential_expiredCertificate() {
         final Domain mockDomain = DomainTestFixtures.createDomain(DOMAIN_ID);
-        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT, null);
+        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new CertificateExpiredException("Certificate has expired")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
         // Verify service was called (audit logging is tested in service layer tests)
-        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any());
     }
 
     @Test
     void shouldEnrollCertificateCredential_duplicateCertificate() {
         final Domain mockDomain = DomainTestFixtures.createDomain(DOMAIN_ID);
-        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT, null);
+        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new DuplicateCertificateException("Certificate with this thumbprint already exists")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.CONFLICT_409, response.getStatus());
         // Verify service was called (audit logging is tested in service layer tests)
-        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any());
     }
 
     @Test
     void shouldEnrollCertificateCredential_limitExceeded() {
         final Domain mockDomain = DomainTestFixtures.createDomain(DOMAIN_ID);
-        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT, null);
+        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new CertificateLimitExceededException("Maximum number of certificates exceeded")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
         // Verify service was called (audit logging is tested in service layer tests)
-        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any());
     }
 
     @Test
@@ -195,24 +194,24 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
         // Verify service was not called (validation failed before service call)
-        verify(certificateCredentialService, never()).enrollCertificate(any(), any(), any(), any(), any());
+        verify(certificateCredentialService, never()).enrollCertificate(any(), any(), any(), any());
     }
 
     @Test
     void shouldEnrollCertificateCredential_technicalManagementException() {
         final Domain mockDomain = DomainTestFixtures.createDomain(DOMAIN_ID);
-        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT, null);
+        final NewCertificateCredential newCredential = createNewCertificateCredential(VALID_PEM_CERT);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new TechnicalManagementException("Technical error occurred")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
         // Verify service was called (audit logging is tested in service layer tests)
-        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any());
     }
 
     // Helper methods
@@ -227,10 +226,9 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
     /**
      * Create a NewCertificateCredential for testing.
      */
-    private NewCertificateCredential createNewCertificateCredential(String certificatePem, String deviceName) {
+    private NewCertificateCredential createNewCertificateCredential(String certificatePem) {
         final NewCertificateCredential credential = new NewCertificateCredential();
         credential.setCertificatePem(certificatePem);
-        credential.setDeviceName(deviceName);
         return credential;
     }
 }

@@ -21,7 +21,6 @@ import { debounceTime } from 'rxjs/operators';
 
 interface EnrollmentForm {
   certificatePem: FormControl<string>;
-  deviceName: FormControl<string | null>;
 }
 
 @Component({
@@ -44,7 +43,6 @@ export class CertificateEnrollmentDialogComponent implements OnInit, OnDestroy {
   ) {
     this.enrollmentForm = new FormGroup({
       certificatePem: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-      deviceName: new FormControl(null),
     });
   }
 

@@ -34,11 +34,10 @@ public interface CertificateCredentialService {
      * @param domain the domain
      * @param userId the user ID
      * @param certificatePem the PEM-encoded certificate
-     * @param deviceName optional device name
      * @param principal the authenticated user performing the action
      * @return the enrolled certificate credential
      */
-    Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, String deviceName, User principal);
+    Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, User principal);
 
     /**
      * Find all certificate credentials for a user.

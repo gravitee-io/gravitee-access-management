@@ -51,7 +51,6 @@ public final class CertificateCredentialTestFixtures {
         credential.setCertificateSubjectDN("CN=Test Certificate " + randomStr);
         credential.setCertificateSerialNumber("serial-" + randomStr);
         credential.setCertificateExpiresAt(new Date(System.currentTimeMillis() + 86400000)); // Tomorrow
-        credential.setDeviceName("Test Device");
         return credential;
     }
 }
