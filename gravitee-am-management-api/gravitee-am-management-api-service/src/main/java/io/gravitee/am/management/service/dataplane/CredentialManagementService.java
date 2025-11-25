@@ -38,4 +38,13 @@ public interface CredentialManagementService extends CredentialCommonService {
 
     Completable delete(Domain domain, String id);
 
+    /**
+     * Delete all WebAuthn credentials for a user.
+     *
+     * @param domain the domain
+     * @param userId the user ID
+     * @return completable
+     */
+    Completable deleteByUserId(Domain domain, String userId);
+
 }
