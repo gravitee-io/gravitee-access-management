@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.Client;
@@ -96,7 +97,7 @@ public class AuthenticationRequestServiceTest {
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain, "unknown").test();
         observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertError(AuthenticationRequestNotFoundException.class);
+        observer.assertError(InvalidGrantException.class);
     }
 
     @Test
