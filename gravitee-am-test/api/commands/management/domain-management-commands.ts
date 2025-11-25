@@ -16,6 +16,7 @@
 
 import { getDomainApi, getDomainManagerUrl } from './service/utils';
 import { Domain } from '../../management/models';
+import { DomainPage } from '../../management/models/DomainPage';
 import { retryUntil } from '@utils-commands/retry';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -32,6 +33,11 @@ export type DomainOidcConfig = {
   [key: string]: any;
 };
 export type DomainWithOidcConfig = { domain: Domain; oidcConfig?: DomainOidcConfig };
+export type DomainListOptions = {
+  page?: number;
+  size?: number;
+  q?: string;
+};
 
 export const setupDomainForTest = async (
   domainName: string,
@@ -120,6 +126,15 @@ export const getDomain = (domainId, accessToken): Promise<Domain> =>
     environmentId: process.env.AM_DEF_ENV_ID,
     // domain in path param
     domain: domainId,
+  });
+
+export const listDomains = (accessToken: string, options?: DomainListOptions): Promise<DomainPage> =>
+  getDomainApi(accessToken).listDomains({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    page: options?.page,
+    size: options?.size,
+    q: options?.q,
   });
 
 export const createAcceptAllDeviceNotifier = (domainId, accessToken) =>

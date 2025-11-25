@@ -34,6 +34,7 @@ import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
 import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
 import { BotDetectionApi } from '@management-apis/BotDetectionApi';
 import { ProtectedResourceApi } from '@management-apis/ProtectedResourceApi';
+import { DefaultApi } from '@management-apis/DefaultApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, accessToken: accessToken });
@@ -122,6 +123,10 @@ export function getExtensionApi(accessToken) {
 
 export function getBotDetectionApi(accessToken) {
   return new BotDetectionApi(createAccessTokenConfig(accessToken));
+}
+
+export function getDefaultApi(accessToken) {
+  return new DefaultApi(createAccessTokenConfig(accessToken));
 }
 
 export function createRandomString(length: number) {
