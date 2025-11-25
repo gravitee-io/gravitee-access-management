@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFou
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.utils.MapUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -107,13 +108,8 @@ public class CibaTokenGranter extends AbstractTokenGranter {
 
                             // Extract and store acrValues from the CIBA request for ID token generation
                             if (cibaRequest.getExternalInformation() != null) {
-                                if (cibaRequest.getExternalInformation().containsKey(CIBA_ACR_VALUES)) {
-                                    @SuppressWarnings("unchecked")
-                                    java.util.List<String> acrValues = (java.util.List<String>) cibaRequest.getExternalInformation().get(CIBA_ACR_VALUES);
-                                    if (acrValues != null && !acrValues.isEmpty()) {
-                                        tokenRequest1.getContext().put(AUTH_FLOW_CONTEXT_ACR_KEY, acrValues);
-                                    }
-                                }
+                                MapUtils.extractStringList(cibaRequest.getExternalInformation(), CIBA_ACR_VALUES)
+                                        .ifPresent(acrValues -> tokenRequest1.getContext().put(AUTH_FLOW_CONTEXT_ACR_KEY, acrValues));
                             }
                             return tokenRequest1;
                         }));
