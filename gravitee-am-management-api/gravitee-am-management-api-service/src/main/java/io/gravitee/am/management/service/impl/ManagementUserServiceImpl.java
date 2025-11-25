@@ -778,6 +778,8 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         // Delete trace of user activity
                         .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
                         .andThen(passwordHistoryService.deleteByUser(domain, userId))
+                        // Delete WebAuthn credentials for the user
+                        .andThen(credentialService.deleteByUserId(domain, userId))
                         .andThen(repository.delete(userId))
                         .andThen(eventService.create(deleteUseEvent).ignoreElement())
                         .toSingleDefault(user))
