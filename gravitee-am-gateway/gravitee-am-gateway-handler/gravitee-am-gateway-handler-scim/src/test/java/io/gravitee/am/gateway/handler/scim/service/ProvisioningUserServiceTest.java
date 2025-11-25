@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
@@ -173,6 +174,9 @@ public class ProvisioningUserServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private CredentialGatewayService credentialService;
 
     @Before
     public void setUp() {
@@ -761,6 +765,7 @@ public class ProvisioningUserServiceTest {
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(any(), eq(userId))).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
+        when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
 
 
         var testObserver = userService.delete(userId, null).test();
@@ -790,6 +795,7 @@ public class ProvisioningUserServiceTest {
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(any(), any())).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
+        when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
 
         var testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();

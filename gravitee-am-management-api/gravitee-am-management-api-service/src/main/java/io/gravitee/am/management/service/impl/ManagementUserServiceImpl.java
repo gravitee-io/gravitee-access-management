@@ -784,6 +784,8 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         .andThen(passwordHistoryService.deleteByUser(domain, userId))
                         // Delete certificate credentials for the user
                         .andThen(certificateCredentialService.deleteByUserId(domain, userId))
+                        // Delete WebAuthn credentials for the user
+                        .andThen(credentialService.deleteByUserId(domain, userId))
                         .andThen(repository.delete(userId))
                         .andThen(eventService.create(deleteUseEvent).ignoreElement())
                         .toSingleDefault(user))

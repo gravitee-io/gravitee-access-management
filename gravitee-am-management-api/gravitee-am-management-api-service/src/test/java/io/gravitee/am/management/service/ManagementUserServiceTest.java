@@ -576,6 +576,7 @@ public class ManagementUserServiceTest {
         when(userRepository.delete(anyString())).thenReturn(Completable.complete());
         when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+        when(credentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
 
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
         when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
@@ -584,6 +585,10 @@ public class ManagementUserServiceTest {
                 .test()
                 .assertComplete()
                 .assertNoErrors();
+
+        // Verify that both certificate and WebAuthn credentials are deleted
+        verify(certificateCredentialService, times(1)).deleteByUserId(domain, user.getId());
+        verify(credentialService, times(1)).deleteByUserId(domain, user.getId());
 
         verify(tokenService).deleteByUser(any(), any());
         verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus() == Status.SUCCESS));
