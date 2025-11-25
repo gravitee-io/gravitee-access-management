@@ -85,6 +85,8 @@ public interface ConstantKeys {
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";
     String AUTH_FLOW_CONTEXT_VERSION_KEY = "authFlowVer";
     String AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY = "authFlow";
+    String AUTH_FLOW_CONTEXT_ACR_KEY = "ciba_acr_values";
+    String CIBA_ACR_VALUES = "acrValues";
 
     // MFA keys.
     String MFA_STOP = "mfaStop";

@@ -33,7 +33,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +105,16 @@ public class CibaTokenGranter extends AbstractTokenGranter {
                             // {#context.attributes['authFlow']['entry']}
                             tokenRequest1.getContext().put(AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, emptyMap());
 
+                            // Extract and store acrValues from the CIBA request for ID token generation
+                            if (cibaRequest.getExternalInformation() != null) {
+                                if (cibaRequest.getExternalInformation().containsKey(CIBA_ACR_VALUES)) {
+                                    @SuppressWarnings("unchecked")
+                                    java.util.List<String> acrValues = (java.util.List<String>) cibaRequest.getExternalInformation().get(CIBA_ACR_VALUES);
+                                    if (acrValues != null && !acrValues.isEmpty()) {
+                                        tokenRequest1.getContext().put(AUTH_FLOW_CONTEXT_ACR_KEY, acrValues);
+                                    }
+                                }
+                            }
                             return tokenRequest1;
                         }));
     }
