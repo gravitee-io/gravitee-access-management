@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
@@ -160,6 +161,9 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Autowired
     private RevokeTokenGatewayService tokenService;
+
+    @Autowired
+    private CredentialGatewayService credentialService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -496,6 +500,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         .andThen(rateLimiterService.deleteByUser(user))
                         .andThen(passwordHistoryService.deleteByUser(domain, userId))
                         .andThen(verifyAttemptService.deleteByUser(user))
+                        .andThen(credentialService.deleteByUserId(domain, userId))
                         .andThen(userRepository.delete(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                                 .principal(principal)

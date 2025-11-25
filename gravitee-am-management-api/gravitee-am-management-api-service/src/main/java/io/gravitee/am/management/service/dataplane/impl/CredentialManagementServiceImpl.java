@@ -183,6 +183,23 @@ public class CredentialManagementServiceImpl implements CredentialManagementServ
     }
 
     @Override
+    public Completable deleteByUserId(Domain domain, String userId) {
+        log.debug("Delete all credentials for domain {} and user {}", domain.getId(), userId);
+        return dataPlaneRegistry.getCredentialRepository(domain)
+                .deleteByUserId(DOMAIN, domain.getId(), userId)
+                .doOnComplete(() -> log.debug("All credentials deleted successfully for domain {} and user {}",
+                        domain.getId(), userId))
+                .onErrorResumeNext(error -> {
+                    if (error instanceof AbstractManagementException) {
+                        return Completable.error(error);
+                    }
+                    log.error("Failed to delete credentials for user {} in domain {}", userId, domain.getId(), error);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("Failed to delete credentials for user %s in domain %s", userId, domain.getId()), error));
+                });
+    }
+
+    @Override
     public Completable deleteByDomain(Domain domain) {
         log.debug("Delete credentials by reference {}", domain.getId());
         return dataPlaneRegistry.getCredentialRepository(domain)
