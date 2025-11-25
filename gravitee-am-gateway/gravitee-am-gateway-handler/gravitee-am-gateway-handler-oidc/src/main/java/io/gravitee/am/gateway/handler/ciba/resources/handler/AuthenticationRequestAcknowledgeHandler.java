@@ -38,7 +38,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -117,7 +119,19 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
                                         return authRequestService.notify(adRequest)
                                                 .flatMap(adResponse -> {
-                                                    req.setExternalInformation(adResponse.getExtraData());
+                                                    // Preserve existing externalInformation (including acrValues) and merge with new extraData
+                                                    Map<String, Object> existingExternalInfo = req.getExternalInformation();
+                                                    Map<String, Object> newExtraData = adResponse.getExtraData() != null ? adResponse.getExtraData() : new HashMap<>();
+
+                                                    if (existingExternalInfo == null) {
+                                                        existingExternalInfo = new java.util.HashMap<>();
+                                                    }
+
+                                                    // Create a new map with existing data, then add/update with new extraData
+                                                    Map<String, Object> mergedExternalInfo = new HashMap<>(existingExternalInfo);
+                                                    mergedExternalInfo.putAll(newExtraData);
+
+                                                    req.setExternalInformation(mergedExternalInfo);
                                                     req.setExternalTrxId(adResponse.getTransactionId());
                                                     return authRequestService.updateAuthDeviceInformation(req);
                                                 });
