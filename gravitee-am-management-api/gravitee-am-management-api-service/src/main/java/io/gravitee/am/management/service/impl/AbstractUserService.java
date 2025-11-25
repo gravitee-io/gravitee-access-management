@@ -222,12 +222,13 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         // Delete rate limit
                         .andThen(rateLimiterService.deleteByUser(user))
                         .andThen(verifyAttemptService.deleteByUser(user))
+                        .andThen(passwordHistoryService.deleteByUser(userId))
+                        .andThen(credentialService.deleteByUserId(referenceType, referenceId, userId))
                         .andThen(getUserService().delete(userId).ignoreElement())
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
                                 membershipService.findByMember(userId, MemberType.USER)
                                         .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
-                        .andThen(passwordHistoryService.deleteByUser(userId))
                         .toSingleDefault(user))
                 .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
