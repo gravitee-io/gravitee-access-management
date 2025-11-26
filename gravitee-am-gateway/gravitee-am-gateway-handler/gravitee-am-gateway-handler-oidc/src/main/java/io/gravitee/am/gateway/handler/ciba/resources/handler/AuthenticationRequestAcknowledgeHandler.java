@@ -188,7 +188,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
         var now = Instant.now().getEpochSecond();
         var diff = exp - now;
-        return diff <= maxRequestLifetimeSecs;va
+        return diff <= maxRequestLifetimeSecs;
     }
 
     private static boolean hasValidNbf(Integer nbf, Integer maxRequestLifetimeSecs) {
