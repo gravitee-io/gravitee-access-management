@@ -28,6 +28,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.utils.MapUtils;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -58,8 +59,10 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.gravitee.am.common.oidc.Scope.FULL_PROFILE;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
+import static io.gravitee.am.common.oidc.idtoken.Claims.ACR;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -114,7 +117,12 @@ public class IDTokenServiceImpl implements IDTokenService {
                                 // set hash claims (hybrid flow)
                                 if (oAuth2Request.getContext() != null && !oAuth2Request.getContext().isEmpty()) {
                                     oAuth2Request.getContext().forEach((claimName, claimValue) -> {
-                                        if (claimValue != null) {
+                                        // Skip ciba_acr_values as it's a List, not a String, and is processed separately for acr claim
+                                        if (AUTH_FLOW_CONTEXT_ACR_KEY.equals(claimName)) {
+                                            return;
+                                        }
+                                        // Only process String values for hash claims (hybrid flow)
+                                        if (claimValue != null && claimValue instanceof String) {
                                             CertificateMetadata certificateMetadata = certificateProvider.getProvider().certificateMetadata();
                                             String digestAlgorithm;
                                             if (certificateMetadata != null
@@ -195,6 +203,18 @@ public class IDTokenServiceImpl implements IDTokenService {
         String nonce = oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(Parameters.NONCE) : null;
         if (nonce != null && !nonce.isEmpty()) {
             idToken.setNonce(nonce);
+        }
+
+        // set acr claim from CIBA request acrValues (if present)
+        // For CIBA flow, acrValues are stored in the token request context during token grant
+        if (oAuth2Request.getContext() != null) {
+            MapUtils.extractStringList(oAuth2Request.getContext(), AUTH_FLOW_CONTEXT_ACR_KEY)
+                    .filter(acrValues -> !acrValues.isEmpty())
+                    .ifPresent(acrValues -> {
+                        // For FAPI-CIBA, use the highest-level requested value (typically the last one in the list)
+                        // or the one that was met. For simplicity, we'll use the last value in the list.
+                        idToken.addAdditionalClaim(ACR, acrValues.getLast());
+                    });
         }
 
         // processing claims list

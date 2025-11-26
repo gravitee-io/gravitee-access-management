@@ -35,10 +35,13 @@ import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -55,6 +58,9 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
     private Domain domain;
 
     private JWTService jwtService;
+
+    @Value("${openid.ciba.auth-request.maxRequestLifetime:3600}")
+    private int maxRequestLifetime = 3600;
 
     public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain, JWTService jwtService) {
         this.authRequestService = authRequestService;
@@ -85,7 +91,17 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                 authRequest.setId(authReqId);
             }
 
-            LOGGER.debug("CIBA Authentication Request linked to auth_req_id '{}'", authRequest);
+            LOGGER.debug("CIBA Authentication Request linked to auth_req_id '{}'", authRequest.getId());
+
+            if (!hasValidExp(authRequest.getExpiry(), maxRequestLifetime)) {
+                context.fail(new InvalidRequestException("The 'exp' claim in the Request Object exceeds the maximum allowed lifetime of 3600 seconds."));
+                return;
+            }
+
+            if (!hasValidNbf(authRequest.getNbf(), maxRequestLifetime)) {
+                context.fail(new InvalidRequestException("The 'nbf' claim in the Request Object is missing or is more than 3600 seconds in the past."));
+                return;
+            }
 
             final int expiresIn = authRequest.getRequestedExpiry() != null ? authRequest.getRequestedExpiry() : domain.getOidc().getCibaSettings().getAuthReqExpiry();
             final String externalTrxId = SecureRandomString.generate();
@@ -117,16 +133,28 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
                                         return authRequestService.notify(adRequest)
                                                 .flatMap(adResponse -> {
-                                                    req.setExternalInformation(adResponse.getExtraData());
+                                                    // Preserve existing externalInformation (including acrValues) and merge with new extraData
+                                                    Map<String, Object> existingExternalInfo = req.getExternalInformation();
+                                                    Map<String, Object> newExtraData = adResponse.getExtraData() != null ? adResponse.getExtraData() : new HashMap<>();
+
+                                                    if (existingExternalInfo == null) {
+                                                        existingExternalInfo = new java.util.HashMap<>();
+                                                    }
+
+                                                    // Create a new map with existing data, then add/update with new extraData
+                                                    Map<String, Object> mergedExternalInfo = new HashMap<>(existingExternalInfo);
+                                                    mergedExternalInfo.putAll(newExtraData);
+
+                                                    req.setExternalInformation(mergedExternalInfo);
                                                     req.setExternalTrxId(adResponse.getTransactionId());
                                                     return authRequestService.updateAuthDeviceInformation(req);
                                                 });
                                     })
                     ).subscribe(req -> {
-
                         CibaAuthenticationResponse response = new CibaAuthenticationResponse();
                         response.setAuthReqId(req.getId());
-                        response.setExpiresIn(req.getExpireAt().toInstant().minusMillis(req.getCreatedAt().getTime()).getEpochSecond());
+                        // Update the response to honor the requested expiry
+                        response.setExpiresIn(expiresIn);
 
                         // specify rate limit for Poll and Ping mode
                         if (client.getBackchannelTokenDeliveryMode()!= null && !client.getBackchannelTokenDeliveryMode().equals(CIBADeliveryMode.PUSH)) {
@@ -151,5 +179,25 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
             LOGGER.error("CIBA Authentication Request object is null");
             context.fail(new InvalidRequestException("Missing authentication request"));
         }
+    }
+
+    private static boolean hasValidExp(Integer exp, Integer maxRequestLifetimeSecs) {
+        if (exp == null) {
+            return false;
+        }
+
+        var now = Instant.now().getEpochSecond();
+        var diff = exp - now;
+        return diff <= maxRequestLifetimeSecs;
+    }
+
+    private static boolean hasValidNbf(Integer nbf, Integer maxRequestLifetimeSecs) {
+        if (nbf == null) {
+            return false;
+        }
+        
+        var now = Instant.now().getEpochSecond();
+        var nbfAge = now - nbf;
+        return nbfAge <= maxRequestLifetimeSecs;
     }
 }

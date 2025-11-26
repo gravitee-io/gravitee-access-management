@@ -33,6 +33,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
@@ -51,6 +52,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 
+import static io.gravitee.am.common.oidc.Parameters.ACR_VALUES;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
 
 /**
@@ -104,6 +106,13 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         // as the application has to be informed of an expired request, we add retention time to the ttl
         // to avoid removing the request information from the database when ttl has expired
         entity.setExpireAt(new Date(now.plusSeconds(ttl + requestRetentionInSec).toEpochMilli()));
+        // Store acrValues in externalInformation for later retrieval when generating ID token
+        if (request.getAcrValues() != null && !request.getAcrValues().isEmpty()) {
+            if (entity.getExternalInformation() == null) {
+                entity.setExternalInformation(new java.util.HashMap<>());
+            }
+            entity.getExternalInformation().put(ACR_VALUES, request.getAcrValues());
+        }
 
         LOGGER.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds", entity.getId(), ttl);
 
@@ -114,7 +123,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId) {
         LOGGER.debug("Search for authentication request with id '{}'", authReqId);
         return this.authRequestRepository.findById(authReqId)
-                .switchIfEmpty(Single.error(() -> new AuthenticationRequestNotFoundException(authReqId)))
+                .switchIfEmpty(Single.error(() -> new InvalidGrantException(authReqId)))
                 .flatMap(request -> {
                     if ((request.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
                         return Single.error(new AuthenticationRequestExpiredException());
