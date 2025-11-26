@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.ciba;
 import io.gravitee.am.common.ciba.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
@@ -83,6 +82,7 @@ public class CibaTokenGranter extends AbstractTokenGranter {
         MultiValueMap<String, String> parameters = tokenRequest.parameters();
         final String authReqId = parameters.getFirst(Parameters.AUTH_REQ_ID);
 
+        logger.info("Parsing CIBA token request for client [{}]", client.getId());
         if (isEmpty(authReqId)) {
             return Single.error(new InvalidRequestException("Missing parameter: auth_req_id"));
         }
@@ -90,9 +90,11 @@ public class CibaTokenGranter extends AbstractTokenGranter {
         return super.parseRequest(tokenRequest, client)
                 .flatMap(tokenRequest1 -> authenticationRequestService.retrieve(domain, authReqId)
                         .map(cibaRequest -> {
+                            logger.info("Found CIBA authentication request [{}]", authReqId);
+                            logger.info("Checking client_id matches {} - {}", cibaRequest.getClientId(), client.getClientId());
                             if (!cibaRequest.getClientId().equals(client.getClientId())) {
-                                logger.warn("client_id '{}' requests token using not owned authentication request '{}'", client.getId(), authReqId);
-                                throw new AuthenticationRequestNotFoundException("Authentication request not found");
+                                logger.warn("client_id '{}' requests token using not owned authentication request '{}'", client.getClientId(), authReqId);
+                                throw new InvalidGrantException("Authentication request not found");
                             }
                             return cibaRequest;
                         })
