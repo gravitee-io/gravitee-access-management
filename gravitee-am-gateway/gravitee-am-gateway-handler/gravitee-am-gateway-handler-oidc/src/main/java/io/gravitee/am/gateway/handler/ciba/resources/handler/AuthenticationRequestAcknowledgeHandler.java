@@ -35,6 +35,7 @@ import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
@@ -57,6 +58,9 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
     private Domain domain;
 
     private JWTService jwtService;
+
+    @Value("${openid.ciba.auth-request.maxExpiry:3600}")
+    private int maxExpiry = 3600;
 
     public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain, JWTService jwtService) {
         this.authRequestService = authRequestService;
@@ -87,7 +91,12 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                 authRequest.setId(authReqId);
             }
 
-            LOGGER.debug("CIBA Authentication Request linked to auth_req_id '{}'", authRequest);
+            LOGGER.debug("CIBA Authentication Request linked to auth_req_id '{}'", authRequest.getId());
+
+            if (!hasValidExp(authRequest.getExpiry(), maxExpiry)) {
+                context.fail(new InvalidRequestException("The 'exp' claim in the Request Object exceeds the maximum allowed lifetime of 3600 seconds."));
+                return;
+            }
 
             final int expiresIn = authRequest.getRequestedExpiry() != null ? authRequest.getRequestedExpiry() : domain.getOidc().getCibaSettings().getAuthReqExpiry();
             final String externalTrxId = SecureRandomString.generate();
@@ -165,5 +174,14 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
             LOGGER.error("CIBA Authentication Request object is null");
             context.fail(new InvalidRequestException("Missing authentication request"));
         }
+    }
+
+    private static boolean hasValidExp(Integer exp, Integer maxExpirySecs) {
+        if (exp == null) {
+            return false;
+        }
+        var now = Instant.now().getEpochSecond();
+        var diff = exp - now;
+        return diff <= maxExpirySecs;
     }
 }
