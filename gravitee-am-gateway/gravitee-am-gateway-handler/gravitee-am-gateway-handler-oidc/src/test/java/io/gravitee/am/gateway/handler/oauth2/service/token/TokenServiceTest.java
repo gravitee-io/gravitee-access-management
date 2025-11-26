@@ -15,8 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -34,11 +40,15 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
+import io.gravitee.am.reporter.api.audit.model.Audit;
+import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.el.TemplateEngine;
@@ -48,11 +58,14 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -63,8 +76,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -119,9 +134,15 @@ public class TokenServiceTest {
     @Mock
     private SubjectManager subjectManager;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final CertificateInfo signingCertificateInfo = createTestCertificateInfo();
+
+    private ArgumentMatcher<AuditBuilder<?>> auditMatcher = auditBuilder -> auditBuilder instanceof ClientTokenAuditBuilder;
+
     @AfterEach
     public void after() {
-        verify(auditService, times(1)).report(any());
+        verify(auditService, times(1)).report(argThat(auditMatcher));
     }
 
     @Test
@@ -133,7 +154,7 @@ public class TokenServiceTest {
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -144,6 +165,8 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -158,7 +181,7 @@ public class TokenServiceTest {
         client.setClientId("my-client-id");
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -170,6 +193,8 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -186,7 +211,7 @@ public class TokenServiceTest {
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -200,6 +225,8 @@ public class TokenServiceTest {
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
         verify(subjectManager).updateJWT(any(), any());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -215,7 +242,7 @@ public class TokenServiceTest {
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -228,6 +255,8 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -242,7 +271,7 @@ public class TokenServiceTest {
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -262,6 +291,8 @@ public class TokenServiceTest {
         assertEquals("tokenRequest", keyCaptor.getAllValues().get(0));
         Assertions.assertNull(((OAuth2Request) valueCaptor.getAllValues().get(0)).getExecutionContext());
         Assertions.assertNull(((OAuth2Request) valueCaptor.getAllValues().get(0)).getHttpResponse());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -276,7 +307,7 @@ public class TokenServiceTest {
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(accessToken));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -287,6 +318,8 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -308,7 +341,7 @@ public class TokenServiceTest {
         when(tplEngine.getValue(eq(customClaimExpression), any())).thenReturn(new String[]{"another_client_identifier", "other_value"});
         when(executionContext.getTemplateEngine()).thenReturn(tplEngine);
 
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -319,10 +352,12 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
-        verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.AUD) instanceof List
+        verify(jwtService).encodeJwt(argThat(jwt -> jwt.get(Claims.AUD) instanceof List
                 && jwt.getAud().equals(((List) jwt.get(Claims.AUD)).get(0))
                 && ((List) jwt.get(Claims.AUD)).size() == 3
                 && oAuth2Request.getClientId().equals(jwt.getAud())), any(Client.class));
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -334,7 +369,7 @@ public class TokenServiceTest {
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
-        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(any(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.error(new TechnicalException())).when(tokenManager).storeAccessToken(any());
@@ -346,6 +381,8 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        expectTokenCreatedFailedAuditLog();
     }
 
     @Test
@@ -359,7 +396,7 @@ public class TokenServiceTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
-        when(jwtService.encode(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -372,6 +409,8 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -400,7 +439,7 @@ public class TokenServiceTest {
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
-        when(jwtService.encode(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(""));
+        when(jwtService.encodeJwt(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
@@ -417,6 +456,8 @@ public class TokenServiceTest {
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
         verify(executionContext).setAttribute(eq(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY), any());
+
+        expectTokenCreatedAuditLog();
     }
 
     @Test
@@ -451,6 +492,8 @@ public class TokenServiceTest {
 
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, times(1)).delete(anyString());
+
+        expectTokenRefreshAuditLog();
     }
 
     @Test
@@ -491,6 +534,8 @@ public class TokenServiceTest {
         assertTrue("one".equals(permissions.get(0).getResourceId()) && "A".equals(permissions.get(0).getResourceScopes().get(0)));
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, times(1)).delete(anyString());
+
+        expectTokenRefreshAuditLog();
     }
 
     @Test
@@ -523,6 +568,8 @@ public class TokenServiceTest {
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, never()).delete(anyString());
         verify(accessTokenRepository, never()).create(any());
+
+        expectTokenRefreshFailedAuditLog();
     }
 
     @Test
@@ -555,6 +602,8 @@ public class TokenServiceTest {
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, never()).delete(anyString());
         verify(accessTokenRepository, never()).create(any());
+
+        expectTokenRefreshFailedAuditLog();
     }
 
     @Test
@@ -587,6 +636,8 @@ public class TokenServiceTest {
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, never()).delete(anyString());
         verify(accessTokenRepository, never()).create(any());
+
+        expectTokenRefreshFailedAuditLog();
     }
 
     @Test
@@ -607,6 +658,8 @@ public class TokenServiceTest {
         verify(refreshTokenRepository, never()).findByToken(any());
         verify(refreshTokenRepository, never()).delete(anyString());
         verify(accessTokenRepository, never()).create(any());
+
+        expectTokenRefreshFailedAuditLog();
     }
 
     @Test
@@ -641,5 +694,66 @@ public class TokenServiceTest {
 
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, never()).delete(anyString());
+
+        expectTokenRefreshAuditLog();
+    }
+
+    private EncodedJWT sampleEncodedJwt() {
+        return new EncodedJWT("encodedToken", signingCertificateInfo);
+    }
+
+    private void expectTokenCreatedAuditLog() {
+        auditMatcher = builder -> {
+            Audit audit = builder.build(objectMapper);
+            AuditOutcomeMatcher outcomeMatcher = new AuditOutcomeMatcher(audit.getOutcome());
+
+            String accessToken = outcomeMatcher.getPropertyByPath("/ACCESS_TOKEN").orElse("");
+            String signingCertificateId = outcomeMatcher.getPropertyByPath("/SIGNING_CERTIFICATE_ID").orElse("");
+            String signingCertificateName = outcomeMatcher.getPropertyByPath("/SIGNING_CERTIFICATE_NAME").orElse("");
+
+            return Strings.CS.equals(audit.getType(), EventType.TOKEN_CREATED)
+                    && audit.getOutcome().getStatus() == Status.SUCCESS
+                    && StringUtils.isNotBlank(accessToken)
+                    && Strings.CS.equals(signingCertificateId, signingCertificateInfo.certificateId())
+                    && Strings.CS.equals(signingCertificateName, signingCertificateInfo.certificateAlias());
+        };
+    }
+
+    private void expectTokenRefreshAuditLog() {
+        auditMatcher = builder -> {
+            Audit audit = builder.build(objectMapper);
+            AuditOutcomeMatcher outcomeMatcher = new AuditOutcomeMatcher(audit.getOutcome());
+
+            String accessToken = outcomeMatcher.getPropertyByPath("/REFRESH_TOKEN").orElse("");
+
+            return Strings.CS.equals(audit.getType(), EventType.TOKEN_REVOKED) // refresh token used to create new token
+                    && audit.getOutcome().getStatus() == Status.SUCCESS
+                    && StringUtils.isNotBlank(accessToken);
+        };
+    }
+
+    private void expectTokenCreatedFailedAuditLog() {
+        auditMatcher = builder -> {
+            Audit audit = builder.build(objectMapper);
+            return Strings.CS.equals(audit.getType(), EventType.TOKEN_CREATED)
+                    && audit.getOutcome().getStatus() == Status.FAILURE;
+        };
+    }
+
+    private void expectTokenRefreshFailedAuditLog() {
+        auditMatcher = builder -> {
+            Audit audit = builder.build(objectMapper);
+            return Strings.CS.equals(audit.getType(), EventType.TOKEN_REVOKED) // refresh token used to create new token
+                    && audit.getOutcome().getStatus() == Status.FAILURE;
+        };
+    }
+
+    private record AuditOutcomeMatcher(AuditOutcome auditOutcome) {
+        Optional<String> getPropertyByPath(String path) {
+            String jsonPath = "$[?(@.path=='%s')].value".formatted(path);
+            return JsonPath.<List<String>>read(auditOutcome.getMessage(), jsonPath)
+                    .stream()
+                    .findFirst();
+        }
     }
 }

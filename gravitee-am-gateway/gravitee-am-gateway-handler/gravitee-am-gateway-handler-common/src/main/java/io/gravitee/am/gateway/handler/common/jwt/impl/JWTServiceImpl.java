@@ -21,6 +21,7 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
@@ -65,11 +66,11 @@ public class JWTServiceImpl implements JWTService {
     private JwtSignerExecutor executor;
 
     @Override
-    public Single<String> encode(JWT jwt, CertificateProvider certificateProvider) {
+    public Single<EncodedJWT> encodeJwt(JWT jwt, CertificateProvider certificateProvider) {
         Objects.requireNonNull(certificateProvider, "Certificate provider is required to sign JWT");
         var claimsToEncrypt = Claims.requireEncryption();
         if (claimsToEncrypt.stream().noneMatch(jwt::containsKey)) {
-            return sign(certificateProvider, jwt);
+            return signWithCertificateInfo(certificateProvider, jwt);
         }
         return certificateProvider.getProvider()
                 .key()
@@ -85,7 +86,7 @@ public class JWTServiceImpl implements JWTService {
                 .map(key -> {
                     claimsToEncrypt.forEach(claim -> encryptClaim(jwt, claim, key));
                     return jwt;
-                }).flatMap(token -> sign(certificateProvider, token));
+                }).flatMap(token -> signWithCertificateInfo(certificateProvider, token));
     }
 
     private void encryptClaim(JWT jwt, String claim, java.security.Key key) {
@@ -96,27 +97,27 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
-    public Single<String> encode(JWT jwt, Client client) {
+    public Single<EncodedJWT> encodeJwt(JWT jwt, Client client) {
         return certificateManager.get(client.getCertificate())
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
     @Override
-    public Single<String> encodeUserinfo(JWT jwt, Client client) {
+    public Single<EncodedJWT> encodeUserinfo(JWT jwt, Client client) {
         //Userinfo may not be signed but only encrypted
         if (client.getUserinfoSignedResponseAlg() == null) {
-            return encode(jwt, certificateManager.noneAlgorithmCertificateProvider());
+            return encodeJwt(jwt, certificateManager.noneAlgorithmCertificateProvider());
         }
 
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
     @Override
-    public Single<String> encodeAuthorization(JWT jwt, Client client) {
+    public Single<EncodedJWT> encodeAuthorization(JWT jwt, Client client) {
         // Signing an authorization response is required
         // As per https://bitbucket.org/openid/fapi/src/master/Financial_API_JWT_Secured_Authorization_Response_Mode.md#markdown-header-5-client-metadata
         // If unspecified, the default algorithm to use for signing authorization responses is RS256. The algorithm none is not allowed.
@@ -130,7 +131,7 @@ public class JWTServiceImpl implements JWTService {
         return certificateManager.findByAlgorithm(signedResponseAlg)
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
     @Override
@@ -171,6 +172,11 @@ public class JWTServiceImpl implements JWTService {
             case SESSION -> new InvalidTokenException("The session token is invalid", ex);
             default -> new InvalidTokenException("The access token is invalid", ex);
         };
+    }
+
+    private Single<EncodedJWT> signWithCertificateInfo(CertificateProvider certificateProvider, JWT jwt) {
+        return sign(certificateProvider, jwt)
+                .map(encodedValue -> new EncodedJWT(encodedValue, certificateProvider.getCertificateInfo()));
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {

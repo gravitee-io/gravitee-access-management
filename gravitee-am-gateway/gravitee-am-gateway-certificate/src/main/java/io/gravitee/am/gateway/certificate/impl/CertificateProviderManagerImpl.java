@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.certificate.impl;
 
+import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.jwt.DefaultJWTBuilder;
@@ -110,6 +111,7 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
         if (provider != null) {
             CertificateProvider certificateProvider = create(provider);
             if (certificateProvider != null) {
+                certificateProvider.setCertificateInfo(buildCertificateInfo(certificate));
                 certificateProvider.setDomain(certificate.getDomain());
                 undeploy(certificate.getId());
                 certificateProviders.put(certificate.getId(), certificateProvider);
@@ -124,5 +126,9 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
         if(removed != null){
             removed.getProvider().unregister();
         }
+    }
+
+    private CertificateInfo buildCertificateInfo(Certificate certificate) {
+        return new CertificateInfo(certificate.getId(), certificate.getName());
     }
 }

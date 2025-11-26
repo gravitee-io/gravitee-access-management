@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.flow;
 
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
@@ -79,6 +80,7 @@ public abstract class AbstractFlow implements Flow {
 
         // Sign if needed, else return unsigned JWT
         return jwtService.encodeAuthorization(jwtAuthorizationResponse.build(), client)
+                .map(EncodedJWT::encodedToken)
                 // Encrypt if needed, else return JWT
                 .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
                 .map(token -> {

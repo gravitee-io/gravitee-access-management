@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
 
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
@@ -70,6 +71,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -1354,7 +1356,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationRequest.setResponseType(ResponseType.CODE);
         authorizationRequest.setRedirectUri("http://localhost:9999/wrong/callback");
 
-        when(jwtService.encodeAuthorization(any(JWT.class), eq(client))).thenReturn(Single.just("my-jwt"));
+        when(jwtService.encodeAuthorization(any(JWT.class), eq(client))).thenReturn(Single.just(new EncodedJWT("my-jwt", createTestCertificateInfo())));
         when(jweService.encryptAuthorization(anyString(), eq(client))).then(invocation -> Single.just((String) invocation.getArguments()[0]));
 
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
