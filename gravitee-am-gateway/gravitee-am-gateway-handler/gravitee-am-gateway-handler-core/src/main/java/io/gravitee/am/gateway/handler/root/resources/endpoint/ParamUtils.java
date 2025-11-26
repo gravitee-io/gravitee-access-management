@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
+import com.nimbusds.jose.JOSEObject;
 import com.nimbusds.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -88,6 +89,18 @@ public class ParamUtils {
         // if parameter is missing from the request object (or if the extract fails)
         // return the value provided through query parameters
         return value.orElse(context.request().getParam(paramName));
+    }
+
+    public static String getRawClaim(RoutingContext context, String paramName) {
+        Optional<String> value = Optional.empty();
+        final JWT requestObject = context.get(ConstantKeys.REQUEST_OBJECT_KEY);
+        if (requestObject instanceof JOSEObject d) {
+            var val = d.getPayload().toJSONObject().get(paramName);
+            if (val != null) {
+                value = Optional.ofNullable(val.toString());
+            }
+        }
+        return value.orElse(null);
     }
 
     private static Optional<String> extractParamFromRequestObject(String paramName, Object claim) {

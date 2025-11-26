@@ -33,6 +33,7 @@ import lombok.Setter;
 
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getRawClaim;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitAcrValues;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitScopes;
@@ -52,6 +53,8 @@ public class CibaAuthenticationRequest extends OAuth2Request {
     String bindingMessage;
     String userCode;
     Integer requestedExpiry;
+    Integer expiry;
+    Integer nbf;
     User user;
 
     public static CibaAuthenticationRequest createFrom(RoutingContext context) {
@@ -89,6 +92,14 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         final String reqExpiry = getOAuthParameter(context, Parameters.REQUESTED_EXPIRY);
         if (reqExpiry != null) {
             cibaRequest.setRequestedExpiry(Integer.parseInt(reqExpiry));
+        }
+        final String exp = getRawClaim(context, Parameters.EXPIRY);
+        if (exp != null) {
+            cibaRequest.setExpiry(Integer.parseInt(exp));
+        }
+        final String nbf = getRawClaim(context, Parameters.NBF);
+        if (nbf != null) {
+            cibaRequest.setNbf(Integer.parseInt(nbf));
         }
 
         return cibaRequest;
