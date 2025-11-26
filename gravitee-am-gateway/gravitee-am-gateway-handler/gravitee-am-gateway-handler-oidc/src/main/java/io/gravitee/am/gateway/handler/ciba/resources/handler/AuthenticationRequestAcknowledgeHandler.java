@@ -137,10 +137,10 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                                                 });
                                     })
                     ).subscribe(req -> {
-
                         CibaAuthenticationResponse response = new CibaAuthenticationResponse();
                         response.setAuthReqId(req.getId());
-                        response.setExpiresIn(req.getExpireAt().toInstant().minusMillis(req.getCreatedAt().getTime()).getEpochSecond());
+                        // Update the response to honor the requested expiry
+                        response.setExpiresIn(expiresIn);
 
                         // specify rate limit for Poll and Ping mode
                         if (client.getBackchannelTokenDeliveryMode()!= null && !client.getBackchannelTokenDeliveryMode().equals(CIBADeliveryMode.PUSH)) {
