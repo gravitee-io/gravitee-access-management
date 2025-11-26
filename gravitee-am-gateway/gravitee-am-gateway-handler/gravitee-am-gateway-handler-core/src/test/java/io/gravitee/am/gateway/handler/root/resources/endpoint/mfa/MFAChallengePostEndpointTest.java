@@ -34,7 +34,16 @@ import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifier
 import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.ApplicationFactorSettings;
+import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Device;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.FactorSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
@@ -79,7 +88,11 @@ import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

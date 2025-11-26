@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.certificate;
+package io.gravitee.am.common.jwt;
 
-import io.gravitee.am.common.jwt.CertificateInfo;
-import io.gravitee.am.jwt.JWTBuilder;
-import io.gravitee.am.jwt.JWTParser;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RequiredArgsConstructor(staticName = "of")
 @Getter
-@Setter
-public class CertificateProvider {
-    private io.gravitee.am.certificate.api.CertificateProvider provider;
-    private String domain;
-    private JWTParser jwtParser;
-    private JWTBuilder jwtBuilder;
-    private CertificateInfo certificateInfo;
-
-    public CertificateProvider(io.gravitee.am.certificate.api.CertificateProvider provider) {
-        this.provider = provider;
-    }
+@ToString
+public class EncodedJWT {
+    private final String encodedToken;
+    private final CertificateInfo certificateInfo;
 }
