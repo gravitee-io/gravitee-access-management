@@ -59,8 +59,8 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
     private JWTService jwtService;
 
-    @Value("${openid.ciba.auth-request.maxExpiry:3600}")
-    private int maxExpiry = 3600;
+    @Value("${openid.ciba.auth-request.maxRequestLifetime:3600}")
+    private int maxRequestLifetime = 3600;
 
     public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain, JWTService jwtService) {
         this.authRequestService = authRequestService;
@@ -93,8 +93,13 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
             LOGGER.debug("CIBA Authentication Request linked to auth_req_id '{}'", authRequest.getId());
 
-            if (!hasValidExp(authRequest.getExpiry(), maxExpiry)) {
+            if (!hasValidExp(authRequest.getExpiry(), maxRequestLifetime)) {
                 context.fail(new InvalidRequestException("The 'exp' claim in the Request Object exceeds the maximum allowed lifetime of 3600 seconds."));
+                return;
+            }
+
+            if (!hasValidNbf(authRequest.getNbf(), maxRequestLifetime)) {
+                context.fail(new InvalidRequestException("The 'nbf' claim in the Request Object is missing or is more than 3600 seconds in the past."));
                 return;
             }
 
@@ -176,12 +181,23 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
         }
     }
 
-    private static boolean hasValidExp(Integer exp, Integer maxExpirySecs) {
+    private static boolean hasValidExp(Integer exp, Integer maxRequestLifetimeSecs) {
         if (exp == null) {
             return false;
         }
+
         var now = Instant.now().getEpochSecond();
         var diff = exp - now;
-        return diff <= maxExpirySecs;
+        return diff <= maxRequestLifetimeSecs;va
+    }
+
+    private static boolean hasValidNbf(Integer nbf, Integer maxRequestLifetimeSecs) {
+        if (nbf == null) {
+            return false;
+        }
+        
+        var now = Instant.now().getEpochSecond();
+        var nbfAge = now - nbf;
+        return nbfAge <= maxRequestLifetimeSecs;
     }
 }
