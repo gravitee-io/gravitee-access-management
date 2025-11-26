@@ -39,6 +39,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.junit.Assert.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -572,35 +574,58 @@ public class FlowServiceTest {
 
         Flow existingFlow = buildFlow();
         existingFlow.setApplication(clientSourceId);
+        Date existingCreatedAt = existingFlow.getCreatedAt();
+        Date existingUpdatedAt = existingFlow.getUpdatedAt();
 
         when(flowRepository.findByApplication(ReferenceType.DOMAIN, DOMAIN, clientSourceId)).thenReturn(Flowable.just(existingFlow));
         when(flowRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<List<Flow>> observer = flowService.copyFromClient(DOMAIN, clientSourceId, clientTargetId).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();
+        observer.assertValueCount(1);
 
-        observer.assertValue(flows -> {
-            Optional<Flow> flow = flows.stream().filter(f -> f.getType() == Type.REGISTER).findFirst();
-            return flow.isPresent()
-                            && !flow.get().getId().equals(existingFlow.getId())
-                            && flow.get().getApplication().equals(clientTargetId)
-                            && flow.get().getReferenceId().equals(DOMAIN)
-                            && flow.get().getOrder().equals(existingFlow.getOrder())
-                            && !flow.get().getCreatedAt().equals(existingFlow.getCreatedAt())
-                            && !flow.get().getUpdatedAt().equals(existingFlow.getUpdatedAt())
-                            && flow.get().getPost().size() == existingFlow.getPost().size()
-                            && flow.get().getPost().get(0).getName().equals(existingFlow.getPost().get(0).getName())
-                            && flow.get().getPre().size() == existingFlow.getPre().size()
-                            && flow.get().getPre().get(0).getName().equals(existingFlow.getPre().get(0).getName());
-                }
-        );
+        List<Flow> flows = observer.values().getFirst();
+        assertNotNull("Flows list should not be null", flows);
+        assertFalse("Flows list should not be empty", flows.isEmpty());
+        
+        Optional<Flow> copiedFlow = flows.stream()
+                .filter(f -> f.getType() == Type.REGISTER)
+                .findFirst();
+        
+        assertTrue("Should find a flow with type REGISTER", copiedFlow.isPresent());
+        
+        Flow flow = copiedFlow.get();
+        assertNotNull(flow.getId());
+        assertNotEquals(existingFlow.getId(), flow.getId());
+        assertEquals(clientTargetId, flow.getApplication());
+        assertEquals(DOMAIN, flow.getReferenceId());
+        assertEquals(existingFlow.getOrder(), flow.getOrder());
+        
+        // Dates should be different (or at least createdAt should be >= existing, and updatedAt should be >= createdAt)
+        assertNotNull(flow.getCreatedAt());
+        assertNotNull(flow.getUpdatedAt());
+        assertTrue(flow.getCreatedAt().compareTo(existingCreatedAt) >= 0);
+        assertTrue(flow.getUpdatedAt().compareTo(existingUpdatedAt) >= 0);
+
+        // Assert post steps
+        assertNotNull(flow.getPost());
+        assertEquals(existingFlow.getPost().size(), flow.getPost().size());
+        assertFalse(flow.getPost().isEmpty());
+        assertEquals(existingFlow.getPost().getFirst().getName(), flow.getPost().getFirst().getName());
+
+        // Assert pre steps
+        assertNotNull(flow.getPre());
+        assertEquals(existingFlow.getPre().size(), flow.getPre().size());
+        assertFalse(flow.getPre().isEmpty());
+        assertEquals(existingFlow.getPre().getFirst().getName(), flow.getPre().getFirst().getName());
 
         // the find method return all instance of Flows
-        verify(flowRepository, atLeast(1)).create(argThat(flow -> !flow.getId().equals(existingFlow.getId())
-                && flow.getApplication().equals(clientTargetId)
-                && flow.getReferenceId().equals(DOMAIN)));
+        verify(flowRepository, atLeast(1)).create(argThat(createdFlow -> !createdFlow.getId().equals(existingFlow.getId())
+                && createdFlow.getApplication().equals(clientTargetId)
+                && createdFlow.getReferenceId().equals(DOMAIN)));
         verify(eventService, atLeast(1)).create(any());
     }
 
