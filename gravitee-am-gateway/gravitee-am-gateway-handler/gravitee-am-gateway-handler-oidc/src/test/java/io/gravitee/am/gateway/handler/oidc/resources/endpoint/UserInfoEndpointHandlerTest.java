@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
@@ -60,6 +61,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
@@ -753,7 +755,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
 
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(jwtService.encodeUserinfo(any(),any())).thenReturn(Single.just("signedJwtBearer"));
+        when(jwtService.encodeUserinfo(any(),any())).thenReturn(Single.just(new EncodedJWT("signedJwtBearer", createTestCertificateInfo())));
         when(jweService.encryptUserinfo("signedJwtBearer",client)).thenReturn(Single.just("signedJwtBearer"));
 
         testRequest(

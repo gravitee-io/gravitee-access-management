@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.exception.oauth2.ReturnUrlMismatchException;
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -202,6 +203,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
 
             // Sign if needed, else return unsigned JWT
             jwtService.encodeAuthorization(jwtException.build(), client)
+                    .map(EncodedJWT::encodedToken)
                     // Encrypt if needed, else return JWT
                     .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
                     .subscribe(

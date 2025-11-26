@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
@@ -120,7 +121,9 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                                 jwt.setIat(new Date().getTime() / 1000L);
                                 jwt.setExp(accessToken.getExp());
 
-                                return jwtService.encodeUserinfo(jwt, client)//Sign if needed, else return unsigned JWT
+                                return jwtService.encodeUserinfo(jwt, client)
+                                        .map(EncodedJWT::encodedToken)
+                                        //Sign if needed, else return unsigned JWT
                                         .flatMap(userinfo -> jweService.encryptUserinfo(userinfo, client));//Encrypt if needed, else return JWT
                             }
                         }

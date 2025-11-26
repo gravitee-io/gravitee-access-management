@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
@@ -55,6 +57,7 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.codegen.annotations.Nullable;
 import lombok.Setter;
 import net.minidev.json.JSONArray;
 import org.slf4j.Logger;
@@ -85,6 +88,9 @@ public class TokenServiceImpl implements TokenService {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private static final String PERMISSIONS = "permissions";
+
+    public static final String SIGNING_CERTIFICATE_ID = "SIGNING_CERTIFICATE_ID";
+    public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
 
     @Autowired
     private AccessTokenRepository accessTokenRepository;
@@ -210,14 +216,19 @@ public class TokenServiceImpl implements TokenService {
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
                     return Single.zip(
-                                    jwtService.encode(accessToken, client),
-                                    (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
+                                    jwtService.encodeJwt(accessToken, client),
+                                    (refreshToken != null ? jwtService.encodeJwt(refreshToken, client).map(Optional::of) : Single.just(Optional.<EncodedJWT>empty())),
                                     (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
-                            .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
-                            .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> enhancedToken))
-                            .doOnSuccess(enhancedToken -> auditService.report(buildTokenCreatedAudit(oAuth2Request, client, endUser, accessToken, refreshToken, enhancedToken)));
+                            .flatMap(tokenWithCertInfo -> enhanceToken(oAuth2Request, client, endUser, executionContext, tokenWithCertInfo))
+                            .flatMap(tokenWithCertInfo -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> tokenWithCertInfo))
+                            .doOnSuccess(tokenWithCertInfo -> auditService.report(buildTokenCreatedAudit(oAuth2Request, client, endUser, accessToken, refreshToken, tokenWithCertInfo)));
                 })
+                .map(tokenWithCertificateInfo -> tokenWithCertificateInfo.token)
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
+    }
+
+    private Single<TokenWithCertificateInfo> enhanceToken(OAuth2Request oAuth2Request, Client client, User endUser, ExecutionContext executionContext, TokenWithCertificateInfo tokenWithCertificateInfo) {
+        return tokenEnhancer.enhance(tokenWithCertificateInfo.token, oAuth2Request, client, endUser, executionContext).map(token -> new TokenWithCertificateInfo(token, tokenWithCertificateInfo.certificateInfo));
     }
 
     @Override
@@ -311,10 +322,10 @@ public class TokenServiceImpl implements TokenService {
      * @param encodedAccessToken access token JWT compact string format
      * @param encodedRefreshToken refresh token JWT compact string format
      * @param oAuth2Request oauth2 token or authorization request
-     * @return Access Token Response Format
+     * @return object containing: Access Token Response Format and Certificate Info
      */
-    private Token convert(JWT accessToken, String encodedAccessToken, String encodedRefreshToken, OAuth2Request oAuth2Request) {
-        AccessToken token = new AccessToken(encodedAccessToken);
+    private TokenWithCertificateInfo convert(JWT accessToken, EncodedJWT encodedAccessToken, @Nullable EncodedJWT encodedRefreshToken, OAuth2Request oAuth2Request) {
+        AccessToken token = new AccessToken(encodedAccessToken.encodedToken());
         token.setSubject(accessToken.getSub());
         token.setExpiresIn(Instant.ofEpochSecond(accessToken.getExp()).minusMillis(System.currentTimeMillis()).getEpochSecond());
         token.setScope(accessToken.getScope());
@@ -325,9 +336,14 @@ public class TokenServiceImpl implements TokenService {
                     .forEach(e -> token.getAdditionalInformation().put(e.getKey(), e.getValue()));
         }
         // set refresh token
-        token.setRefreshToken(encodedRefreshToken);
-        return token;
+        Optional.ofNullable(encodedRefreshToken).map(EncodedJWT::encodedToken).ifPresent(token::setRefreshToken);
+        return new TokenWithCertificateInfo(token, encodedAccessToken.certificateInfo());
     }
+
+    private record TokenWithCertificateInfo(
+            Token token,
+            CertificateInfo certificateInfo
+    ) {}
 
 
     /**
@@ -557,18 +573,20 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private ClientTokenAuditBuilder buildTokenCreatedAudit(OAuth2Request oAuth2Request, Client client, User endUser, 
-                                                           JWT accessToken, JWT refreshToken, Token enhancedToken) {
+                                                           JWT accessToken, JWT refreshToken, TokenWithCertificateInfo tokenWithCertInfo) {
+        Token enhancedToken = tokenWithCertInfo.token;
+
         return AuditBuilder.builder(ClientTokenAuditBuilder.class)
                 .accessToken(accessToken.getJti())
                 .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
                 .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
                 .tokenActor(client)
-                .withParams(() -> buildAuditParams(oAuth2Request))
+                .withParams(() -> buildAuditParams(oAuth2Request, tokenWithCertInfo.certificateInfo))
                 .tokenTarget(endUser)
                 .accessTokenSubject(enhancedToken.getSubject());
     }
 
-    private Map<String, Object> buildAuditParams(OAuth2Request oAuth2Request) {
+    private Map<String, Object> buildAuditParams(OAuth2Request oAuth2Request, CertificateInfo certificateInfo) {
         var params = new HashMap<String, Object>();
         params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE, oAuth2Request.getGrantType());
         params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, oAuth2Request.getResponseType());
@@ -579,6 +597,11 @@ public class TokenServiceImpl implements TokenService {
         
         if (!isEmpty(oAuth2Request.getResources())) {
             params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE, String.join(" ", oAuth2Request.getResources()));
+        }
+
+        if (certificateInfo != null) {
+            params.put(SIGNING_CERTIFICATE_ID, certificateInfo.certificateId());
+            params.put(SIGNING_CERTIFICATE_NAME, certificateInfo.certificateAlias());
         }
         
         return params;

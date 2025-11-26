@@ -27,7 +27,6 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.observers.TestObserver;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -200,7 +199,7 @@ public class JWTServiceTest {
         var test = jwtService.encodeUserinfo(new JWT(), client).test();
         test.await(10, TimeUnit.SECONDS);
         test.assertComplete()
-                .assertValue(o -> o.equals(expectedResult));
+                .assertValue(o -> o.encodedToken().equals(expectedResult));
     }
 
     @Test
