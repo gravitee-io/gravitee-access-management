@@ -25,6 +25,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestExpiredException;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
+import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationRejectedException;
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
@@ -129,7 +130,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
                         return Single.error(new AuthenticationRequestExpiredException());
                     }
                     if (!clientId.equals(request.getClientId())) {
-                        return Single.error(new InvalidClientException(String.format("Invalid client_id '%s' for authentication request '%s'", clientId, authReqId)));
+                        return Single.error(new InvalidGrantException(String.format("Invalid grant: auth_req_id '%s' issued to client '%s' cannot be used by client '%s'", authReqId, request.getClientId(), clientId)));
                     }
                     switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
                         case ONGOING:
@@ -143,7 +144,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
                             request.setLastAccessAt(new Date());
                             return this.authRequestRepository.update(request).flatMap(__ -> Single.error(new AuthorizationPendingException()));
                         case REJECTED:
-                            return this.authRequestRepository.delete(authReqId).toSingle(() -> { throw new AccessDeniedException(); });
+                            return this.authRequestRepository.delete(authReqId).toSingle(() -> { throw new AuthorizationRejectedException(); });
                         default:
                             return this.authRequestRepository.delete(authReqId).toSingle(() -> request);
                     }
