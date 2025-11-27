@@ -119,3 +119,18 @@ curl -X POST http://localhost:8181/__admin/mappings \
   }'
 
 ```
+
+==== OpenFGA:
+
+OpenFGA is required for testing the authorization engine plugin integration.
+
+Run with command:
+```
+docker run -d --rm --name openfga -p 8090:8080 -p 8091:8081 -p 3000:3000 openfga/openfga:v1.8.5 run
+```
+
+Verify OpenFGA is running:
+```
+curl http://localhost:8090/healthz
+```
+

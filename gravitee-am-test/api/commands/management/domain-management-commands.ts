@@ -305,6 +305,42 @@ export const waitForDomainSync = async (
     }
 };
 
+export async function waitForOidcReady(
+    domainHrid: string,
+    options?: {
+        timeoutMs?: number;
+        intervalMs?: number;
+    },
+) {
+    const { timeoutMs = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS, intervalMs = DEFAULT_DOMAIN_SYNC_INTERVAL_MS } = options || {};
+
+    const start = Date.now();
+    let lastStatus: number | undefined;
+    let lastError: unknown;
+
+    while (Date.now() - start < timeoutMs) {
+        try {
+            const res = await getWellKnownOpenIdConfiguration(domainHrid);
+
+            lastStatus = res.status;
+
+            if (res.status === 200 && res.body) {
+                return res;
+            }
+        } catch (err) {
+            lastError = err;
+        }
+
+        await waitFor(DOMAIN_READY_MIN_WAIT_MS);
+    }
+
+    throw new Error(
+        `Timed out waiting for OIDC config for domain "${domainHrid}" after ${timeoutMs}ms. ` +
+        (lastStatus ? `Last status: ${lastStatus}` : '') +
+        (lastError instanceof Error ? ` Last error: ${lastError.message}` : ''),
+    );
+}
+
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));
 
 export async function allowHttpLocalhostRedirects(domain: Domain, accessToken: string) {
