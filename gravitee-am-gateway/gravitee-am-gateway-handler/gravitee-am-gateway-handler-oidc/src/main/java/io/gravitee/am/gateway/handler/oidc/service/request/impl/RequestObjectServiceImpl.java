@@ -21,6 +21,7 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
@@ -179,7 +180,7 @@ public class RequestObjectServiceImpl implements RequestObjectService {
         return jwkService.getKeys(client)
                 .switchIfEmpty(Single.error(new InvalidRequestObjectException()))
                 .flatMap((Function<JWKSet, Single<JWK>>) jwkSet -> jwkService.getKey(jwkSet, jwt.getHeader().getKeyID())
-                        .switchIfEmpty(Single.error(new InvalidRequestObjectException("Invalid key ID"))))
+                        .switchIfEmpty(Single.error(new InvalidClientException("Invalid key ID"))))
                 .flatMap((Function<JWK, SingleSource<JWT>>) jwk -> {
                     // 6.3.2.  Signed Request Object
                     // To perform Signature Validation, the alg Header Parameter in the
