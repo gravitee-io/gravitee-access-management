@@ -36,6 +36,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.common.oidc.Parameters.ACR_VALUES;
 import static java.util.Collections.emptyMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -107,7 +108,7 @@ public class CibaTokenGranter extends AbstractTokenGranter {
 
                             // Extract and store acrValues from the CIBA request for ID token generation
                             if (cibaRequest.getExternalInformation() != null) {
-                                MapUtils.extractStringList(cibaRequest.getExternalInformation(), CIBA_ACR_VALUES)
+                                MapUtils.extractStringList(cibaRequest.getExternalInformation(), ACR_VALUES)
                                         .ifPresent(acrValues -> tokenRequest1.getContext().put(AUTH_FLOW_CONTEXT_ACR_KEY, acrValues));
                             }
                             return tokenRequest1;
