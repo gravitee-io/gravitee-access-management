@@ -16,49 +16,51 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
-import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
-import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
-import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
+import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
+import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import net.minidev.json.JSONArray;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.assertj.core.api.Assertions.assertThat;
-import org.mockito.ArgumentCaptor;
-import net.minidev.json.JSONArray;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TokenServiceImplTest {
@@ -137,7 +139,7 @@ public class TokenServiceImplTest {
 
     private void setupCommonMocks(AuthorizationRequest request) {
         when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
-        when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just("encoded-jwt"));
+        when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
         when(tokenManager.storeAccessToken(any())).thenReturn(Completable.complete());
         when(tokenManager.storeRefreshToken(any())).thenReturn(Completable.complete());
@@ -154,7 +156,7 @@ public class TokenServiceImplTest {
 
     private JWT captureRefreshTokenJWT() {
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
-        verify(jwtService, Mockito.times(2)).encode(jwtCaptor.capture(), any(Client.class));
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
         return jwtCaptor.getAllValues().get(1);
     }
 
@@ -405,6 +407,10 @@ public class TokenServiceImplTest {
         assertThat(auditMessage).contains("resource");
         assertThat(auditMessage).contains("https://mcp.example.com/api/v1");
         assertThat(auditMessage).contains("https://mcp2.example.com/api/v1");
+    }
+
+    private EncodedJWT sampleEncodedJwt() {
+        return EncodedJWT.of("encoded-jwt", createTestCertificateInfo());
     }
 
 }
