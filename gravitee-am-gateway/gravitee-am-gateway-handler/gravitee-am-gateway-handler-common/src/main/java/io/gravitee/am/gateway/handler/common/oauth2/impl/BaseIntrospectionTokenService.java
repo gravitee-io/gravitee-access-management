@@ -21,21 +21,14 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
-import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.model.AccessToken;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 
 import java.time.Instant;
 import java.util.Date;
-
-import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,9 +53,7 @@ abstract class BaseIntrospectionTokenService {
 
     protected Maybe<JWT> introspectToken(String token, boolean offlineVerification) {
         return jwtService.decode(token, tokenType)
-                .flatMapMaybe(jwt -> clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
-                .switchIfEmpty(Single.error(() -> new InvalidTokenException("Invalid or unknown client for this token")))
-                .flatMap(client -> jwtService.decodeAndVerify(token, client, tokenType))
+                .flatMap(jwt -> jwtService.decodeAndVerify(token, () -> getClientCertificateId(jwt).blockingGet(), tokenType))
                 .toMaybe()
                 .flatMap(jwt -> {
                     // Just check the JWT signature and JWT validity if offline verification option is enabled
@@ -95,5 +86,11 @@ abstract class BaseIntrospectionTokenService {
                     }
                     return Maybe.error(ex);
                 });
+    }
+
+    private Maybe<String> getClientCertificateId(JWT jwt) {
+        return clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
+                .switchIfEmpty(Maybe.error(() -> new InvalidTokenException("Invalid or unknown client for this token")))
+                .map(Client::getCertificate);
     }
 }

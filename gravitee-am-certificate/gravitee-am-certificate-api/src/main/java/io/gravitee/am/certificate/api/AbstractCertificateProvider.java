@@ -88,7 +88,8 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 // create key pair
                 KeyPair keyPair = new KeyPair(cert.getPublicKey(), (PrivateKey) key);
                 // create key
-                certificateKey = new DefaultKey(getAlias(), keyPair);
+                String keyId = certificateMetadata.getMetadata().get(CertificateMetadata.ID).toString();
+                certificateKey = new DefaultKey(keyId, keyPair);
                 // update metadata
                 certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
                 // generate public certificate keys
