@@ -33,7 +33,7 @@ public interface AuthenticationRequestService {
 
     Single<CibaAuthRequest> register(CibaAuthenticationRequest request, Client client);
 
-    Single<CibaAuthRequest> retrieve(Domain domain, String authReqId);
+    Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, String clientId);
 
     Single<CibaAuthRequest> updateAuthDeviceInformation(CibaAuthRequest request);
 

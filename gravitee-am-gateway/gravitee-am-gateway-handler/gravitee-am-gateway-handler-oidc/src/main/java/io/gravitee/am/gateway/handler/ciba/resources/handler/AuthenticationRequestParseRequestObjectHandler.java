@@ -22,6 +22,7 @@ import io.gravitee.am.common.exception.jwt.PrematureJWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.jwt.DefaultJWTParser;
@@ -75,6 +76,10 @@ public class AuthenticationRequestParseRequestObjectHandler implements Handler<R
                     .map(jwt -> preserveRequestObject(context, jwt))
                     .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
                     .onErrorResumeNext(error -> {
+                        // FAPI CIBA requires invalid client error when key does not match for client
+                        if (error instanceof InvalidClientException) {
+                            return Single.error(error);
+                        }
                         // invalid_request_object isn't specified in the CIBA specification
                         // so catch all exception different from InvalidRequestException and
                         // return convert it in InvalidRequestException

@@ -88,12 +88,9 @@ public class CibaTokenGranter extends AbstractTokenGranter {
         }
 
         return super.parseRequest(tokenRequest, client)
-                .flatMap(tokenRequest1 -> authenticationRequestService.retrieve(domain, authReqId)
+                .flatMap(tokenRequest1 -> authenticationRequestService.retrieve(domain, authReqId, client.getClientId())
                         .map(cibaRequest -> {
-                            logger.info("Found CIBA authentication request [{}]", authReqId);
-                            logger.info("Checking client_id matches {} - {}", cibaRequest.getClientId(), client.getClientId());
                             if (!cibaRequest.getClientId().equals(client.getClientId())) {
-                                logger.warn("client_id '{}' requests token using not owned authentication request '{}'", client.getClientId(), authReqId);
                                 throw new InvalidGrantException("Authentication request not found");
                             }
                             return cibaRequest;

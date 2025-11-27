@@ -120,13 +120,16 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     }
 
     @Override
-    public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId) {
+    public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, String clientId) {
         LOGGER.debug("Search for authentication request with id '{}'", authReqId);
         return this.authRequestRepository.findById(authReqId)
                 .switchIfEmpty(Single.error(() -> new InvalidGrantException(authReqId)))
                 .flatMap(request -> {
                     if ((request.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
                         return Single.error(new AuthenticationRequestExpiredException());
+                    }
+                    if (!clientId.equals(request.getClientId())) {
+                        return Single.error(new InvalidClientException(String.format("Invalid client_id '%s' for authentication request '%s'", clientId, authReqId)));
                     }
                     switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
                         case ONGOING:
