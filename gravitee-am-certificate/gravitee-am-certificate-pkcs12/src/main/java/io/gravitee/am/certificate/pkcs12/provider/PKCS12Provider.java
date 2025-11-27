@@ -61,7 +61,7 @@ public class PKCS12Provider extends AbstractCertificateProvider implements Initi
     }
 
     @Override
-    protected String getAlias() {
+    public String getAlias() {
         return configuration.getAlias();
     }
 

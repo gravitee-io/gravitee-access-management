@@ -87,6 +87,11 @@ public class CertificateProviderManagerTest {
             }
 
             @Override
+            public String getAlias() {
+                return "none";
+            }
+
+            @Override
             public Flowable<JWK> privateKey() {
                 throw new UnsupportedOperationException("No private key for \"none\" algorithm");
             }
@@ -135,6 +140,11 @@ public class CertificateProviderManagerTest {
             @Override
             public Flowable<JWK> privateKey() {
                return null;
+            }
+
+            @Override
+            public String getAlias() {
+                return "hmac";
             }
 
             @Override

@@ -45,6 +45,8 @@ public interface CertificateProvider {
 
     String signatureAlgorithm();
 
+    String getAlias();
+
     default Certificate certificate() {
         return null;
     }
