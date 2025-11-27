@@ -93,7 +93,7 @@ public class JWTServiceImpl implements JWTService {
     @Override
     public Single<String> encode(JWT jwt, Client client) {
         return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
                 .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
@@ -106,7 +106,7 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
                 .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
@@ -124,14 +124,14 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(signedResponseAlg)
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
                 .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
         return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
 
     }
@@ -152,6 +152,13 @@ public class JWTServiceImpl implements JWTService {
                 logger.debug("Failed to decode {} JWT", tokenType, ex);
                 emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
+        });
+    }
+
+    private Single<CertificateProvider> fallbackToDefaultCertificateProvider(Client client) {
+        return Single.defer(() -> {
+            logger.warn("Falling back to default certificate provider for client: {}", client);
+            return Single.just(certificateManager.defaultCertificateProvider());
         });
     }
 
