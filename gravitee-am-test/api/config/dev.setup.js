@@ -18,6 +18,7 @@ process.env.AM_MANAGEMENT_URL = 'http://localhost:8093';
 process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_URL + '/management';
 process.env.AM_GATEWAY_URL = 'http://localhost:8092';
 process.env.AM_CIBA_NOTIFIER_URL = 'http://localhost:8080/ciba';
+process.env.AM_OPENFGA_URL = 'http://localhost:8090';
 process.env.AM_DEF_ORG_ID = 'DEFAULT';
 process.env.AM_DEF_ENV_ID = 'DEFAULT';
 process.env.AM_ADMIN_USERNAME = 'admin';

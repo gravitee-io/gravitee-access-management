@@ -82,6 +82,15 @@ services:
     ports:
       - 8080:8080
 
+  openfga:
+    image: openfga/openfga:v1.8.5
+    container_name: gio_am_openfga
+    ports:
+      - 8090:8080
+      - 8091:8081
+      - 3000:3000
+    command: run
+
   fakesmtp:
     image: gessnerfl/fake-smtp-server
     container_name: am_fake_smtp
