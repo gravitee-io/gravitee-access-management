@@ -254,6 +254,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
             }
 
             @Override
+            public String getAlias() {
+                return "gravitee-hmac-default-key";
+            }
+
+            @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
                 return Single.just(certificateKey);
             }
@@ -294,6 +299,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
             @Override
             public Optional<Date> getExpirationDate() {
                 return Optional.empty();
+            }
+
+            @Override
+            public String getAlias() {
+                return "none";
             }
 
             @Override

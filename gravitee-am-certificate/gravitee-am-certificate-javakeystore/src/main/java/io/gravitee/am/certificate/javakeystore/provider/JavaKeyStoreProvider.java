@@ -59,7 +59,7 @@ public class JavaKeyStoreProvider extends AbstractCertificateProvider implements
     }
 
     @Override
-    protected String getAlias() {
+    public String getAlias() {
         return configuration.getAlias();
     }
 

@@ -18,7 +18,7 @@ package io.gravitee.am.certificate.pkcs12.provider;
 import com.nimbusds.jose.jwk.KeyUse;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.pkcs12.PKCS12Configuration;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class PKCS12ProviderTest {
         final var provider = loadProvider(file, null);
 
         final var jwk = provider.keys().blockingFirst();
-        Assert.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
+        Assertions.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
     }
 
     @ParameterizedTest
@@ -53,7 +53,7 @@ public class PKCS12ProviderTest {
     public void should_have_use_with_sig_config_empty(String file) throws Exception {
         final var provider = loadProvider(file, Set.of());
         final var jwk = provider.keys().blockingFirst();
-        Assert.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
+        Assertions.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
     }
 
     @ParameterizedTest
@@ -61,7 +61,7 @@ public class PKCS12ProviderTest {
     public void should_have_use_with_enc_config(String file) throws Exception {
         final var provider = loadProvider(file, Set.of(KeyUse.ENCRYPTION.getValue()));
         final var jwk = provider.keys().blockingFirst();
-        Assert.assertEquals(KeyUse.ENCRYPTION.getValue(), jwk.getUse());
+        Assertions.assertEquals(KeyUse.ENCRYPTION.getValue(), jwk.getUse());
     }
 
     private PKCS12Provider loadProvider(String certificate, Set<String> use) throws Exception {

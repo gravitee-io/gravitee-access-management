@@ -17,20 +17,32 @@ package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.JWKSet;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.KeyPair;
+import java.text.ParseException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -92,11 +104,30 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
-    public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
-        return certificateManager.get(client.getCertificate())
+    public Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType) {
+        if (getDefaultCertificateId == null) {
+            return Single.error(new IllegalArgumentException("getDefaultCertificateId is required"));
+        }
+        Optional<SignedJWT> signedJWTOptional = parseSignedToken(jwt);
+        Optional<String> issuerDomain = extractDomain(signedJWTOptional);
+
+        return Maybe.fromOptional(extractKid(signedJWTOptional).flatMap(kid -> certificateManager.providers()
+                        .stream()
+                        .filter(certificateProvider -> kid.equals(certificateProvider.getProvider().getAlias()) &&
+                                (issuerDomain.isEmpty() || issuerDomain.get().equals(certificateProvider.getDomain())))
+                        .findFirst()))
+                .switchIfEmpty(certificateManager.get(getDefaultCertificateId.get()))
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
+    }
 
+    private static Optional<SignedJWT> parseSignedToken(String jwt) {
+        try {
+            return Optional.ofNullable(SignedJWT.parse(jwt));
+        } catch (ParseException e) {
+            logger.debug("Unable to parse JWT to verify it", e);
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -157,4 +188,19 @@ public class JWTServiceImpl implements JWTService {
         });
     }
 
+    private Optional<String> extractKid(Optional<SignedJWT> jwt) {
+        return jwt.map(SignedJWT::getHeader).map(header -> header.getKeyID());
+    }
+    private Optional<String> extractDomain(Optional<SignedJWT>  jwt) {
+        if (jwt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.ofNullable(jwt.get().getJWTClaimsSet().getStringClaim("domain"));
+        } catch (ParseException e) {
+            logger.debug("Unable to parse JWT to extract domain", e);
+            return Optional.empty();
+        }
+    }
 }
