@@ -525,13 +525,19 @@ jobs:
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
       - run:
+          name: Start OpenFGA
+          command: |
+            docker pull openfga/openfga:v1.8.5
+            docker run -d --rm --name openfga -p 8090:8080 -p 8091:8081 openfga/openfga:v1.8.5 run --playground-enabled=false
+      - run:
           name: Wait services bootstrap
           command: |
-            # Wait for Mongo, FakeSMTP, Wiremock, CIBA to be up and running
+            # Wait for Mongo, FakeSMTP, Wiremock, CIBA, OpenFGA to be up and running
             timeout 30s bash -c 'until nc -vz localhost 27017; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 5025; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8181; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8080; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 8090; do sleep 2; done'
       - run:
           name: Configure Wiremock
           command: |
@@ -710,13 +716,19 @@ jobs:
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
       - run:
+          name: Start OpenFGA
+          command: |
+            docker pull openfga/openfga:v1.8.5
+            docker run -d --rm --name openfga -p 8090:8080 -p 8091:8081 -p 3000:3000 openfga/openfga:v1.8.5 run
+      - run:
           name: Wait services bootstrap
           command: |
-            # Wait for JDBC, FakeSMTP, Wiremock, CIBA to be up and running
+            # Wait for JDBC, FakeSMTP, Wiremock, CIBA, OpenFGA to be up and running
             timeout 30s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 5025; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8181; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8080; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 8090; do sleep 2; done'
       - run:
           name: Configure Wiremock
           command: |
