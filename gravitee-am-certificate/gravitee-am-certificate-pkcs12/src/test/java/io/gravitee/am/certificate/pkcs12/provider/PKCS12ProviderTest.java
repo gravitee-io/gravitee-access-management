@@ -18,6 +18,7 @@ package io.gravitee.am.certificate.pkcs12.provider;
 import com.nimbusds.jose.jwk.KeyUse;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.pkcs12.PKCS12Configuration;
+import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -37,6 +38,8 @@ import static java.util.Map.of;
  */
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public class PKCS12ProviderTest {
+
+    private static final String CERTIFICATE_ID = "cert123";
 
     @ParameterizedTest
     @ValueSource(strings = {"/server-no-extension.p12", "/server-sign-extension.p12"})
@@ -63,6 +66,12 @@ public class PKCS12ProviderTest {
         Assertions.assertEquals(KeyUse.ENCRYPTION.getValue(), jwk.getUse());
     }
 
+    @Test
+    public void should_have_certificate_key_id() throws Exception {
+        final var provider = loadProvider("/server-no-extension.p12", null);
+        Assertions.assertEquals(CERTIFICATE_ID, provider.key().blockingGet().getKeyId());
+    }
+
     private PKCS12Provider loadProvider(String certificate, Set<String> use) throws Exception {
         final var provider = new PKCS12Provider();
         PKCS12Configuration config = new PKCS12Configuration();
@@ -75,7 +84,7 @@ public class PKCS12ProviderTest {
         try (InputStream certReader = this.getClass().getResourceAsStream(certificate)) {
             assert certReader != null;
             final var content = certReader.readAllBytes();
-            metadata.setMetadata(new HashMap<>(of(CertificateMetadata.FILE, content)));
+            metadata.setMetadata(new HashMap<>(of(CertificateMetadata.FILE, content, CertificateMetadata.ID, CERTIFICATE_ID)));
         }
 
         ReflectionTestUtils.setField(provider, "certificateMetadata", metadata);

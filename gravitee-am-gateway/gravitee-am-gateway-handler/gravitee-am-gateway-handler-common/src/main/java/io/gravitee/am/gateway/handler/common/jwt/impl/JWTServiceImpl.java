@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleEmitter;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -36,9 +38,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyPair;
+import java.text.ParseException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -129,11 +134,14 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
-    public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
-        return certificateManager.get(client.getCertificate())
+    public Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType) {
+        if (getDefaultCertificateId == null) {
+            return Single.error(new IllegalArgumentException("getDefaultCertificateId is required"));
+        }
+        String certificateId = extractKid(jwt).orElse(getDefaultCertificateId.get());
+        return certificateManager.get(certificateId)
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
-
     }
 
     @Override
@@ -201,4 +209,12 @@ public class JWTServiceImpl implements JWTService {
         }
     }
 
+    private Optional<String> extractKid(String jwt) {
+        try {
+            return Optional.ofNullable(SignedJWT.parse(jwt).getHeader().getKeyID());
+        } catch (ParseException e) {
+            logger.debug("Unable to parse JWT header to extract kid", e);
+            return Optional.empty();
+        }
+    }
 }
