@@ -18,7 +18,7 @@
     "@ajsf/material": "^0.4.0-beta.1",
     "@angular/animations": "^13.3.0",
     "@angular/cdk": "^13.3.1",
-    "@angular/common": "^13.3.0",
+    "@angular/common": "^19.2.16",
     "@angular/compiler": "^13.3.0",
     "@angular/core": "^13.3.0",
     "@angular/flex-layout": "^11.0.0-beta.33",
