@@ -149,6 +149,7 @@ class CredentialAuditBuilderBaseTest {
                 .certificateSubjectDN("CN=test")
                 .certificateSerialNumber("serial-123")
                 .certificatePem("-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----")
+                .certificateIssuerDN("CN=issuer")
                 .certificateExpiresAt(new Date(System.currentTimeMillis() + 86400000))
                 .createdAt(new Date())
                 .updatedAt(new Date())

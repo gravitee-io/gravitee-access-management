@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.error;
 
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -75,6 +76,9 @@ public class ErrorHandler extends AbstractErrorHandler {
             } else if (throwable instanceof HttpException) {
                 HttpException httpStatusException = (HttpException) throwable;
                 handleException(routingContext, httpStatusException.getMessage(), httpStatusException.getPayload());
+            } else if (throwable instanceof AuthenticationException) {
+                AuthenticationException authenticationException = (AuthenticationException) throwable;
+                handleException(routingContext, authenticationException.getErrorCode(), authenticationException.getErrorCode() + " : " + authenticationException.getMessage());
             } else if (throwable instanceof AttestationException) {
                 handleException(routingContext, "technical_error", "Invalid WebAuthn attestation, make sure your device is compliant with the platform requirements");
             } else {

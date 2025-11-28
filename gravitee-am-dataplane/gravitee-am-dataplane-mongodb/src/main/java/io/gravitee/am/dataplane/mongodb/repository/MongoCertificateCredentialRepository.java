@@ -56,7 +56,7 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
     private static final String FIELD_CERTIFICATE_THUMBPRINT = "certificateThumbprint";
     private static final String FIELD_CERTIFICATE_SUBJECT_DN = "certificateSubjectDN";
     private static final String FIELD_CERTIFICATE_SERIAL_NUMBER = "certificateSerialNumber";
-    private static final String FIELD_CERTIFICATE_EXPIRES_AT = "certificateExpiresAt";
+    private static final String FIELD_CERTIFICATE_ISSUER_DN = "certificateIssuerDN";
 
     private MongoCollection<CertificateCredentialMongo> certificateCredentialsCollection;
 
@@ -68,7 +68,7 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
         final var indexes = new HashMap<Document, IndexOptions>();
         // Index for findByUserId
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1uid1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("rt1ri1uname1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SUBJECT_DN, 1).append(FIELD_CERTIFICATE_ISSUER_DN, 1).append(FIELD_CERTIFICATE_SERIAL_NUMBER, 1), new IndexOptions().name("rt1ri1s1i1s1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_THUMBPRINT, 1), new IndexOptions().name("rt1ri1ct1"));
 
         super.createIndex(certificateCredentialsCollection, indexes);
@@ -138,15 +138,22 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
     }
 
     @Override
-    public Flowable<CertificateCredential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
-        return Flowable.fromPublisher(
+    public Maybe<CertificateCredential> findBySubjectAndIssuerAndSerialNumber(ReferenceType referenceType,
+                                                                              String referenceId,
+                                                                              String subjectDN,
+                                                                              String issuerDN,
+                                                                              String serialNumber) {
+        return Observable.fromPublisher(
                         certificateCredentialsCollection.find(
                                 and(
                                         eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                         eq(FIELD_REFERENCE_ID, referenceId),
-                                        eq(FIELD_USERNAME, username)
+                                        eq(FIELD_CERTIFICATE_SUBJECT_DN, subjectDN),
+                                        eq(FIELD_CERTIFICATE_ISSUER_DN, issuerDN),
+                                        eq(FIELD_CERTIFICATE_SERIAL_NUMBER, serialNumber)
                                 )
-                        ))
+                        ).first())
+                .firstElement()
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
     }
@@ -209,6 +216,7 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
         credential.setCertificateThumbprint(credentialMongo.getCertificateThumbprint());
         credential.setCertificateSubjectDN(credentialMongo.getCertificateSubjectDN());
         credential.setCertificateSerialNumber(credentialMongo.getCertificateSerialNumber());
+        credential.setCertificateIssuerDN(credentialMongo.getCertificateIssuerDN());
         credential.setCertificateExpiresAt(credentialMongo.getCertificateExpiresAt());
         credential.setCreatedAt(credentialMongo.getCreatedAt());
         credential.setUpdatedAt(credentialMongo.getUpdatedAt());
@@ -241,6 +249,7 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
         credentialMongo.setCertificateThumbprint(credential.getCertificateThumbprint());
         credentialMongo.setCertificateSubjectDN(credential.getCertificateSubjectDN());
         credentialMongo.setCertificateSerialNumber(credential.getCertificateSerialNumber());
+        credentialMongo.setCertificateIssuerDN(credential.getCertificateIssuerDN());
         credentialMongo.setCertificateExpiresAt(credential.getCertificateExpiresAt());
         credentialMongo.setCreatedAt(credential.getCreatedAt());
         credentialMongo.setUpdatedAt(credential.getUpdatedAt());

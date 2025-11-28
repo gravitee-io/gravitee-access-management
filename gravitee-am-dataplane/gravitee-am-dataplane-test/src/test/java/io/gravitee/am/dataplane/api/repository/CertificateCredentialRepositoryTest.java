@@ -58,13 +58,19 @@ public class CertificateCredentialRepositoryTest extends AbstractDataPlaneTest {
     }
 
     @Test
-    public void testFindByUsername() {
+    public void testFindBySubjectAndIssuerAndSerialNumber() {
         // create credential
         CertificateCredential credential = buildCertificateCredential();
         CertificateCredential credentialCreated = certificateCredentialRepository.create(credential).blockingGet();
 
         // fetch credential
-        var testObserver = certificateCredentialRepository.findByUsername(ReferenceType.DOMAIN, credential.getReferenceId(), credential.getUsername()).test();
+        TestObserver<CertificateCredential> testObserver = certificateCredentialRepository.findBySubjectAndIssuerAndSerialNumber(
+                ReferenceType.DOMAIN,
+                credential.getReferenceId(),
+                credential.getCertificateSubjectDN(),
+                credential.getCertificateIssuerDN(),
+                credential.getCertificateSerialNumber()
+        ).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -392,6 +398,7 @@ public class CertificateCredentialRepositoryTest extends AbstractDataPlaneTest {
         credential.setCertificatePem("-----BEGIN CERTIFICATE-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA" + randomStr + "\n-----END CERTIFICATE-----");
         credential.setCertificateThumbprint("thumbprint-" + randomStr);
         credential.setCertificateSubjectDN("CN=Test User " + randomStr);
+        credential.setCertificateIssuerDN("CN=Issuer " + randomStr);
         credential.setCertificateSerialNumber("serial-" + randomStr);
         credential.setCertificateExpiresAt(expirationDate);
         credential.setMetadata(metadata);

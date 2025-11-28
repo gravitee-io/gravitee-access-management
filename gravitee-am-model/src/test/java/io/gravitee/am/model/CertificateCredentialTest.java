@@ -57,12 +57,14 @@ class CertificateCredentialTest {
         credential.setCertificateThumbprint("abc123def456...");
         credential.setCertificateSubjectDN("CN=John Doe, O=Example Corp");
         credential.setCertificateSerialNumber("12345678901234567890");
+        credential.setCertificateIssuerDN("CN=Issuer");
         credential.setCertificateExpiresAt(expirationDate);
         
         assertThat(credential.getCertificatePem()).isEqualTo("-----BEGIN CERTIFICATE-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...\n-----END CERTIFICATE-----");
         assertThat(credential.getCertificateThumbprint()).isEqualTo("abc123def456...");
         assertThat(credential.getCertificateSubjectDN()).isEqualTo("CN=John Doe, O=Example Corp");
         assertThat(credential.getCertificateSerialNumber()).isEqualTo("12345678901234567890");
+        assertThat(credential.getCertificateIssuerDN()).isEqualTo("CN=Issuer");
         assertThat(credential.getCertificateExpiresAt()).isEqualTo(expirationDate);
     }
 

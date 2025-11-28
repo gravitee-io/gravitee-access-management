@@ -115,20 +115,24 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
     @Override
     public Maybe<CertificateCredential> findByThumbprint(ReferenceType referenceType, String referenceId, String thumbprint) {
         LOGGER.debug("findByThumbprint({},{},{})", referenceType, referenceId, thumbprint);
-        return Observable.fromPublisher(certificateCredentialRepository.findByThumbprint(referenceType.name(), referenceId, thumbprint))
+        return certificateCredentialRepository.findByThumbprint(referenceType.name(), referenceId, thumbprint)
                 .firstElement()
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
     }
 
     @Override
-    public Flowable<CertificateCredential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
-        LOGGER.debug("findByUsername({},{},{})", referenceType, referenceId, username);
-        return certificateCredentialRepository.findByUsername(referenceType.name(), referenceId, username)
+    public Maybe<CertificateCredential> findBySubjectAndIssuerAndSerialNumber(ReferenceType referenceType, String referenceId, String subjectDN, String issuerDN, String serialNumber) {
+        LOGGER.debug("findBySubjectAndIssuerAndSerialNumber({},{},{},{},{})", referenceType, referenceId, subjectDN, issuerDN, serialNumber);
+        return certificateCredentialRepository.findBySubjectAndIssuerAndSerialNumber(
+                referenceType.name(),
+                        referenceId,
+                        subjectDN,
+                        issuerDN,
+                        serialNumber)
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
     }
-
 
     @Override
     public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
@@ -193,7 +197,7 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
         credentialJdbc.setCertificateThumbprint(credential.getCertificateThumbprint());
         credentialJdbc.setCertificateSubjectDN(credential.getCertificateSubjectDN());
         credentialJdbc.setCertificateSerialNumber(credential.getCertificateSerialNumber());
-
+        credentialJdbc.setCertificateIssuerDN(credential.getCertificateIssuerDN());
         credentialJdbc.setCertificateExpiresAt(localDateConverter.convertTo(credential.getCertificateExpiresAt()));
         credentialJdbc.setCreatedAt(localDateConverter.convertTo(credential.getCreatedAt()));
         credentialJdbc.setUpdatedAt(localDateConverter.convertTo(credential.getUpdatedAt()));
@@ -221,6 +225,7 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
         credential.setCertificatePem(credentialJdbc.getCertificatePem());
         credential.setCertificateThumbprint(credentialJdbc.getCertificateThumbprint());
         credential.setCertificateSubjectDN(credentialJdbc.getCertificateSubjectDN());
+        credential.setCertificateIssuerDN(credentialJdbc.getCertificateIssuerDN());
         credential.setCertificateSerialNumber(credentialJdbc.getCertificateSerialNumber());
         credential.setCertificateExpiresAt(localDateConverter.convertFrom(credentialJdbc.getCertificateExpiresAt()));
         credential.setCreatedAt(localDateConverter.convertFrom(credentialJdbc.getCreatedAt()));

@@ -49,6 +49,26 @@ public interface CertificateCredentialService {
     Flowable<CertificateCredential> findByUserId(Domain domain, String userId);
 
     /**
+     * Find certificate credential for a user.
+     *
+     * @param domain the domain
+     * @param thumbprint the thumbprint
+     * @return maybe of certificate credential
+     */
+    Maybe<CertificateCredential> findByThumbprint(Domain domain, String thumbprint);
+
+    /**
+     * Find certificate credential for a user.
+     *
+     * @param domain the domain
+     * @param subjectDN the subjectDN
+     * @param issuerDN the issuerDN
+     * @param serialNumber the serialNumber
+     * @return maybe of certificate credential
+     */
+    Maybe<CertificateCredential> findByPrimaryMetadata(Domain domain, String subjectDN, String issuerDN, String serialNumber);
+
+    /**
      * Find a certificate credential by ID.
      *
      * @param domain the domain
@@ -56,15 +76,6 @@ public interface CertificateCredentialService {
      * @return maybe certificate credential
      */
     Maybe<CertificateCredential> findById(Domain domain, String id);
-
-    /**
-     * Find a certificate credential by username.
-     *
-     * @param domain the domain
-     * @param username the username
-     * @return maybe certificate credential
-     */
-    Flowable<CertificateCredential> findByDomainAndUsername(Domain domain, String username);
 
     /**
      * Delete a certificate credential.

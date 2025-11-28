@@ -43,6 +43,7 @@ public class CertificateCredentialMongo extends Auditable {
     private String certificateThumbprint;
     private String certificateSubjectDN;
     private String certificateSerialNumber;
+    private String certificateIssuerDN;
     private Date certificateExpiresAt;
 
     // Optional/extensible fields

@@ -50,6 +50,7 @@ public final class CertificateCredentialTestFixtures {
         credential.setCertificateThumbprint("thumbprint-" + randomStr);
         credential.setCertificateSubjectDN("CN=Test Certificate " + randomStr);
         credential.setCertificateSerialNumber("serial-" + randomStr);
+        credential.setCertificateIssuerDN("CN=Issuer" + randomStr);
         credential.setCertificateExpiresAt(new Date(System.currentTimeMillis() + 86400000)); // Tomorrow
         return credential;
     }
