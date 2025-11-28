@@ -20,8 +20,6 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.In
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.RefreshToken;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -41,7 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class IntrospectionEndpointTest extends RxWebTestBase {
 
     @InjectMocks
-    private IntrospectionEndpoint introspectionEndpointHandler = new IntrospectionEndpoint();
+    private IntrospectionEndpoint introspectionEndpointHandler;
 
     @Mock
     private IntrospectionService introspectionService;

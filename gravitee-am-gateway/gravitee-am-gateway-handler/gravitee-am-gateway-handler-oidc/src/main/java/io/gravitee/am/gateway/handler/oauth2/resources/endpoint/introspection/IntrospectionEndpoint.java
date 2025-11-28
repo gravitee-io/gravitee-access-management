@@ -16,11 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedTokenType;
-import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthorizationRequestEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.model.oidc.Client;
@@ -29,8 +26,6 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * OAuth 2.0 Token Introspection Endpoint
@@ -41,12 +36,7 @@ import org.slf4j.LoggerFactory;
  * @author GraviteeSource Team
  */
 public class IntrospectionEndpoint implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IntrospectionEndpoint.class);
-
     private IntrospectionService introspectionService;
-
-    public IntrospectionEndpoint() {
-    }
 
     public IntrospectionEndpoint(IntrospectionService introspectionService) {
         this.introspectionService = introspectionService;
@@ -54,6 +44,22 @@ public class IntrospectionEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
+        try {
+            IntrospectionRequest request = createRequest(context);
+            introspectionService
+                .introspect(request)
+                .doOnSuccess(introspectionResponse -> context.response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .end(Json.encodePrettily(introspectionResponse)))
+                .subscribe();
+        } catch (InvalidClientException | InvalidRequestException e) {
+            context.fail(e);
+        }
+    }
+
+    private IntrospectionRequest createRequest(RoutingContext context) {
         // If the protected resource uses OAuth 2.0 client credentials to
         // authenticate to the introspection endpoint and its credentials are
         // invalid, the authorization server responds with an HTTP 401
@@ -62,32 +68,17 @@ public class IntrospectionEndpoint implements Handler<RoutingContext> {
             throw new InvalidClientException();
         }
 
-        introspectionService
-                .introspect(createRequest(context))
-                .doOnSuccess(introspectionResponse -> context.response()
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .end(Json.encodePrettily(introspectionResponse)))
-                .subscribe();
-    }
-
-    private static IntrospectionRequest createRequest(RoutingContext context) {
         String token = context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY);
-        String tokenTypeHintParam = context.request().getParam(ConstantKeys.TOKEN_TYPE_HINT_PARAM_KEY);
         if (token == null) {
             throw new InvalidRequestException();
         }
-        if (tokenTypeHintParam == null) {
-            return IntrospectionRequest.withoutHint(token);
-        } else {
-            return IntrospectionRequest.withHint(token, tokenTypeHintParam);
 
-        }
+        String tokenTypeHint = context.request().getParam(ConstantKeys.TOKEN_TYPE_HINT_PARAM_KEY);
 
-    }
-
-    public void setIntrospectionService(IntrospectionService introspectionService) {
-        this.introspectionService = introspectionService;
+        return IntrospectionRequest.builder()
+            .token(token)
+            .tokenTypeHint(tokenTypeHint)
+            .callerClientId(client.getClientId())
+            .build();
     }
 }

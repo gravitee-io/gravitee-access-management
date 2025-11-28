@@ -32,6 +32,7 @@ let domain;
 let openIdConfiguration;
 let jwtBearerExtGrant;
 let basicAuth;
+let signingCertificateId;
 
 jest.setTimeout(200000);
 
@@ -62,7 +63,7 @@ beforeAll(async () => {
   };
   jwtBearerExtGrant = await createExtensionGrant(domain.id, accessToken, extGrantRequest);
 
-  await createServiceApplication(domain.id, accessToken, 'app', 'app', 'app').then((app) =>
+  const application = await createServiceApplication(domain.id, accessToken, 'app', 'app', 'app').then((app) =>
     updateApplication(
       domain.id,
       accessToken,
@@ -76,6 +77,7 @@ beforeAll(async () => {
       app.id,
     ),
   );
+  signingCertificateId = application.certificate;
   basicAuth = getBase64BasicAuth('app', 'app');
   await startDomain(domain.id, accessToken);
   await waitForDomainSync(domain.id, accessToken);
@@ -104,7 +106,7 @@ describe('Scenario: Application with extension grant jwt-bearer', () => {
 
     const responseJwt = response.body.access_token;
     const newJwt = parseJwt(responseJwt);
-    expect(newJwt.header['kid']).toBe('default');
+    expect(newJwt.header['kid']).toBe(signingCertificateId);
     expect(newJwt.header['typ']).toBe('JWT');
 
     expect(newJwt.payload['sub']).toBe(testCryptData.thirdParty.jwtPayload.sub);

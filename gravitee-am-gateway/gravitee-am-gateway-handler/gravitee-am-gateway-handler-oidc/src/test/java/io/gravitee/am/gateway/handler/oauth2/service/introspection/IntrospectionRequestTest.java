@@ -19,34 +19,32 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 public class IntrospectionRequestTest {
 
     @Test
     public void should_create_introspection_request(){
-        IntrospectionRequest request = IntrospectionRequest.withHint("token", "access_token");
+        IntrospectionRequest request = IntrospectionRequest.builder().token("token").tokenTypeHint(TokenTypeHint.ACCESS_TOKEN).build();
         Assertions.assertEquals("token", request.getToken());
         Assertions.assertEquals(TokenTypeHint.ACCESS_TOKEN, request.getTokenTypeHint().get());
     }
 
     @Test
     public void should_create_introspection_request_without_hint_if_its_unknown(){
-        IntrospectionRequest request = IntrospectionRequest.withHint("token", "unknown");
+        IntrospectionRequest request = IntrospectionRequest.builder().token("token").tokenTypeHint("unknown").build();
         Assertions.assertEquals("token", request.getToken());
         Assertions.assertTrue(request.getTokenTypeHint().isEmpty());
     }
 
     @Test
     public void should_create_introspection_request_without_hint(){
-        IntrospectionRequest request = IntrospectionRequest.withoutHint("token");
+        IntrospectionRequest request = IntrospectionRequest.builder().token("token").build();
         Assertions.assertEquals("token", request.getToken());
         Assertions.assertTrue(request.getTokenTypeHint().isEmpty());
     }
 
     @Test
     public void should_throw_ex_if_token_is_missing(){
-        Assertions.assertThrows(NullPointerException.class, () -> IntrospectionRequest.withoutHint(null));
+        Assertions.assertThrows(NullPointerException.class, () -> IntrospectionRequest.builder().build());
     }
 
 }
