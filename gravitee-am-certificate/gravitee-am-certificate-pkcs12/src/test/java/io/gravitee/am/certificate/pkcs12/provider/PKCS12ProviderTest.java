@@ -70,6 +70,8 @@ public class PKCS12ProviderTest {
     public void should_have_certificate_key_id() throws Exception {
         final var provider = loadProvider("/server-no-extension.p12", null);
         Assertions.assertEquals(CERTIFICATE_ID, provider.key().blockingGet().getKeyId());
+        Assertions.assertEquals(CERTIFICATE_ID, provider.keys().blockingFirst().getKid());
+        Assertions.assertEquals(CERTIFICATE_ID, provider.privateKey().blockingFirst().getKid());
     }
 
     private PKCS12Provider loadProvider(String certificate, Set<String> use) throws Exception {
