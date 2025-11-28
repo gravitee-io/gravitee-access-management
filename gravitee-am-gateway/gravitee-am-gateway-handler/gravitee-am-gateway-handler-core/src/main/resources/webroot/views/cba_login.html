@@ -29,23 +29,11 @@
     </div>
     <div class="section">
         <form class="form" role="form" id="login" method="post" th:action="${action}">
-            <div>
-                <input class="input-field" type="text" id="username" name="username"
-                       th:placeholder="#{login.label.username}"
-                       th:value="${param.username}" autofocus="autofocus" required
-                       th:readonly="${param.username != null}"
-                />
-            </div>
-
             <div class="checkbox" th:if="${rememberMeEnabled}">
                 <label for="rememberMe">
                     <input type="checkbox" id="rememberMe" name="rememberMe" />
                     <span th:text="#{login.label.remember.me}"/>
                 </label>
-            </div>
-
-            <div class="header-description">
-                <span th:text="#{cba.login.tips}"/>
             </div>
 
             <div id="cba-error" class="item error-text hide">

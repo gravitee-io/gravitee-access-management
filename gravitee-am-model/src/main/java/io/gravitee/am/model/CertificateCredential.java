@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,6 +44,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 public class CertificateCredential {
+    private static final String ISSUER_DN = "issuerDN";
 
     // Fields shared with other credential types (e.g., WebAuthn credentials)
     private String id;
@@ -71,5 +73,20 @@ public class CertificateCredential {
     private Date updatedAt;
     @Schema(type = "java.lang.Long")
     private Date accessedAt;
+
+    public String getIssuerDN() {
+        if (metadata == null) {
+            return null;
+        }
+        return metadata.get(ISSUER_DN);
+    }
+
+    public void setIssuerDN(String value){
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        metadata.put(ISSUER_DN, value);
+    }
+
 }
 

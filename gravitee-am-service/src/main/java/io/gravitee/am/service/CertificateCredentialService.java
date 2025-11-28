@@ -49,6 +49,15 @@ public interface CertificateCredentialService {
     Flowable<CertificateCredential> findByUserId(Domain domain, String userId);
 
     /**
+     * Find certificate credential for a user.
+     *
+     * @param domain the domain
+     * @param thumbprint the thumbprint
+     * @return maybe of certificate credential
+     */
+    Maybe<CertificateCredential> findByThumbprint(Domain domain, String thumbprint);
+
+    /**
      * Find a certificate credential by ID.
      *
      * @param domain the domain

@@ -280,6 +280,28 @@ public class CertificateCredentialServiceTest {
     }
 
     @Test
+    public void shouldFindByThumbprint() {
+        CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
+                DOMAIN, USER_ID, VALID_PEM_CERT);
+        credential.setId("credential-id");
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId(DOMAIN_ID);
+
+        when(certificateCredentialRepository.findByThumbprint(ReferenceType.DOMAIN, DOMAIN_ID, "thumbprint"))
+                .thenReturn(Maybe.just(credential));
+
+        TestObserver<CertificateCredential> testObserver = certificateCredentialService
+                .findByThumbprint(DOMAIN, "thumbprint")
+                .test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(cred -> cred.getId().equals("credential-id"));
+    }
+
+
+    @Test
     public void shouldFindById_wrongDomain() {
         // Test domain tenancy check - credential belongs to different domain
         CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
