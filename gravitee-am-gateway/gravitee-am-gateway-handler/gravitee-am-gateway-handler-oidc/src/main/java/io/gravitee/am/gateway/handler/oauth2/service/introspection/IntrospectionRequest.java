@@ -16,9 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.introspection;
 
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.RefreshToken;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -30,21 +28,25 @@ import java.util.Optional;
  */
 
 @Value
+@Builder
 public class IntrospectionRequest {
 
     @NonNull String token;
     TokenTypeHint tokenTypeHint;
+    String callerClientId;
 
     public Optional<TokenTypeHint> getTokenTypeHint() {
         return Optional.ofNullable(tokenTypeHint);
     }
 
-    public static IntrospectionRequest withHint(String token, String hint){
-        return new IntrospectionRequest(token, TokenTypeHint.toOptional(hint).orElse(null));
+    public static class IntrospectionRequestBuilder {
+        public IntrospectionRequestBuilder tokenTypeHint(String hint) {
+            this.tokenTypeHint = TokenTypeHint.toOptional(hint).orElse(null);
+            return this;
+        }
+        public IntrospectionRequestBuilder tokenTypeHint(TokenTypeHint hint) {
+            this.tokenTypeHint = hint;
+            return this;
+        }
     }
-
-    public static IntrospectionRequest withoutHint(String token){
-        return new IntrospectionRequest(token, null);
-    }
-
 }

@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.oauth2;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -25,5 +24,9 @@ import io.reactivex.rxjava3.core.Single;
  */
 public interface IntrospectionTokenService {
 
-    Maybe<JWT> introspect(String token, boolean offlineVerification);
+    default Maybe<JWT> introspect(String token, boolean offlineVerification) {
+        return introspect(token, offlineVerification, null);
+    }
+
+    Maybe<JWT> introspect(String token, boolean offlineVerification, String callerClientId);
 }

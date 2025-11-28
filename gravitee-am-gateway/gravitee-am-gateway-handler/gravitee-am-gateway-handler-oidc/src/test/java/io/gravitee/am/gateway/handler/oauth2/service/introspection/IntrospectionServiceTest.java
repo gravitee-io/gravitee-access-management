@@ -65,10 +65,10 @@ public class IntrospectionServiceTest {
         AccessToken accessToken = new AccessToken(token);
         accessToken.setSubject("user");
         accessToken.setClientId("client-id");
-        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
+        when(tokenService.introspect("token", "client-id")).thenReturn(Maybe.just(accessToken));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
 
-        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").callerClientId("client-id").build();
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -85,10 +85,10 @@ public class IntrospectionServiceTest {
         accessToken.setClientId("client-id");
         accessToken.setCreatedAt(new Date(Instant.now().toEpochMilli()));
         accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()));
-        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
+        when(tokenService.introspect("token", "client-id")).thenReturn(Maybe.just(accessToken));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.error(new InvalidGISException("invalid gis")));
 
-        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").callerClientId("client-id").build();
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -105,9 +105,9 @@ public class IntrospectionServiceTest {
         AccessToken accessToken = new AccessToken(token);
         accessToken.setSubject("client-id");
         accessToken.setClientId("client-id");
-        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
+        when(tokenService.introspect("token", (String) null)).thenReturn(Maybe.just(accessToken));
 
-        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").build();
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -125,9 +125,9 @@ public class IntrospectionServiceTest {
         accessToken.setCreatedAt(new Date());
         accessToken.setExpireAt(new Date());
         accessToken.setAdditionalInformation(Collections.singletonMap("custom-claim", "test"));
-        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
+        when(tokenService.introspect("token", (String) null)).thenReturn(Maybe.just(accessToken));
 
-        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").build();
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -145,9 +145,9 @@ public class IntrospectionServiceTest {
         accessToken.setCreatedAt(new Date());
         accessToken.setExpireAt(new Date());
         accessToken.setAdditionalInformation(Collections.singletonMap(Claims.AUD, "test-aud"));
-        when(tokenService.introspect(token)).thenReturn(Maybe.just(accessToken));
+        when(tokenService.introspect(token, (String) null)).thenReturn(Maybe.just(accessToken));
 
-        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").build();
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -166,11 +166,11 @@ public class IntrospectionServiceTest {
         accessToken.setCreatedAt(new Date());
         accessToken.setExpireAt(new Date());
         accessToken.setAdditionalInformation(Collections.singletonMap(Claims.AUD, "test-aud"));
-        when(tokenService.introspect(token)).thenReturn(Maybe.just(accessToken));
+        when(tokenService.introspect(token, "client-id")).thenReturn(Maybe.just(accessToken));
 
         ReflectionTestUtils.setField(introspectionService, "allowAudience", true);
 
-        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").callerClientId("client-id").build();
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);

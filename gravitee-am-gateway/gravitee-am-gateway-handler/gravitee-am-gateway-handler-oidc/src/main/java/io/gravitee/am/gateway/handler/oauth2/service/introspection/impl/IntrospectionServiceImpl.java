@@ -52,8 +52,8 @@ public class IntrospectionServiceImpl implements IntrospectionService {
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest request) {
         return request.getTokenTypeHint()
-                .map(hint -> tokenService.introspect(request.getToken(), hint))
-                .orElseGet(() -> tokenService.introspect(request.getToken()))
+                .map(hint -> tokenService.introspect(request.getToken(), hint, request.getCallerClientId()))
+                .orElseGet(() -> tokenService.introspect(request.getToken(), request.getCallerClientId()))
                 .flatMapSingle(token -> {
                     if (token.getSubject() != null && !token.getSubject().equals(token.getClientId())) {
                         return subjectManager

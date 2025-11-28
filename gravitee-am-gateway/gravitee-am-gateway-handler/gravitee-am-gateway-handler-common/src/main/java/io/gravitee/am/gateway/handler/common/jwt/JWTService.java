@@ -20,6 +20,8 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.function.Supplier;
+
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,12 +72,22 @@ public interface JWTService {
     Single<String> encodeAuthorization(JWT jwt, Client client);
 
     /**
+     * Decode JWT signed string representation to JWT using certificate from hint claim or client
+     * @param jwt JWT to decode
+     * @param getDefaultCertificateId supplier of ID of certificate to use to decode the token if <code>kid</code> header parameter is not set
+     * @return JWT object
+     */
+    Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType);
+
+    /**
      * Decode JWT signed string representation to JWT
      * @param jwt JWT to decode
      * @param client client which want to decode the token
      * @return JWT object
      */
-    Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType);
+    default Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
+        return decodeAndVerify(jwt, client::getCertificate, tokenType);
+    }
 
     /**
      * Decode JWT signed string representation to JWT using the specified certificate provider.

@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class ProtectedResourceManagerTest {
+public class ProtectedResourceManagerImplTest {
     @InjectMocks
     private ProtectedResourceManagerImpl manager = new ProtectedResourceManagerImpl();
 
@@ -619,5 +619,151 @@ public class ProtectedResourceManagerTest {
         Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2");
+    }
+
+    @Test
+    public void getByIdentifier_shouldReturnEmptySetWhenIdentifierIsNull() {
+        Set<ProtectedResource> resources = manager.getByIdentifier(null);
+        assertThat(resources).isEmpty();
+    }
+
+    @Test
+    public void getByIdentifier_shouldReturnMatchingResource() {
+        // Setup protected resource with matching resource identifiers
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1", "resource://api2"));
+
+        manager.deploy(resource);
+
+        // Request resources for matching identifier
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api1");
+
+        assertThat(result).hasSize(1);
+        assertThat(result).extracting(ProtectedResource::getId).containsExactly("resource1");
+    }
+
+    @Test
+    public void getByIdentifier_shouldReturnMultipleResourcesMatchingSameIdentifier() {
+        // Setup first protected resource
+        ProtectedResource resource1 = new ProtectedResource();
+        resource1.setId("resource1");
+        resource1.setDomainId("domain_id");
+        resource1.setResourceIdentifiers(Arrays.asList("resource://api1", "resource://api2"));
+
+        // Setup second protected resource (also has resource://api1)
+        ProtectedResource resource2 = new ProtectedResource();
+        resource2.setId("resource2");
+        resource2.setDomainId("domain_id");
+        resource2.setResourceIdentifiers(Arrays.asList("resource://api1", "resource://api3"));
+
+        manager.deploy(resource1);
+        manager.deploy(resource2);
+
+        // Request resources for identifier that matches both
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api1");
+
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(ProtectedResource::getId)
+                .containsExactlyInAnyOrder("resource1", "resource2");
+    }
+
+    @Test
+    public void getByIdentifier_shouldReturnEmptySetWhenNoMatchingResources() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        manager.deploy(resource);
+
+        // Request resources for non-matching identifier
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api99");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void getByIdentifier_shouldHandleResourceWithNullResourceIdentifiers() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(null);
+
+        manager.deploy(resource);
+
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api1");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void getByIdentifier_shouldMatchResourceWithMultipleIdentifiers() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1", "resource://api2", "resource://api3"));
+
+        manager.deploy(resource);
+
+        // Request with one of the identifiers
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api2");
+
+        assertThat(result).hasSize(1);
+        assertThat(result).extracting(ProtectedResource::getId).containsExactly("resource1");
+    }
+
+    @Test
+    public void getByIdentifier_shouldFilterByDomainId() {
+        // Setup resource in correct domain
+        ProtectedResource resource1 = new ProtectedResource();
+        resource1.setId("resource1");
+        resource1.setDomainId("domain_id");
+        resource1.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        // Setup resource in different domain (should be filtered out)
+        ProtectedResource resource2 = new ProtectedResource();
+        resource2.setId("resource2");
+        resource2.setDomainId("other_domain");
+        resource2.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        manager.deploy(resource1);
+        manager.deploy(resource2);
+
+        // Request resources - should only return resource from domain_id
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api1");
+
+        assertThat(result).hasSize(1);
+        assertThat(result).extracting(ProtectedResource::getId).containsExactly("resource1");
+    }
+
+    @Test
+    public void getByIdentifier_shouldHandleEmptyResourceIdentifiers() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Collections.emptyList());
+
+        manager.deploy(resource);
+
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api1");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void getByIdentifier_shouldHandleResourceWithNullDomainId() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId(null);
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        manager.deploy(resource);
+
+        // Should be filtered out because domainId doesn't match
+        Set<ProtectedResource> result = manager.getByIdentifier("resource://api1");
+
+        assertThat(result).isEmpty();
     }
 }
