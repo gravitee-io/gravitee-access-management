@@ -280,6 +280,56 @@ public class CertificateCredentialServiceTest {
     }
 
     @Test
+    public void shouldFindByThumbprint() {
+        CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
+                DOMAIN, USER_ID, VALID_PEM_CERT);
+        credential.setId("credential-id");
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId(DOMAIN_ID);
+
+        when(certificateCredentialRepository.findByThumbprint(ReferenceType.DOMAIN, DOMAIN_ID, "thumbprint"))
+                .thenReturn(Maybe.just(credential));
+
+        TestObserver<CertificateCredential> testObserver = certificateCredentialService
+                .findByThumbprint(DOMAIN, "thumbprint")
+                .test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(cred -> cred.getId().equals("credential-id"));
+    }
+
+    @Test
+    public void shouldFindByPrimaryMetadata() {
+        CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
+                DOMAIN, USER_ID, VALID_PEM_CERT);
+        credential.setId("credential-id");
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId(DOMAIN_ID);
+
+        when(certificateCredentialRepository.findBySubjectAndIssuerAndSerialNumber(
+                ReferenceType.DOMAIN,
+                DOMAIN_ID,
+                credential.getCertificateSubjectDN(),
+                credential.getCertificateIssuerDN(),
+                credential.getCertificateSerialNumber()))
+                .thenReturn(Maybe.just(credential));
+
+        TestObserver<CertificateCredential> testObserver = certificateCredentialService
+                .findByPrimaryMetadata(DOMAIN, credential.getCertificateSubjectDN(),
+                        credential.getCertificateIssuerDN(),
+                        credential.getCertificateSerialNumber())
+                .test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(cred -> cred.getId().equals("credential-id"));
+    }
+
+
+    @Test
     public void shouldFindById_wrongDomain() {
         // Test domain tenancy check - credential belongs to different domain
         CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
@@ -330,27 +380,6 @@ public class CertificateCredentialServiceTest {
         testObserver.assertNoErrors();
 
         verify(certificateCredentialRepository, times(1)).delete("credential-id");
-    }
-
-    @Test
-    public void shouldFindByDomainAndUsername() {
-        CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
-                DOMAIN, USER_ID, VALID_PEM_CERT);
-        credential.setId("credential-id");
-        credential.setReferenceType(ReferenceType.DOMAIN);
-        credential.setReferenceId(DOMAIN_ID);
-
-        when(certificateCredentialRepository.findByUsername(ReferenceType.DOMAIN, DOMAIN_ID, "credential-id"))
-                .thenReturn(Flowable.just(credential));
-
-        TestSubscriber<CertificateCredential> testObserver = certificateCredentialService
-                .findByDomainAndUsername(DOMAIN, "credential-id")
-                .test();
-
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(cred -> cred.getId().equals("credential-id"));
     }
 
     @Test

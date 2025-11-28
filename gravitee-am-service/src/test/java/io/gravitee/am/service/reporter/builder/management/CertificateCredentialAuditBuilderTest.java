@@ -164,6 +164,7 @@ class CertificateCredentialAuditBuilderTest {
                 .certificateThumbprint("thumbprint-123")
                 .certificateSubjectDN("CN=test")
                 .certificateSerialNumber("serial-123")
+                .certificateIssuerDN("CN=issuer")
                 .certificatePem("-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----")
                 .certificateExpiresAt(new Date(System.currentTimeMillis() + 86400000))
                 .createdAt(new Date())

@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,6 +44,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 public class CertificateCredential {
+    private static final String ISSUER_DN = "issuerDN";
 
     // Fields shared with other credential types (e.g., WebAuthn credentials)
     private String id;
@@ -54,15 +56,16 @@ public class CertificateCredential {
     private String userAgent;
 
     // X.509 certificate-specific fields (PEM format)
-    private String certificatePem; // PEM-encoded certificate (required)
-    private String certificateThumbprint; // SHA-256 thumbprint (required)
-    private String certificateSubjectDN; // Subject Distinguished Name (required)
-    private String certificateSerialNumber; // Certificate serial number (required)
+    private String certificatePem;
+    private String certificateThumbprint;
+    private String certificateSubjectDN;
+    private String certificateSerialNumber;
+    private String certificateIssuerDN;
     @Schema(type = "java.lang.Long")
     private Date certificateExpiresAt; // Certificate expiration date (required)
 
     // Optional/extensible fields
-    private Map<String, String> metadata; // For optional attributes (issuerDN, keyUsage, extendedKeyUsage, subjectAlternativeNames, certificateChain, etc.)
+    private Map<String, String> metadata; // For optional attributes (keyUsage, extendedKeyUsage, subjectAlternativeNames, certificateChain, etc.)
 
     // Timestamps
     @Schema(type = "java.lang.Long")
@@ -71,5 +74,6 @@ public class CertificateCredential {
     private Date updatedAt;
     @Schema(type = "java.lang.Long")
     private Date accessedAt;
+
 }
 

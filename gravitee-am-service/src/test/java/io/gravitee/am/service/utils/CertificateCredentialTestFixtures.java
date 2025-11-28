@@ -60,6 +60,7 @@ public final class CertificateCredentialTestFixtures {
         credential.setCertificatePem(certificatePem);
         credential.setCertificateThumbprint("thumbprint-" + randomStr);
         credential.setCertificateSubjectDN("CN=Test User " + randomStr);
+        credential.setCertificateIssuerDN("CN=issuer" + randomStr);
         credential.setCertificateSerialNumber("serial-" + randomStr);
         credential.setCertificateExpiresAt(expirationDate);
         credential.setMetadata(metadata);
@@ -85,6 +86,7 @@ public final class CertificateCredentialTestFixtures {
         credential.setUserId(userId);
         credential.setCertificateThumbprint("thumbprint-" + randomStr);
         credential.setCertificateSubjectDN("CN=Test Certificate " + randomStr);
+        credential.setCertificateIssuerDN("CN=issuer" + randomStr);
         credential.setCertificateSerialNumber("serial-" + randomStr);
         credential.setCertificateExpiresAt(new Date(System.currentTimeMillis() + 86400000)); // Tomorrow
         return credential;

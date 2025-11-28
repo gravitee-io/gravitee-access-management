@@ -53,6 +53,8 @@ public class JdbcCertificateCredential {
     private String certificateSubjectDN;
     @Column("certificate_serial_number")
     private String certificateSerialNumber;
+    @Column("certificate_issuer_dn")
+    private String certificateIssuerDN;
     @Column("certificate_expires_at")
     private LocalDateTime certificateExpiresAt;
 

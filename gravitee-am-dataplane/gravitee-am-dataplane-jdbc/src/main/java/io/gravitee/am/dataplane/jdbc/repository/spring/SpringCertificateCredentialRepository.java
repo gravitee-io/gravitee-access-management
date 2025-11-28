@@ -17,6 +17,7 @@ package io.gravitee.am.dataplane.jdbc.repository.spring;
 
 import io.gravitee.am.dataplane.jdbc.repository.model.JdbcCertificateCredential;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
@@ -33,10 +34,21 @@ public interface SpringCertificateCredentialRepository extends RxJava3CrudReposi
     @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and certificate_thumbprint = :thumbprint")
     Flowable<JdbcCertificateCredential> findByThumbprint(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("thumbprint") String thumbprint);
 
-    @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and username = :username")
-    Flowable<JdbcCertificateCredential> findByUsername(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("username") String username);
+    @Query("""
+            SELECT * FROM cert_credentials c WHERE 
+                 c.reference_id = :refId AND
+                 c.reference_type = :refType AND
+                 c.certificate_subject_dn = :subjectDN AND
+                 c.certificate_issuer_dn = :issuerDN AND
+                 c.certificate_serial_number = :serialNumber
+            """)
+    Maybe<JdbcCertificateCredential> findBySubjectAndIssuerAndSerialNumber(@Param("refType") String referenceType,
+                                                                           @Param("refId") String referenceId,
+                                                                           @Param("subjectDN") String subjectDN,
+                                                                           @Param("issuerDN") String issuerDN,
+                                                                           @Param("serialNumber") String serialNumber);
 
     @Query("Select * from cert_credentials c where c.reference_id = :refId and c.reference_type = :refType and user_id = :userId and id = :id")
-    io.reactivex.rxjava3.core.Maybe<JdbcCertificateCredential> findByReferenceTypeAndReferenceIdAndUserIdAndId(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("userId") String userId, @Param("id") String id);
+    Maybe<JdbcCertificateCredential> findByReferenceTypeAndReferenceIdAndUserIdAndId(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("userId") String userId, @Param("id") String id);
 }
 
