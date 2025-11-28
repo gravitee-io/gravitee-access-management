@@ -31,6 +31,8 @@ public interface ProtectedResourceManager extends Service {
 
     ProtectedResource get(String protectedResourceId);
 
+    Set<ProtectedResource> getByIdentifier(String identifier);
+
     /**
      * Get scopes for the given resource identifiers from protected resources in the specified domain
      *

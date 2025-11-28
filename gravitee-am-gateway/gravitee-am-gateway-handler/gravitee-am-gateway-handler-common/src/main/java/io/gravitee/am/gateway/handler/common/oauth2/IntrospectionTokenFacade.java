@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.oauth2;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -26,12 +25,20 @@ public class IntrospectionTokenFacade {
     private final IntrospectionTokenService refreshTokenIntrospectionTokenService;
 
     public Maybe<JWT> introspectAccessToken(String token) {
-        return accessTokenIntrospectionTokenService.introspect(token, false)
-                .onErrorResumeWith(Maybe.empty());
+        return introspectAccessToken(token, null);
     }
 
     public Maybe<JWT> introspectRefreshToken(String token) {
-        return refreshTokenIntrospectionTokenService.introspect(token, false)
+        return introspectRefreshToken(token, null);
+    }
+
+    public Maybe<JWT> introspectAccessToken(String token, String callerClientId) {
+        return accessTokenIntrospectionTokenService.introspect(token, false, callerClientId)
+                .onErrorResumeWith(Maybe.empty());
+    }
+
+    public Maybe<JWT> introspectRefreshToken(String token, String callerClientId) {
+        return refreshTokenIntrospectionTokenService.introspect(token, false, callerClientId)
                 .onErrorResumeWith(Maybe.empty());
     }
 }

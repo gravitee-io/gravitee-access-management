@@ -100,8 +100,8 @@ public class TokenServiceImplTest {
     public void when_access_token_is_not_found_should_be_returned_refresh_token() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.empty());
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         tokenService.introspect("token").test()
                 .assertValue(token -> token.getValue().equals("id"));
     }
@@ -205,8 +205,8 @@ public class TokenServiceImplTest {
     public void when_access_token_is_found_should_be_returned() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.just(jwt));
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token").test()
                 .assertValue(token -> token.getValue().equals("id"));
 
@@ -214,8 +214,8 @@ public class TokenServiceImplTest {
 
     @Test
     public void when_none_token_is_found_should_return_empty() {
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.empty());
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token").test()
                 .assertComplete()
                 .assertNoValues();
@@ -226,8 +226,8 @@ public class TokenServiceImplTest {
     public void when_hint_is_access_token_and_access_token_is_found_should_be_returned() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.just(jwt));
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token", TokenTypeHint.ACCESS_TOKEN).test()
                 .assertValue(token -> token.getValue().equals("id"));
     }
@@ -236,8 +236,8 @@ public class TokenServiceImplTest {
     public void when_hint_is_access_token_and_access_token_is_not_found_should_be_return_refresh_token() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.empty());
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         tokenService.introspect("token", TokenTypeHint.ACCESS_TOKEN).test()
                 .assertValue(token -> token instanceof RefreshToken && token.getValue().equals("id"));
     }
@@ -246,8 +246,8 @@ public class TokenServiceImplTest {
     public void when_hint_is_access_token_and_access_and_refresh_tokens_are_not_found_should_return_empty() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.empty());
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token", TokenTypeHint.ACCESS_TOKEN).test()
                 .assertComplete()
                 .assertNoValues();
@@ -257,8 +257,8 @@ public class TokenServiceImplTest {
     public void when_hint_is_refresh_token_and_refresh_token_is_found_should_be_returned() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.empty());
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test()
                 .assertValue(token -> token.getValue().equals("id"));
     }
@@ -267,8 +267,8 @@ public class TokenServiceImplTest {
     public void when_hint_is_refresh_token_and_refresh_token_is_not_found_should_be_return_access_token() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.just(jwt));
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test()
                 .assertValue(token -> token instanceof AccessToken && token.getValue().equals("id"));
     }
@@ -277,8 +277,8 @@ public class TokenServiceImplTest {
     public void when_hint_is_refresh_token_and_access_and_refresh_tokens_are_not_found_should_return_empty() {
         JWT jwt = new JWT();
         jwt.setJti("id");
-        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.any())).thenReturn(Maybe.empty());
-        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test()
                 .assertComplete()
                 .assertNoValues();
