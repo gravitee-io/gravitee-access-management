@@ -269,16 +269,18 @@ public class CommonConfiguration {
     @Qualifier("AccessTokenIntrospection")
     public IntrospectionTokenService introspectionAccessTokenService(JWTService jwtService,
                                                                      ClientSyncService clientSyncService,
+                                                                     ProtectedResourceManager protectedResourceManager,
                                                                      AccessTokenRepository accessTokenRepository) {
-        return new IntrospectionAccessTokenService(jwtService, clientSyncService, accessTokenRepository);
+        return new IntrospectionAccessTokenService(jwtService, clientSyncService, protectedResourceManager, environment, accessTokenRepository);
     }
 
     @Bean
     @Qualifier("RefreshTokenIntrospection")
     public IntrospectionTokenService introspectionRefreshTokenService(JWTService jwtService,
                                                                       ClientSyncService clientSyncService,
+                                                                      ProtectedResourceManager protectedResourceManager,
                                                                       RefreshTokenRepository refreshTokenRepository) {
-        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, refreshTokenRepository);
+        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, protectedResourceManager, environment, refreshTokenRepository);
     }
 
     @Bean

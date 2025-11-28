@@ -145,24 +145,44 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Maybe<Token> introspect(String token) {
-        return introspectionTokenFacade.introspectAccessToken(token)
-                .map(this::convertAccessToken)
-                .switchIfEmpty(introspectionTokenFacade.introspectRefreshToken(token).map(this::convertRefreshToken));
-    }
-
-    @Override
     public Maybe<Token> introspect(String token, TokenTypeHint hint) {
         switch (hint) {
             case REFRESH_TOKEN:
-                return introspectionTokenFacade.introspectRefreshToken(token)
-                        .map(this::convertRefreshToken)
-                        .switchIfEmpty(introspectionTokenFacade.introspectAccessToken(token).map(this::convertAccessToken));
+                return introspectAsRefreshTokenFirst(token, null);
             case ACCESS_TOKEN:
-                return introspect(token);
+                return introspectAsAccessTokenFirst(token, null);
             default:
                 return Maybe.empty();
         }
+    }
+
+    @Override
+    public Maybe<Token> introspect(String token, TokenTypeHint hint, String callerClientId) {
+        switch (hint) {
+            case REFRESH_TOKEN:
+                return introspectAsRefreshTokenFirst(token, callerClientId);
+            case ACCESS_TOKEN:
+                return introspectAsAccessTokenFirst(token, callerClientId);
+            default:
+                return Maybe.empty();
+        }
+    }
+
+    @Override
+    public Maybe<Token> introspect(String token, String callerClientId) {
+        return introspectAsAccessTokenFirst(token, callerClientId);
+    }
+
+    private Maybe<Token> introspectAsAccessTokenFirst(String token, String callerClientId) {
+        return introspectionTokenFacade.introspectAccessToken(token, callerClientId)
+                .map(this::convertAccessToken)
+                .switchIfEmpty(introspectionTokenFacade.introspectRefreshToken(token, callerClientId).map(this::convertRefreshToken));
+    }
+
+    private Maybe<Token> introspectAsRefreshTokenFirst(String token, String callerClientId) {
+        return introspectionTokenFacade.introspectRefreshToken(token, callerClientId)
+                .map(this::convertRefreshToken)
+                .switchIfEmpty(introspectionTokenFacade.introspectAccessToken(token, callerClientId).map(this::convertAccessToken));
     }
 
     @Override

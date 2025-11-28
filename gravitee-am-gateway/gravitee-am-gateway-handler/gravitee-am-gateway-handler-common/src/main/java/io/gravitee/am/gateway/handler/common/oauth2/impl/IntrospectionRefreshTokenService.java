@@ -19,10 +19,11 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
+import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
 
@@ -31,8 +32,10 @@ public class IntrospectionRefreshTokenService extends BaseIntrospectionTokenServ
 
     public IntrospectionRefreshTokenService(JWTService jwtService,
                                             ClientSyncService clientService,
+                                            ProtectedResourceManager protectedResourceManager,
+                                            Environment environment,
                                             RefreshTokenRepository refreshTokenRepository) {
-        super(REFRESH_TOKEN, jwtService, clientService);
+        super(REFRESH_TOKEN, jwtService, clientService, protectedResourceManager, environment);
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
@@ -42,7 +45,7 @@ public class IntrospectionRefreshTokenService extends BaseIntrospectionTokenServ
     }
 
     @Override
-    public Maybe<JWT> introspect(String token, boolean offlineVerification) {
-        return introspectToken(token, offlineVerification);
+    public Maybe<JWT> introspect(String token, boolean offlineVerification, String callerClientId) {
+        return introspectToken(token, offlineVerification, callerClientId);
     }
 }

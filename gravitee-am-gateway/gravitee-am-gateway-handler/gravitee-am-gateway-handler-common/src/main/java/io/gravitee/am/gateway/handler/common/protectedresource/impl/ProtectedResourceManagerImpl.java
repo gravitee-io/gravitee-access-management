@@ -164,6 +164,20 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     }
 
     @Override
+    public Set<ProtectedResource> getByIdentifier(String identifier) {
+        if (identifier == null) {
+            return Collections.emptySet();
+        }
+
+        return resources.values()
+                .stream()
+                .filter(resource -> domain.getId().equals(resource.getDomainId())
+                        && resource.getResourceIdentifiers() != null
+                        && resource.getResourceIdentifiers().contains(identifier))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Set<String> getScopesForResources(Set<String> requestedResources) {
         if (requestedResources == null || requestedResources.isEmpty()) {
             return Collections.emptySet();
