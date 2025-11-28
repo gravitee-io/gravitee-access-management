@@ -184,10 +184,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
         credential.setCertificateSubjectDN(certFields.subjectDN);
         credential.setCertificateSerialNumber(certFields.serialNumber);
         credential.setCertificateExpiresAt(certFields.expiresAt);
-
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("issuerDN", certFields.issuerDN);
-        credential.setMetadata(metadata);
+        credential.setIssuerDN(certFields.issuerDN);
 
         Date now = new Date();
         credential.setCreatedAt(now);
@@ -236,6 +233,17 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
                 .onErrorResumeNext(error -> {
                     log.error("Failed to find certificate credentials for user {}", userId, error);
                     return Flowable.error(new TechnicalManagementException("Failed to find certificate credentials", error));
+                });
+    }
+
+    @Override
+    public Maybe<CertificateCredential> findByThumbprint(Domain domain, String thumbprint) {
+        log.debug("Find certificate credentials for domain {} and thumbprint {}", domain.getId(), thumbprint);
+        return dataPlaneRegistry.getCertificateCredentialRepository(domain)
+                .findByThumbprint(ReferenceType.DOMAIN, domain.getId(), thumbprint)
+                .onErrorResumeNext(error -> {
+                    log.error("Failed to find certificate credentials for thumbprint {}", thumbprint, error);
+                    return Maybe.error(new TechnicalManagementException("Failed to find certificate credentials", error));
                 });
     }
 
