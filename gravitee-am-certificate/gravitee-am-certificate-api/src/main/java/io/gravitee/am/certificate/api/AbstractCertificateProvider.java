@@ -16,14 +16,9 @@
 package io.gravitee.am.certificate.api;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.KeyOperation;
-import com.nimbusds.jose.jwk.KeyUse;
-import com.nimbusds.jose.util.Base64;
 import io.gravitee.am.certificate.api.jwk.JwkNimbusConverter;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
-import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
-import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +73,8 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
             keystore.load(is, getStorepass().toCharArray());
             // generate JWK set
             // TODO : should be moved to the gravitee-am-jwt module
-            jwkSet = JWKSet.load(keystore, name -> getKeypass().toCharArray());
+            String keyId = certificateMetadata.getMetadata().get(CertificateMetadata.ID).toString();
+            jwkSet = loadJwkSet(keystore, keyId);
             keys = getKeys();
             // generate Key pair
             java.security.Key key = keystore.getKey(getAlias(), getKeypass().toCharArray());
@@ -88,7 +84,6 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 // create key pair
                 KeyPair keyPair = new KeyPair(cert.getPublicKey(), (PrivateKey) key);
                 // create key
-                String keyId = certificateMetadata.getMetadata().get(CertificateMetadata.ID).toString();
                 certificateKey = new DefaultKey(keyId, keyPair);
                 // update metadata
                 certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
@@ -141,7 +136,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
         // CertificateProvider only manage RSA key.
         com.nimbusds.jose.jwk.JWK nimbusJwk = new com.nimbusds.jose.jwk.RSAKey.Builder((RSAPublicKey) ((KeyPair) certificateKey.getValue()).getPublic())
                 .privateKey((RSAPrivateKey) ((KeyPair) certificateKey.getValue()).getPrivate())
-                .keyID(getAlias())
+                .keyID(certificateKey.getKeyId())
                 .build();
         List<JWK> jwks = converter(nimbusJwk, true, getUse(), signatureAlgorithm()).createJwk().toList();
         return Flowable.fromIterable(jwks);
@@ -201,6 +196,23 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName().equals(signingAlgorithm))
                 .findFirst()
                 .orElse(SignatureAlgorithm.RS256);
+    }
+
+    private JWKSet loadJwkSet(KeyStore keystore, String keyId) throws KeyStoreException {
+        List<com.nimbusds.jose.jwk.JWK> overridenKeys = JWKSet
+                .load(keystore, name -> getKeypass().toCharArray())
+                .getKeys()
+                .stream()
+                .map(jwk -> {
+                    if (jwk instanceof com.nimbusds.jose.jwk.RSAKey rsaKey) {
+                        return new com.nimbusds.jose.jwk.RSAKey.Builder(rsaKey).keyID(keyId).build();
+                    } else if (jwk instanceof com.nimbusds.jose.jwk.ECKey ecKey) {
+                        return new com.nimbusds.jose.jwk.ECKey.Builder(ecKey).keyID(keyId).build();
+                    }
+                    return jwk;
+                })
+                .collect(Collectors.toList());
+        return new JWKSet(overridenKeys);
     }
 
     @Override
