@@ -64,6 +64,7 @@ public abstract class OTPFactorProvider implements FactorProvider {
                 if (!code.equals(otpCode)) {
                     log.debug("Invalid 2FA code, not the same value");
                     emitter.onError(invalid2faCodeException());
+                    return;
                 }
                 // get last connection date of the user to test code
                 Long expireAt = enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class);
@@ -76,7 +77,8 @@ public abstract class OTPFactorProvider implements FactorProvider {
                     } else {
                         log.debug("Invalid 2FA code, expiry date is null");
                     }
-                    emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
+                    emitter.onError(invalid2faCodeException());
+                    return;
                 }
                 emitter.onComplete();
             } catch (Exception ex) {
