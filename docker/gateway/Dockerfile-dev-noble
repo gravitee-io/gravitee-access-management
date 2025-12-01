@@ -18,7 +18,7 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
-RUN apk add --update zip unzip
+RUN apk add --update unzip
 
 ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 

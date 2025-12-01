@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM alpine:3.14 AS build-env
+FROM alpine:3.22 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
-RUN apk add --update zip unzip
+RUN apk add --update --no-cache unzip
 
 ADD ./gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
