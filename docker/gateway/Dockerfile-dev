@@ -19,6 +19,7 @@ LABEL maintainer="contact@graviteesource.com"
 ARG GRAVITEEAM_VERSION=0
 ARG JATTACH_VERSION=2.2
 
+<<<<<<< HEAD
 RUN apk add --no-cache --virtual .build-deps zip unzip build-base wget ca-certificates \
     && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
     && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
@@ -30,6 +31,9 @@ RUN apk add --no-cache --virtual .build-deps zip unzip build-base wget ca-certif
     && install -m 0755 "${JATTACH_SRC}" /tmp/jattach \
     && rm -rf /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz \
     && apk del .build-deps
+=======
+RUN apk add --update --no-cache unzip
+>>>>>>> dede27f4e (chore(docker): refactor Dockerfile for GW and MAPI to reduce number of layer)
 
 ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
