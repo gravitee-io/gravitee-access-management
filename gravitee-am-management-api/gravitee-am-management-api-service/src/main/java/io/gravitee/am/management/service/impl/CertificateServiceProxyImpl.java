@@ -43,6 +43,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Supplier;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -149,38 +150,41 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     @Override
     public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal) {
         return certificateService.create(domain, newCertificate, principal, false)
-                .flatMap(cert -> filterSensitiveData(cert)
-                    .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
-                            .principal(principal)
-                            .type(EventType.CERTIFICATE_CREATED)
-                            .certificate(certificate)))
-                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
-                            .principal(principal)
-                            .type(EventType.CERTIFICATE_CREATED)
-                            .reference(Reference.domain(cert.getDomain()))
-                            .throwable(throwable))));
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.CERTIFICATE_CREATED)
+                        .certificate(certificate)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.CERTIFICATE_CREATED)
+                        .reference(Reference.domain(domain.getId()))
+                        .throwable(throwable)));
     }
 
     @Override
     public Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal) {
+
+        Supplier<CertificateAuditBuilder> audit = () ->
+                AuditBuilder.builder(CertificateAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.CERTIFICATE_UPDATED)
+                        .reference(Reference.domain(domain.getId()));
+
         return certificateService.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
+                .doOnError(err -> auditService.report(audit.get().throwable(err)))
                 .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
+                        .doOnError(err -> auditService.report(audit.get().throwable(err)))
                         .flatMap(safeOldCert -> updateSensitiveData(updateCertificate, oldCertificate)
                                 .flatMap(certificateToUpdate -> certificateService.update(domain, id, certificateToUpdate, principal))
-                                .flatMap(cert -> filterSensitiveData(cert)
-                                    .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
-                                            .principal(principal)
-                                            .type(EventType.CERTIFICATE_UPDATED)
-                                            .oldValue(safeOldCert)
-                                            .certificate(certificate)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
-                                            .principal(principal)
-                                            .type(EventType.CERTIFICATE_UPDATED)
-                                            .reference(Reference.domain(cert.getDomain()))
-                                            .throwable(throwable))))
-                ));
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(updated -> auditService.report(audit.get().oldValue(safeOldCert).certificate(updated)))
+                                .doOnError(err -> auditService.report(audit.get().oldValue(safeOldCert).throwable(err)))
+                        )
+                );
     }
+
 
     @Override
     public Completable delete(String certificateId, User principal) {

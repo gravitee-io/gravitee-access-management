@@ -37,6 +37,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Supplier;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -81,14 +83,24 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
 
     @Override
     public Single<ServiceResource> update(Domain domain, String id, UpdateServiceResource updateServiceResource, User principal) {
+
+        Supplier<ServiceResourceAuditBuilder> audit = () ->
+                AuditBuilder.builder(ServiceResourceAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.RESOURCE_UPDATED)
+                        .reference(Reference.domain(domain.getId()));
+
         return serviceResourceService.findById(id)
                 .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
-                .flatMap(oldResource -> filterSensitiveData(oldResource).flatMap(safeOldResource ->
-                        updateSensitiveData(updateServiceResource, oldResource)
-                                .flatMap(resourceToUpdate -> serviceResourceService.update(domain, id, resourceToUpdate, principal)
-                                        .flatMap(this::filterSensitiveData)
-                                        .doOnSuccess(serviceResource -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).oldValue(safeOldResource).resource(serviceResource)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).reference(Reference.domain(domain.getId())).throwable(throwable)))))
+                .doOnError(err -> auditService.report(audit.get().throwable(err)))
+                .flatMap(oldResource -> filterSensitiveData(oldResource)
+                        .doOnError(err -> auditService.report(audit.get().throwable(err)))
+                        .flatMap(safeOldResource -> updateSensitiveData(updateServiceResource, oldResource)
+                                .flatMap(resourceToUpdate -> serviceResourceService.update(domain, id, resourceToUpdate, principal))
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(updated -> auditService.report(audit.get().oldValue(safeOldResource).resource(updated)))
+                                .doOnError(err -> auditService.report(audit.get().oldValue(safeOldResource).throwable(err)))
+                        )
                 );
     }
 

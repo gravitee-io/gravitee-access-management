@@ -35,6 +35,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Supplier;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -94,14 +96,26 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
 
     @Override
     public Single<Reporter> update(Reference domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
+
+        Supplier<ReporterAuditBuilder> baseAudit = () ->
+                AuditBuilder.builder(ReporterAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.REPORTER_UPDATED)
+                        .reference(domain);
+
         return reporterService.findById(id)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
-                .flatMap(oldReporter -> filterSensitiveData(oldReporter)
-                        .flatMap(safeOldReporter -> updateSensitiveData(updateReporter, oldReporter)
-                                .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal, isUpgrader))
-                                .flatMap(this::filterSensitiveData)
-                                .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).oldValue(safeOldReporter).reporter(reporter1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).reporter(safeOldReporter).type(EventType.REPORTER_UPDATED).throwable(throwable))))
+                .doOnError(throwable -> auditService.report(baseAudit.get().throwable(throwable)))
+                .flatMap(oldReporter ->
+                        filterSensitiveData(oldReporter)
+                                .doOnError(throwable -> auditService.report(baseAudit.get().throwable(throwable)))
+                                .flatMap(safeOldReporter ->
+                                        updateSensitiveData(updateReporter, oldReporter)
+                                                .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal, isUpgrader))
+                                                .flatMap(this::filterSensitiveData)
+                                                .doOnSuccess(updatedReporter -> auditService.report(baseAudit.get().oldValue(safeOldReporter).reporter(updatedReporter)))
+                                                .doOnError(throwable -> auditService.report(baseAudit.get().oldValue(safeOldReporter).throwable(throwable)))
+                                )
                 );
     }
 
@@ -111,7 +125,7 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
-    public String createReporterConfig(Reference reference){
+    public String createReporterConfig(Reference reference) {
         return reporterService.createReporterConfig(reference);
     }
 

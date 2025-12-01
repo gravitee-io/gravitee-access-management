@@ -40,6 +40,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -115,22 +116,33 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, principal, system)
                 .flatMap(this::filterSensitiveData)
-                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(identityProvider1)))
+                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(new Reference(referenceType, referenceId)).identityProvider(identityProvider1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     @Override
     public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
+
+        Supplier<IdentityProviderAuditBuilder> audit = () ->
+                AuditBuilder.builder(IdentityProviderAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.IDENTITY_PROVIDER_UPDATED)
+                        .reference(new Reference(referenceType, referenceId));
+
         return identityProviderService.findById(id)
                 .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
+                .doOnError(err -> auditService.report(audit.get().throwable(err)))
                 .flatMap(oldIdP -> filterSensitiveData(oldIdP)
+                        .doOnError(err -> auditService.report(audit.get().throwable(err)))
                         .flatMap(safeOldIdp -> updateSensitiveData(updateIdentityProvider, oldIdP)
                                 .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal, isUpgrader))
                                 .flatMap(this::filterSensitiveData)
-                                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(safeOldIdp).identityProvider(identityProvider1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable))))
+                                .doOnSuccess(updated -> auditService.report(audit.get().oldValue(safeOldIdp).identityProvider(updated)))
+                                .doOnError(err -> auditService.report(audit.get().oldValue(safeOldIdp).throwable(err)))
+                        )
                 );
     }
+
 
     @Override
     public Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
