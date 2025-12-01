@@ -36,6 +36,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Supplier;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -73,38 +75,41 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
     @Override
     public Single<BotDetection> create(String domain, NewBotDetection botDetection, User principal) {
         return botDetectionService.create(domain, botDetection, principal)
-                .flatMap(bot -> filterSensitiveData(bot)
-                        .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
-                                .principal(principal)
-                                .type(EventType.BOT_DETECTION_CREATED)
-                                .botDetection(detection)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
-                                .principal(principal)
-                                .type(EventType.BOT_DETECTION_CREATED)
-                                .reference(new Reference(bot.getReferenceType(), bot.getReferenceId()))
-                                .throwable(throwable))));
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.BOT_DETECTION_CREATED)
+                        .botDetection(detection)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.BOT_DETECTION_CREATED)
+                        .reference(Reference.domain(domain))
+                        .throwable(throwable)));
     }
 
     @Override
     public Single<BotDetection> update(String domain, String id, UpdateBotDetection updateBotDetection, User principal) {
+
+        Supplier<BotDetectionAuditBuilder> audit = () ->
+                AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.BOT_DETECTION_UPDATED)
+                        .reference(Reference.domain(domain));
+
         return botDetectionService.findById(id)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
+                .doOnError(err -> auditService.report(audit.get().throwable(err)))
                 .flatMap(oldBotDetection -> filterSensitiveData(oldBotDetection)
-                        .flatMap(safeOldBoDetection -> updateSensitiveData(updateBotDetection, oldBotDetection)
+                        .doOnError(err -> auditService.report(audit.get().throwable(err)))
+                        .flatMap(safeOldBotDetection -> updateSensitiveData(updateBotDetection, oldBotDetection)
                                 .flatMap(botDetectionToUpdate -> botDetectionService.update(domain, id, botDetectionToUpdate, principal))
-                                .flatMap(bot -> filterSensitiveData(bot)
-                                    .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
-                                            .principal(principal)
-                                            .type(EventType.BOT_DETECTION_UPDATED)
-                                            .oldValue(safeOldBoDetection)
-                                            .botDetection(detection)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
-                                            .principal(principal)
-                                            .reference(new Reference(bot.getReferenceType(), bot.getReferenceId()))
-                                            .type(EventType.BOT_DETECTION_UPDATED)
-                                            .throwable(throwable))))
-                    ));
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(updated -> auditService.report(audit.get().oldValue(safeOldBotDetection).botDetection(updated)))
+                                .doOnError(err -> auditService.report(audit.get().oldValue(safeOldBotDetection).throwable(err)))
+                        )
+                );
     }
+
 
     @Override
     public Completable delete(String domain, String botDetectionId, User principal) {
