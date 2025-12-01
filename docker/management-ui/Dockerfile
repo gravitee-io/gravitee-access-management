@@ -27,11 +27,11 @@ ENV MGMT_BASE_HREF "/"
 ENV MGMT_API_URL "http://localhost:8093"
 
 RUN apk update \
-  && apk add --update --no-cache zip unzip netcat-openbsd wget \
+  && apk add --update --no-cache unzip netcat-openbsd wget \
   && apk add --upgrade --no-cache libgcrypt \
   && wget https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -P /tmp \
   && unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
-  && apk del zip unzip netcat-openbsd wget \
+  && apk del unzip netcat-openbsd wget \
   && cp -fr /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET} \
   && rm -rf /tmp/*
 
