@@ -33,7 +33,7 @@ import {
 } from '@gateway-commands/oauth-oidc-commands';
 import {applicationBase64Token} from '@gateway-commands/utils';
 import {clearEmails, getLastEmail} from '@utils-commands/email-commands';
-import {getUser} from '@management-commands/user-management-commands';
+import {getUser, getUserPage} from '@management-commands/user-management-commands';
 
 let mngAccessToken: string;
 let scimAccessToken: string;
@@ -101,8 +101,10 @@ afterAll(async function () {
     await deleteDomain(domain.id, mngAccessToken);
   }
 });
-describe('SCIM with preRegistration', () => {
-  it('should create SCIM user with preRegistration', async () => {
+
+describe('SCIM with custom parameters', () => {
+
+  it('should create SCIM user with preRegistration and confirm registration', async () => {
 
     const request = {
       schemas: [
@@ -195,4 +197,62 @@ describe('SCIM with preRegistration', () => {
     expect(user.enabled).toBeTruthy();
   });
 
+  it('should send email with client information when client is specified', async () => {
+
+    const request = {
+      schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
+      externalId: '70198412321242223922424',
+      userName: 'barbara1',
+      password: null,
+      name: {
+        formatted: 'Mr. John Doe',
+        familyName: 'Doe',
+        givenName: 'John',
+      },
+      displayName: 'John Doe',
+      emails: [
+        {
+          value: 'barbara@user.com',
+          type: 'work',
+          primary: true,
+        },
+      ],
+      active: true,
+      'urn:ietf:params:scim:schemas:extension:custom:2.0:User': {
+        preRegistration: true,
+        client: scimClient.id,
+      },
+    };
+
+    // Clear emails for this specific recipient
+    await clearEmails();
+
+    const response = await performPost(scimEndpoint, '/Users', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(201);
+    const createdUser = response.body;
+
+    expect(createdUser).toBeDefined();
+    expect(createdUser.enabled).toBeFalsy();
+
+    // Retrieve confirmation email
+    const email = await getLastEmail(1000);
+    const confirmationLink = email.extractLink();
+    expect(confirmationLink).toBeDefined();
+
+    // Verify email contains client_id parameter
+    const url = new URL(confirmationLink);
+    const clientIdParam = url.searchParams.get('client_id');
+    expect(clientIdParam).toBeDefined();
+    expect(clientIdParam).toBe(scimClient.settings.oauth.clientId);
+
+    // Verify user was created with client
+    const users = await getUserPage(domain.id, mngAccessToken);
+    const user = users.data.find((u) => u.email === 'barbara@user.com');
+    expect(user).toBeDefined();
+    expect(user.client).toBe(scimClient.id);
+
+    await clearEmails();
+  });
 });
