@@ -88,9 +88,9 @@ public class RequestObjectServiceImpl implements RequestObjectService {
 
     @Override
     public Single<JWT> readRequestObject(String request, Client client, boolean encRequired) {
-        return jweService.decrypt(request, encRequired)
+        return jweService.decrypt(request, client, encRequired)
                 .onErrorResumeNext(err -> {
-                    if (err instanceof InvalidRequestObjectException) {
+                    if (err instanceof InvalidRequestObjectException || err instanceof InvalidClientException){
                         return Single.error(err);
                     }
                     return Single.error(new InvalidRequestObjectException("Malformed request object"));
@@ -179,6 +179,14 @@ public class RequestObjectServiceImpl implements RequestObjectService {
     }
 
     private Single<JWT> validateSignature(SignedJWT jwt, Client client) {
+        var clientKeys = client.getJwks().getKeys().stream().map(JWK::getKid).toList();
+        var jwkSigningKey = jwt.getHeader().getKeyID();
+        // If the request was signed by a key not supported by the current client, then that's an invalid request
+        final boolean isValidKey = clientKeys.contains(jwkSigningKey);
+        if (!isValidKey) {
+            throw new InvalidRequestException();
+        }
+
         return jwkService.getKeys(client)
                 .switchIfEmpty(Single.error(new InvalidRequestObjectException()))
                 .flatMap((Function<JWKSet, Single<JWK>>) jwkSet -> jwkService.getKey(jwkSet, jwt.getHeader().getKeyID())
