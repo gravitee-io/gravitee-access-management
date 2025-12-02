@@ -48,8 +48,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
-import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
+import static io.gravitee.am.common.audit.EventType.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -198,6 +197,7 @@ public class JdbcAuditReporterTest {
     public void testReporter_aggregationGroupBy_loginType() {
         int loop = 10;
         int webauthnLogin = 0;
+        int cbaLogin = 0;
         int userLogin = 0;
         Random random = new Random();
         for (int i = 0; i < loop; ++i) {
@@ -208,10 +208,18 @@ public class JdbcAuditReporterTest {
                     reportable.getActor().setAlternativeId(MY_USER);
                     userLogin++;
                 } else {
-                    reportable.setType(USER_WEBAUTHN_LOGIN);
-                    reportable.getTarget().setAlternativeId(MY_USER);
-                    reportable.getOutcome().setStatus(Status.FAILURE);
-                    webauthnLogin++;
+                    if (random.nextBoolean()) {
+                        reportable.setType(USER_WEBAUTHN_LOGIN);
+                        reportable.getTarget().setAlternativeId(MY_USER);
+                        reportable.getOutcome().setStatus(Status.FAILURE);
+                        webauthnLogin++;
+                    } else {
+                        reportable.setType(USER_CBA_LOGIN);
+                        reportable.getTarget().setAlternativeId(MY_USER);
+                        reportable.getOutcome().setStatus(Status.FAILURE);
+                        cbaLogin++;
+                    }
+
                 }
             }
             auditReporter.report(reportable);
@@ -229,11 +237,14 @@ public class JdbcAuditReporterTest {
 
         int expectedUserLogin = userLogin;
         int expectedWebauthnLogin = webauthnLogin;
-        test.assertValue(map -> map.size() == ((expectedWebauthnLogin > 0 && expectedUserLogin > 0) ? 2 : 1));
+        int expectedCbaLogin = cbaLogin;
+        test.assertValue(map -> map.size() == (Math.signum(expectedUserLogin) + Math.signum(expectedWebauthnLogin) + Math.signum(expectedCbaLogin)));
         test.assertValue(map -> expectedWebauthnLogin == 0 || map.containsKey("USER_WEBAUTHN_LOGIN"));
         test.assertValue(map -> expectedUserLogin == 0 || map.containsKey("USER_LOGIN"));
+        test.assertValue(map -> expectedCbaLogin == 0 || map.containsKey("USER_CBA_LOGIN"));
         test.assertValue(map -> expectedWebauthnLogin == 0 || ((Number) map.get("USER_WEBAUTHN_LOGIN")).intValue() == expectedWebauthnLogin);
         test.assertValue(map -> expectedUserLogin == 0 || ((Number) map.get("USER_LOGIN")).intValue() == expectedUserLogin);
+        test.assertValue(map -> expectedCbaLogin == 0 || ((Number) map.get("USER_CBA_LOGIN")).intValue() == expectedCbaLogin);
     }
 
     @Test
@@ -270,6 +281,52 @@ public class JdbcAuditReporterTest {
                 .field("outcome.status")
                 .build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy_webauthnLogin", criteria, Type.GROUP_BY).test();
+        test.awaitDone(10, TimeUnit.SECONDS);
+        test.assertNoErrors();
+
+        int expectedFailure = accFailure;
+        int expectedSuccess = accSuccess;
+        test.assertValue(map -> map.size() == ((expectedFailure > 0 && expectedSuccess > 0) ? 2 : 1));
+        test.assertValue(map -> expectedFailure == 0 || map.containsKey("FAILURE"));
+        test.assertValue(map -> expectedSuccess == 0 || map.containsKey("SUCCESS"));
+        test.assertValue(map -> expectedFailure == 0 || ((Number) map.get("FAILURE")).intValue() == expectedFailure);
+        test.assertValue(map -> expectedSuccess == 0 || ((Number) map.get("SUCCESS")).intValue() == expectedSuccess);
+    }
+
+    @Test
+    public void testReporter_aggregationGroupBy_cbaLogin() {
+        int loop = 10;
+        int accFailure = 0;
+        int accSuccess = 0;
+        Random random = new Random();
+        for (int i = 0; i < loop; ++i) {
+            Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_cbaLogin");
+            reportable.setType(USER_CBA_LOGIN);
+            if (i % 2 == 0) {
+                if (random.nextBoolean()) {
+                    reportable.getActor().setAlternativeId(MY_USER);
+                    accSuccess++;
+                } else {
+                    reportable.getTarget().setAlternativeId(MY_USER);
+                    reportable.getOutcome().setStatus(Status.FAILURE);
+                    accFailure++;
+                }
+            }
+            auditReporter.report(reportable);
+        }
+        Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_cbaLogin");
+        reportable.setType(USER_LOGIN);
+        reportable.getActor().setAlternativeId(MY_USER);
+        auditReporter.report(reportable);
+
+        waitBulkLoadFlush();
+
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder()
+                .user(MY_USER)
+                .types(List.of(USER_CBA_LOGIN))
+                .field("outcome.status")
+                .build();
+        TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy_cbaLogin", criteria, Type.GROUP_BY).test();
         test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 

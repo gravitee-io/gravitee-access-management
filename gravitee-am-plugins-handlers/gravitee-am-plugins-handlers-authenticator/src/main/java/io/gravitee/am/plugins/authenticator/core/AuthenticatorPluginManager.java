@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.plugins.authenticator.core;
 
-import io.gravitee.am.authenticator.api.Authenticator;
+import io.gravitee.am.authenticator.api.AuthenticatorPlugin;
 import io.gravitee.am.authenticator.api.AuthenticatorProvider;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class AuthenticatorPluginManager extends
-        ProviderPluginManager<Authenticator<?, AuthenticatorProvider>, AuthenticatorProvider, AuthenticatorProviderConfiguration>
-        implements AmPluginManager<Authenticator<?, AuthenticatorProvider>> {
+        ProviderPluginManager<AuthenticatorPlugin<?, AuthenticatorProvider>, AuthenticatorProvider, AuthenticatorProviderConfiguration>
+        implements AmPluginManager<AuthenticatorPlugin<?, AuthenticatorProvider>> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticatorPluginManager.class);
     private final PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
@@ -73,7 +73,7 @@ public class AuthenticatorPluginManager extends
     }
 
 
-    private Optional<AuthenticatorProvider> create(Authenticator<?,?> authenticator, ApplicationContext parentContext) {
+    private Optional<AuthenticatorProvider> create(AuthenticatorPlugin<?,?> authenticator, ApplicationContext parentContext) {
             try {
                 var authenticatorProvider = createInstance(authenticator.provider());
 

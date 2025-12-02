@@ -29,8 +29,10 @@ public interface Field {
     String USER = "user";
     String USER_LOGIN = "user_login";
     String WEBAUTHN = "webauthn";
+    String CBA = "cba";
+
 
     static Collection<String> types() {
-        return Arrays.asList(USER_STATUS, USER_REGISTRATION, APPLICATION, USER, USER_LOGIN, WEBAUTHN);
+        return Arrays.asList(USER_STATUS, USER_REGISTRATION, APPLICATION, USER, USER_LOGIN, WEBAUTHN, CBA);
     }
 }

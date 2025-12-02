@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.authenticator.api;
+package io.gravitee.am.service.reporter.builder;
 
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.reactivex.rxjava3.core.Single;
-import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.gravitee.am.common.audit.EventType;
 
-public interface Authenticator {
-
-    Single<User> authenticate(RoutingContext ctx);
-    AuditBuilder successAuditLog(RoutingContext context, User user);
-    AuditBuilder failedAuditLog(RoutingContext context, Throwable throwable);
-
+public class AuthenticationCbaAuditBuilder extends AuthenticationAuditBuilder {
+    public AuthenticationCbaAuditBuilder() {
+        super();
+        type(EventType.USER_CBA_LOGIN);
+    }
 }
