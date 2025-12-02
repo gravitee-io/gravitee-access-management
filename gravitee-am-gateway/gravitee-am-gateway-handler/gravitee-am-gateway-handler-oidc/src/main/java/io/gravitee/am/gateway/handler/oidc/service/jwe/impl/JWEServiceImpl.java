@@ -24,6 +24,7 @@ import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
@@ -136,7 +137,14 @@ public class JWEServiceImpl implements JWEService {
             // Parse a first time to check if the JWT is encrypted
             JWT parsedJwt = JWTParser.parse(jwt);
 
-            if (client != null && !client.getClientId().equals(parsedJwt.getJWTClaimsSet().getIssuer())) {
+            if (client != null && parsedJwt.getJWTClaimsSet().getIssuer() != null && !client.getClientId().equals(parsedJwt.getJWTClaimsSet().getIssuer())) {
+                // if the kid of the signed JWT is different from the available keys in the client, it is a bad request
+                var clientKeys = client.getJwks().getKeys().stream().map(JWK::getKid).toList();
+                var jwkSigningKey = parsedJwt.getHeader().toJSONObject().get("kid").toString();
+                if (clientKeys.contains(jwkSigningKey)) {
+                    return Single.error(new InvalidRequestException("Invalid JWT signing key"));
+                }
+
                 throw new InvalidClientException("Client ID does not match issuer");
             }
 
