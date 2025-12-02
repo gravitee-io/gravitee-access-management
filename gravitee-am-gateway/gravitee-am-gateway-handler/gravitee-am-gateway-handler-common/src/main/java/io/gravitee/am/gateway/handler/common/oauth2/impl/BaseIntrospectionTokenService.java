@@ -23,7 +23,6 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.ProtectedResource;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -38,6 +37,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -97,13 +97,13 @@ abstract class BaseIntrospectionTokenService {
                     if (ex instanceof JWTException) {
                         LOGGER.debug("An error occurs while decoding JWT access token : {}", token, ex);
                         return Maybe.error(new InvalidTokenException(ex.getMessage(), ex));
-                    }
-                    if (ex instanceof InvalidTokenException) {
-                        InvalidTokenException invalidTokenException = (InvalidTokenException) ex;
+                    } else if (ex instanceof InvalidTokenException invalidTokenException) {
                         String details = invalidTokenException.getDetails();
                         JWT jwt = invalidTokenException.getJwt();
                         LOGGER.debug("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
                                 token, details != null ? details : "none", jwt != null ? jwt.toString() : "{}", invalidTokenException);
+                    } else {
+                        LOGGER.debug("An unexpected error occurred while introspecting JWT access token: {}", token, ex);
                     }
                     return Maybe.error(ex);
                 });
@@ -119,7 +119,11 @@ abstract class BaseIntrospectionTokenService {
         // Single-audience: check if the audience is a client ID
         if (audiences.size() == 1) {
             return clientService.findByDomainAndClientId(jwt.getDomain(), audiences.getFirst())
-                    .map(Client::getCertificate)
+                    .flatMapSingle(client -> {
+                        String certificateId = client.getCertificate();
+                        // If the client's certificate is null, assume the token is signed with an HMAC key
+                        return Single.just(Objects.requireNonNullElse(certificateId, ""));
+                    })
                     .switchIfEmpty(Single.defer(() -> validateProtectedResourcesAndGetCertificateId(jwt, callerClientId)));
         }
 
