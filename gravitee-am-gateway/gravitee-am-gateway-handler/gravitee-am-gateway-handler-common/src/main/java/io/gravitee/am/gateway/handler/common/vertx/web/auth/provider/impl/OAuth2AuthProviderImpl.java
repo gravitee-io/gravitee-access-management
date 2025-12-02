@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl;
 
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -42,6 +44,7 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
     public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
         introspectionTokenService.introspect(token, offlineVerification)
                 .flatMap(jwt -> clientSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
+                        .switchIfEmpty(Maybe.error(new InvalidTokenException("The token is invalid", "Client not found")))
                         .map(client -> new OAuth2AuthResponse(jwt, client)))
                 .subscribe(
                         accessToken -> handler.handle(Future.succeededFuture(accessToken)),
