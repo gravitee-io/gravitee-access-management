@@ -55,6 +55,12 @@ import static java.util.stream.Collectors.toList;
 public class UserMapper {
 
     public static final String LAST_PASSWORD_RESET_KEY = "lastPasswordReset";
+<<<<<<< HEAD
+=======
+    public static final String PRE_REGISTRATION_KEY = "preRegistration";
+    public static final String FORCE_RESET_PASSWORD_KEY = "forceResetPassword";
+    public static final String CLIENT_KEY = "client";
+>>>>>>> 304e86519 (feat: possibility to provide client for scim user creation)
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserMapper.class);
 
@@ -220,6 +226,42 @@ public class UserMapper {
                     throw new UserInvalidException("Unable to parse lastPasswordReset. lastPasswordReset must be in ISO 8601 format.");
                 }
             }
+<<<<<<< HEAD
+=======
+            var preRegistration = graviteeUser.getAdditionalInformation().get(PRE_REGISTRATION_KEY);
+            if (preRegistration != null) {
+                if (preRegistration instanceof Boolean) {
+                    user.setPreRegistration((Boolean) preRegistration);
+                    user.setPassword(null);//user will receive email to set password.
+                    graviteeUser.getAdditionalInformation().remove(PRE_REGISTRATION_KEY);
+                } else {
+                    LOGGER.error("preRegistration must be boolean");
+                    throw new UserInvalidException("Unable to parse preRegistration. preRegistration must be boolean.");
+                }
+            }
+
+            var forceResetPassword = graviteeUser.getAdditionalInformation().get(FORCE_RESET_PASSWORD_KEY);
+            if(forceResetPassword != null) {
+                if (forceResetPassword instanceof Boolean) {
+                    user.setForceResetPassword((Boolean) forceResetPassword);
+                    graviteeUser.getAdditionalInformation().remove(FORCE_RESET_PASSWORD_KEY);
+                } else {
+                    LOGGER.error("forceResetPassword must be boolean");
+                    throw new UserInvalidException("Unable to parse forceResetPassword. forceResetPassword must be boolean.");
+                }
+            }
+
+            var client = graviteeUser.getAdditionalInformation().get(CLIENT_KEY);
+            if (client != null) {
+                if (client instanceof String) {
+                    user.setClient((String) client);
+                    graviteeUser.getAdditionalInformation().remove(CLIENT_KEY);
+                } else {
+                    LOGGER.error("client must be string");
+                    throw new UserInvalidException("Unable to parse client. client must be string.");
+                }
+            }
+>>>>>>> 304e86519 (feat: possibility to provide client for scim user creation)
             additionalInformation.putAll(graviteeUser.getAdditionalInformation());
         }
         user.setAdditionalInformation(additionalInformation);
