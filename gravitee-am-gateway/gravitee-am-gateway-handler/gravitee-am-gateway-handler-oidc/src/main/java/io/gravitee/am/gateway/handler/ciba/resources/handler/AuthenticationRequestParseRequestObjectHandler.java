@@ -24,6 +24,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.ClientBindingMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidIssuerException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.jwt.DefaultJWTParser;
@@ -129,14 +130,11 @@ public class AuthenticationRequestParseRequestObjectHandler implements Handler<R
             }
 
             // iss : The Issuer claim MUST be the client_id of the OAuth Client.
-            // iss : The Issuer claim MUST be the client_id of the OAuth Client.
             final String iss = claims.getStringClaim(Claims.ISS);
             if (iss == null) {
                 return Single.error(new InvalidRequestException("iss is missing"));
             } else if(!client.getClientId().equals(iss)){
-                // *** FIX FOR TEST 3: Throw InvalidClientException directly for iss mismatch ***
-                // This is the error the test wants (401/invalid_client), so we use the expected exception type.
-                return Single.error(new InvalidClientException(String.format("iss claim does not match authenticated client_id : %s", iss)));
+                return Single.error(new InvalidIssuerException(String.format("iss claim does not match authenticated client_id : %s", iss)));
             }
 
             // client_id check (assuming you added this to fully cover the test)
