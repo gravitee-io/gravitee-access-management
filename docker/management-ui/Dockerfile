@@ -19,8 +19,8 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
-# Update to get support for Zip/Unzip, Bash
-RUN apk --update add zip unzip bash wget
+# Update to get support Bash
+RUN apk --update add bash
 
 ENV WWW_TARGET /usr/share/nginx/html
 ENV MGMT_BASE_HREF "/"
