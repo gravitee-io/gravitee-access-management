@@ -174,15 +174,27 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private Maybe<Token> introspectAsAccessTokenFirst(String token, String callerClientId) {
-        return introspectionTokenFacade.introspectAccessToken(token, callerClientId)
-                .map(jwt -> convertAccessToken(jwt, callerClientId))
-                .switchIfEmpty(introspectionTokenFacade.introspectRefreshToken(token, callerClientId).map(jwt -> convertRefreshToken(jwt, callerClientId)));
+        return introspectAsAccessToken(token, callerClientId)
+                .switchIfEmpty(introspectAsRefreshToken(token, callerClientId));
     }
 
     private Maybe<Token> introspectAsRefreshTokenFirst(String token, String callerClientId) {
+        return introspectAsRefreshToken(token, callerClientId)
+                .switchIfEmpty(introspectAsAccessToken(token, callerClientId));
+    }
+
+    private Maybe<Token> introspectAsAccessToken(String token, String callerClientId) {
+        return introspectionTokenFacade.introspectAccessToken(token, callerClientId)
+                .flatMap(jwt -> accessTokenRepository.findByToken(jwt.getJti())
+                        .map(repoToken -> convertAccessToken(jwt, repoToken.getClient()))
+                        .switchIfEmpty(Maybe.just(convertAccessToken(jwt, null))));
+    }
+
+    private Maybe<Token> introspectAsRefreshToken(String token, String callerClientId) {
         return introspectionTokenFacade.introspectRefreshToken(token, callerClientId)
-                .map(jwt -> convertRefreshToken(jwt, callerClientId))
-                .switchIfEmpty(introspectionTokenFacade.introspectAccessToken(token, callerClientId).map(jwt -> convertAccessToken(jwt, callerClientId)));
+                .flatMap(jwt -> refreshTokenRepository.findByToken(jwt.getJti())
+                        .map(repoToken -> convertRefreshToken(jwt, repoToken.getClient()))
+                        .switchIfEmpty(Maybe.just(convertRefreshToken(jwt, null))));
     }
 
     @Override
