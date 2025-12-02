@@ -84,6 +84,7 @@ import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -893,5 +894,64 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
       enrolledFactor.setFactorId("factorId");
       enrolledFactor.setSecurity(enrolledFactorSecurity);
       user.setFactors(Collections.singletonList(enrolledFactor));
+  }
+
+  @Test
+  public void shouldUseContextClientId_whenUserClientIsNull_duringRegistration() throws Exception {
+      // Test for AM-6111: During registration confirmation, endUser.getClient() is null
+      // The rate limiter should use client.getId() from routing context instead
+      FactorProvider factorProvider = mock(FactorProvider.class);
+      when(factorProvider.needChallengeSending()).thenReturn(true);
+      when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+      when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
+      Factor factor = mock(Factor.class);
+      when(factor.getId()).thenReturn("factorId");
+      when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+      when(factorManager.get("factorId")).thenReturn(factorProvider);
+      when(factorManager.getFactor("factorId")).thenReturn(factor);
+      when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+      spyRoutingContext.setMethod(HttpMethod.GET);
+      
+      // Create user with null client (simulating registration scenario)
+      User user = new User();
+      user.setId("userId");
+      user.setClient(null); // This is null during registration confirmation
+      createUserFactor(user);
+      
+      // Client is available in routing context (from client_id parameter)
+      Client client = new Client();
+      client.setId("context-client-id");
+      client.setFactors(Collections.singleton("factorId"));
+      client.setDomain("domain-id");
+      
+      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+      when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+      when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(true));
+
+      mfaChallengeEndpoint.handle(spyRoutingContext);
+
+      int attempt = 20;
+      while (!spyRoutingContext.ended() && attempt > 0) {
+          Thread.sleep(100);
+          --attempt;
+      }
+
+      // Verify that tryConsume was called with client.getId() from context, not endUser.getClient()
+      ArgumentCaptor<String> clientIdCaptor = ArgumentCaptor.forClass(String.class);
+      verify(rateLimiterService, times(1)).tryConsume(
+          eq("userId"), 
+          eq("factorId"), 
+          clientIdCaptor.capture(), 
+          eq("domain-id")
+      );
+      
+      // Assert that context client ID was used, not null
+      Assert.assertEquals("context-client-id", clientIdCaptor.getValue());
   }
 }
