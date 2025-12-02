@@ -129,7 +129,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> accessTokenRepository.findByToken(jwt.getJti()).map(accessToken -> convertAccessToken(jwt)));
+                .flatMapMaybe(jwt -> accessTokenRepository.findByToken(jwt.getJti()).map(accessToken -> convertAccessToken(jwt, null)));
     }
 
     @Override
@@ -141,7 +141,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> refreshTokenRepository.findByToken(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt)));
+                .flatMapMaybe(jwt -> refreshTokenRepository.findByToken(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt, null)));
     }
 
     @Override
@@ -175,14 +175,14 @@ public class TokenServiceImpl implements TokenService {
 
     private Maybe<Token> introspectAsAccessTokenFirst(String token, String callerClientId) {
         return introspectionTokenFacade.introspectAccessToken(token, callerClientId)
-                .map(this::convertAccessToken)
-                .switchIfEmpty(introspectionTokenFacade.introspectRefreshToken(token, callerClientId).map(this::convertRefreshToken));
+                .map(jwt -> convertAccessToken(jwt, callerClientId))
+                .switchIfEmpty(introspectionTokenFacade.introspectRefreshToken(token, callerClientId).map(jwt -> convertRefreshToken(jwt, callerClientId)));
     }
 
     private Maybe<Token> introspectAsRefreshTokenFirst(String token, String callerClientId) {
         return introspectionTokenFacade.introspectRefreshToken(token, callerClientId)
-                .map(this::convertRefreshToken)
-                .switchIfEmpty(introspectionTokenFacade.introspectAccessToken(token, callerClientId).map(this::convertAccessToken));
+                .map(jwt -> convertRefreshToken(jwt, callerClientId))
+                .switchIfEmpty(introspectionTokenFacade.introspectAccessToken(token, callerClientId).map(jwt -> convertAccessToken(jwt, callerClientId)));
     }
 
     @Override
@@ -321,28 +321,30 @@ public class TokenServiceImpl implements TokenService {
     /**
      * Convert JWT object to Access Token
      * @param jwt jwt to convert
+     * @param clientId client id, if known
      * @return access token response format
      */
-    private Token convertAccessToken(JWT jwt) {
+    private Token convertAccessToken(JWT jwt, String clientId) {
         AccessToken accessToken = new AccessToken(jwt.getJti());
         if (jwt.getConfirmationMethod() != null) {
             accessToken.setConfirmationMethod((Map) jwt.getConfirmationMethod());
         }
-        return convert(accessToken, jwt);
+        return convert(accessToken, jwt, clientId);
     }
 
     /**
      * Convert JWT object to Refresh Token
      * @param jwt jwt to convert
+     * @param clientId client id, if known
      * @return access token response format
      */
-    private Token convertRefreshToken(JWT jwt) {
+    private Token convertRefreshToken(JWT jwt, String clientId) {
         RefreshToken refreshToken = new RefreshToken(jwt.getJti());
-        return convert(refreshToken, jwt);
+        return convert(refreshToken, jwt, clientId);
     }
 
-    private Token convert(Token token, JWT jwt) {
-        token.setClientId(jwt.getAud());
+    private Token convert(Token token, JWT jwt, String clientId) {
+        token.setClientId(clientId != null ? clientId : jwt.getAud());
         token.setSubject(jwt.getSub());
         token.setScope(jwt.getScope());
         token.setCreatedAt(new Date(jwt.getIat() * 1000L));

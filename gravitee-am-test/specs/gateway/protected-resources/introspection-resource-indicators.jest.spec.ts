@@ -73,7 +73,7 @@ describe('Protected Resource Introspection with Resource Indicators (RFC 8707)',
     // Verify introspection response
     expect(introspectionResponse.body).toBeDefined();
     expect(introspectionResponse.body.active).toBe(true);
-    expect(introspectionResponse.body.client_id).toBe(resources[0]);
+    expect(introspectionResponse.body.client_id).toBe(protectedResource.clientId);
     expect(introspectionResponse.body.aud).toBe(resources[0]);
     expect(introspectionResponse.body.token_type).toBe('bearer');
     expect(introspectionResponse.body.scope).toBe('openid');

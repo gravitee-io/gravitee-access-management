@@ -407,4 +407,120 @@ public class TokenServiceImplTest {
         assertThat(auditMessage).contains("https://mcp2.example.com/api/v1");
     }
 
+    @Test
+    public void when_introspect_access_token_with_null_callerClientId_should_use_jwt_aud_as_clientId() {
+        // Arrange: JWT with aud claim set to "token-client-id"
+        JWT jwt = new JWT();
+        jwt.setJti("access-token-id");
+        jwt.setAud("token-client-id");
+        jwt.setSub("user-123");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
+        
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.empty());
+        
+        // Act: Introspect without callerClientId (null)
+        TestObserver<Token> observer = tokenService.introspect("token").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        
+        // Assert: Token should have clientId from JWT's aud claim
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("token-client-id");
+                    return true;
+                });
+    }
+
+    @Test
+    public void when_introspect_access_token_with_provided_callerClientId_should_use_callerClientId() {
+        // Arrange: JWT with aud claim set to "resource-id", but callerClientId is "caller-client-id"
+        JWT jwt = new JWT();
+        jwt.setJti("access-token-id");
+        jwt.setAud("resource-id");
+        jwt.setSub("user-123");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
+        
+        String callerClientId = "caller-client-id";
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.eq(callerClientId)))
+                .thenReturn(Maybe.just(jwt));
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.eq(callerClientId)))
+                .thenReturn(Maybe.empty());
+        
+        // Act: Introspect with callerClientId
+        TestObserver<Token> observer = tokenService.introspect("token", callerClientId).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        
+        // Assert: Token should have clientId from callerClientId parameter
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("caller-client-id");
+                    return true;
+                });
+    }
+
+    @Test
+    public void when_introspect_refresh_token_with_null_callerClientId_should_use_jwt_aud_as_clientId() {
+        // Arrange: JWT refresh token with aud claim set to "token-client-id"
+        JWT jwt = new JWT();
+        jwt.setJti("refresh-token-id");
+        jwt.setAud("token-client-id");
+        jwt.setSub("user-123");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 7200);
+        
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.just(jwt));
+        
+        // Act: Introspect without callerClientId (null) and REFRESH_TOKEN hint
+        TestObserver<Token> observer = tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        
+        // Assert: Token should have clientId from JWT's aud claim
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("token-client-id");
+                    assertThat(token).isInstanceOf(RefreshToken.class);
+                    return true;
+                });
+    }
+
+    @Test
+    public void when_introspect_refresh_token_with_provided_callerClientId_should_use_callerClientId() {
+        // Arrange: JWT refresh token with aud claim set to "resource-id", but callerClientId is "caller-client-id"
+        JWT jwt = new JWT();
+        jwt.setJti("refresh-token-id");
+        jwt.setAud("resource-id");
+        jwt.setSub("user-123");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 7200);
+        
+        String callerClientId = "caller-client-id";
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.eq(callerClientId)))
+                .thenReturn(Maybe.empty());
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.eq(callerClientId)))
+                .thenReturn(Maybe.just(jwt));
+        
+        // Act: Introspect with callerClientId and REFRESH_TOKEN hint
+        TestObserver<Token> observer = tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN, callerClientId).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        
+        // Assert: Token should have clientId from callerClientId parameter
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("caller-client-id");
+                    assertThat(token).isInstanceOf(RefreshToken.class);
+                    return true;
+                });
+    }
+
 }
