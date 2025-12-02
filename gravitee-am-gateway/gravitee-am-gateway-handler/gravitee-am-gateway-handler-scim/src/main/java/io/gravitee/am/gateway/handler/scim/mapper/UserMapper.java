@@ -57,6 +57,7 @@ public class UserMapper {
     public static final String LAST_PASSWORD_RESET_KEY = "lastPasswordReset";
     public static final String PRE_REGISTRATION_KEY = "preRegistration";
     public static final String FORCE_RESET_PASSWORD_KEY = "forceResetPassword";
+    public static final String CLIENT_KEY = "client";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserMapper.class);
 
@@ -242,6 +243,17 @@ public class UserMapper {
                 } else {
                     LOGGER.error("forceResetPassword must be boolean");
                     throw new UserInvalidException("Unable to parse forceResetPassword. forceResetPassword must be boolean.");
+                }
+            }
+
+            var client = graviteeUser.getAdditionalInformation().get(CLIENT_KEY);
+            if (client != null) {
+                if (client instanceof String) {
+                    user.setClient((String) client);
+                    graviteeUser.getAdditionalInformation().remove(CLIENT_KEY);
+                } else {
+                    LOGGER.error("client must be string");
+                    throw new UserInvalidException("Unable to parse client. client must be string.");
                 }
             }
             additionalInformation.putAll(graviteeUser.getAdditionalInformation());
