@@ -83,6 +83,22 @@ public class BaseIntrospectionTokenServiceTest {
     }
 
     @Test
+    public void shouldValidateSingleAudienceClientWhenCertificateIsNull() {
+        JWT jwt = buildJwtWithAudiences(List.of("client-id"));
+        Client client = buildClient("client-id");
+        // certificate is intentionally left null to simulate HMAC-signed JWT
+
+        mockDecode(jwt);
+        when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+
+        TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
+
+        observer.assertResult(jwt);
+        verify(protectedResourceManager, never()).getByIdentifier(anyString());
+    }
+
+    @Test
     public void shouldValidateSingleAudienceProtectedResource() {
         JWT jwt = buildJwtWithAudiences(List.of("resource-id"));
         Client backendClient = buildClient("backend-client");
