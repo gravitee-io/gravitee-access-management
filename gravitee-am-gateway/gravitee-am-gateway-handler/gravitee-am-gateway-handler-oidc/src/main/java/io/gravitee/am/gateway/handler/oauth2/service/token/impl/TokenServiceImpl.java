@@ -263,13 +263,13 @@ public class TokenServiceImpl implements TokenService {
         final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request, user));
         // store refresh token (if exists)
         if (refreshToken != null) {
-            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user)));
+            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request.getClientId())));
         }
         return persistAccessToken;
     }
 
     private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
-        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convertCommon(new io.gravitee.am.repository.oauth2.model.AccessToken(), token, user);
+        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convertCommon(new io.gravitee.am.repository.oauth2.model.AccessToken(), token, user, oAuth2Request.getClientId());
         // set authorization code
         accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
@@ -277,15 +277,15 @@ public class TokenServiceImpl implements TokenService {
         return accessToken;
     }
 
-    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user) {
-        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user);
+    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user, String clientId) {
+        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, clientId);
     }
 
-    private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user) {
+    private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user, String clientId) {
         newToken.setId(RandomString.generate());
         newToken.setToken(sourceToken.getJti());
         newToken.setDomain(sourceToken.getDomain());
-        newToken.setClient(sourceToken.getAud());
+        newToken.setClient(clientId);
         // keep reference to userId in the storage, only outside world has to see the sub which maybe based on source+extId
         newToken.setSubject(user == null ? sourceToken.getSub() : user.getId());
         newToken.setCreatedAt(new Date(sourceToken.getIat() * 1000));
