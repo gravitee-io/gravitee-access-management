@@ -93,6 +93,10 @@ export class LoginSettingsComponent implements OnChanges {
     return this.loginSettings?.passwordlessEnabled;
   }
 
+  isCbaEnabled() {
+    return this.loginSettings?.certificateBasedAuthEnabled;
+  }
+
   enableCertificateBasedAuth(event) {
     this.loginSettings.certificateBasedAuthEnabled = event.checked;
     this.formChanged = true;

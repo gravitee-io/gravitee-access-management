@@ -52,7 +52,7 @@ public class WebAuthnEnforcePasswordHandler implements Handler<RoutingContext> {
         final Cookie cookie = routingContext.request().getCookie(webAuthnCookieService.getRememberDeviceCookieName());
         final LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
         // feature disabled, continue
-        if (loginSettings == null || !loginSettings.isEnforcePasswordPolicyEnabled()) {
+        if (loginSettings == null || !loginSettings.isPasswordlessEnabled() || !loginSettings.isEnforcePasswordPolicyEnabled()) {
             routingContext.next();
             return;
         }

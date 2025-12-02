@@ -107,35 +107,7 @@
           login page if the user has an enrolled device.</mat-hint
         >
       </div>
-      <div fxLayout="column" style="margin-top: 10px">
-        <mat-slide-toggle
-          (change)="enablePasswordlessEnforcePassword($event)"
-          [checked]="isPasswordlessEnforcePasswordEnabled()"
-          [disabled]="readonly || !isPasswordlessEnabled()"
-        >
-          Passwordless Enforce Password usage
-        </mat-slide-toggle>
-        <mat-hint style="font-size: 75%">Force user to sign in with its credentials (password or external IdP) periodically.</mat-hint>
-      </div>
-      <div fxLayout="column" style="margin-top: 10px">
-        <mat-form-field appearance="outline" floatLabel="always">
-          <mat-label>Max passwordless usage (seconds)</mat-label>
-          <input
-            matInput
-            type="number"
-            name="expiryDuration"
-            required
-            [ngModel]="loginSettings.passwordlessEnforcePasswordMaxAge"
-            (ngModelChange)="setEnforcePasswordMaxAge($event)"
-            [min]="0"
-            [disabled]="readonly || !isPasswordlessEnforcePasswordEnabled()"
-          />
-          <mat-hint
-            >Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated with
-            credentials.</mat-hint
-          >
-        </mat-form-field>
-      </div>
+
       <div fxLayout="column" style="margin-top: 10px">
         <mat-slide-toggle
           (change)="enablePasswordlessDeviceNaming($event)"
@@ -174,6 +146,36 @@
           <mat-error *ngIf="!certificateBasedAuthUrlCtrl.hasError('required') && certificateBasedAuthUrlCtrl.invalid">
             Provide a valid HTTPS URL (for example, https://cba.example.com/).
           </mat-error>
+        </mat-form-field>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px">
+        <h5 style="margin-bottom: 8px">Settings</h5>
+        <mat-slide-toggle
+          (change)="enablePasswordlessEnforcePassword($event)"
+          [checked]="isPasswordlessEnforcePasswordEnabled()"
+          [disabled]="readonly || (!isPasswordlessEnabled() && !isCbaEnabled())"
+        >
+          Passwordless Enforce Password usage
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%">Force user to sign in with its credentials (password or external IdP) periodically.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Max passwordless usage (seconds)</mat-label>
+          <input
+            matInput
+            type="number"
+            name="expiryDuration"
+            required
+            [ngModel]="loginSettings.passwordlessEnforcePasswordMaxAge"
+            (ngModelChange)="setEnforcePasswordMaxAge($event)"
+            [min]="0"
+            [disabled]="readonly || !isPasswordlessEnforcePasswordEnabled()"
+          />
+          <mat-hint
+            >Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated with
+            credentials.</mat-hint
+          >
         </mat-form-field>
       </div>
     </div>
