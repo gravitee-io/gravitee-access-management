@@ -100,6 +100,7 @@ public class TokenServiceImplTest {
     public void when_access_token_is_not_found_should_be_returned_refresh_token() {
         JWT jwt = new JWT();
         jwt.setJti("id");
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         tokenService.introspect("token").test()
@@ -107,6 +108,11 @@ public class TokenServiceImplTest {
     }
 
     // ========== Helper Methods ==========
+
+    private void setupDefaultRepositoryMocks() {
+        Mockito.when(accessTokenRepository.findByToken(Mockito.anyString())).thenReturn(Maybe.empty());
+        Mockito.when(refreshTokenRepository.findByToken(Mockito.anyString())).thenReturn(Maybe.empty());
+    }
 
     private AuthorizationRequest createAuthorizationRequest(String clientId, Set<String> resources, Map<String, Object> previousRefreshToken) {
         AuthorizationRequest request = new AuthorizationRequest();
@@ -205,6 +211,7 @@ public class TokenServiceImplTest {
     public void when_access_token_is_found_should_be_returned() {
         JWT jwt = new JWT();
         jwt.setJti("id");
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token").test()
@@ -226,6 +233,7 @@ public class TokenServiceImplTest {
     public void when_hint_is_access_token_and_access_token_is_found_should_be_returned() {
         JWT jwt = new JWT();
         jwt.setJti("id");
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token", TokenTypeHint.ACCESS_TOKEN).test()
@@ -236,6 +244,7 @@ public class TokenServiceImplTest {
     public void when_hint_is_access_token_and_access_token_is_not_found_should_be_return_refresh_token() {
         JWT jwt = new JWT();
         jwt.setJti("id");
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         tokenService.introspect("token", TokenTypeHint.ACCESS_TOKEN).test()
@@ -246,6 +255,7 @@ public class TokenServiceImplTest {
     public void when_hint_is_access_token_and_access_and_refresh_tokens_are_not_found_should_return_empty() {
         JWT jwt = new JWT();
         jwt.setJti("id");
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token", TokenTypeHint.ACCESS_TOKEN).test()
@@ -257,6 +267,7 @@ public class TokenServiceImplTest {
     public void when_hint_is_refresh_token_and_refresh_token_is_found_should_be_returned() {
         JWT jwt = new JWT();
         jwt.setJti("id");
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test()
@@ -267,6 +278,7 @@ public class TokenServiceImplTest {
     public void when_hint_is_refresh_token_and_refresh_token_is_not_found_should_be_return_access_token() {
         JWT jwt = new JWT();
         jwt.setJti("id");
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.just(jwt));
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull())).thenReturn(Maybe.empty());
         tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test()
@@ -408,7 +420,7 @@ public class TokenServiceImplTest {
     }
 
     @Test
-    public void when_introspect_access_token_with_null_callerClientId_should_use_jwt_aud_as_clientId() {
+    public void when_introspect_access_token_and_access_token_is_not_found_should_use_jwt_aud_as_clientId() {
         // Arrange: JWT with aud claim set to "token-client-id"
         JWT jwt = new JWT();
         jwt.setJti("access-token-id");
@@ -417,6 +429,7 @@ public class TokenServiceImplTest {
         jwt.setIat(System.currentTimeMillis() / 1000);
         jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
         
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull()))
                 .thenReturn(Maybe.just(jwt));
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull()))
@@ -426,7 +439,7 @@ public class TokenServiceImplTest {
         TestObserver<Token> observer = tokenService.introspect("token").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         
-        // Assert: Token should have clientId from JWT's aud claim
+        // Assert: Token should have clientId from JWT's aud claim (fallback when repository token not found)
         observer.assertComplete()
                 .assertNoErrors()
                 .assertValue(token -> {
@@ -436,8 +449,8 @@ public class TokenServiceImplTest {
     }
 
     @Test
-    public void when_introspect_access_token_with_provided_callerClientId_should_use_callerClientId() {
-        // Arrange: JWT with aud claim set to "resource-id", but callerClientId is "caller-client-id"
+    public void when_introspect_access_token_should_use_original_client_id_from_repository() {
+        // Arrange: JWT with aud claim set to "resource-id" (RFC 8707), original client ID stored in repository
         JWT jwt = new JWT();
         jwt.setJti("access-token-id");
         jwt.setAud("resource-id");
@@ -445,27 +458,35 @@ public class TokenServiceImplTest {
         jwt.setIat(System.currentTimeMillis() / 1000);
         jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
         
+        String originalClientId = "original-client-id";
         String callerClientId = "caller-client-id";
+        
+        io.gravitee.am.repository.oauth2.model.AccessToken repoToken = 
+                new io.gravitee.am.repository.oauth2.model.AccessToken();
+        repoToken.setClient(originalClientId);
+        
+        Mockito.when(accessTokenRepository.findByToken("access-token-id")).thenReturn(Maybe.just(repoToken));
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.eq(callerClientId)))
                 .thenReturn(Maybe.just(jwt));
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.eq(callerClientId)))
                 .thenReturn(Maybe.empty());
         
-        // Act: Introspect with callerClientId
+        // Act: Introspect with callerClientId (different from original client)
         TestObserver<Token> observer = tokenService.introspect("token", callerClientId).test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         
-        // Assert: Token should have clientId from callerClientId parameter
+        // Assert: Token should have clientId from repository (original client), not callerClientId
         observer.assertComplete()
                 .assertNoErrors()
                 .assertValue(token -> {
-                    assertThat(token.getClientId()).isEqualTo("caller-client-id");
+                    assertThat(token.getClientId()).isEqualTo(originalClientId);
+                    assertThat(token.getClientId()).isNotEqualTo(callerClientId);
                     return true;
                 });
     }
 
     @Test
-    public void when_introspect_refresh_token_with_null_callerClientId_should_use_jwt_aud_as_clientId() {
+    public void when_introspect_refresh_token_and_refresh_token_is_not_found_should_use_jwt_aud_as_clientId() {
         // Arrange: JWT refresh token with aud claim set to "token-client-id"
         JWT jwt = new JWT();
         jwt.setJti("refresh-token-id");
@@ -474,6 +495,7 @@ public class TokenServiceImplTest {
         jwt.setIat(System.currentTimeMillis() / 1000);
         jwt.setExp(System.currentTimeMillis() / 1000 + 7200);
         
+        setupDefaultRepositoryMocks();
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull()))
                 .thenReturn(Maybe.empty());
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull()))
@@ -483,7 +505,7 @@ public class TokenServiceImplTest {
         TestObserver<Token> observer = tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         
-        // Assert: Token should have clientId from JWT's aud claim
+        // Assert: Token should have clientId from JWT's aud claim (fallback when repository token not found)
         observer.assertComplete()
                 .assertNoErrors()
                 .assertValue(token -> {
@@ -494,8 +516,8 @@ public class TokenServiceImplTest {
     }
 
     @Test
-    public void when_introspect_refresh_token_with_provided_callerClientId_should_use_callerClientId() {
-        // Arrange: JWT refresh token with aud claim set to "resource-id", but callerClientId is "caller-client-id"
+    public void when_introspect_refresh_token_should_use_original_client_id_from_repository() {
+        // Arrange: JWT refresh token with aud claim set to "resource-id" (RFC 8707), original client ID stored in repository
         JWT jwt = new JWT();
         jwt.setJti("refresh-token-id");
         jwt.setAud("resource-id");
@@ -503,21 +525,29 @@ public class TokenServiceImplTest {
         jwt.setIat(System.currentTimeMillis() / 1000);
         jwt.setExp(System.currentTimeMillis() / 1000 + 7200);
         
+        String originalClientId = "original-client-id";
         String callerClientId = "caller-client-id";
+        
+        io.gravitee.am.repository.oauth2.model.RefreshToken repoToken = 
+                new io.gravitee.am.repository.oauth2.model.RefreshToken();
+        repoToken.setClient(originalClientId);
+        
+        Mockito.when(refreshTokenRepository.findByToken("refresh-token-id")).thenReturn(Maybe.just(repoToken));
         Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.eq(callerClientId)))
                 .thenReturn(Maybe.empty());
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.eq(callerClientId)))
                 .thenReturn(Maybe.just(jwt));
         
-        // Act: Introspect with callerClientId and REFRESH_TOKEN hint
+        // Act: Introspect with callerClientId (different from original client) and REFRESH_TOKEN hint
         TestObserver<Token> observer = tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN, callerClientId).test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         
-        // Assert: Token should have clientId from callerClientId parameter
+        // Assert: Token should have clientId from repository (original client), not callerClientId
         observer.assertComplete()
                 .assertNoErrors()
                 .assertValue(token -> {
-                    assertThat(token.getClientId()).isEqualTo("caller-client-id");
+                    assertThat(token.getClientId()).isEqualTo(originalClientId);
+                    assertThat(token.getClientId()).isNotEqualTo(callerClientId);
                     assertThat(token).isInstanceOf(RefreshToken.class);
                     return true;
                 });
