@@ -163,6 +163,18 @@ export class DomainDashboardComponent implements OnInit {
           },
         },
       },
+      {
+        flex: 50,
+        title: 'CBA Logins',
+        subhead: 'Latest CBA logins',
+        chart: {
+          type: 'pie',
+          request: {
+            type: 'group_by',
+            field: 'cba',
+          },
+        },
+      },
     ],
   };
 

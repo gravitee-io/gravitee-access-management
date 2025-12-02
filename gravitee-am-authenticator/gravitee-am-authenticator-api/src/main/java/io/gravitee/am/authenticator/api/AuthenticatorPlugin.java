@@ -15,15 +15,10 @@
  */
 package io.gravitee.am.authenticator.api;
 
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.reactivex.rxjava3.core.Single;
-import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.gravitee.am.common.plugin.AmPlugin;
 
-public interface Authenticator {
-
-    Single<User> authenticate(RoutingContext ctx);
-    AuditBuilder successAuditLog(RoutingContext context, User user);
-    AuditBuilder failedAuditLog(RoutingContext context, Throwable throwable);
+public abstract class AuthenticatorPlugin<
+        C extends AuthenticatorConfiguration,
+        P extends AuthenticatorProvider> extends AmPlugin<C, P> {
 
 }

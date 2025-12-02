@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.plugins.authenticator.plugin;
 
-import io.gravitee.am.authenticator.api.Authenticator;
+import io.gravitee.am.authenticator.api.AuthenticatorPlugin;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
-public class AuthenticatorPluginHandler extends AmPluginHandler<Authenticator<?, ?>> {
+public class AuthenticatorPluginHandler extends AmPluginHandler<AuthenticatorPlugin<?, ?>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticatorPluginHandler.class);
 
     @Override
@@ -44,7 +44,7 @@ public class AuthenticatorPluginHandler extends AmPluginHandler<Authenticator<?,
     protected void handle(Plugin plugin, Class<?> pluginClass) {
         try {
             getLogger().info("Register a new plugin: {} [{}]", plugin.id(), plugin.clazz());
-            Assert.isAssignable(Authenticator.class, pluginClass);
+            Assert.isAssignable(AuthenticatorPlugin.class, pluginClass);
             pluginManager.register(createInstance(pluginClass, plugin));
         } catch (Exception e) {
             getLogger().error("Unexpected error while create authenticator instance", e);
