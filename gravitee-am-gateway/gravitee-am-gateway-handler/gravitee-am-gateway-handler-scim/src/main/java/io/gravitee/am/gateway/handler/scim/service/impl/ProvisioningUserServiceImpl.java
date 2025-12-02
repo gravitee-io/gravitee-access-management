@@ -42,6 +42,7 @@ import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
@@ -53,12 +54,14 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
+import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
@@ -88,6 +91,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -164,6 +168,9 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Autowired
     private CredentialGatewayService credentialService;
+
+    @Autowired
+    private ApplicationService applicationService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -264,51 +271,58 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         })
                 // check roles
                 .flatMapCompletable(__ -> checkRoles(user.getRoles()))
-                // and create the user
-                .andThen(Single.defer(() -> {
-                    // store user
-                    return userValidator.validate(userModel)
-                            .andThen(Single.defer(() -> {
-                                        final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(source);
-                                        if (identityProvider == null) {
-                                            return Single.error(new IdentityProviderNotFoundException(source));
+                // check and validate client (if provided)
+                .andThen(checkClient(userModel.getClient())
+                        .map(Optional::of)
+                        .defaultIfEmpty(Optional.empty())
+                        .flatMap(optApp -> {
+                            // Set validated Application ID
+                            optApp.ifPresent(application -> userModel.setClient(application.getId()));
+                            // store user
+                            return userValidator.validate(userModel)
+                                    .andThen(Single.defer(() -> {
+                                                final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(source);
+                                                if (identityProvider == null) {
+                                                    return Single.error(new IdentityProviderNotFoundException(source));
+                                                }
+                                                return identityProviderManager.getUserProvider(source)
+                                                        .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
+                                                        .flatMap(userProvider -> userProvider.create(UserMapper.convert(userModel)));
+                                            })
+                                            .flatMap(idpUser -> {
+                                                // AM 'users' collection is not made for authentication (but only management stuff)
+                                                // clear password
+                                                userModel.setPassword(null);
+                                                // set external id
+                                                userModel.setExternalId(idpUser.getId());
+                                                return userRepository.create(userModel);
+                                            })
+                                            .onErrorResumeNext(ex -> {
+                                                if (ex instanceof UserProviderNotFoundException) {
+                                                    // just store in AM
+                                                    userModel.setPassword(null);
+                                                    // As there are no UserProvider, the user is an external one
+                                                    userModel.setInternal(false);
+                                                    // set external id
+                                                    userModel.setExternalId(user.getExternalId() != null ? user.getExternalId() : userModel.getId());
+                                                    // enable the profile by default as password is not required in that case
+                                                    userModel.setEnabled(true);
+                                                    return userRepository.create(userModel);
+                                                }
+                                                if (ex instanceof UserAlreadyExistsException) {
+                                                    return Single.error(new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName())));
+                                                }
+                                                return Single.error(ex);
+                                            }))
+                                    .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                    .doOnSuccess(user1 -> {
+                                        if (user1.isPreRegistration()) {
+                                            // Send email with client information if available
+                                            var resolvedClient = optApp.map(Application::toClient).orElse(null);
+                                            emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient);
                                         }
-                                        return identityProviderManager.getUserProvider(source)
-                                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
-                                                .flatMap(userProvider -> userProvider.create(UserMapper.convert(userModel)));
-                                    })
-                                    .flatMap(idpUser -> {
-                                        // AM 'users' collection is not made for authentication (but only management stuff)
-                                        // clear password
-                                        userModel.setPassword(null);
-                                        // set external id
-                                        userModel.setExternalId(idpUser.getId());
-                                        return userRepository.create(userModel);
-                                    })
-                                    .onErrorResumeNext(ex -> {
-                                        if (ex instanceof UserProviderNotFoundException) {
-                                            // just store in AM
-                                            userModel.setPassword(null);
-                                            // As there are no UserProvider, the user is an external one
-                                            userModel.setInternal(false);
-                                            // set external id
-                                            userModel.setExternalId(user.getExternalId() != null ? user.getExternalId() : userModel.getId());
-                                            // enable the profile by default as password is not required in that case
-                                            userModel.setEnabled(true);
-                                            return userRepository.create(userModel);
-                                        }
-                                        if (ex instanceof UserAlreadyExistsException) {
-                                            return Single.error(new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName())));
-                                        }
-                                        return Single.error(ex);
-                                    }))
-                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                            .doOnSuccess(user1 -> {
-                                if (user1.isPreRegistration()) {
-                                    emailService.send(Template.REGISTRATION_CONFIRMATION, user1, null);
-                                }
-                            });
-                }))
+                                    });
+                        }))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.USER_CREATED)
@@ -362,8 +376,12 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                     return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
 
-                                return userValidator.validate(userToUpdate)
-                                        .andThen(Single.defer(() -> {
+                                // check and validate client (if provided)
+                                return checkClient(userToUpdate.getClient())
+                                        .doOnSuccess(app -> userToUpdate.setClient(app.getId()))
+                                        .ignoreElement()
+                                        .andThen(userValidator.validate(userToUpdate)
+                                                .andThen(Single.defer(() -> {
                                                     final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(source);
                                                     if (identityProvider == null) {
                                                         return Single.error(new IdentityProviderNotFoundException(source));
@@ -406,7 +424,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                                     return Single.error(ex);
                                                 })
                                                 .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
-                                                .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error))));
+                                                .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error)))));
                             }));
                 })
                 .map(user1 -> UserMapper.convert(user1, baseUrl, false))
@@ -559,6 +577,28 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                     }
                     return roles1;
                 }).ignoreElement();
+    }
+
+    /**
+     * Validates that the client exists and belongs to the current domain.
+     * Accepts both Application ID and clientId.
+     *
+     * @param clientId Application ID or clientId (nullable)
+     * @return Maybe<Application> containing the validated application or empty if clientId is null
+     * @throws ClientNotFoundException if client doesn't exist or belongs to different domain
+     */
+    private Maybe<Application> checkClient(String clientId) {
+        if (clientId == null || clientId.trim().isEmpty()) {
+            return Maybe.empty();
+        }
+        return applicationService.findById(clientId)
+                .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain.getId(), clientId)))
+                .map(app -> {
+                    if (!domain.getId().equals(app.getDomain())) {
+                        throw new ClientNotFoundException(clientId);
+                    }
+                    return app;
+                });
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
