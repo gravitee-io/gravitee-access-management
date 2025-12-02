@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -85,5 +86,78 @@ public class UserMapperTest {
         return List.of(Claims.AUTH_TIME, ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY)
                 .stream()
                 .collect(Collectors.toMap(s -> s, s -> s));
+    }
+
+    @Test
+    public void shouldExtractClient_fromGraviteeUser() {
+        GraviteeUser scimUser = new GraviteeUser();
+        scimUser.setSchemas(List.of(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER));
+        scimUser.setUserName("testuser");
+        Map<String, Object> additionalInfo = new HashMap<>();
+        additionalInfo.put("client", "my-application-id");
+        scimUser.setAdditionalInformation(additionalInfo);
+
+        io.gravitee.am.model.User user = UserMapper.convert(scimUser);
+
+        assertTrue(user.getClient().equals("my-application-id"));
+        // client should be removed from additionalInformation
+        assertFalse(user.getAdditionalInformation().containsKey("client"));
+    }
+
+    @Test
+    public void shouldHandleNullClient_fromGraviteeUser() {
+        GraviteeUser scimUser = new GraviteeUser();
+        scimUser.setSchemas(List.of(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER));
+        scimUser.setUserName("testuser");
+        Map<String, Object> additionalInfo = new HashMap<>();
+        scimUser.setAdditionalInformation(additionalInfo);
+
+        io.gravitee.am.model.User user = UserMapper.convert(scimUser);
+
+        assertTrue(user.getClient() == null);
+    }
+
+    @Test(expected = io.gravitee.am.service.exception.UserInvalidException.class)
+    public void shouldThrowException_whenClientIsNotString() {
+        GraviteeUser scimUser = new GraviteeUser();
+        scimUser.setSchemas(List.of(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER));
+        scimUser.setUserName("testuser");
+        Map<String, Object> additionalInfo = new HashMap<>();
+        additionalInfo.put("client", 12345); // Integer instead of String
+        scimUser.setAdditionalInformation(additionalInfo);
+
+        UserMapper.convert(scimUser);
+    }
+
+    @Test(expected = io.gravitee.am.service.exception.UserInvalidException.class)
+    public void shouldThrowException_whenClientIsBoolean() {
+        GraviteeUser scimUser = new GraviteeUser();
+        scimUser.setSchemas(List.of(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER));
+        scimUser.setUserName("testuser");
+        Map<String, Object> additionalInfo = new HashMap<>();
+        additionalInfo.put("client", true); // Boolean instead of String
+        scimUser.setAdditionalInformation(additionalInfo);
+
+        UserMapper.convert(scimUser);
+    }
+
+    @Test
+    public void shouldExtractBothPreRegistrationAndClient() {
+        GraviteeUser scimUser = new GraviteeUser();
+        scimUser.setSchemas(List.of(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER));
+        scimUser.setUserName("testuser");
+        Map<String, Object> additionalInfo = new HashMap<>();
+        additionalInfo.put("preRegistration", true);
+        additionalInfo.put("client", "my-app");
+        scimUser.setAdditionalInformation(additionalInfo);
+
+        io.gravitee.am.model.User user = UserMapper.convert(scimUser);
+
+        assertTrue(user.isPreRegistration());
+        assertTrue(user.getClient().equals("my-app"));
+        assertTrue(user.getPassword() == null); // preRegistration clears password
+        // Both should be removed from additionalInformation
+        assertFalse(user.getAdditionalInformation().containsKey("preRegistration"));
+        assertFalse(user.getAdditionalInformation().containsKey("client"));
     }
 }
