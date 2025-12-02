@@ -418,7 +418,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore-maven-job-cache:
           jobName: build_branch
       - run:
@@ -443,7 +444,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore-maven-job-cache:
           jobName: build_branch_nexus
       - run:
@@ -487,7 +489,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - checkout
+      - checkout:
+          method: full
       - keeper/env-export:
           secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
