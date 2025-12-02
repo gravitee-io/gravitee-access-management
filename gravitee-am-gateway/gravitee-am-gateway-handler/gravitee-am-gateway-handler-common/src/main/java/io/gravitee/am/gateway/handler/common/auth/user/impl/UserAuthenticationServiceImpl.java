@@ -150,7 +150,8 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                         return Single.just(user);
                     }
                     // feature disabled, continue
-                    if (loginSettings == null || !loginSettings.isEnforcePasswordPolicyEnabled()) {
+                    if (loginSettings == null || !loginSettings.isEnforcePasswordPolicyEnabled() ||
+                            (!loginSettings.isPasswordlessEnabled() && !loginSettings.isCertificateBasedAuthEnabled())) {
                         return Single.just(user);
                     }
                     // evaluate the condition

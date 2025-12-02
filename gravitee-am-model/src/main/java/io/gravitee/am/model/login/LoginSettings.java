@@ -107,8 +107,7 @@ public class LoginSettings {
     }
 
     public boolean isEnforcePasswordPolicyEnabled() {
-        return passwordlessEnabled
-                && passwordlessEnforcePasswordEnabled
+        return passwordlessEnforcePasswordEnabled
                 && passwordlessEnforcePasswordMaxAge != null;
     }
 
