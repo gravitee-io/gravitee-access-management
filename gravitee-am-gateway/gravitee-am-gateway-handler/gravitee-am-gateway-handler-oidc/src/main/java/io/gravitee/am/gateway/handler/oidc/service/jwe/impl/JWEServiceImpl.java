@@ -27,6 +27,7 @@ import com.nimbusds.jwt.JWTParser;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKFilter;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
@@ -134,6 +135,10 @@ public class JWEServiceImpl implements JWEService {
         try {
             // Parse a first time to check if the JWT is encrypted
             JWT parsedJwt = JWTParser.parse(jwt);
+
+            if (client != null && !client.getClientId().equals(parsedJwt.getJWTClaimsSet().getIssuer())) {
+                throw new InvalidClientException("Client ID does not match issuer");
+            }
 
             if (parsedJwt instanceof EncryptedJWT) {
 
