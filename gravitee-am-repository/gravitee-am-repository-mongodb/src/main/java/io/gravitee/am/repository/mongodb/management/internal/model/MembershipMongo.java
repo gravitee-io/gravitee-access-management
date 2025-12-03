@@ -32,6 +32,7 @@ public class MembershipMongo extends Auditable {
     private String referenceId;
     private String referenceType;
     private String role;
+    private boolean fromRoleMapper = false;
 
     public String getId() {
         return id;
@@ -87,5 +88,13 @@ public class MembershipMongo extends Auditable {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public boolean isFromRoleMapper() {
+        return fromRoleMapper;
+    }
+
+    public void setFromRoleMapper(boolean fromRoleMapper) {
+        this.fromRoleMapper = fromRoleMapper;
     }
 }
