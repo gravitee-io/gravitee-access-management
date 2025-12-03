@@ -24,7 +24,6 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.ClientBindingMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidIssuerException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.jwt.DefaultJWTParser;
@@ -131,17 +130,8 @@ public class AuthenticationRequestParseRequestObjectHandler implements Handler<R
 
             // iss : The Issuer claim MUST be the client_id of the OAuth Client.
             final String iss = claims.getStringClaim(Claims.ISS);
-            if (iss == null) {
-                return Single.error(new InvalidRequestException("iss is missing"));
-            } else if(!client.getClientId().equals(iss)){
-                return Single.error(new InvalidIssuerException(String.format("iss claim does not match authenticated client_id : %s", iss)));
-            }
-
-            // client_id check (assuming you added this to fully cover the test)
-            final String claimClientId = claims.getStringClaim("client_id");
-            if (claimClientId != null && !client.getClientId().equals(claimClientId)) {
-                // *** FIX FOR TEST 3: Throw InvalidClientException directly for client_id claim mismatch ***
-                return Single.error(new InvalidClientException(String.format("client_id claim in JWT does not match authenticated client_id : %s", claimClientId)));
+            if (iss == null || !client.getClientId().equals(iss)) {
+                return Single.error(new InvalidRequestException("iss is missing or invalid"));
             }
 
             // exp : An expiration time that limits the validity lifetime of the signed authentication request.

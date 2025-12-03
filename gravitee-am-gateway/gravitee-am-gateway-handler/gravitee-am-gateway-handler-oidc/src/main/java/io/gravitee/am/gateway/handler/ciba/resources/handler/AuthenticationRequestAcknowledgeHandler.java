@@ -91,8 +91,6 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                 authRequest.setId(authReqId);
             }
 
-            LOGGER.debug("CIBA Authentication Request linked to auth_req_id '{}'", authRequest.getId());
-
             if (!hasValidExp(authRequest.getExpiry(), maxRequestLifetime)) {
                 context.fail(new InvalidRequestException("The 'exp' claim in the Request Object exceeds the maximum allowed lifetime of 3600 seconds."));
                 return;
