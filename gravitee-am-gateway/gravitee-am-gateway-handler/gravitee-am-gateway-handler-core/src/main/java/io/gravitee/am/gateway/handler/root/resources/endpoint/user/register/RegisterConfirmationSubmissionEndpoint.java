@@ -79,6 +79,11 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
             // if auto login option is enabled add the user to the session
             if (registrationResponse.isAutoLogin()) {
                 context.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())));
+            } else {
+                // Clear session to prevent interference with subsequent flows
+                if (context.session() != null) {
+                    context.session().destroy();
+                }
             }
             // no redirect uri has been set, redirect to the default page
             if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
