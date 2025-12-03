@@ -210,8 +210,16 @@ email:
   port: 587
   from: noreply@my.domain
   username: user@my.domain
-  password: password
-  # List of allowed from
+  password: password # used only for basic auth
+  authMethod: basic # basic or oauth2
+#  oauth2:
+#    tokenEndpoint: https://oauth2.googleapis.com/token # OAuth2 token endpoint URL
+#    clientId: abc
+#    clientSecret: abc
+#    refreshToken: abc
+#    scope: https://mail.google.com/
+
+  # List of allowed from addresses
   allowedfrom:
     - "*@*.*"
     # - ${email.from}
