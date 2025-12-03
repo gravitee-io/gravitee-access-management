@@ -22,10 +22,11 @@ ENV WWW_TARGET /usr/share/nginx/html
 ENV MGMT_BASE_HREF "/"
 ENV MGMT_API_URL "http://localhost:8093"
 
-RUN apk add --update zip unzip
-
 ADD gravitee-am-webui-${GRAVITEEAM_VERSION}.zip /tmp/
-RUN unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/
+
+RUN apk add --update unzip && \
+    unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ && \
+    apk del unzip
 
 RUN mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET}
 
