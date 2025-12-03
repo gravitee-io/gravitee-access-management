@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.gateway.handler.common.utils.CertificateUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.oidc.Client;
@@ -27,8 +28,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
 
-import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.extractPeerCertificate;
-import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
+import static io.gravitee.am.gateway.handler.common.utils.CertificateUtils.extractPeerCertificate;
+import static io.gravitee.am.gateway.handler.common.utils.CertificateUtils.getThumbprint;
 
 /**
  * Client Authentication method : self_signed_tls_client_auth

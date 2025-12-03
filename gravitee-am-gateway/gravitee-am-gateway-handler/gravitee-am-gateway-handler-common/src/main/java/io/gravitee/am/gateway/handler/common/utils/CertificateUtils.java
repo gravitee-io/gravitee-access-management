@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
+package io.gravitee.am.gateway.handler.common.utils;
 
 import io.gravitee.am.certificate.api.X509CertUtils;
 import io.vertx.rxjava3.ext.web.RoutingContext;
