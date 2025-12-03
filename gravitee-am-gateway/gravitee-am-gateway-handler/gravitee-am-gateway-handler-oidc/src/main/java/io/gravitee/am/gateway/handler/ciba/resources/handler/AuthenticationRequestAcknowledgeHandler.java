@@ -181,7 +181,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
     private static boolean hasValidExp(Integer exp, Integer maxRequestLifetimeSecs) {
         if (exp == null) {
-            return false;
+            return true;
         }
 
         var now = Instant.now().getEpochSecond();
@@ -191,7 +191,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
     private static boolean hasValidNbf(Integer nbf, Integer maxRequestLifetimeSecs) {
         if (nbf == null) {
-            return false;
+            return true;
         }
         
         var now = Instant.now().getEpochSecond();
