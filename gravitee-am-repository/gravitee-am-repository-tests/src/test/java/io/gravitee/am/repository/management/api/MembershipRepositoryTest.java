@@ -47,6 +47,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         membership.setReferenceId(ORGANIZATION_ID);
         membership.setMemberType(MemberType.USER);
         membership.setMemberId("user#1");
+        membership.setFromRoleMapper(true);
 
         Membership createdMembership = membershipRepository.create(membership).blockingGet();
 
@@ -59,7 +60,8 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
                 && m.getReferenceType() == membership.getReferenceType()
                 && m.getReferenceId().equals(membership.getReferenceId())
                 && m.getMemberType() == membership.getMemberType()
-                && m.getMemberId().equals(membership.getMemberId()));
+                && m.getMemberId().equals(membership.getMemberId())
+                && m.isFromRoleMapper());
     }
 
     @Test

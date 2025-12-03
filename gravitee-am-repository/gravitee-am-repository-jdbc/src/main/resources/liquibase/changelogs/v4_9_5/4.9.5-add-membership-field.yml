@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.5-add-membership-field
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: memberships
+              columnName: from_role_mapper
+      changes:
+        #############################
+        # memberships #
+        ############################
+        - addColumn:
+            tableName: memberships
+            columns:
+              - column: { name: from_role_mapper, type: boolean, constraints: { nullable: true } }

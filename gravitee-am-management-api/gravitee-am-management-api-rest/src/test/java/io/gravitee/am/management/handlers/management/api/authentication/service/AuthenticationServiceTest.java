@@ -23,6 +23,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
@@ -32,6 +33,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,6 +46,7 @@ import org.springframework.security.core.Authentication;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -57,6 +61,7 @@ import static org.mockito.Mockito.when;
 public class AuthenticationServiceTest {
 
     public static final String ORGANIZATION_ID = Organization.DEFAULT;
+    public static final Role DEFAULT_ROLE = new Role();
 
     @InjectMocks
     private AuthenticationService authenticationService = new AuthenticationServiceImpl();
@@ -91,6 +96,12 @@ public class AuthenticationServiceTest {
     @Mock
     private UserEnhancer userEnhancer;
 
+    @BeforeAll
+    public static void beforeAll() {
+        DEFAULT_ROLE.setId("id-organization-user-default");
+        DEFAULT_ROLE.setName("organization-user-default");
+    }
+
     @Test
     public void shouldCreateUser() {
         User user = new User();
@@ -103,6 +114,7 @@ public class AuthenticationServiceTest {
         when(userServiceMock.create(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(user));
         when(userServiceMock.setRoles(any(), any(io.gravitee.am.model.User.class))).thenReturn(Completable.complete());
         when(userEnhancer.enhance(any())).thenReturn(Single.just(user));
+
         authenticationService.onAuthenticationSuccess(authenticationMock);
 
         verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
@@ -119,6 +131,11 @@ public class AuthenticationServiceTest {
         when(userServiceMock.update(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
         when(userEnhancer.enhance(any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
+        when(roleServiceMock.findDefaultRole(ORGANIZATION_ID, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(new Role()));
+        when(repositoryUserMock.getId()).thenReturn("user-id");
+        when(membershipMock.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(membershipServiceMock.findByMember("user-id", MemberType.USER)).thenReturn(Flowable.just(membershipMock));
+
         authenticationService.onAuthenticationSuccess(authenticationMock);
 
         verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
@@ -127,9 +144,10 @@ public class AuthenticationServiceTest {
     }
 
     @Test
-    public void shouldUpdatedUser_update_membership() {
+    public void should_update_role_assigned_by_roleMapper() {
         when(membershipMock.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
         when(membershipMock.getRoleId()).thenReturn("organization-user-role-id");
+        when(roleServiceMock.findDefaultRole(ORGANIZATION_ID, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(DEFAULT_ROLE));
 
         when(repositoryUserMock.getId()).thenReturn("user-id");
         when(repositoryUserMock.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
@@ -152,6 +170,61 @@ public class AuthenticationServiceTest {
 
         verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
         verify(userServiceMock, times(1)).update(any(io.gravitee.am.model.User.class));
-        verify(membershipServiceMock, times(1)).addOrUpdate(any(String.class), any(Membership.class));
+        verify(membershipServiceMock, times(1)).addOrUpdate(any(String.class), argThat(Membership::isFromRoleMapper));
+    }
+
+    @Test
+    public void should_not_update_role_assigned_by_roleMapper_no_changes() {
+        when(membershipMock.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(membershipMock.getRoleId()).thenReturn("organization-owner-role-id");
+        when(roleServiceMock.findDefaultRole(ORGANIZATION_ID, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(DEFAULT_ROLE));
+
+        when(repositoryUserMock.getId()).thenReturn("user-id");
+
+        when(userDetailsMock.getRoles()).thenReturn(Collections.singletonList("organization-owner-role-id"));
+
+        when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
+
+        when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.just(repositoryUserMock));
+        when(userServiceMock.update(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
+        when(userEnhancer.enhance(any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
+
+        when(membershipServiceMock.findByMember("user-id", MemberType.USER)).thenReturn(Flowable.just(membershipMock));
+
+        authenticationService.onAuthenticationSuccess(authenticationMock);
+
+        verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
+        verify(userServiceMock, times(1)).update(any(io.gravitee.am.model.User.class));
+        verify(membershipServiceMock, never()).addOrUpdate(any(String.class), any(Membership.class));
+    }
+
+    @Test
+    public void should_update_role_with_defaultRole() {
+        when(membershipMock.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(roleServiceMock.findDefaultRole(ORGANIZATION_ID, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(DEFAULT_ROLE));
+
+        when(repositoryUserMock.getId()).thenReturn("user-id");
+        when(repositoryUserMock.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(repositoryUserMock.getReferenceId()).thenReturn("organization-id");
+
+        when(userDetailsMock.getRoles()).thenReturn(Collections.emptyList());
+
+        when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
+
+        when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.just(repositoryUserMock));
+        when(userServiceMock.update(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
+        when(userEnhancer.enhance(any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
+
+        when(roleServiceMock.findById(ReferenceType.ORGANIZATION, "organization-id", DEFAULT_ROLE.getId())).thenReturn(Single.just(DEFAULT_ROLE));
+
+        when(membershipServiceMock.findByMember("user-id", MemberType.USER)).thenReturn(Flowable.just(membershipMock));
+        when(membershipMock.isFromRoleMapper()).thenReturn(true);
+        when(membershipServiceMock.addOrUpdate(anyString(), any(Membership.class))).thenReturn(Single.just(new Membership()));
+
+        authenticationService.onAuthenticationSuccess(authenticationMock);
+
+        verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
+        verify(userServiceMock, times(1)).update(any(io.gravitee.am.model.User.class));
+        verify(membershipServiceMock, times(1)).addOrUpdate(any(String.class), argThat(m -> !m.isFromRoleMapper() && m.getRoleId().equals(DEFAULT_ROLE.getId())));
     }
 }

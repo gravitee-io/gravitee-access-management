@@ -186,6 +186,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-webauth.yml
   - include:
+      - file: liquibase/changelogs/v4_9_5/4.9.5-add-membership-field.yml
+  - include:
       - file: liquibase/changelogs/v4_10_0/4.10.0-protected-resources-table.yml
   - include:
       - file: liquibase/changelogs/v4_10_0/4.10.0-add-authorization-engines-table.yml
