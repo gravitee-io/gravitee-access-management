@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 
 /**
@@ -53,9 +54,11 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
 
     private final CibaAuthenticationRequestResolver cibaRequestResolver;
     private final int bindingMessageMaxLength;
+    private final boolean fapiEnabled;
 
     public AuthenticationRequestParametersHandler(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager, ProtectedResourceManager protectedResourceManager) {
         this.bindingMessageMaxLength = domain.getOidc().getCibaSettings().getBindingMessageLength();
+        this.fapiEnabled = domain.usePlainFapiProfile() || domain.useFapiBrazilProfile();
 
         cibaRequestResolver = new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService, subjectManager);
         cibaRequestResolver.setManagers(scopeManager, protectedResourceManager);
@@ -69,6 +72,9 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
         final Client client = context.get(CLIENT_CONTEXT_KEY);
 
         try {
+            if (fapiEnabled && context.get(REQUEST_OBJECT_KEY) == null) {
+                throw new InvalidRequestException("Signed authentication request is required for FAPI");
+            }
             validateScopes(request);
             validateAcrValue(openIDProviderMetadata, request);
             validateHints(request);
