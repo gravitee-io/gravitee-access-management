@@ -83,6 +83,11 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
             // if auto login option is enabled add the user to the session
             if (resetPasswordResponse.isAutoLogin()) {
                 context.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(resetPasswordResponse.getUser())));
+            } else {
+                // Clear session to prevent interference with subsequent flows
+                if (context.session() != null) {
+                    context.session().destroy();
+                }
             }
             // do on force password reset
             if (context.get(ConstantKeys.TOKEN_CONTEXT_KEY) != null) {
