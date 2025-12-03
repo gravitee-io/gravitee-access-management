@@ -163,6 +163,7 @@ public class MembershipServiceImpl implements MembershipService {
                                 newMembership.setRoleId(membership.getRoleId());
                                 newMembership.setCreatedAt(new Date());
                                 newMembership.setUpdatedAt(newMembership.getCreatedAt());
+                                newMembership.setFromRoleMapper(membership.isFromRoleMapper());
                                 return createInternal(newMembership, principal);
                             } else {
                                 // update membership
@@ -170,6 +171,7 @@ public class MembershipServiceImpl implements MembershipService {
                                 Membership updateMembership = new Membership(oldMembership);
                                 updateMembership.setRoleId(membership.getRoleId());
                                 updateMembership.setUpdatedAt(new Date());
+                                updateMembership.setFromRoleMapper(membership.isFromRoleMapper());
                                 return membershipRepository.update(updateMembership)
                                         // create event for sync process
                                         .flatMap(membership1 -> {

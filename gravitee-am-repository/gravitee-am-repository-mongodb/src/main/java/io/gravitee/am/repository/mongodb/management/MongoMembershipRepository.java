@@ -170,6 +170,7 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         membership.setRoleId(membershipMongo.getRole());
         membership.setCreatedAt(membershipMongo.getCreatedAt());
         membership.setUpdatedAt(membershipMongo.getUpdatedAt());
+        membership.setFromRoleMapper(membershipMongo.isFromRoleMapper());
         return membership;
     }
 
@@ -184,6 +185,7 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         membershipMongo.setRole(membership.getRoleId());
         membershipMongo.setCreatedAt(membership.getCreatedAt());
         membershipMongo.setUpdatedAt(membership.getUpdatedAt());
+        membershipMongo.setFromRoleMapper(membership.isFromRoleMapper());
         return membershipMongo;
     }
 }
