@@ -554,7 +554,7 @@ describe('CIBA valid Flow', () => {
         Authorization: 'Basic ' + getBase64BasicAuth(cibaApp.client_id, cibaApp.client_secret),
       },
     );
-    expect(response2.status).toBe(403);
+    expect(response2.status).toBe(400);
     expect(response2.body.error).toBe('access_denied');
   });
 });
