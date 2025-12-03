@@ -197,6 +197,17 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        LOGGER.debug("Delete authorization engines by domain {}", domainId);
+        return authorizationEngineRepository.deleteByDomain(domainId)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to delete authorization engines for domain: {}", domainId, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete authorization engines for domain: %s", domainId), ex));
+                });
+    }
+
     private Completable validateConfiguration(String type, String configuration) {
         return Completable.fromAction(() -> {
                     ValidationResult validationResult = authorizationEnginePluginManager.validate(new ProviderConfiguration(type, configuration));

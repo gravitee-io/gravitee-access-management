@@ -185,6 +185,27 @@ public class AuthorizationEngineRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
     }
 
+    @Test
+    public void deleteByDomain(){
+        AuthorizationEngine engine = buildAuthorizationEngine();
+        AuthorizationEngine created = authorizationEngineRepository.create(engine).blockingGet();
+
+        TestObserver<AuthorizationEngine> testObserver = authorizationEngineRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(e -> e.getName().equals(created.getName()));
+
+        TestObserver<Void> testObserver1 = authorizationEngineRepository.deleteByDomain(engine.getReferenceId()).test();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver = authorizationEngineRepository.findById(created.getId()).test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
+    }
+
     private AuthorizationEngine buildAuthorizationEngine() {
         AuthorizationEngine engine = new AuthorizationEngine();
         engine.setName("testName");

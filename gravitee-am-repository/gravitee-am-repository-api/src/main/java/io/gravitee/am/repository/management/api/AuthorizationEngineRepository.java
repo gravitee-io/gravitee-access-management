@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 
@@ -32,4 +33,6 @@ public interface AuthorizationEngineRepository extends CrudRepository<Authorizat
     Maybe<AuthorizationEngine> findByDomainAndId(String domainId, String id);
 
     Maybe<AuthorizationEngine> findByDomainAndType(String domainId, String type);
+
+    Completable deleteByDomain(String domainId);
 }

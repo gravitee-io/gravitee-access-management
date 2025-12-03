@@ -26,8 +26,10 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -35,6 +37,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
@@ -162,5 +166,14 @@ public class JdbcAuthorizationEngineRepository extends AbstractJdbcRepository im
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return this.authorizationEngineRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        LOGGER.debug("deleteByDomain({})", domainId);
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationEngine.class)
+                .matching(Query.query(where(REFERENCE_ID_FIELD).is(domainId).and(where(REF_TYPE_FIELD).is(ReferenceType.DOMAIN.name()))))
+                .all())
+                .observeOn(Schedulers.computation());
     }
 }

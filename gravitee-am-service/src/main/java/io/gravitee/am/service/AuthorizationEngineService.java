@@ -41,4 +41,6 @@ public interface AuthorizationEngineService {
     Single<AuthorizationEngine> update(Domain domain, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal);
 
     Completable delete(Domain domain, String authorizationEngineId, User principal);
+
+    Completable deleteByDomain(String domainId);
 }
