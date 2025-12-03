@@ -326,7 +326,7 @@ describe('CIBA valid Flow', () => {
       '',
       {
         domainId: cibaDomain.id,
-        domainCallback: `${process.env.AM_GATEWAY_URL}/${cibaDomain.hrid}/oidc/ciba/authenticate/callback`,
+        domainCallback: `http://host.docker.internal:8092/${cibaDomain.hrid}/oidc/ciba/authenticate/callback`,
         clientId: cibaApp.client_id,
         clientSecret: cibaApp.client_secret,
       },
@@ -450,7 +450,7 @@ describe('CIBA valid Flow', () => {
       login_hint: cibaUser.username,
     };
 
-    const options = { expiresIn: '10h', keyid: '123', algorithm: 'RS256' };
+    const options = { expiresIn: '5m', keyid: '123', algorithm: 'RS256' };
     const privatePEM = jwkToPem(privateJwk, { private: true });
     const requestObject = jwt.sign(payload, privatePEM, options);
 
