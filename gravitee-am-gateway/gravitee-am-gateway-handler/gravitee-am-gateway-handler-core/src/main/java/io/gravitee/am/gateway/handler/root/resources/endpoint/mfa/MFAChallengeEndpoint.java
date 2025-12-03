@@ -211,7 +211,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         }
 
         if (rateLimiterService.isRateLimitEnabled()) {
-            rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
+            rateLimiterService.tryConsume(endUser.getId(), factor.getId(), client.getId(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 // if sendMessage is allowed, then get the EnrolledFactor with code reinitialiation to manage the movingFactor reset
                                 // during enrollment phase (if the user refresh the page)
