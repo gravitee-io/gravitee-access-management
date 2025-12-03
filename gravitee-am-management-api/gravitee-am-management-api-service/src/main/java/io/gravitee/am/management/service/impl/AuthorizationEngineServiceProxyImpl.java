@@ -131,6 +131,11 @@ public class AuthorizationEngineServiceProxyImpl extends AbstractSensitiveProxy 
     }
 
     @Override
+    public Completable deleteByDomain(String domainId) {
+        return service.deleteByDomain(domainId);
+    }
+
+    @Override
     protected RuntimeException getSchemaNotFoundException(String type) {
         return new AuthorizationEnginePluginSchemaNotFoundException(type);
     }

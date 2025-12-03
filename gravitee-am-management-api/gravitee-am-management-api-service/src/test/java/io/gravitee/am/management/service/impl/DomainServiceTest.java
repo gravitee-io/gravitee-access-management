@@ -40,8 +40,8 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.Role;
@@ -68,6 +68,7 @@ import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DeviceIdentifierService;
@@ -83,8 +84,8 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
-import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.ProtectedResourceService;
+import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ServiceResourceService;
@@ -102,7 +103,6 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
-import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSettingsValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -116,7 +116,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -335,6 +334,9 @@ public class DomainServiceTest {
 
     @Mock
     private CertificateCredentialService certificateCredentialService;
+
+    @Mock
+    private AuthorizationEngineService authorizationEngineService;
 
     @Test
     public void shouldDelegateFindById() {
@@ -1103,6 +1105,7 @@ public class DomainServiceTest {
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1120,6 +1123,7 @@ public class DomainServiceTest {
         verify(userActivityService, times(1)).deleteByDomain(any());
         verify(deviceIdentifierService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(serviceResourceService, times(1)).deleteByDomain(DOMAIN_ID);
+        verify(authorizationEngineService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(scopeService, times(1)).delete(any(), eq(SCOPE_ID), eq(true));
         verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
@@ -1169,6 +1173,7 @@ public class DomainServiceTest {
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

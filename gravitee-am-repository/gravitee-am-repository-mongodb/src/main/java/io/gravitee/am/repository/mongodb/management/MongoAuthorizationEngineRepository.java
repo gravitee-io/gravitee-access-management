@@ -118,6 +118,12 @@ public class MongoAuthorizationEngineRepository extends AbstractManagementMongoR
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        return Completable.fromPublisher(authorizationEnginesCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.DOMAIN.name()), eq(FIELD_REFERENCE_ID, domainId))))
+                .observeOn(Schedulers.computation());
+    }
+
     private AuthorizationEngine convert(AuthorizationEngineMongo authorizationEngineMongo) {
         if (authorizationEngineMongo == null) {
             return null;

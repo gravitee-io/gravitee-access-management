@@ -55,6 +55,7 @@ import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
@@ -271,6 +272,8 @@ public class DomainServiceImpl implements DomainService {
     private DeviceIdentifierService deviceIdentifierService;
     @Autowired
     private ServiceResourceService serviceResourceService;
+    @Autowired
+    private AuthorizationEngineService authorizationEngineService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -657,6 +660,7 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(deviceIdentifierService.deleteByDomain(domainId))
                             // delete certificate credentials
                             .andThen(certificateCredentialService.deleteByDomain(domain))
+                            .andThen(authorizationEngineService.deleteByDomain(domainId))
                             .andThen(protectedResourceService.findByDomain(domainId)
                                     .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
                             )
