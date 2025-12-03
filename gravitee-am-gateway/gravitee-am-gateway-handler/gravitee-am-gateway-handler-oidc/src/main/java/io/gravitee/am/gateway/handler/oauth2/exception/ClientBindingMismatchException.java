@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-
 /**
  * Exception thrown when a requested resource is not recognized by the authorization server.
  *

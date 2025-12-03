@@ -18,19 +18,22 @@ package io.gravitee.am.gateway.handler.ciba.exception;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class AuthorizationRejectedException extends OAuth2Exception {
+
+    public AuthorizationRejectedException() {}
+
+    public AuthorizationRejectedException(String message) {
+        super(message);
+    }
+
+    public AuthorizationRejectedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
     @Override
     public String getOAuth2ErrorCode() {
         return "access_denied";
     }
-
-    @Override
-    public int getHttpStatusCode() {
-        return 400;
-    }
-
 }
