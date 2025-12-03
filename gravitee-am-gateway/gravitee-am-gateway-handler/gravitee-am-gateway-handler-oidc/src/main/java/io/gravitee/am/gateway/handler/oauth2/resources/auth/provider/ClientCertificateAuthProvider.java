@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.gateway.handler.common.utils.CertificateUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;

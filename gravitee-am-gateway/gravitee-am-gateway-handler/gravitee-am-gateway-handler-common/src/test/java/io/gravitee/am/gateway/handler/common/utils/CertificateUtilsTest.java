@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
+package io.gravitee.am.gateway.handler.common.utils;
 
 
 import io.vertx.rxjava3.core.http.HttpServerRequest;

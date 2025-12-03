@@ -33,6 +33,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -98,11 +99,11 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
         }
 
         String thumbprint = X509CertUtils.getThumbprint(cert, "SHA-256");
-        String subjectDN = cert.getSubjectX500Principal().getName();
+        String subjectDN = new X500Name(cert.getSubjectX500Principal().getName()).toString();
+        String issuerDN = new X500Name(cert.getIssuerX500Principal().getName()).toString();
         String serialNumber = cert.getSerialNumber().toString();
         Date expiresAt = cert.getNotAfter();
-        String issuerDN = cert.getIssuerX500Principal().getName();
-        
+
         log.debug("Certificate parsed successfully - Subject DN: {}, Serial: {}, Thumbprint: {}", subjectDN, serialNumber, thumbprint);
         
         return new CertificateFields(thumbprint, subjectDN, serialNumber, expiresAt, issuerDN);

@@ -28,7 +28,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientAuthAuditBuilder;
 import io.vertx.core.AsyncResult;
@@ -49,8 +48,8 @@ import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.web.UriBuilder.decodeURIComponent;
-import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.extractPeerCertificate;
-import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
+import static io.gravitee.am.gateway.handler.common.utils.CertificateUtils.extractPeerCertificate;
+import static io.gravitee.am.gateway.handler.common.utils.CertificateUtils.getThumbprint;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
