@@ -83,13 +83,13 @@ public class CibaTokenGranter extends AbstractTokenGranter {
         MultiValueMap<String, String> parameters = tokenRequest.parameters();
         final String authReqId = parameters.getFirst(Parameters.AUTH_REQ_ID);
 
-        logger.info("Parsing CIBA token request for client [{}]", client.getId());
+        logger.debug("Parsing CIBA token request for client [{}] authReqId: {}", client.getClientId(), authReqId);
         if (isEmpty(authReqId)) {
             return Single.error(new InvalidRequestException("Missing parameter: auth_req_id"));
         }
 
         return super.parseRequest(tokenRequest, client)
-                .flatMap(tokenRequest1 -> authenticationRequestService.retrieve(domain, authReqId, client.getClientId())
+                .flatMap(tokenRequest1 -> authenticationRequestService.retrieve(domain, authReqId, client)
                         .map(cibaRequest -> {
                             if (!cibaRequest.getClientId().equals(client.getClientId())) {
                                 throw new InvalidGrantException("Authentication request not found");
