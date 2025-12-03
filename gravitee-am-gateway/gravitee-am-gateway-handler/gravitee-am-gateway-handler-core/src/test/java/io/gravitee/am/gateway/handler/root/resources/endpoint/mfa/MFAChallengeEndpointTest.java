@@ -55,6 +55,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
@@ -78,12 +79,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -158,8 +161,29 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(domainDataPlane.getDomain()).thenReturn(domain);
     }
 
+    private void awaitResponseEnd(SpyRoutingContext spyRoutingContext) {
+        Completable completable = spyRoutingContext.ended() 
+            ? Completable.complete()
+            : Completable.create(emitter -> {
+                spyRoutingContext.response().endHandler(v -> {
+                    if (!emitter.isDisposed()) {
+                        emitter.onComplete();
+                    }
+                });
+                // Handle race condition: end() called between initial check and setting handler
+                if (spyRoutingContext.ended() && !emitter.isDisposed()) {
+                    emitter.onComplete();
+                }
+            });
+        
+        TestObserver<Void> testObserver = completable.test();
+        testObserver.awaitDone(20, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
     @Test
-    public void shouldSendCode_withEmail_tidUsedAsMovingFactor() throws Exception {
+    public void shouldSendCode_withEmail_tidUsedAsMovingFactor() {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
         when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
@@ -183,11 +207,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
         mfaChallengeEndpoint.handle(spyRoutingContext);
 
-        int attempt = 20;
-        while (!spyRoutingContext.ended() && attempt > 0) {
-            Thread.sleep(1000);
-            --attempt;
-        }
+        awaitResponseEnd(spyRoutingContext);
 
         assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertNull(spyRoutingContext.response().headers().get("location"));
@@ -195,7 +215,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldSendSameCode_withEmail_afterErrorValidation() throws Exception {
+    public void shouldSendSameCode_withEmail_afterErrorValidation() {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
         when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
@@ -221,11 +241,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
         mfaChallengeEndpoint.handle(spyRoutingContext);
 
-        int attempt = 20;
-        while (!spyRoutingContext.ended() && attempt > 0) {
-            Thread.sleep(1000);
-            --attempt;
-        }
+        awaitResponseEnd(spyRoutingContext);
 
         assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
@@ -234,7 +250,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldSendSameCode_withEmail_afterRateLimitError() throws Exception {
+    public void shouldSendSameCode_withEmail_afterRateLimitError() {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
         when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
@@ -261,11 +277,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
         mfaChallengeEndpoint.handle(spyRoutingContext);
 
-        int attempt = 20;
-        while (!spyRoutingContext.ended() && attempt > 0) {
-            Thread.sleep(1000);
-            --attempt;
-        }
+        awaitResponseEnd(spyRoutingContext);
 
         assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
@@ -273,7 +285,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldSendAnotherCode_withEmail_ifRateLimiteSuccessful() throws Exception {
+    public void shouldSendAnotherCode_withEmail_ifRateLimiteSuccessful() {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
         when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
@@ -302,11 +314,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
         mfaChallengeEndpoint.handle(spyRoutingContext);
 
-        int attempt = 20;
-        while (!spyRoutingContext.ended() && attempt > 0) {
-            Thread.sleep(1000);
-            --attempt;
-        }
+        awaitResponseEnd(spyRoutingContext);
 
         assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         Assertions.assertThat(previousTid).isNotEqualTo(spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
@@ -398,20 +406,72 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     assertTrue(location.contains("/login?error=mfa_challenge_failed&error_code=send_challenge_failed&error_description=MFA+Challenge+failed+for+unexpected+reason"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
-    }
+  }
 
-    private static User createUser() {
-        User user = new User();
-        user.setId("userId");
-        createUserFactor(user);
-        return user;
-    }
+  @Test
+  public void shouldUseContextClientIdForRateLimit() {
+      FactorProvider factorProvider = mock(FactorProvider.class);
+      when(factorProvider.needChallengeSending()).thenReturn(true);
+      when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+      when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
+      Factor factor = mock(Factor.class);
+      when(factor.getId()).thenReturn("factorId");
+      when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+      when(factorManager.get("factorId")).thenReturn(factorProvider);
+      when(factorManager.getFactor("factorId")).thenReturn(factor);
+      when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
 
-    private static void createUserFactor(User user) {
-        EnrolledFactor enrolledFactor = new EnrolledFactor();
-        EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-        enrolledFactor.setFactorId("factorId");
-        enrolledFactor.setSecurity(enrolledFactorSecurity);
-        user.setFactors(Collections.singletonList(enrolledFactor));
-    }
+      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+      spyRoutingContext.setMethod(HttpMethod.GET);
+      
+      // Create user with null client (simulating registration scenario)
+      User user = createUser();
+      user.setClient(null);
+      
+      // Client is available in routing context (from client_id parameter)
+      Client client = new Client();
+      client.setId("context-client-id");
+      client.setFactors(Collections.singleton("factorId"));
+      client.setDomain("domain-id");
+      
+      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+      when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+      when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(true));
+
+      mfaChallengeEndpoint.handle(spyRoutingContext);
+
+      awaitResponseEnd(spyRoutingContext);
+
+      // Verify that tryConsume was called with client.getId() from context, not endUser.getClient()
+      ArgumentCaptor<String> clientIdCaptor = ArgumentCaptor.forClass(String.class);
+      verify(rateLimiterService, times(1)).tryConsume(
+          eq("userId"), 
+          eq("factorId"), 
+          clientIdCaptor.capture(), 
+          eq("domain-id")
+      );
+      
+      // Assert that context client ID was used, not null
+      Assert.assertEquals("context-client-id", clientIdCaptor.getValue());
+  }
+
+  private static User createUser() {
+      User user = new User();
+      user.setId("userId");
+      createUserFactor(user);
+      return user;
+  }
+
+  private static void createUserFactor(User user) {
+      EnrolledFactor enrolledFactor = new EnrolledFactor();
+      EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
+      enrolledFactor.setFactorId("factorId");
+      enrolledFactor.setSecurity(enrolledFactorSecurity);
+      user.setFactors(Collections.singletonList(enrolledFactor));
+  }
+
 }
