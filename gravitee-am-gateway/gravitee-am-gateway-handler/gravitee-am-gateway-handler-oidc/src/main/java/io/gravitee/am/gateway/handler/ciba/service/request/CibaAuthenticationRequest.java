@@ -91,15 +91,15 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         cibaRequest.setUserCode(getOAuthParameter(context, Parameters.USER_CODE));
         final String reqExpiry = getOAuthParameter(context, Parameters.REQUESTED_EXPIRY);
         if (reqExpiry != null) {
-            cibaRequest.setRequestedExpiry(Integer.parseInt(reqExpiry));
+            cibaRequest.setRequestedExpiry(parseNumericValue(reqExpiry));
         }
         final String exp = getRawClaim(context, Parameters.EXPIRY);
         if (exp != null) {
-            cibaRequest.setExpiry(Integer.parseInt(exp));
+            cibaRequest.setExpiry(parseNumericValue(exp));
         }
         final String nbf = getRawClaim(context, Parameters.NBF);
         if (nbf != null) {
-            cibaRequest.setNbf(Integer.parseInt(nbf));
+            cibaRequest.setNbf(parseNumericValue(nbf));
         }
 
         return cibaRequest;
@@ -109,5 +109,13 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(request.params().size());
         request.params().entries().forEach(entry -> requestParameters.add(entry.getKey(), entry.getValue()));
         return requestParameters;
+    }
+
+    private static Integer parseNumericValue(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return (int) Math.round(Double.parseDouble(value));
+        }
     }
 }
