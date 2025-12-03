@@ -115,22 +115,22 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
             entity.getExternalInformation().put(ACR_VALUES, request.getAcrValues());
         }
 
-        LOGGER.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds", entity.getId(), ttl);
+        LOGGER.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds for client {}", entity.getId(), ttl, client.getClientId());
 
         return authRequestRepository.create(entity);
     }
 
     @Override
-    public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, String clientId) {
-        LOGGER.debug("Search for authentication request with id '{}'", authReqId);
+    public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, Client client) {
+        LOGGER.debug("Search for authentication request with id {} for client {}", authReqId, client.getClientId());
         return this.authRequestRepository.findById(authReqId)
                 .switchIfEmpty(Single.error(() -> new InvalidGrantException(authReqId)))
                 .flatMap(request -> {
                     if ((request.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
                         return Single.error(new AuthenticationRequestExpiredException());
                     }
-                    if (!clientId.equals(request.getClientId())) {
-                        return Single.error(new InvalidGrantException(String.format("Invalid grant: auth_req_id '%s' issued to client '%s' cannot be used by client '%s'", authReqId, request.getClientId(), clientId)));
+                    if (!client.getClientId().equals(request.getClientId())) {
+                        return Single.error(new InvalidGrantException(String.format("Invalid client: auth_req_id '%s' issued to client '%s' cannot be used by client '%s'", authReqId, request.getClientId(), client.getClientId())));
                     }
                     switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
                         case ONGOING:
