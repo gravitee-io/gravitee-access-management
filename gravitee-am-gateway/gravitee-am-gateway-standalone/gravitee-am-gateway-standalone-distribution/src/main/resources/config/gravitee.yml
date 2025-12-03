@@ -210,23 +210,36 @@ jwt:
 
 # SMTP configuration used to send mails
 email:
-  enabled: false
-  host: smtp.my.domain
+  enabled: true
+  host: smtp.gmail.com
   subject: "[Gravitee.io] %s"
   port: 587
-  from: noreply@my.domain
-  username: user@my.domain
-  password: password
-  # List of allowed from
+  from: noreplay@my.domain.com
+  authMethod: oauth2
+  oauth2:
+    # OAuth2 token endpoint URL
+    tokenEndpoint: https://oauth2.googleapis.com/token
+    # OAuth2 application (client) ID
+    clientId: abc
+    # OAuth2 application client secret (sensitive - use environment variables)
+    clientSecret: abc
+    # OAuth2 refresh token (long-lived)
+    refreshToken: abc
+    # OAuth2 scope
+    # Gmail: "https://mail.google.com/"
+    # Microsoft: "https://outlook.office365.com/.default"
+    scope: https://mail.google.com/
+    # Email address for XOAUTH2 authentication
+    username: user@mail.com
+
+  # List of allowed from addresses
   allowedfrom:
     - "*@*.*"
-    # - ${email.from}
-    # - *@mydomain.org
 
-#  properties:
-#    auth: true
-#    starttls.enable: true
-#    ssl.trust: smtp.gmail.com
+  properties:
+    auth: true
+    starttls.enable: true
+    ssl.trust: smtp.gmail.com
 
 # Mail templates
 #templates:
