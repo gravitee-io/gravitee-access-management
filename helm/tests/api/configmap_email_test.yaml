@@ -316,3 +316,40 @@ tests:
                      *   startTLSEnabled: false\n
                      *   subject: gravitee\n
                      *   username: info@example.com"
+
+  - it: Define OAuth2 authentication method
+    template: api/api-configmap.yaml
+    set:
+      smtp:
+        enabled: true
+        host: smtp.gmail.com
+        port: 587
+        from: sender@example.com
+        username: sender@example.com
+        authMethod: oauth2
+        oauth2:
+          tokenEndpoint: https://oauth2.googleapis.com/token
+          clientId: test-client-id
+          clientSecret: test-client-secret
+          refreshToken: test-refresh-token
+          scope: https://mail.google.com/
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: " *email:\n
+                     *  authMethod: oauth2\n
+                     *  enabled: true\n
+                     *  from: sender@example.com\n
+                     *  host: smtp.gmail.com\n
+                     *  oauth2:\n
+                     *    clientId: test-client-id\n
+                     *    clientSecret: test-client-secret\n
+                     *    refreshToken: test-refresh-token\n
+                     *    scope: https://mail.google.com/\n
+                     *    tokenEndpoint: https://oauth2.googleapis.com/token\n
+                     *  port: 587\n
+                     *  username: sender@example.com"
