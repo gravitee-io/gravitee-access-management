@@ -41,6 +41,14 @@ public class DummyHttpResponse implements HttpServerResponse {
     private final io.vertx.core.MultiMap headers = MultiMap.caseInsensitiveMultiMap();
     private boolean ended;
     private int statusCode;
+    private Handler<Void> endHandler;
+
+    private void markEnded() {
+        this.ended = true;
+        if (endHandler != null) {
+            endHandler.handle(null);
+        }
+    }
 
     @Override
     public HttpServerResponse exceptionHandler(Handler<Throwable> handler) {
@@ -164,7 +172,8 @@ public class DummyHttpResponse implements HttpServerResponse {
 
     @Override
     public HttpServerResponse endHandler(@Nullable Handler<Void> handler) {
-        return null;
+        this.endHandler = handler;
+        return this;
     }
 
     @Override
@@ -209,35 +218,35 @@ public class DummyHttpResponse implements HttpServerResponse {
 
     @Override
     public Future<Void> end(String chunk) {
-        this.ended = true;
+        markEnded();
         return Future.succeededFuture();
     }
 
     @Override
     public void end(String chunk, Handler<AsyncResult<Void>> handler) {
-        this.ended = true;
+        markEnded();
     }
 
     @Override
     public Future<Void> end(String chunk, String enc) {
-        this.ended = true;
+        markEnded();
         return Future.succeededFuture();
     }
 
     @Override
     public void end(String chunk, String enc, Handler<AsyncResult<Void>> handler) {
-        this.ended = true;
+        markEnded();
     }
 
     @Override
     public Future<Void> end(Buffer chunk) {
-        this.ended = true;
+        markEnded();
         return Future.succeededFuture();
     }
 
     @Override
     public void end(Buffer chunk, Handler<AsyncResult<Void>> handler) {
-        this.ended = true;
+        markEnded();
     }
 
     @Override
@@ -247,8 +256,13 @@ public class DummyHttpResponse implements HttpServerResponse {
 
     @Override
     public Future<Void> end() {
-        this.ended = true;
+        markEnded();
         return Future.succeededFuture();
+    }
+
+    @Override
+    public void end(Handler<AsyncResult<Void>> handler) {
+        markEnded();
     }
 
     @Override
@@ -299,11 +313,6 @@ public class DummyHttpResponse implements HttpServerResponse {
     @Override
     public Future<Void> sendFile(String filename, long offset) {
         return HttpServerResponse.super.sendFile(filename, offset);
-    }
-
-    @Override
-    public void end(Handler<AsyncResult<Void>> handler) {
-
     }
 
     @Override
