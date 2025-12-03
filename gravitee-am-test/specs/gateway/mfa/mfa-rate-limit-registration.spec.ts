@@ -338,7 +338,6 @@ describe('MFA Rate Limit during Registration Confirmation', () => {
       Cookie: headers['set-cookie'],
     });
 
-    expect(rateLimitedResponse.status).not.toBe(500);
     expect(rateLimitedResponse.status).toBe(302);
 
     const redirectLocation = rateLimitedResponse.headers['location'] || '';
