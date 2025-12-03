@@ -24,6 +24,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
@@ -38,6 +39,9 @@ import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -122,6 +126,56 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
                     assertEquals("http://custom_uri?client_id=client-id", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldDestroySession_whenAutoLoginIsFalse() throws Exception {
+        verifySessionDestructionBehavior(false, true);
+    }
+
+    @Test
+    public void shouldNotDestroySession_whenAutoLoginIsTrue() throws Exception {
+        verifySessionDestructionBehavior(true, false);
+    }
+
+    private void verifySessionDestructionBehavior(boolean autoLogin, boolean expectDestroy) throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        User user = new User();
+
+        RegistrationResponse registrationResponse = new RegistrationResponse();
+        registrationResponse.setAutoLogin(autoLogin);
+        registrationResponse.setUser(user);
+
+        Session session = mock(Session.class);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.getDelegate().setSession(session);
+            routingContext.put("client", client);
+            routingContext.put("user", user);
+            routingContext.next();
+        });
+
+        when(userService.confirmRegistration(eq(client), eq(user), any())).thenReturn(Single.just(registrationResponse));
+
+        testRequest(
+                HttpMethod.POST, "/confirmRegistration?client_id=client-id",
+                this::postPassword,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/confirmRegistration?client_id=client-id&success=registration_completed"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
+        if (expectDestroy) {
+            verify(session).destroy();
+        } else {
+            verify(session, never()).destroy();
+        }
     }
 
     private void postPassword(io.vertx.rxjava3.core.http.HttpClientRequest httpClientRequest) {
