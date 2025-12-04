@@ -45,14 +45,6 @@ public interface Parameters {
      */
     String REQUESTED_EXPIRY = "requested_expiry";
     /**
-     * The time when the authentication request expires, measured in the number of seconds since the UNIX epoch.
-     */
-    String EXPIRY = "exp";
-    /**
-     * The time before which the JWT MUST NOT be accepted for processing.
-     */
-    String NBF = "nbf";
-    /**
      * The unique identifier to identify the authentication request (transaction) made by the Client.
      */
     String AUTH_REQ_ID = "auth_req_id";

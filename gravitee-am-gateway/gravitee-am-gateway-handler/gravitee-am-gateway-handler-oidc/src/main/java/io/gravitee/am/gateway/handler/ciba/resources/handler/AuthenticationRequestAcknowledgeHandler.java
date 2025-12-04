@@ -59,8 +59,11 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
     private JWTService jwtService;
 
-    @Value("${openid.ciba.auth-request.maxRequestLifetime:3600}")
-    private int maxRequestLifetime = 3600;
+    @Value("${openid.ciba.auth-request.maxExpiryLifetime:3600}")
+    private int maxExpiryLifetime = 3600;
+
+    @Value("${openid.ciba.auth-request.maxNbfLifetime:3600}")
+    private int maxNbfLifetime = 3600;
 
     public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain, JWTService jwtService) {
         this.authRequestService = authRequestService;
@@ -91,13 +94,13 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                 authRequest.setId(authReqId);
             }
 
-            if (!hasValidExp(authRequest.getExpiry(), maxRequestLifetime)) {
-                context.fail(new InvalidRequestException("The 'exp' claim in the Request Object exceeds the maximum allowed lifetime of 3600 seconds."));
+            if (!hasValidExp(authRequest.getExpiry(), maxExpiryLifetime)) {
+                context.fail(new InvalidRequestException(String.format("The 'exp' claim in the Request Object exceeds the maximum allowed lifetime of %s seconds.", maxExpiryLifetime)));
                 return;
             }
 
-            if (!hasValidNbf(authRequest.getNbf(), maxRequestLifetime)) {
-                context.fail(new InvalidRequestException("The 'nbf' claim in the Request Object is missing or is more than 3600 seconds in the past."));
+            if (!hasValidNbf(authRequest.getNbf(), maxNbfLifetime)) {
+                context.fail(new InvalidRequestException(String.format("The 'nbf' claim in the Request Object is missing or is more than %s seconds in the past.", maxNbfLifetime)));
                 return;
             }
 
