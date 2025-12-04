@@ -24,6 +24,7 @@ import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
@@ -46,6 +47,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.text.ParseException;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -137,16 +139,7 @@ public class JWEServiceImpl implements JWEService {
             // Parse a first time to check if the JWT is encrypted
             JWT parsedJwt = JWTParser.parse(jwt);
 
-            if (client != null && parsedJwt.getJWTClaimsSet().getIssuer() != null && !client.getClientId().equals(parsedJwt.getJWTClaimsSet().getIssuer())) {
-                // if the kid of the signed JWT is different from the available keys in the client, it is a bad request
-                var clientKeys = client.getJwks().getKeys().stream().map(JWK::getKid).toList();
-                var jwkSigningKey = parsedJwt.getHeader().toJSONObject().get("kid").toString();
-                if (clientKeys.contains(jwkSigningKey)) {
-                    return Single.error(new InvalidRequestException("Invalid JWT signing key"));
-                }
-
-                throw new InvalidClientException("Client ID does not match issuer");
-            }
+            checkFapiSigningKeys(client, parsedJwt);
 
             if (parsedJwt instanceof EncryptedJWT) {
 
@@ -205,6 +198,29 @@ public class JWEServiceImpl implements JWEService {
             return Single.error(ex);
         }
     }
+
+    private void checkFapiSigningKeys(Client client, JWT parsedJwt) throws ParseException {
+        if (!domain.usePlainFapiProfile()) {
+            return;
+        }
+
+        if (!(parsedJwt instanceof SignedJWT signedJWT)) {
+            return;
+        }
+
+        if (client != null && signedJWT.getJWTClaimsSet().getIssuer() != null && !client.getClientId().equals(signedJWT.getJWTClaimsSet().getIssuer())) {
+            // if the kid of the signed JWT is different from the available keys in the client, it is a bad request
+            var clientKeys = client.getJwks().getKeys().stream().map(JWK::getKid).toList();
+            var jwkSigningKey = signedJWT.getHeader().toJSONObject().get("kid").toString();
+            if (clientKeys.contains(jwkSigningKey)) {
+                throw new InvalidRequestException("Invalid JWT signing key");
+            }
+
+            throw new InvalidClientException("Client ID does not match issuer");
+        }
+
+    }
+
 
     private Single<JWT> decrypt(JWEObject jwe, Client client, Predicate<JWK> filter, JWEDecrypterFunction<JWK, JWEDecrypter> function) {
         final Maybe<JWKSet> jwks = client != null ? jwkService.getKeys(client) : jwkService.getDomainPrivateKeys();
