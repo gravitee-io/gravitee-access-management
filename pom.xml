@@ -72,6 +72,7 @@
         <module>gravitee-am-ciba-delegated-service</module>
         <module>gravitee-am-monitoring</module>
         <module>gravitee-am-dataplane</module>
+        <module>gravitee-am-tooling</module>
     </modules>
 
     <properties>
