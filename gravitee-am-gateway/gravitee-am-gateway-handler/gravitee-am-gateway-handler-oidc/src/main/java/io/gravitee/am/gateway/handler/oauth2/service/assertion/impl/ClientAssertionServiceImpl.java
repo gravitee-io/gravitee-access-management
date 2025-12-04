@@ -142,7 +142,8 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             // https://tools.ietf.org/id/draft-lodderstedt-oauth-par-00.html#pushed-authorization-request-endpoint
             if (aud.stream().filter(discovery.getTokenEndpoint()::equals).count() == 0 &&
                     (discovery.getIssuer() != null && aud.stream().filter(discovery.getIssuer()::equals).count() == 0) &&
-                    (discovery.getParEndpoint() != null && aud.stream().filter(discovery.getParEndpoint()::equals).count() == 0)) {
+                    (discovery.getParEndpoint() != null && aud.stream().filter(discovery.getParEndpoint()::equals).count() == 0) &&
+                    (discovery.getBackchannelAuthenticationEndpoint() != null && aud.stream().filter(discovery.getBackchannelAuthenticationEndpoint()::equals).count() == 0)) {
                 return Maybe.error(NOT_VALID);
             }
 
