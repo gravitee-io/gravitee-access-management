@@ -24,7 +24,7 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitForDomainStart,
@@ -251,7 +251,7 @@ beforeAll(async () => {
   domain = domainStarted;
 
   await waitForDomainStart(domain);
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, accessToken);
 
   // Get existing flows and add RegistrationConfirmation flow
   // Note: Flows must be created after domain is started
@@ -279,7 +279,7 @@ beforeAll(async () => {
   });
 
   await updateApplicationFlows(domain.id, accessToken, application.id, flows);
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, accessToken);
 
   // Get SCIM access token
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
@@ -351,6 +351,6 @@ describe('MFA Rate Limit during Registration Confirmation', () => {
 });
 
 afterAll(async () => {
-    await deleteDomain(domain?.id, accessToken);
+    await safeDeleteDomain(domain?.id, accessToken);
 });
 

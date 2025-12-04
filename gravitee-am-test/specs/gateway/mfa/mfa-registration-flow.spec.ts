@@ -26,7 +26,7 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitForDomainStart,
@@ -359,7 +359,7 @@ beforeAll(async () => {
   domain = domainStarted;
 
   await waitForDomainStart(domain);
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, accessToken);
 
   // Get existing flows and add RegistrationConfirmation flow
   const flows = await getApplicationFlows(domain.id, accessToken, application.id);
@@ -386,7 +386,7 @@ beforeAll(async () => {
   });
 
   await updateApplicationFlows(domain.id, accessToken, application.id, flows);
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, accessToken);
 
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
   const tokenResponse = await performPost(openIdConfiguration.body.token_endpoint, '', 'grant_type=client_credentials', {
@@ -429,6 +429,6 @@ describe('User registration with MFA enrollment and session management', () => {
 });
 
 afterAll(async () => {
-  await deleteDomain(domain?.id, accessToken);
+  await safeDeleteDomain(domain?.id, accessToken);
 });
 
