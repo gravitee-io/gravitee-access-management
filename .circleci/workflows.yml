@@ -157,9 +157,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - gravitee-access-management-v1-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gravitee-access-management-v1-<< parameters.jobName >>-{{ .Branch }}-
-            - gravitee-access-management-v1-<< parameters.jobName >>-
+            - gravitee-access-management-v2-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gravitee-access-management-v2-<< parameters.jobName >>-{{ .Branch }}-
+            - gravitee-access-management-v2-<< parameters.jobName >>-
   save-maven-job-cache:
     description: Restore Maven cache for a dedicated job
     parameters:
@@ -174,7 +174,7 @@ commands:
       - save_cache:
           paths:
             - ~/.m2
-          key: gravitee-access-management-v1-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
+          key: gravitee-access-management-v2-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
           when: always
   notify-on-failure:
     steps:
@@ -1245,9 +1245,9 @@ jobs:
           at: .
       - restore_cache:
           keys:
-            - gravitee-access-management-v1-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gravitee-access-management-v1-sonarcloud-analysis-{{ .Branch }}-
-            - gravitee-access-management-v1-sonarcloud-analysis-
+            - gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-
+            - gravitee-access-management-v2-sonarcloud-analysis-
       - keeper/env-export:
           secret-url: keeper://9x9YgyU6DWzux4DPoHAzDQ/field/password
           var-name: SONAR_TOKEN
@@ -1260,7 +1260,7 @@ jobs:
       - save_cache:
           paths:
             - /opt/sonar-scanner/.sonar/cache
-          key: gravitee-access-management-v1-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
+          key: gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
           when: always
 
   junit_tests:
