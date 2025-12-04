@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.ciba.service.request;
 
 import io.gravitee.am.common.ciba.Parameters;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpHeaders;
@@ -93,11 +94,11 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         if (reqExpiry != null) {
             cibaRequest.setRequestedExpiry(parseNumericValue(reqExpiry));
         }
-        final String exp = getRawClaim(context, Parameters.EXPIRY);
+        final String exp = getRawClaim(context, Claims.EXP);
         if (exp != null) {
             cibaRequest.setExpiry(parseNumericValue(exp));
         }
-        final String nbf = getRawClaim(context, Parameters.NBF);
+        final String nbf = getRawClaim(context, Claims.NBF);
         if (nbf != null) {
             cibaRequest.setNbf(parseNumericValue(nbf));
         }
