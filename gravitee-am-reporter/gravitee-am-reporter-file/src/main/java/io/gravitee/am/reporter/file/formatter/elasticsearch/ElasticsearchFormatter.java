@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.reporter.file.formatter.elasticsearch;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.reporter.file.audit.AuditEntry;
 import io.gravitee.am.reporter.file.audit.ReportEntry;
 import io.gravitee.am.reporter.file.formatter.AbstractFormatter;
@@ -41,6 +43,7 @@ public class ElasticsearchFormatter<T extends ReportEntry> extends AbstractForma
     /** Index simple date format **/
     private final DateTimeFormatter dtf;
     private final DateTimeFormatter sdf;
+    private final ObjectMapper mapper;
 
     @Autowired
     private FreeMarkerComponent freeMarkerComponent;
@@ -48,6 +51,7 @@ public class ElasticsearchFormatter<T extends ReportEntry> extends AbstractForma
     public ElasticsearchFormatter() {
         this.dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS[XXX]").withZone(ZoneId.systemDefault());
         this.sdf = DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneId.systemDefault());
+        this.mapper = new ObjectMapper();
     }
 
     @Override
@@ -71,8 +75,31 @@ public class ElasticsearchFormatter<T extends ReportEntry> extends AbstractForma
         data.put("date", sdf.format(audit.getTimestamp()));
         data.put(Fields.SPECIAL_TIMESTAMP, dtf.format(audit.getTimestamp()));
         data.put("audit", audit);
+        
+        if (audit.getOutcome() != null && audit.getOutcome().getMessage() != null) {
+            String message = audit.getOutcome().getMessage();
+            String trimmedMessage = message.trim();
+            boolean isValidJson = isValidJsonArrayOrObject(trimmedMessage);
+            data.put("outcomeMessageIsValidJson", isValidJson);
+            if (isValidJson) {
+                data.put("outcomeMessageTrimmed", trimmedMessage);
+            }
+        }
 
         return generateData("audit.ftl", data);
+    }
+
+    private boolean isValidJsonArrayOrObject(String message) {
+        if (message == null || message.isEmpty()) {
+            return false;
+        }
+
+        try {
+            JsonNode jsonNode = mapper.readTree(message.trim());
+            return jsonNode.isArray() || jsonNode.isObject();
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private Buffer generateData(String templateName, Map<String, Object> data) {
