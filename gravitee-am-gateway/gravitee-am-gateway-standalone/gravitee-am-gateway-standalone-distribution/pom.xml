@@ -504,6 +504,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.authenticator</groupId>
+            <artifactId>gravitee-am-authenticator-cba</artifactId>
+            <version>${gravitee-am-authenticator-cba.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
     </dependencies>
 
@@ -994,6 +1001,12 @@
                                     <groupId>com.graviteesource.am.gateway.handler</groupId>
                                     <artifactId>gravitee-am-gateway-handler-authzen</artifactId>
                                     <version>${gravitee-am-gateway-handler-authzen.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.authenticator</groupId>
+                                    <artifactId>gravitee-am-authenticator-cba</artifactId>
+                                    <version>${gravitee-am-authenticator-cba.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>
