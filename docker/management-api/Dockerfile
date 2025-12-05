@@ -29,7 +29,7 @@ RUN apk update \
 FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
+ENV GRAVITEEIO_HOME=/opt/graviteeio-am-management-api
 
 RUN mkdir -p ${GRAVITEEIO_HOME} \
     && addgroup -g 1000 graviteeio \
@@ -37,7 +37,6 @@ RUN mkdir -p ${GRAVITEEIO_HOME} \
     && chmod -R g=u ${GRAVITEEIO_HOME}
 
 COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-management-api-standalone-* ${GRAVITEEIO_HOME}
-
 
 WORKDIR ${GRAVITEEIO_HOME}
 EXPOSE 8093

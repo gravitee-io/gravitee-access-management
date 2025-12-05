@@ -28,7 +28,7 @@ RUN unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -
 FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEE_AM_HOME /opt/graviteeio-am-management-api
+ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-management-api
 
 COPY --from=build-env /tmp/gravitee-am-management-api-standalone-* /opt/graviteeio-am-management-api/
 

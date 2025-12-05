@@ -28,7 +28,7 @@ RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
 FROM eclipse-temurin:21.0.8_9-jre-noble
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
+ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-gateway
 
 # Upgrade libc6
 USER root
