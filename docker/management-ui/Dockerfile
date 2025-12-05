@@ -22,9 +22,9 @@ ARG GRAVITEEAM_VERSION=0
 # Update to get support Bash
 RUN apk --update add bash
 
-ENV WWW_TARGET /usr/share/nginx/html
-ENV MGMT_BASE_HREF "/"
-ENV MGMT_API_URL "http://localhost:8093"
+ENV WWW_TARGET=/usr/share/nginx/html
+ENV MGMT_BASE_HREF="/"
+ENV MGMT_API_URL="http://localhost:8093"
 
 RUN apk update \
   && apk add --update --no-cache unzip netcat-openbsd wget \
