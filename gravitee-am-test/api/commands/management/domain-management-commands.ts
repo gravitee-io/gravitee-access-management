@@ -224,85 +224,88 @@ export const waitForDomainSync = async (
     stabilityMillis = DEFAULT_DOMAIN_SYNC_STABILITY_MS,
   } = options || {};
 
-  // Early return for fallback case (no domainId or accessToken)
-  if (!domainId || !accessToken) {
-    // Fallback: Use shorter fixed wait (2 seconds instead of 10)
-    // This is a conservative improvement that maintains backward compatibility
-    // while still providing significant time savings
-    await waitFor(DOMAIN_SYNC_FALLBACK_WAIT_MS);
-    return;
-  }
+  await waitFor(6000);
+  return;
 
-  // Use polling with retryUntil when domainId and accessToken are provided
-    // State tracking for stability check
-    const state = {
-      lastUpdatedAt: null as number | null,
-      stableSince: null as number | null,
-    };
-
-    try {
-      await retryUntil(
-        async () => {
-          try {
-            const domain = await getDomain(domainId, accessToken);
-            const currentUpdatedAt = domain.updatedAt ? new Date(domain.updatedAt).getTime() : null;
-            return { updatedAt: currentUpdatedAt, timestamp: Date.now() };
-          } catch (error: unknown) {
-            // If domain fetch fails, return null as fallback
-            // This allows retry logic to continue (domain might not be ready yet)
-            // Log at debug level to handle the exception while avoiding log spam
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            console.debug(`Error fetching domain ${domainId} for sync check: ${errorMessage}`);
-            return { updatedAt: null, timestamp: Date.now() };
-          }
-        },
-        (result) => {
-          const { updatedAt, timestamp } = result;
-
-          // If updatedAt is null, domain is not ready or has no timestamp. Continue polling.
-          if (updatedAt === null) {
-            return false;
-          }
-
-          // First check - initialize state
-          if (state.lastUpdatedAt === null) {
-            state.lastUpdatedAt = updatedAt;
-            state.stableSince = timestamp;
-            return false;
-          }
-
-          // Domain was updated - reset stability timer
-          if (updatedAt !== state.lastUpdatedAt) {
-            state.lastUpdatedAt = updatedAt;
-            state.stableSince = timestamp;
-            return false;
-          }
-
-          // Domain hasn't been updated - check if stable long enough
-          const stableDuration = timestamp - (state.stableSince || timestamp);
-          return stableDuration >= stabilityMillis;
-        },
-        {
-          timeoutMillis,
-          intervalMillis,
-          onDone: () => {
-            const duration = state.stableSince ? Date.now() - (state.stableSince || 0) : 0;
-            console.debug(`Domain ${domainId} sync complete (stable for ${duration}ms)`);
-          },
-          onRetry: () => {
-            // Silent retry - avoid log spam
-          },
-        }
-      );
-      
-      // Additional minimum wait to ensure domain is ready to serve requests
-      // Stability check doesn't guarantee domain is ready to handle requests
-      await waitFor(DOMAIN_READY_MIN_WAIT_MS);
-    } catch (error: unknown) {
-      // Timeout or error - log warning but don't throw (backward compatibility)
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
-    }
+  // // Early return for fallback case (no domainId or accessToken)
+  // if (!domainId || !accessToken) {
+  //   // Fallback: Use shorter fixed wait (2 seconds instead of 10)
+  //   // This is a conservative improvement that maintains backward compatibility
+  //   // while still providing significant time savings
+  //   await waitFor(DOMAIN_SYNC_FALLBACK_WAIT_MS);
+  //   return;
+  // }
+  //
+  // // Use polling with retryUntil when domainId and accessToken are provided
+  //   // State tracking for stability check
+  //   const state = {
+  //     lastUpdatedAt: null as number | null,
+  //     stableSince: null as number | null,
+  //   };
+  //
+  //   try {
+  //     await retryUntil(
+  //       async () => {
+  //         try {
+  //           const domain = await getDomain(domainId, accessToken);
+  //           const currentUpdatedAt = domain.updatedAt ? new Date(domain.updatedAt).getTime() : null;
+  //           return { updatedAt: currentUpdatedAt, timestamp: Date.now() };
+  //         } catch (error: unknown) {
+  //           // If domain fetch fails, return null as fallback
+  //           // This allows retry logic to continue (domain might not be ready yet)
+  //           // Log at debug level to handle the exception while avoiding log spam
+  //           const errorMessage = error instanceof Error ? error.message : String(error);
+  //           console.debug(`Error fetching domain ${domainId} for sync check: ${errorMessage}`);
+  //           return { updatedAt: null, timestamp: Date.now() };
+  //         }
+  //       },
+  //       (result) => {
+  //         const { updatedAt, timestamp } = result;
+  //
+  //         // If updatedAt is null, domain is not ready or has no timestamp. Continue polling.
+  //         if (updatedAt === null) {
+  //           return false;
+  //         }
+  //
+  //         // First check - initialize state
+  //         if (state.lastUpdatedAt === null) {
+  //           state.lastUpdatedAt = updatedAt;
+  //           state.stableSince = timestamp;
+  //           return false;
+  //         }
+  //
+  //         // Domain was updated - reset stability timer
+  //         if (updatedAt !== state.lastUpdatedAt) {
+  //           state.lastUpdatedAt = updatedAt;
+  //           state.stableSince = timestamp;
+  //           return false;
+  //         }
+  //
+  //         // Domain hasn't been updated - check if stable long enough
+  //         const stableDuration = timestamp - (state.stableSince || timestamp);
+  //         return stableDuration >= stabilityMillis;
+  //       },
+  //       {
+  //         timeoutMillis,
+  //         intervalMillis,
+  //         onDone: () => {
+  //           const duration = state.stableSince ? Date.now() - (state.stableSince || 0) : 0;
+  //           console.debug(`Domain ${domainId} sync complete (stable for ${duration}ms)`);
+  //         },
+  //         onRetry: () => {
+  //           // Silent retry - avoid log spam
+  //         },
+  //       }
+  //     );
+  //
+  //     // Additional minimum wait to ensure domain is ready to serve requests
+  //     // Stability check doesn't guarantee domain is ready to handle requests
+  //     await waitFor(DOMAIN_READY_MIN_WAIT_MS);
+  //   } catch (error: unknown) {
+  //     // Timeout or error - log warning but don't throw (backward compatibility)
+  //     const errorMessage = error instanceof Error ? error.message : String(error);
+  //     console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
+  //   }
 };
 
 export async function waitForOidcReady(
