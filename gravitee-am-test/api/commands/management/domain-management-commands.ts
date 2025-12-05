@@ -294,7 +294,7 @@ export const waitForDomainSync = async (
           },
         }
       );
-      
+
       // Additional minimum wait to ensure domain is ready to serve requests
       // Stability check doesn't guarantee domain is ready to handle requests
       await waitFor(DOMAIN_READY_MIN_WAIT_MS);
