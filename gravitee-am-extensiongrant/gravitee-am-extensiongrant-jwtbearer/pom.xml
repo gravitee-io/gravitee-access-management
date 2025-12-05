@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-extensiongrant</artifactId>
         <groupId>io.gravitee.am.extensiongrant</groupId>
-        <version>4.6.28-SNAPSHOT</version>
+        <version>4.6.28</version>
     </parent>
 
     <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
