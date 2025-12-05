@@ -27,7 +27,7 @@ RUN apk update \
 FROM eclipse-temurin:21.0.9_10-jre-noble
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
+ENV GRAVITEEIO_HOME=/opt/graviteeio-am-management-api
 
 # Upgrade libc6
 USER root
