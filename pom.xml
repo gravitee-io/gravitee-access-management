@@ -183,6 +183,7 @@
         <gravitee-am-certificate-aws.version>3.0.0</gravitee-am-certificate-aws.version>
         <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.5</gravitee-am-authorizationengine-openfga.version>
         <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.3</gravitee-am-gateway-handler-authzen.version>
+        <gravitee-am-authenticator-cba.version>1.0.0-alpha.2</gravitee-am-authenticator-cba.version>
 
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
