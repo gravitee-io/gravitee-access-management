@@ -19,8 +19,6 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
-RUN apk add --update --no-cache zip unzip
-
 RUN apk update \
 	&& apk add --update --no-cache unzip netcat-openbsd wget \
 	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
@@ -31,7 +29,7 @@ RUN apk update \
 FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
+ENV GRAVITEEIO_HOME=/opt/graviteeio-am-gateway
 
 RUN mkdir -p ${GRAVITEEIO_HOME} \
     && addgroup -g 1000 graviteeio \
