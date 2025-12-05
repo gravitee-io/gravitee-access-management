@@ -28,7 +28,7 @@ RUN unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -
 FROM eclipse-temurin:21.0.9_10-jre-noble
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEE_AM_HOME /opt/graviteeio-am-management-api
+ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-management-api
 
 # Upgrade libc6
 USER root
