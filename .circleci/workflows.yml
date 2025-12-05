@@ -582,7 +582,7 @@ jobs:
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
       - run:
           name: Run Management Jest tests (parallel)
-          command: npm --prefix gravitee-am-test run ci:management:parallel
+          command: npm --prefix gravitee-am-test run ci:management
       - run:
           name: Run Gateway Jest tests (sequential)
           command: npm --prefix gravitee-am-test run ci:gateway
@@ -773,7 +773,7 @@ jobs:
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
       - run:
           name: Run Management Jest tests (parallel)
-          command: npm --prefix gravitee-am-test run ci:management:parallel
+          command: npm --prefix gravitee-am-test run ci:management
       - run:
           name: Run Gateway Jest tests (sequential)
           command: npm --prefix gravitee-am-test run ci:gateway
