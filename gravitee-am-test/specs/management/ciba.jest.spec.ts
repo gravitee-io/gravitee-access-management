@@ -545,7 +545,7 @@ describe('CIBA valid Flow', () => {
     const auth_req_id = response1.body.auth_req_id;
 
     // wait 6 sec before new request
-    await delay(6000);
+    await delay(10000);
     const response2 = await performPost(
       `${process.env.AM_GATEWAY_URL}/${cibaDomain.hrid}/oauth/token?auth_req_id=${auth_req_id}&grant_type=urn:openid:params:grant-type:ciba`,
       '',
