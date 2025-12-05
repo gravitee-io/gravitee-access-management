@@ -91,7 +91,7 @@ public class ParamUtils {
         return value.orElse(context.request().getParam(paramName));
     }
 
-    public static String getRawClaim(RoutingContext context, String paramName) {
+    public static Optional<String> getRawClaim(RoutingContext context, String paramName) {
         Optional<String> value = Optional.empty();
         final JWT requestObject = context.get(ConstantKeys.REQUEST_OBJECT_KEY);
         if (requestObject instanceof JOSEObject d) {
@@ -100,7 +100,7 @@ public class ParamUtils {
                 value = Optional.ofNullable(val.toString());
             }
         }
-        return value.orElse(null);
+        return value;
     }
 
     private static Optional<String> extractParamFromRequestObject(String paramName, Object claim) {
