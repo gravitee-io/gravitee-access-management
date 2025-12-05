@@ -25,6 +25,9 @@ import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 
@@ -81,11 +84,15 @@ public class PermissionEvaluatedAuditBuilder extends GatewayAuditBuilder<Permiss
             this.authRequest = request;
             // Set the target based on the resource being accessed
             if (request.resource() != null) {
+                var resource = request.resource();
+                var displayName = Stream.of(resource.type(), resource.id())
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.joining(":"));
                 setTarget(
                     request.resource().id(),
                     EntityType.AUTHORIZATION_ENGINE,
                     request.resource().type(),
-                    request.resource().type() + ":" + request.resource().id(),
+                    displayName,
                     this.referenceType,
                     this.referenceId
                 );
