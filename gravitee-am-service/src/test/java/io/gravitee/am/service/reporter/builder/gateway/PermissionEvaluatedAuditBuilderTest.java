@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@SuppressWarnings("unchecked")
 class PermissionEvaluatedAuditBuilderTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -81,8 +80,11 @@ class PermissionEvaluatedAuditBuilderTest {
         
         assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
         assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
-        assertNotNull(audit.getTarget());
-        assertEquals(decisionId, audit.getTarget().getAttributes().get("decisionId"));
+        
+        // Verify the outcome message contains the data as JSON diff
+        assertNotNull(audit.getOutcome().getMessage());
+        assertTrue(audit.getOutcome().getMessage().contains("decisionId"));
+        assertTrue(audit.getOutcome().getMessage().contains(decisionId));
     }
 
     @Test
@@ -91,7 +93,7 @@ class PermissionEvaluatedAuditBuilderTest {
         var subjectId = "john";
         var actionName = "hotel.booking.create";
         var resourceId = "room-2025";
-        var reason = "Tuple matched";
+        var decision = true;
         
         var request = AuthorizationEngineRequest.builder()
                 .subject(AuthorizationEngineRequest.Subject.builder()
@@ -109,8 +111,8 @@ class PermissionEvaluatedAuditBuilderTest {
         
         var response = AuthorizationEngineResponse.builder()
                 .decisionId(decisionId)
-                .decision(true)
-                .context(Map.of("reason", reason))
+                .decision(decision)
+                .context(Map.of("reason", "Tuple matched"))
                 .build();
         
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
@@ -122,34 +124,18 @@ class PermissionEvaluatedAuditBuilderTest {
         assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
         assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
         
-        // Verify target attributes
-        assertNotNull(audit.getTarget());
-        assertEquals(EntityType.AUTHORIZATION_ENGINE, audit.getTarget().getType());
-        assertEquals(resourceId, audit.getTarget().getId());
-        
-        // Verify request attributes
-        var requestAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("request");
-        assertNotNull(requestAttr);
-        
-        var subjectAttr = (Map<String, Object>) requestAttr.get("subject");
-        assertEquals("user", subjectAttr.get("type"));
-        assertEquals(subjectId, subjectAttr.get("id"));
-        
-        assertEquals(actionName, requestAttr.get("action"));
-        
-        var resourceAttr = (Map<String, Object>) requestAttr.get("resource");
-        assertEquals("room", resourceAttr.get("type"));
-        assertEquals(resourceId, resourceAttr.get("id"));
-        
-        // Verify response attributes
-        var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
-        assertNotNull(responseAttr);
-        assertEquals(true, responseAttr.get("result"));
-        assertEquals(reason, responseAttr.get("reason"));
+        // Verify the outcome message contains the data as JSON diff
+        String outcomeMessage = audit.getOutcome().getMessage();
+        assertNotNull(outcomeMessage);
+        assertTrue(outcomeMessage.contains("decisionId"));
+        assertTrue(outcomeMessage.contains(decisionId));
+        assertTrue(outcomeMessage.contains("request"));
+        assertTrue(outcomeMessage.contains("response"));
+        assertTrue(outcomeMessage.contains("result"));
     }
 
     @Test
-    void shouldBuildWithDefaultReason() {
+    void shouldBuildWithAllowedDecision() {
         var request = AuthorizationEngineRequest.builder()
                 .subject(AuthorizationEngineRequest.Subject.builder()
                         .id("user-1")
@@ -175,14 +161,17 @@ class PermissionEvaluatedAuditBuilderTest {
                 .response(response)
                 .build(objectMapper);
         
-        var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
-        assertNotNull(responseAttr);
-        assertEquals(true, responseAttr.get("result"));
-        assertEquals("Allow", responseAttr.get("reason"));
+        assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
+        assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
+        
+        String outcomeMessage = audit.getOutcome().getMessage();
+        assertNotNull(outcomeMessage);
+        assertTrue(outcomeMessage.contains("result"));
+        assertTrue(outcomeMessage.contains("true"));
     }
 
     @Test
-    void shouldBuildWithDeniedDecisionAndDefaultReason() {
+    void shouldBuildWithDeniedDecision() {
         var request = AuthorizationEngineRequest.builder()
                 .subject(AuthorizationEngineRequest.Subject.builder()
                         .id("user-1")
@@ -208,10 +197,13 @@ class PermissionEvaluatedAuditBuilderTest {
                 .response(response)
                 .build(objectMapper);
         
-        var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
-        assertNotNull(responseAttr);
-        assertEquals(false, responseAttr.get("result"));
-        assertEquals("Deny", responseAttr.get("reason"));
+        assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
+        assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
+        
+        String outcomeMessage = audit.getOutcome().getMessage();
+        assertNotNull(outcomeMessage);
+        assertTrue(outcomeMessage.contains("result"));
+        assertTrue(outcomeMessage.contains("false"));
     }
 
     @Test
@@ -271,7 +263,6 @@ class PermissionEvaluatedAuditBuilderTest {
         var subjectId = "john";
         var actionName = "hotel.booking.create";
         var resourceId = "room-2025";
-        var reason = "Tuple matched";
         
         var domain = new Domain();
         domain.setId(domainId);
@@ -299,7 +290,7 @@ class PermissionEvaluatedAuditBuilderTest {
         var response = AuthorizationEngineResponse.builder()
                 .decisionId(decisionId)
                 .decision(true)
-                .context(Map.of("reason", reason))
+                .context(Map.of("reason", "Tuple matched"))
                 .build();
         
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
@@ -323,36 +314,21 @@ class PermissionEvaluatedAuditBuilderTest {
         assertEquals(clientAppId, audit.getActor().getId());
         assertEquals(EntityType.APPLICATION, audit.getActor().getType());
         assertEquals(clientName, audit.getActor().getAlternativeId());
+        assertEquals(clientName, audit.getActor().getDisplayName());
         
         // Verify access point
         assertNotNull(audit.getAccessPoint());
         assertEquals(clientAppId, audit.getAccessPoint().getId());
         assertEquals(clientId, audit.getAccessPoint().getAlternativeId());
         
-        // Verify target
-        assertNotNull(audit.getTarget());
-        assertEquals(resourceId, audit.getTarget().getId());
-        
-        // Verify decision ID
-        assertEquals(decisionId, audit.getTarget().getAttributes().get("decisionId"));
-        
-        // Verify request (subject is in request attributes, not actor)
-        var requestAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("request");
-        
-        var subjectAttr = (Map<String, Object>) requestAttr.get("subject");
-        assertEquals("user", subjectAttr.get("type"));
-        assertEquals(subjectId, subjectAttr.get("id"));
-        
-        assertEquals(actionName, requestAttr.get("action"));
-        
-        var resourceAttr = (Map<String, Object>) requestAttr.get("resource");
-        assertEquals("room", resourceAttr.get("type"));
-        assertEquals(resourceId, resourceAttr.get("id"));
-        
-        // Verify response
-        var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
-        assertEquals(true, responseAttr.get("result"));
-        assertEquals(reason, responseAttr.get("reason"));
+        // Verify the outcome message contains all the data as JSON diff
+        String outcomeMessage = audit.getOutcome().getMessage();
+        assertNotNull(outcomeMessage);
+        assertTrue(outcomeMessage.contains("decisionId"));
+        assertTrue(outcomeMessage.contains(decisionId));
+        assertTrue(outcomeMessage.contains("request"));
+        assertTrue(outcomeMessage.contains("response"));
+        assertTrue(outcomeMessage.contains("result"));
     }
 
     @Test
@@ -367,8 +343,9 @@ class PermissionEvaluatedAuditBuilderTest {
         
         assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
         assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
-        // Decision ID should default to transactional ID when no response is provided
         assertNotNull(audit.getTransactionId());
+        // When no data is provided, outcome message should be null (no diff)
+        assertNull(audit.getOutcome().getMessage());
     }
 
     @Test
@@ -397,7 +374,6 @@ class PermissionEvaluatedAuditBuilderTest {
         assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
         assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
         assertEquals(errorMessage, audit.getOutcome().getMessage());
-        // Decision ID should fall back to transactional ID when no response is provided
         assertNotNull(audit.getTransactionId());
     }
 }
