@@ -31,6 +31,8 @@ import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
@@ -48,12 +50,12 @@ import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
-import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -95,7 +97,9 @@ import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 import static io.reactivex.rxjava3.core.Completable.complete;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -177,6 +181,9 @@ public class ProvisioningUserServiceTest {
 
     @Mock
     private CredentialGatewayService credentialService;
+
+    @Mock
+    private ApplicationService applicationService;
 
     @Before
     public void setUp() {
@@ -1075,6 +1082,213 @@ public class ProvisioningUserServiceTest {
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertError(err -> err instanceof UserInvalidException);
+    }
+
+    @Test
+    public void shouldCreateUser_withValidClient_byApplicationId() {
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("idp-source");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("client", "app-id-123");
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        io.gravitee.am.model.Application application = new io.gravitee.am.model.Application();
+        application.setId("app-id-123");
+        application.setDomain(DOMAIN_ID);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(applicationService.findById("app-id-123")).thenReturn(Maybe.just(application));
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setClient("app-id-123");
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        // Verify the client was set
+        assertEquals("app-id-123", newUserDefinition.getValue().getClient());
+        verify(applicationService, times(1)).findById("app-id-123");
+    }
+
+    @Test
+    public void shouldCreateUser_withValidClient_byClientId() {
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("idp-source");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("client", "my-client-id");
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        io.gravitee.am.model.Application application = new io.gravitee.am.model.Application();
+        application.setId("app-id-456");
+        application.setDomain(DOMAIN_ID);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        // First lookup by ID fails, then by clientId succeeds
+        when(applicationService.findById("my-client-id")).thenReturn(Maybe.empty());
+        when(applicationService.findByDomainAndClientId(DOMAIN_ID, "my-client-id")).thenReturn(Maybe.just(application));
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setClient("app-id-456");
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        // Verify the client was set to the Application ID (not clientId)
+        assertEquals("app-id-456", newUserDefinition.getValue().getClient());
+        verify(applicationService, times(1)).findById("my-client-id");
+        verify(applicationService, times(1)).findByDomainAndClientId(DOMAIN_ID, "my-client-id");
+    }
+
+    @Test
+    public void shouldCreateUser_withoutClient() {
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("idp-source");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        when(newUser.getAdditionalInformation()).thenReturn(new HashMap<>());
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        // Verify client is null
+        assertNull(newUserDefinition.getValue().getClient());
+        verify(applicationService, never()).findById(anyString());
+    }
+
+    @Test
+    public void shouldThrowException_whenClientNotFound() {
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("idp-source");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("client", "non-existent-client");
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(applicationService.findById("non-existent-client")).thenReturn(Maybe.empty());
+        when(applicationService.findByDomainAndClientId(DOMAIN_ID, "non-existent-client")).thenReturn(Maybe.empty());
+
+        TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
+        testObserver.assertError(err -> err instanceof InvalidValueException);
+
+        verify(applicationService, times(1)).findById("non-existent-client");
+        verify(applicationService, times(1)).findByDomainAndClientId(DOMAIN_ID, "non-existent-client");
+    }
+
+    @Test
+    public void shouldThrowException_whenClientBelongsToDifferentDomain() {
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("idp-source");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("client", "app-id-999");
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        io.gravitee.am.model.Application application = new io.gravitee.am.model.Application();
+        application.setId("app-id-999");
+        application.setDomain("different-domain-id"); // Different domain
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(applicationService.findById("app-id-999")).thenReturn(Maybe.just(application));
+
+        TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
+        testObserver.assertError(err -> err instanceof InvalidValueException);
+
+        verify(applicationService, times(1)).findById("app-id-999");
+    }
+
+    @Test
+    public void shouldCreateUser_withPreRegistrationAndClient() {
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("idp-source");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("preRegistration", true);
+        ai.put("client", "app-id-123");
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        io.gravitee.am.model.Application application = new io.gravitee.am.model.Application();
+        application.setId("app-id-123");
+        application.setDomain(DOMAIN_ID);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(applicationService.findById("app-id-123")).thenReturn(Maybe.just(application));
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setClient("app-id-123");
+        user.setPreRegistration(true);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        // Verify both preRegistration and client are set
+        assertTrue(newUserDefinition.getValue().isPreRegistration());
+        assertEquals("app-id-123", newUserDefinition.getValue().getClient());
+        verify(applicationService, times(1)).findById("app-id-123");
+        // Verify email service is called with the Client object (not null)
+        ArgumentCaptor<Template> templateCaptor = ArgumentCaptor.forClass(Template.class);
+        ArgumentCaptor<io.gravitee.am.model.User> emailUserCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        ArgumentCaptor<Client> clientCaptor = ArgumentCaptor.forClass(Client.class);
+        verify(emailService, times(1)).send(templateCaptor.capture(), emailUserCaptor.capture(), clientCaptor.capture());
+
+        assertEquals(Template.REGISTRATION_CONFIRMATION, templateCaptor.getValue());
+        assertEquals("app-id-123", emailUserCaptor.getValue().getClient());
+        assertEquals("app-id-123", clientCaptor.getValue().getId());
     }
 
 
