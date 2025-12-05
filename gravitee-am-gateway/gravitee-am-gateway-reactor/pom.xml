@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway</groupId>
         <artifactId>gravitee-am-gateway</artifactId>
-        <version>4.10.0-alpha.3</version>
+        <version>4.10.0-alpha.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-reactor</artifactId>

@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gravitee-am-repository</artifactId>
         <groupId>io.gravitee.am.repository</groupId>
-        <version>4.10.0-alpha.3</version>
+        <version>4.10.0-alpha.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-repository-redis-api</artifactId>

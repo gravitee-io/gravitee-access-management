@@ -22,13 +22,13 @@
     <parent>
         <artifactId>gravitee-am-identityprovider</artifactId>
         <groupId>io.gravitee.am.identityprovider</groupId>
-        <version>4.10.0-alpha.3</version>
+        <version>4.10.0-alpha.4-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-identityprovider-github</artifactId>
 
-    <version>4.10.0-alpha.3</version>
+    <version>4.10.0-alpha.4-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Identity Provider - GitHub</name>
 
     <dependencies>
