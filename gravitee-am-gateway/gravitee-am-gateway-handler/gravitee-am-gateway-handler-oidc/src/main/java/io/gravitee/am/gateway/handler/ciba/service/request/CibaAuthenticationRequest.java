@@ -94,14 +94,10 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         if (reqExpiry != null) {
             cibaRequest.setRequestedExpiry(parseNumericValue(reqExpiry));
         }
-        final String exp = getRawClaim(context, Claims.EXP);
-        if (exp != null) {
-            cibaRequest.setExpiry(parseNumericValue(exp));
-        }
-        final String nbf = getRawClaim(context, Claims.NBF);
-        if (nbf != null) {
-            cibaRequest.setNbf(parseNumericValue(nbf));
-        }
+        getRawClaim(context, Claims.EXP)
+                .ifPresent(exp -> cibaRequest.setExpiry(parseNumericValue(exp)));
+        getRawClaim(context, Claims.NBF)
+                .ifPresent(nbf -> cibaRequest.setNbf(parseNumericValue(nbf)));
 
         return cibaRequest;
     }
