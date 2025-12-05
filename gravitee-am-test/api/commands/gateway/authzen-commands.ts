@@ -48,17 +48,20 @@ export interface AuthZenAccessEvaluationResponse {
 /**
  * Call AuthZen Access Evaluation API
  * @param domainHrid - Domain HRID (path), not the UUID
- * @param accessToken
+ * @param clientId - MCP server client ID
+ * @param clientSecret - MCP server client secret
  * @param evaluationRequest
  */
 export async function evaluateAccess(
   domainHrid: string,
-  accessToken: string,
+  clientId: string,
+  clientSecret: string,
   evaluationRequest: AuthZenAccessEvaluationRequest,
 ): Promise<AuthZenAccessEvaluationResponse> {
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   const response = await request(process.env.AM_GATEWAY_URL)
     .post(`/${domainHrid}/access/v1/evaluation`)
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Basic ${basicAuth}`)
     .set('Content-Type', 'application/json')
     .send(evaluationRequest)
     .expect(200);
@@ -68,19 +71,22 @@ export async function evaluateAccess(
 /**
  * Call AuthZen API expecting an error
  * @param domainHrid - Domain HRID (path), not the UUID
- * @param accessToken
+ * @param clientId - MCP server client ID
+ * @param clientSecret - MCP server client secret
  * @param evaluationRequest
  * @param expectedStatus
  */
 export async function evaluateAccessExpectError(
   domainHrid: string,
-  accessToken: string,
+  clientId: string,
+  clientSecret: string,
   evaluationRequest: any,
   expectedStatus: number,
 ): Promise<any> {
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   return await request(process.env.AM_GATEWAY_URL)
     .post(`/${domainHrid}/access/v1/evaluation`)
-    .set('Authorization', `Bearer ${accessToken}`)
+    .set('Authorization', `Basic ${basicAuth}`)
     .set('Content-Type', 'application/json')
     .send(evaluationRequest)
     .expect(expectedStatus);
