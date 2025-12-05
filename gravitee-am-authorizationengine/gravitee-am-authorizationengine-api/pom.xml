@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-authorizationengine</artifactId>
         <groupId>io.gravitee.am.authorizationengine</groupId>
-        <version>4.10.0-alpha.3-SNAPSHOT</version>
+        <version>4.10.0-alpha.3</version>
     </parent>
 
     <artifactId>gravitee-am-authorizationengine-api</artifactId>
