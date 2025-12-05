@@ -66,6 +66,7 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
@@ -121,11 +122,15 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
         final Maybe<Role> defaultRoleObs = roleService.findDefaultRole(user.getReferenceId(), DefaultRole.ORGANIZATION_USER, ORGANIZATION);
         Maybe<Role> roleObs = defaultRoleObs;
 
+        var fromRoleMapper = new AtomicBoolean(false);
         if (principal != null && principal.getRoles() != null && !principal.getRoles().isEmpty()) {
             // We allow only one role in AM portal. Get the first (should not append).
             String roleId = principal.getRoles().get(0);
-
             roleObs = roleService.findById(user.getReferenceType(), user.getReferenceId(), roleId)
+                    .map(role -> {
+                        fromRoleMapper.set(true);
+                        return role;
+                    })
                     .toMaybe()
                     .onErrorResumeNext(throwable -> {
                         if (throwable instanceof RoleNotFoundException) {
@@ -138,15 +143,15 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                     });
         }
 
-        Membership membership = new Membership();
-        membership.setMemberType(MemberType.USER);
-        membership.setMemberId(user.getId());
-        membership.setReferenceType(user.getReferenceType());
-        membership.setReferenceId(user.getReferenceId());
-
         return roleObs.switchIfEmpty(Maybe.error(new TechnicalManagementException(String.format("Cannot add user membership to organization %s. Unable to find ORGANIZATION_USER role", user.getReferenceId()))))
                 .flatMapCompletable(role -> {
+                    Membership membership = new Membership();
+                    membership.setMemberType(MemberType.USER);
+                    membership.setMemberId(user.getId());
+                    membership.setReferenceType(user.getReferenceType());
+                    membership.setReferenceId(user.getReferenceId());
                     membership.setRoleId(role.getId());
+                    membership.setFromRoleMapper(fromRoleMapper.get());
                     return membershipService.addOrUpdate(user.getReferenceId(), membership).ignoreElement();
                 });
     }

@@ -44,6 +44,8 @@ public class JdbcMembership {
     private LocalDateTime createdAt;
     @Column("updated_at")
     private LocalDateTime updatedAt;
+    @Column("from_role_mapper")
+    private Boolean fromRoleMapper;
 
     public String getId() {
         return id;
@@ -115,5 +117,13 @@ public class JdbcMembership {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getFromRoleMapper() {
+        return fromRoleMapper;
+    }
+
+    public void setFromRoleMapper(Boolean fromRoleMapper) {
+        this.fromRoleMapper = fromRoleMapper;
     }
 }

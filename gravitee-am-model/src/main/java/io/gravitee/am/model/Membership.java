@@ -37,6 +37,7 @@ public class Membership {
     private Date createdAt;
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
+    private boolean fromRoleMapper = false;
 
     public Membership() {}
 
@@ -50,6 +51,7 @@ public class Membership {
         this.roleId = other.roleId;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+        this.fromRoleMapper = other.fromRoleMapper;
     }
 
     public boolean isUserMember(String userId) {
@@ -136,6 +138,14 @@ public class Membership {
         this.updatedAt = updatedAt;
     }
 
+    public boolean isFromRoleMapper() {
+        return fromRoleMapper;
+    }
+
+    public void setFromRoleMapper(boolean fromRoleMapper) {
+        this.fromRoleMapper = fromRoleMapper;
+    }
+
     @Override
     public String toString() {
         return "{\"_class\":\"Membership\", " +
@@ -148,6 +158,7 @@ public class Membership {
                 "\"role\":" + (roleId == null ? "null" : "\"" + roleId + "\"") + ", " +
                 "\"createdAt\":" + (createdAt == null ? "null" : createdAt) + ", " +
                 "\"updatedAt\":" + (updatedAt == null ? "null" : updatedAt) +
+                "\"fromRoleMapper\":" + fromRoleMapper +
                 "}";
     }
 }

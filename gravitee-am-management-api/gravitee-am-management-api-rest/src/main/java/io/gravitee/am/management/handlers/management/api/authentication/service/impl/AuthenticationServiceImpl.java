@@ -28,7 +28,9 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
@@ -41,6 +43,7 @@ import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +52,9 @@ import org.springframework.security.core.Authentication;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -57,6 +62,7 @@ import java.util.concurrent.TimeUnit;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     /**
@@ -111,8 +117,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         } else {
                             existingUser.setAdditionalInformation(new HashMap<>(principal.getAdditionalInformation()));
                         }
+
                         return userService.update(existingUser)
-                                .flatMap(user -> updateRoles(principal, existingUser).andThen(Single.just(user)));
+                                .flatMap(user -> roleService.findDefaultRole(organizationId, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)
+                                        .switchIfEmpty(Maybe.error(() -> new IllegalStateException("No default organization user role found")))
+                                        .flatMapCompletable(defaulRole -> updateRoles(principal, existingUser, defaulRole)).andThen(Single.just(user)));
                     })
                     .onErrorResumeNext(ex -> {
                         if (ex instanceof UserNotFoundException) {
@@ -180,26 +189,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     /**
      * Update ORGANIZATION role to an existing user if the identity provider role mapper has changed
      */
-    private Completable updateRoles(User principal, io.gravitee.am.model.User existingUser) {
-        // no role defined, continue
-        if (principal.getRoles() == null || principal.getRoles().isEmpty()) {
-            return Completable.complete();
-        }
-
-        // role to update if it's different from the current one
-        final String roleId = principal.getRoles().get(0);
-
+    private Completable updateRoles(User principal, io.gravitee.am.model.User existingUser, Role defaultRole) {
         // update membership if necessary
         return membershipService.findByMember(existingUser.getId(), MemberType.USER)
                 .filter(membership -> ReferenceType.ORGANIZATION == membership.getReferenceType())
                 .firstElement()
-                .map(membership -> !membership.getRoleId().equals(roleId))
-                .switchIfEmpty(Maybe.just(false))
-                .flatMapCompletable(mustChangeOrganizationRole -> {
+                .flatMapCompletable(existingMembership -> {
 
-                    if (!mustChangeOrganizationRole) {
+                    var needUpdate = (isRoleFromMapper(principal) && !existingMembership.getRoleId().equals(computeRoleToAssign(principal, defaultRole))) ||
+                            (existingMembership.isFromRoleMapper() && !isRoleFromMapper(principal));
+
+                    if (!needUpdate) {
+                        log.debug("No need to update roles for user {} because roles are already up to date or not assigned by role mapper", existingUser.getUsername());
                         return Completable.complete();
                     }
+
+                    final String roleId = computeRoleToAssign(principal, defaultRole);
 
                     Membership membership = new Membership();
                     membership.setMemberType(MemberType.USER);
@@ -207,11 +212,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     membership.setReferenceType(existingUser.getReferenceType());
                     membership.setReferenceId(existingUser.getReferenceId());
                     membership.setRoleId(roleId);
+                    membership.setCreatedAt(new Date());
+                    membership.setFromRoleMapper(isRoleFromMapper(principal));
 
                     // check role and then update membership
                     return roleService.findById(existingUser.getReferenceType(), existingUser.getReferenceId(), roleId)
                             .flatMap(__ -> membershipService.addOrUpdate(existingUser.getReferenceId(), membership))
                             .ignoreElement();
                 });
+    }
+
+
+    private static boolean isRoleFromMapper(User principal) {
+        return principal.getRoles() != null && !principal.getRoles().isEmpty();
+    }
+    private static String computeRoleToAssign(User principal, Role defaultRole) {
+        return isRoleFromMapper(principal) ? principal.getRoles().get(0) : defaultRole.getId();
     }
 }
