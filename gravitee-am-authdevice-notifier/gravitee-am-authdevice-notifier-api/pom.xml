@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.authdevice.notifier</groupId>
         <artifactId>gravitee-am-authdevice-notifier</artifactId>
-        <version>4.6.28</version>
+        <version>4.6.29-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
