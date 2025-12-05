@@ -23,7 +23,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import org.junit.jupiter.api.Test;
 
@@ -130,9 +130,16 @@ class PermissionEvaluatedAuditBuilderTest {
         // Verify request attributes
         var requestAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("request");
         assertNotNull(requestAttr);
-        assertEquals(subjectId, requestAttr.get("subject"));
+        
+        var subjectAttr = (Map<String, Object>) requestAttr.get("subject");
+        assertEquals("user", subjectAttr.get("type"));
+        assertEquals(subjectId, subjectAttr.get("id"));
+        
         assertEquals(actionName, requestAttr.get("action"));
-        assertEquals(resourceId, requestAttr.get("resource"));
+        
+        var resourceAttr = (Map<String, Object>) requestAttr.get("resource");
+        assertEquals("room", resourceAttr.get("type"));
+        assertEquals(resourceId, resourceAttr.get("id"));
         
         // Verify response attributes
         var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
@@ -171,7 +178,7 @@ class PermissionEvaluatedAuditBuilderTest {
         var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
         assertNotNull(responseAttr);
         assertEquals(true, responseAttr.get("result"));
-        assertEquals("Access granted", responseAttr.get("reason"));
+        assertEquals("Allow", responseAttr.get("reason"));
     }
 
     @Test
@@ -204,7 +211,7 @@ class PermissionEvaluatedAuditBuilderTest {
         var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
         assertNotNull(responseAttr);
         assertEquals(false, responseAttr.get("result"));
-        assertEquals("Access denied", responseAttr.get("reason"));
+        assertEquals("Deny", responseAttr.get("reason"));
     }
 
     @Test
@@ -224,38 +231,43 @@ class PermissionEvaluatedAuditBuilderTest {
     }
 
     @Test
-    void shouldBuildWithUser() {
-        var userId = "user-123";
-        var username = "john.doe";
-        var displayName = "John Doe";
+    void shouldBuildWithClientActor() {
+        var clientId = "client-123";
+        var clientAppId = "app-id-456";
+        var clientName = "My Application";
         var domainId = "domain-123";
         
-        var user = new User();
-        user.setId(userId);
-        user.setUsername(username);
-        user.setDisplayName(displayName);
-        user.setReferenceType(ReferenceType.DOMAIN);
-        user.setReferenceId(domainId);
+        var client = new Client();
+        client.setId(clientAppId);
+        client.setClientId(clientId);
+        client.setClientName(clientName);
+        client.setDomain(domainId);
         
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
                 .type(EventType.PERMISSION_EVALUATED)
-                .user(user)
+                .actor(client)
                 .build(objectMapper);
         
         assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
         assertNotNull(audit.getActor());
-        assertEquals(userId, audit.getActor().getId());
-        assertEquals(EntityType.USER, audit.getActor().getType());
-        assertEquals(username, audit.getActor().getAlternativeId());
-        assertEquals(displayName, audit.getActor().getDisplayName());
+        assertEquals(clientAppId, audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals(clientName, audit.getActor().getAlternativeId());
+        assertEquals(clientName, audit.getActor().getDisplayName());
+        
+        // Also verify access point is set
+        assertNotNull(audit.getAccessPoint());
+        assertEquals(clientAppId, audit.getAccessPoint().getId());
+        assertEquals(clientId, audit.getAccessPoint().getAlternativeId());
     }
 
     @Test
     void shouldBuildCompleteAuditEvent() {
         var decisionId = "decision-uuid-123";
         var domainId = "domain-123";
-        var userId = "user-123";
-        var username = "john";
+        var clientAppId = "app-id-456";
+        var clientId = "client-123";
+        var clientName = "My Application";
         var subjectId = "john";
         var actionName = "hotel.booking.create";
         var resourceId = "room-2025";
@@ -264,12 +276,11 @@ class PermissionEvaluatedAuditBuilderTest {
         var domain = new Domain();
         domain.setId(domainId);
         
-        var user = new User();
-        user.setId(userId);
-        user.setUsername(username);
-        user.setDisplayName("John Doe");
-        user.setReferenceType(ReferenceType.DOMAIN);
-        user.setReferenceId(domainId);
+        var client = new Client();
+        client.setId(clientAppId);
+        client.setClientId(clientId);
+        client.setClientName(clientName);
+        client.setDomain(domainId);
         
         var request = AuthorizationEngineRequest.builder()
                 .subject(AuthorizationEngineRequest.Subject.builder()
@@ -294,7 +305,7 @@ class PermissionEvaluatedAuditBuilderTest {
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
                 .type(EventType.PERMISSION_EVALUATED)
                 .domain(domain)
-                .user(user)
+                .actor(client)
                 .request(request)
                 .response(response)
                 .build(objectMapper);
@@ -307,10 +318,16 @@ class PermissionEvaluatedAuditBuilderTest {
         assertEquals(ReferenceType.DOMAIN, audit.getReferenceType());
         assertEquals(domainId, audit.getReferenceId());
         
-        // Verify actor (user)
+        // Verify actor (client/application)
         assertNotNull(audit.getActor());
-        assertEquals(userId, audit.getActor().getId());
-        assertEquals(username, audit.getActor().getAlternativeId());
+        assertEquals(clientAppId, audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals(clientName, audit.getActor().getAlternativeId());
+        
+        // Verify access point
+        assertNotNull(audit.getAccessPoint());
+        assertEquals(clientAppId, audit.getAccessPoint().getId());
+        assertEquals(clientId, audit.getAccessPoint().getAlternativeId());
         
         // Verify target
         assertNotNull(audit.getTarget());
@@ -319,11 +336,18 @@ class PermissionEvaluatedAuditBuilderTest {
         // Verify decision ID
         assertEquals(decisionId, audit.getTarget().getAttributes().get("decisionId"));
         
-        // Verify request
+        // Verify request (subject is in request attributes, not actor)
         var requestAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("request");
-        assertEquals(subjectId, requestAttr.get("subject"));
+        
+        var subjectAttr = (Map<String, Object>) requestAttr.get("subject");
+        assertEquals("user", subjectAttr.get("type"));
+        assertEquals(subjectId, subjectAttr.get("id"));
+        
         assertEquals(actionName, requestAttr.get("action"));
-        assertEquals(resourceId, requestAttr.get("resource"));
+        
+        var resourceAttr = (Map<String, Object>) requestAttr.get("resource");
+        assertEquals("room", resourceAttr.get("type"));
+        assertEquals(resourceId, resourceAttr.get("id"));
         
         // Verify response
         var responseAttr = (Map<String, Object>) audit.getTarget().getAttributes().get("response");
@@ -336,7 +360,7 @@ class PermissionEvaluatedAuditBuilderTest {
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
                 .type(EventType.PERMISSION_EVALUATED)
                 .domain(null)
-                .user(null)
+                .actor(null)
                 .request(null)
                 .response(null)
                 .build(objectMapper);

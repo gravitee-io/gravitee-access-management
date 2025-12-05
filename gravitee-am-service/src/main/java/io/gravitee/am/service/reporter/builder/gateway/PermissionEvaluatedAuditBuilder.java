@@ -21,7 +21,6 @@ import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.User;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 
 import java.util.HashMap;
@@ -96,21 +95,24 @@ public class PermissionEvaluatedAuditBuilder extends GatewayAuditBuilder<Permiss
     }
 
     /**
-     * Sets the user (subject) who triggered the permission evaluation.
-     * @param user User
+     * Sets the client/application that is making the authorization check.
+     * This becomes the actor in the audit event.
+     * Note: The subject (user) being checked is captured in the request attributes.
+     * 
+     * @param client Client making the authorization check
      * @return this builder
      */
-    public PermissionEvaluatedAuditBuilder user(User user) {
-        if (user != null) {
+    public PermissionEvaluatedAuditBuilder actor(io.gravitee.am.model.oidc.Client client) {
+        if (client != null) {
+            // Set as both access point and actor
+            client(client);
             setActor(
-                user.getId(),
-                EntityType.USER,
-                user.getUsername(),
-                user.getDisplayName(),
-                user.getReferenceType(),
-                user.getReferenceId(),
-                user.getExternalId(),
-                user.getSource()
+                client.getId(),
+                EntityType.APPLICATION,
+                client.getClientName(),
+                client.getClientName(),
+                this.referenceType,
+                this.referenceId
             );
         }
         return this;
@@ -145,16 +147,29 @@ public class PermissionEvaluatedAuditBuilder extends GatewayAuditBuilder<Permiss
      * Builds the request attributes map from the authorization engine request.
      * Format:
      * {
-     *   "subject": "john",
+     *   "subject": {
+     *     "type": "user",
+     *     "id": "john"
+     *   },
      *   "action": "hotel.booking.create",
-     *   "resource": "room-2025"
+     *   "resource": {
+     *     "type": "room",
+     *     "id": "room-2025"
+     *   }
      * }
      */
     private Map<String, Object> buildRequestAttributes(AuthorizationEngineRequest request) {
         Map<String, Object> requestMap = new HashMap<>();
         
         if (request.subject() != null) {
-            requestMap.put("subject", request.subject().id());
+            Map<String, Object> subjectMap = new HashMap<>();
+            if (request.subject().type() != null) {
+                subjectMap.put("type", request.subject().type());
+            }
+            if (request.subject().id() != null) {
+                subjectMap.put("id", request.subject().id());
+            }
+            requestMap.put("subject", subjectMap);
         }
         
         if (request.action() != null) {
@@ -162,7 +177,14 @@ public class PermissionEvaluatedAuditBuilder extends GatewayAuditBuilder<Permiss
         }
         
         if (request.resource() != null) {
-            requestMap.put("resource", request.resource().id());
+            Map<String, Object> resourceMap = new HashMap<>();
+            if (request.resource().type() != null) {
+                resourceMap.put("type", request.resource().type());
+            }
+            if (request.resource().id() != null) {
+                resourceMap.put("id", request.resource().id());
+            }
+            requestMap.put("resource", resourceMap);
         }
         
         return requestMap;
@@ -186,7 +208,7 @@ public class PermissionEvaluatedAuditBuilder extends GatewayAuditBuilder<Permiss
             responseMap.put(REASON_KEY, response.context().get(REASON_KEY));
         } else {
             // Default reason based on decision
-            responseMap.put(REASON_KEY, response.decision() ? "Access granted" : "Access denied");
+            responseMap.put(REASON_KEY, response.decision() ? "Allow" : "Deny");
         }
         
         return responseMap;
