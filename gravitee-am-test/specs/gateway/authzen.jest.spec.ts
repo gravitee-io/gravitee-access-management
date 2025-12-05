@@ -18,20 +18,18 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
-    safeDeleteDomain,
-    setupDomainForTest,
-    startDomain,
-    waitForOidcReady
+  safeDeleteDomain,
+  setupDomainForTest,
+  startDomain, waitFor,
+  waitForDomainSync
 } from '@management-commands/domain-management-commands';
-import { delay, uniqueName } from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 import { buildTestUser, createUser } from '@management-commands/user-management-commands';
 import { createAuthorizationEngine, deleteAuthorizationEngine } from '@management-commands/authorization-engine-management-commands';
 import { addTuple, deleteTuple } from '@management-commands/openfga-settings-commands';
 import { mcpAuthorizationModel, tupleFactory, checkFactory, authzenFactory } from '@api-fixtures/openfga-fixtures';
 import { AuthorizationEngine } from '@management-models/AuthorizationEngine';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
-import { getWellKnownOpenIdConfiguration, signInUser, requestToken } from '@gateway-commands/oauth-oidc-commands';
 import { evaluateAccess, evaluateAccessExpectError, evaluateAccessUnauthenticated } from '@gateway-commands/authzen-commands';
 
 global.fetch = fetch;
@@ -40,10 +38,7 @@ let accessToken: string; // Admin token for management API
 let testDomain: any;
 let testUser1: any;
 let testUser2: any;
-let user1Token: string; // OAuth2 token for AuthZen calls
-let user2Token: string;
-let testApp: any;
-let openIdConfig: any;
+let authzenApp: any; // Application for AuthZEN authentication
 let authEngine: AuthorizationEngine;
 let storeId: string;
 let authorizationModelId: string;
@@ -94,18 +89,14 @@ beforeAll(async () => {
   });
   expect(authEngine?.id).toBeDefined();
 
-  // 7. Setup OAuth2 application for AuthZen API calls
-  const idpSet = await getAllIdps(testDomain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
-
-  const appClientId = uniqueName('openfga-app', true);
-  const appClientSecret = uniqueName('openfga-secret', true);
-  testApp = await createApplication(testDomain.id, accessToken, {
-    name: 'OpenFGA AuthZen Test App',
-    type: 'WEB',
+  // 7. Create application for AuthZEN API authentication
+  const appClientId = uniqueName('authzen-app-client', true);
+  const appClientSecret = uniqueName('authzen-app-secret', true);
+  authzenApp = await createApplication(testDomain.id, accessToken, {
+    name: 'AuthZEN Test Application',
+    type: 'SERVICE',
     clientId: appClientId,
     clientSecret: appClientSecret,
-    redirectUris: ['https://callback.example.com'],
   }).then((app) =>
     updateApplication(
       testDomain.id,
@@ -113,18 +104,20 @@ beforeAll(async () => {
       {
         settings: {
           oauth: {
-            redirectUris: ['https://callback.example.com'],
-            grantTypes: ['authorization_code'],
+            grantTypes: ['client_credentials'],
           },
         },
-        identityProviders: [{ identity: defaultIdp.id, priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+      updatedApp.settings.oauth.clientId = app.settings.oauth.clientId;
       return updatedApp;
     }),
   );
+  expect(authzenApp?.id).toBeDefined();
+  expect(authzenApp?.settings?.oauth?.clientId).toBeDefined();
+  expect(authzenApp?.settings?.oauth?.clientSecret).toBeDefined();
 
   // 8. Create test users
   const user1Data = buildTestUser(0);
@@ -134,24 +127,8 @@ beforeAll(async () => {
   testUser2 = await createUser(testDomain.id, accessToken, user2Data);
   testUser2.password = user2Data.password;
 
-  // 9. Get OpenID configuration
-    const oidcResponse = await waitForOidcReady(testDomain.hrid, {
-        timeoutMs: 30000,   // tweak if needed
-        intervalMs: 500,    // tweak if needed
-    });
-
-    expect(oidcResponse.status).toBe(200);
-    openIdConfig = oidcResponse.body;
-  // 10. Sign in users and get OAuth2 tokens for AuthZen API
-  const user1LoginRedirect = await signInUser(testDomain, testApp, testUser1, openIdConfig);
-  const user1TokenResponse = await requestToken(testApp, openIdConfig, user1LoginRedirect);
-  user1Token = user1TokenResponse.body.access_token;
-  expect(user1Token).toBeDefined();
-
-  const user2LoginRedirect = await signInUser(testDomain, testApp, testUser2, openIdConfig);
-  const user2TokenResponse = await requestToken(testApp, openIdConfig, user2LoginRedirect);
-  user2Token = user2TokenResponse.body.access_token;
-  expect(user2Token).toBeDefined();
+  // Wait for users to sync to gateway
+  await waitFor(10000);
 });
 
 afterAll(async () => {
@@ -168,237 +145,245 @@ afterAll(async () => {
   }
 });
 
-  describe('AuthZen API - Basic Authorization Checks', () => {
-    const authzenServerId = 'authzen-server-' + Date.now();
+describe('AuthZen API - Basic Authorization Checks', () => {
+  const authzenServerId = 'authzen-server-' + Date.now();
 
-    beforeAll(async () => {
-      // Setup: user1 is owner, user2 is viewer
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, authzenServerId));
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.viewerTuple(testUser2.username, authzenServerId));
-    });
-
-    it('should return true when owner evaluates can_access via AuthZen API', async () => {
-      const result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canAccess(testUser1.username, authzenServerId));
-      expect(result.decision).toBe(true);
-    });
-
-    it('should return true when owner evaluates can_manage via AuthZen API', async () => {
-      const result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canManage(testUser1.username, authzenServerId));
-      expect(result.decision).toBe(true);
-    });
-
-    it('should return true for can_access and false for can_manage when viewer evaluates via AuthZen API', async () => {
-      const accessResult = await evaluateAccess(testDomain.hrid, user2Token, authzenFactory.canAccess(testUser2.username, authzenServerId));
-      expect(accessResult.decision).toBe(true);
-
-      const manageResult = await evaluateAccess(testDomain.hrid, user2Token, authzenFactory.canManage(testUser2.username, authzenServerId));
-      expect(manageResult.decision).toBe(false);
-    });
-
-    it('should return false when evaluating access without relationship tuple', async () => {
-      const unauthorizedServerId = 'authzen-unauthorized-' + Date.now();
-      const result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canAccess(testUser1.username, unauthorizedServerId));
-      expect(result.decision).toBe(false);
-    });
+  beforeAll(async () => {
+    // Setup: user1 is owner, user2 is viewer
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, authzenServerId));
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.viewerTuple(testUser2.username, authzenServerId));
   });
 
-  describe('AuthZen API - Request Validation', () => {
-    const validationServerId = 'validation-server-' + Date.now();
-
-    beforeAll(async () => {
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, validationServerId));
-    });
-
-    it('should return 400 error when request is missing subject field', async () => {
-      await evaluateAccessExpectError(
-        testDomain.hrid,
-        user1Token,
-        {
-          resource: { type: 'mcp_server', id: validationServerId },
-          action: { name: 'can_access' },
-        },
-        400,
-      );
-    });
-
-    it('should return 400 error when request has empty subject id', async () => {
-      await evaluateAccessExpectError(
-        testDomain.hrid,
-        user1Token,
-        {
-          subject: { type: 'user', id: '' },
-          resource: { type: 'mcp_server', id: validationServerId },
-          action: { name: 'can_access' },
-        },
-        400,
-      );
-    });
-
-    it('should return 400 error when request is missing resource field', async () => {
-      await evaluateAccessExpectError(
-        testDomain.hrid,
-        user1Token,
-        {
-          subject: { type: 'user', id: testUser1.username },
-          action: { name: 'can_access' },
-        },
-        400,
-      );
-    });
-
-    it('should return 400 error when request is missing action field', async () => {
-      await evaluateAccessExpectError(
-        testDomain.hrid,
-        user1Token,
-        {
-          subject: { type: 'user', id: testUser1.username },
-          resource: { type: 'mcp_server', id: validationServerId },
-        },
-        400,
-      );
-    });
-
-    it('should return 401 error when request is unauthenticated', async () => {
-      await evaluateAccessUnauthenticated(testDomain.hrid, authzenFactory.canAccess(testUser1.username, validationServerId), 401);
-    });
+  it('should return true when owner evaluates can_access via AuthZen API', async () => {
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canAccess(testUser1.username, authzenServerId));
+    expect(result.decision).toBe(true);
   });
 
-  describe('AuthZen API - Properties Support', () => {
-    const propsServerId = 'props-server-' + Date.now();
-
-    beforeAll(async () => {
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, propsServerId));
-    });
-
-    it('should successfully evaluate request when subject properties are included', async () => {
-      const result = await evaluateAccess(
-        testDomain.hrid,
-        user1Token,
-        authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
-          subject: { department: 'engineering', role: 'admin' },
-        }),
-      );
-      expect(result.decision).toBe(true);
-    });
-
-    it('should successfully evaluate request when resource properties are included', async () => {
-      const result = await evaluateAccess(
-        testDomain.hrid,
-        user1Token,
-        authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
-          resource: { environment: 'production' },
-        }),
-      );
-      expect(result.decision).toBe(true);
-    });
-
-    it('should successfully evaluate request when action properties are included', async () => {
-      const result = await evaluateAccess(
-        testDomain.hrid,
-        user1Token,
-        authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
-          action: { method: 'POST' },
-        }),
-      );
-      expect(result.decision).toBe(true);
-    });
-
-    it('should successfully evaluate request when context properties are included', async () => {
-      const result = await evaluateAccess(
-        testDomain.hrid,
-        user1Token,
-        authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
-          context: { ip_address: '192.168.1.1', time_of_day: 'business_hours' },
-        }),
-      );
-      expect(result.decision).toBe(true);
-    });
+  it('should return true when owner evaluates can_manage via AuthZen API', async () => {
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canManage(testUser1.username, authzenServerId));
+    expect(result.decision).toBe(true);
   });
 
-  describe('AuthZen API - Dynamic Permission Changes', () => {
-    const dynamicServerId = 'dynamic-' + Date.now();
+  it('should return true for can_access and false for can_manage when viewer evaluates via AuthZen API', async () => {
+    const accessResult = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canAccess(testUser2.username, authzenServerId));
+    expect(accessResult.decision).toBe(true);
 
-    it('should return false when evaluating access before relationship tuple exists', async () => {
-      const result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canAccess(testUser1.username, dynamicServerId));
-      expect(result.decision).toBe(false);
-    });
-
-    it('should return true when evaluating access after relationship tuple is added', async () => {
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, dynamicServerId));
-
-      const result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canAccess(testUser1.username, dynamicServerId));
-      expect(result.decision).toBe(true);
-    });
-
-    it('should return false when evaluating access after relationship tuple is removed', async () => {
-      await deleteTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, dynamicServerId));
-
-      const result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canAccess(testUser1.username, dynamicServerId));
-      expect(result.decision).toBe(false);
-    });
-
-    it('should reflect permission changes when relationship transitions from owner to viewer', async () => {
-      const roleChangeServerId = 'role-change-' + Date.now();
-
-      // Start as owner
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, roleChangeServerId));
-
-      let result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canManage(testUser1.username, roleChangeServerId));
-      expect(result.decision).toBe(true);
-
-      // Change to viewer
-      await deleteTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, roleChangeServerId));
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.viewerTuple(testUser1.username, roleChangeServerId));
-
-      result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canManage(testUser1.username, roleChangeServerId));
-      expect(result.decision).toBe(false);
-
-      result = await evaluateAccess(testDomain.hrid, user1Token, authzenFactory.canAccess(testUser1.username, roleChangeServerId));
-      expect(result.decision).toBe(true);
-    });
+    const manageResult = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canManage(testUser2.username, authzenServerId));
+    expect(manageResult.decision).toBe(false);
   });
 
-  describe('AuthZen API - Edge Cases', () => {
-    const edgeServerId = 'edge-server-' + Date.now();
+  it('should return false when evaluating access without relationship tuple', async () => {
+    const unauthorizedServerId = 'authzen-unauthorized-' + Date.now();
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canAccess(testUser1.username, unauthorizedServerId));
+    expect(result.decision).toBe(false);
+  });
+});
 
-    beforeAll(async () => {
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, edgeServerId));
-    });
+describe('AuthZen API - Request Validation', () => {
+  const validationServerId = 'validation-server-' + Date.now();
 
-    it('should successfully evaluate when subject id contains special characters', async () => {
-      const specialServerId = 'special-server-' + Date.now();
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple('user@example.com', specialServerId));
+  beforeAll(async () => {
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, validationServerId));
+  });
 
-      const request = authzenFactory.canAccess('user@example.com', specialServerId);
-      const result = await evaluateAccess(testDomain.hrid, user1Token, request);
+  it('should return 400 error when request is missing subject field', async () => {
+    await evaluateAccessExpectError(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      {
+        resource: { type: 'mcp_server', id: validationServerId },
+        action: { name: 'can_access' },
+      },
+      400,
+    );
+  });
 
-      expect(result.decision).toBe(true);
-    });
+  it('should return 400 error when request has empty subject id', async () => {
+    await evaluateAccessExpectError(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      {
+        subject: { type: 'user', id: '' },
+        resource: { type: 'mcp_server', id: validationServerId },
+        action: { name: 'can_access' },
+      },
+      400,
+    );
+  });
 
-    it('should successfully evaluate when resource id contains special characters', async () => {
-      const specialResourceId = 'server-with_special.chars-123';
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, specialResourceId));
+  it('should return 400 error when request is missing resource field', async () => {
+    await evaluateAccessExpectError(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      {
+        subject: { type: 'user', id: testUser1.username },
+        action: { name: 'can_access' },
+      },
+      400,
+    );
+  });
 
-      const request = authzenFactory.canAccess(testUser1.username, specialResourceId);
-      const result = await evaluateAccess(testDomain.hrid, user1Token, request);
+  it('should return 400 error when request is missing action field', async () => {
+    await evaluateAccessExpectError(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      {
+        subject: { type: 'user', id: testUser1.username },
+        resource: { type: 'mcp_server', id: validationServerId },
+      },
+      400,
+    );
+  });
 
-      expect(result.decision).toBe(true);
-    });
+  it('should return 401 error when request is unauthenticated', async () => {
+    await evaluateAccessUnauthenticated(testDomain.hrid, authzenFactory.canAccess(testUser1.username, validationServerId), 401);
+  });
+});
 
-    it('should successfully evaluate when resource id is very long', async () => {
-      const longResourceId = 'a'.repeat(200);
-      await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, longResourceId));
+describe('AuthZen API - Properties Support', () => {
+  const propsServerId = 'props-server-' + Date.now();
 
-      const request = authzenFactory.canAccess(testUser1.username, longResourceId);
-      const result = await evaluateAccess(testDomain.hrid, user1Token, request);
+  beforeAll(async () => {
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, propsServerId));
+  });
 
-      expect(result.decision).toBe(true);
-    });
+  it('should successfully evaluate request when subject properties are included', async () => {
+    const result = await evaluateAccess(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
+        subject: { department: 'engineering', role: 'admin' },
+      }),
+    );
+    expect(result.decision).toBe(true);
+  });
 
-    it('should return false when checking non-existent relation type', async () => {
-      const request = authzenFactory.custom('user', testUser1.username, 'tool', edgeServerId, 'non_existent_relation');
-      const result = await evaluateAccess(testDomain.hrid, user1Token, request);
+  it('should successfully evaluate request when resource properties are included', async () => {
+    const result = await evaluateAccess(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
+        resource: { environment: 'production' },
+      }),
+    );
+    expect(result.decision).toBe(true);
+  });
 
-      expect(result.decision).toBe(false);
-    });
+  it('should successfully evaluate request when action properties are included', async () => {
+    const result = await evaluateAccess(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
+        action: { method: 'POST' },
+      }),
+    );
+    expect(result.decision).toBe(true);
+  });
+
+  it('should successfully evaluate request when context properties are included', async () => {
+    const result = await evaluateAccess(
+      testDomain.hrid,
+      authzenApp.settings.oauth.clientId,
+      authzenApp.settings.oauth.clientSecret,
+      authzenFactory.canAccess(testUser1.username, propsServerId, 'tool', {
+        context: { ip_address: '192.168.1.1', time_of_day: 'business_hours' },
+      }),
+    );
+    expect(result.decision).toBe(true);
+  });
+});
+
+describe('AuthZen API - Dynamic Permission Changes', () => {
+  const dynamicServerId = 'dynamic-' + Date.now();
+
+  it('should return false when evaluating access before relationship tuple exists', async () => {
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canAccess(testUser1.username, dynamicServerId));
+    expect(result.decision).toBe(false);
+  });
+
+  it('should return true when evaluating access after relationship tuple is added', async () => {
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, dynamicServerId));
+
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canAccess(testUser1.username, dynamicServerId));
+    expect(result.decision).toBe(true);
+  });
+
+  it('should return false when evaluating access after relationship tuple is removed', async () => {
+    await deleteTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, dynamicServerId));
+
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canAccess(testUser1.username, dynamicServerId));
+    expect(result.decision).toBe(false);
+  });
+
+  it('should reflect permission changes when relationship transitions from owner to viewer', async () => {
+    const roleChangeServerId = 'role-change-' + Date.now();
+
+    // Start as owner
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, roleChangeServerId));
+
+    let result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canManage(testUser1.username, roleChangeServerId));
+    expect(result.decision).toBe(true);
+
+    // Change to viewer
+    await deleteTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, roleChangeServerId));
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.viewerTuple(testUser1.username, roleChangeServerId));
+
+    result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canManage(testUser1.username, roleChangeServerId));
+    expect(result.decision).toBe(false);
+
+    result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, authzenFactory.canAccess(testUser1.username, roleChangeServerId));
+    expect(result.decision).toBe(true);
+  });
+});
+
+describe('AuthZen API - Edge Cases', () => {
+  const edgeServerId = 'edge-server-' + Date.now();
+
+  beforeAll(async () => {
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, edgeServerId));
+  });
+
+  it('should successfully evaluate when subject id contains special characters', async () => {
+    const specialServerId = 'special-server-' + Date.now();
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple('user@example.com', specialServerId));
+
+    const request = authzenFactory.canAccess('user@example.com', specialServerId);
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, request);
+
+    expect(result.decision).toBe(true);
+  });
+
+  it('should successfully evaluate when resource id contains special characters', async () => {
+    const specialResourceId = 'server-with_special.chars-123';
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, specialResourceId));
+
+    const request = authzenFactory.canAccess(testUser1.username, specialResourceId);
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, request);
+
+    expect(result.decision).toBe(true);
+  });
+
+  it('should successfully evaluate when resource id is very long', async () => {
+    const longResourceId = 'a'.repeat(200);
+    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, longResourceId));
+
+    const request = authzenFactory.canAccess(testUser1.username, longResourceId);
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, request);
+
+    expect(result.decision).toBe(true);
+  });
+
+  it('should return false when checking non-existent relation type', async () => {
+    const request = authzenFactory.custom('user', testUser1.username, 'tool', edgeServerId, 'non_existent_relation');
+    const result = await evaluateAccess(testDomain.hrid, authzenApp.settings.oauth.clientId, authzenApp.settings.oauth.clientSecret, request);
+
+    expect(result.decision).toBe(false);
+  });
 });
