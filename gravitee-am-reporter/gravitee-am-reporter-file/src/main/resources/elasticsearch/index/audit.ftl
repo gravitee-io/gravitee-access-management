@@ -22,7 +22,14 @@
   <#if audit.getOutcome()??>
     ,"outcome": {
       <#if audit.getOutcome().getStatus()??>"status":"${audit.getOutcome().getStatus()}"<#if audit.getOutcome().getMessage()??>,</#if></#if>
-      <#if audit.getOutcome().getMessage()??>"message":"${audit.getOutcome().getMessage()}"</#if>
+      <#if audit.getOutcome().getMessage()??>
+        <#assign message = audit.getOutcome().getMessage()>
+        <#if outcomeMessageIsValidJson?? && outcomeMessageIsValidJson>
+          "message":${outcomeMessageTrimmed}
+        <#else>
+          "message":"${message?j_string}"
+        </#if>
+      </#if>
     }
   </#if>
   <#if audit.getAccessPoint()??>
