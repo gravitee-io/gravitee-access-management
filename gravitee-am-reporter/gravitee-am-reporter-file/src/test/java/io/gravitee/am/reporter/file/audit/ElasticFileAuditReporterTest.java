@@ -42,6 +42,8 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -55,6 +57,17 @@ public class ElasticFileAuditReporterTest extends FileAuditReporterTest {
         System.setProperty(FileAuditReporter.REPORTERS_FILE_ENABLED, "true");
         System.setProperty(FileAuditReporter.REPORTERS_FILE_OUTPUT, "ELASTICSEARCH");
         System.setProperty(FileAuditReporter.REPORTERS_FILE_DIRECTORY, "target");
+    }
+
+    private static final ObjectMapper OBJECT_MAPPER = createObjectMapper();
+
+    private static ObjectMapper createObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
     }
 
     /**
@@ -94,19 +107,13 @@ public class ElasticFileAuditReporterTest extends FileAuditReporterTest {
     protected void checkAuditLogs(List<Audit> reportables, int loop) throws IOException {
         List<String> lines = Files.readAllLines(Paths.get(buildAuditLogsFilename()));
         assertEquals(10, lines.size());
-
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         
         for (int i = 0; i < loop; ++i) {
-            ElasticsearchAuditEntry readAudit = mapper.readValue(lines.get(i), ElasticsearchAuditEntry.class);
+            ElasticsearchAuditEntry readAudit = OBJECT_MAPPER.readValue(lines.get(i), ElasticsearchAuditEntry.class);
             assertReportEqualsTo(reportables.get(i), readAudit);
             
             // Also validate JSON structure to catch template issues
-            validateJsonStructure(lines.get(i), mapper);
+            validateJsonStructure(lines.get(i), OBJECT_MAPPER);
         }
     }
     
@@ -130,12 +137,8 @@ public class ElasticFileAuditReporterTest extends FileAuditReporterTest {
         List<String> lines = Files.readAllLines(Paths.get(buildAuditLogsFilename()));
         String lastLine = lines.get(lines.size() - 1); // Get the last line (our test audit)
         
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        
         // This should not throw an exception if JSON is valid
-        JsonNode jsonNode = mapper.readTree(lastLine);
+        JsonNode jsonNode = OBJECT_MAPPER.readTree(lastLine);
         
         // Validate the outcome structure
         JsonNode outcomeNode = jsonNode.get("outcome");
@@ -147,6 +150,143 @@ public class ElasticFileAuditReporterTest extends FileAuditReporterTest {
         
         // The status field should not be present
         assertNull("Status should not be present", outcomeNode.get("status"));
+    }
+    
+    /**
+     * Test case for MFA_CHALLENGE events where message is a JSON array string
+     * The message should be output as a quoted string
+     */
+    @Test
+    public void testOutcomeWithJsonArrayMessage() throws Exception {
+        // Given: Audit with JSON array string message (MFA_CHALLENGE format)
+        String jsonArrayMessage = "[{\"op\":\"add\",\"path\":\"/target\",\"value\":\"test@example.com\"},{\"op\":\"add\",\"path\":\"/type\",\"value\":\"EMAIL\"}]";
+        Audit audit = createAuditWithMessage("MFA_CHALLENGE", jsonArrayMessage, io.gravitee.am.common.audit.Status.SUCCESS);
+        
+        // When: Audit is reported
+        auditReporter.report(audit);
+        waitBulkLoadFlush();
+        
+        JsonNode outcomeNode = readLastAuditOutcome();
+        JsonNode messageNode = outcomeNode.get("message");
+        
+        assertNotNull("Message should be present", messageNode);
+        assertTrue("Message should be a string", messageNode.isTextual());
+        assertEquals("Message content should match", jsonArrayMessage, messageNode.asText());
+    }
+    
+    /**
+     * Test case for USER_CREATED events where message is a JSON object string
+     * The message should be output as a quoted string
+     */
+    @Test
+    public void testOutcomeWithJsonObjectMessage() throws Exception {
+        String jsonObjectMessage = "{\"token\":{\"id\":\"token-id\",\"name\":\"token-name\"}}";
+        Audit audit = createAuditWithMessage("USER_CREATED", jsonObjectMessage, io.gravitee.am.common.audit.Status.SUCCESS);
+        
+        auditReporter.report(audit);
+        waitBulkLoadFlush();
+        
+        JsonNode outcomeNode = readLastAuditOutcome();
+        JsonNode messageNode = outcomeNode.get("message");
+        
+        assertNotNull("Message should be present", messageNode);
+        assertTrue("Message should be a string", messageNode.isTextual());
+        assertEquals("Message content should match", jsonObjectMessage, messageNode.asText());
+    }
+    
+    /**
+     * Test case for plain string messages (error messages, etc.)
+     * The message should be output as a quoted string
+     */
+    @Test
+    public void testOutcomeWithPlainStringMessage() throws Exception {
+        String plainMessage = "error-message";
+        Audit audit = createAuditWithMessage("AUTHENTICATION", plainMessage, io.gravitee.am.common.audit.Status.FAILURE);
+        verifyPlainStringMessage(audit, plainMessage);
+    }
+    
+    @Test
+    public void testOutcomeWithEdgeCaseStringMessages() throws Exception {
+        String[] edgeCases = new String[] {
+                "Error: [invalid json",
+                "Error: {invalid json",
+                "{not-a-json-object}",
+                "[not-a-json-array]"
+        };
+        for (String message : edgeCases) {
+            Audit audit = createAuditWithMessage("AUTHENTICATION", message, io.gravitee.am.common.audit.Status.FAILURE);
+            verifyPlainStringMessage(audit, message);
+        }
+    }
+    
+    @Test
+    public void testOutcomeWithJsonArrayMessageWithWhitespace() throws Exception {
+        String jsonArrayMessage = " [{\"op\":\"add\",\"path\":\"/target\",\"value\":\"test\"}] ";
+        Audit audit = createAuditWithMessage("MFA_CHALLENGE", jsonArrayMessage, io.gravitee.am.common.audit.Status.SUCCESS);
+        
+        verifyPlainStringMessage(audit, jsonArrayMessage);
+    }
+    
+    @Test
+    public void testOutcomeWithNullMessage() throws Exception {
+        Audit audit = buildRandomAudit(ReferenceType.DOMAIN, "testReporter");
+        AuditOutcome outcome = new AuditOutcome();
+        outcome.setStatus(io.gravitee.am.common.audit.Status.SUCCESS);
+        outcome.setMessage(null);
+        audit.setOutcome(outcome);
+        
+        auditReporter.report(audit);
+        waitBulkLoadFlush();
+        
+        JsonNode outcomeNode = readLastAuditOutcome();
+        assertFalse("Message should not be present when it is null", outcomeNode.has("message"));
+    }
+
+    @Test
+    public void testOutcomeWithEmptyStringMessage() throws Exception {
+        String emptyMessage = "";
+        Audit audit = createAuditWithMessage("AUTHENTICATION", emptyMessage, io.gravitee.am.common.audit.Status.SUCCESS);
+        verifyPlainStringMessage(audit, emptyMessage);
+    }
+    
+    private Audit createAuditWithMessage(String eventType, String message, io.gravitee.am.common.audit.Status status) {
+        Audit audit = buildRandomAudit(ReferenceType.DOMAIN, "testReporter");
+        audit.setType(eventType);
+        AuditOutcome outcome = new AuditOutcome();
+        outcome.setStatus(status);
+        outcome.setMessage(message);
+        audit.setOutcome(outcome);
+        return audit;
+    }
+    
+    private JsonNode readLastAuditOutcome() throws IOException {
+        List<String> lines = Files.readAllLines(Paths.get(buildAuditLogsFilename()));
+        String lastLine = lines.get(lines.size() - 1);
+        
+        JsonNode jsonNode = OBJECT_MAPPER.readTree(lastLine);
+        JsonNode outcomeNode = jsonNode.get("outcome");
+        assertNotNull("Outcome should be present", outcomeNode);
+        return outcomeNode;
+    }
+    
+    /**
+     * Helper method to verify that a message is output as a quoted string
+     */
+    private void verifyPlainStringMessage(Audit audit, String expectedMessage) throws Exception {
+        auditReporter.report(audit);
+        waitBulkLoadFlush();
+        
+        // Validate overall JSON structure (commas, etc.)
+        List<String> lines = Files.readAllLines(Paths.get(buildAuditLogsFilename()));
+        String lastLine = lines.get(lines.size() - 1);
+        validateJsonStructure(lastLine, OBJECT_MAPPER);
+
+        JsonNode outcomeNode = readLastAuditOutcome();
+        JsonNode messageNode = outcomeNode.get("message");
+        
+        assertNotNull("Message should be present", messageNode);
+        assertTrue("Message should be a string", messageNode.isTextual());
+        assertEquals("Message content should match", expectedMessage, messageNode.asText());
     }
     
     /**
