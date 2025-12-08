@@ -23,13 +23,13 @@
     <parent>
         <groupId>io.gravitee.am.identityprovider</groupId>
         <artifactId>gravitee-am-identityprovider</artifactId>
-        <version>4.10.0-alpha.4</version>
+        <version>4.10.0-alpha.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-identityprovider-api</artifactId>
     <packaging>jar</packaging>
 
-    <version>4.10.0-alpha.4</version>
+    <version>4.10.0-alpha.5-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Identity Provider - API</name>
 
     <dependencies>
