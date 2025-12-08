@@ -16,9 +16,11 @@
 package io.gravitee.am.service.reporter.builder.gateway;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineRequest;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
 import io.gravitee.am.common.audit.EntityType;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.oidc.Client;
@@ -42,6 +44,7 @@ public class PermissionEvaluatedAuditBuilder extends GatewayAuditBuilder<Permiss
 
     public PermissionEvaluatedAuditBuilder() {
         super();
+        type(EventType.PERMISSION_EVALUATED);
     }
 
     /**
@@ -52,8 +55,19 @@ public class PermissionEvaluatedAuditBuilder extends GatewayAuditBuilder<Permiss
     public PermissionEvaluatedAuditBuilder response(AuthorizationEngineResponse response) {
         if (response != null) {
             this.data.put(RESPONSE_KEY, response);
-            this.data.put(DECISION_ID_KEY, response.decisionId());
             this.data.put(RESULT_KEY, response.decision());
+        }
+        return this;
+    }
+
+    /**
+     * Sets the decision ID.
+     * @param decisionId Decision ID
+     * @return this builder
+     */
+    public PermissionEvaluatedAuditBuilder decisionId(String decisionId) {
+        if (!Strings.isNullOrEmpty(decisionId)) {
+            this.data.put(DECISION_ID_KEY, decisionId);
         }
         return this;
     }

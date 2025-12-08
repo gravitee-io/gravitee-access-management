@@ -22,14 +22,12 @@ import java.util.Map;
 /**
  * Authorization engine response.
  *
- * @param decisionId Unique identifier for this authorization decision
  * @param decision   Whether access is granted (true) or denied (false)
  * @param context    Optional context with additional decision information (e.g., reason)
  * @author GraviteeSource Team
  */
 @Builder
 public record AuthorizationEngineResponse(
-        String decisionId,
         boolean decision,
         Map<String, Object> context
 ) {}
