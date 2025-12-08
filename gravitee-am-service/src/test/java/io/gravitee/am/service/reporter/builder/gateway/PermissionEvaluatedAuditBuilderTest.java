@@ -49,43 +49,6 @@ class PermissionEvaluatedAuditBuilderTest {
         assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
     }
 
-    @Test
-    void shouldBuildWithDecisionId() {
-        var decisionId = "custom-decision-id-123";
-        
-        var request = AuthorizationEngineRequest.builder()
-                .subject(AuthorizationEngineRequest.Subject.builder()
-                        .id("user-1")
-                        .type("user")
-                        .build())
-                .resource(AuthorizationEngineRequest.Resource.builder()
-                        .id("resource-1")
-                        .type("document")
-                        .build())
-                .action(AuthorizationEngineRequest.Action.builder()
-                        .name("read")
-                        .build())
-                .build();
-        
-        var response = AuthorizationEngineResponse.builder()
-                .decisionId(decisionId)
-                .decision(true)
-                .build();
-        
-        var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
-                .type(EventType.PERMISSION_EVALUATED)
-                .request(request)
-                .response(response)
-                .build(objectMapper);
-        
-        assertEquals(EventType.PERMISSION_EVALUATED, audit.getType());
-        assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
-        
-        // Verify the outcome message contains the data as JSON diff
-        assertNotNull(audit.getOutcome().getMessage());
-        assertTrue(audit.getOutcome().getMessage().contains("decisionId"));
-        assertTrue(audit.getOutcome().getMessage().contains(decisionId));
-    }
 
     @Test
     void shouldBuildWithRequestAndResponse() {
@@ -110,12 +73,12 @@ class PermissionEvaluatedAuditBuilderTest {
                 .build();
         
         var response = AuthorizationEngineResponse.builder()
-                .decisionId(decisionId)
                 .decision(decision)
                 .context(Map.of("reason", "Tuple matched"))
                 .build();
         
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
+                .decisionId(decisionId)
                 .type(EventType.PERMISSION_EVALUATED)
                 .request(request)
                 .response(response)
@@ -151,11 +114,11 @@ class PermissionEvaluatedAuditBuilderTest {
                 .build();
         
         var response = AuthorizationEngineResponse.builder()
-                .decisionId("decision-granted")
                 .decision(true)
                 .build();
         
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
+                .decisionId("decision-granted")
                 .type(EventType.PERMISSION_EVALUATED)
                 .request(request)
                 .response(response)
@@ -187,11 +150,11 @@ class PermissionEvaluatedAuditBuilderTest {
                 .build();
         
         var response = AuthorizationEngineResponse.builder()
-                .decisionId("decision-denied")
                 .decision(false)
                 .build();
         
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
+                .decisionId("decision-denied")
                 .type(EventType.PERMISSION_EVALUATED)
                 .request(request)
                 .response(response)
@@ -288,12 +251,12 @@ class PermissionEvaluatedAuditBuilderTest {
                 .build();
         
         var response = AuthorizationEngineResponse.builder()
-                .decisionId(decisionId)
                 .decision(true)
                 .context(Map.of("reason", "Tuple matched"))
                 .build();
         
         var audit = AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
+                .decisionId(decisionId)
                 .type(EventType.PERMISSION_EVALUATED)
                 .domain(domain)
                 .actor(client)
