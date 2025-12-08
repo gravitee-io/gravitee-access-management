@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.authenticator</groupId>
         <artifactId>gravitee-am-authenticator</artifactId>
-        <version>4.10.0-alpha.4-SNAPSHOT</version>
+        <version>4.10.0-alpha.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-reporter</artifactId>
         <groupId>io.gravitee.am.reporter</groupId>
-        <version>4.10.0-alpha.4-SNAPSHOT</version>
+        <version>4.10.0-alpha.4</version>
     </parent>
 
     <artifactId>gravitee-am-reporter-mongodb</artifactId>
