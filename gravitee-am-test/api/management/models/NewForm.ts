@@ -78,6 +78,7 @@ export const NewFormTemplateEnum = {
   WebauthnRegister: 'WEBAUTHN_REGISTER',
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
+  CbaLogin: 'CBA_LOGIN',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',

@@ -403,16 +403,16 @@ export interface User {
   zoneInfo?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
    * @type {string}
    * @memberof User
    */
   middleName?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -551,8 +551,8 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     address: json['address'] == null ? undefined : json['address'],
     locale: json['locale'] == null ? undefined : json['locale'],
     zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     middleName: json['middleName'] == null ? undefined : json['middleName'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
@@ -635,8 +635,8 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     address: value['address'],
     locale: value['locale'],
     zoneInfo: value['zoneInfo'],
-    identitiesAsMap: value['identitiesAsMap'],
     middleName: value['middleName'],
+    identitiesAsMap: value['identitiesAsMap'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],

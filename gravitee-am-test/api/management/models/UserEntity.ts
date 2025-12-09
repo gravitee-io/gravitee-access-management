@@ -422,16 +422,16 @@ export interface UserEntity {
   zoneInfo?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
    * @type {string}
    * @memberof UserEntity
    */
   middleName?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -572,8 +572,8 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     address: json['address'] == null ? undefined : json['address'],
     locale: json['locale'] == null ? undefined : json['locale'],
     zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     middleName: json['middleName'] == null ? undefined : json['middleName'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
@@ -658,8 +658,8 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     address: value['address'],
     locale: value['locale'],
     zoneInfo: value['zoneInfo'],
-    identitiesAsMap: value['identitiesAsMap'],
     middleName: value['middleName'],
+    identitiesAsMap: value['identitiesAsMap'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],
