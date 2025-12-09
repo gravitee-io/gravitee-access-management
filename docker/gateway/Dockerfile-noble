@@ -21,13 +21,15 @@ ARG GRAVITEEAM_VERSION=0
 RUN apk update \
 	&& apk add --update --no-cache unzip wget \
 	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
-    && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
-    && rm /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip
+    && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /gravitee-tmp/ \
+    && chmod -R g=u /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ \
+    && rm -rf /tmp/*
 
 FROM eclipse-temurin:21.0.9_10-jre-noble
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEEIO_HOME=/opt/graviteeio-am-gateway
+ARG GRAVITEEAM_VERSION=0
+ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-gateway
 
 # Upgrade libc6
 USER root
@@ -39,9 +41,11 @@ RUN apt-get update && \
 RUN groupmod --new-name graviteeio ubuntu && \
  adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio
 
-COPY --from=build-env --chown=1001:1000 /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
+COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ ${GRAVITEE_AM_HOME}/
 
-WORKDIR ${GRAVITEEIO_HOME}
+RUN chmod -R g=u ${GRAVITEE_AM_HOME}
+
+WORKDIR ${GRAVITEE_AM_HOME}
 EXPOSE 8092
 ENTRYPOINT ["./bin/gravitee"]
 

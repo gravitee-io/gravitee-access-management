@@ -1030,7 +1030,8 @@ jobs:
             echo $TAG > /tmp/docker-tag.txt
 
             # create a latest tag for the given branch to avoid flooding AquaSec project
-            export TAG_LATEST=$(echo "${CIRCLE_BRANCH}-latest")
+            # Sanitize branch name to match Docker tag format: /[\w][\w.-]{0,127}/
+            export TAG_LATEST=$(echo "${CIRCLE_BRANCH}" | sed -E 's/[^a-zA-Z0-9._-]+/-/g' | sed -E 's/^[.-]+//' | cut -c1-119)-latest
             
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - create_docker_context

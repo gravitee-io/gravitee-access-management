@@ -23,19 +23,22 @@ RUN apk add --update --no-cache unzip
 
 ADD ./gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
-RUN unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
+RUN unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /gravitee-tmp/ \
+    && chmod -R g=u /gravitee-tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}/ \
+    && rm -rf /tmp/*
 
 FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
+ARG GRAVITEEAM_VERSION=0
 ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-management-api
 
-COPY --from=build-env /tmp/gravitee-am-management-api-standalone-* /opt/graviteeio-am-management-api/
-
 RUN addgroup -g 1000 graviteeio \
-    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio \
-    && chgrp -R graviteeio ${GRAVITEE_AM_HOME} \
-    && chmod -R g=u ${GRAVITEE_AM_HOME}
+    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
+
+COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}/ ${GRAVITEE_AM_HOME}/
+
+RUN chmod -R g=u ${GRAVITEE_AM_HOME}
 
 WORKDIR ${GRAVITEE_AM_HOME}
 

@@ -23,22 +23,24 @@ RUN apk update \
 	&& apk add --update --no-cache unzip netcat-openbsd wget \
 	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /gravitee-tmp/ \
+    && chmod -R g=u /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ \
     && apk del unzip netcat-openbsd wget \
     && rm -rf /var/cache/apk/* /tmp/*
 
 FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEEIO_HOME=/opt/graviteeio-am-gateway
+ARG GRAVITEEAM_VERSION=0
+ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-gateway
 
-RUN mkdir -p ${GRAVITEEIO_HOME} \
-    && addgroup -g 1000 graviteeio \
-    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio \
-    && chmod -R g=u ${GRAVITEEIO_HOME}
+RUN addgroup -g 1000 graviteeio \
+    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
 
-COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-gateway-standalone-* ${GRAVITEEIO_HOME}
+COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ ${GRAVITEE_AM_HOME}/
 
-WORKDIR ${GRAVITEEIO_HOME}
+RUN chmod -R g=u ${GRAVITEE_AM_HOME}
+
+WORKDIR ${GRAVITEE_AM_HOME}
 EXPOSE 8092
 ENTRYPOINT ["./bin/gravitee"]
 
