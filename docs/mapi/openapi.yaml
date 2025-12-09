@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.10.0-alpha.3-SNAPSHOT
+  version: 4.10.0-alpha.5-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -446,9 +446,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DomainPage"
+                $ref: "#/components/schemas/DomainPage"
         "500":
           description: Internal server error
     post:
@@ -1391,6 +1389,7 @@ paths:
           - WEBAUTHN_REGISTER
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
+          - CBA_LOGIN
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -1786,6 +1785,7 @@ paths:
           - WEBAUTHN_REGISTER
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
+          - CBA_LOGIN
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -3814,6 +3814,7 @@ paths:
           - WEBAUTHN_REGISTER
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
+          - CBA_LOGIN
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -4602,6 +4603,7 @@ paths:
           - WEBAUTHN_REGISTER
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
+          - CBA_LOGIN
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -9110,6 +9112,7 @@ paths:
           - WEBAUTHN_REGISTER
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
+          - CBA_LOGIN
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -12392,13 +12395,15 @@ components:
           type: string
         certificateSerialNumber:
           type: string
+        certificateIssuerDN:
+          type: string
         certificateExpiresAt:
           type: string
           format: date-time
         metadata:
           type: object
           additionalProperties:
-            type: object
+            type: string
         createdAt:
           type: string
           format: date-time
@@ -12487,13 +12492,13 @@ components:
           type: array
           items:
             type: string
-        openDynamicClientRegistrationEnabled:
-          type: boolean
         allowedScopesEnabled:
+          type: boolean
+        clientTemplateEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
-        clientTemplateEnabled:
+        openDynamicClientRegistrationEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -12718,21 +12723,21 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
-          type: boolean
-        redirectUriExpressionLanguageEnabled:
-          type: boolean
         dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
           type: boolean
         redirectUriStrictMatching:
           type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+        dynamicClientRegistrationTemplateEnabled:
+          type: boolean
+        redirectUriUnsecuredHttpSchemeAllowed:
+          type: boolean
+        redirectUriExpressionLanguageEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -13488,6 +13493,8 @@ components:
         updatedAt:
           type: string
           format: date-time
+        fromRoleMapper:
+          type: boolean
     MembershipListItem:
       type: object
       properties:
@@ -13652,7 +13659,6 @@ components:
       type: object
       properties:
         certificatePem:
-          minLength: 1
           type: string
           description: The certificate in PEM format
           example: |-
@@ -13748,6 +13754,7 @@ components:
           - WEBAUTHN_REGISTER
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
+          - CBA_LOGIN
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -13845,6 +13852,7 @@ components:
           - WEBAUTHN_REGISTER
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
+          - CBA_LOGIN
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -14892,13 +14900,13 @@ components:
             type: string
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
-        openDynamicClientRegistrationEnabled:
+        clientTemplateEnabled:
           type: boolean
           writeOnly: true
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
-        clientTemplateEnabled:
+        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         isDynamicClientRegistrationEnabled:
@@ -16689,14 +16697,20 @@ components:
           type: boolean
         serviceAccount:
           type: boolean
+        address:
+          type: object
+          additionalProperties:
+            type: object
+        locale:
+          type: string
+        zoneInfo:
+          type: string
+        middleName:
+          type: string
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        middleName:
-          type: string
         inactive:
           type: boolean
         profile:
@@ -16705,22 +16719,16 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
         disabled:
           type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
     UserEntity:
       type: object
       properties:
@@ -16889,14 +16897,20 @@ components:
           $ref: "#/components/schemas/ApplicationEntity"
         sourceId:
           type: string
+        address:
+          type: object
+          additionalProperties:
+            type: object
+        locale:
+          type: string
+        zoneInfo:
+          type: string
+        middleName:
+          type: string
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        middleName:
-          type: string
         inactive:
           type: boolean
         profile:
@@ -16905,22 +16919,16 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
         disabled:
           type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
     UserId:
       type: object
       properties:
