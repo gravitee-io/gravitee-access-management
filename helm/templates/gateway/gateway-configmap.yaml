@@ -161,6 +161,12 @@ data:
         {{- end }}
       {{- end }}
 
+    {{- if ( and .Values.domains .Values.domains.secrets ) }}
+    domains:
+      secrets:
+        {{- .Values.domains.secrets | toYaml | nindent 8 }}
+    {{- end }}
+
     {{- if .Values.reporters }}
     reporters:
 {{ toYaml .Values.reporters | indent 6 }}
