@@ -100,16 +100,22 @@ export interface CertificateCredential {
   certificateSerialNumber?: string;
   /**
    *
+   * @type {string}
+   * @memberof CertificateCredential
+   */
+  certificateIssuerDN?: string;
+  /**
+   *
    * @type {Date}
    * @memberof CertificateCredential
    */
   certificateExpiresAt?: Date;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {{ [key: string]: string; }}
    * @memberof CertificateCredential
    */
-  metadata?: { [key: string]: any };
+  metadata?: { [key: string]: string };
   /**
    *
    * @type {Date}
@@ -171,6 +177,7 @@ export function CertificateCredentialFromJSONTyped(json: any, ignoreDiscriminato
     certificateThumbprint: json['certificateThumbprint'] == null ? undefined : json['certificateThumbprint'],
     certificateSubjectDN: json['certificateSubjectDN'] == null ? undefined : json['certificateSubjectDN'],
     certificateSerialNumber: json['certificateSerialNumber'] == null ? undefined : json['certificateSerialNumber'],
+    certificateIssuerDN: json['certificateIssuerDN'] == null ? undefined : json['certificateIssuerDN'],
     certificateExpiresAt: json['certificateExpiresAt'] == null ? undefined : new Date(json['certificateExpiresAt']),
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
@@ -200,6 +207,7 @@ export function CertificateCredentialToJSONTyped(value?: CertificateCredential |
     certificateThumbprint: value['certificateThumbprint'],
     certificateSubjectDN: value['certificateSubjectDN'],
     certificateSerialNumber: value['certificateSerialNumber'],
+    certificateIssuerDN: value['certificateIssuerDN'],
     certificateExpiresAt:
       value['certificateExpiresAt'] == null ? value['certificateExpiresAt'] : value['certificateExpiresAt'].toISOString(),
     metadata: value['metadata'],

@@ -86,6 +86,12 @@ export interface Membership {
    * @memberof Membership
    */
   updatedAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Membership
+   */
+  fromRoleMapper?: boolean;
 }
 
 /**
@@ -135,6 +141,7 @@ export function MembershipFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     roleId: json['roleId'] == null ? undefined : json['roleId'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    fromRoleMapper: json['fromRoleMapper'] == null ? undefined : json['fromRoleMapper'],
   };
 }
 
@@ -157,5 +164,6 @@ export function MembershipToJSONTyped(value?: Membership | null, ignoreDiscrimin
     roleId: value['roleId'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    fromRoleMapper: value['fromRoleMapper'],
   };
 }
