@@ -1,0 +1,21 @@
+suite: Gateway configMap - domains section
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: should copy secret providers settings
+    template: gateway/gateway-configmap.yaml
+    set:
+      domains:
+        secrets:
+          providers:
+            - id: test-id
+              name: test-name
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "domains:\\n[\\s\\S]*\\s*secrets:\\n\\s*providers:\\n\\s*-\\s*id:\\s*test-id\\n\\s*name:\\s*test-name"
+      

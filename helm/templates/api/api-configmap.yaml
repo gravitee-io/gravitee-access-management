@@ -188,6 +188,11 @@ data:
       reporters:
         {{- .Values.api.domains.reporters | toYaml | nindent 8 }}
       {{- end }}
+      {{- if ( and .Values.domains .Values.domains.secrets ) }}
+      secrets:
+        {{- .Values.domains.secrets | toYaml | nindent 8 }}
+      {{- end }}
+
     {{- if .Values.applications }}
     applications:
       {{- .Values.applications | toYaml | nindent 6 }}
