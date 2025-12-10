@@ -61,11 +61,6 @@ public class VertxServerConfiguration {
         return new io.gravitee.am.monitoring.DomainReadinessServiceImpl();
     }
 
-//    @Bean
-//    public DomainReadinessHandler domainReadinessHandler() {
-//        return new DomainReadinessHandler();
-//    }
-
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public GraviteeVerticle graviteeVerticle(
