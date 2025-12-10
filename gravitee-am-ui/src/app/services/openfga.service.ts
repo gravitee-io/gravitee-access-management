@@ -39,7 +39,7 @@ export class OpenFGAService {
     const request = this.http.get<any>(
       `${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/authorization-models?${params}`,
     );
-    return continuationToken ? request : this.retryOnServerError(request);
+    return this.retryOnServerError(request);
   }
 
   addAuthorizationModel(
@@ -67,7 +67,7 @@ export class OpenFGAService {
       params += `&continuationToken=${continuationToken}`;
     }
     const request = this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/tuples?${params}`);
-    return continuationToken ? request : this.retryOnServerError(request);
+    return this.retryOnServerError(request);
   }
 
   addTuple(domainId: string, engineId: string, tuple: any): Observable<any> {
@@ -89,7 +89,7 @@ export class OpenFGAService {
       retry({
         count: this.MAX_RETRIES,
         delay: (error: unknown) => {
-          const isServerError = error instanceof HttpErrorResponse && error.status >= 500 && error.status < 600;
+          const isServerError = error instanceof HttpErrorResponse && error.status >= 500;
           if (isServerError) {
             return timer(this.RETRY_DELAY_MS);
           }
