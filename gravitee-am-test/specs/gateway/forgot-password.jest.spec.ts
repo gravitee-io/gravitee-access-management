@@ -59,7 +59,7 @@ const userProps = {
   password: 'SomeP@ssw0rd01',
 };
 
-jest.setTimeout(200000);
+jest.setTimeout(20000);
 const settings = [
   {
     inherited: false,

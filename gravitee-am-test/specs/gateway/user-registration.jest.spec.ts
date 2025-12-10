@@ -22,7 +22,7 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import {
   createDomain,
   safeDeleteDomain,
-  startDomain,
+  startDomain, waitFor,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
@@ -34,7 +34,7 @@ import { uniqueName } from '@utils-commands/misc';
 
 globalThis.fetch = fetch;
 
-const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
+const jdbc = process.env.REPOSITORY_TYPE;
 
 let domain;
 let accessToken;
@@ -98,6 +98,7 @@ beforeAll(async () => {
 
   // Wait for application to sync to gateway
   await waitForDomainSync(domain.id, accessToken);
+  await waitFor(5000)
 });
 
 describe('Register User on domain', () => {
@@ -282,25 +283,21 @@ const createMongoIdp = async (domainId, accessToken) => {
     type: 'mongo-am-idp',
     domainWhitelist: [],
     configuration:
-      '{"uri":"mongodb://localhost:27017","host":"localhost","port":27017,"enableCredentials":false,"databaseCredentials":"gravitee-am","database":"gravitee-am","usersCollection":"idp-test-users","findUserByUsernameQuery":"{$or: [{username: ?}, {contract: ?}]}","findUserByEmailQuery":"{email: ?}","usernameField":"username","passwordField":"password","passwordEncoder":"None","useDedicatedSalt":false,"passwordSaltLength":32}',
+      '{"uri":"mongodb://mongodb:27017","host":"localhost","port":27017,"enableCredentials":false,"databaseCredentials":"gravitee-am","database":"gravitee-am","usersCollection":"idp-test-users","findUserByUsernameQuery":"{$or: [{username: ?}, {contract: ?}]}","findUserByEmailQuery":"{email: ?}","usernameField":"username","passwordField":"password","passwordEncoder":"None","useDedicatedSalt":false,"passwordSaltLength":32}',
     name: 'another-idp',
   });
 };
 
 const createJdbcIdp = async (domainId, accessToken) => {
   console.log('creating jdbc idp');
-  const password = process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
-    ? process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
-    : 'p@ssw0rd';
-  const database = process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
-    ? process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
-    : 'gravitee-am';
+  const password = 'postgres'
+  const database = 'postgres'
 
   return await createIdp(domainId, accessToken, {
     external: false,
     type: 'jdbc-am-idp',
     domainWhitelist: [],
-    configuration: `{\"host\":\"localhost\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
+    configuration: `{\"host\":\"postgres\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
     name: 'other-jdbc-idp',
   });
 };

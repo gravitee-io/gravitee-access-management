@@ -102,7 +102,7 @@ beforeAll(async () => {
         type: 'openfga',
         name: 'Agentic Flow Authorization Engine',
         configuration: JSON.stringify({
-            connectionUri: process.env.AM_OPENFGA_URL,
+            connectionUri: process.env.AM_INTERNAL_OPENFGA_URL,
             storeId,
             authorizationModelId,
             apiToken: '',

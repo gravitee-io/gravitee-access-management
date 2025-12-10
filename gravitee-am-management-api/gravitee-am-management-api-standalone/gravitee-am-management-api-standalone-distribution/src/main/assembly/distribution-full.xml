@@ -39,7 +39,7 @@
             <fileMode>755</fileMode>
         </fileSet>
 
-        <!-- Just to router an empty logs directory -->
+        <!-- Just to create an empty logs directory -->
         <fileSet>
             <directory>src/main/assembly</directory>
             <outputDirectory>/logs</outputDirectory>
@@ -50,6 +50,14 @@
 
         <fileSet>
             <directory>target/staging</directory>
+            <outputDirectory>/plugins</outputDirectory>
+            <includes>
+                <include>*.zip</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <directory>target/staging-full</directory>
             <outputDirectory>/plugins</outputDirectory>
             <includes>
                 <include>*.zip</include>

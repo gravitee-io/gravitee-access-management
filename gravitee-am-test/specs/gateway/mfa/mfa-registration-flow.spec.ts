@@ -64,8 +64,8 @@ jest.setTimeout(200000);
 const TEST_PASSWORD = 'TestP@ssw0rd123';
 
 const createSMTPResource = async (domain, accessToken) => {
-  const smtpHost = process.env.GRAVITEE_EMAIL_HOST || 'localhost';
-  const smtpPort = process.env.GRAVITEE_EMAIL_PORT || '5025';
+  const smtpHost = process.env.INTERNAL_FAKE_SMTP_HOST;
+  const smtpPort = process.env.INTERNAL_FAKE_SMTP_PORT;
 
   const smtp = await createResource(domain.id, accessToken, {
     type: 'smtp-am-resource',

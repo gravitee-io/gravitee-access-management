@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/sfr"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{{{request.body}}}",
+    "transformers": ["response-template"]
+  }
+}

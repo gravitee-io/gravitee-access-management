@@ -57,14 +57,6 @@
         </fileSet>
 
         <fileSet>
-            <directory>target/staging-mocks</directory>
-            <outputDirectory>/plugins</outputDirectory>
-            <includes>
-                <include>*.zip</include>
-            </includes>
-        </fileSet>
-
-        <fileSet>
             <directory>src/main/resources/templates</directory>
             <outputDirectory>/templates</outputDirectory>
             <includes>
