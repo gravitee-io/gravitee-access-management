@@ -1,0 +1,116 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-17.2}
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+  gateway:
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    volumes:
+      - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc/postgresql-jdbc.jar
+      - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc/r2dbc-postgresql.jar
+      - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-gateway/plugins/ext/dataplane-am-jdbc/postgresql-jdbc.jar
+      - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-gateway/plugins/ext/dataplane-am-jdbc/r2dbc-postgresql.jar
+      - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-gateway/plugins/ext/reporter-am-jdbc/postgresql-jdbc.jar
+      - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-gateway/plugins/ext/reporter-am-jdbc/r2dbc-postgresql.jar
+    environment:
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT=5432
+
+      - GRAVITEE_REPOSITORIES_OAUTH2_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT=5432
+
+      - GRAVITEE_REPOSITORIES_GATEWAY_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT=5432
+
+      - GRAVITEE_DATAPLANES_0_ID=default
+      - GRAVITEE_DATAPLANES_0_TYPE=jdbc
+      - GRAVITEE_DATAPLANES_0_JDBC_DRIVER=postgresql
+      - GRAVITEE_DATAPLANES_0_JDBC_DATABASE=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_USERNAME=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_PASSWORD=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_HOST=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_PORT=5432
+
+  management:
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    volumes:
+      - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-management-api/plugins/ext/repository-am-jdbc/postgresql-jdbc.jar
+      - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-management-api/plugins/ext/repository-am-jdbc/r2dbc-postgresql.jar
+      - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-management-api/plugins/ext/dataplane-am-jdbc/postgresql-jdbc.jar
+      - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-management-api/plugins/ext/dataplane-am-jdbc/r2dbc-postgresql.jar
+      - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-management-api/plugins/ext/reporter-am-jdbc/postgresql-jdbc.jar
+      - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-management-api/plugins/ext/reporter-am-jdbc/r2dbc-postgresql.jar
+    environment:
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT=5432
+
+      - GRAVITEE_REPOSITORIES_OAUTH2_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT=5432
+
+      - GRAVITEE_REPOSITORIES_GATEWAY_TYPE=jdbc
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER=postgresql
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST=postgres
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT=5432
+
+      - GRAVITEE_DATAPLANES_0_ID=default
+      - GRAVITEE_DATAPLANES_0_TYPE=jdbc
+      - GRAVITEE_DATAPLANES_0_JDBC_DRIVER=postgresql
+      - GRAVITEE_DATAPLANES_0_JDBC_DATABASE=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_USERNAME=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_PASSWORD=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_HOST=postgres
+      - GRAVITEE_DATAPLANES_0_JDBC_PORT=5432

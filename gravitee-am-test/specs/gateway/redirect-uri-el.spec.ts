@@ -42,7 +42,7 @@ let user: any;
 
 jest.setTimeout(200000);
 
-const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
+const jdbc = process.env.REPOSITORY_TYPE;
 
 const failingELParam = {
   callback1: 'https://callback/',

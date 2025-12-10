@@ -447,7 +447,6 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
-
         <dependency>
             <groupId>io.gravitee.am.dataplane</groupId>
             <artifactId>gravitee-am-dataplane-jdbc</artifactId>
@@ -455,22 +454,6 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.resource.mock</groupId>
-            <artifactId>gravitee-am-resource-mfa-mock</artifactId>
-            <version>${gravitee-resource-mfa-mock.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.gravitee.am.factor.mock</groupId>
-            <artifactId>gravitee-am-factor-mock</artifactId>
-            <version>${gravitee-factor-mock.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
         <dependency>
             <groupId>com.graviteesource.am.authorizationengine.openfga</groupId>
             <artifactId>gravitee-am-authorizationengine-openfga</artifactId>
@@ -973,22 +956,158 @@
 
     <profiles>
         <profile>
-            <id>with-mocks</id>
+            <id>full-bundle</id>
+            <dependencies>
+                <!-- Identity Providers -->
+                <dependency>
+                    <groupId>com.graviteesource.am.identityprovider</groupId>
+                    <artifactId>gravitee-am-identityprovider-http-flow</artifactId>
+                    <version>${gravitee-am-identityprovider-http-flow.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.graviteesource.am.identityprovider</groupId>
+                    <artifactId>gravitee-am-identityprovider-cas</artifactId>
+                    <version>${gravitee-am-identityprovider-cas.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+
+                <!-- Factors-->
+                <dependency>
+                    <groupId>io.gravitee.am.factor.mock</groupId>
+                    <artifactId>gravitee-am-factor-mock</artifactId>
+                    <version>${gravitee-factor-mock.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+
+                <!-- Resources-->
+                <dependency>
+                    <groupId>com.graviteesource.am.resource</groupId>
+                    <artifactId>gravitee-am-resource-http-factor</artifactId>
+                    <version>${gravitee-am-resource-http-factor.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.graviteesource.am.resource</groupId>
+                    <artifactId>gravitee-am-resource-sfr</artifactId>
+                    <version>${gravitee-am-resource-sfr.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.gravitee.am.resource.mock</groupId>
+                    <artifactId>gravitee-am-resource-mfa-mock</artifactId>
+                    <version>${gravitee-resource-mfa-mock.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.graviteesource.am.resource</groupId>
+                    <artifactId>gravitee-am-resource-orange-contact-everyone</artifactId>
+                    <version>${gravitee-am-resource-orange-contact-everyone.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.graviteesource.am.resource</groupId>
+                    <artifactId>gravitee-am-resource-http</artifactId>
+                    <version>${gravitee-am-resource-http.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+
+                <!-- Gateway handlers -->
+                <dependency>
+                    <groupId>com.graviteesource.am.gateway.handler</groupId>
+                    <artifactId>gravitee-am-gateway-handler-saml2-idp</artifactId>
+                    <version>${gravitee-am-gateway-handler-saml2-idp.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+
+                <!-- Services-->
+                <dependency>
+                    <groupId>com.graviteesource.service</groupId>
+                    <artifactId>gravitee-service-geoip</artifactId>
+                    <version>${gravitee-service-geoip.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.6</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>bin</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <appendAssemblyId>false</appendAssemblyId>
+                                    <descriptors>
+                                        <descriptor>src/main/assembly/distribution-full.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-mocks</id>
+                                <id>copy-full</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>copy</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/staging-mocks</outputDirectory>
+                                    <outputDirectory>${basedir}/target/staging-full</outputDirectory>
                                     <artifactItems>
+                                        <!-- Identity Providers -->
+                                        <artifactItem>
+                                            <groupId>com.graviteesource.am.identityprovider</groupId>
+                                            <artifactId>gravitee-am-identityprovider-http-flow</artifactId>
+                                            <version>${gravitee-am-identityprovider-http-flow.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.graviteesource.am.identityprovider</groupId>
+                                            <artifactId>gravitee-am-identityprovider-cas</artifactId>
+                                            <version>${gravitee-am-identityprovider-cas.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+
+                                        <!-- Factors-->
+                                        <artifactItem>
+                                            <groupId>io.gravitee.am.factor.mock</groupId>
+                                            <artifactId>gravitee-am-factor-mock</artifactId>
+                                            <version>${gravitee-factor-mock.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+
+                                        <!-- Resources-->
+                                        <artifactItem>
+                                            <groupId>com.graviteesource.am.resource</groupId>
+                                            <artifactId>gravitee-am-resource-http-factor</artifactId>
+                                            <version>${gravitee-am-resource-http-factor.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.graviteesource.am.resource</groupId>
+                                            <artifactId>gravitee-am-resource-sfr</artifactId>
+                                            <version>${gravitee-am-resource-sfr.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
                                         <artifactItem>
                                             <groupId>io.gravitee.am.resource.mock</groupId>
                                             <artifactId>gravitee-am-resource-mfa-mock</artifactId>
@@ -996,9 +1115,31 @@
                                             <type>zip</type>
                                         </artifactItem>
                                         <artifactItem>
-                                            <groupId>io.gravitee.am.factor.mock</groupId>
-                                            <artifactId>gravitee-am-factor-mock</artifactId>
-                                            <version>${gravitee-factor-mock.version}</version>
+                                            <groupId>com.graviteesource.am.resource</groupId>
+                                            <artifactId>gravitee-am-resource-orange-contact-everyone</artifactId>
+                                            <version>${gravitee-am-resource-orange-contact-everyone.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.graviteesource.am.resource</groupId>
+                                            <artifactId>gravitee-am-resource-http</artifactId>
+                                            <version>${gravitee-am-resource-http.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+
+                                        <!-- Gateway handlers -->
+                                        <artifactItem>
+                                            <groupId>com.graviteesource.am.gateway.handler</groupId>
+                                            <artifactId>gravitee-am-gateway-handler-saml2-idp</artifactId>
+                                            <version>${gravitee-am-gateway-handler-saml2-idp.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+
+                                        <!-- Services-->
+                                        <artifactItem>
+                                            <groupId>com.graviteesource.service</groupId>
+                                            <artifactId>gravitee-service-geoip</artifactId>
+                                            <version>${gravitee-service-geoip.version}</version>
                                             <type>zip</type>
                                         </artifactItem>
                                     </artifactItems>
@@ -1006,7 +1147,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>

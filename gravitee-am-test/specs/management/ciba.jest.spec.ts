@@ -36,6 +36,9 @@ let nonCibaDomain: any;
 let cibaUser: any;
 let cibaApp: any;
 const managementUrl = `${process.env.AM_MANAGEMENT_URL}/management/organizations/DEFAULT/environments/DEFAULT/domains/`;
+const cibaUrl = `${process.env.AM_CIBA_NOTIFIER_URL}`;
+const internalCibaUrl = `${process.env.AM_INTERNAL_CIBA_NOTIFIER_URL}`;
+
 
 jest.setTimeout(200000);
 
@@ -291,7 +294,7 @@ describe('CIBA valid Flow', () => {
       {
         type: 'http-am-authdevice-notifier',
         configuration:
-          '{"endpoint":"http://localhost:8080/ciba/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}',
+          `{"endpoint":"${internalCibaUrl}/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
         name: 'Always OK notifier',
       },
       {
@@ -322,11 +325,11 @@ describe('CIBA valid Flow', () => {
     });
     await delay(6000);
     const cibaResponse = await performPost(
-      'http://localhost:8080/ciba/domains',
+      `${cibaUrl}/domains`,
       '',
       {
         domainId: cibaDomain.id,
-        domainCallback: `${process.env.AM_GATEWAY_URL}/${cibaDomain.hrid}/oidc/ciba/authenticate/callback`,
+        domainCallback: `${process.env.AM_INTERNAL_GATEWAY_URL}/${cibaDomain.hrid}/oidc/ciba/authenticate/callback`,
         clientId: cibaApp.client_id,
         clientSecret: cibaApp.client_secret,
       },
@@ -497,7 +500,7 @@ describe('CIBA valid Flow', () => {
       {
         type: 'http-am-authdevice-notifier',
         configuration:
-          '{"endpoint":"http://localhost:8080/ciba/notify/reject-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}',
+          `{"endpoint":"${internalCibaUrl}/notify/reject-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
         name: 'Always reject notifier',
       },
       {

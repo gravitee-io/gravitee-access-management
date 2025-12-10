@@ -1,0 +1,23 @@
+{
+  "name": "gravitee-am-test",
+  "version": "4.10.0-SNAPSHOT",
+  "private": true,
+  "description": "Gravitee.io AM - Tests",
+  "license": "MIT License",
+  "scripts": {
+    "stack:init:ciba": "mvn -f ../../gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild",
+    "stack:init:plugins:psql": "sh dev/scripts/download-jdbc.sh",
+    "stack:init:copy-am": "rm -f ./dev/build-ctx/*.zip && cp ../../gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/gravitee-am*.zip dev/build-ctx && cp ../../gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am*.zip ./dev/build-ctx",
+    "stack:init:build": "AM_VERSION=* docker compose -f dev/docker-compose.yml build",
+
+    "stack:ci:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml up -d",
+    "stack:ci:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml up -d",
+
+    "stack:dev:setup:mongo:4": "MONGO_VERSION=4.4 docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml up -d",
+    "stack:dev:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml up -d",
+    "stack:dev:setup:psql": "JDBC_PLUGINS=./plugins/jdbc docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml up -d",
+    "stack:dev:setup:psql:11": "JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=11.18-bullseye docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml up -d",
+
+    "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml down"
+  }
+}

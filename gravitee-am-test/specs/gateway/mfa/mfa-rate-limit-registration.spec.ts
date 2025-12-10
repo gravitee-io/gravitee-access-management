@@ -57,13 +57,10 @@ let scimEndpoint;
 jest.setTimeout(200000);
 
 const createSMTPResource = async (domain, accessToken) => {
-  // Use same host/port as gateway email configuration when provided, default to localhost:5025 (CI/dev standard)
-  const smtpHost = process.env.GRAVITEE_EMAIL_HOST || 'localhost';
-  const smtpPort = process.env.GRAVITEE_EMAIL_PORT || '5025';
 
   const smtp = await createResource(domain.id, accessToken, {
     type: 'smtp-am-resource',
-    configuration: `{"host":"${smtpHost}","port":${smtpPort},"from":"admin@test.com","protocol":"smtp","authentication":false,"startTls":false}`,
+    configuration: `{"host":"${process.env.INTERNAL_FAKE_SMTP_HOST}","port":${process.env.INTERNAL_FAKE_SMTP_PORT},"from":"admin@test.com","protocol":"smtp","authentication":false,"startTls":false}`,
     name: 'FakeSmtp',
   });
 

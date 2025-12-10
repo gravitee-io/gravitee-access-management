@@ -38,7 +38,7 @@ import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
-const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
+const jdbc = process.env.REPOSITORY_TYPE;
 
 jest.setTimeout(200000);
 let accessToken;
