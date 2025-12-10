@@ -738,12 +738,12 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
 
             this.tuplePagination.reset();
             this.modelPagination.reset();
+            this.hasLoadError = false;
             const onLoadFailure = () => {
               this.hasLoadError = true;
             };
             this.loadAuthorizationModel(undefined, onLoadFailure);
             this.loadTuples(undefined, onLoadFailure);
-            this.hasLoadError = false;
           },
         }),
     );
