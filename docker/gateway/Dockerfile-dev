@@ -38,23 +38,17 @@ RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
 FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
+ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-gateway
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
 COPY --from=build-env /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
 COPY --from=build-env /tmp/jattach /usr/local/bin/jattach
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio \
-    && apk add --no-cache jemalloc jemalloc-dev ca-certificates perl \
-    && ln -s /usr/local/bin/jattach /usr/local/bin/jeattach \
+    && apk add --no-cache jemalloc ca-certificates perl \
     && chgrp -R graviteeio ${GRAVITEE_AM_HOME} \
     && chmod -R g=u ${GRAVITEE_AM_HOME}
-
-RUN if [ -x "${JAVA_HOME}/bin/jcmd" ]; then \
-        ln -sf "${JAVA_HOME}/bin/jcmd" /usr/local/bin/jcmd; \
-    else \
-        echo "jcmd not found in ${JAVA_HOME}/bin; skipping symlink"; \
-    fi
 
 WORKDIR ${GRAVITEE_AM_HOME}
 
