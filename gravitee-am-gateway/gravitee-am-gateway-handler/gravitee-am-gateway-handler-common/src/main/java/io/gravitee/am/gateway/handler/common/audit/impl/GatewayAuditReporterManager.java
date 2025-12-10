@@ -76,6 +76,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
     @Autowired
     private EnvironmentService environmentService;
 
+    @Autowired
+    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
 
@@ -228,6 +231,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }
         if (!needDeployment(reporter)) {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), true, null);
             return false;
         }
         if (reporter.getReference().type() == ReferenceType.ORGANIZATION && !reporter.isInherited()) {
@@ -245,8 +249,10 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 eventBusReporter.start();
                 reporters.put(reporter.getId(), reporter);
                 reporterPlugins.put(reporter.getId(), eventBusReporter);
+                domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), true, null);
             } catch (Exception ex) {
                 logger.error("Unexpected error while starting reporter", ex);
+                domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), false, ex.getMessage());
                 return false;
             }
 
@@ -270,6 +276,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             return startReporterProvider(reporter, context);
         } else {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), true, null);
             return false;
         }
     }

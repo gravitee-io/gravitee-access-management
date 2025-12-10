@@ -71,6 +71,14 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     }
 
     @Override
+    public void updateDomainStatus(String domainId, DomainState.Status status) {
+        if (domainId != null) {
+            logger.debug("Updates domain status for domain {}, status {}", domainId, status);
+            domainStates.computeIfAbsent(domainId, k -> new DomainState()).setStatus(status).setLastSync(System.currentTimeMillis());
+        }
+    }
+
+    @Override
     public void removeDomain(String domainId) {
         if (domainId != null) {
             logger.debug("Removing domain state for {}", domainId);

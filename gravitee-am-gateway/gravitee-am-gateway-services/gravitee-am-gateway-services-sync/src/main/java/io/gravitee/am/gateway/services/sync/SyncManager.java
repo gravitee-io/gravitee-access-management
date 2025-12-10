@@ -80,6 +80,13 @@ public class SyncManager implements InitializingBean {
     private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
     private static final String DATAPLANE_ID_PROPERTY = Scope.GATEWAY.getRepositoryPropertyKey()+".dataPlane.id";
     private static final String SEPARATOR = ",";
+    private static final Set<Type> PLUGIN_TYPES = Set.of(
+            Type.IDENTITY_PROVIDER,
+            Type.CERTIFICATE,
+            Type.FACTOR,
+            Type.REPORTER,
+            Type.AUTHORIZATION_ENGINE
+    );
 
     @Autowired
     private EventManager eventManager;
@@ -224,7 +231,10 @@ public class SyncManager implements InitializingBean {
         List<Domain> domains = findDomains.blockingGet();
 
         // deploy security domains
-        domains.forEach(securityDomainManager::deploy);
+        domains.forEach(domain -> {
+            securityDomainManager.deploy(domain);
+            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
+        });
         logger.info("Security domains initialization done");
     }
 
@@ -237,8 +247,8 @@ public class SyncManager implements InitializingBean {
                 String eventId = event.getId();
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
                     // Track event start
-                    if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN) {
-                        domainReadinessService.updatePluginStatus(event.getPayload().getReferenceId(), event.getPayload().getId(), null, false, "Sync initiated");
+                    if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN && PLUGIN_TYPES.contains(event.getType())) {
+                        domainReadinessService.updatePluginStatus(event.getPayload().getReferenceId(), event.getPayload().getId(), event.getType().name(), false, "Sync initiated");
                     }
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
                 } else {
@@ -251,6 +261,7 @@ public class SyncManager implements InitializingBean {
     private void synchronizeDomain(Event event) {
         final String domainId = event.getPayload().getId();
         final Action action = event.getPayload().getAction();
+        domainReadinessService.updateDomainStatus(domainId, DomainState.Status.INITIALIZING);
         switch (action) {
             case CREATE, UPDATE -> {
                 Maybe<Domain> maybeDomain = domainRepository.findById(domainId);
@@ -266,8 +277,12 @@ public class SyncManager implements InitializingBean {
                         // domain is not yet deployed, so let's do it !
                         if (deployedDomain == null) {
                             securityDomainManager.deploy(domain);
+                            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
                         } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
                             securityDomainManager.update(domain);
+                            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
+                        } else {
+                            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
                         }
                     } else {
                         // Check that the security domain was not previously deployed with other tags
@@ -275,8 +290,12 @@ public class SyncManager implements InitializingBean {
                         if (deployedDomain != null) {
                             securityDomainManager.undeploy(domainId);
                             domainReadinessService.removeDomain(domainId);
+                        } else {
+                            domainReadinessService.removeDomain(domainId);
                         }
                     }
+                } else {
+                    domainReadinessService.removeDomain(domainId);
                 }
             }
             case DELETE -> {
