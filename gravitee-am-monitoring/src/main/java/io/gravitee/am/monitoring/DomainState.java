@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.monitoring;
 
-import io.gravitee.common.component.Lifecycle;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,39 +24,45 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author GraviteeSource Team
  */
 public class DomainState {
-    private long lastSync;
+    private final AtomicLong lastSync = new AtomicLong();
     private final Map<String, PluginState> plugins = new ConcurrentHashMap<>();
 
     public boolean isSynchronized() {
-        return plugins.values().stream().allMatch(p -> p.getState() != Lifecycle.State.STARTED && p.getState() != Lifecycle.State.INITIALIZED);
+        return plugins.values().stream().allMatch(PluginState::isSuccess);
     }
 
     public boolean isStable() {
-        return plugins.values().stream().allMatch(p -> p.getState() != Lifecycle.State.STOPPED);
+        return plugins.values().stream().allMatch(PluginState::isSuccess);
     }
 
     public Map<String, PluginState> getPlugins() {
         return plugins;
     }
 
-    public void updatePluginState(String pluginId, String pluginName, Lifecycle.State state) {
-        plugins.compute(pluginId, (k, v) -> {
+    public long getLastSync() {
+        return lastSync.get();
+    }
+
+    public void updatePluginState(String pluginId, String pluginName, boolean success, String message) {
+        PluginState updatedPlugin = plugins.compute(pluginId, (k, v) -> {
             if (v == null) {
                 v = new PluginState();
                 v.setName(pluginName != null ? pluginName : pluginId);
             } else if (pluginName != null) {
                 v.setName(pluginName);
             }
-            v.setState(state);
+            v.setSuccess(success);
+            v.setMessage(message);
             v.setLastSync(System.currentTimeMillis());
             return v;
         });
-        this.lastSync = System.currentTimeMillis();
+        this.lastSync.set(updatedPlugin.getLastSync());
     }
 
     public static class PluginState {
         private String name;
-        private Lifecycle.State state;
+        private boolean success;
+        private String message;
         private long lastSync;
 
         public String getName() {
@@ -67,12 +73,20 @@ public class DomainState {
             this.name = name;
         }
 
-        public Lifecycle.State getState() {
-            return state;
+        public boolean isSuccess() {
+            return success;
         }
 
-        public void setState(Lifecycle.State state) {
-            this.state = state;
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
         }
 
         public long getLastSync() {

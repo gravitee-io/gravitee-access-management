@@ -50,15 +50,22 @@ public interface DomainReadinessService {
      * @return DomainState object.
      */
     DomainState getDomainState(String domainId);
+
+    /**
+     * Get detailed state of all domains.
+     * @return Map of Domain States.
+     */
+    java.util.Map<String, DomainState> getDomainStates();
     
     /**
      * Update the status of a plugin.
      * @param domainId Domain ID.
      * @param pluginId Plugin ID.
      * @param pluginName Plugin Name (optional, can be null).
-     * @param state Lifecycle State
+     * @param success Success flag.
+     * @param message Error message (optional).
      */
-    void updatePluginStatus(String domainId, String pluginId, String pluginName, Lifecycle.State state);
+    void updatePluginStatus(String domainId, String pluginId, String pluginName, boolean success, String message);
 
     /**
      * Remove a domain from tracking.

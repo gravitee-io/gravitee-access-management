@@ -30,7 +30,6 @@ import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.monitoring.DomainReadinessService;
-import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Maybe;
@@ -239,7 +238,7 @@ public class SyncManager implements InitializingBean {
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
                     // Track event start
                     if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN) {
-                        domainReadinessService.updatePluginStatus(event.getPayload().getReferenceId(), event.getPayload().getId(), null, Lifecycle.State.STARTED);
+                        domainReadinessService.updatePluginStatus(event.getPayload().getReferenceId(), event.getPayload().getId(), null, false, "Sync initiated");
                     }
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
                 } else {
