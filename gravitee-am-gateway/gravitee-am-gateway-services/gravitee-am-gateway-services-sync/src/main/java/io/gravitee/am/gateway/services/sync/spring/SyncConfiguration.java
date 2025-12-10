@@ -16,7 +16,10 @@
 package io.gravitee.am.gateway.services.sync.spring;
 
 import io.gravitee.am.gateway.services.sync.SyncManager;
+import io.gravitee.am.gateway.services.sync.api.DomainReadinessHandler;
 import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
+import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.monitoring.DomainReadinessServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -44,5 +47,15 @@ public class SyncConfiguration {
     @Bean
     public SyncProbe syncProbe() {
         return new SyncProbe();
+    }
+
+    @Bean
+    public DomainReadinessHandler domainReadinessHandler() {
+        return new DomainReadinessHandler();
+    }
+
+    @Bean
+    public DomainReadinessService domainReadinessService() {
+        return new DomainReadinessServiceImpl();
     }
 }
