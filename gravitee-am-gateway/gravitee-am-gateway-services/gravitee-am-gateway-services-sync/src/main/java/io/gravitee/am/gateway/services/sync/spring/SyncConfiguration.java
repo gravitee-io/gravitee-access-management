@@ -49,13 +49,4 @@ public class SyncConfiguration {
         return new SyncProbe();
     }
 
-    @Bean
-    public DomainReadinessHandler domainReadinessHandler() {
-        return new DomainReadinessHandler();
-    }
-
-    @Bean
-    public DomainReadinessService domainReadinessService() {
-        return new DomainReadinessServiceImpl();
-    }
 }
