@@ -16,7 +16,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, timer } from 'rxjs';
-import { retry, catchError, delayWhen, mergeMap } from 'rxjs/operators';
+import { retry, catchError } from 'rxjs/operators';
 import { SKIP_404_REDIRECT } from 'app/interceptors/http-request.interceptor';
 
 import type { AuthorizationModel } from '@openfga/sdk';
@@ -85,20 +85,18 @@ export class OpenFGAService {
   }
 
   private retryOnServerError<T>(source: Observable<T>): Observable<T> {
-    let retryCount = 0;
     return source.pipe(
       retry({
         count: this.MAX_RETRIES,
-        delay: (error: any) => {
+        delay: (error: unknown) => {
           const isServerError = error instanceof HttpErrorResponse && error.status >= 500 && error.status < 600;
           if (isServerError) {
-            retryCount++;
             return timer(this.RETRY_DELAY_MS);
           }
           return throwError(() => error);
         },
       }),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         return throwError(() => error);
       }),
     );

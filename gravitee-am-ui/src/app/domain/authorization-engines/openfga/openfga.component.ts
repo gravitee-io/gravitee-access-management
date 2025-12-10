@@ -728,7 +728,6 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
           next: (engine) => {
             this.authorizationEngine = engine;
             const config = JSON.parse(engine.configuration || '{}');
-            const previousStoreId = this.storeId;
             this.configuration = { ...config };
             this.draftConfiguration = { ...config };
             this.originalName = engine.name;
