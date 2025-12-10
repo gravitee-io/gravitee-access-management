@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError, timer } from 'rxjs';
+import { retry, catchError, delayWhen, mergeMap } from 'rxjs/operators';
 import { SKIP_404_REDIRECT } from 'app/interceptors/http-request.interceptor';
 
 import type { AuthorizationModel } from '@openfga/sdk';
@@ -25,6 +26,8 @@ import { AppConfig } from '../../config/app.config';
 @Injectable()
 export class OpenFGAService {
   private domainsURL: string = AppConfig.settings.domainBaseURL;
+  private readonly RETRY_DELAY_MS = 1000;
+  private readonly MAX_RETRIES = 3;
 
   constructor(private http: HttpClient) {}
 
@@ -33,7 +36,10 @@ export class OpenFGAService {
     if (continuationToken) {
       params += `&continuationToken=${continuationToken}`;
     }
-    return this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/authorization-models?${params}`);
+    const request = this.http.get<any>(
+      `${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/authorization-models?${params}`,
+    );
+    return continuationToken ? request : this.retryOnServerError(request);
   }
 
   addAuthorizationModel(
@@ -49,7 +55,10 @@ export class OpenFGAService {
 
   getStore(domainId: string, engineId: string): Observable<any> {
     const context = new HttpContext().set(SKIP_404_REDIRECT, true);
-    return this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/store`, { context });
+    const request = this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/store`, {
+      context,
+    });
+    return this.retryOnServerError(request);
   }
 
   listTuples(domainId: string, engineId: string, pageSize: number, continuationToken?: string): Observable<any> {
@@ -57,7 +66,8 @@ export class OpenFGAService {
     if (continuationToken) {
       params += `&continuationToken=${continuationToken}`;
     }
-    return this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/tuples?${params}`);
+    const request = this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/tuples?${params}`);
+    return continuationToken ? request : this.retryOnServerError(request);
   }
 
   addTuple(domainId: string, engineId: string, tuple: any): Observable<any> {
@@ -72,5 +82,25 @@ export class OpenFGAService {
 
   checkPermission(domainId: string, engineId: string, permissionRequest: any): Observable<any> {
     return this.http.post<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/check`, permissionRequest);
+  }
+
+  private retryOnServerError<T>(source: Observable<T>): Observable<T> {
+    let retryCount = 0;
+    return source.pipe(
+      retry({
+        count: this.MAX_RETRIES,
+        delay: (error: any) => {
+          const isServerError = error instanceof HttpErrorResponse && error.status >= 500 && error.status < 600;
+          if (isServerError) {
+            retryCount++;
+            return timer(this.RETRY_DELAY_MS);
+          }
+          return throwError(() => error);
+        },
+      }),
+      catchError((error: any) => {
+        return throwError(() => error);
+      }),
+    );
   }
 }

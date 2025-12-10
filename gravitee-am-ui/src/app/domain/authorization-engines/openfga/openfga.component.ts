@@ -465,6 +465,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.tuplePagination.setLoading(false);
+          this.tuplePagination.setItems([], null, this.tuplePageSize);
           if (onLoadFailure) {
             onLoadFailure();
           } else {
@@ -727,6 +728,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
           next: (engine) => {
             this.authorizationEngine = engine;
             const config = JSON.parse(engine.configuration || '{}');
+            const previousStoreId = this.storeId;
             this.configuration = { ...config };
             this.draftConfiguration = { ...config };
             this.originalName = engine.name;
@@ -737,8 +739,11 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
 
             this.tuplePagination.reset();
             this.modelPagination.reset();
-            this.loadAuthorizationModel();
-            this.loadTuples();
+            const onLoadFailure = () => {
+              this.hasLoadError = true;
+            };
+            this.loadAuthorizationModel(undefined, onLoadFailure);
+            this.loadTuples(undefined, onLoadFailure);
             this.hasLoadError = false;
           },
         }),
