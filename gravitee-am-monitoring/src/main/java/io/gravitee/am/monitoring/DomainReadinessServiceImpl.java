@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.monitoring;
 
-import io.gravitee.common.component.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,10 +58,15 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     }
 
     @Override
-    public void updatePluginStatus(String domainId, String pluginId, String pluginName, Lifecycle.State state) {
+    public Map<String, DomainState> getDomainStates() {
+        return java.util.Collections.unmodifiableMap(domainStates);
+    }
+
+    @Override
+    public void updatePluginStatus(String domainId, String pluginId, String pluginName, boolean success, String message) {
         if (domainId != null) {
-            logger.debug("Updates plugin status for domain {}, plugin {}, name {}, state {}", domainId, pluginId, pluginName, state);
-            domainStates.computeIfAbsent(domainId, k -> new DomainState()).updatePluginState(pluginId, pluginName, state);
+            logger.debug("Updates plugin status for domain {}, plugin {}, name {}, success {}, message {}", domainId, pluginId, pluginName, success, message);
+            domainStates.computeIfAbsent(domainId, k -> new DomainState()).updatePluginState(pluginId, pluginName, success, message);
         }
     }
 

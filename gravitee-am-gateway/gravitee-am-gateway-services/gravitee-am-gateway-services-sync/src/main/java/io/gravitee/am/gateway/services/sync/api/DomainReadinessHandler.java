@@ -37,8 +37,9 @@ public class DomainReadinessHandler implements Handler<RoutingContext> {
 
         if (domainId == null) {
             context.response()
-                    .setStatusCode(400)
-                    .end("Missing domainId parameter");
+                    .setStatusCode(200)
+                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                    .end(Json.encode(domainReadinessService.getDomainStates()));
             return;
         }
 

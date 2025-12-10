@@ -49,4 +49,29 @@ public class SyncConfiguration {
         return new SyncProbe();
     }
 
+    @Bean
+    public DomainReadinessHandler domainReadinessHandler() {
+        return new DomainReadinessHandler();
+    }
+
+    @Bean
+    public DomainReadinessRouteConfigurer domainReadinessRouteConfigurer(io.gravitee.am.gateway.reactor.Reactor reactor, DomainReadinessHandler handler) {
+        return new DomainReadinessRouteConfigurer(reactor, handler);
+    }
+
+    public static class DomainReadinessRouteConfigurer implements org.springframework.beans.factory.InitializingBean {
+        private final io.gravitee.am.gateway.reactor.Reactor reactor;
+        private final DomainReadinessHandler handler;
+
+        public DomainReadinessRouteConfigurer(io.gravitee.am.gateway.reactor.Reactor reactor, DomainReadinessHandler handler) {
+            this.reactor = reactor;
+            this.handler = handler;
+        }
+
+        @Override
+        public void afterPropertiesSet() {
+            reactor.route().get("/_internal/domains").handler(handler);
+            reactor.route().get("/_internal/domains/:domainId").handler(handler);
+        }
+    }
 }

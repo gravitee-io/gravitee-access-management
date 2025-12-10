@@ -30,7 +30,6 @@ import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.monitoring.DomainReadinessService;
-import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -170,11 +169,11 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 .subscribe(
                         identityProvider -> {
                             logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
-                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, identityProvider.getName(), Lifecycle.State.INITIALIZED);
+                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, identityProvider.getName(), true, null);
                         },
                         error -> {
                             logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error);
-                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, null, Lifecycle.State.STOPPED);
+                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, null, false, error.getMessage());
                         },
                         () -> logger.error("No identity provider found with id {}", identityProviderId));
     }
