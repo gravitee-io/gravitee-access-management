@@ -63,6 +63,9 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     @Autowired
     private FactorPluginManager factorPluginManager;
 
+    @Autowired
+    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing factors for domain {}", domain.getName());
@@ -142,12 +145,15 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
                 this.factorProviders.put(factor.getId(), factorProvider);
                 this.factors.put(factor.getId(), factor);
                 logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
+                domainReadinessService.updatePluginStatus(domain.getId(), factor.getId(), factor.getName(), true, null);
             } else {
                 logger.info("Factor {} already loaded for domain {}", factor.getName(), domain.getName());
+                domainReadinessService.updatePluginStatus(domain.getId(), factor.getId(), factor.getName(), true, null);
             }
         } catch (Exception ex) {
             this.factorProviders.remove(factor.getId());
             logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
+            domainReadinessService.updatePluginStatus(domain.getId(), factor.getId(), factor.getName(), false, ex.getMessage());
         }
     }
 

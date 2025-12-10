@@ -27,6 +27,14 @@ public class DomainState {
     private final AtomicLong lastSync = new AtomicLong();
     private final Map<String, PluginState> plugins = new ConcurrentHashMap<>();
 
+    public enum Status {
+        INITIALIZING,
+        DEPLOYED,
+        FAILURE
+    }
+
+    private volatile Status status = Status.INITIALIZING;
+
     public boolean isSynchronized() {
         return plugins.values().stream().allMatch(PluginState::isSuccess);
     }
@@ -35,12 +43,26 @@ public class DomainState {
         return plugins.values().stream().allMatch(PluginState::isSuccess);
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public DomainState setStatus(Status status) {
+        this.status = status;
+        return this;
+    }
+
     public Map<String, PluginState> getPlugins() {
         return plugins;
     }
 
     public long getLastSync() {
         return lastSync.get();
+    }
+
+    public DomainState setLastSync(long lastSync) {
+        this.lastSync.set(lastSync);
+        return this;
     }
 
     public void updatePluginState(String pluginId, String pluginName, boolean success, String message) {

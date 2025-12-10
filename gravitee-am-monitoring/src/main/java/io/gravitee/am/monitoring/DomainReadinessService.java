@@ -68,6 +68,13 @@ public interface DomainReadinessService {
     void updatePluginStatus(String domainId, String pluginId, String pluginName, boolean success, String message);
 
     /**
+     * Update the status of a domain.
+     * @param domainId Domain ID.
+     * @param status Domain Status.
+     */
+    void updateDomainStatus(String domainId, DomainState.Status status);
+
+    /**
      * Remove a domain from tracking.
      * @param domainId Domain ID.
      */
