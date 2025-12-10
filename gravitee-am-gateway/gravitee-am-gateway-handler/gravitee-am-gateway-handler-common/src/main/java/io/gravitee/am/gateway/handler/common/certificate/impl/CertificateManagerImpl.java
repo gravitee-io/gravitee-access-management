@@ -75,6 +75,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     @Autowired
     private CertificateProviderManager certificateProviderManager;
 
+    @Autowired
+    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+
     private CertificateProvider defaultCertificateProvider;
 
     private CertificateProvider noneAlgorithmCertificateProvider;
@@ -124,6 +127,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                             certificateProviderManager.create(certificate);
                             certificates.put(certificate.getId(), certificate);
                             logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
+                            domainReadinessService.updatePluginStatus(domain.getId(), certificate.getId(), certificate.getName(), true, null);
                         },
                         error -> logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
                 );
@@ -207,13 +211,18 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                                 certificateProviderManager.create(certificate);
                                 certificates.put(certificateId, certificate);
                                 logger.info("Certificate {} loaded for domain {}", certificateId, domain.getName());
+                                domainReadinessService.updatePluginStatus(domain.getId(), certificateId, certificate.getName(), true, null);
                                 reloadIdentityProviders(certificate);
                             } catch (Exception ex) {
                                 logger.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
                                 certificates.remove(certificateId, certificate);
+                                domainReadinessService.updatePluginStatus(domain.getId(), certificateId, certificate.getName(), false, ex.getMessage());
                             }
                         },
-                        error -> logger.error("An error has occurred when loading certificate {} for domain {}", certificateId, domain.getName(), error),
+                        error -> {
+                            logger.error("An error has occurred when loading certificate {} for domain {}", certificateId, domain.getName(), error);
+                            domainReadinessService.updatePluginStatus(domain.getId(), certificateId, null, false, error.getMessage());
+                        },
                         () -> logger.error("No certificate found with id {}", certificateId));
     }
 

@@ -58,6 +58,9 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
 
     @Override
@@ -170,14 +173,18 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 providers.put(authorizationEngine.getId(), provider);
 
                 logger.info("Authorization engine {} deployed for domain {}", authorizationEngine.getId(), domain.getName());
+                domainReadinessService.updatePluginStatus(domain.getId(), authorizationEngine.getId(), authorizationEngine.getName(), true, null);
                 return Single.just(authorizationEngine);
             } else {
-                return Single.error(new IllegalStateException("Failed to create authorization engine provider"));
+                String errorMsg = "Failed to create authorization engine provider";
+                domainReadinessService.updatePluginStatus(domain.getId(), authorizationEngine.getId(), authorizationEngine.getName(), false, errorMsg);
+                return Single.error(new IllegalStateException(errorMsg));
             }
         } catch (Exception ex) {
             logger.error("An error has occurred while loading authorization engine: {} [{}]",
                     authorizationEngine.getName(), authorizationEngine.getType(), ex);
             clearProvider(authorizationEngine.getId());
+            domainReadinessService.updatePluginStatus(domain.getId(), authorizationEngine.getId(), authorizationEngine.getName(), false, ex.getMessage());
             return Single.error(ex);
         }
     }
