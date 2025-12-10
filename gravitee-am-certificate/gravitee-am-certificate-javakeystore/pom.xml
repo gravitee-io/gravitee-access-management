@@ -40,6 +40,12 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.secret</groupId>
+            <artifactId>gravitee-secret-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
 
         <!-- Spring -->
         <dependency>

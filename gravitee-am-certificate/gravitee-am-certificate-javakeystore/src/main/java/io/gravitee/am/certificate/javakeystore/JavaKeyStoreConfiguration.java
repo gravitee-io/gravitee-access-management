@@ -16,6 +16,7 @@
 package io.gravitee.am.certificate.javakeystore;
 
 import io.gravitee.am.certificate.api.CertificateConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,9 +31,11 @@ import java.util.Set;
 public class JavaKeyStoreConfiguration implements CertificateConfiguration {
 
     private String jks;
+    @Secret
     private String storepass;
     private String alias;
     private Set<String> use;
+    @Secret
     private String keypass;
     private String algorithm;
 }
