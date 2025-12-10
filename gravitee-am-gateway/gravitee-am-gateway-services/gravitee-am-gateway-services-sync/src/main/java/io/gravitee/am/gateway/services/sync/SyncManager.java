@@ -26,8 +26,11 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.Scope;
+import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
+import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Maybe;
@@ -105,6 +108,9 @@ public class SyncManager implements InitializingBean {
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     private Optional<List<String>> shardingTags;
 
@@ -231,6 +237,10 @@ public class SyncManager implements InitializingBean {
             } else {
                 String eventId = event.getId();
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
+                    // Track event start
+                    if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN) {
+                        domainReadinessService.updatePluginStatus(event.getPayload().getReferenceId(), event.getPayload().getId(), null, Lifecycle.State.STARTED);
+                    }
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
                 } else {
                     logger.debug("Event id {} already processed", eventId);
@@ -265,11 +275,15 @@ public class SyncManager implements InitializingBean {
                         // In that case, we must undeploy it
                         if (deployedDomain != null) {
                             securityDomainManager.undeploy(domainId);
+                            domainReadinessService.removeDomain(domainId);
                         }
                     }
                 }
             }
-            case DELETE -> securityDomainManager.undeploy(domainId);
+            case DELETE -> {
+                securityDomainManager.undeploy(domainId);
+                domainReadinessService.removeDomain(domainId);
+            }
             default -> {
                 // No action needed for default case
             }

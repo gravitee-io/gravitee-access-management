@@ -29,6 +29,8 @@ import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -74,6 +76,9 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     private final ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
@@ -165,8 +170,12 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 .subscribe(
                         identityProvider -> {
                             logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
+                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, identityProvider.getName(), Lifecycle.State.INITIALIZED);
                         },
-                        error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
+                        error -> {
+                            logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error);
+                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, null, Lifecycle.State.STOPPED);
+                        },
                         () -> logger.error("No identity provider found with id {}", identityProviderId));
     }
 
