@@ -23,6 +23,7 @@ import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
@@ -59,7 +60,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     private EventManager eventManager;
 
     @Autowired
-    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+    private DomainReadinessService domainReadinessService;
 
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
 

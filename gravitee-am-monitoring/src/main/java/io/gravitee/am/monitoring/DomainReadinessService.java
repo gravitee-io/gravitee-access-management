@@ -15,48 +15,25 @@
  */
 package io.gravitee.am.monitoring;
 
-import io.gravitee.common.component.Lifecycle;
-
-import java.util.Set;
-
 /**
  * @author GraviteeSource Team
  */
 public interface DomainReadinessService {
-
-    /**
-     * Get the list of domains that are currently unstable.
-     * @return Set of domain IDs.
-     */
-    Set<String> getUnstableDomains();
-
-    /**
-     * Check if a domain is stable (all plugins successfully created).
-     * @param domainId Domain ID.
-     * @return true if stable.
-     */
-    boolean isDomainStable(String domainId);
-
-    /**
-     * Check if a domain is fully synchronized (no pending events).
-     * @param domainId Domain ID.
-     * @return true if synchronized.
-     */
-    boolean isDomainSynchronized(String domainId);
-
     /**
      * Get detailed state of a domain.
      * @param domainId Domain ID.
      * @return DomainState object.
      */
     DomainState getDomainState(String domainId);
-
-    /**
-     * Get detailed state of all domains.
-     * @return Map of Domain States.
-     */
-    java.util.Map<String, DomainState> getDomainStates();
     
+    /**
+     * Initialize the synchronization status of a plugin.
+     * @param domainId Domain ID.
+     * @param pluginId Plugin ID.
+     * @param pluginName Plugin Name (optional, can be null).
+     */
+    void initPluginSync(String domainId, String pluginId, String pluginName);
+
     /**
      * Update the status of a plugin.
      * @param domainId Domain ID.

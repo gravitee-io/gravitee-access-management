@@ -124,11 +124,19 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     private void updateFactor(String factorId, FactorEvent factorEvent) {
         final String eventType = factorEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} factor event for {}", domain.getName(), eventType, factorId);
+        final String factorIdentifier = "Factor-" + factorId;
+        domainReadinessService.initPluginSync(domain.getId(), factorId, factorIdentifier);
         factorService.findById(factorId)
                 .subscribe(
                         this::updateFactor,
-                        error -> logger.error("Unable to load factor for domain {}", domain.getName(), error),
-                        () -> logger.error("No factor found with id {}", factorId));
+                        error -> {
+                            logger.error("Unable to load factor for domain {}", domain.getName(), error);
+                            domainReadinessService.updatePluginStatus(domain.getId(), factorId, factorIdentifier, false, error.getMessage());
+                        },
+                        () -> {
+                            logger.error("No factor found with id {}", factorId);
+                            domainReadinessService.updatePluginStatus(domain.getId(), factorId, factorIdentifier, false, "No factor found with id " + factorId);
+                        });
     }
 
     private void removeFactor(String factorId) {

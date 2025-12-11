@@ -85,7 +85,8 @@ public class SyncManager implements InitializingBean {
             Type.CERTIFICATE,
             Type.FACTOR,
             Type.REPORTER,
-            Type.AUTHORIZATION_ENGINE
+            Type.AUTHORIZATION_ENGINE,
+            Type.PROTECTED_RESOURCE
     );
 
     @Autowired
@@ -248,7 +249,7 @@ public class SyncManager implements InitializingBean {
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
                     // Track event start
                     if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN && PLUGIN_TYPES.contains(event.getType())) {
-                        domainReadinessService.updatePluginStatus(event.getPayload().getReferenceId(), event.getPayload().getId(), event.getType().name(), false, "Sync initiated");
+                        domainReadinessService.initPluginSync(event.getPayload().getReferenceId(), event.getPayload().getId(), event.getType().name());
                     }
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
                 } else {
@@ -269,34 +270,31 @@ public class SyncManager implements InitializingBean {
                     maybeDomain = maybeDomain.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
                 Domain domain = maybeDomain.blockingGet();
-                if (domain != null) {
-                    // Get deployed domain
-                    Domain deployedDomain = securityDomainManager.get(domain.getId());
-                    // Can the security domain be deployed ?
-                    if (canHandle(domain)) {
-                        // domain is not yet deployed, so let's do it !
-                        if (deployedDomain == null) {
-                            securityDomainManager.deploy(domain);
-                            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
-                        } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
-                            securityDomainManager.update(domain);
-                            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
-                        } else {
-                            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
-                        }
-                    } else {
-                        // Check that the security domain was not previously deployed with other tags
-                        // In that case, we must undeploy it
-                        if (deployedDomain != null) {
-                            securityDomainManager.undeploy(domainId);
-                            domainReadinessService.removeDomain(domainId);
-                        } else {
-                            domainReadinessService.removeDomain(domainId);
-                        }
-                    }
-                } else {
+                if (domain == null) {
                     domainReadinessService.removeDomain(domainId);
+                    return;
                 }
+
+                // Get deployed domain
+                Domain deployedDomain = securityDomainManager.get(domain.getId());
+                // Can the security domain be deployed?
+                if (!canHandle(domain)) {
+                    // Check that the security domain was not previously deployed with other tags
+                    // In that case, we must undeploy it
+                    if (deployedDomain != null) {
+                        securityDomainManager.undeploy(domainId);
+                    }
+                    domainReadinessService.removeDomain(domainId);
+                    return;
+                }
+
+                // domain is not yet deployed, so let's do it !
+                if (deployedDomain == null) {
+                    securityDomainManager.deploy(domain);
+                } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
+                    securityDomainManager.update(domain);
+                }
+                domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
             }
             case DELETE -> {
                 securityDomainManager.undeploy(domainId);
