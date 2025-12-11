@@ -17,15 +17,18 @@ package io.gravitee.am.gateway.services.sync.api;
 
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author GraviteeSource Team
  */
+@Slf4j
 public class DomainReadinessHandler implements Handler<RoutingContext> {
 
     @Autowired
@@ -36,24 +39,27 @@ public class DomainReadinessHandler implements Handler<RoutingContext> {
         String domainId = context.request().getParam("domainId");
 
         if (domainId == null) {
-            context.response()
-                    .setStatusCode(200)
-                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                    .end(Json.encode(domainReadinessService.getDomainStates()));
+            context.fail(HttpStatusCode.BAD_REQUEST_400);
             return;
         }
 
         var details = domainReadinessService.getDomainState(domainId);
         if (details == null) {
-             context.response()
-                    .setStatusCode(404)
-                    .end("Domain not found");
-             return;
+            context.fail(HttpStatusCode.NOT_FOUND_404);
+            return;
         }
 
-        context.response()
-                .setStatusCode(200)
-                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                .end(Json.encode(details));
+        if (details.isSynchronized() && details.isStable()) {
+            context.response()
+                    .setStatusCode(HttpStatusCode.OK_200)
+                    .end();
+        } else {
+            log.debug("Domain {} is not ready (stable: {}, synchronized: {})", domainId, details.isStable(),
+                    details.isSynchronized());
+            context.response()
+                    .setStatusCode(HttpStatusCode.OK_200)
+                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                    .end(Json.encode(details));
+        }
     }
 }

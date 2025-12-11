@@ -19,9 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * @author GraviteeSource Team
@@ -33,33 +31,17 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     private final Map<String, DomainState> domainStates = new ConcurrentHashMap<>();
 
     @Override
-    public Set<String> getUnstableDomains() {
-        return domainStates.entrySet().stream()
-                .filter(entry -> !entry.getValue().isStable())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-    }
-
-    @Override
-    public boolean isDomainStable(String domainId) {
-        DomainState state = domainStates.get(domainId);
-        return state != null && state.isStable();
-    }
-
-    @Override
-    public boolean isDomainSynchronized(String domainId) {
-        DomainState state = domainStates.get(domainId);
-        return state != null && state.isSynchronized();
-    }
-
-    @Override
     public DomainState getDomainState(String domainId) {
         return domainStates.get(domainId);
     }
 
+
     @Override
-    public Map<String, DomainState> getDomainStates() {
-        return java.util.Collections.unmodifiableMap(domainStates);
+    public void initPluginSync(String domainId, String pluginId, String pluginName) {
+        if (domainId != null) {
+            logger.debug("Init plugin synchronization for domain {}, plugin {}, name {}", domainId, pluginId, pluginName);
+            domainStates.computeIfAbsent(domainId, k -> new DomainState()).initPluginSync(pluginId);
+        }
     }
 
     @Override
