@@ -22,6 +22,7 @@ import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
@@ -72,6 +73,9 @@ class AuthorizationEngineManagerImplTest {
 
     @Mock
     private AuthorizationEngineProvider mockProvider;
+
+    @Mock
+    private DomainReadinessService domainReadinessService;
 
     @InjectMocks
     private AuthorizationEngineManagerImpl manager;
