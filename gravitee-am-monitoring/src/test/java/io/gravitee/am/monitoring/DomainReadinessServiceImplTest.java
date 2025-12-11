@@ -43,7 +43,8 @@ public class DomainReadinessServiceImplTest {
         assertFalse(state.isSynchronized());
 
         // Update with success
-        domainReadinessService.updatePluginStatus(domainId, pluginId, pluginName, true, null);
+        domainReadinessService.pluginLoaded(domainId, pluginId);
+        domainReadinessService.updateDomainStatus(domainId, DomainState.Status.DEPLOYED);
 
         assertTrue(state.getSyncState().get(pluginId));
         assertTrue(state.getCreationState().get(pluginId).isSuccess());
@@ -68,7 +69,8 @@ public class DomainReadinessServiceImplTest {
         assertFalse("Domain should NOT be synchronized yet", state.isSynchronized());
         
         // 3. Process complete
-        domainReadinessService.updatePluginStatus(domainId, pluginId, "Slow Plugin", true, null);
+        domainReadinessService.pluginLoaded(domainId, pluginId);
+        domainReadinessService.updateDomainStatus(domainId, DomainState.Status.DEPLOYED);
         
         // VERIFY: Plugin is SYNCHRONIZED and STABLE
         assertTrue("Sync state should be true", state.getSyncState().get(pluginId));
@@ -86,7 +88,7 @@ public class DomainReadinessServiceImplTest {
         domainReadinessService.initPluginSync(domainId, pluginId, "Failing Plugin");
         
         // 2. Process failed
-        domainReadinessService.updatePluginStatus(domainId, pluginId, "Failing Plugin", false, "Connection Refused");
+        domainReadinessService.pluginFailed(domainId, pluginId, "Connection Refused");
         
         DomainState state = domainReadinessService.getDomainState(domainId);
         
@@ -97,5 +99,75 @@ public class DomainReadinessServiceImplTest {
         
         assertTrue("Domain should be synchronized (logic flow complete)", state.isSynchronized());
         assertFalse("Domain should NOT be stable", state.isStable());
+    }
+
+    @Test
+    public void shouldMarkPluginLoaded() {
+        String domainId = "domain-loaded";
+        String pluginId = "plugin-loaded";
+        String pluginType = "Loaded Plugin";
+
+        domainReadinessService.initPluginSync(domainId, pluginId, pluginType);
+        domainReadinessService.pluginLoaded(domainId, pluginId);
+
+        DomainState state = domainReadinessService.getDomainState(domainId);
+        assertTrue(state.getSyncState().get(pluginId));
+        assertTrue(state.getCreationState().get(pluginId).isSuccess());
+    }
+
+    @Test
+    public void shouldMarkPluginLoadedWithType() {
+        String domainId = "domain-loaded-type";
+        String pluginId = "plugin-loaded-type";
+        String pluginType = "REPORTER";
+
+        domainReadinessService.initPluginSync(domainId, pluginId, pluginType);
+        domainReadinessService.pluginLoaded(domainId, pluginId);
+
+        DomainState state = domainReadinessService.getDomainState(domainId);
+        assertTrue(state.getSyncState().get(pluginId));
+        assertTrue(state.getCreationState().get(pluginId).isSuccess());
+        assertEquals(pluginType, state.getCreationState().get(pluginId).getType());
+    }
+
+    @Test
+    public void shouldMarkPluginFailed() {
+        String domainId = "domain-failed-method";
+        String pluginId = "plugin-failed-method";
+        String pluginType = "Failed Method Plugin";
+        String message = "Explicit Failure";
+
+        domainReadinessService.initPluginSync(domainId, pluginId, pluginType);
+        domainReadinessService.pluginFailed(domainId, pluginId, message);
+
+        DomainState state = domainReadinessService.getDomainState(domainId);
+        assertTrue(state.getSyncState().get(pluginId));
+        assertFalse(state.getCreationState().get(pluginId).isSuccess());
+        assertEquals(message, state.getCreationState().get(pluginId).getMessage());
+    }
+
+    @Test
+    public void shouldUnloadPlugin() {
+        String domainId = "domain-unload";
+        String pluginId = "plugin-unload";
+        String pluginType = "Unload Plugin";
+
+        // Initialize and Fail
+        domainReadinessService.initPluginSync(domainId, pluginId, pluginType);
+        domainReadinessService.pluginFailed(domainId, pluginId, "Failure");
+        domainReadinessService.updateDomainStatus(domainId, DomainState.Status.DEPLOYED);
+
+        DomainState state = domainReadinessService.getDomainState(domainId);
+        assertNotNull(state);
+        assertFalse("Should be unstable due to failure", state.isStable());
+        assertNotNull(state.getCreationState().get(pluginId));
+
+        // Unload
+        domainReadinessService.pluginUnloaded(domainId, pluginId);
+
+        // Verify
+        assertTrue("Should be stable after unloading failing plugin", state.isStable());
+        assertNull("Plugin should be removed from sync state", state.getSyncState().get(pluginId));
+        assertNull("Plugin should be removed from creation state", state.getCreationState().get(pluginId));
     }
 }

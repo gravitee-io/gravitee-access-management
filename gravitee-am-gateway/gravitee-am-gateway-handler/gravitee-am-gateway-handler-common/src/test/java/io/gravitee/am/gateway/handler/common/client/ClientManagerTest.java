@@ -22,6 +22,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.common.event.Event;
@@ -58,6 +59,8 @@ public class ClientManagerTest {
     private GatewayMetricProvider gatewayMetricProvider;
     @Mock
     private ApplicationRepository applicationRepository;
+    @Mock
+    private DomainReadinessService domainReadinessService;
 
     @Before
     public void setUp() {

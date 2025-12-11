@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.audit.impl;
 
 import io.gravitee.am.common.event.EventManager;
+
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
@@ -231,7 +232,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }
         if (!needDeployment(reporter)) {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
-            domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), true, null);
+            domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             return false;
         }
         if (reporter.getReference().type() == ReferenceType.ORGANIZATION && !reporter.isInherited()) {
@@ -249,10 +250,10 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 eventBusReporter.start();
                 reporters.put(reporter.getId(), reporter);
                 reporterPlugins.put(reporter.getId(), eventBusReporter);
-                domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), true, null);
+                domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             } catch (Exception ex) {
                 logger.error("Unexpected error while starting reporter", ex);
-                domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), false, ex.getMessage());
+                domainReadinessService.pluginFailed(domain.getId(), reporter.getId(), ex.getMessage());
                 return false;
             }
 
@@ -276,7 +277,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             return startReporterProvider(reporter, context);
         } else {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
-            domainReadinessService.updatePluginStatus(domain.getId(), reporter.getId(), reporter.getName(), true, null);
+            domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             return false;
         }
     }

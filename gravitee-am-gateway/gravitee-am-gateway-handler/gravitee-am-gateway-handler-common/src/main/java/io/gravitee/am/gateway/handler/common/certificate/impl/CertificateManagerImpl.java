@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.certificate.impl;
 import io.gravitee.am.certificate.api.CertificateProviders;
 import io.gravitee.am.common.event.CertificateEvent;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderCertificateReloader;
@@ -39,8 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.InvalidKeyException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -124,12 +123,17 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 .observeOn(Schedulers.io())
                 .subscribe(
                         certificate -> {
+                            domainReadinessService.initPluginSync(domain.getId(), certificate.getId(), Type.CERTIFICATE.name());
                             certificateProviderManager.create(certificate);
                             certificates.put(certificate.getId(), certificate);
                             logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
-                            domainReadinessService.updatePluginStatus(domain.getId(), certificate.getId(), certificate.getName(), true, null);
+                            domainReadinessService.pluginLoaded(domain.getId(), certificate.getId());
                         },
-                        error -> logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
+                        error -> 
+                        {
+                            logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), "", error.getMessage());
+                        }
                 );
     }
 
@@ -139,8 +143,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
         logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
+        
         for (Map.Entry<String, Certificate> entry: certificates.entrySet()) {
             certificateProviderManager.delete(entry.getKey());
+            domainReadinessService.pluginUnloaded(domain.getId(), entry.getKey());
         }
         certificates.clear();
     }
@@ -211,17 +217,17 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                                 certificateProviderManager.create(certificate);
                                 certificates.put(certificateId, certificate);
                                 logger.info("Certificate {} loaded for domain {}", certificateId, domain.getName());
-                                domainReadinessService.updatePluginStatus(domain.getId(), certificateId, certificate.getName(), true, null);
+                                domainReadinessService.pluginLoaded(domain.getId(), certificateId);
                                 reloadIdentityProviders(certificate);
                             } catch (Exception ex) {
                                 logger.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
                                 certificates.remove(certificateId, certificate);
-                                domainReadinessService.updatePluginStatus(domain.getId(), certificateId, certificate.getName(), false, ex.getMessage());
+                                domainReadinessService.pluginFailed(domain.getId(), certificateId, ex.getMessage());
                             }
                         },
                         error -> {
                             logger.error("An error has occurred when loading certificate {} for domain {}", certificateId, domain.getName(), error);
-                            domainReadinessService.updatePluginStatus(domain.getId(), certificateId, null, false, error.getMessage());
+                            domainReadinessService.pluginFailed(domain.getId(), certificateId, error.getMessage());
                         },
                         () -> logger.error("No certificate found with id {}", certificateId));
     }
@@ -236,6 +242,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         logger.info("Removing certificate {} for domain {}", certificateId, domain.getName());
         Certificate deletedCertificate = certificates.remove(certificateId);
         certificateProviderManager.delete(certificateId);
+        domainReadinessService.pluginUnloaded(domain.getId(), certificateId);
         if (deletedCertificate != null) {
             logger.info("Certificate {} has been removed for domain {}", certificateId, domain.getName());
         } else {

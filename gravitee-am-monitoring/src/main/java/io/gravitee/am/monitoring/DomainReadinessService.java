@@ -30,19 +30,31 @@ public interface DomainReadinessService {
      * Initialize the synchronization status of a plugin.
      * @param domainId Domain ID.
      * @param pluginId Plugin ID.
-     * @param pluginName Plugin Name (optional, can be null).
+     * @param pluginType Plugin Type.
      */
-    void initPluginSync(String domainId, String pluginId, String pluginName);
+    void initPluginSync(String domainId, String pluginId, String pluginType);
 
     /**
-     * Update the status of a plugin.
+     * Mark a plugin as successfully loaded/synchronized.
      * @param domainId Domain ID.
      * @param pluginId Plugin ID.
-     * @param pluginName Plugin Name (optional, can be null).
-     * @param success Success flag.
-     * @param message Error message (optional).
      */
-    void updatePluginStatus(String domainId, String pluginId, String pluginName, boolean success, String message);
+    void pluginLoaded(String domainId, String pluginId);
+
+    /**
+     * Mark a plugin as failed to load/synchronize.
+     * @param domainId Domain ID.
+     * @param pluginId Plugin ID.
+     * @param message Failure message.
+     */
+    void pluginFailed(String domainId, String pluginId, String message);
+
+    /**
+     * Remove a plugin from matching.
+     * @param domainId Domain ID.
+     * @param pluginId Plugin ID.
+     */
+    void pluginUnloaded(String domainId, String pluginId);
 
     /**
      * Update the status of a domain.

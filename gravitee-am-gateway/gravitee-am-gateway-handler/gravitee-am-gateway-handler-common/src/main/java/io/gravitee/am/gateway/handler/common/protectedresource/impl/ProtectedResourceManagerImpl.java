@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.protectedresource.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ProtectedResourceEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.McpTool;
@@ -24,6 +25,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.common.event.Event;
@@ -60,6 +62,9 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
 
+    @Autowired
+    private DomainReadinessService domainReadinessService;
+
     private final ConcurrentMap<String, ProtectedResource> resources = new ConcurrentHashMap<>();
 
 
@@ -74,8 +79,12 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
                             gatewayMetricProvider.incrementProtectedResource();
                             resources.put(res.getId(), res);
                             log.info("Protected Resource {} loaded for domain {}", res.getName(), domain.getName());
+                            domainReadinessService.pluginLoaded(domain.getId(), res.getId());
                         },
-                        error -> log.error("An error has occurred when loading protected resources for domain {}", domain.getName(), error)
+                        error -> {
+                            log.error("An error has occurred when loading protected resources for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), "", error.getMessage());
+                        }
                 );
     }
 
@@ -106,6 +115,8 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     private void removeProtectedResource(String protectedResourceId) {
         log.info("Removing protected resource {} for domain {}", protectedResourceId, domain.getName());
         ProtectedResource deletedProtectedResource = resources.remove(protectedResourceId);
+        domainReadinessService.pluginUnloaded(domain.getId(), protectedResourceId);
+        
         if (deletedProtectedResource != null) {
             log.info("Protected Resource {} has been removed for domain {}", protectedResourceId, domain.getName());
         } else {
@@ -115,16 +126,24 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
 
     private void deployProtectedResource(String protectedResourceId) {
         log.info("Deploying protected resource {} for domain {}", protectedResourceId, domain.getName());
+        domainReadinessService.initPluginSync(domain.getId(), protectedResourceId, Type.PROTECTED_RESOURCE.name());
         protectedResourceRepository.findById(protectedResourceId)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         res -> {
                             resources.put(res.getId(), res);
                             log.info("Protected Resource {} loaded for domain {}", protectedResourceId, domain.getName());
+                            domainReadinessService.pluginLoaded(domain.getId(), res.getId());
 
                         },
-                        error -> log.error("An error has occurred when loading protected resource {} for domain {}", protectedResourceId, domain.getName(), error),
-                        () -> log.warn("No protected resource found with id {}", protectedResourceId));
+                        error -> {
+                            log.error("An error has occurred when loading protected resource {} for domain {}", protectedResourceId, domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), protectedResourceId, error.getMessage());
+                        },
+                        () -> {
+                            log.warn("No protected resource found with id {}", protectedResourceId);
+                            domainReadinessService.pluginUnloaded(domain.getId(), protectedResourceId);
+                        });
     }
 
     @Override
