@@ -50,18 +50,26 @@ public class DomainState {
         return this;
     }
 
-    public void initPluginSync(String pluginId) {
+    public void initPluginSync(String pluginId, String pluginType) {
         syncState.put(pluginId, false);
+        creationState.compute(pluginId, (k, v) -> {
+            if (v == null) {
+                v = new PluginStatus();
+                v.setId(pluginId);
+            }
+            if (pluginType != null) {
+                v.setType(pluginType);
+            }
+            return v;
+        });
     }
 
-    public void updatePluginState(String pluginId, String pluginName, boolean success, String message) {
+    public void updatePluginState(String pluginId, boolean success, String message) {
         syncState.put(pluginId, true);
         creationState.compute(pluginId, (k, v) -> {
             if (v == null) {
                 v = new PluginStatus();
-                v.setName(pluginName != null ? pluginName : pluginId);
-            } else if (pluginName != null) {
-                v.setName(pluginName);
+                v.setId(pluginId);
             }
             v.setSuccess(success);
             v.setMessage(message);
@@ -71,8 +79,15 @@ public class DomainState {
         this.lastSync.set(System.currentTimeMillis());
     }
 
+    public void removePlugin(String pluginId) {
+        if (pluginId != null) {
+            syncState.remove(pluginId);
+            creationState.remove(pluginId);
+        }
+    }
+
     public boolean isStable() {
-        return creationState.values().stream().allMatch(PluginStatus::isSuccess);
+        return status == Status.DEPLOYED && creationState.values().stream().allMatch(PluginStatus::isSuccess);
     }
 
     public boolean isSynchronized() {
@@ -82,7 +97,8 @@ public class DomainState {
     @Getter
     @Setter
     public static class PluginStatus {
-        private String name;
+        private String id;
+        private String type;
         private boolean success;
         private String message;
         private long lastSync;

@@ -17,12 +17,14 @@ package io.gravitee.am.gateway.handler.common.client.impl;
 
 import io.gravitee.am.common.event.ApplicationEvent;
 import io.gravitee.am.common.event.EventManager;
+
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.common.event.Event;
@@ -56,6 +58,9 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
     @Autowired
     private ApplicationRepository applicationRepository;
 
+    @Autowired
+    private DomainReadinessService domainReadinessService;
+
     private final ConcurrentMap<String, Client> clients = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Domain> domains = new ConcurrentHashMap<>();
@@ -76,8 +81,12 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                             gatewayMetricProvider.incrementApp();
                             clients.put(client.getId(), client);
                             logger.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
+                            domainReadinessService.pluginLoaded(domain.getId(), client.getId());
                         },
-                        error -> logger.error("An error has occurred when loading applications for domain {}", domain.getName(), error)
+                        error -> {
+                            logger.error("An error has occurred when loading applications for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), "", error.getMessage());
+                        }
                 );
     }
 
@@ -167,9 +176,13 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                             } else {
                                 clients.put(client.getId(), client);
                                 logger.info("Application {} loaded for domain {}", applicationId, domain.getName());
+                                domainReadinessService.pluginLoaded(domain.getId(), client.getId());
                             }
                         },
-                        error -> logger.error("An error has occurred when loading application {} for domain {}", applicationId, domain.getName(), error),
+                        error -> {
+                            logger.error("An error has occurred when loading application {} for domain {}", applicationId, domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), applicationId, error.getMessage());
+                        },
                         () -> logger.error("No application found with id {}", applicationId));
     }
 
@@ -177,6 +190,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
         logger.info("Removing application {} for domain {}", applicationId, domain.getName());
         Client deletedClient = clients.remove(applicationId);
         if (deletedClient != null) {
+            domainReadinessService.pluginUnloaded(domain.getId(), applicationId);
             logger.info("Application {} has been removed for domain {}", applicationId, domain.getName());
         } else {
             logger.info("Application {} was not loaded for domain {}", applicationId, domain.getName());
