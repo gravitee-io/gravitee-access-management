@@ -6057,7 +6057,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/regex-escape@npm:^3":
+"@types/regex-escape@npm:3.4.1":
   version: 3.4.1
   resolution: "@types/regex-escape@npm:3.4.1"
   checksum: 10c0/6f6d1a01a37df6c368dd6df9720b4e013cf40c76dc4c24688c2982260608821e0d1d8ddfe7335386a3393599dfbf343e0f3b9a08beac818c3ee7e8ab16f24f7a
@@ -10643,7 +10643,7 @@ __metadata:
     "@types/json-schema": "npm:7.0.15"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:20.11.23"
-    "@types/regex-escape": "npm:^3"
+    "@types/regex-escape": "npm:3.4.1"
     "@typescript-eslint/eslint-plugin": "npm:8.35.1"
     "@typescript-eslint/parser": "npm:8.35.1"
     "@typescript-eslint/types": "npm:8.35.1"
