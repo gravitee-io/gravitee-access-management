@@ -81,7 +81,7 @@
     "@types/json-schema": "7.0.15",
     "@types/lodash": "4.17.20",
     "@types/node": "20.11.23",
-    "@types/regex-escape": "^3",
+    "@types/regex-escape": "3.4.1",
     "@typescript-eslint/eslint-plugin": "8.35.1",
     "@typescript-eslint/parser": "8.35.1",
     "@typescript-eslint/types": "8.35.1",
