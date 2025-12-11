@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM graviteeio/java:21 as build-env
+FROM graviteeio/java:21 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
@@ -27,7 +27,10 @@ RUN apk update \
 FROM eclipse-temurin:21.0.8_9-jre-noble
 LABEL maintainer="contact@graviteesource.com"
 
-ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
+ENV GRAVITEEIO_HOME=/opt/graviteeio-am-management-api
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
+
+ARG JATTACH_VERSION=2.2
 
 # Upgrade libc6
 USER root
@@ -35,6 +38,21 @@ RUN apt-get update && \
     apt-get upgrade -y libc6 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libjemalloc2 ca-certificates build-essential wget && \
+    wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz && \
+    tar -xf /tmp/jattach.tar.gz -C /tmp/ && \
+    make -C /tmp/jattach-${JATTACH_VERSION} && \
+    JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" && \
+    if [ ! -f "${JATTACH_SRC}" ]; then \
+        JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+    fi && \
+    install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach && \
+    ln -sf /usr/lib/$(dpkg-architecture --query DEB_BUILD_MULTIARCH)/libjemalloc.so.2 /usr/lib/libjemalloc.so.2 && \
+    apt-get purge -y build-essential wget && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz
 
 RUN groupmod --new-name graviteeio ubuntu && \
  adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio

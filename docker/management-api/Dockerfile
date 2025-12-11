@@ -18,16 +18,27 @@ FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
-ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
+ARG JATTACH_VERSION=2.2
+ENV GRAVITEEIO_HOME=/opt/graviteeio-am-management-api
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
 
 RUN apk update \
-	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
-	&& wget --no-check-certificate  -O /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-management-api/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip \
+    && apk add --no-cache ca-certificates jemalloc perl \
+	&& apk add --no-cache --virtual .build-deps zip unzip netcat-openbsd wget build-base \
+	&& wget -O /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-management-api/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
-	&& apk del zip unzip netcat-openbsd wget \
+    && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
+    && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
+    && make -C /tmp/jattach-${JATTACH_VERSION} \
+    && JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" \
+    && if [ ! -f "${JATTACH_SRC}" ]; then \
+            JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+       fi \
+    && install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach \
+    && apk del .build-deps \
     && mv /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
     && rm -rf /tmp/* \
 	&& chgrp -R graviteeio ${GRAVITEEIO_HOME} \

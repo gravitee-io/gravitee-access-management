@@ -19,13 +19,14 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 ARG JATTACH_VERSION=2.2
-ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
+ENV GRAVITEEIO_HOME=/opt/graviteeio-am-gateway
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
 
 RUN apk update \
-    && apk add --no-cache ca-certificates jemalloc jemalloc-dev perl \
+    && apk add --no-cache ca-certificates jemalloc perl \
 	&& apk add --no-cache --virtual .build-deps zip unzip netcat-openbsd wget build-base \
 	&& wget -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
@@ -37,18 +38,11 @@ RUN apk update \
             JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
        fi \
     && install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach \
-    && ln -s /usr/local/bin/jattach /usr/local/bin/jeattach \
     && apk del .build-deps \
     && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
     && rm -rf /tmp/* \
 	&& chgrp -R graviteeio ${GRAVITEEIO_HOME} \
     && chmod -R g=u ${GRAVITEEIO_HOME}
-
-RUN if [ -x "${JAVA_HOME}/bin/jcmd" ]; then \
-        ln -sf "${JAVA_HOME}/bin/jcmd" /usr/local/bin/jcmd; \
-    else \
-        echo "jcmd not found in ${JAVA_HOME}/bin; skipping symlink"; \
-    fi
 
 WORKDIR ${GRAVITEEIO_HOME}
 EXPOSE 8092
