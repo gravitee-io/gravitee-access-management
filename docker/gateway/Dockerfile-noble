@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM graviteeio/java:21 as build-env
+FROM graviteeio/java:21 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
@@ -23,7 +23,29 @@ RUN apk update \
 	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /gravitee-tmp/ \
     && chmod -R g=u /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ \
-    && rm -rf /tmp/*
+    && apk del unzip wget \
+    && rm -rf /var/cache/apk/* /tmp/*
+
+FROM eclipse-temurin:21.0.8_9-jre-noble AS build-jattach
+LABEL maintainer="contact@graviteesource.com"
+
+ARG JATTACH_VERSION=2.2
+
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential wget ca-certificates && \
+    wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz && \
+    tar -xf /tmp/jattach.tar.gz -C /tmp/ && \
+    make -C /tmp/jattach-${JATTACH_VERSION} && \
+    JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" && \
+    if [ ! -f "${JATTACH_SRC}" ]; then \
+        JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+    fi && \
+    install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach && \
+    apt-get purge -y build-essential wget && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz
 
 FROM eclipse-temurin:21.0.8_9-jre-noble
 LABEL maintainer="contact@graviteesource.com"
@@ -38,10 +60,20 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libjemalloc2 ca-certificates && \
+    JEMALLOC_PATH=$(dpkg -L libjemalloc2 | grep -E '/lib.*/libjemalloc\.so\.2$' | head -1) && \
+    ln -sf "${JEMALLOC_PATH}" /usr/lib/libjemalloc.so.2 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
+
 RUN groupmod --new-name graviteeio ubuntu && \
  adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio
 
 COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ ${GRAVITEE_AM_HOME}/
+COPY --from=build-jattach /usr/local/bin/jattach /usr/local/bin/jattach
 
 RUN chmod -R g=u ${GRAVITEE_AM_HOME}
 
