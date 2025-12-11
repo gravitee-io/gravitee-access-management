@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -48,10 +49,12 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
 
             // handle exception
             Throwable throwable = context.failure();
-            if (throwable instanceof PolicyChainException) {
-                PolicyChainException policyChainException = (PolicyChainException) throwable;
+            if (throwable instanceof PolicyChainException policyChainException) {
                 handleException(context, policyChainException.key(), policyChainException.getMessage());
+            } else if (throwable instanceof OAuth2Exception oAuth2Exception) {
+                handleException(context, oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage());
             } else {
+                logger.error("An exception has occurred while handling consent request", throwable);
                 handleException(context, "internal_server_error", "Unexpected error");
             }
         }
