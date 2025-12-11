@@ -35,20 +35,53 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
         return domainStates.get(domainId);
     }
 
-
     @Override
-    public void initPluginSync(String domainId, String pluginId, String pluginName) {
+    public void initPluginSync(String domainId, String pluginId, String pluginType) {
         if (domainId != null) {
-            logger.debug("Init plugin synchronization for domain {}, plugin {}, name {}", domainId, pluginId, pluginName);
-            domainStates.computeIfAbsent(domainId, k -> new DomainState()).initPluginSync(pluginId);
+            logger.debug("[{}] Init Plugin {} synchronization for domain {}", pluginType, pluginId, domainId);
+            domainStates.computeIfAbsent(domainId, k -> new DomainState()).initPluginSync(pluginId, pluginType);
         }
     }
 
     @Override
-    public void updatePluginStatus(String domainId, String pluginId, String pluginName, boolean success, String message) {
+    public void pluginLoaded(String domainId, String pluginId) {
         if (domainId != null) {
-            logger.debug("Updates plugin status for domain {}, plugin {}, name {}, success {}, message {}", domainId, pluginId, pluginName, success, message);
-            domainStates.computeIfAbsent(domainId, k -> new DomainState()).updatePluginState(pluginId, pluginName, success, message);
+            DomainState domainState = domainStates.get(domainId);
+            if (domainState == null || !domainState.getCreationState().containsKey(pluginId)) {
+                logger.error("Plugin {} loaded for domain {} but was not initialized", pluginId, domainId);
+                return;
+            }
+            String pluginType = domainState.getCreationState().get(pluginId).getType();
+            logger.debug("[{}] Plugin {} loaded for domain {}", pluginType, pluginId, domainId);
+            updatePluginStatus(domainId, pluginId, true, null);
+        }
+    }
+
+    @Override
+    public void pluginFailed(String domainId, String pluginId, String message) {
+        if (domainId != null) {
+            DomainState domainState = domainStates.get(domainId);
+            if (domainState == null || !domainState.getCreationState().containsKey(pluginId)) {
+                logger.error("Plugin {} failed to load for domain {} but was not initialized - error:{}", pluginId, domainId, message);
+                return;
+            }
+            String pluginType = domainState.getCreationState().get(pluginId).getType();
+            logger.debug("[{}] Plugin {} failed to load for domain {} - error:{}", pluginType, pluginId, domainId, message);
+            updatePluginStatus(domainId, pluginId, false, message);
+        }
+    }
+
+    @Override
+    public void pluginUnloaded(String domainId, String pluginId) {
+        if (domainId != null) {
+            DomainState domainState = domainStates.get(domainId);
+            if (domainState != null && domainState.getCreationState().containsKey(pluginId)) {
+                String pluginType = domainState.getCreationState().get(pluginId).getType();
+                logger.debug("[{}] Plugin {} unloaded for domain {}", pluginType, pluginId, domainId);
+            } else {
+                logger.debug("Plugin {} unloaded for domain {}", pluginId, domainId);
+            }
+            domainStates.computeIfAbsent(domainId, k -> new DomainState()).removePlugin(pluginId);
         }
     }
 
@@ -66,5 +99,9 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
             logger.debug("Removing domain state for {}", domainId);
             domainStates.remove(domainId);
         }
+    }
+
+    private void updatePluginStatus(String domainId, String pluginId, boolean success, String message) {
+        domainStates.computeIfAbsent(domainId, k -> new DomainState()).updatePluginState(pluginId, success, message);
     }
 }

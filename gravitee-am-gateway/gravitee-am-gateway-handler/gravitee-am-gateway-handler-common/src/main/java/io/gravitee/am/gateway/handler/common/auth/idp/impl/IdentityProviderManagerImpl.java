@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.IdentityProviderEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -164,16 +165,17 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private void updateIdentityProvider(String identityProviderId, IdentityProviderEvent identityProviderEvent) {
         final String eventType = identityProviderEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} identity provider event for {}", domain.getName(), eventType, identityProviderId);
+        domainReadinessService.initPluginSync(domain.getId(), identityProviderId, Type.IDENTITY_PROVIDER.name());
         identityProviderRepository.findById(identityProviderId)
                 .flatMapSingle(this::updateAuthenticationProvider)
                 .subscribe(
                         identityProvider -> {
                             logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
-                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, identityProvider.getName(), true, null);
+                            domainReadinessService.pluginLoaded(domain.getId(), identityProviderId);
                         },
                         error -> {
                             logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error);
-                            domainReadinessService.updatePluginStatus(domain.getId(), identityProviderId, null, false, error.getMessage());
+                            domainReadinessService.pluginFailed(domain.getId(), identityProviderId, error.getMessage());
                         },
                         () -> logger.error("No identity provider found with id {}", identityProviderId));
     }
@@ -244,6 +246,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         return Completable.fromAction(() -> {
             if (oldProviders.authProvider != null) {
                 try {
+                    domainReadinessService.pluginUnloaded(domain.getId(), oldProviders.identity.getId());
                     oldProviders.authProvider.stop();
                     logger.debug("Stopped old authentication provider after replacement");
                 } catch (Exception e) {
@@ -300,6 +303,8 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         final String id = identityProvider.getId();
         final ReentrantLock lock = lockFor(id);
 
+        domainReadinessService.initPluginSync(domain.getId(), id, Type.IDENTITY_PROVIDER.name());
+
         return createProvider(identityProvider)
                 .flatMap(newProviders -> {
                     Providers old;
@@ -314,7 +319,11 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                             .onErrorComplete()
                             .andThen(Single.just(identityProvider));
                 })
-                .doOnError(e -> logger.error("Failed to replace identity provider {}", id, e));
+                .doOnSuccess(idp -> domainReadinessService.pluginLoaded(domain.getId(), idp.getId()))
+                .doOnError(e -> {
+                    logger.error("Failed to replace identity provider {}", id, e);
+                    domainReadinessService.pluginFailed(domain.getId(), id, e.getMessage());
+                });
     }
 
     private record Providers(String id, AuthenticationProvider authProvider, UserProvider userProvider,
@@ -335,6 +344,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         AuthenticationProvider authenticationProvider = providers.remove(identityProviderId);
         UserProvider userProvider = userProviders.remove(identityProviderId);
         identities.remove(identityProviderId);
+        domainReadinessService.pluginUnloaded(domain.getId(), identityProviderId);
         if (authenticationProvider != null) {
             // stop the authentication provider
             try {

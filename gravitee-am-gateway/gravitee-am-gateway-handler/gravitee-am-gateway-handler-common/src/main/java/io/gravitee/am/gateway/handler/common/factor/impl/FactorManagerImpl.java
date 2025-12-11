@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.factor.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FactorEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.model.ApplicationFactorSettings;
@@ -124,18 +125,17 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     private void updateFactor(String factorId, FactorEvent factorEvent) {
         final String eventType = factorEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} factor event for {}", domain.getName(), eventType, factorId);
-        final String factorIdentifier = "Factor-" + factorId;
-        domainReadinessService.initPluginSync(domain.getId(), factorId, factorIdentifier);
+        domainReadinessService.initPluginSync(domain.getId(), factorId, Type.FACTOR.name());
         factorService.findById(factorId)
                 .subscribe(
                         this::updateFactor,
                         error -> {
                             logger.error("Unable to load factor for domain {}", domain.getName(), error);
-                            domainReadinessService.updatePluginStatus(domain.getId(), factorId, factorIdentifier, false, error.getMessage());
+                            domainReadinessService.pluginFailed(domain.getId(), factorId, error.getMessage());
                         },
                         () -> {
                             logger.error("No factor found with id {}", factorId);
-                            domainReadinessService.updatePluginStatus(domain.getId(), factorId, factorIdentifier, false, "No factor found with id " + factorId);
+                            domainReadinessService.pluginFailed(domain.getId(), factorId, "No factor found with id " + factorId);
                         });
     }
 
@@ -143,6 +143,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         logger.info("Domain {} has received form event, remove factor {}", domain.getName(), factorId);
         factorProviders.remove(factorId);
         factors.remove(factorId);
+        domainReadinessService.pluginUnloaded(domain.getId(), factorId);
     }
 
     private void updateFactor(Factor factor) {
@@ -153,15 +154,15 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
                 this.factorProviders.put(factor.getId(), factorProvider);
                 this.factors.put(factor.getId(), factor);
                 logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
-                domainReadinessService.updatePluginStatus(domain.getId(), factor.getId(), factor.getName(), true, null);
+                domainReadinessService.pluginLoaded(domain.getId(), factor.getId());
             } else {
                 logger.info("Factor {} already loaded for domain {}", factor.getName(), domain.getName());
-                domainReadinessService.updatePluginStatus(domain.getId(), factor.getId(), factor.getName(), true, null);
+                domainReadinessService.pluginLoaded(domain.getId(), factor.getId());
             }
         } catch (Exception ex) {
             this.factorProviders.remove(factor.getId());
             logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
-            domainReadinessService.updatePluginStatus(domain.getId(), factor.getId(), factor.getName(), false, ex.getMessage());
+            domainReadinessService.pluginFailed(domain.getId(), factor.getId(), ex.getMessage());
         }
     }
 

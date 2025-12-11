@@ -86,7 +86,8 @@ public class SyncManager implements InitializingBean {
             Type.FACTOR,
             Type.REPORTER,
             Type.AUTHORIZATION_ENGINE,
-            Type.PROTECTED_RESOURCE
+            Type.PROTECTED_RESOURCE,
+            Type.APPLICATION
     );
 
     @Autowired
@@ -249,6 +250,7 @@ public class SyncManager implements InitializingBean {
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
                     // Track event start
                     if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN && PLUGIN_TYPES.contains(event.getType())) {
+                        logger.info("Initializing Plugin State {} - {}", event.getType().name(), event.getPayload().getId());
                         domainReadinessService.initPluginSync(event.getPayload().getReferenceId(), event.getPayload().getId(), event.getType().name());
                     }
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());

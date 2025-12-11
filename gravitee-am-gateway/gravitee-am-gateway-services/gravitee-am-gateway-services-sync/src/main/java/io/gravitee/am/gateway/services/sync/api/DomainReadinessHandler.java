@@ -57,7 +57,7 @@ public class DomainReadinessHandler implements Handler<RoutingContext> {
             log.debug("Domain {} is not ready (stable: {}, synchronized: {})", domainId, details.isStable(),
                     details.isSynchronized());
             context.response()
-                    .setStatusCode(HttpStatusCode.OK_200)
+                    .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
                     .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                     .end(Json.encode(details));
         }
