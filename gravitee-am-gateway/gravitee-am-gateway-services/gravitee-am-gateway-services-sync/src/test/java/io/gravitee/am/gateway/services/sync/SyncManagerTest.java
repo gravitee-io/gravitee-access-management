@@ -24,6 +24,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -94,6 +95,9 @@ public class SyncManagerTest {
 
     @Mock
     private DefaultReactor defaultReactor;
+
+    @Mock
+    private DomainReadinessService domainReadinessService;
 
     @Before
     public void before() throws Exception {
