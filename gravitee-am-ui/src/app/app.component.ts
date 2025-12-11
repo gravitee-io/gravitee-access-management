@@ -15,6 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 
 import { SidenavService } from './components/sidenav/sidenav.service';
 import { AuthService } from './services/auth.service';
@@ -32,7 +34,11 @@ export class AppComponent implements OnInit {
     public router: Router,
     private authService: AuthService,
     private sidenavService: SidenavService,
-  ) {}
+    private matIconRegistry: MatIconRegistry,
+    private sanitizer: DomSanitizer,
+  ) {
+    this.registerCustomIcon();
+  }
 
   ngOnInit() {
     this.authService.notifyObservable$.subscribe((response) => {
@@ -42,6 +48,14 @@ export class AppComponent implements OnInit {
     });
 
     this.sidenavService.resizeSidenavObservable.subscribe((reducedMode) => (this.reducedMode = reducedMode));
+  }
+
+  private registerCustomIcon(): void {
+    this.matIconRegistry.addSvgIconInNamespace(
+      'gio',
+      'gravitee',
+      this.sanitizer.bypassSecurityTrustResourceUrl('assets/gravitee-icon.svg'),
+    );
   }
 
   displaySidenav(): boolean {

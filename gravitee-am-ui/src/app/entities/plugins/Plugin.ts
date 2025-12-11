@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { LicensePluginOptions } from '@gravitee/ui-particles-angular/lib/gio-license/gio-license.service';
+
+import { LicensePluginOptions } from '@gravitee/ui-particles-angular';
 
 export class Plugin implements LicensePluginOptions {
   id: string;
