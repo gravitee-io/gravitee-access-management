@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.audit.impl;
 
 import io.gravitee.am.common.event.EventManager;
+
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
@@ -27,6 +28,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -75,6 +77,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     @Autowired
     private EnvironmentService environmentService;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
@@ -228,6 +233,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }
         if (!needDeployment(reporter)) {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             return false;
         }
         if (reporter.getReference().type() == ReferenceType.ORGANIZATION && !reporter.isInherited()) {
@@ -235,6 +241,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             return false;
         }
         logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
+        domainReadinessService.initPluginSync(domain.getId(), reporter.getId(), io.gravitee.am.common.event.Type.REPORTER.name());
         var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
         io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
 
@@ -245,8 +252,10 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 eventBusReporter.start();
                 reporters.put(reporter.getId(), reporter);
                 reporterPlugins.put(reporter.getId(), eventBusReporter);
+                domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             } catch (Exception ex) {
                 logger.error("Unexpected error while starting reporter", ex);
+                domainReadinessService.pluginFailed(domain.getId(), reporter.getId(), ex.getMessage());
                 return false;
             }
 
@@ -270,6 +279,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             return startReporterProvider(reporter, context);
         } else {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            domainReadinessService.pluginLoaded(domain.getId(), reporter.getId());
             return false;
         }
     }

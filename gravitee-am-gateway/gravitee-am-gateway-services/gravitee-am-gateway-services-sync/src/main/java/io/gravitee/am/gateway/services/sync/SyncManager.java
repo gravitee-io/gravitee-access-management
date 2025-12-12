@@ -26,8 +26,10 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.Scope;
+import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Maybe;
@@ -78,6 +80,15 @@ public class SyncManager implements InitializingBean {
     private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
     private static final String DATAPLANE_ID_PROPERTY = Scope.GATEWAY.getRepositoryPropertyKey()+".dataPlane.id";
     private static final String SEPARATOR = ",";
+    private static final Set<Type> PLUGIN_TYPES = Set.of(
+            Type.IDENTITY_PROVIDER,
+            Type.CERTIFICATE,
+            Type.FACTOR,
+            Type.REPORTER,
+            Type.AUTHORIZATION_ENGINE,
+            Type.PROTECTED_RESOURCE,
+            Type.APPLICATION
+    );
 
     @Autowired
     private EventManager eventManager;
@@ -105,6 +116,9 @@ public class SyncManager implements InitializingBean {
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     private Optional<List<String>> shardingTags;
 
@@ -219,7 +233,10 @@ public class SyncManager implements InitializingBean {
         List<Domain> domains = findDomains.blockingGet();
 
         // deploy security domains
-        domains.forEach(securityDomainManager::deploy);
+        domains.forEach(domain -> {
+            securityDomainManager.deploy(domain);
+            domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
+        });
         logger.info("Security domains initialization done");
     }
 
@@ -244,32 +261,43 @@ public class SyncManager implements InitializingBean {
         final Action action = event.getPayload().getAction();
         switch (action) {
             case CREATE, UPDATE -> {
+                domainReadinessService.updateDomainStatus(domainId, DomainState.Status.INITIALIZING);
                 Maybe<Domain> maybeDomain = domainRepository.findById(domainId);
                 if (this.eventsTimeOut > 0) {
                     maybeDomain = maybeDomain.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
                 Domain domain = maybeDomain.blockingGet();
-                if (domain != null) {
-                    // Get deployed domain
-                    Domain deployedDomain = securityDomainManager.get(domain.getId());
-                    // Can the security domain be deployed ?
-                    if (canHandle(domain)) {
-                        // domain is not yet deployed, so let's do it !
-                        if (deployedDomain == null) {
-                            securityDomainManager.deploy(domain);
-                        } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
-                            securityDomainManager.update(domain);
-                        }
-                    } else {
-                        // Check that the security domain was not previously deployed with other tags
-                        // In that case, we must undeploy it
-                        if (deployedDomain != null) {
-                            securityDomainManager.undeploy(domainId);
-                        }
-                    }
+                if (domain == null) {
+                    domainReadinessService.removeDomain(domainId);
+                    return;
                 }
+
+                // Get deployed domain
+                Domain deployedDomain = securityDomainManager.get(domain.getId());
+                // Can the security domain be deployed?
+                if (!canHandle(domain)) {
+                    // Check that the security domain was not previously deployed with other tags
+                    // In that case, we must undeploy it
+                    if (deployedDomain != null) {
+                        securityDomainManager.undeploy(domainId);
+                    }
+                    domainReadinessService.removeDomain(domainId);
+                    return;
+                }
+
+                // domain is not yet deployed, so let's do it !
+                if (deployedDomain == null) {
+                    securityDomainManager.deploy(domain);
+                } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
+                    securityDomainManager.update(domain);
+                }
+                domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
             }
-            case DELETE -> securityDomainManager.undeploy(domainId);
+            case DELETE -> {
+                domainReadinessService.updateDomainStatus(domainId, DomainState.Status.REMOVING);
+                securityDomainManager.undeploy(domainId);
+                domainReadinessService.removeDomain(domainId);
+            }
             default -> {
                 // No action needed for default case
             }

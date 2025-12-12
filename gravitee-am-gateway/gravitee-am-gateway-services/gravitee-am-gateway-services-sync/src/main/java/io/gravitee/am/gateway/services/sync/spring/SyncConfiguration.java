@@ -16,7 +16,10 @@
 package io.gravitee.am.gateway.services.sync.spring;
 
 import io.gravitee.am.gateway.services.sync.SyncManager;
+import io.gravitee.am.gateway.services.sync.api.DomainReadinessHandler;
 import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
+import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.monitoring.DomainReadinessServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -44,5 +47,31 @@ public class SyncConfiguration {
     @Bean
     public SyncProbe syncProbe() {
         return new SyncProbe();
+    }
+
+    @Bean
+    public DomainReadinessHandler domainReadinessHandler() {
+        return new DomainReadinessHandler();
+    }
+
+    @Bean
+    public DomainReadinessRouteConfigurer domainReadinessRouteConfigurer(io.gravitee.am.gateway.reactor.Reactor reactor, DomainReadinessHandler handler) {
+        return new DomainReadinessRouteConfigurer(reactor, handler);
+    }
+
+    public static class DomainReadinessRouteConfigurer implements org.springframework.beans.factory.InitializingBean {
+        private final io.gravitee.am.gateway.reactor.Reactor reactor;
+        private final DomainReadinessHandler handler;
+
+        public DomainReadinessRouteConfigurer(io.gravitee.am.gateway.reactor.Reactor reactor, DomainReadinessHandler handler) {
+            this.reactor = reactor;
+            this.handler = handler;
+        }
+
+        @Override
+        public void afterPropertiesSet() {
+            reactor.route().get("/_internal/domains").handler(handler);
+            reactor.route().get("/_internal/domains/:domainId").handler(handler);
+        }
     }
 }

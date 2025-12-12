@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.IdentityProviderEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -29,6 +30,7 @@ import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -53,7 +55,7 @@ import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigu
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderManagerImpl extends AbstractService implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
+public class IdentityProviderManagerImpl extends AbstractService implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload>, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
@@ -74,6 +76,9 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     private final ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
@@ -165,8 +170,12 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 .subscribe(
                         identityProvider -> {
                             logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
+                            domainReadinessService.pluginLoaded(domain.getId(), identityProviderId);
                         },
-                        error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
+                        error -> {
+                            logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), identityProviderId, error.getMessage());
+                        },
                         () -> logger.error("No identity provider found with id {}", identityProviderId));
     }
 
@@ -176,6 +185,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
+        domainReadinessService.initPluginSync(domain.getId(), identityProvider.getId(), Type.IDENTITY_PROVIDER.name());
         if (needDeployment(identityProvider)) {
             return forceUpdateAuthenticationProvider(identityProvider);
         } else {
@@ -214,7 +224,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 return identityProviderPluginManager
                         .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
                         .map(userProviderOpt -> new Providers(identityProvider.getId(), authenticationProvider,
-                                userProviderOpt.orElse(null), identityProvider));
+                                userProviderOpt.orElse(null), identityProvider));                 
             }
         }
     }
@@ -236,6 +246,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         return Completable.fromAction(() -> {
             if (oldProviders.authProvider != null) {
                 try {
+                    domainReadinessService.pluginUnloaded(domain.getId(), oldProviders.identity.getId());
                     oldProviders.authProvider.stop();
                     logger.debug("Stopped old authentication provider after replacement");
                 } catch (Exception e) {
@@ -261,7 +272,10 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private Single<IdentityProvider> deployProvider(IdentityProvider identityProvider) {
         logger.info("Deploying new identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-        final ReentrantLock lock = lockFor(identityProvider.getId());
+        final String id = identityProvider.getId();
+        final ReentrantLock lock = lockFor(id);
+
+        domainReadinessService.initPluginSync(domain.getId(), id, Type.IDENTITY_PROVIDER.name());
 
         try {
             return createProvider(identityProvider)
@@ -280,8 +294,15 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                         }
                         logger.info("Successfully deployed new identity provider {} for domain {}", identityProvider.getId(), domain.getName());
                         return identityProvider;
+                    })
+                    .doOnSuccess(idp -> domainReadinessService.pluginLoaded(domain.getId(), idp.getId()))
+                    .doOnError(e -> {
+                        logger.error("Failed to deploy identity provider {}", id, e);
+                        domainReadinessService.pluginFailed(domain.getId(), id, e.getMessage());
                     });
         } catch (IOException e) {
+            logger.error("Failed to deploy identity provider {}", id, e);
+            domainReadinessService.pluginFailed(domain.getId(), id, e.getMessage());
             return Single.error(e);
         }
     }
@@ -291,6 +312,8 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
         final String id = identityProvider.getId();
         final ReentrantLock lock = lockFor(id);
+
+        domainReadinessService.initPluginSync(domain.getId(), id, Type.IDENTITY_PROVIDER.name());
 
         return createProvider(identityProvider)
                 .flatMap(newProviders -> {
@@ -306,7 +329,11 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                             .onErrorComplete()
                             .andThen(Single.just(identityProvider));
                 })
-                .doOnError(e -> logger.error("Failed to replace identity provider {}", id, e));
+                .doOnSuccess(idp -> domainReadinessService.pluginLoaded(domain.getId(), idp.getId()))
+                .doOnError(e -> {
+                    logger.error("Failed to replace identity provider {}", id, e);
+                    domainReadinessService.pluginFailed(domain.getId(), id, e.getMessage());
+                });
     }
 
     private record Providers(String id, AuthenticationProvider authProvider, UserProvider userProvider,
@@ -327,6 +354,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         AuthenticationProvider authenticationProvider = providers.remove(identityProviderId);
         UserProvider userProvider = userProviders.remove(identityProviderId);
         identities.remove(identityProviderId);
+        domainReadinessService.pluginUnloaded(domain.getId(), identityProviderId);
         if (authenticationProvider != null) {
             // stop the authentication provider
             try {
