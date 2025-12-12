@@ -165,7 +165,6 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private void updateIdentityProvider(String identityProviderId, IdentityProviderEvent identityProviderEvent) {
         final String eventType = identityProviderEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} identity provider event for {}", domain.getName(), eventType, identityProviderId);
-        domainReadinessService.initPluginSync(domain.getId(), identityProviderId, Type.IDENTITY_PROVIDER.name());
         identityProviderRepository.findById(identityProviderId)
                 .flatMapSingle(this::updateAuthenticationProvider)
                 .subscribe(
