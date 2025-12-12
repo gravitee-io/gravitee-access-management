@@ -85,6 +85,25 @@ export const extractXsrfTokenAndActionResponse = async (response) => {
   return { headers: result.headers, token: xsrfToken, action: action };
 };
 
+export const extractXsrfTokenAndHref = async (response, htmlElementId: string) => {
+  const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
+  const result = await performGet(response.headers['location'], '', headers);
+  if (result.status == 302) {
+    console.error(` Expected 200 from ${result.request.url}, got 302 location=${result.headers['location']}`);
+    throw new Error('Expected 200, got 302');
+  } else if (result.status != 200) {
+    throw new Error(`Expected 200 from ${result.request.url}, got ${result.status}`);
+  }
+  const dom = cheerio.load(result.text);
+  const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
+  const action = dom(`[id=${htmlElementId}]`).attr('href');
+
+  expect(xsrfToken).toBeDefined();
+  expect(action).toBeDefined();
+
+  return { headers: result.headers, token: xsrfToken, action: action };
+};
+
 export const extractXsrfToken = async (url, parameters) => {
   const result = await performGet(url, parameters).expect(200);
   const dom = cheerio.load(result.text);

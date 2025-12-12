@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Certificate Based Login</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{../assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span th:text="#{login.title} + ' ' + ${client.name}"></span>
+        </div>
+        <div class="header-description">
+            <span th:text="#{cba.login.description}"/>
+        </div>
+    </div>
+    <div class="section">
+        <form class="form" role="form" id="login" method="post" th:action="${action}">
+            <div>
+                <input class="input-field" type="text" id="username" name="username"
+                       th:placeholder="#{login.label.username}"
+                       th:value="${param.username}" autofocus="autofocus" required
+                       th:readonly="${param.username != null}"
+                />
+            </div>
+
+            <div class="checkbox" th:if="${rememberMeEnabled}">
+                <label for="rememberMe">
+                    <input type="checkbox" id="rememberMe" name="rememberMe" />
+                    <span th:text="#{login.label.remember.me}"/>
+                </label>
+            </div>
+
+            <div class="header-description">
+                <span th:text="#{cba.login.tips}"/>
+            </div>
+
+            <div id="cba-error" class="item error-text hide">
+                <span>
+                    <span class="error" th:text="#{cba.login.error}"/>
+                    <small class="error_description" th:text="#{cba.login.error.description}"/>
+                </span>
+            </div>
+
+            <div th:if="${error}" class="item error-text">
+                <span>
+                    <span class="error" th:text="${error}"></span>
+                    <small th:text="*{error_description}?: #{cba.login.error.description}"></small>
+                </span>
+            </div>
+
+            <div>
+                <button class="button primary" th:text="#{cba.login.button.next}"></button>
+            </div>
+        </form>
+    </div>
+    <div class="section">
+        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span th:text="#{common.back.to.sign.in}"/></a>
+    </div>
+</div>
+
+
+<script th:if="${rememberDeviceIsActive}" th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
+        th:src="@{../assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
+            if (fp.visitorId) {
+                $("#login")
+                    .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+        });
+    });
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+        th:src="@{../assets/js/fp/fp.min.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+        th:src="@{../assets/js/remember-device/fingerprintjs-v3-gravitee.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3Gravitee(fp => {
+            if (fp.visitorId) {
+                $("#login")
+                    .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+            if (fp.components && fp.components.platform && fp.components.platform.value) {
+                $("#login").append('<input type="hidden" id="deviceType" name="deviceType" value="' + fp.components.platform.value + '"/>');
+            }
+        });
+    });
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:src="@{../assets/js/device-type-v1.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:attr="nonce=${script_inline_nonce}">
+    const deviceId = "[[${cookieDeviceIdentifier}]]" ;
+
+    $(document).ready(function () {
+        $("#login").append('<input type="hidden" name="deviceId" value="' + deviceId + '"/>')
+        $("#login").append('<input type="hidden" name="deviceType" value="' + retrievePlatform(window.navigator) + '"/>');
+    });
+</script>
+</body>
+</html>
