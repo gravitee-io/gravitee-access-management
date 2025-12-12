@@ -21,18 +21,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.reporter.file.JUnitConfiguration;
+import io.gravitee.am.reporter.file.audit.FileAuditReporter;
 import lombok.Data;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -247,6 +250,34 @@ public class ElasticFileAuditReporterTest extends FileAuditReporterTest {
         String emptyMessage = "";
         Audit audit = createAuditWithMessage("AUTHENTICATION", emptyMessage, io.gravitee.am.common.audit.Status.SUCCESS);
         verifyPlainStringMessage(audit, emptyMessage);
+    }
+    
+    @Test
+    public void shouldOmitEnvironmentIdWhenNullForOrganizationLevelReporter() throws Exception {
+        GraviteeContext orgContext = new GraviteeContext("ORG_ID", null, null);
+        GraviteeContext originalContext = setReporterContext(orgContext);
+        
+        Audit audit = buildRandomAudit(ReferenceType.ORGANIZATION, "orgReporter");
+        auditReporter.report(audit);
+        waitBulkLoadFlush();
+        
+        List<String> lines = Files.readAllLines(Paths.get(buildAuditLogsFilename()));
+        String lastLine = lines.get(lines.size() - 1);
+        
+        validateJsonStructure(lastLine, OBJECT_MAPPER);
+        JsonNode jsonNode = OBJECT_MAPPER.readTree(lastLine);
+        
+        assertEquals("Organization ID should match", "ORG_ID", jsonNode.get("organizationId").asText());
+        assertFalse("Environment ID should not be present when null", jsonNode.has("environmentId"));
+        assertTrue("Transaction ID should be present", jsonNode.has("transactionId"));
+        
+        setReporterContext(originalContext);
+    }
+    
+    private GraviteeContext setReporterContext(GraviteeContext newContext) {
+        GraviteeContext originalContext = (GraviteeContext) ReflectionTestUtils.getField(auditReporter, "context");
+        ReflectionTestUtils.setField(auditReporter, "context", newContext);
+        return originalContext;
     }
     
     private Audit createAuditWithMessage(String eventType, String message, io.gravitee.am.common.audit.Status status) {
