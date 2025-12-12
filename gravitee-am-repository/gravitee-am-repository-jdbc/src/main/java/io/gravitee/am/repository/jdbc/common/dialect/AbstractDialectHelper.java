@@ -16,8 +16,8 @@
 package io.gravitee.am.repository.jdbc.common.dialect;
 
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -27,7 +27,6 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -416,5 +415,53 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 .append(wildcard ? " UPPER(r.name)" : " r.name")
                 .append(wildcard ? " LIKE " : " =")
                 .append(wildcard ? " UPPER(:value) " : " :value ");
+    }
+
+    @Override
+    public String buildSearchProtectedResourcesQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc) {
+        StringBuilder builder = new StringBuilder("SELECT DISTINCT p.* FROM protected_resources p ");
+        builder.append("LEFT JOIN protected_resource_identifiers pi ON p.id = pi.protected_resource_id ");
+        builder.append("WHERE ");
+        return buildSearchProtectedResources(wildcard, withIds, builder)
+                .append(buildPagingClause(sort, asc, page, size))
+                .toString();
+    }
+
+    @Override
+    public String buildCountProtectedResourcesQuery(boolean wildcard, boolean withIds) {
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT p.id) FROM protected_resources p ");
+        builder.append("LEFT JOIN protected_resource_identifiers pi ON p.id = pi.protected_resource_id ");
+        builder.append("WHERE ");
+        return buildSearchProtectedResources(wildcard, withIds, builder)
+                .toString();
+    }
+
+    protected StringBuilder buildSearchProtectedResources(boolean wildcard, StringBuilder builder) {
+        return builder.append("p.domain_id = :domainId")
+                .append(" AND p.type = :type")
+                .append(" AND (")
+                .append(" upper(p.name) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR upper(pi.identifier) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" ) ");
+    }
+
+    protected StringBuilder buildSearchProtectedResources(boolean wildcard, boolean withIds, StringBuilder builder) {
+        builder.append("p.domain_id = :domainId")
+                .append(" AND p.type = :type");
+
+        if (withIds) {
+            builder.append(" AND p.id IN (:ids)");
+        }
+
+        builder.append(" AND (")
+                .append(" upper(p.name) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR upper(pi.identifier) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" ) ");
+
+        return builder;
     }
 }

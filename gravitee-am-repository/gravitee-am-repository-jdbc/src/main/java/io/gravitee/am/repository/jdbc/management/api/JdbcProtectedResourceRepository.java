@@ -87,7 +87,6 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         """.formatted(TABLE_NAME);
     }
 
-
     protected ProtectedResource toEntity(JdbcProtectedResource entity) {
         return mapper.map(entity, ProtectedResource.class);
     }
@@ -281,7 +280,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         return Flowable.empty();
                     }
                     List<String> ids = resources.stream().map(ProtectedResource::getId).toList();
-                    return featuresSpring.findAllByProtectedResourceIdInOrderByKeyName(ids)
+                    return featuresSpring.findAllByProtectedResourceIdIn(ids, Sort.by(Sort.Order.asc("key")))
                             .toList()
                             .flatMapPublisher(features -> {
                                 Map<String, List<JdbcProtectedResourceFeature>> byResourceId = features
@@ -361,6 +360,83 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         return identifierSpring.existsByDomainIdAndIdentifierInAndProtectedResourceIdNot(domainId, resourceIdentifiers, excludeId);
     }
 
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("search({}, {}, {}, {}, {})", domainId, type, query, pageSortRequest.getPage(), pageSortRequest.getSize());
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");  // Convert * to SQL LIKE %
+
+        String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
+
+        // Build query: search in name field AND join with identifiers table to search in identifiers
+        String searchSql = databaseDialectHelper.buildSearchProtectedResourcesQuery(wildcardMatch, false, pageSortRequest.getPage(), pageSortRequest.getSize(), transformSortValue(sortBy), pageSortRequest.isAsc());
+        String countSql = databaseDialectHelper.buildCountProtectedResourcesQuery(wildcardMatch, false);
+
+        Flowable<ProtectedResource> mainFlowable = fluxToFlowable(getTemplate().getDatabaseClient()
+                .sql(searchSql)
+                .bind("domainId", domainId)
+                .bind("type", type.name())
+                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity);
+
+        return attachIdentifiers(attachFeatures(mainFlowable))
+                .map(ProtectedResourcePrimaryData::of)
+                .toList()
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(countSql)
+                        .bind("domainId", domainId)
+                        .bind("type", type.name())
+                        .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                        .map((row, rowMetadata) -> row.get(0, Long.class))
+                        .first())
+                        .map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .doOnError(error -> LOGGER.error("Unable to search protected resources with domainId={}, type={} (page={}/size={})",
+                        domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, ProtectedResource.Type type, List<String> ids, String query, PageSortRequest pageSortRequest) {
+        if (ids.isEmpty()) {
+            return Single.just(new Page<>());
+        }
+
+        LOGGER.debug("search({}, {}, {}, {}, {}, appIds={})", domainId, type, ids, query, pageSortRequest.getPage(), pageSortRequest.getSize());
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+
+        String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
+
+        String searchSql = databaseDialectHelper.buildSearchProtectedResourcesQuery(wildcardMatch, true, pageSortRequest.getPage(), pageSortRequest.getSize(), transformSortValue(sortBy), pageSortRequest.isAsc());
+        String countSql = databaseDialectHelper.buildCountProtectedResourcesQuery(wildcardMatch, true);
+
+        Flowable<ProtectedResource> mainFlowable = fluxToFlowable(getTemplate().getDatabaseClient()
+                .sql(searchSql)
+                .bind("domainId", domainId)
+                .bind("type", type.name())
+                .bind("ids", ids)
+                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity);
+
+        return attachIdentifiers(attachFeatures(mainFlowable))
+                .map(ProtectedResourcePrimaryData::of)
+                .toList()
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(countSql)
+                        .bind("domainId", domainId)
+                        .bind("type", type.name())
+                        .bind("ids", ids)
+                        .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                        .map((row, rowMetadata) -> row.get(0, Long.class))
+                        .first())
+                        .map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .doOnError(error -> LOGGER.error("Unable to search protected resources with domainId={}, type={} (page={}/size={})",
+                        domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+    }
+
     private Single<ProtectedResource> complete(ProtectedResource entity) {
         return Single.just(entity)
                 .flatMap(app -> clientSecretSpring.findAllByProtectedResourceId(app.getId())
@@ -377,7 +453,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                             app.setResourceIdentifiers(identifiers);
                             return app;
                         }))
-                .flatMap(app -> featuresSpring.findAllByProtectedResourceIdOrderByKeyName(app.getId())
+                .flatMap(app -> featuresSpring.findAllByProtectedResourceId(app.getId(), Sort.by(Sort.Order.asc("key")))
                         .map(feature -> mapper.map(feature, McpTool.class))
                         .toList()
                         .map(features -> {

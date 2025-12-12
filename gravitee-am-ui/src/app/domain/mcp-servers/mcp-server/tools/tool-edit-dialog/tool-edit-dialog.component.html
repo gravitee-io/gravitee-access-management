@@ -18,24 +18,26 @@
 <div class="edit-tool-container">
   <h3>Edit Tool</h3>
   <span>Update the tool details and associated scopes.</span>
-  <form fxLayout="column">
+  <form fxLayout="column" [formGroup]="form">
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-label>Tool Name</mat-label>
-      <input matInput type="text" placeholder="Tool Name" name="toolName" [formControl]="toolNameCtrl" required />
-      <mat-error *ngIf="toolNameCtrl.hasError('required')"> Tool name is required </mat-error>
-      <mat-error *ngIf="toolNameCtrl.hasError('pattern')">
+      <input matInput type="text" placeholder="Tool Name" name="key" formControlName="key" required maxlength="64" />
+      <mat-hint>Maximum 64 characters (letters, numbers, hyphens, and underscores only)</mat-hint>
+      <mat-error *ngIf="form.get('key').hasError('required')"> Tool name is required </mat-error>
+      <mat-error *ngIf="form.get('key').hasError('pattern')">
         Tool name must contain only letters, numbers, hyphens, and underscores
       </mat-error>
+      <mat-error *ngIf="form.get('key').hasError('maxlength')"> Tool name must be at most 64 characters </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-label>Description</mat-label>
-      <input matInput type="text" placeholder="Description" name="toolDescription" [formControl]="toolDescriptionCtrl" />
+      <input matInput type="text" placeholder="Description" name="description" formControlName="description" />
     </mat-form-field>
 
     <mat-form-field>
       <mat-label>Scopes</mat-label>
-      <mat-chip-grid #chipList aria-label="Scopes selection">
+      <mat-chip-grid #chipList aria-label="Scopes selection" [errorStateMatcher]="matcher">
         <mat-chip-row *ngFor="let scope of tool.scopes" [removable]="true" (removed)="remove(scope)">
           {{ scope }}
           <mat-icon matChipRemove>cancel</mat-icon>
@@ -44,7 +46,7 @@
           name="scope"
           #scopeInput
           placeholder="Select scopes to add to this tool."
-          [formControl]="scopeCtrl"
+          [formControl]="scope"
           [matAutocomplete]="auto"
           [matChipInputFor]="chipList"
           [matChipInputSeparatorKeyCodes]="matChipInputSeparatorKeyCodes"
@@ -57,6 +59,7 @@
           <small>{{ scope.description }}</small>
         </mat-option>
       </mat-autocomplete>
+      <mat-error *ngIf="scope.hasError('uncommitted')"> Please select a scope from the list or clear the field </mat-error>
     </mat-form-field>
   </form>
   <div class="edit-tool-actions">

@@ -361,4 +361,184 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
                 argThat(sort -> sort.getSortBy().get().equals("name") && sort.direction() == 1));
     }
 
+    @Test
+    public void shouldSearchProtectedResources(){
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("SECRETVALUE");
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId("app-id");
+        protectedResource.setName("test-server");
+        protectedResource.setClientSecrets(List.of(clientSecret));
+        protectedResource.setClientId("client-id");
+        protectedResource.setUpdatedAt(new Date());
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(new Page(List.of(protectedResource), 0, 1)))
+                .when(protectedResourceService).search(eq(domainId), eq(ProtectedResource.Type.MCP_SERVER), eq("*test*"), any());
+
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .queryParam("type", "MCP_SERVER")
+                .queryParam("q", "*test*")
+                .request().get();
+
+        Map map = response.readEntity(Map.class);
+        Map data = (Map) ((List)map.get("data")).get(0);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals("app-id", data.get("id"));
+        assertEquals("test-server", data.get("name"));
+
+        Mockito.verify(protectedResourceService, Mockito.times(1)).search(
+                eq(domainId),
+                eq(ProtectedResource.Type.MCP_SERVER),
+                eq("*test*"),
+                any());
+    }
+
+    @Test
+    public void shouldSearchProtectedResourcesWithPagination(){
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("SECRETVALUE");
+
+        ProtectedResource protectedResource1 = new ProtectedResource();
+        protectedResource1.setId("app-id-1");
+        protectedResource1.setName("test-server-1");
+        protectedResource1.setClientSecrets(List.of(clientSecret));
+        protectedResource1.setClientId("client-id-1");
+        protectedResource1.setUpdatedAt(new Date());
+
+        ProtectedResource protectedResource2 = new ProtectedResource();
+        protectedResource2.setId("app-id-2");
+        protectedResource2.setName("test-server-2");
+        protectedResource2.setClientSecrets(List.of(clientSecret));
+        protectedResource2.setClientId("client-id-2");
+        protectedResource2.setUpdatedAt(new Date());
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(new Page(List.of(protectedResource1, protectedResource2), 0, 2)))
+                .when(protectedResourceService).search(eq(domainId), eq(ProtectedResource.Type.MCP_SERVER), eq("*test*"), any());
+
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .queryParam("type", "MCP_SERVER")
+                .queryParam("q", "*test*")
+                .queryParam("page", "0")
+                .queryParam("size", "10")
+                .request().get();
+
+        Map map = response.readEntity(Map.class);
+        List data = (List) map.get("data");
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(2, data.size());
+        assertEquals(0, map.get("currentPage"));
+        assertEquals(2, map.get("totalCount"));
+
+        Mockito.verify(protectedResourceService, Mockito.times(1)).search(
+                eq(domainId),
+                eq(ProtectedResource.Type.MCP_SERVER),
+                eq("*test*"),
+                argThat(sort -> sort.getPage() == 0 && sort.getSize() == 10));
+    }
+
+    @Test
+    public void shouldSearchProtectedResourcesWithSorting(){
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("SECRETVALUE");
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId("app-id");
+        protectedResource.setName("test-server");
+        protectedResource.setClientSecrets(List.of(clientSecret));
+        protectedResource.setClientId("client-id");
+        protectedResource.setUpdatedAt(new Date());
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(new Page(List.of(protectedResource), 0, 1)))
+                .when(protectedResourceService).search(eq(domainId), eq(ProtectedResource.Type.MCP_SERVER), eq("*test*"), any());
+
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .queryParam("type", "MCP_SERVER")
+                .queryParam("q", "*test*")
+                .queryParam("sort", "name.asc")
+                .request().get();
+
+        Map map = response.readEntity(Map.class);
+        Map data = (Map) ((List)map.get("data")).get(0);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals("app-id", data.get("id"));
+        assertEquals("test-server", data.get("name"));
+
+        Mockito.verify(protectedResourceService, Mockito.times(1)).search(
+                eq(domainId),
+                eq(ProtectedResource.Type.MCP_SERVER),
+                eq("*test*"),
+                argThat(sort -> sort.getSortBy().get().equals("name") && sort.direction() == 1));
+    }
+
+    @Test
+    public void shouldSearchProtectedResourcesByIds(){
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("SECRETVALUE");
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId("app-id");
+        protectedResource.setName("test-server");
+        protectedResource.setClientSecrets(List.of(clientSecret));
+        protectedResource.setClientId("client-id");
+        protectedResource.setUpdatedAt(new Date());
+
+        doReturn(Flowable.just("app-id")).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(new Page(List.of(protectedResource), 0, 1)))
+                .when(protectedResourceService).search(eq(domainId), eq(ProtectedResource.Type.MCP_SERVER), eq(List.of("app-id")), eq("*test*"), any());
+
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .queryParam("type", "MCP_SERVER")
+                .queryParam("q", "*test*")
+                .request().get();
+
+        Map map = response.readEntity(Map.class);
+        Map data = (Map) ((List)map.get("data")).get(0);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals("app-id", data.get("id"));
+        assertEquals("test-server", data.get("name"));
+
+        Mockito.verify(protectedResourceService, Mockito.times(1)).search(
+                eq(domainId),
+                eq(ProtectedResource.Type.MCP_SERVER),
+                eq(List.of("app-id")),
+                eq("*test*"),
+                any());
+    }
+
 }

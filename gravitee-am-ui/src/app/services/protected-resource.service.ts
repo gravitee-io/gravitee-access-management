@@ -38,6 +38,10 @@ export class ProtectedResourceService {
     );
   }
 
+  search(domainId: string, type: ProtectedResourceType, query: string): Observable<Page<ProtectedResourcePrimaryData>> {
+    return this.http.get<Page<ProtectedResourcePrimaryData>>(this.baseURL + `${domainId}/protected-resources?type=${type}&q=${query}`);
+  }
+
   create(domainId: string, protectedResource: NewProtectedResourceRequest): Observable<NewProtectedResourceResponse> {
     return this.http.post<NewProtectedResourceResponse>(this.baseURL + `${domainId}/protected-resources`, protectedResource);
   }
@@ -78,18 +82,15 @@ export interface ProtectedResourcePrimaryData {
 
 export interface ProtectedResource extends ProtectedResourcePrimaryData {
   description?: string;
-
   domainId: string;
   clientId: string;
-
-  updatedAt: string;
-  createdAt: string;
 }
 
 export interface ProtectedResourceFeature {
   key: string;
   description: string;
   type: ProtectedResourceFeatureType;
+  createdAt?: string;
 }
 
 export interface NewProtectedResourceRequest {

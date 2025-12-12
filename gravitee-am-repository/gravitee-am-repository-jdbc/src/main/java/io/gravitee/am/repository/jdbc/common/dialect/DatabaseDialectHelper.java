@@ -66,6 +66,10 @@ public interface DatabaseDialectHelper {
 
     String buildCountRoleQuery(boolean wildcard);
 
+    String buildSearchProtectedResourcesQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc);
+
+    String buildCountProtectedResourcesQuery(boolean wildcard, boolean withIds);
+
     default String buildPagingClause(String field, boolean asc, int page, int size) {
         return buildPagingClauseUsingOffset(field, asc, page * size, size);
     }

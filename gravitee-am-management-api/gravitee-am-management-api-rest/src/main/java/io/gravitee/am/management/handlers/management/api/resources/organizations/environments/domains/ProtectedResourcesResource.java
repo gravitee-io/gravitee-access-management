@@ -41,11 +41,11 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.fromString;
 
@@ -138,6 +138,7 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
             @QueryParam("size") @DefaultValue("50") int size,
             @Parameter(schema = @Schema(type = "string"))
             @QueryParam("sort") @DefaultValue("updatedAt.desc") SortParam sort,
+            @QueryParam("q") String query,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
         ProtectedResource.Type resourceType = fromString(type);
@@ -153,12 +154,28 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                 .andThen(checkDomainExists(domainId).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE, Acl.READ)
                         .filter(hasPermission -> hasPermission)
-                        .flatMapSingle(__ ->  service.findByDomainAndType(domainId, resourceType, pageSortRequest))
+                        .flatMapSingle(__ -> listProtectedResources(domainId, resourceType, query, pageSortRequest))
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.PROTECTED_RESOURCE, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> service.findByDomainAndTypeAndIds(domainId, resourceType, ids, pageSortRequest))))
+                                        .flatMap(ids -> listProtectedResourcesByIds(domainId, resourceType, ids, query, pageSortRequest))))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Single<Page<ProtectedResourcePrimaryData>> listProtectedResources(String domain, ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
+        if (StringUtils.hasText(query)) {
+            return service.search(domain, type, query, pageSortRequest);
+        } else {
+            return service.findByDomainAndType(domain, type, pageSortRequest);
+        }
+    }
+
+    private Single<Page<ProtectedResourcePrimaryData>> listProtectedResourcesByIds(String domain, ProtectedResource.Type type, List<String> ids, String query, PageSortRequest pageSortRequest) {
+        if (StringUtils.hasText(query)) {
+            return service.search(domain, type, ids, query, pageSortRequest);
+        } else {
+            return service.findByDomainAndTypeAndIds(domain, type, ids, pageSortRequest);
+        }
     }
 
 

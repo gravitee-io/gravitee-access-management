@@ -31,14 +31,6 @@
               <mat-divider></mat-divider>
             </div>
             <div class="mcp-details">
-              <span>Name:</span>
-              <p>{{ protectedResource.name }}</p>
-            </div>
-            <div class="mcp-details">
-              <span>Client id (OAuth2.0):</span>
-              <p>{{ protectedResource.clientId }}</p>
-            </div>
-            <div class="mcp-details">
               <span>MCP Server Resource URI:</span>
               <div class="link">
                 <p #resource_uri>{{ protectedResource.resourceIdentifiers }}</p>
@@ -47,8 +39,26 @@
             </div>
 
             <div class="mcp-details">
-              <span>Description:</span>
-              <p>{{ protectedResource.description }}</p>
+              <span>OAuth ClientID:</span>
+              <div class="link">
+                <p #client_id>{{ protectedResource.clientId }}</p>
+                <mat-icon (click)="copyToClipboard(client_id)">content_copy</mat-icon>
+              </div>
+            </div>
+          </div>
+          <div class="gv-form-section">
+            <div class="gv-form-section-title tools-header">
+              <div class="tools-header-content">
+                <h5>Tools</h5>
+                <button mat-stroked-button type="submit" routerLink="../tools">View Tools</button>
+              </div>
+              <small>This MCP Server exposes the following tools that can be invoked by authenticated clients</small>
+              <mat-divider></mat-divider>
+            </div>
+            <div class="tools-chips" *ngIf="hasTools">
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let tool of displayTools">{{ tool }}</mat-chip>
+              </mat-chip-listbox>
             </div>
           </div>
         </div>

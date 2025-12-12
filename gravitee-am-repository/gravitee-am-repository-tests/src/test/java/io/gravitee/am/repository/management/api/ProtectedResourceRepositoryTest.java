@@ -496,77 +496,6 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldReturnFeaturesInAlphabeticalOrderByKey() {
-        // Create tools in non-alphabetical order
-        McpTool zebraTool = generateMcpTool("zebra_tool");
-        zebraTool.setDescription("Should be last");
-        
-        McpTool appleTool = generateMcpTool("apple_tool");
-        appleTool.setDescription("Should be first");
-        
-        McpTool middleTool = generateMcpTool("middle_tool");
-        middleTool.setDescription("Should be in middle");
-        
-        McpTool bananaTool = generateMcpTool("banana_tool");
-        bananaTool.setDescription("Should be second");
-        
-        // Add them in random order
-        List<ProtectedResourceFeature> toolsInRandomOrder = List.of(zebraTool, appleTool, middleTool, bananaTool);
-        
-        ClientSecret clientSecret = generateClientSecret();
-        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
-        ProtectedResource toSave = generateResource("ordering-test", "domain-ordering", "client-ordering", 
-                clientSecret, secretSettings, toolsInRandomOrder);
-
-        TestObserver<ProtectedResource> testObserver = repository.create(toSave)
-                .flatMapMaybe(created -> repository.findById(created.getId()))
-                .test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        
-        // Verify features are returned in alphabetical order by key
-        testObserver.assertValue(a -> a.getFeatures() != null && a.getFeatures().size() == 4);
-        testObserver.assertValue(a -> a.getFeatures().get(0).getKey().equals("apple_tool"));
-        testObserver.assertValue(a -> a.getFeatures().get(1).getKey().equals("banana_tool"));
-        testObserver.assertValue(a -> a.getFeatures().get(2).getKey().equals("middle_tool"));
-        testObserver.assertValue(a -> a.getFeatures().get(3).getKey().equals("zebra_tool"));
-    }
-    
-    @Test
-    public void shouldReturnFeaturesInAlphabeticalOrderAfterUpdate() {
-        // Create resource with initial tools
-        McpTool tool1 = generateMcpTool("tool_1");
-        ClientSecret clientSecret = generateClientSecret();
-        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
-        ProtectedResource toSave = generateResource(clientSecret, secretSettings, List.of(tool1));
-
-        ProtectedResource created = repository.create(toSave).blockingGet();
-        
-        // Update with tools in reverse alphabetical order
-        McpTool zebraTool = generateMcpTool("zebra_update");
-        McpTool appleTool = generateMcpTool("apple_update");
-        McpTool middleTool = generateMcpTool("middle_update");
-        
-        created.setFeatures(List.of(zebraTool, appleTool, middleTool));
-        
-        TestObserver<ProtectedResource> testObserver = repository.update(created)
-                .flatMapMaybe(updated -> repository.findById(updated.getId()))
-                .test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        
-        // Verify features are returned in alphabetical order after update
-        testObserver.assertValue(a -> a.getFeatures().size() == 3);
-        testObserver.assertValue(a -> a.getFeatures().get(0).getKey().equals("apple_update"));
-        testObserver.assertValue(a -> a.getFeatures().get(1).getKey().equals("middle_update"));
-        testObserver.assertValue(a -> a.getFeatures().get(2).getKey().equals("zebra_update"));
-    }
-
-    @Test
     public void shouldDeleteResourceById() {
         ClientSecret clientSecret = generateClientSecret();
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
@@ -717,6 +646,418 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         toSave.setClientSecrets(List.of(clientSecret));
         toSave.setFeatures(features);
         return toSave;
+    }
+
+    @Test
+    public void shouldSearchByNameExactMatch() {
+        ProtectedResource resource1 = generateResource("TestServer", "searchDomain1", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource resource2 = generateResource("OtherServer", "searchDomain1", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        ProtectedResource resource3 = generateResource("TestAPI", "searchDomain1", "client3",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key3")));
+
+        zip(repository.create(resource1), repository.create(resource2), repository.create(resource3), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.search("searchDomain1", MCP_SERVER, "TestServer", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("TestServer")));
+    }
+
+    @Test
+    public void shouldSearchByNameWithWildcard() {
+        ProtectedResource resource1 = generateResource("ProductionServer", "searchDomain2", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource resource2 = generateResource("DevelopmentServer", "searchDomain2", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        ProtectedResource resource3 = generateResource("TestAPI", "searchDomain2", "client3",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key3")));
+
+        zip(repository.create(resource1), repository.create(resource2), repository.create(resource3), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.search("searchDomain2", MCP_SERVER, "*Server*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("ProductionServer")))
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("DevelopmentServer")))
+                .assertValue(page -> page.getData().stream().noneMatch(r -> r.name().equals("TestAPI")));
+    }
+
+    @Test
+    public void shouldSearchByResourceIdentifierExactMatch() {
+        ProtectedResource resource1 = generateResource("Server1", "searchDomain3", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        resource1.setResourceIdentifiers(List.of("https://api.example.com/server1"));
+
+        ProtectedResource resource2 = generateResource("Server2", "searchDomain3", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        resource2.setResourceIdentifiers(List.of("https://api.example.com/server2"));
+
+        zip(repository.create(resource1), repository.create(resource2), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.search("searchDomain3", MCP_SERVER, "https://api.example.com/server1", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("Server1")));
+    }
+
+    @Test
+    public void shouldSearchByResourceIdentifierWithWildcard() {
+        ProtectedResource resource1 = generateResource("HTTPSServer", "searchDomain4", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        resource1.setResourceIdentifiers(List.of("https://secure.example.com/api"));
+
+        ProtectedResource resource2 = generateResource("HTTPServer", "searchDomain4", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        resource2.setResourceIdentifiers(List.of("http://insecure.example.com/api"));
+
+        ProtectedResource resource3 = generateResource("LocalhostServer", "searchDomain4", "client3",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key3")));
+        resource3.setResourceIdentifiers(List.of("https://localhost:8080/api"));
+
+        zip(repository.create(resource1), repository.create(resource2), repository.create(resource3), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.search("searchDomain4", MCP_SERVER, "*https://*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("HTTPSServer")))
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("LocalhostServer")))
+                .assertValue(page -> page.getData().stream().noneMatch(r -> r.name().equals("HTTPServer")));
+    }
+
+    @Test
+    public void shouldSearchWithPagination() {
+        ProtectedResource resource1 = generateResource("SearchTest1", "searchDomain5", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource resource2 = generateResource("SearchTest2", "searchDomain5", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        ProtectedResource resource3 = generateResource("SearchTest3", "searchDomain5", "client3",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key3")));
+
+        zip(repository.create(resource1), repository.create(resource2), repository.create(resource3), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        // Page 0, size 2
+        repository.search("searchDomain5", MCP_SERVER, "*SearchTest*", PageSortRequest.builder()
+                        .page(0)
+                        .size(2)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getCurrentPage() == 0)
+                .assertValue(page -> page.getTotalCount() == 3)
+                .assertValue(page -> page.getData().size() == 2);
+
+        // Page 1, size 2
+        repository.search("searchDomain5", MCP_SERVER, "*SearchTest*", PageSortRequest.builder()
+                        .page(1)
+                        .size(2)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getCurrentPage() == 1)
+                .assertValue(page -> page.getTotalCount() == 3)
+                .assertValue(page -> page.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldSearchByIds() {
+        ProtectedResource resource1 = generateResource("IDServer1", "searchDomain6", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource resource2 = generateResource("IDServer2", "searchDomain6", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        ProtectedResource resource3 = generateResource("IDServer3", "searchDomain6", "client3",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key3")));
+
+        zip(repository.create(resource1), repository.create(resource2), repository.create(resource3), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        // Search only in resource1 and resource2
+        repository.search("searchDomain6", MCP_SERVER, List.of(resource1.getId(), resource2.getId()), "*Server*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.id().equals(resource1.getId())))
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.id().equals(resource2.getId())))
+                .assertValue(page -> page.getData().stream().noneMatch(r -> r.id().equals(resource3.getId())));
+    }
+
+    @Test
+    public void shouldSearchWithSorting() {
+        ProtectedResource resourceZ = generateResource("ZebraServer", "searchDomain7", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource resourceA = generateResource("AppleServer", "searchDomain7", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        ProtectedResource resourceM = generateResource("MangoServer", "searchDomain7", "client3",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key3")));
+
+        zip(repository.create(resourceZ), repository.create(resourceA), repository.create(resourceM), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        // Ascending sort
+        repository.search("searchDomain7", MCP_SERVER, "*Server*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .sortBy("name")
+                        .asc(true)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getData().size() == 3)
+                .assertValue(page -> List.copyOf(page.getData()).get(0).name().equals("AppleServer"))
+                .assertValue(page -> List.copyOf(page.getData()).get(1).name().equals("MangoServer"))
+                .assertValue(page -> List.copyOf(page.getData()).get(2).name().equals("ZebraServer"));
+
+        // Descending sort
+        repository.search("searchDomain7", MCP_SERVER, "*Server*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .sortBy("name")
+                        .asc(false)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getData().size() == 3)
+                .assertValue(page -> List.copyOf(page.getData()).get(0).name().equals("ZebraServer"))
+                .assertValue(page -> List.copyOf(page.getData()).get(1).name().equals("MangoServer"))
+                .assertValue(page -> List.copyOf(page.getData()).get(2).name().equals("AppleServer"));
+    }
+
+    @Test
+    public void shouldSearchCaseInsensitive() {
+        ProtectedResource resource1 = generateResource("TestServer", "searchDomain8", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource resource2 = generateResource("TESTAPI", "searchDomain8", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+
+        zip(repository.create(resource1), repository.create(resource2), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        // Search with lowercase
+        repository.search("searchDomain8", MCP_SERVER, "*test*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("TestServer")))
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("TESTAPI")));
+
+        // Search with uppercase
+        repository.search("searchDomain8", MCP_SERVER, "*TEST*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("TestServer")))
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("TESTAPI")));
+    }
+
+    @Test
+    public void shouldSearchReturnEmptyWhenNoMatch() {
+        ProtectedResource resource1 = generateResource("Server1", "searchDomain9", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+
+        repository.create(resource1).test().awaitDone(10, TimeUnit.SECONDS);
+
+        repository.search("searchDomain9", MCP_SERVER, "NonExistentServer", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 0)
+                .assertValue(page -> page.getData().isEmpty());
+    }
+
+    @Test
+    public void shouldSearchReturnEmptyForEmptyIdsList() {
+        ProtectedResource resource1 = generateResource("Server1", "searchDomain10", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+
+        repository.create(resource1).test().awaitDone(10, TimeUnit.SECONDS);
+
+        repository.search("searchDomain10", MCP_SERVER, List.of(), "*Server*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 0)
+                .assertValue(page -> page.getData().isEmpty());
+    }
+
+    @Test
+    public void shouldSearchExactMatchCaseInsensitive() {
+        // Test that exact match search (without wildcards) is case-insensitive
+        ProtectedResource resource1 = generateResource("ProductionServer", "searchDomain11", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource resource2 = generateResource("TestingServer", "searchDomain11", "client2",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+
+        zip(repository.create(resource1), repository.create(resource2), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        // Search with exact lowercase match - should find resource with mixed case name
+        repository.search("searchDomain11", MCP_SERVER, "productionserver", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("ProductionServer")));
+
+        // Search with exact uppercase match - should find resource with mixed case name
+        repository.search("searchDomain11", MCP_SERVER, "PRODUCTIONSERVER", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("ProductionServer")));
+
+        // Search with mixed case - should find resource
+        repository.search("searchDomain11", MCP_SERVER, "PrOdUcTiOnSeRvEr", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("ProductionServer")));
+    }
+
+    @Test
+    public void shouldReturnFeaturesInAlphabeticalOrderByKey() {
+        // Create a resource with features that are NOT in alphabetical order
+        McpTool tool1 = generateMcpTool("zebra_tool");
+        McpTool tool2 = generateMcpTool("apple_tool");
+        McpTool tool3 = generateMcpTool("mango_tool");
+        McpTool tool4 = generateMcpTool("banana_tool");
+
+        ProtectedResource resource = generateResource("OrderTestServer", "searchDomain12", "client1",
+                generateClientSecret(), generateApplicationSecretSettings(), List.of(tool1, tool2, tool3, tool4));
+
+        TestObserver<ProtectedResource> createObserver = repository.create(resource).test();
+        createObserver.awaitDone(10, TimeUnit.SECONDS);
+        createObserver.assertComplete().assertNoErrors();
+
+        // Retrieve and verify features are sorted alphabetically by key
+        TestObserver<ProtectedResource> testObserver = repository.findById(resource.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(r -> r.getFeatures().size() == 4);
+        testObserver.assertValue(r -> r.getFeatures().get(0).getKey().equals("apple_tool"));
+        testObserver.assertValue(r -> r.getFeatures().get(1).getKey().equals("banana_tool"));
+        testObserver.assertValue(r -> r.getFeatures().get(2).getKey().equals("mango_tool"));
+        testObserver.assertValue(r -> r.getFeatures().get(3).getKey().equals("zebra_tool"));
+
+        // Also verify through search
+        TestObserver<io.gravitee.am.model.common.Page<io.gravitee.am.model.ProtectedResourcePrimaryData>> searchObserver =
+                repository.search("searchDomain12", MCP_SERVER, "*OrderTest*", PageSortRequest.builder()
+                        .page(0)
+                        .size(10)
+                        .build())
+                .test();
+        searchObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        searchObserver.assertComplete();
+        searchObserver.assertNoErrors();
+        searchObserver.assertValue(page -> page.getTotalCount() == 1);
+        searchObserver.assertValue(page -> page.getData().stream().findFirst().get().features().size() == 4);
+        searchObserver.assertValue(page -> {
+            var features = page.getData().stream().findFirst().get().features().stream().toList();
+            return features.get(0).getKey().equals("apple_tool") &&
+                   features.get(1).getKey().equals("banana_tool") &&
+                   features.get(2).getKey().equals("mango_tool") &&
+                   features.get(3).getKey().equals("zebra_tool");
+        });
     }
 
 }

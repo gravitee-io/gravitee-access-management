@@ -33,6 +33,7 @@ import {
     createProtectedResource,
     getMcpServer,
     getMcpServers,
+    searchMcpServers,
     updateProtectedResource,
     patchProtectedResource,
     deleteProtectedResource,
@@ -594,6 +595,224 @@ describe('When admin created bunch of Protected Resources', () => {
         expect(fetched).toEqual(protectedResourcePrimaryData);
     });
 
+});
+
+describe('When searching protected resources', () => {
+    let searchDomain: Domain;
+    let searchableResources: any[];
+
+    beforeAll(async () => {
+        // Create a dedicated domain for search tests
+        searchDomain = await setupDomainForTest(uniqueName('search-test', true), { accessToken, waitForStart: true }).then((it) => it.domain);
+
+        // Create specific resources for search testing
+        const testResources = [
+            {
+                name: 'Production-Server',
+                type: 'MCP_SERVER',
+                resourceIdentifiers: ['https://prod.example.com'],
+                features: [{ key: 'prod_tool', type: 'MCP_TOOL', description: 'Production tool' }]
+            },
+            {
+                name: 'Development-Server',
+                type: 'MCP_SERVER',
+                resourceIdentifiers: ['https://dev.example.com'],
+                features: [{ key: 'dev_tool', type: 'MCP_TOOL', description: 'Development tool' }]
+            },
+            {
+                name: 'Test-API',
+                type: 'MCP_SERVER',
+                resourceIdentifiers: ['https://test-api.com'],
+                features: [{ key: 'test_tool', type: 'MCP_TOOL', description: 'Test tool' }]
+            },
+            {
+                name: 'Analytics-Service',
+                type: 'MCP_SERVER',
+                resourceIdentifiers: ['https://analytics.service.io'],
+                features: [{ key: 'analytics', type: 'MCP_TOOL', description: 'Analytics' }]
+            },
+            {
+                name: 'Data-Processing-Server',
+                type: 'MCP_SERVER',
+                resourceIdentifiers: ['https://data.processor.net'],
+                features: [{ key: 'processor', type: 'MCP_TOOL', description: 'Data processor' }]
+            }
+        ] as NewProtectedResource[];
+
+        searchableResources = [];
+        for (const resource of testResources) {
+            const created = await createProtectedResource(searchDomain.id, accessToken, resource);
+            searchableResources.push(created);
+        }
+
+    });
+
+    afterAll(async () => {
+        if (searchDomain?.id) {
+            await safeDeleteDomain(searchDomain.id, accessToken);
+        }
+    });
+
+    it('Should search by exact name match', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, 'Production-Server', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBeGreaterThanOrEqual(1);
+        expect(result.data.some(r => r.name === 'Production-Server')).toBeTruthy();
+    });
+
+    it('Should search by name with wildcard', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*Server*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBeGreaterThanOrEqual(3);
+        expect(result.data.some(r => r.name === 'Production-Server')).toBeTruthy();
+        expect(result.data.some(r => r.name === 'Development-Server')).toBeTruthy();
+        expect(result.data.some(r => r.name === 'Data-Processing-Server')).toBeTruthy();
+    });
+
+    it('Should search by resource identifier with wildcard', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*example.com*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBeGreaterThanOrEqual(2);
+        expect(result.data.some(r => r.resourceIdentifiers?.includes('https://prod.example.com'))).toBeTruthy();
+        expect(result.data.some(r => r.resourceIdentifiers?.includes('https://dev.example.com'))).toBeTruthy();
+    });
+
+    it('Should search by partial name', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*Prod*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBeGreaterThanOrEqual(2);
+        expect(result.data.some(r => r.name === 'Production-Server')).toBeTruthy();
+        expect(result.data.some(r => r.name === 'Data-Processing-Server')).toBeTruthy();
+    });
+
+    it('Should search by resource identifier protocol', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*https://*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBeGreaterThanOrEqual(5);
+    });
+
+    it('Should return empty results for non-existent search', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*NonExistentResource*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBe(0);
+        expect(result.data).toHaveLength(0);
+    });
+
+    it('Should search with pagination', async () => {
+        const page0 = await searchMcpServers(searchDomain.id, accessToken, '*Server*', 2, 0);
+        const page1 = await searchMcpServers(searchDomain.id, accessToken, '*Server*', 2, 1);
+
+        expect(page0).toBeDefined();
+        expect(page0.currentPage).toBe(0);
+        expect(page0.data.length).toBeLessThanOrEqual(2);
+
+        expect(page1).toBeDefined();
+        expect(page1.currentPage).toBe(1);
+        expect(page1.data.length).toBeLessThanOrEqual(2);
+
+        if (page0.data.length > 0 && page1.data.length > 0) {
+            expect(page0.data[0].id).not.toEqual(page1.data[0].id);
+        }
+    });
+
+    it('Should search with sorting by name ascending', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*Server*', 10, 0, 'name.asc');
+
+        expect(result).toBeDefined();
+        expect(result.data.length).toBeGreaterThan(0);
+
+        // Verify results are sorted
+        for (let i = 1; i < result.data.length; i++) {
+            expect(result.data[i].name.localeCompare(result.data[i - 1].name)).toBeGreaterThanOrEqual(0);
+        }
+    });
+
+    it('Should search with sorting by name descending', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*Server*', 10, 0, 'name.desc');
+
+        expect(result).toBeDefined();
+        expect(result.data.length).toBeGreaterThan(0);
+
+        // Verify results are sorted
+        for (let i = 1; i < result.data.length; i++) {
+            expect(result.data[i].name.localeCompare(result.data[i - 1].name)).toBeLessThanOrEqual(0);
+        }
+    });
+
+    it('Should search case-insensitively', async () => {
+        const resultLower = await searchMcpServers(searchDomain.id, accessToken, '*production*', 10, 0);
+        const resultUpper = await searchMcpServers(searchDomain.id, accessToken, '*PRODUCTION*', 10, 0);
+        const resultMixed = await searchMcpServers(searchDomain.id, accessToken, '*PrOdUcTiOn*', 10, 0);
+
+        expect(resultLower.totalCount).toBeGreaterThan(0);
+        expect(resultUpper.totalCount).toEqual(resultLower.totalCount);
+        expect(resultMixed.totalCount).toEqual(resultLower.totalCount);
+
+        expect(resultLower.data.some(r => r.name === 'Production-Server')).toBeTruthy();
+        expect(resultUpper.data.some(r => r.name === 'Production-Server')).toBeTruthy();
+        expect(resultMixed.data.some(r => r.name === 'Production-Server')).toBeTruthy();
+    });
+
+    it('Should search by partial resource identifier', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*service.io*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBeGreaterThanOrEqual(1);
+        expect(result.data.some(r => r.name === 'Analytics-Service')).toBeTruthy();
+    });
+
+    it('Should handle special characters in search query', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*-Server*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.totalCount).toBeGreaterThanOrEqual(3);
+        expect(result.data.some(r => r.name === 'Production-Server')).toBeTruthy();
+        expect(result.data.some(r => r.name === 'Development-Server')).toBeTruthy();
+        expect(result.data.some(r => r.name === 'Data-Processing-Server')).toBeTruthy();
+    });
+
+    it('Should search and return only basic information (no secrets)', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*Server*', 10, 0);
+
+        expect(result).toBeDefined();
+        expect(result.data.length).toBeGreaterThan(0);
+
+        // Verify no secrets are exposed in search results
+        const secretNotPresent = result.data.every(data => data['clientSecret'] === undefined);
+        expect(secretNotPresent).toBeTruthy();
+
+        // Verify basic information is present
+        result.data.forEach(resource => {
+            expect(resource.id).toBeDefined();
+            expect(resource.name).toBeDefined();
+            expect(resource.updatedAt).toBeDefined();
+        });
+    });
+
+    it('Should combine search with size limit', async () => {
+        const result = await searchMcpServers(searchDomain.id, accessToken, '*Server*', 2, 0);
+
+        expect(result).toBeDefined();
+        expect(result.data.length).toBeLessThanOrEqual(2);
+        expect(result.totalCount).toBeGreaterThanOrEqual(result.data.length);
+    });
+
+    it('Should return consistent results across multiple searches', async () => {
+        const result1 = await searchMcpServers(searchDomain.id, accessToken, '*Analytics*', 10, 0);
+        const result2 = await searchMcpServers(searchDomain.id, accessToken, '*Analytics*', 10, 0);
+
+        expect(result1.totalCount).toEqual(result2.totalCount);
+        expect(result1.data.length).toEqual(result2.data.length);
+        if (result1.data.length > 0) {
+            expect(result1.data[0].id).toEqual(result2.data[0].id);
+        }
+    });
 });
 
 describe('When updating protected resource', () => {

@@ -15,7 +15,7 @@
  */
 import { Component, ElementRef, Inject, Injectable, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormControl, FormControl, Validators } from '@angular/forms';
+import { UntypedFormControl, FormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
 interface NewTool {
@@ -56,7 +56,7 @@ export class DomainNewMcpServerToolDialogComponent {
     scopes: [],
   };
   filteredScopes: any[];
-  scopeCtrl = new UntypedFormControl();
+  scopeCtrl: UntypedFormControl;
   toolNameCtrl: FormControl<string>;
   toolDescriptionCtrl: FormControl<string>;
   isEditMode: boolean;
@@ -76,9 +76,16 @@ export class DomainNewMcpServerToolDialogComponent {
     }
 
     // Initialize form controls with validation
-    this.toolNameCtrl = new FormControl(this.newTool.name || '', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)]);
+    this.toolNameCtrl = new FormControl(this.newTool.name || '', [
+      Validators.required,
+      Validators.pattern(/^[a-zA-Z0-9_-]+$/),
+      Validators.maxLength(64),
+    ]);
 
     this.toolDescriptionCtrl = new FormControl(this.newTool.description || '');
+
+    // Initialize scope control with custom validator
+    this.scopeCtrl = new UntypedFormControl(null, [this.uncommittedScopeValidator()]);
 
     // Sync form controls with tool object
     this.toolNameCtrl.valueChanges.subscribe((value) => {
@@ -94,6 +101,10 @@ export class DomainNewMcpServerToolDialogComponent {
         this.filteredScopes = data.scopes.filter((scope) => {
           return scope.key.includes(searchTerm) && this.newTool.scopes.indexOf(scope.key) === -1;
         });
+        // Mark as touched to show validation errors when there's uncommitted text
+        if (searchTerm !== '') {
+          this.scopeCtrl.markAsTouched();
+        }
       }
     });
     this.filteredScopes = this.loadFilteredScopes();
@@ -106,11 +117,27 @@ export class DomainNewMcpServerToolDialogComponent {
       return;
     }
 
+    // Check if scope control is invalid (including uncommitted text)
+    if (this.scopeCtrl.invalid) {
+      this.scopeCtrl.markAsTouched();
+      return;
+    }
+
     this.dialogRef.close(this.newTool);
   }
 
   isFormValid(): boolean {
-    return this.toolNameCtrl.valid;
+    return this.toolNameCtrl.valid && this.scopeCtrl.valid;
+  }
+
+  private uncommittedScopeValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (value !== null && value !== '' && typeof value === 'string') {
+        return { uncommitted: true };
+      }
+      return null;
+    };
   }
 
   close(): void {

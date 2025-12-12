@@ -1355,6 +1355,7 @@ export interface ListProtectedResourcesRequest {
   page?: number;
   size?: number;
   sort?: string;
+  q?: string;
 }
 
 export interface ListResourcesRequest {
@@ -12297,6 +12298,10 @@ export class DomainApi extends runtime.BaseAPI {
 
     if (requestParameters.sort !== undefined) {
       queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
     }
 
     const headerParameters: runtime.HTTPHeaders = {};

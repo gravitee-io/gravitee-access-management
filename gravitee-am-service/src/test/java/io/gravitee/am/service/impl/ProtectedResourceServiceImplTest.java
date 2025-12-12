@@ -20,18 +20,21 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.model.McpTool;
-import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
@@ -762,5 +765,95 @@ public class ProtectedResourceServiceImplTest {
         verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+    }
+
+    @Test
+    public void shouldSearchProtectedResources() {
+        ProtectedResourcePrimaryData resource1 = ProtectedResourcePrimaryData.of(createProtectedResource("res1", DOMAIN_ID));
+        ProtectedResourcePrimaryData resource2 = ProtectedResourcePrimaryData.of(createProtectedResource("res2", DOMAIN_ID));
+        Page<ProtectedResourcePrimaryData> page = new Page<>(
+                List.of(resource1, resource2), 0, 2);
+
+        PageSortRequest pageSortRequest = PageSortRequest.builder()
+                .page(0)
+                .size(10)
+                .build();
+
+        when(repository.search(eq(DOMAIN_ID), eq(ProtectedResource.Type.MCP_SERVER), eq("*test*"), eq(pageSortRequest)))
+                .thenReturn(Single.just(page));
+
+        service.search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, "*test*", pageSortRequest)
+                .test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(result -> result.getData().size() == 2)
+                .assertValue(result -> result.getTotalCount() == 2)
+                .assertValue(result -> result.getCurrentPage() == 0);
+
+        verify(repository, times(1)).search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, "*test*", pageSortRequest);
+    }
+
+    @Test
+    public void shouldSearchProtectedResourcesByIds() {
+        ProtectedResourcePrimaryData resource1 = ProtectedResourcePrimaryData.of(createProtectedResource("res1", DOMAIN_ID));
+        Page<ProtectedResourcePrimaryData> page = new Page<>(
+                List.of(resource1), 0, 1);
+
+        PageSortRequest pageSortRequest = PageSortRequest.builder()
+                .page(0)
+                .size(10)
+                .build();
+
+        List<String> ids = List.of("res1", "res2");
+
+        when(repository.search(eq(DOMAIN_ID), eq(ProtectedResource.Type.MCP_SERVER), eq(ids), eq("*server*"), eq(pageSortRequest)))
+                .thenReturn(Single.just(page));
+
+        service.search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, ids, "*server*", pageSortRequest)
+                .test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(result -> result.getData().size() == 1)
+                .assertValue(result -> result.getTotalCount() == 1);
+
+        verify(repository, times(1)).search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, ids, "*server*", pageSortRequest);
+    }
+
+    @Test
+    public void shouldHandleSearchError() {
+        PageSortRequest pageSortRequest = PageSortRequest.builder()
+                .page(0)
+                .size(10)
+                .build();
+
+        when(repository.search(eq(DOMAIN_ID), eq(ProtectedResource.Type.MCP_SERVER), eq("*test*"), eq(pageSortRequest)))
+                .thenReturn(Single.error(new RuntimeException("Database error")));
+
+        service.search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, "*test*", pageSortRequest)
+                .test()
+                .assertError(TechnicalManagementException.class)
+                .assertError(throwable -> throwable.getMessage().contains("An error occurs while trying to search protected resources"));
+
+        verify(repository, times(1)).search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, "*test*", pageSortRequest);
+    }
+
+    @Test
+    public void shouldHandleSearchByIdsError() {
+        PageSortRequest pageSortRequest = PageSortRequest.builder()
+                .page(0)
+                .size(10)
+                .build();
+
+        List<String> ids = List.of("res1");
+
+        when(repository.search(eq(DOMAIN_ID), eq(ProtectedResource.Type.MCP_SERVER), eq(ids), eq("*test*"), eq(pageSortRequest)))
+                .thenReturn(Single.error(new RuntimeException("Database error")));
+
+        service.search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, ids, "*test*", pageSortRequest)
+                .test()
+                .assertError(TechnicalManagementException.class)
+                .assertError(throwable -> throwable.getMessage().contains("An error occurs while trying to search protected resources"));
+
+        verify(repository, times(1)).search(DOMAIN_ID, ProtectedResource.Type.MCP_SERVER, ids, "*test*", pageSortRequest);
     }
 }

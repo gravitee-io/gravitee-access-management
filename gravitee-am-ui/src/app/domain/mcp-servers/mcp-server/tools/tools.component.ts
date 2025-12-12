@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, filter } from 'rxjs/operators';
@@ -72,7 +72,6 @@ export class DomainMcpServerToolsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private protectedResourceService: ProtectedResourceService,
     private scopeService: ScopeService,
     private snackbarService: SnackbarService,
@@ -296,13 +295,20 @@ export class DomainMcpServerToolsComponent implements OnInit {
   }
 
   private mapFeaturesToTools(features: ProtectedResourceFeature[]): McpTool[] {
-    return features.map((feature) => {
-      const featureWithScopes = feature as ProtectedResourceFeatureWithScopes;
-      return {
-        key: feature.key,
-        description: feature.description,
-        scopes: featureWithScopes.scopes ?? [],
-      };
-    });
+    // Sort by createdAt descending (newest first)
+    return [...features]
+      .sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      })
+      .map((feature) => {
+        const featureWithScopes = feature as ProtectedResourceFeatureWithScopes;
+        return {
+          key: feature.key,
+          description: feature.description,
+          scopes: featureWithScopes.scopes ?? [],
+        };
+      });
   }
 }

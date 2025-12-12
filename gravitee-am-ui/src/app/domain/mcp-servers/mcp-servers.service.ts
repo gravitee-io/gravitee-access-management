@@ -60,6 +60,33 @@ export class McpServersService {
       ),
     );
   }
+
+  search(domainId: string, query: string): Observable<Page<McpServer>> {
+    return this.service.search(domainId, ProtectedResourceType.MCP_SERVER, query).pipe(
+      map(
+        (page) =>
+          ({
+            ...page,
+            data: page.data.map(
+              (elem) =>
+                ({
+                  id: elem.id,
+                  name: elem.name,
+                  resourceIdentifier: elem?.resourceIdentifiers?.[0],
+                  tools: elem.features
+                    ? elem.features.map((feat) => ({
+                        key: feat.key,
+                        description: feat.description,
+                        scopes: feat['scopes'],
+                      }))
+                    : [],
+                  updatedAt: elem.updatedAt,
+                }) as McpServer,
+            ),
+          }) as Page<McpServer>,
+      ),
+    );
+  }
   create(domainId: string, newMcpServer: NewMcpServer): Observable<NewProtectedResourceResponse> {
     const request = {
       name: newMcpServer.name?.trim(),

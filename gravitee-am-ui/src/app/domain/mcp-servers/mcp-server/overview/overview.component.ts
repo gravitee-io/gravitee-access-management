@@ -16,7 +16,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ProtectedResource } from '../../../../services/protected-resource.service';
+import { ProtectedResource, ProtectedResourceService } from '../../../../services/protected-resource.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
@@ -32,12 +32,38 @@ export class DomainMcpServerOverviewComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private protectedResourceService: ProtectedResourceService,
     private snackbarService: SnackbarService,
   ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.protectedResource = this.route.snapshot.data['mcpServer'];
+    const initialData = this.route.snapshot.data['mcpServer'];
+    this.protectedResource = initialData;
+
+    if (initialData?.id && initialData?.type) {
+      this.protectedResourceService.findById(this.domainId, initialData.id, initialData.type).subscribe((resource) => {
+        this.protectedResource = resource;
+        this.route.snapshot.data['mcpServer'] = resource;
+      });
+    }
+  }
+
+  get displayTools(): string[] {
+    if (!this.protectedResource?.features) {
+      return [];
+    }
+    return [...this.protectedResource.features]
+      .sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      })
+      .map((f) => f.key);
+  }
+
+  get hasTools(): boolean {
+    return this.protectedResource?.features?.length > 0;
   }
 
   copyToClipboard(element: HTMLElement) {

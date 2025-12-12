@@ -156,6 +156,84 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
                 .map(count -> count > 0);
     }
 
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, Type type, String query, PageSortRequest pageSortRequest) {
+        // Build case-insensitive search query for name and resourceIdentifiers fields
+        Bson searchQuery;
+
+        if (query.contains("*")) {
+            // Wildcard search: convert * to regex pattern
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
+            searchQuery = or(
+                new BasicDBObject(FIELD_NAME, pattern),
+                new BasicDBObject(RESOURCE_IDENTIFIERS_FIELD, pattern)
+            );
+        } else {
+            // Exact match: use case-insensitive regex for consistency with JDBC
+            String regex = "^" + java.util.regex.Pattern.quote(query) + "$";
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
+            searchQuery = or(
+                new BasicDBObject(FIELD_NAME, pattern),
+                new BasicDBObject(RESOURCE_IDENTIFIERS_FIELD, pattern)
+            );
+        }
+
+        Bson mongoQuery = and(
+            eq(DOMAIN_ID_FIELD, domain),
+            eq(TYPE_FIELD, type),
+            searchQuery
+        );
+
+        return queryProtectedResource(mongoQuery, pageSortRequest)
+            .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, Type type, List<String> ids, String query, PageSortRequest pageSortRequest) {
+        if (ids.isEmpty()) {
+            return Single.just(new Page<>());
+        }
+
+        // Build case-insensitive search query for name and resourceIdentifiers fields
+        Bson searchQuery;
+
+        if (query.contains("*")) {
+            // Wildcard search: convert * to regex pattern
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
+            searchQuery = and(
+                in(FIELD_ID, ids),
+                or(
+                    new BasicDBObject(FIELD_NAME, pattern),
+                    new BasicDBObject(RESOURCE_IDENTIFIERS_FIELD, pattern)
+                )
+            );
+        } else {
+            // Exact match: use case-insensitive regex for consistency with JDBC
+            String regex = "^" + java.util.regex.Pattern.quote(query) + "$";
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
+            searchQuery = and(
+                in(FIELD_ID, ids),
+                or(
+                    new BasicDBObject(FIELD_NAME, pattern),
+                    new BasicDBObject(RESOURCE_IDENTIFIERS_FIELD, pattern)
+                )
+            );
+        }
+
+        Bson mongoQuery = and(
+            eq(DOMAIN_ID_FIELD, domain),
+            eq(TYPE_FIELD, type),
+            searchQuery
+        );
+
+        return queryProtectedResource(mongoQuery, pageSortRequest)
+            .observeOn(Schedulers.computation());
+    }
+
     private Single<Page<ProtectedResourcePrimaryData>> queryProtectedResource(Bson query, PageSortRequest pageSortRequest) {
         Single<Long> countOperation = Observable.fromPublisher(collection
                         .countDocuments(query, countOptions()))
@@ -202,13 +280,10 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setType(Type.valueOf(mongo.getType()));
         result.setCreatedAt(mongo.getCreatedAt());
         result.setUpdatedAt(mongo.getUpdatedAt());
-        // Sort features by key to match JDBC behavior (OrderByKeyName)
-        result.setFeatures(mongo.getFeatures() == null ? List.of() : 
+        result.setFeatures(mongo.getFeatures() == null ? List.of() :
                 mongo.getFeatures().stream()
-                .sorted(java.util.Comparator.comparing(
-                        ProtectedResourceMongo.ProtectedResourceFeatureMongo::getKey,
-                        java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .map(this::convert)
+                .sorted(Comparator.comparing(ProtectedResourceFeature::getKey))
                 .toList());
         return result;
     }
