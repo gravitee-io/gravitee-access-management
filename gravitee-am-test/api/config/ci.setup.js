@@ -30,3 +30,4 @@ process.env.INTERNAL_FAKE_SMTP_HOST = 'smtp';
 process.env.INTERNAL_FAKE_SMTP_PORT = '5025';
 process.env.SFR_URL = 'http://localhost:8181';
 process.env.INTERNAL_SFR_URL = 'http://wiremock:8080';
+process.env.MTLS_URL= 'https://localhost:1443/am'

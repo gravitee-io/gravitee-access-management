@@ -1,0 +1,1 @@
+Client certificates generated with [ca.key](../../docker/local-stack/dev/client-ssl-proxy/server/ca.key) from local-stack
