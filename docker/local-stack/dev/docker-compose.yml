@@ -41,6 +41,7 @@ services:
       - GRAVITEE_SERVICES_SYNC_CRON=*/2 * * * * *
       - GRAVITEE_SERVICES_SYNC_TIMEFRAMEBEFOREDELAY=5000
       - GRAVITEE_SERVICES_SYNC_TIMEFRAMEAFTERDELAY=5000
+      - GRAVITEE_HTTP_SSL_CERTIFICATEHEADER=X-Client-Cert
       - GIO_MAX_MEM=512m
 
   management:
@@ -111,3 +112,14 @@ services:
       - 8090:8080
       - 8091:8081
     command: ["run", "--playground-enabled=false"]
+
+  gateway-mtls:
+    image: nginx:1.21.1-alpine
+    restart: always
+    volumes:
+      - ./gateway-mtls/nginx.conf:/etc/nginx/nginx.conf
+      - ./gateway-mtls/server/server.crt:/etc/nginx/certs/server.crt:ro
+      - ./gateway-mtls/server/server.key:/etc/nginx/certs/server.key:ro
+      - ./gateway-mtls/server/ca.crt:/etc/nginx/certs/ca.crt:ro
+    ports:
+      - 1443:1443
