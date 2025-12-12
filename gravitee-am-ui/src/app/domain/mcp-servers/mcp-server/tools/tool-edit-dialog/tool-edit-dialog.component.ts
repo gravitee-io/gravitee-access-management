@@ -15,7 +15,7 @@
  */
 import { Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormControl, FormControl, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
 interface EditTool {
@@ -44,56 +44,54 @@ export class DomainMcpServerToolEditDialogComponent {
   tool: EditTool;
   originalTool: EditTool;
   filteredScopes: any[];
-  scopeCtrl = new UntypedFormControl();
-  toolNameCtrl: FormControl<string>;
-  toolDescriptionCtrl: FormControl<string>;
+  form: FormGroup;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: EditToolDialogData,
     public dialogRef: MatDialogRef<DomainMcpServerToolEditDialogComponent, EditTool>,
+    private fb: FormBuilder,
   ) {
-    // Clone the tool to avoid mutating the original
     this.tool = {
       key: data.tool.key,
       description: data.tool.description,
       scopes: [...(data.tool.scopes || [])],
     };
 
-    // Store the original tool for comparison
     this.originalTool = {
       key: data.tool.key,
       description: data.tool.description,
       scopes: [...(data.tool.scopes || [])],
     };
 
-    // Initialize form controls with validation
-    this.toolNameCtrl = new FormControl(data.tool.key, [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)]);
+    this.form = this.fb.group({
+      key: [data.tool.key, [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/), Validators.maxLength(64)]],
+      description: [data.tool.description || ''],
+      scope: [null, [this.uncommittedScopeValidator()]],
+    });
 
-    this.toolDescriptionCtrl = new FormControl(data.tool.description || '');
-
-    // Sync form controls with tool object
-    this.toolNameCtrl.valueChanges.subscribe((value) => {
+    this.form.get('key').valueChanges.subscribe((value) => {
       this.tool.key = value || '';
     });
 
-    this.toolDescriptionCtrl.valueChanges.subscribe((value) => {
+    this.form.get('description').valueChanges.subscribe((value) => {
       this.tool.description = value || '';
     });
 
-    this.scopeCtrl.valueChanges.subscribe((searchTerm: string) => {
+    this.form.get('scope').valueChanges.subscribe((searchTerm: string) => {
       if (typeof searchTerm === 'string') {
         this.filteredScopes = data.scopes.filter((scope) => {
           return scope.key.includes(searchTerm) && this.tool.scopes.indexOf(scope.key) === -1;
         });
       }
     });
+
     this.filteredScopes = this.loadFilteredScopes();
   }
 
   accept(): void {
     // Validate form before accepting
-    if (this.toolNameCtrl.invalid) {
-      this.toolNameCtrl.markAsTouched();
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
 
@@ -107,14 +105,35 @@ export class DomainMcpServerToolEditDialogComponent {
   }
 
   isFormValid(): boolean {
-    return this.toolNameCtrl.valid;
+    return this.form.valid;
+  }
+
+  get scope(): FormControl {
+    return this.form.get('scope') as FormControl;
+  }
+
+  matcher = {
+    isErrorState: (): boolean => {
+      return this.scope.invalid && (this.scope.dirty || this.scope.touched);
+    },
+  };
+
+  private uncommittedScopeValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (value !== null && value !== '' && typeof value === 'string') {
+        return { uncommitted: true };
+      }
+      return null;
+    };
   }
 
   private hasChanges(): boolean {
-    // Trim values for comparison
-    const currentKey = this.tool.key?.trim() || '';
+    const formValue = this.form.value;
+
+    const currentKey = formValue.key?.trim() || '';
     const originalKey = this.originalTool.key?.trim() || '';
-    const currentDescription = this.tool.description?.trim() || '';
+    const currentDescription = formValue.description?.trim() || '';
     const originalDescription = this.originalTool.description?.trim() || '';
 
     // Check if key or description changed
@@ -154,7 +173,7 @@ export class DomainMcpServerToolEditDialogComponent {
     this.tool.scopes.push(event.option.value);
     this.scopeInput.nativeElement.value = '';
     this.scopeInput.nativeElement.blur();
-    this.scopeCtrl.setValue(null);
+    this.form.get('scope').setValue(null);
     this.filteredScopes = this.loadFilteredScopes();
   }
 

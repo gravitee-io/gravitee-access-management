@@ -32,18 +32,12 @@ import java.util.Objects;
 @Setter
 public class NewProtectedResource {
 
-    /**
-     * Maximum length for MCP Server name (based on MCP specification and practical compatibility)
-     */
     public static final int NAME_MAX_LENGTH = 64;
 
-    /**
-     * Pattern for protected resource name: must begin with a non-whitespace character
-     */
     public static final String NAME_PATTERN = "^[^\\s].*";
 
     @NotBlank
-    @Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters")
+    @Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
     @Pattern(regexp = NAME_PATTERN, message = "Name must begin with a non-whitespace character")
     private String name;
 

@@ -453,6 +453,28 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("Search protected resources with query {} for domainId={}, type={}", query, domain, type);
+        return repository.search(domain, type, query, pageSortRequest)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search protected resources with query {} for domainId={} and type={}", query, domain, type, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to search protected resources with query %s for domain %s", query, domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, ProtectedResource.Type type, List<String> ids, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("Search protected resources with query {} for domainId={}, type={}, ids={}", query, domain, type, ids);
+        return repository.search(domain, type, ids, query, pageSortRequest)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search protected resources with query {} for domainId={} and type={}", query, domain, type, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to search protected resources with query %s for domain %s", query, domain), ex));
+                });
+    }
+
+    @Override
     public Flowable<ProtectedResource> findByDomain(String domain) {
         LOGGER.debug("Find protected resources by domainId={}", domain);
         return repository.findByDomain(domain)

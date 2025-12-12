@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ProtectedResource } from '../../../services/protected-resource.service';
+import { ProtectedResource, ProtectedResourceType } from '../../../services/protected-resource.service';
 
 @Component({
   selector: 'app-mcp-server',
@@ -33,5 +33,11 @@ export class DomainMcpServerComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.protectedResource = this.route.snapshot.data['mcpServer'];
+  }
+
+  get displayType(): string {
+    return this.protectedResource.type.toLowerCase() === ProtectedResourceType.MCP_SERVER.toLowerCase()
+      ? 'MCP'
+      : this.protectedResource.type;
   }
 }

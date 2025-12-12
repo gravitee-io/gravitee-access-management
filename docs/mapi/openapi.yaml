@@ -6249,6 +6249,10 @@ paths:
         schema:
           type: string
           default: updatedAt.desc
+      - name: q
+        in: query
+        schema:
+          type: string
       responses:
         "200":
           description: List registered protected resources for a security domain
@@ -12492,13 +12496,13 @@ components:
           type: array
           items:
             type: string
-        allowedScopesEnabled:
+        dynamicClientRegistrationEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
         openDynamicClientRegistrationEnabled:
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -12723,21 +12727,21 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
+        redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        redirectUriStrictMatching:
+          type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
         dynamicClientRegistrationTemplateEnabled:
-          type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        redirectUriExpressionLanguageEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -14068,6 +14072,7 @@ components:
       type: object
       properties:
         key:
+          maxLength: 64
           minLength: 1
           pattern: "^[a-zA-Z0-9_-]+$"
           type: string
@@ -14900,13 +14905,13 @@ components:
             type: string
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
-        clientTemplateEnabled:
-          type: boolean
-          writeOnly: true
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         openDynamicClientRegistrationEnabled:
+          type: boolean
+          writeOnly: true
+        clientTemplateEnabled:
           type: boolean
           writeOnly: true
         isDynamicClientRegistrationEnabled:
@@ -16343,6 +16348,7 @@ components:
       type: object
       properties:
         key:
+          maxLength: 64
           minLength: 1
           pattern: "^[a-zA-Z0-9_-]+$"
           type: string
@@ -16697,38 +16703,38 @@ components:
           type: boolean
         serviceAccount:
           type: boolean
-        address:
-          type: object
-          additionalProperties:
-            type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
-        middleName:
-          type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        inactive:
-          type: boolean
-        profile:
-          type: string
-        website:
-          type: string
-        birthdate:
-          type: string
-        phoneNumber:
-          type: string
-        disabled:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        phoneNumber:
+          type: string
+        website:
+          type: string
+        address:
+          type: object
+          additionalProperties:
+            type: object
+        profile:
+          type: string
+        zoneInfo:
+          type: string
+        birthdate:
+          type: string
+        disabled:
+          type: boolean
+        inactive:
+          type: boolean
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        middleName:
+          type: string
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        locale:
+          type: string
     UserEntity:
       type: object
       properties:
@@ -16897,38 +16903,38 @@ components:
           $ref: "#/components/schemas/ApplicationEntity"
         sourceId:
           type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
-        middleName:
-          type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        inactive:
-          type: boolean
-        profile:
-          type: string
-        website:
-          type: string
-        birthdate:
-          type: string
-        phoneNumber:
-          type: string
-        disabled:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        phoneNumber:
+          type: string
+        website:
+          type: string
+        address:
+          type: object
+          additionalProperties:
+            type: object
+        profile:
+          type: string
+        zoneInfo:
+          type: string
+        birthdate:
+          type: string
+        disabled:
+          type: boolean
+        inactive:
+          type: boolean
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        middleName:
+          type: string
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        locale:
+          type: string
     UserId:
       type: object
       properties:

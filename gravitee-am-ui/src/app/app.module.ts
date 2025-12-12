@@ -31,7 +31,6 @@ import { MatNativeDateModule, MatRippleModule } from '@angular/material/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatGridListModule } from '@angular/material/grid-list';
-import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -74,6 +73,7 @@ import {
 } from '@gravitee/ui-particles-angular';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { NgOptimizedImage } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 import { AppConfig } from '../config/app.config';
 

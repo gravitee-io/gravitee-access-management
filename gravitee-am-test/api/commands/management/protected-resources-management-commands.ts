@@ -73,6 +73,18 @@ export const getMcpServers = (domainId: string, accessToken: string, size = 10, 
     sort: sort,
   });
 
+export const searchMcpServers = (domainId: string, accessToken: string, query: string, size = 10, page = 0, sort?: string): Promise<ProtectedResourcePage> =>
+  getProtectedResourcesApi(accessToken).listProtectedResources({
+    organizationId: 'DEFAULT',
+    environmentId: 'DEFAULT',
+    domain: domainId,
+    size: size,
+    page: page,
+    type: 'MCP_SERVER',
+    sort: sort,
+    q: query,
+  });
+
 export const getMcpServer = (domainId: string, accessToken: string, id: string): Promise<ProtectedResourcePrimaryData> =>
   getProtectedResourcesApi(accessToken).findProtectedResource({
     organizationId: 'DEFAULT',

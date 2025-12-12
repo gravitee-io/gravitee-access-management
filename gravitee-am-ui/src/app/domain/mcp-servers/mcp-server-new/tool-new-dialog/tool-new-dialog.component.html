@@ -21,11 +21,13 @@
   <form fxLayout="column" (keydown.enter)="$event.preventDefault(); isFormValid() && accept()">
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-label>Tool Name</mat-label>
-      <input matInput type="text" placeholder="Tool Name" name="toolName" [formControl]="toolNameCtrl" required />
+      <input matInput type="text" placeholder="Tool Name" name="toolName" [formControl]="toolNameCtrl" required maxlength="64" />
+      <mat-hint>Maximum 64 characters (letters, numbers, hyphens, and underscores only)</mat-hint>
       <mat-error *ngIf="toolNameCtrl.hasError('required')"> Tool name is required </mat-error>
       <mat-error *ngIf="toolNameCtrl.hasError('pattern')">
         Tool name must contain only letters, numbers, hyphens, and underscores
       </mat-error>
+      <mat-error *ngIf="toolNameCtrl.hasError('maxlength')"> Tool name must be at most 64 characters </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline" floatLabel="always">
@@ -34,6 +36,7 @@
     </mat-form-field>
 
     <mat-form-field>
+      <mat-label>Scopes</mat-label>
       <mat-chip-grid #chipList aria-label="Scopes selection">
         <mat-chip-row *ngFor="let scope of newTool.scopes" [removable]="true" (removed)="remove(scope)">
           {{ scope }}
@@ -56,6 +59,7 @@
           <small>{{ scope.description }}</small>
         </mat-option>
       </mat-autocomplete>
+      <mat-error *ngIf="scopeCtrl.hasError('uncommitted')"> Please select a scope from the list or clear the field </mat-error>
     </mat-form-field>
   </form>
   <div class="new-tool-actions">
