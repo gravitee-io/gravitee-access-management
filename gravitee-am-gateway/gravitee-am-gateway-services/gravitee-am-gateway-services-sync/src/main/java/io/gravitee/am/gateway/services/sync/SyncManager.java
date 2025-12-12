@@ -248,11 +248,6 @@ public class SyncManager implements InitializingBean {
             } else {
                 String eventId = event.getId();
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
-                    // Track event start
-                    if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN && PLUGIN_TYPES.contains(event.getType())) {
-                        logger.info("Initializing Plugin State domain:{} type:{} - id:{}",event.getPayload().getReferenceId(), event.getType().name(), event.getPayload().getId());
-                        domainReadinessService.initPluginSync(event.getPayload().getReferenceId(), event.getPayload().getId(), event.getType().name());
-                    }
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
                 } else {
                     logger.debug("Event id {} already processed", eventId);
