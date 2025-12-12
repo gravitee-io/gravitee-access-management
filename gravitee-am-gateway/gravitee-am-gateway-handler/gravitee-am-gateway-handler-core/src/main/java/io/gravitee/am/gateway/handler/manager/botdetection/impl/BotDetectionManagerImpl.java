@@ -21,6 +21,7 @@ import io.gravitee.am.botdetection.api.BotDetectionContext;
 import io.gravitee.am.botdetection.api.BotDetectionProvider;
 import io.gravitee.am.common.event.BotDetectionEvent;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.Domain;
@@ -28,6 +29,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.BotDetectionService;
@@ -76,6 +78,9 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     public ConcurrentMap<String, BotDetection> getBotDetections() {
         return botDetections;
@@ -172,9 +177,11 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         final BotDetectionProvider previousProvider = providers.remove(pluginId);
         botDetections.remove(pluginId);
         stopBotDetectionProvider(previousProvider);
+        domainReadinessService.pluginUnloaded(domain.getId(), pluginId);
     }
 
     private void updateBotDetection(BotDetection detection) {
+        domainReadinessService.initPluginSync(domain.getId(), detection.getId(), Type.BOT_DETECTION.name());
         try {
             if (needDeployment(detection)) {
                 var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
@@ -184,12 +191,15 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
                 this.botDetections.put(detection.getId(), detection);
 
                 LOGGER.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
+                domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             } else {
                 LOGGER.info("Bot detection {} already loaded for domain {}", detection.getName(), domain.getName());
+                domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             }
         } catch (Exception ex) {
             this.providers.remove(detection.getId());
             LOGGER.error("Unable to create bot detection provider for domain {}", domain.getName(), ex);
+            domainReadinessService.pluginFailed(domain.getId(), detection.getId(), ex.getMessage());
         }
     }
 

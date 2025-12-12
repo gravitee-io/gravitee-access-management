@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.client.impl;
 import io.gravitee.am.common.event.ApplicationEvent;
 import io.gravitee.am.common.event.EventManager;
 
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -78,6 +79,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         client -> {
+                            domainReadinessService.initPluginSync(domain.getId(), client.getId(), Type.APPLICATION.name());
                             gatewayMetricProvider.incrementApp();
                             clients.put(client.getId(), client);
                             logger.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
@@ -174,6 +176,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                             if (!client.isEnabled()) {
                                 removeClient(applicationId);
                             } else {
+                                domainReadinessService.initPluginSync(domain.getId(), client.getId(), io.gravitee.am.common.event.Type.APPLICATION.name());
                                 clients.put(client.getId(), client);
                                 logger.info("Application {} loaded for domain {}", applicationId, domain.getName());
                                 domainReadinessService.pluginLoaded(domain.getId(), client.getId());

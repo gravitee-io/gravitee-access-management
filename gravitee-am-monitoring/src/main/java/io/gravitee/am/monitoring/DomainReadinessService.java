@@ -68,4 +68,16 @@ public interface DomainReadinessService {
      * @param domainId Domain ID.
      */
     void removeDomain(String domainId);
+
+    /**
+     * Check if all domains are ready (stable and synchronized).
+     * @return true if all domains are ready, false otherwise.
+     */
+    boolean isAllDomainsReady();
+
+    /**
+     * Get all domain states.
+     * @return Map of domain ID to DomainState.
+     */
+    java.util.Map<String, DomainState> getDomainStates();
 }

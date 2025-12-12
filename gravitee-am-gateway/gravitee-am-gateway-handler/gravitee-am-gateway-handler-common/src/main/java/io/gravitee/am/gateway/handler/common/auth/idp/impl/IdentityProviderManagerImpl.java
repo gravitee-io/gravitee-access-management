@@ -55,7 +55,7 @@ import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigu
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderManagerImpl extends AbstractService implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
+public class IdentityProviderManagerImpl extends AbstractService implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload>, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
@@ -186,6 +186,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
+        domainReadinessService.initPluginSync(domain.getId(), identityProvider.getId(), Type.IDENTITY_PROVIDER.name());
         if (needDeployment(identityProvider)) {
             return forceUpdateAuthenticationProvider(identityProvider);
         } else {
@@ -224,7 +225,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 return identityProviderPluginManager
                         .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
                         .map(userProviderOpt -> new Providers(identityProvider.getId(), authenticationProvider,
-                                userProviderOpt.orElse(null), identityProvider));
+                                userProviderOpt.orElse(null), identityProvider));                 
             }
         }
     }
@@ -272,7 +273,10 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private Single<IdentityProvider> deployProvider(IdentityProvider identityProvider) {
         logger.info("Deploying new identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-        final ReentrantLock lock = lockFor(identityProvider.getId());
+        final String id = identityProvider.getId();
+        final ReentrantLock lock = lockFor(id);
+
+        domainReadinessService.initPluginSync(domain.getId(), id, Type.IDENTITY_PROVIDER.name());
 
         try {
             return createProvider(identityProvider)
@@ -291,8 +295,15 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                         }
                         logger.info("Successfully deployed new identity provider {} for domain {}", identityProvider.getId(), domain.getName());
                         return identityProvider;
+                    })
+                    .doOnSuccess(idp -> domainReadinessService.pluginLoaded(domain.getId(), idp.getId()))
+                    .doOnError(e -> {
+                        logger.error("Failed to deploy identity provider {}", id, e);
+                        domainReadinessService.pluginFailed(domain.getId(), id, e.getMessage());
                     });
         } catch (IOException e) {
+            logger.error("Failed to deploy identity provider {}", id, e);
+            domainReadinessService.pluginFailed(domain.getId(), id, e.getMessage());
             return Single.error(e);
         }
     }

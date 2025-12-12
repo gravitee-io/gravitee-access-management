@@ -76,6 +76,7 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         res -> {
+                            domainReadinessService.initPluginSync(domain.getId(), res.getId(), Type.PROTECTED_RESOURCE.name());
                             gatewayMetricProvider.incrementProtectedResource();
                             resources.put(res.getId(), res);
                             log.info("Protected Resource {} loaded for domain {}", res.getName(), domain.getName());
