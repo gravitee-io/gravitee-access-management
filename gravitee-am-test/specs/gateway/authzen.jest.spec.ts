@@ -81,7 +81,7 @@ beforeAll(async () => {
     type: 'openfga',
     name: 'OpenFGA+AuthZen Test Engine',
     configuration: JSON.stringify({
-      connectionUri: process.env.AM_OPENFGA_URL,
+      connectionUri: process.env.AM_INTERNAL_OPENFGA_URL,
       storeId,
       authorizationModelId,
       apiToken: '',

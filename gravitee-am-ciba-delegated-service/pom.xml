@@ -144,7 +144,7 @@
                 <version>${jib-maven-plugin.version}</version>
                 <configuration>
                     <to>
-                        <image>localhost:5000/gravitee-am-ciba-delegated-service</image>
+                        <image>gravitee-am-ciba-delegated-service</image>
                     </to>
                     <from>
                         <image>eclipse-temurin:21</image>

@@ -73,7 +73,6 @@ let callFactor2;
 
 const validMFACode = '333333';
 const sharedSecret = 'K546JFR2PK5CGQLLUTFG4W46IKDFWWUE';
-const sfrUrl = 'http://localhost:8181';
 
 jest.setTimeout(200000);
 
@@ -368,7 +367,7 @@ describe('MFA', () => {
 afterAll(async () => {
   if (domain && domain.id) {
     await safeDeleteDomain(domain.id, accessToken);
-    await performDelete(sfrUrl, '/__admin/requests', {});
+    await performDelete(process.env.SFR_URL, '/__admin/requests', {});
   }
 });
 
@@ -397,7 +396,7 @@ const enrollMockFactor = async (authorize, factor, domain) => {
 const createSMTPResource = async (domain, accessToken) => {
   const smtp = await createResource(domain.id, accessToken, {
     type: 'smtp-am-resource',
-    configuration: '{"host":"localhost","port":5025,"from":"admin@test.com","protocol":"smtp","authentication":false,"startTls":false}',
+    configuration: `{"host":"${process.env.INTERNAL_FAKE_SMTP_HOST}","port":${process.env.INTERNAL_FAKE_SMTP_PORT},"from":"admin@test.com","protocol":"smtp","authentication":false,"startTls":false}`,
     name: 'FakeSmtp',
   });
 
@@ -485,7 +484,7 @@ const createSFRResource = async (domain, accessToken) => {
     name: 'sfr',
     type: 'sfr-am-resource',
     configuration: JSON.stringify({
-      serviceHost: sfrUrl + '/sfr',
+      serviceHost: process.env.INTERNAL_SFR_URL + '/sfr',
       serviceId: '1',
       servicePassword: '1',
       spaceId: '1',
@@ -815,7 +814,7 @@ const verifyFactorFailure = async (challenge, factor) => {
 
 const verifySmsSfrFactor = async (challenge, factor) => {
   const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
-  const code = await extractSmsCode(sfrUrl);
+  const code = await extractSmsCode(process.env.SFR_URL);
   return await postFactor(challengeResponse, factor, code);
 };
 

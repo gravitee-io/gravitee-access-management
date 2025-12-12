@@ -425,7 +425,7 @@ jobs:
       - run:
           name: Maven Package & deploy on artifactory
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean deploy
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean deploy
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
@@ -463,28 +463,7 @@ jobs:
       docker_layer_caching: true
     resource_class: large
     environment:
-      # SMTP config
-      GRAVITEE_EMAIL_ENABLED: true
-      GRAVITEE_EMAIL_HOST: localhost
-      GRAVITEE_EMAIL_PORT: 5025
-
-      # MFA rate limit
-      GRAVITEE_MFA_RATE_ENABLED: true
-      GRAVITEE_MFA_RATE_LIMIT: 2
-      GRAVITEE_MFA_RATE_TIMEPERIOD: 1
-      GRAVITEE_MFA_RATE_TIMEUNIT: Minutes
-
-      # Username policy
-      GRAVITEE_USER_USERNAME_POLICY_PATTERN: "^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;=,]{1,100}$"
-      GRAVITEE_USER_NAME_STRICT_POLICY_PATTERN: "^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\/<>?:;=.,]{0,100}$"
-      GRAVITEE_USER_NAME_LAX_POLICY_PATTERN: "^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?=]{0,100}$"
-
-      # Sync tuning
-      GRAVITEE_SERVICES_SYNC_CRON: "*/2 * * * * *"
-      GRAVITEE_SERVICES_SYNC_TIMEFRAMEBEFOREDELAY: 5000
-      GRAVITEE_SERVICES_SYNC_TIMEFRAMEAFTERDELAY: 5000
-
-      # Memory
+      REPOSITORY_TYPE: mongodb
       GIO_MAX_MEM: 512m
     steps:
       - attach_workspace:
@@ -495,40 +474,17 @@ jobs:
           secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
-          name: install test module dependencies
-          command: npm --prefix gravitee-am-test i
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
       - run:
-          name: Prepare Access Management
-          command: |
-            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
-            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            echo "export AM_VERSION=$AM_VERSION" >> $BASH_ENV
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
       - run:
-          name: Start Mongo
-          command: |
-            docker pull mongo:<< parameters.mongo_version >>
-            docker run -d --name mongo_tmp --rm -p 27017:27017 mongo:<< parameters.mongo_version >>
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
-          name: Start FakeSMTP
-          command: |
-            docker pull gessnerfl/fake-smtp-server:1.10.4
-            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server:1.10.4
-      - run:
-          name: Start Wiremock
-          command: |
-            docker pull wiremock/wiremock:3.13.1
-            docker run -d --rm --name wiremock -p 8181:8080 wiremock/wiremock:3.13.1 --verbose --global-response-templating
-      - run:
-          name: Start CIBA delegated service
-          command: |
-            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
-            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-      - run:
-          name: Start OpenFGA
-          command: |
-            docker pull openfga/openfga:v1.8.5
-            docker run -d --rm --name openfga -p 8090:8080 -p 8091:8081 openfga/openfga:v1.8.5 run --playground-enabled=false
+          name: Spin up stack with Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
       - run:
           name: Wait services bootstrap
           command: |
@@ -538,62 +494,18 @@ jobs:
             timeout 30s bash -c 'until nc -vz localhost 8181; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8080; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8090; do sleep 2; done'
-      - run:
-          name: Configure Wiremock
-          command: |
-            curl -X POST http://localhost:8181/__admin/mappings \
-              -H "Content-Type: application/json" \
-              -d '{
-                "request": {
-                  "method": "POST",
-                  "url": "/sfr"
-                },
-                "response": {
-                  "status": 200,
-                  "headers": {
-                    "Content-Type": "application/json"
-                  },
-                  "body": "{{{request.body}}}",
-                  "transformers": ["response-template"]
-                }
-              }'
-      - run:
-          name: Download plugins
-          command: |
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/resources/gravitee-am-resource-sfr/gravitee-am-resource-sfr-1.0.2.zip -o gravitee-am-resource-sfr-1.0.2.zip
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/factors/gravitee-am-factor-sms/gravitee-am-factor-sms-1.0.1.zip -o gravitee-am-factor-sms-1.0.1.zip
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/gateway/handlers/gravitee-am-gateway-handler-saml2-idp/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip -o gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
-
-            cp gravitee-am-resource-sfr-1.0.2.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
-            cp gravitee-am-factor-sms-1.0.1.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
-            cp gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
-
-            mv gravitee-am-resource-sfr-1.0.2.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
-            mv gravitee-am-factor-sms-1.0.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
-            mv gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
-
-      - run:
-          name: Spin up AM
-          command: |
-            # Start AM Management
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
-            # Start AM Gateway
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
       - run:
           name: Run Management Jest tests (parallel)
           command: npm --prefix gravitee-am-test run ci:management:parallel
       - run:
           name: Run Gateway Jest tests (sequential)
           command: npm --prefix gravitee-am-test run ci:gateway
-      - keeper/env-export:
-          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
-          var-name: SLACK_ACCESS_TOKEN
-      - slack/notify:
-          branch_pattern: ".+"
-          event: fail
-          mentions: "@am_team"
-          template: basic_fail_1
+      - run:
+          name: Stop
+          command: npm --prefix docker/local-stack run stack:down
+
   run_jest_tests_psql:
     parameters:
       psql_version:
@@ -603,62 +515,7 @@ jobs:
       docker_layer_caching: true
     resource_class: large
     environment:
-      # PSQL Repositories
-      GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE: jdbc
-      GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER: postgresql
-      GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST: localhost
-      GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT: 5432
-      GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE: postgres
-      GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME: postgres
-      GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD: T0pS3cr3t
-      GRAVITEE_REPOSITORIES_OAUTH2_TYPE: jdbc
-      GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER: postgresql
-      GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST: localhost
-      GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT: 5432
-      GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE: postgres
-      GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME: postgres
-      GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD: T0pS3cr3t
-      GRAVITEE_REPOSITORIES_GATEWAY_TYPE: jdbc
-      GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER: postgresql
-      GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST: localhost
-      GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT: 5432
-      GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE: postgres
-      GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME: postgres
-      GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD: T0pS3cr3t
-
-      # DataPlane
-      GRAVITEE_DATAPLANES_0_ID: default
-      GRAVITEE_DATAPLANES_0_JDBC_DATABASE: postgres
-      GRAVITEE_DATAPLANES_0_JDBC_DRIVER: postgresql
-      GRAVITEE_DATAPLANES_0_JDBC_HOST: localhost
-      GRAVITEE_DATAPLANES_0_JDBC_PASSWORD: T0pS3cr3t
-      GRAVITEE_DATAPLANES_0_JDBC_PORT: 5432
-      GRAVITEE_DATAPLANES_0_JDBC_USERNAME: postgres
-      GRAVITEE_DATAPLANES_0_TYPE: jdbc
-
-      # SMTP / Email
-      GRAVITEE_EMAIL_ENABLED: true
-      GRAVITEE_EMAIL_HOST: localhost
-      GRAVITEE_EMAIL_PORT: 5025
-
-      # MFA
-      GRAVITEE_MFA_RATE_ENABLED: true
-      GRAVITEE_MFA_RATE_LIMIT: 2
-      GRAVITEE_MFA_RATE_TIMEPERIOD: 1
-      GRAVITEE_MFA_RATE_TIMEUNIT: Minutes
-
-      # Username policy
-      GRAVITEE_USER_USERNAME_POLICY_PATTERN: "^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;=,]{1,100}$"
-      GRAVITEE_USER_NAME_STRICT_POLICY_PATTERN: "^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\/<>?:;=.,]{0,100}$"
-      GRAVITEE_USER_NAME_LAX_POLICY_PATTERN: "^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?=]{0,100}$"
-
-      # Sync tuning
-      GRAVITEE_SERVICES_SYNC_CRON: "*/2 * * * * *"
-      GRAVITEE_SERVICES_SYNC_TIMEFRAMEBEFOREDELAY: 5000
-      GRAVITEE_SERVICES_SYNC_TIMEFRAMEAFTERDELAY: 5000
-
-      # Memory
-      GIO_MAX_MEM: 512m
+      REPOSITORY_TYPE: jdbc
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -667,59 +524,20 @@ jobs:
           secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
-          name: install test module dependencies
-          command: npm --prefix gravitee-am-test i
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
       - run:
-          name: Prepare Access Management
-          command: |
-            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
-            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            echo "export AM_VERSION=$AM_VERSION" >> $BASH_ENV
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
       - run:
           name: Prepare JDBC plugins
-          command: |
-            # Try jdbc.postgresql.org first, fallback to Maven Central if it fails
-            curl --retry 2 --retry-delay 5 --max-time 30 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar || \
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar -o postgresql-jdbc.jar
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
-            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
-            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
-            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
-            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+          command: npm --prefix docker/local-stack run stack:init:plugins:psql
       - run:
-          name: Start PostgreSQL
-          command: |
-            docker pull postgres:<< parameters.psql_version >>
-            docker run -d --name postgresql_tmp --rm -p 5432:5432 -e POSTGRES_PASSWORD=T0pS3cr3t postgres:<< parameters.psql_version >>
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
-          name: Start FakeSMTP
-          command: |
-            docker pull gessnerfl/fake-smtp-server:1.10.4
-            docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server:1.10.4
-      - run:
-          name: Start Wiremock
-          command: |
-            docker pull wiremock/wiremock:3.13.1
-            docker run -d --rm --name wiremock -p 8181:8080 wiremock/wiremock:3.13.1 --verbose --global-response-templating
-      - run:
-          name: Start CIBA delegated service
-          command: |
-            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
-            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-      - run:
-          name: Start OpenFGA
-          command: |
-            docker pull openfga/openfga:v1.8.5
-            docker run -d --rm --name openfga -p 8090:8080 -p 8091:8081 -p 3000:3000 openfga/openfga:v1.8.5 run
+          name: Spin up stack with Postgres << parameters.psql_version >>
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
       - run:
           name: Wait services bootstrap
           command: |
@@ -730,61 +548,14 @@ jobs:
             timeout 30s bash -c 'until nc -vz localhost 8080; do sleep 2; done'
             timeout 30s bash -c 'until nc -vz localhost 8090; do sleep 2; done'
       - run:
-          name: Configure Wiremock
-          command: |
-            curl -X POST http://localhost:8181/__admin/mappings \
-              -H "Content-Type: application/json" \
-              -d '{
-                "request": {
-                  "method": "POST",
-                  "url": "/sfr"
-                },
-                "response": {
-                  "status": 200,
-                  "headers": {
-                    "Content-Type": "application/json"
-                  },
-                  "body": "{{{request.body}}}",
-                  "transformers": ["response-template"]
-                }
-              }'
-      - run:
-          name: Download plugins
-          command: |
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/resources/gravitee-am-resource-sfr/gravitee-am-resource-sfr-1.0.2.zip -o gravitee-am-resource-sfr-1.0.2.zip
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/factors/gravitee-am-factor-sms/gravitee-am-factor-sms-1.0.1.zip -o gravitee-am-factor-sms-1.0.1.zip
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/gateway/handlers/gravitee-am-gateway-handler-saml2-idp/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip -o gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
-
-            cp gravitee-am-resource-sfr-1.0.2.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
-            cp gravitee-am-factor-sms-1.0.1.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
-            cp gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
-
-            mv gravitee-am-resource-sfr-1.0.2.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
-            mv gravitee-am-factor-sms-1.0.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
-            mv gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
-
-      - run:
-          name: Spin up AM
-          command: |
-            # Start AM Management
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
-            # Start AM Gateway
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
-      - run:
           name: Run Management Jest tests (parallel)
-          command: npm --prefix gravitee-am-test run ci:management:parallel
+          command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
       - run:
           name: Run Gateway Jest tests (sequential)
-          command: npm --prefix gravitee-am-test run ci:gateway
-      - keeper/env-export:
-          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
-          var-name: SLACK_ACCESS_TOKEN
-      - slack/notify:
-          branch_pattern: ".+"
-          event: fail
-          mentions: "@am_team"
-          template: basic_fail_1
+          command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
+      - run:
+          name: Stop
+          command: npm --prefix docker/local-stack run stack:down
   run_postman_tests_mongo:
     parameters:
       mongo_version:
@@ -1323,7 +1094,7 @@ jobs:
       - run:
           name: "Maven Package Install (no tests)"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,with-mocks clean install -DskipTests
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean install -DskipTests
       - save-maven-job-cache:
           jobName: pull_requests
       - run:

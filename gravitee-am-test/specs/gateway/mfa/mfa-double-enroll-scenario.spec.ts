@@ -43,8 +43,6 @@ let smsFactor;
 let app;
 let callFactor;
 
-const sfrUrl = 'http://localhost:8181';
-
 jest.setTimeout(200000);
 
 beforeAll(async () => {
@@ -135,7 +133,7 @@ describe('MFA double enrollment scenario', () => {
 
 afterAll(async () => {
   await safeDeleteDomain(domain?.id, accessToken);
-  await performDelete(sfrUrl, '/__admin/requests', {});
+  await performDelete(process.env.SFR_URL, '/__admin/requests', {});
 });
 
 const enrollSmsFactor = async (authResponse, factor, domain, phoneNumber) => {
@@ -169,7 +167,7 @@ const createSFRResource = async (domain, accessToken) => {
     name: 'sfr',
     type: 'sfr-am-resource',
     configuration: JSON.stringify({
-      serviceHost: sfrUrl + '/sfr',
+      serviceHost: process.env.INTERNAL_SFR_URL + '/sfr',
       serviceId: '1',
       servicePassword: '1',
       spaceId: '1',
@@ -280,7 +278,7 @@ const createApp = async (domain, accessToken, smsFactorId, callFactorId) => {
 };
 const verifySmsSfrFactor = async (challenge, factor) => {
   const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
-  const code = await extractSmsCode(sfrUrl);
+  const code = await extractSmsCode(process.env.SFR_URL);
   return await postFactor(challengeResponse, factor, code);
 };
 
