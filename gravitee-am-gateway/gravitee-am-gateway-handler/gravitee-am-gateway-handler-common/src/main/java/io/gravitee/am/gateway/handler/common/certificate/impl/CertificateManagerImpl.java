@@ -129,11 +129,8 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                             logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
                             domainReadinessService.pluginLoaded(domain.getId(), certificate.getId());
                         },
-                        error -> 
-                        {
-                            logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error);
-                            domainReadinessService.pluginFailed(domain.getId(), "", error.getMessage());
-                        }
+                        error ->
+                                logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
                 );
     }
 
