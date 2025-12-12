@@ -19,6 +19,7 @@ package io.gravitee.am.monitoring;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +36,7 @@ public class DomainState {
     public enum Status {
         INITIALIZING,
         DEPLOYED,
+        REMOVING,
         FAILURE
     }
 

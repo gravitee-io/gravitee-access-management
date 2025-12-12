@@ -28,6 +28,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -78,7 +79,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
     private EnvironmentService environmentService;
 
     @Autowired
-    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+    private DomainReadinessService domainReadinessService;
 
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
@@ -240,6 +241,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             return false;
         }
         logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
+        domainReadinessService.initPluginSync(domain.getId(), reporter.getId(), io.gravitee.am.common.event.Type.REPORTER.name());
         var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
         io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
 

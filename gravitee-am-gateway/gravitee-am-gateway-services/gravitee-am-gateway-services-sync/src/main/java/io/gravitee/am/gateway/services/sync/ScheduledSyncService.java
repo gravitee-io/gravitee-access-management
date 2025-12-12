@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
+import io.gravitee.am.gateway.services.sync.api.DomainReadinessHandler;
 import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.healthcheck.ProbeManager;
@@ -34,9 +35,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ScheduledSyncService extends AbstractService implements Runnable {
 
-    /**
-     * Logger.
-     */
     private final Logger logger = LoggerFactory.getLogger(ScheduledSyncService.class);
 
     @Autowired
@@ -48,11 +46,17 @@ public class ScheduledSyncService extends AbstractService implements Runnable {
     @Value("${services.sync.enabled:true}")
     private boolean enabled;
 
+    @Value("${services.sync.probes.state.enabled:false}")
+    private boolean stateProbeEnabled;
+
     @Autowired
     private SyncManager syncStateManager;
 
     @Autowired
     private SyncProbe syncProbe;
+
+    @Autowired
+    private DomainReadinessHandler stateProbe;
 
     @Autowired
     private ProbeManager probeManager;
@@ -64,8 +68,13 @@ public class ScheduledSyncService extends AbstractService implements Runnable {
         if (enabled) {
             super.doStart();
 
-            // register the probe
+            // register the probes
             probeManager.register(syncProbe);
+
+            if (stateProbeEnabled) {
+                logger.info("Domain State probe has been enabled");
+                probeManager.register(stateProbe);
+            }
 
             // start the sync service
             logger.info("Sync service has been initialized with cron [{}]", cronTrigger);

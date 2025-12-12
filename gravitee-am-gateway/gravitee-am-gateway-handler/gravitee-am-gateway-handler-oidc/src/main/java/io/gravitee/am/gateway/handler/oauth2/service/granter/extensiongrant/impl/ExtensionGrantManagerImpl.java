@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.imp
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ExtensionGrantEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -38,6 +39,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantProviderConfiguration;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
@@ -106,6 +108,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     @Autowired
     private SubjectManager subjectManager;
 
+    @Autowired
+    private DomainReadinessService domainReadinessService;
+
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing extension grants for domain {}", domain.getName());
@@ -173,6 +178,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         ((CompositeTokenGranter) tokenGranter).removeTokenGranter(extensionGrantId);
         extensionGrants.remove(extensionGrantId);
         extensionGrantGranters.remove(extensionGrantId);
+        domainReadinessService.pluginUnloaded(domain.getId(), extensionGrantId);
         // backward compatibility, update remaining granters for the min date
         if (!extensionGrants.isEmpty()) {
             minDate = Collections.min(extensionGrants.values().stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
@@ -181,6 +187,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     }
 
     private void updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
+        domainReadinessService.initPluginSync(domain.getId(), extensionGrant.getId(), Type.EXTENSION_GRANT.name());
         try {
             if (needDeployment(extensionGrant)) {
                 AuthenticationProvider authenticationProvider = null;
@@ -200,13 +207,16 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                 ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
                 extensionGrants.put(extensionGrant.getId(), extensionGrant);
                 extensionGrantGranters.put(extensionGrant.getId(), extensionGrantGranter);
+                domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
             } else {
                 logger.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
+                domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
             }
         } catch (Exception ex) {
             // failed to load the plugin
             logger.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
             removeExtensionGrant(extensionGrant.getId());
+            domainReadinessService.pluginFailed(domain.getId(), extensionGrant.getId(), ex.getMessage());
         }
     }
 

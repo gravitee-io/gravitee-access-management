@@ -26,6 +26,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.FactorService;
@@ -46,9 +47,8 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FactorManagerImpl extends AbstractService implements FactorManager, InitializingBean, EventListener<FactorEvent, Payload> {
-
-    private static final Logger logger = LoggerFactory.getLogger(FactorManagerImpl.class);
+public class FactorManagerImpl extends AbstractService implements FactorManager, EventListener<FactorEvent, Payload>, InitializingBean {
+    static final Logger logger = LoggerFactory.getLogger(FactorManagerImpl.class);
     private final ConcurrentMap<String, FactorProvider> factorProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Factor> factors = new ConcurrentHashMap<>();
 
@@ -65,7 +65,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     private FactorPluginManager factorPluginManager;
 
     @Autowired
-    private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
+    private DomainReadinessService domainReadinessService;
 
     @Override
     public void afterPropertiesSet() {
@@ -147,6 +147,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
     }
 
     private void updateFactor(Factor factor) {
+        domainReadinessService.initPluginSync(domain.getId(), factor.getId(), Type.FACTOR.name());
         try {
             if (needDeployment(factor)) {
                 var factorProviderConfig = new ProviderConfiguration(factor.getType(), factor.getConfiguration());

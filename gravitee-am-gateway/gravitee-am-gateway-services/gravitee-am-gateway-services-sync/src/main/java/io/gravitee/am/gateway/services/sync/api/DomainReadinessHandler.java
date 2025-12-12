@@ -25,24 +25,49 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 
+
+import io.gravitee.node.api.healthcheck.Probe;
+import io.gravitee.node.api.healthcheck.Result;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 /**
  * @author GraviteeSource Team
  */
 @Slf4j
-public class DomainReadinessHandler implements Handler<RoutingContext> {
+public class DomainReadinessHandler implements Handler<RoutingContext>, Probe {
 
     @Autowired
     private DomainReadinessService domainReadinessService;
 
     @Override
+    public String id() {
+        return "domain-readiness";
+    }
+
+    @Override
+    public CompletionStage<Result> check() {
+        // Without parameter, it gives the global state of the GW (OK = all domain stable and synced)
+        if (domainReadinessService.isAllDomainsReady()) {
+            return CompletableFuture.completedFuture(Result.healthy());
+        }
+        return CompletableFuture.completedFuture(Result.notReady());
+    }
+
+    @Override
     public void handle(RoutingContext context) {
         String domainId = context.request().getParam("domainId");
+        boolean isOutputJson = "json".equals(context.request().getParam("output"));
 
         if (domainId == null) {
-            context.fail(HttpStatusCode.BAD_REQUEST_400);
+            fetchAllDomainStates(context, isOutputJson);
             return;
         }
 
+        fetchDomainState(context, domainId, isOutputJson);
+    }
+
+    private void fetchDomainState(RoutingContext context, String domainId, boolean isOutputJson) {
         var details = domainReadinessService.getDomainState(domainId);
         if (details == null) {
             context.fail(HttpStatusCode.NOT_FOUND_404);
@@ -50,16 +75,42 @@ public class DomainReadinessHandler implements Handler<RoutingContext> {
         }
 
         if (details.isSynchronized() && details.isStable()) {
-            context.response()
-                    .setStatusCode(HttpStatusCode.OK_200)
-                    .end();
+            context.response().setStatusCode(HttpStatusCode.OK_200);
+            if (isOutputJson) {
+                context.response()
+                        .putHeader("content-type", MediaType.APPLICATION_JSON)
+                        .end(Json.encode(details));
+            } else {
+                context.response().end();
+            }
         } else {
             log.debug("Domain {} is not ready (stable: {}, synchronized: {})", domainId, details.isStable(),
                     details.isSynchronized());
             context.response()
                     .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
-                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                    .putHeader("content-type", MediaType.APPLICATION_JSON)
                     .end(Json.encode(details));
+        }
+    }
+
+    private void fetchAllDomainStates(RoutingContext context, boolean isOutputJson) {
+        String content = null;
+        if (isOutputJson) {
+            content = Json.encode(domainReadinessService.getDomainStates());
+        }
+
+        if (domainReadinessService.isAllDomainsReady()) {
+            context.response().setStatusCode(HttpStatusCode.OK_200);
+        } else {
+            context.response().setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503);
+        }
+
+        if (content != null) {
+            context.response()
+                    .putHeader("content-type", MediaType.APPLICATION_JSON)
+                    .end(content);
+        } else {
+            context.response().end();
         }
     }
 }
