@@ -250,7 +250,7 @@ public class SyncManager implements InitializingBean {
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
                     // Track event start
                     if (event.getPayload() != null && event.getPayload().getReferenceType() == io.gravitee.am.model.ReferenceType.DOMAIN && PLUGIN_TYPES.contains(event.getType())) {
-                        logger.info("Initializing Plugin State {} - {}", event.getType().name(), event.getPayload().getId());
+                        logger.info("Initializing Plugin State domain:{} type:{} - id:{}",event.getPayload().getReferenceId(), event.getType().name(), event.getPayload().getId());
                         domainReadinessService.initPluginSync(event.getPayload().getReferenceId(), event.getPayload().getId(), event.getType().name());
                     }
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
@@ -264,9 +264,9 @@ public class SyncManager implements InitializingBean {
     private void synchronizeDomain(Event event) {
         final String domainId = event.getPayload().getId();
         final Action action = event.getPayload().getAction();
-        domainReadinessService.updateDomainStatus(domainId, DomainState.Status.INITIALIZING);
         switch (action) {
             case CREATE, UPDATE -> {
+                domainReadinessService.updateDomainStatus(domainId, DomainState.Status.INITIALIZING);
                 Maybe<Domain> maybeDomain = domainRepository.findById(domainId);
                 if (this.eventsTimeOut > 0) {
                     maybeDomain = maybeDomain.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
@@ -299,6 +299,7 @@ public class SyncManager implements InitializingBean {
                 domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
             }
             case DELETE -> {
+                domainReadinessService.updateDomainStatus(domainId, DomainState.Status.REMOVING);
                 securityDomainManager.undeploy(domainId);
                 domainReadinessService.removeDomain(domainId);
             }

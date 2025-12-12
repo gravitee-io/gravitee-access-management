@@ -22,6 +22,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.service.FactorService;
 import io.reactivex.rxjava3.core.Flowable;
@@ -58,6 +59,9 @@ public class FactorManagerTest {
 
     @Mock
     private FactorPluginManager factorPluginManager;
+
+    @Mock
+    private DomainReadinessService domainReadinessService;
 
     @InjectMocks
     private FactorManagerImpl factorMng = new FactorManagerImpl();

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.manager.deviceidentifiers;
 
 import io.gravitee.am.common.event.DeviceIdentifierEvent;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.Domain;
@@ -25,6 +26,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.DeviceIdentifierService;
@@ -68,6 +70,9 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
 
     @Autowired
     private DeviceIdentifierPluginManager deviceIdentifierPluginManager;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     public ConcurrentMap<String, DeviceIdentifier> getDeviceIdentifiers() {
         return deviceIdentifiers;
@@ -113,7 +118,7 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
                     updateDeviceIdentifier(event.content().getId(), event.type());
                     break;
                 case UNDEPLOY:
-                    removeBotDetection(event.content().getId());
+                    removeDeviceIdentifier(event.content().getId());
                     break;
             }
         }
@@ -128,13 +133,15 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
                 () -> LOGGER.error("No Device identifier found with id {}", deviceIdentifierId));
     }
 
-    private void removeBotDetection(String pluginId) {
+    private void removeDeviceIdentifier(String pluginId) {
         LOGGER.info("Domain {} has received event, remove Device identifier {}", domain.getName(), pluginId);
         deviceIdentifiers.remove(pluginId);
         providers.remove(pluginId);
+        domainReadinessService.pluginUnloaded(domain.getId(), pluginId);
     }
 
     private void updateDeviceIdentifier(DeviceIdentifier detection) {
+        domainReadinessService.initPluginSync(domain.getId(), detection.getId(), Type.DEVICE_IDENTIFIER.name());
         try {
             if (needDeployment(detection)) {
                 var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
@@ -142,12 +149,15 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
                 this.deviceIdentifiers.put(detection.getId(), detection);
                 this.providers.put(detection.getId(), provider);
                 LOGGER.info("Device identifier {} loaded for domain {}", detection.getName(), domain.getName());
+                domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             } else {
                 LOGGER.info("Device identifier {} already loaded for domain {}", detection.getName(), domain.getName());
+                domainReadinessService.pluginLoaded(domain.getId(), detection.getId());
             }
         } catch (Exception ex) {
             this.providers.remove(detection.getId());
             LOGGER.error("Unable to create Device identifier provider for domain {}", domain.getName(), ex);
+            domainReadinessService.pluginFailed(domain.getId(), detection.getId(), ex.getMessage());
         }
     }
 
