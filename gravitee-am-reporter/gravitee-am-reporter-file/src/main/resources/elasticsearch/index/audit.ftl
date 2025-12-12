@@ -6,7 +6,9 @@
   "event_id" : "${audit.getId()}",
   "event_type":"${audit.getType()}",
   "organizationId":"${audit.getOrganizationId()}",
-  "environmentId":"${audit.getEnvironmentId()}",
+  <#if audit.getEnvironmentId()??>
+    "environmentId":"${audit.getEnvironmentId()}",
+  </#if>
   "transactionId":"${audit.getTransactionId()}",
   <#if audit.getNodeId()??>
     "nodeId":"${audit.getNodeId()?j_string}",
