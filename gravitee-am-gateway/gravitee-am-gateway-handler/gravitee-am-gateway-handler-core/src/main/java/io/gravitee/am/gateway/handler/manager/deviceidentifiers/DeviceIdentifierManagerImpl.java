@@ -90,7 +90,11 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
                             updateDeviceIdentifier(remeberDevice);
                             LOGGER.info("Device identifier {} loaded for domain {}", remeberDevice.getName(), domain.getName());
                         },
-                        error -> LOGGER.error("Unable to initialize device identifiers for domain {}", domain.getName(), error));
+                        error ->
+                        {
+                            LOGGER.error("Unable to initialize device identifiers for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.DEVICE_IDENTIFIER.name(), error.getMessage());
+                        });
     }
 
     @Override

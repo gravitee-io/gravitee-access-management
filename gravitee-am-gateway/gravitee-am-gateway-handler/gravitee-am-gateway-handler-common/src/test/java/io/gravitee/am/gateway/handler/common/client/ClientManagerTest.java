@@ -167,7 +167,7 @@ public class ClientManagerTest {
         TestObserver<Client> testObserver = new TestObserver<>();
         testObserver.await(5, TimeUnit.SECONDS);
 
-        verify(domainReadinessService).pluginInitFailed("domain-id", "manager", "Database error");
+        verify(domainReadinessService).pluginInitFailed("domain-id", "APPLICATION", "Database error");
     }
 
     @Test

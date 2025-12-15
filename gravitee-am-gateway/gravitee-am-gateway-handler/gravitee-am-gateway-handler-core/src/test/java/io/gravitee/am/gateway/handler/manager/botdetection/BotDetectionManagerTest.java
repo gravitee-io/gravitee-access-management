@@ -25,8 +25,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.service.BotDetectionService;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import java.util.Map;
 
@@ -54,6 +59,15 @@ public class BotDetectionManagerTest {
     @Spy
     private ObjectMapper mapper = new ObjectMapper();
 
+    @Mock
+    private DomainReadinessService domainReadinessService;
+
+    @Mock
+    private BotDetectionService botDetectionService;
+
+    @Mock
+    private Domain domain;
+
     private BotDetection botDetection = new BotDetection();
 
     @Before
@@ -61,6 +75,17 @@ public class BotDetectionManagerTest {
         botDetection.setConfiguration("{\"key\": \"value\"}");
         botDetection.setType(BOT_DETECTION_PLUGIN_TYPE);
         cut.getBotDetections().put(BOT_DETECTION_PLUGIN, botDetection);
+    }
+
+    @Test
+    public void shouldHandleInitializationError() {
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("domain-name");
+        when(botDetectionService.findByDomain("domain-id")).thenReturn(io.reactivex.rxjava3.core.Flowable.error(new RuntimeException("DB Error")));
+
+        cut.afterPropertiesSet();
+
+        org.mockito.Mockito.verify(domainReadinessService).pluginInitFailed("domain-id", io.gravitee.am.common.event.Type.BOT_DETECTION.name(), "DB Error");
     }
 
     @Test

@@ -139,7 +139,7 @@ class AuthorizationEngineManagerImplTest {
         // then
         verify(authorizationEngineRepository, times(1)).findByDomain("domain-id");
         verify(domainReadinessService, never()).pluginLoaded(any(), any());
-        verify(domainReadinessService, never()).pluginFailed(any(), any(), any());
+        verify(domainReadinessService).pluginInitFailed("domain-id", "AUTHORIZATION_ENGINE", "Database error");
     }
 
     @Test

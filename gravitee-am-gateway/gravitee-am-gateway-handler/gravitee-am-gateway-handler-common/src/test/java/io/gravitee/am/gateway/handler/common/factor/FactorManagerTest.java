@@ -156,4 +156,14 @@ public class FactorManagerTest {
         verify(domainReadinessService).initPluginSync(DOMAIN_ID, "error-factor", Type.FACTOR.name());
         verify(domainReadinessService).pluginFailed(DOMAIN_ID, "error-factor", "Error loading factor");
     }
+
+    @Test
+    public void shouldHandleInitializationError() {
+        when(domain.getId()).thenReturn(DOMAIN_ID);
+        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.error(new RuntimeException("DB Error")));
+
+        factorMng.afterPropertiesSet();
+
+        verify(domainReadinessService).pluginInitFailed(DOMAIN_ID, Type.FACTOR.name(), "DB Error");
+    }
 }
