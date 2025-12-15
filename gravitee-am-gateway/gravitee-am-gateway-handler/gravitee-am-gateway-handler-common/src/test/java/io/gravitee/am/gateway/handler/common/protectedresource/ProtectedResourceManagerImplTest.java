@@ -42,8 +42,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import io.gravitee.am.common.event.Type;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -100,6 +104,8 @@ public class ProtectedResourceManagerImplTest {
         manager.onEvent(event);
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(manager.entities().size()).isEqualTo(3));
+        verify(domainReadinessService).initPluginSync(eq("domain_id"), eq("res_id"), eq(Type.PROTECTED_RESOURCE.name()));
+        verify(domainReadinessService).pluginLoaded(eq("domain_id"), eq("res_id"));
     }
 
     @Test
@@ -118,6 +124,9 @@ public class ProtectedResourceManagerImplTest {
 
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(manager.entities().size()).isEqualTo(1));
+        
+        verify(domainReadinessService).initPluginSync(eq("domain_id"), eq("res_id"), eq(Type.PROTECTED_RESOURCE.name()));
+        verify(domainReadinessService).pluginLoaded(eq("domain_id"), eq("res_id"));
     }
 
     @Test
@@ -155,6 +164,9 @@ public class ProtectedResourceManagerImplTest {
 
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(manager.entities().size()).isEqualTo(3));
+        
+        verify(domainReadinessService).initPluginSync(eq("domain_id"), eq("deploy_res"), eq(Type.PROTECTED_RESOURCE.name()));
+        verify(domainReadinessService).pluginLoaded(eq("domain_id"), eq("deploy_res"));
     }
 
     @Test
@@ -171,6 +183,7 @@ public class ProtectedResourceManagerImplTest {
                     assertThat(manager.entities().size()).isEqualTo(1);
                     assertThat(manager.get("resource1")).isNull();
                 });
+        verify(domainReadinessService).pluginUnloaded(eq("domain_id"), eq("resource1"));
     }
 
     @Test
@@ -292,6 +305,9 @@ public class ProtectedResourceManagerImplTest {
         await().pollDelay(100, TimeUnit.MILLISECONDS)
                 .atMost(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(manager.entities().size()).isEqualTo(initialSize));
+        
+        verify(domainReadinessService).initPluginSync(eq("domain_id"), eq("error_res"), eq(Type.PROTECTED_RESOURCE.name()));
+        verify(domainReadinessService).pluginFailed(eq("domain_id"), eq("error_res"), eq("Database error"));
     }
 
     @Test

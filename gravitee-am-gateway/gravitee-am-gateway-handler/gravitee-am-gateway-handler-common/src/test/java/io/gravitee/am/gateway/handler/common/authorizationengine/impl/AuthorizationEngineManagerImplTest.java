@@ -121,6 +121,8 @@ class AuthorizationEngineManagerImplTest {
         // then - give async operation time to complete
         verify(authorizationEngineRepository, timeout(1000).times(1)).findByDomain("domain-id");
         verify(authorizationEnginePluginManager, timeout(1000).times(1)).create(any(ProviderConfiguration.class));
+        verify(domainReadinessService, timeout(1000).times(1)).initPluginSync("domain-id", "engine-id", "AUTHORIZATION_ENGINE");
+        verify(domainReadinessService, timeout(1000).times(1)).pluginLoaded("domain-id", "engine-id");
     }
 
     @Test
@@ -136,6 +138,8 @@ class AuthorizationEngineManagerImplTest {
 
         // then
         verify(authorizationEngineRepository, times(1)).findByDomain("domain-id");
+        verify(domainReadinessService, never()).pluginLoaded(any(), any());
+        verify(domainReadinessService, never()).pluginFailed(any(), any(), any());
     }
 
     @Test
@@ -215,6 +219,8 @@ class AuthorizationEngineManagerImplTest {
         // then - give async operation time to complete
         verify(authorizationEngineRepository, timeout(1000).times(1)).findById("engine-id");
         verify(authorizationEnginePluginManager, timeout(1000).times(1)).create(any(ProviderConfiguration.class));
+        verify(domainReadinessService, timeout(1000).times(1)).initPluginSync("domain-id", "engine-id", "AUTHORIZATION_ENGINE");
+        verify(domainReadinessService, timeout(1000).times(1)).pluginLoaded("domain-id", "engine-id");
     }
 
     @Test
@@ -238,6 +244,8 @@ class AuthorizationEngineManagerImplTest {
         // then
         verify(authorizationEngineRepository, timeout(1000).times(1)).findById("engine-id");
         verify(authorizationEnginePluginManager, timeout(1000).times(1)).create(any(ProviderConfiguration.class));
+        verify(domainReadinessService, timeout(1000).times(1)).initPluginSync("domain-id", "engine-id", "AUTHORIZATION_ENGINE");
+        verify(domainReadinessService, timeout(1000).times(1)).pluginLoaded("domain-id", "engine-id");
     }
 
     @Test
@@ -264,6 +272,7 @@ class AuthorizationEngineManagerImplTest {
         TestObserver<AuthorizationEngineProvider> observer = manager.get("engine-id").test();
         observer.assertNoValues();
         verify(mockProvider, times(1)).stop();
+        verify(domainReadinessService, times(1)).pluginUnloaded("domain-id", "engine-id");
     }
 
     @Test
@@ -337,6 +346,8 @@ class AuthorizationEngineManagerImplTest {
 
         // then - should handle the error gracefully
         verify(authorizationEngineRepository, timeout(1000).times(1)).findById("engine-id");
+        verify(domainReadinessService, timeout(1000).times(1)).initPluginSync("domain-id", "engine-id", "AUTHORIZATION_ENGINE");
+        verify(domainReadinessService, timeout(1000).times(1)).pluginFailed(eq("domain-id"), eq("engine-id"), any());
 
         // Provider should not be in cache
         TestObserver<AuthorizationEngineProvider> observer = manager.get("engine-id").test();
@@ -418,6 +429,7 @@ class AuthorizationEngineManagerImplTest {
 
         // then
         verify(mockProvider, times(1)).stop();
+        verify(domainReadinessService, times(1)).pluginUnloaded("domain-id", "engine-id");
 
         // Provider should be cleared
         TestObserver<AuthorizationEngineProvider> observer = manager.get("engine-id").test();
