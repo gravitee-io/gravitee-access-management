@@ -19,7 +19,6 @@ package io.gravitee.am.monitoring;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +36,7 @@ public class DomainState {
         INITIALIZING,
         DEPLOYED,
         REMOVING,
-        FAILURE
+        ERROR
     }
 
     private volatile Status status = Status.INITIALIZING;
