@@ -30,6 +30,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.BotDetectionService;
@@ -95,7 +96,10 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
                             updateBotDetection(detection);
                             LOGGER.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
                         },
-                        error -> LOGGER.error("Unable to initialize bot detections for domain {}", domain.getName(), error));
+                        error -> {
+                            LOGGER.error("Unable to initialize bot detections for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.BOT_DETECTION.name(), error.getMessage());
+                        });
     }
 
     @Override
@@ -168,8 +172,14 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         botDetectionService.findById(pluginId)
                 .subscribe(
                         this::updateBotDetection,
-                        error -> LOGGER.error("Unable to load bot detection for domain {}", domain.getName(), error),
-                        () -> LOGGER.error("No bot detection found with id {}", pluginId));
+                        error -> {
+                            LOGGER.error("Unable to load bot detection for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), pluginId, error.getMessage());
+                        },
+                        () -> {
+                            LOGGER.error("No bot detection found with id {}", pluginId);
+                            domainReadinessService.pluginFailed(domain.getId(), pluginId, "No bot detection found with id " + pluginId);
+                        });
     }
 
     private void removeBotDetection(String pluginId) {

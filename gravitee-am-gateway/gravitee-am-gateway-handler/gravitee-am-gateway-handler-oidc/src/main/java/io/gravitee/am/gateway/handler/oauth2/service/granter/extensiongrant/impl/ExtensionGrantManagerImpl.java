@@ -127,7 +127,10 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                             updateExtensionGrantProvider(extensionGrant);
                             logger.info("Extension grants loaded for domain {}", domain.getName());
                         },
-                        error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error));
+                        error -> {
+                            logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.EXTENSION_GRANT.name(), error.getMessage());
+                        });
 
         logger.info("Register event listener for extension grant events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ExtensionGrantEvent.class, domain.getId());
@@ -151,6 +154,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     break;
                 case UNDEPLOY:
                     removeExtensionGrant(event.content().getId());
+                    domainReadinessService.pluginUnloaded(domain.getId(), event.content().getId());
                     break;
             }
         }
@@ -178,7 +182,6 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         ((CompositeTokenGranter) tokenGranter).removeTokenGranter(extensionGrantId);
         extensionGrants.remove(extensionGrantId);
         extensionGrantGranters.remove(extensionGrantId);
-        domainReadinessService.pluginUnloaded(domain.getId(), extensionGrantId);
         // backward compatibility, update remaining granters for the min date
         if (!extensionGrants.isEmpty()) {
             minDate = Collections.min(extensionGrants.values().stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));

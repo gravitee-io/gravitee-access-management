@@ -50,6 +50,17 @@ public interface DomainReadinessService {
     void pluginFailed(String domainId, String pluginId, String message);
 
     /**
+     * Mark a plugin as failed to initialize.
+     * This combines initialization and failure reporting for scenarios where the plugin
+     * failed before it could be fully loaded/identified (e.g. database error fetching plugins).
+     *
+     * @param domainId Domain ID.
+     * @param pluginType Plugin Type (used as ID).
+     * @param message Failure message.
+     */
+    void pluginInitFailed(String domainId, String pluginType, String message);
+
+    /**
      * Remove a plugin from matching.
      * @param domainId Domain ID.
      * @param pluginId Plugin ID.

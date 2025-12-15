@@ -87,7 +87,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                         },
                         error -> {
                             logger.error("An error has occurred when loading applications for domain {}", domain.getName(), error);
-                            domainReadinessService.pluginFailed(domain.getId(), "", error.getMessage());
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.APPLICATION.name(), error.getMessage());
                         }
                 );
     }
@@ -186,7 +186,10 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                             logger.error("An error has occurred when loading application {} for domain {}", applicationId, domain.getName(), error);
                             domainReadinessService.pluginFailed(domain.getId(), applicationId, error.getMessage());
                         },
-                        () -> logger.error("No application found with id {}", applicationId));
+                        () -> {
+                            logger.error("No application found with id {}", applicationId);
+                            domainReadinessService.pluginUnloaded(domain.getId(), applicationId);
+                        });
     }
 
     private void removeClient(String applicationId) {

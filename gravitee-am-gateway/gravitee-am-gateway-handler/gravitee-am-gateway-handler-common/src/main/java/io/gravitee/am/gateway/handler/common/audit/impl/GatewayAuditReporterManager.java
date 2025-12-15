@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.audit.impl;
 import io.gravitee.am.common.event.EventManager;
 
 import io.gravitee.am.common.event.ReporterEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.service.DomainAwareListener;
@@ -115,6 +116,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }, err -> {
             // Could not deploy
             logger.error("Reporter service can not be started", err);
+            domainReadinessService.pluginInitFailed(domain.getId(), Type.REPORTER.name(), err.getMessage());
         });
     }
 

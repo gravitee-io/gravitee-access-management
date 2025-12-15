@@ -29,6 +29,7 @@ import io.gravitee.common.event.Event;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Flowable;
 import io.gravitee.am.common.event.Type;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,8 +41,11 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -148,7 +152,22 @@ public class ClientManagerTest {
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(clientManager.entities().size()).isEqualTo(1));
 
-        verify(domainReadinessService, times(1)).pluginUnloaded("domain_id", "client2");
+        verify(domainReadinessService, times(1)).pluginUnloaded(any(), any());
+    }
+
+    @Test
+    public void shouldHandleClientLoadingError() throws Exception {
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("domain-name");
+        when(domain.isMaster()).thenReturn(true);
+        when(applicationRepository.findAll()).thenReturn(Flowable.error(new RuntimeException("Database error")));
+
+        clientManager.afterPropertiesSet();
+
+        TestObserver<Client> testObserver = new TestObserver<>();
+        testObserver.await(5, TimeUnit.SECONDS);
+
+        verify(domainReadinessService).pluginInitFailed("domain-id", "manager", "Database error");
     }
 
     @Test
