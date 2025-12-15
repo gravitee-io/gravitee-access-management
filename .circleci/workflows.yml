@@ -471,7 +471,7 @@ jobs:
       - checkout:
           method: full
       - keeper/env-export:
-          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: Install test module dependencies
@@ -521,7 +521,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - keeper/env-export:
-          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: Install test module dependencies
@@ -569,7 +569,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - keeper/env-export:
-          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: Install Newman
@@ -628,7 +628,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - keeper/env-export:
-          secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
           name: Install Newman
