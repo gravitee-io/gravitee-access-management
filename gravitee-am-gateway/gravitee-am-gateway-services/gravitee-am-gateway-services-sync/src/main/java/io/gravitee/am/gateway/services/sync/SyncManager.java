@@ -80,15 +80,6 @@ public class SyncManager implements InitializingBean {
     private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
     private static final String DATAPLANE_ID_PROPERTY = Scope.GATEWAY.getRepositoryPropertyKey()+".dataPlane.id";
     private static final String SEPARATOR = ",";
-    private static final Set<Type> PLUGIN_TYPES = Set.of(
-            Type.IDENTITY_PROVIDER,
-            Type.CERTIFICATE,
-            Type.FACTOR,
-            Type.REPORTER,
-            Type.AUTHORIZATION_ENGINE,
-            Type.PROTECTED_RESOURCE,
-            Type.APPLICATION
-    );
 
     @Autowired
     private EventManager eventManager;

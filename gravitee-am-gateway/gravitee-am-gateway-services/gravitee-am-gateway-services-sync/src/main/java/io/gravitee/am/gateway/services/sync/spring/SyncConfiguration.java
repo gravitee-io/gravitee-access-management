@@ -18,8 +18,6 @@ package io.gravitee.am.gateway.services.sync.spring;
 import io.gravitee.am.gateway.services.sync.SyncManager;
 import io.gravitee.am.gateway.services.sync.api.DomainReadinessHandler;
 import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
-import io.gravitee.am.monitoring.DomainReadinessService;
-import io.gravitee.am.monitoring.DomainReadinessServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
