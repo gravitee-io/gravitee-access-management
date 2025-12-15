@@ -608,6 +608,8 @@ liquibase:
 #  timeUnit: Minutes
 
 #applications:
+#  signing:
+#    fallback-to-hmac-signature: true
 #  secret:
 #    # Algorithms used to hash the client secret.
 #    # Can be one of :

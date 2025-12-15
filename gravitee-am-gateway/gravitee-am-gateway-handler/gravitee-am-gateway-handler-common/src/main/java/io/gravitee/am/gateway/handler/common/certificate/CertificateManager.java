@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.common.certificate;
 
+import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Collection;
 
@@ -36,4 +39,14 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
     CertificateProvider defaultCertificateProvider();
 
     CertificateProvider noneAlgorithmCertificateProvider();
+
+    default Single<CertificateProvider> getClientCertificateProvider(Client client, boolean fallbackToHmacSignature) {
+        if(client.getCertificate() == null) {
+            return Single.just(defaultCertificateProvider());
+        }
+        return get(client.getCertificate())
+                .switchIfEmpty(fallbackToHmacSignature ?
+                        Single.just(defaultCertificateProvider()) :
+                        Single.error(new TemporarilyUnavailableException("The certificate cannot be loaded")));
+    }
 }
