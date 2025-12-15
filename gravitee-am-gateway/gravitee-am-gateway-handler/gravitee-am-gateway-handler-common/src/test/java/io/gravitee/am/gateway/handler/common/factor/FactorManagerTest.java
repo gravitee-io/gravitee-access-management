@@ -25,7 +25,13 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.service.FactorService;
+import io.gravitee.am.common.event.FactorEvent;
+import io.gravitee.am.common.event.Type;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.common.event.Event;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,12 +40,12 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
-import java.util.Set;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -74,6 +80,8 @@ public class FactorManagerTest {
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(factor));
         when(factorPluginManager.create(any())).thenReturn(mock(FactorProvider.class));
         factorMng.afterPropertiesSet();
+        verify(domainReadinessService).initPluginSync(DOMAIN_ID, FACTOR_ID, Type.FACTOR.name());
+        verify(domainReadinessService).pluginLoaded(DOMAIN_ID, FACTOR_ID);
     }
 
     @Test
@@ -103,5 +111,49 @@ public class FactorManagerTest {
     @Test
     public void shouldNotProvideActiveFactor_noClient() {
         assertFalse(factorMng.getClientFactor(null, "inactive-factor").isPresent());
+    }
+
+
+    @Test
+    public void shouldUpdateFactor() {
+        Factor factor = new Factor();
+        factor.setId("update-factor");
+        factor.setName("update-factor-name");
+        when(factorService.findById("update-factor")).thenReturn(Maybe.just(factor));
+        when(factorPluginManager.create(any())).thenReturn(mock(FactorProvider.class));
+
+        Event<FactorEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(FactorEvent.UPDATE);
+        when(event.content()).thenReturn(new Payload("update-factor", ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.UPDATE));
+
+        factorMng.onEvent(event);
+
+        verify(domainReadinessService, times(2)).initPluginSync(DOMAIN_ID, "update-factor", Type.FACTOR.name());
+        verify(domainReadinessService).pluginLoaded(DOMAIN_ID, "update-factor");
+    }
+
+    @Test
+    public void shouldRemoveFactor() {
+        Event<FactorEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(FactorEvent.UNDEPLOY);
+        when(event.content()).thenReturn(new Payload(FACTOR_ID, ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.DELETE));
+
+        factorMng.onEvent(event);
+
+        verify(domainReadinessService).pluginUnloaded(DOMAIN_ID, FACTOR_ID);
+    }
+
+    @Test
+    public void shouldHandleFactorError() {
+        when(factorService.findById("error-factor")).thenReturn(Maybe.error(new RuntimeException("Error loading factor")));
+
+        Event<FactorEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(FactorEvent.UPDATE);
+        when(event.content()).thenReturn(new Payload("error-factor", ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.UPDATE));
+
+        factorMng.onEvent(event);
+
+        verify(domainReadinessService).initPluginSync(DOMAIN_ID, "error-factor", Type.FACTOR.name());
+        verify(domainReadinessService).pluginFailed(DOMAIN_ID, "error-factor", "Error loading factor");
     }
 }

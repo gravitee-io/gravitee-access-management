@@ -27,6 +27,8 @@ import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.common.event.Event;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.gravitee.am.common.event.Type;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +40,11 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -84,6 +91,23 @@ public class ClientManagerTest {
     }
 
     @Test
+    public void shouldInitializeClients() throws Exception {
+        Application application = new Application();
+        application.setId("client_id");
+        application.setEnabled(true);
+
+        when(applicationRepository.findByDomain("domain_id")).thenReturn(Flowable.just(application));
+
+        clientManager.afterPropertiesSet();
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(clientManager.entities().size()).isEqualTo(3));
+
+        verify(domainReadinessService, times(1)).initPluginSync("domain_id", "client_id", Type.APPLICATION.name());
+        verify(domainReadinessService, times(1)).pluginLoaded("domain_id", "client_id");
+    }
+
+    @Test
     public void shouldNotDeployDisabledClient() {
         Application application = new Application();
         application.setId("client_id");
@@ -93,6 +117,9 @@ public class ClientManagerTest {
         clientManager.onEvent(event);
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(clientManager.entities().size()).isEqualTo(2));
+
+        verify(domainReadinessService, never()).initPluginSync(eq("domain_id"), eq("client_id"), anyString());
+        verify(domainReadinessService, never()).pluginLoaded("domain_id", "client_id");
     }
 
     @Test
@@ -105,6 +132,9 @@ public class ClientManagerTest {
         clientManager.onEvent(event);
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(clientManager.entities().size()).isEqualTo(3));
+        
+        verify(domainReadinessService, times(1)).initPluginSync("domain_id", "client_id", Type.APPLICATION.name());
+        verify(domainReadinessService, times(1)).pluginLoaded("domain_id", "client_id");
     }
 
     @Test
@@ -117,5 +147,19 @@ public class ClientManagerTest {
         clientManager.onEvent(event);
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(clientManager.entities().size()).isEqualTo(1));
+
+        verify(domainReadinessService, times(1)).pluginUnloaded("domain_id", "client2");
+    }
+
+    @Test
+    public void shouldHandleDeploymentFailure() {
+        when(applicationRepository.findById("client_failure")).thenReturn(Maybe.error(new RuntimeException("Connection failed")));
+        when(payload.getId()).thenReturn("client_failure");
+        
+        clientManager.onEvent(event);
+        
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(domainReadinessService, times(1))
+                        .pluginFailed(eq("domain_id"), eq("client_failure"), eq("Connection failed")));
     }
 }

@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -53,6 +54,7 @@ import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 import static java.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -118,6 +120,7 @@ public class SyncManagerTest {
         verify(securityDomainManager, never()).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
+        verify(domainReadinessService, never()).updateDomainStatus(any(), any());
     }
 
     @Test
@@ -145,6 +148,7 @@ public class SyncManagerTest {
         verify(securityDomainManager, times(1)).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
+        verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.DEPLOYED));
     }
 
     @Test
@@ -242,6 +246,8 @@ public class SyncManagerTest {
         verify(securityDomainManager, times(1)).deploy(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, times(1)).undeploy(domain.getId());
+        verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.REMOVING));
+        verify(domainReadinessService).removeDomain(eq("domain-1"));
     }
 
     @Test
@@ -276,6 +282,8 @@ public class SyncManagerTest {
         verify(securityDomainManager, times(1)).deploy(any());
         verify(securityDomainManager, times(1)).update(any());
         verify(securityDomainManager, never()).undeploy(domain.getId());
+        verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.INITIALIZING));
+        verify(domainReadinessService, times(2)).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.DEPLOYED));
     }
 
     @Test
