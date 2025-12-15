@@ -68,8 +68,8 @@ public class SyncConfiguration {
 
         @Override
         public void afterPropertiesSet() {
-            reactor.route().get("/_internal/domains").handler(handler);
-            reactor.route().get("/_internal/domains/:domainId").handler(handler);
+            reactor.route().get("/_node/domains").handler(handler);
+            reactor.route().get("/_node/domains/:domainId").handler(handler);
         }
     }
 }
