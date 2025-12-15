@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.spring;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.GatewayAuditReporterManager;
@@ -85,10 +86,9 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.annotation.PostConstruct;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -112,8 +112,7 @@ import java.util.concurrent.TimeUnit;
         ContextConfiguration.class,
         RiskAssessmentConfiguration.class})
 public class CommonConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonConfiguration.class);
-
+    public static final String FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY = "applications.signing.fallback-to-hmac-signature";
 
     @Autowired
     private Environment environment;
@@ -168,8 +167,11 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public JWTService jwtService() {
-        return new JWTServiceImpl();
+    public JWTService jwtService(
+            CertificateManager certificateManager,
+            ObjectMapper objectMapper,
+            @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":true}") Boolean fallbackToHmacSignature) {
+        return new JWTServiceImpl(certificateManager, objectMapper, fallbackToHmacSignature);
     }
 
     @Bean

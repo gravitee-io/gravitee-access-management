@@ -82,9 +82,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     @Autowired
     private CertificateProviderManager certificateProviderManager;
 
-    private CertificateProvider defaultCertificateProvider;
+    CertificateProvider defaultCertificateProvider;
 
-    private CertificateProvider noneAlgorithmCertificateProvider;
+    CertificateProvider noneAlgorithmCertificateProvider;
 
     private final ConcurrentMap<String, Certificate> certificates = new ConcurrentHashMap<>();
 
