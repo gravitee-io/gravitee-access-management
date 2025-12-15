@@ -84,7 +84,7 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
                         },
                         error -> {
                             log.error("An error has occurred when loading protected resources for domain {}", domain.getName(), error);
-                            domainReadinessService.pluginFailed(domain.getId(), "", error.getMessage());
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.PROTECTED_RESOURCE.name(), error.getMessage());
                         }
                 );
     }
