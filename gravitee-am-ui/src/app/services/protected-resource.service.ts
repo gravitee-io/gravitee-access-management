@@ -78,18 +78,15 @@ export interface ProtectedResourcePrimaryData {
 
 export interface ProtectedResource extends ProtectedResourcePrimaryData {
   description?: string;
-
   domainId: string;
   clientId: string;
-
-  updatedAt: string;
-  createdAt: string;
 }
 
 export interface ProtectedResourceFeature {
   key: string;
   description: string;
   type: ProtectedResourceFeatureType;
+  createdAt?: string;
 }
 
 export interface NewProtectedResourceRequest {

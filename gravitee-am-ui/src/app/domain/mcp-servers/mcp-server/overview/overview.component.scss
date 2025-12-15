@@ -6,6 +6,7 @@
 }
 
 .mcp-details {
+  margin-top: 15px;
   margin-bottom: 10px;
 
   span {
@@ -46,5 +47,28 @@
       word-break: break-word;
       word-wrap: break-word;
     }
+  }
+}
+
+.tools-header {
+  .tools-header-content {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+
+    h5 {
+      margin: 0;
+    }
+  }
+}
+
+.tools-chips {
+  margin-top: 16px;
+
+  mat-chip-listbox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }

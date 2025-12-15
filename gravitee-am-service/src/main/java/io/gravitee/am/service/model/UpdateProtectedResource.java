@@ -28,14 +28,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static io.gravitee.am.service.model.NewProtectedResource.NAME_MAX_LENGTH;
-
 @Getter
 @Setter
 public class UpdateProtectedResource {
 
     @NotBlank
-    @Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters")
+    @Size(min = 1, max = NewProtectedResource.NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
     @Pattern(regexp = NewProtectedResource.NAME_PATTERN, message = "Name must begin with a non-whitespace character")
     private String name;
 

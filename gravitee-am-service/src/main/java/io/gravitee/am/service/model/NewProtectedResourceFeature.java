@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.gravitee.am.model.ProtectedResourceFeature;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -36,8 +37,13 @@ import org.apache.commons.lang3.StringUtils;
 @Setter
 public class NewProtectedResourceFeature {
 
+    public static final int KEY_MAX_LENGTH = 64;
+
+    public static final String KEY_PATTERN = "^[a-zA-Z0-9_-]+$";
+
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "must match regex ^[a-zA-Z0-9_-]+$")
+    @Size(min = 1, max = KEY_MAX_LENGTH, message = "Key must be between {min} and {max} characters")
+    @Pattern(regexp = KEY_PATTERN, message = "must match regex ^[a-zA-Z0-9_-]+$")
     private String key;
 
     private String description;

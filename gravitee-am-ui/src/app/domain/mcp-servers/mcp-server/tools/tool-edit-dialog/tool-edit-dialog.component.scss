@@ -20,4 +20,38 @@
     display: flex;
     justify-content: flex-end;
   }
+
+  .uncommitted-scope-outline {
+    ::ng-deep {
+      .mat-mdc-text-field-wrapper {
+        .mdc-notched-outline {
+          .mdc-notched-outline__leading {
+            border-color: var(--mdc-outlined-text-field-error-outline-color) !important;
+          }
+
+          .mdc-notched-outline__notch {
+            border-top-color: var(--mdc-outlined-text-field-error-outline-color) !important;
+            border-bottom-color: var(--mdc-outlined-text-field-error-outline-color) !important;
+          }
+
+          .mdc-notched-outline__trailing {
+            border-color: var(--mdc-outlined-text-field-error-outline-color) !important;
+          }
+        }
+      }
+
+      .mat-mdc-floating-label {
+        color: var(--mdc-outlined-text-field-error-label-text-color) !important;
+      }
+
+      label.mat-mdc-form-field-required-marker {
+        color: var(--mdc-outlined-text-field-error-label-text-color) !important;
+      }
+    }
+  }
+
+  .uncommitted-scope-hint {
+    color: var(--mdc-outlined-text-field-error-label-text-color);
+    font-size: 12px;
+  }
 }
