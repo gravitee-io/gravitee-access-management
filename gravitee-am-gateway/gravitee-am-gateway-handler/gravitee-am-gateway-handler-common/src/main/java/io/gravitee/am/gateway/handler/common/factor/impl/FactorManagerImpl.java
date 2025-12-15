@@ -73,7 +73,10 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         factorService.findByDomain(domain.getId())
                 .subscribe(
                         this::updateFactor,
-                        error -> logger.error("Unable to initialize factors for domain {}", domain.getName(), error));
+                        error -> {
+                            logger.error("Unable to initialize factors for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.FACTOR.name(), error.getMessage());
+                        });
     }
 
     @Override
@@ -155,13 +158,14 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
                 this.factorProviders.put(factor.getId(), factorProvider);
                 this.factors.put(factor.getId(), factor);
                 logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
-                domainReadinessService.pluginLoaded(domain.getId(), factor.getId());
             } else {
                 logger.info("Factor {} already loaded for domain {}", factor.getName(), domain.getName());
-                domainReadinessService.pluginLoaded(domain.getId(), factor.getId());
             }
+
+            domainReadinessService.pluginLoaded(domain.getId(), factor.getId());
         } catch (Exception ex) {
             this.factorProviders.remove(factor.getId());
+            this.factors.remove(factor.getId());
             logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
             domainReadinessService.pluginFailed(domain.getId(), factor.getId(), ex.getMessage());
         }

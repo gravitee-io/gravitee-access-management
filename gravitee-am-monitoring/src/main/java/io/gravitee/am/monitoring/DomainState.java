@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.monitoring;
 
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,14 +40,13 @@ public class DomainState {
 
     private volatile Status status = Status.INITIALIZING;
 
-    public DomainState setStatus(Status status) {
+    public synchronized DomainState setStatus(Status status) {
         this.status = status;
         return this;
     }
 
-    public DomainState setLastSync(long lastSync) {
+    public synchronized void setLastSync(long lastSync) {
         this.lastSync.set(lastSync);
-        return this;
     }
 
     public void initPluginSync(String pluginId, String pluginType) {

@@ -105,6 +105,12 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     }
 
     @Override
+    public void pluginInitFailed(String domainId, String pluginType, String message) {
+        initPluginSync(domainId, "INIT", pluginType);
+        pluginFailed(domainId, "INIT", message);
+    }
+
+    @Override
     public void pluginUnloaded(String domainId, String pluginId) {
         if (domainId == null) {
             logger.warn("Received pluginUnloaded for null domainId. Plugin: {}", pluginId);

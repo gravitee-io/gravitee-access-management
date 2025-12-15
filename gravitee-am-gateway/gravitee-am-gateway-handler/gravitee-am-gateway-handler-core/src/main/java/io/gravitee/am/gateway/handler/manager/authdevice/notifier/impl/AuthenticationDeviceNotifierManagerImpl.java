@@ -25,6 +25,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.plugins.authdevice.notifier.core.AuthenticationDeviceNotifierPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
@@ -106,7 +107,10 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                             logger.info("Authentication Device Notifier {} loaded for domain {}", notifier.getName(), domain.getName());
                             domainReadinessService.pluginLoaded(domain.getId(), notifier.getId());
                         },
-                        error -> logger.error("Unable to initialize Authentication Device Notifiers for domain {}", domain.getName(), error)
+                        error -> {
+                            logger.error("Unable to initialize Authentication Device Notifiers for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.AUTH_DEVICE_NOTIFIER.name(), error.getMessage());
+                        }
                 );
     }
 
@@ -140,8 +144,8 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                 .switchIfEmpty(Maybe.error(() -> new AuthenticationDeviceNotifierNotFoundException("Authentication Device Notifier " + notifierId + " not found")))
                 .map(notifier -> {
                     if (needDeployment(notifier)) {
-                        domainReadinessService.initPluginSync(domain.getId(), notifier.getId(), Type.AUTH_DEVICE_NOTIFIER.name());
                         unloadDeviceNotifierProvider(notifierId);
+                        domainReadinessService.initPluginSync(domain.getId(), notifier.getId(), Type.AUTH_DEVICE_NOTIFIER.name());
                         var provider = deviceNotifierPluginManager.create(new ProviderConfiguration(notifier.getType(), notifier.getConfiguration()));
                         provider.start();
                         this.deviceNotifierProviders.put(notifier.getId(), provider);

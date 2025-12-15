@@ -101,8 +101,10 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                         logger.info("All authorization engines initialized for domain {}", domain.getName()))
                 .subscribe(
                         () -> {}, // complete handled above
-                        error -> logger.error("Unexpected error while initializing authorization engines for domain {}",
-                                domain.getName(), error)
+                        error -> {
+                            logger.error("Unexpected error while initializing authorization engines for domain {}", domain.getName(), error);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.AUTHORIZATION_ENGINE.name(), error.getMessage());
+                        }
                 );
     }
 
