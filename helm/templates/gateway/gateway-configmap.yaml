@@ -161,6 +161,12 @@ data:
         {{- end }}
       {{- end }}
 
+      {{- if .Values.gateway.services.purge }}
+      # Data purge service (JDBC only).
+      purge:
+{{ toYaml .Values.gateway.services.purge | indent 8 }}
+      {{- end }}
+
     {{- if .Values.reporters }}
     reporters:
 {{ toYaml .Values.reporters | indent 6 }}
