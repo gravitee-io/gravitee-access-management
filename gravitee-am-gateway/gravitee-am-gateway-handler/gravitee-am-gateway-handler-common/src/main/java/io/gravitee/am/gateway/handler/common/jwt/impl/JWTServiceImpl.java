@@ -55,11 +55,19 @@ public class JWTServiceImpl implements JWTService {
     private static final Logger logger = LoggerFactory.getLogger(JWTServiceImpl.class);
     public static final String AWS_HSM_CERTIFICATE_PROVIDER = "AwsHsmCertificateProvider";
 
-    @Autowired
-    private CertificateManager certificateManager;
+
+    private final CertificateManager certificateManager;
+    private final ObjectMapper objectMapper;
+    private final Boolean fallbackToHmacSignature;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    public JWTServiceImpl(CertificateManager certificateManager,
+                          ObjectMapper objectMapper,
+                          Boolean fallbackToHmacSignature) {
+        this.certificateManager = certificateManager;
+        this.objectMapper = objectMapper;
+        this.fallbackToHmacSignature = fallbackToHmacSignature;
+    }
 
     @Autowired
     private JwtSignerExecutor executor;
@@ -97,9 +105,14 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<EncodedJWT> encodeJwt(JWT jwt, Client client) {
-        return certificateManager.get(client.getCertificate())
-                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
+        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
                 .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
+    }
+
+    @Override
+    public Single<String> encode(JWT jwt, Client client) {
+        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
+                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
@@ -110,8 +123,7 @@ public class JWTServiceImpl implements JWTService {
         }
 
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
-                .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
+                .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
                 .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
@@ -128,8 +140,7 @@ public class JWTServiceImpl implements JWTService {
         }
 
         return certificateManager.findByAlgorithm(signedResponseAlg)
-                .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
+                .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
                 .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
@@ -144,6 +155,12 @@ public class JWTServiceImpl implements JWTService {
                     logger.warn("Falling back to default certificate provider for certificateId: {}", certificateId);
                     return Single.just(certificateManager.defaultCertificateProvider());
                 }))
+                .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
+    }
+
+    @Override
+    public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
+        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
     }
 
@@ -163,13 +180,6 @@ public class JWTServiceImpl implements JWTService {
                 logger.debug("Failed to decode {} JWT", tokenType, ex);
                 emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
-        });
-    }
-
-    private Single<CertificateProvider> fallbackToDefaultCertificateProvider(Client client) {
-        return Single.defer(() -> {
-            logger.warn("Falling back to default certificate provider for client: {}", client);
-            return Single.just(certificateManager.defaultCertificateProvider());
         });
     }
 
