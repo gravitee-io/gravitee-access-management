@@ -146,12 +146,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.gravitee.am</groupId>
-            <artifactId>gravitee-am-monitoring</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- Vert.x -->
         <dependency>
             <groupId>io.vertx</groupId>
