@@ -30,8 +30,6 @@ import lombok.Setter;
 import java.util.List;
 import java.util.Optional;
 
-import static io.gravitee.am.service.model.NewProtectedResource.NAME_MAX_LENGTH;
-
 /**
  * @author GraviteeSource Team
  */
@@ -40,7 +38,7 @@ import static io.gravitee.am.service.model.NewProtectedResource.NAME_MAX_LENGTH;
 @Setter
 public class PatchProtectedResource {
 
-    private Optional<@Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters")
+    private Optional<@Size(min = 1, max = NewProtectedResource.NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
             @Pattern(regexp = NewProtectedResource.NAME_PATTERN, message = "Name must begin with a non-whitespace character") String> name;
     private Optional<String> description;
     private Optional<List<@NotBlank @Url(allowFragment = false) String>> resourceIdentifiers;

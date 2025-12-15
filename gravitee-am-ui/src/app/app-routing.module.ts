@@ -1466,7 +1466,7 @@ export const routes: Routes = [
                     data: {
                       menu: {
                         label: 'MCP Servers',
-                        icon: 'gio:server',
+                        icon: 'gio:mcp',
                         level: 'top',
                       },
                       breadcrumb: {
