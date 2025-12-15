@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.spring;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
@@ -111,11 +112,9 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.annotation.PostConstruct;
-import lombok.val;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -139,8 +138,7 @@ import java.util.concurrent.TimeUnit;
         ContextConfiguration.class,
         RiskAssessmentConfiguration.class})
 public class CommonConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonConfiguration.class);
-
+    public static final String FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY = "applications.signing.fallback-to-hmac-signature";
 
     @Autowired
     private Environment environment;
@@ -195,8 +193,11 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public JWTService jwtService() {
-        return new JWTServiceImpl();
+    public JWTService jwtService(
+            CertificateManager certificateManager,
+            ObjectMapper objectMapper,
+            @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":true}") Boolean fallbackToHmacSignature) {
+        return new JWTServiceImpl(certificateManager, objectMapper, fallbackToHmacSignature);
     }
 
     @Bean
@@ -336,7 +337,7 @@ public class CommonConfiguration {
     }
     @Bean
     public GroupManager groupManager(Environment environment, EventManager eventManager, DataPlaneRegistry registry, Domain domain) {
-        final val cachedRepository = registry.getGroupRepository(domain);
+        final var cachedRepository = registry.getGroupRepository(domain);
         // FIXME: sync process can not be done anymore, need to convert as a classical cache.
         //        Since the first implementation of the DataPlane split, groups are managed on the GW
         //        as consequence Sync is not possible.
