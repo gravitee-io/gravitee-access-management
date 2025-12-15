@@ -49,11 +49,19 @@ public class JWTServiceImpl implements JWTService {
     private static final Logger logger = LoggerFactory.getLogger(JWTServiceImpl.class);
     public static final String AWS_HSM_CERTIFICATE_PROVIDER = "AwsHsmCertificateProvider";
 
-    @Autowired
-    private CertificateManager certificateManager;
+
+    private final CertificateManager certificateManager;
+    private final ObjectMapper objectMapper;
+    private final Boolean fallbackToHmacSignature;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    public JWTServiceImpl(CertificateManager certificateManager,
+                          ObjectMapper objectMapper,
+                          Boolean fallbackToHmacSignature) {
+        this.certificateManager = certificateManager;
+        this.objectMapper = objectMapper;
+        this.fallbackToHmacSignature = fallbackToHmacSignature;
+    }
 
     @Override
     public Single<String> encode(JWT jwt, CertificateProvider certificateProvider) {
@@ -88,8 +96,7 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<String> encode(JWT jwt, Client client) {
-        return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
                 .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
@@ -101,8 +108,7 @@ public class JWTServiceImpl implements JWTService {
         }
 
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
-                .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
                 .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
@@ -119,15 +125,13 @@ public class JWTServiceImpl implements JWTService {
         }
 
         return certificateManager.findByAlgorithm(signedResponseAlg)
-                .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
                 .flatMap(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Client client, TokenType tokenType) {
-        return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+        return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
 
     }

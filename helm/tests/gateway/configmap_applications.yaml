@@ -1,0 +1,30 @@
+suite: Test Gateway configmap section applications
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Test application config block
+    template: gateway/gateway-configmap.yaml
+    set:
+      applications:
+        signing:
+          fallback-to-hmac-signature: true
+        secret:
+          algorithm: None
+          properties:
+            rounds: 10
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            applications:
+              secret:
+                algorithm: None
+                properties:
+                  rounds: 10
+              signing:
+                fallback-to-hmac-signature: true
