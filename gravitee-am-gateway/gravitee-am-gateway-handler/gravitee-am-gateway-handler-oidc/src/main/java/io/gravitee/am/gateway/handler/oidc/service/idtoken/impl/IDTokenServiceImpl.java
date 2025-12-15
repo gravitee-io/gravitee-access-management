@@ -63,6 +63,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 import static io.gravitee.am.common.oidc.idtoken.Claims.ACR;
+import static io.gravitee.am.gateway.handler.common.spring.CommonConfiguration.FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -101,6 +102,9 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Value("${legacy.openid.openid_scope_full_profile:false}")
     private boolean legacyOpenidScope;
 
+    @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":true}")
+    private Boolean fallbackToHmacSignature;
+
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext) {
         // use or create execution context
@@ -111,8 +115,7 @@ public class IDTokenServiceImpl implements IDTokenService {
 
                     // sign ID Token
                     return certificateManager.findByAlgorithm(client.getIdTokenSignedResponseAlg())
-                            .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                            .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                            .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
                             .flatMap(certificateProvider -> {
                                 // set hash claims (hybrid flow)
                                 if (oAuth2Request.getContext() != null && !oAuth2Request.getContext().isEmpty()) {

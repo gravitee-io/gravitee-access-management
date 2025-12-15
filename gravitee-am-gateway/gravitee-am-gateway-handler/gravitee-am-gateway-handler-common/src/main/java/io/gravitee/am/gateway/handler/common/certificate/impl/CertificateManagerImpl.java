@@ -77,9 +77,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     @Autowired
     private io.gravitee.am.monitoring.DomainReadinessService domainReadinessService;
 
-    private CertificateProvider defaultCertificateProvider;
+    CertificateProvider defaultCertificateProvider;
 
-    private CertificateProvider noneAlgorithmCertificateProvider;
+    CertificateProvider noneAlgorithmCertificateProvider;
 
     private final ConcurrentMap<String, Certificate> certificates = new ConcurrentHashMap<>();
 
@@ -142,7 +142,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
         logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
-        
+
         for (Map.Entry<String, Certificate> entry: certificates.entrySet()) {
             certificateProviderManager.delete(entry.getKey());
             domainReadinessService.pluginUnloaded(domain.getId(), entry.getKey());

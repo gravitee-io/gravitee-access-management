@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.jwt;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Key;
+import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
 import io.gravitee.am.common.jwt.Claims;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
@@ -31,9 +32,7 @@ import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.crypto.KeyGenerator;
@@ -41,6 +40,7 @@ import java.security.KeyPairGenerator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -51,18 +51,14 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class JWTServiceTest {
 
-    @InjectMocks
-    private JWTService jwtService = new JWTServiceImpl();
+    private JWTService jwtService;
 
     @Mock
     private CertificateManager certificateManager;
 
-    @Spy
-    private ObjectMapper objectMapper = new ObjectMapper();
-
     @Before
     public void setUp() {
-
+        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), true);
         var rs256CertProvider = mockCertProvider(mockJwtBuilder("token_rs_256"));
         var rs512CertProvider = mockCertProvider(mockJwtBuilder("token_rs_512"));
         var defaultCertProvider = mockCertProvider(mockJwtBuilder("token_default"));
@@ -70,9 +66,9 @@ public class JWTServiceTest {
 
         when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
         when(certificateManager.findByAlgorithm("RS512")).thenReturn(Maybe.just(rs512CertProvider));
-        when(certificateManager.get(null)).thenReturn(Maybe.empty());
         when(certificateManager.get("notExistingId")).thenReturn(Maybe.empty());
         when(certificateManager.get("existingId")).thenReturn(Maybe.just(rs256CertProvider));
+        when(certificateManager.getClientCertificateProvider(any(), anyBoolean())).thenCallRealMethod();
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCertProvider);
         when(certificateManager.noneAlgorithmCertificateProvider()).thenReturn(noneAlgCertProvider);
     }
@@ -208,6 +204,18 @@ public class JWTServiceTest {
         jwtService.decode(jwtWithUnderscore, JWTService.TokenType.ACCESS_TOKEN)
                 .test()
                 .assertValue(jwt -> jwt.get("displayName").equals("Boëgen Maler"));
+    }
+
+    @Test
+    public void encode_noClientCertificateFound_noFallback() throws Exception {
+        jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), false);
+
+        Client client = new Client();
+        client.setCertificate("notExistingId");
+
+        var testObserver = jwtService.encode(new JWT(), client).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertError(TemporarilyUnavailableException.class);
     }
 
 }
