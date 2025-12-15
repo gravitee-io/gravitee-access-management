@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.certificate;
+package io.gravitee.am.gateway.handler.common.certificate.impl;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
-import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -37,11 +39,11 @@ import static org.mockito.Mockito.*;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CertificateManagerTest {
+public class CertificateManagerImplTest {
 
     @Spy
     @InjectMocks
-    private CertificateManager certificateManager = new CertificateManagerImpl();
+    private CertificateManagerImpl certificateManager = new CertificateManagerImpl();
 
     @Mock
     private CertificateProviderManager certificateProviderManager;
@@ -49,8 +51,10 @@ public class CertificateManagerTest {
     @Mock
     private Domain domain;
 
+    io.gravitee.am.gateway.certificate.CertificateProvider defaultProvider;
+
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         CertificateProvider rs256CertificateProvider = mock(CertificateProvider.class);
         CertificateProvider rs512CertificateProvider = mock(CertificateProvider.class);
         when(rs256CertificateProvider.signatureAlgorithm()).thenReturn("RS256");
@@ -63,6 +67,9 @@ public class CertificateManagerTest {
         when(rs256CertProvider.getProvider()).thenReturn(rs256CertificateProvider);
         when(rs512CertProvider.getProvider()).thenReturn(rs512CertificateProvider);
         doReturn(Arrays.asList(rs256CertProvider,rs512CertProvider)).when(certificateManager).providers();
+
+        defaultProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        certificateManager.defaultCertificateProvider = defaultProvider;
     }
 
     @Test
@@ -103,5 +110,62 @@ public class CertificateManagerTest {
                                 .getProvider()
                                 .signatureAlgorithm()
                 ));
+    }
+
+    @Test
+    public void findClientCertificate_shouldReturnIfFound(){
+        Client client = new Client();
+        client.setCertificate("id");
+        var provider = new io.gravitee.am.gateway.certificate.CertificateProvider(null);
+
+        Mockito.when(certificateProviderManager.get("id")).thenReturn(provider);
+
+        certificateManager.getClientCertificateProvider(client, true)
+                .test()
+                .assertValue(cp -> cp == provider);
+
+        certificateManager.getClientCertificateProvider(client, false)
+                .test()
+                .assertValue(cp -> cp == provider);
+    }
+
+    @Test
+    public void findClientCertificate_shouldReturnHmacIfCertificateIsEmpty(){
+        Client client = new Client();
+        client.setCertificate(null);
+
+        certificateManager.getClientCertificateProvider(client, true)
+                .test()
+                .assertValue(cp -> cp == defaultProvider);
+
+        certificateManager.getClientCertificateProvider(client, false)
+                .test()
+                .assertValue(cp -> cp == defaultProvider);
+    }
+
+    @Test
+    public void findClientCertificate_shouldFallbackIfNotFound(){
+        Client client = new Client();
+        client.setCertificate("id");
+
+        Mockito.when(certificateProviderManager.get("id")).thenReturn(null);
+
+        certificateManager.getClientCertificateProvider(client, true)
+                .test()
+                .assertValue(cp -> cp == defaultProvider);
+
+    }
+
+    @Test
+    public void findClientCertificate_shouldReturnErrorIfFallbackIsDisabled(){
+        Client client = new Client();
+        client.setCertificate("id");
+
+        Mockito.when(certificateProviderManager.get("id")).thenReturn(null);
+
+        certificateManager.getClientCertificateProvider(client, false)
+                .test()
+                .assertError(th -> th instanceof TemporarilyUnavailableException);
+
     }
 }
