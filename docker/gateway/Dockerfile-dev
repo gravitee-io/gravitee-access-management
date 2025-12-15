@@ -18,7 +18,9 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
-RUN apk add --update --no-cache unzip
+RUN apk update \
+    && apk add --update --no-cache unzip \
+    && rm -rf /var/cache/apk/*
 
 ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
@@ -26,16 +28,41 @@ RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /grav
     && chmod -R g=u /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ \
     && rm -rf /tmp/*
 
+FROM alpine:3.22 AS build-jattach
+LABEL maintainer="contact@graviteesource.com"
+
+ARG JATTACH_VERSION=2.2
+
+RUN apk update \
+    && apk add --no-cache --virtual .build-deps build-base wget ca-certificates \
+    && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
+    && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
+    && make -C /tmp/jattach-${JATTACH_VERSION} \
+    && JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" \
+    && if [ ! -f "${JATTACH_SRC}" ]; then \
+            JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+       fi \
+    && install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach \
+    && rm -rf /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz \
+    && apk del .build-deps \
+    && rm -rf /var/cache/apk/*
+
 FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-gateway
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
 
+RUN apk update \
+    && apk add --no-cache jemalloc ca-certificates perl \
+    && rm -rf /var/cache/apk/*
+
 COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ ${GRAVITEE_AM_HOME}/
+COPY --from=build-jattach /usr/local/bin/jattach /usr/local/bin/jattach
 
 RUN chmod -R g=u ${GRAVITEE_AM_HOME}
 
