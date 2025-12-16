@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.common.exception.authentication;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -25,6 +27,10 @@ public class AccountDisabledException extends AccountStatusException {
 
     public AccountDisabledException(String msg) {
         super(msg);
+    }
+
+    public AccountDisabledException(String msg, Map<String, String> details) {
+        super(msg, details);
     }
 
     @Override

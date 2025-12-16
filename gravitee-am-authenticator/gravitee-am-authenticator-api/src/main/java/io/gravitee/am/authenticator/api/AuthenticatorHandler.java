@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.authenticator.api;
 
+import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.service.AuditService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -34,7 +36,11 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         authenticator.authenticate(routingContext)
                 .doOnSuccess(user -> auditService.report(authenticator.successAuditLog(routingContext, user)))
-                .doOnError(err -> auditService.report(authenticator.failedAuditLog(routingContext, err)))
+                .doOnError(err -> {
+                    var auditEvent = authenticator.failedAuditLog(routingContext, err);
+                    auditEvent.principal(setAuditUser(err));
+                    auditService.report(auditEvent);
+                })
                 .subscribe(
                         user -> setupUserSession(routingContext, user).next(),
                         err -> {
@@ -48,6 +54,23 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
         ctx.getDelegate().setUser(user);
         ctx.put(ConstantKeys.USER_CONTEXT_KEY, user.getUser());
         return ctx;
+    }
+
+    private static DefaultUser setAuditUser(Throwable err) {
+        if (!(err instanceof AccountStatusException ase)) {
+            return null;
+        }
+
+        var details = ase.getDetails();
+        if (details == null) {
+            return null;
+        }
+
+        var user = new io.gravitee.am.model.User();
+        user.setId(details.get("id"));
+        user.setUsername(details.get("username"));
+        user.setDisplayName(details.get("displayName"));
+        return new DefaultUser(user);
     }
 
 }
