@@ -160,6 +160,12 @@ data:
 {{ toYaml .Values.gateway.services.metrics.prometheus | indent 10 }}
         {{- end }}
       {{- end }}
+      
+      {{- if .Values.gateway.services.purge }}
+      # Data purge service (JDBC only).
+      purge:
+{{ toYaml .Values.gateway.services.purge | indent 8 }}
+      {{- end }}
 
     {{- if ( and .Values.domains .Values.domains.secrets ) }}
     domains:

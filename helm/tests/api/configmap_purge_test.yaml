@@ -1,0 +1,60 @@
+suite: Test API configmap section purge
+templates:
+  - "api/api-configmap.yaml"
+tests:
+  - it: should not include purge service when not configured
+    template: api/api-configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "purge:"
+
+  - it: should include purge service with minimal configuration
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          purge:
+            enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                enabled: true
+
+  - it: should include purge service with cron and events retention
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          purge:
+            cron: "0 0 23 * * *"
+            enabled: true
+            events:
+              retention:
+                days: 90
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                cron: 0 0 23 \* \* \*
+                enabled: true
+                events:
+                  retention:
+                    days: 90
