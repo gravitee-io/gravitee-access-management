@@ -24,7 +24,7 @@
 <body>
 <div class="container" th:if="${error == null && success == null}">
     <div class="header">
-        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.png}">
         <div class="title">
             <span th:text="#{registration.title} + ' ' + ${client.name}"></span>
         </div>
