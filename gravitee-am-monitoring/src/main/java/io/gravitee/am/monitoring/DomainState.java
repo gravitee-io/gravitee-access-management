@@ -85,11 +85,11 @@ public class DomainState {
         }
     }
 
-    public boolean isStable() {
+    public synchronized boolean isStable() {
         return status == Status.DEPLOYED && creationState.values().stream().allMatch(PluginStatus::isSuccess);
     }
 
-    public boolean isSynchronized() {
+    public synchronized boolean isSynchronized() {
         return syncState.values().stream().allMatch(Boolean::booleanValue);
     }
 
