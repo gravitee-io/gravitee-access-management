@@ -134,10 +134,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 // check account status
                 .flatMap(user -> {
                     if (isIndefinitelyLocked(user)) {
-                        return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername()));
+                        return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername(), Map.of("id", user.getId(), "username", user.getUsername(),"displayName", user.getDisplayName())));
                     }
                     if (!user.isEnabled()) {
-                        return Single.error(new AccountDisabledException("Account is disabled for user " + user.getUsername()));
+                        return Single.error(new AccountDisabledException("Account is disabled for user " + user.getUsername(), Map.of("id", user.getId(), "username", user.getUsername(),"displayName", user.getDisplayName())));
                     }
                     return Single.just(user);
                 })
