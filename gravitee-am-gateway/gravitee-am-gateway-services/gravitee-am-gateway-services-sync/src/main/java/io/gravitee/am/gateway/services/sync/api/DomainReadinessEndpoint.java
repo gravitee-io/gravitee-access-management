@@ -16,18 +16,16 @@
 package io.gravitee.am.gateway.services.sync.api;
 
 import io.gravitee.am.monitoring.DomainReadinessService;
-import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
-import io.vertx.core.Handler;
-import io.vertx.core.json.Json;
-import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import lombok.extern.slf4j.Slf4j;
-
-
 import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
+import io.vertx.core.json.Json;
+import io.vertx.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import io.gravitee.node.management.http.endpoint.ManagementEndpoint;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -35,7 +33,7 @@ import java.util.concurrent.CompletionStage;
  * @author GraviteeSource Team
  */
 @Slf4j
-public class DomainReadinessHandler implements Handler<RoutingContext>, Probe {
+public class DomainReadinessEndpoint implements ManagementEndpoint, Probe {
 
     @Autowired
     private DomainReadinessService domainReadinessService;
@@ -46,16 +44,17 @@ public class DomainReadinessHandler implements Handler<RoutingContext>, Probe {
     }
 
     @Override
-    public CompletionStage<Result> check() {
-        // Without parameter, it gives the global state of the GW (OK = all domain stable and synced)
-        if (domainReadinessService.isAllDomainsReady()) {
-            return CompletableFuture.completedFuture(Result.healthy());
-        }
-        return CompletableFuture.completedFuture(Result.notReady());
+    public HttpMethod method() {
+        return HttpMethod.GET;
     }
 
     @Override
-    public void handle(RoutingContext context) {
+    public String path() {
+        return "/domains";
+    }
+
+    @Override
+    public void handle(io.vertx.ext.web.RoutingContext context) {
         String domainId = context.request().getParam("domainId");
         boolean isOutputJson = "json".equals(context.request().getParam("output"));
 
@@ -65,6 +64,15 @@ public class DomainReadinessHandler implements Handler<RoutingContext>, Probe {
         }
 
         fetchDomainState(context, domainId, isOutputJson);
+    }
+
+    @Override
+    public CompletionStage<Result> check() {
+        // Without parameter, it gives the global state of the GW (OK = all domain stable and synced)
+        if (domainReadinessService.isAllDomainsReady()) {
+            return CompletableFuture.completedFuture(Result.healthy());
+        }
+        return CompletableFuture.completedFuture(Result.notReady());
     }
 
     private void fetchDomainState(RoutingContext context, String domainId, boolean isOutputJson) {

@@ -15,10 +15,11 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
-import io.gravitee.am.gateway.services.sync.api.DomainReadinessHandler;
+import io.gravitee.am.gateway.services.sync.api.DomainReadinessEndpoint;
 import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.healthcheck.ProbeManager;
+import io.gravitee.node.management.http.endpoint.ManagementEndpointManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,10 +57,13 @@ public class ScheduledSyncService extends AbstractService implements Runnable {
     private SyncProbe syncProbe;
 
     @Autowired
-    private DomainReadinessHandler stateProbe;
+    private DomainReadinessEndpoint stateProbe;
 
     @Autowired
     private ProbeManager probeManager;
+
+    @Autowired
+    private ManagementEndpointManager endpointManager;
 
     private final AtomicLong counter = new AtomicLong(0);
 
@@ -70,6 +74,9 @@ public class ScheduledSyncService extends AbstractService implements Runnable {
 
             // register the probes
             probeManager.register(syncProbe);
+
+            // register the ManagementEndpoint
+            endpointManager.register(stateProbe);
 
             if (stateProbeEnabled) {
                 logger.info("Domain State probe has been enabled");
