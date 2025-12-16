@@ -82,9 +82,9 @@
     --white: #FFFFFF;
     --font-light-color: var(--grey);
     --font-dark-color: #100C27;
-    --primary-background-color: #6A4FF7;
+    --primary-background-color: #E14711;
     --primary-foreground-color: #FFFFFF;
-    --secondary-background-color: #DAD3FD;
+    --secondary-background-color: #ffc2ac;
     --secondary-foreground-color: #000000;
     --disabled-background-color: #DFDFDF;
     --disabled-foreground-color: #7C7C7C;
@@ -111,11 +111,11 @@
     --button-background-color: var(--white);
     --button-text-color: var(--black);
     --button-border-radius: 8px;
-    --button-primary-background-color: var(--primary-background-color);
+    --button-primary-background-color: linear-gradient(90deg, #F01114 0%, #FF7200 100%);
     --button-primary-text-color: var(--primary-foreground-color);
-    --button-secondary-background-color: var(--secondary-background-color);
+    --button-secondary-background-color: #FFC2AC;
     --button-secondary-text-color: var(--secondary-foreground-color);
-    --button-social-background-color: var(--secondary-background-color);
+    --button-social-background-color: #FFC2AC;
     --button-social-text-color: var(--secondary-foreground-color);
     --button-disabled-background-color: var(--disabled-background-color);
     --button-disabled-text-color: var(--disabled-foreground-color);
@@ -178,7 +178,7 @@ body, body * {
 }
 
 .icons.primary {
-    color: var(--icon-primary-color);
+    color: #E14711;
 }
 
 .icon-input-field {
@@ -205,11 +205,25 @@ body, body * {
     max-width: 600px;
     min-width: 350px;
     width: var(--container-width);
-    top: 100px;
-    background: var(--container-background-color);
-    border: var(--container-border-width) solid var(--container-border-color);
+    background: linear-gradient(90deg, #F01114 0%, #FF7200 100%);
     border-radius: var(--container-border-radius);
-    border-top: var(--container-border-top-width) solid var(--container-border-top-color);
+    position: relative;
+    z-index: 0;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: var(--container-background-color);
+    border-radius: calc(var(--container-border-radius) - 2px);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.container > * {
+    position: relative;
+    z-index: 2;
 }
 
 .header {
