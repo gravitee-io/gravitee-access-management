@@ -1,0 +1,117 @@
+suite: Test Gateway configmap section purge
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: should not include purge service when not configured
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "purge:"
+
+  - it: should include purge service with minimal configuration
+    set:
+      gateway:
+        services:
+          purge:
+            enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                enabled: true
+
+  - it: should include purge service with all configuration options
+    set:
+      gateway:
+        services:
+          purge:
+            enabled: true
+            cron: "0 0 23 * * *"
+            exclude: login_attempts, refresh_token
+            events:
+              retention:
+                days: 90
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                cron: 0 0 23 \* \* \*
+                enabled: true
+                events:
+                  retention:
+                    days: 90
+                exclude: login_attempts, refresh_token
+
+  - it: should include purge service with custom cron expression
+    set:
+      gateway:
+        services:
+          purge:
+            enabled: true
+            cron: "0 0 2 * * *"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            cron: 0 0 2 \* \* \*
+
+  - it: should include purge service with custom events retention
+    set:
+      gateway:
+        services:
+          purge:
+            enabled: true
+            events:
+              retention:
+                days: 30
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                .*
+                events:
+                  retention:
+                    days: 30
+
+  - it: should include purge service with exclude list
+    set:
+      gateway:
+        services:
+          purge:
+            enabled: true
+            exclude: login_attempts, refresh_token, access_token
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            exclude: login_attempts, refresh_token, access_token
