@@ -19,6 +19,8 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.repository.common.EnumParsingUtils;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcRole;
 import io.gravitee.am.repository.jdbc.management.api.spring.role.SpringRoleOauthScopeRepository;
@@ -40,10 +42,20 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
@@ -56,6 +68,11 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  */
 @Repository
 public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRepository, InitializingBean {
+
+    private static final Logger log = LoggerFactory.getLogger(JdbcRoleRepository.class);
+    private static final Set<String> LOGGED_PERMISSION_FILTER_IDS = ConcurrentHashMap.newKeySet();
+    private static final Set<String> VALID_PERMISSION_KEYS = Set.of(Permission.values()).stream().map(Enum::name).collect(Collectors.toSet());
+    private static final ObjectMapper PERMISSION_OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public static final String COL_ID = "id";
     public static final String COL_NAME = "name";
@@ -92,6 +109,46 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     private SpringRoleOauthScopeRepository oauthScopeRepository;
 
     protected Role toEntity(JdbcRole entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        ReferenceType referenceType = EnumParsingUtils.safeValueOf(ReferenceType.class, entity.getReferenceType(), entity.getId(), "referenceType", log);
+        ReferenceType assignableType = EnumParsingUtils.safeValueOf(ReferenceType.class, entity.getAssignableType(), entity.getId(), "assignableType", log);
+        boolean unknownRef = EnumParsingUtils.isUnknown(entity.getReferenceType(), referenceType);
+        boolean unknownAssign = EnumParsingUtils.isUnknown(entity.getAssignableType(), assignableType);
+        if (unknownRef || unknownAssign) {
+            EnumParsingUtils.logDiscard(entity.getId(), log, "contains incompatible enum values");
+            return null;
+        }
+
+        // Fail closed / normalise incompatible permission keys before Dozer mapping (unknown Permission enums)
+        String rawPermissionAcls = entity.getPermissionAcls();
+        if (rawPermissionAcls != null) {
+            try {
+                Map<String, Object> permissionMap = PERMISSION_OBJECT_MAPPER.readValue(rawPermissionAcls, new TypeReference<Map<String, Object>>() {});
+                Set<String> invalidKeys = permissionMap.keySet().stream()
+                        .filter(key -> !VALID_PERMISSION_KEYS.contains(key))
+                        .collect(Collectors.toSet());
+                if (!invalidKeys.isEmpty()) {
+                    permissionMap.keySet().removeAll(invalidKeys);
+                    if (LOGGED_PERMISSION_FILTER_IDS.add(entity.getId())) {
+                        log.warn("Discarding incompatible permission keys for role id={} (filtered unknown permissions: {})", entity.getId(), invalidKeys);
+                    } else {
+                        log.debug("Discarding incompatible permission keys for role id={} (filtered unknown permissions: {})", entity.getId(), invalidKeys);
+                    }
+                    if (permissionMap.isEmpty()) {
+                        EnumParsingUtils.logDiscard(entity.getId(), log, "contains only incompatible permissionAcls");
+                        return null;
+                    }
+                    entity.setPermissionAcls(PERMISSION_OBJECT_MAPPER.writeValueAsString(permissionMap));
+                }
+            } catch (Exception e) {
+                EnumParsingUtils.logDiscard(entity.getId(), log, "failed to parse permissionAcls");
+                return null;
+            }
+        }
+
         return mapper.map(entity, Role.class);
     }
 
@@ -109,7 +166,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     public Flowable<Role> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         return roleRepository.findByReference(referenceType.name(), referenceId)
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .observeOn(Schedulers.computation());
     }
@@ -122,7 +182,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                         .and(where(COL_REFERENCE_TYPE).is(referenceType.name())))
                         .sort(Sort.by(COL_NAME).ascending())
                         .with(PageRequest.of(page, size)), JdbcRole.class))
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
                 .flatMap(content -> roleRepository.countByReference(referenceType.name(), referenceId)
@@ -145,7 +208,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcRole.class, row)).all())
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
@@ -165,16 +231,23 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
             return Flowable.empty();
         }
         return roleRepository.findByIdIn(ids)
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .observeOn(Schedulers.computation());
     }
 
     @Override
-    public Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role) {
-        LOGGER.debug("findById({},{},{})", referenceType, referenceId, role);
-        return completeWithScopes(roleRepository.findById(referenceType.name(), referenceId, role)
-                .map(this::toEntity), role)
+    public Maybe<Role> findById(ReferenceType referenceType, String referenceId, String roleId) {
+        LOGGER.debug("findById({},{},{})", referenceType, referenceId, roleId);
+        return roleRepository.findById(referenceType.name(), referenceId, roleId)
+                .flatMap(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
+                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()))
                 .observeOn(Schedulers.computation());
     }
 
@@ -182,7 +255,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     public Maybe<Role> findByNameAndAssignableType(ReferenceType referenceType, String referenceId, String name, ReferenceType assignableType) {
         LOGGER.debug("findByNameAndAssignableType({},{},{},{})", referenceType, referenceId, name, assignableType);
         return roleRepository.findByNameAndAssignableType(referenceType.name(), referenceId, name, assignableType.name())
-                .map(this::toEntity)
+                .flatMap(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()))
                 .observeOn(Schedulers.computation());
     }
@@ -191,7 +267,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     public Flowable<Role> findByNamesAndAssignableType(ReferenceType referenceType, String referenceId, List<String> names, ReferenceType assignableType) {
         LOGGER.debug("findByNamesAndAssignableType({},{},{},{})", referenceType, referenceId, names, assignableType);
         return roleRepository.findByNamesAndAssignableType(referenceType.name(), referenceId, names, assignableType.name())
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .concatMapMaybe(role -> completeWithScopes(Maybe.just(role), role.getId()))
                 .observeOn(Schedulers.computation());
     }
@@ -199,8 +278,12 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     @Override
     public Maybe<Role> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return completeWithScopes(roleRepository.findById(id)
-                .map(this::toEntity), id)
+        return roleRepository.findById(id)
+                .flatMap(jdbcRole -> {
+                    Role role = toEntity(jdbcRole);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
+                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()))
                 .observeOn(Schedulers.computation());
     }
 
@@ -230,8 +313,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
         final List<String> resourceScopes = item.getOauthScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
-            action = action.then(Flux.fromIterable(resourceScopes).concatMap(insertScopr(item)
-            ).reduce(Long::sum));
+            action = action.then(Flux.fromIterable(resourceScopes).concatMap(insertScopr(item))
+                    .reduce(0L, Long::sum));
         }
 
         return monoToSingle(action.as(trx::transactional))
@@ -266,7 +349,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         final List<String> resourceScopes = item.getOauthScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
             action = action.then(Flux.fromIterable(resourceScopes).concatMap(insertScopr(item))
-                    .reduce(Long::sum));
+                    .reduce(0L, Long::sum));
         }
 
         return monoToSingle(deleteScopes.then(action).as(trx::transactional))
