@@ -105,7 +105,7 @@ public class PreviewServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(response -> response.getContent() != null && response.getContent().contains("PreviewApp"));
-        observer.assertValue(response -> response.getContent() != null && response.getContent().contains("#6A4FF7"));
+        observer.assertValue(response -> response.getContent() != null && response.getContent().contains("#DA3B00"));
     }
 
     @Test
