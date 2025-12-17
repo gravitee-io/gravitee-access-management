@@ -24,6 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.repository.common.EnumParsingUtils;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -35,6 +36,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -42,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -59,6 +63,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
 @Component
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(MongoRoleRepository.class);
     private static final String FIELD_SCOPE = "scope";
     private static final String FIELD_ASSIGNABLE_TYPE = "assignableType";
     private MongoCollection<RoleMongo> rolesCollection;
@@ -81,14 +86,23 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Flowable<Role> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(withMaxTime(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert)
+        return Flowable.fromPublisher(withMaxTime(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
+                .flatMapMaybe(roleMongo -> {
+                    Role role = convert(roleMongo);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<Role>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
-        Single<List<Role>> rolesOperation = Observable.fromPublisher(withMaxTime(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<List<Role>> rolesOperation = Observable.fromPublisher(withMaxTime(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size))
+                .flatMap(roleMongo -> {
+                    Role role = convert(roleMongo);
+                    return role != null ? Observable.just(role) : Observable.empty();
+                })
+                .toList();
         return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, page, count))
                 .observeOn(Schedulers.computation());
     }
@@ -111,26 +125,43 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
                 searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(mongoQuery, countOptions())).first(0l);
-        Single<List<Role>> rolesOperation = Observable.fromPublisher(withMaxTime(rolesCollection.find(mongoQuery)).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<List<Role>> rolesOperation = Observable.fromPublisher(withMaxTime(rolesCollection.find(mongoQuery)).skip(size * page).limit(size))
+                .flatMap(roleMongo -> {
+                    Role role = convert(roleMongo);
+                    return role != null ? Observable.just(role) : Observable.empty();
+                })
+                .toList();
         return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, 0, count))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Role> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(rolesCollection.find(in(FIELD_ID, ids)))).map(this::convert)
+        return Flowable.fromPublisher(withMaxTime(rolesCollection.find(in(FIELD_ID, ids))))
+                .flatMapMaybe(roleMongo -> {
+                    Role role = convert(roleMongo);
+                    return role != null ? Maybe.just(role) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role) {
-        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, role))).first()).firstElement().map(this::convert)
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, role))).first()).firstElement()
+                .flatMap(roleMongo -> {
+                    Role mappedRole = convert(roleMongo);
+                    return mappedRole != null ? Maybe.just(mappedRole) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Role> findById(String role) {
-        return Observable.fromPublisher(rolesCollection.find(eq(FIELD_ID, role)).first()).firstElement().map(this::convert)
+        return Observable.fromPublisher(rolesCollection.find(eq(FIELD_ID, role)).first()).firstElement()
+                .flatMap(roleMongo -> {
+                    Role mappedRole = convert(roleMongo);
+                    return mappedRole != null ? Maybe.just(mappedRole) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -157,13 +188,21 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Maybe<Role> findByNameAndAssignableType(ReferenceType referenceType, String referenceId, String name, ReferenceType assignableType) {
-        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name()))).first()).firstElement().map(this::convert)
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name()))).first()).firstElement()
+                .flatMap(roleMongo -> {
+                    Role mappedRole = convert(roleMongo);
+                    return mappedRole != null ? Maybe.just(mappedRole) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Role> findByNamesAndAssignableType(ReferenceType referenceType, String referenceId, List<String> names, ReferenceType assignableType) {
-        return Flowable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), in(FIELD_NAME, names), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name())))).map(this::convert)
+        return Flowable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), in(FIELD_NAME, names), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name()))))
+                .flatMap(roleMongo -> {
+                    Role role = convert(roleMongo);
+                    return role != null ? Flowable.just(role) : Flowable.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -171,14 +210,23 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         if (roleMongo == null) {
             return null;
         }
+        
+        ReferenceType referenceType = EnumParsingUtils.safeValueOf(ReferenceType.class, roleMongo.getReferenceType(), roleMongo.getId(), "referenceType", log);
+        ReferenceType assignableType = EnumParsingUtils.safeValueOf(ReferenceType.class, roleMongo.getAssignableType(), roleMongo.getId(), "assignableType", log);
+        boolean unknownRef = EnumParsingUtils.isUnknown(roleMongo.getReferenceType(), referenceType);
+        boolean unknownAssign = EnumParsingUtils.isUnknown(roleMongo.getAssignableType(), assignableType);
+        if (unknownRef || unknownAssign) {
+            EnumParsingUtils.logDiscard(roleMongo.getId(), log, "contains incompatible enum values");
+            return null;
+        }
 
         Role role = new Role();
         role.setId(roleMongo.getId());
         role.setName(roleMongo.getName());
         role.setDescription(roleMongo.getDescription());
-        role.setReferenceType(roleMongo.getReferenceType() == null ? null : ReferenceType.valueOf(roleMongo.getReferenceType()));
+        role.setReferenceType(referenceType);
         role.setReferenceId(roleMongo.getReferenceId());
-        role.setAssignableType(roleMongo.getAssignableType() == null ? null : ReferenceType.valueOf(roleMongo.getAssignableType()));
+        role.setAssignableType(assignableType);
         role.setSystem(roleMongo.isSystem());
         role.setDefaultRole(roleMongo.isDefaultRole());
 
