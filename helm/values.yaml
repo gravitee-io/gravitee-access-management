@@ -572,11 +572,15 @@ api:
         # Subject of the email send by the email notifier
         expiryEmailSubject: "Client secret will expire soon"
 
-    # Data purge service (JDBC only).
+    # Data purge service
     # purge:
-      # enabled: true                               # enable the JDBC purge task (default: true)
+      # enabled: true                               # enable the purge task (default: true)
       # cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
-      # events:                                     # event retention period in days (default: 90 days)
+      # exclude: ""                                 # comma-separated list of targets to exclude (e.g., "events,audits")
+      # events:                                     # event retention period in days (default: 90 days). Can be set only once on initial boot
+      #   retention:
+      #     days: 90
+      # audits:                                     # audit retention period in days (default: 90 days, 0 for disabled) - Management API only
       #   retention:
       #     days: 90
 
@@ -841,7 +845,7 @@ gateway:
         enabled: true
     # Data purge service (JDBC only).
     # purge:
-      # enabled: true                               # enable the JDBC purge task (default: true)
+      # enabled: true                               # enable the purge task (default: true)
       # cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
       # exclude: login_attempts, refresh_token      # comma separated list of table to exclude from the purge process
       # events:                                     # event retention period in days (default: 90 days)

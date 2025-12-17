@@ -15,28 +15,7 @@
  */
 package io.gravitee.am.repository.common;
 
-import io.reactivex.rxjava3.core.Completable;
+public interface ExpiredDataSweeperProvider {
 
-public interface ExpiredDataSweeper {
-
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
-
-    enum Target {
-        access_tokens,
-        authorization_codes,
-        refresh_tokens,
-        scope_approvals,
-        request_objects,
-        login_attempts,
-        uma_permission_ticket,
-        auth_flow_ctx,
-        pushed_authorization_requests,
-        ciba_auth_requests,
-        user_activities,
-        devices,
-        events,
-        audits
-    }
+    ExpiredDataSweeper getExpiredDataSweeper(ExpiredDataSweeper.Target target);
 }

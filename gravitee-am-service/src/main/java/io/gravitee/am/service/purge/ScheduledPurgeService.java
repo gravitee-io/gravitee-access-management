@@ -17,15 +17,11 @@ package io.gravitee.am.service.purge;
 
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.common.ExpiredDataSweeper.Target;
+import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 
@@ -33,7 +29,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -43,7 +38,7 @@ public class ScheduledPurgeService extends AbstractService implements Runnable {
     private final boolean enabled;
     private final String cronTrigger;
     private final TaskScheduler scheduler;
-    private final ExpiredDataSweepers sweepers;
+    private final ExpiredDataSweeperProvider sweeper;
     private final List<Target> purgeTargets;
 
     @Override
@@ -81,7 +76,7 @@ public class ScheduledPurgeService extends AbstractService implements Runnable {
 
     private Optional<ExpiredDataSweeper> getSweeper(Target target) {
         try {
-            return Optional.ofNullable(sweepers.getExpiredDataSweeper(target));
+            return Optional.ofNullable(sweeper.getExpiredDataSweeper(target));
         } catch (Exception e) {
             return Optional.empty();
         }

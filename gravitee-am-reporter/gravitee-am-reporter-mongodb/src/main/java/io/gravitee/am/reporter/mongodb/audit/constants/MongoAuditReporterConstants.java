@@ -37,6 +37,7 @@ public class MongoAuditReporterConstants {
   public static final String FIELD_ACTOR_ID = "actor.id";
   public static final String FIELD_ACCESS_POINT_ID = "accessPoint.id";
   public static final String INDEX_REFERENCE_TIMESTAMP_NAME = "r1t_1";
+  public static final String INDEX_TIMESTAMP_ID_NAME = "t1id1_1";
   public static final String INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "r1ty1t_1";
   public static final String INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME = "r1ty1s1t_1";
   public static final String INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "r1a1t_1";

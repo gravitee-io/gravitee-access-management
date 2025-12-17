@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.management.service.spring;
 
-import io.gravitee.am.service.purge.ExpiredDataSweepers;
+import io.gravitee.am.management.service.purge.ManagementExpiredDataSweeperProvider;
+import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.am.service.purge.ScheduledPurgeService;
 import io.gravitee.am.service.purge.ScheduledPurgeServiceFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -26,22 +27,26 @@ import org.springframework.scheduling.TaskScheduler;
 
 import java.util.List;
 
+import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.audits;
 import static io.gravitee.am.repository.common.ExpiredDataSweeper.Target.events;
 
 @Configuration
 @Slf4j
 public class ManagementPurgeServiceConfiguration {
-    private final ScheduledPurgeServiceFactory factory = new ScheduledPurgeServiceFactory(List.of(events));
+    private final ScheduledPurgeServiceFactory factory = new ScheduledPurgeServiceFactory(List.of(events, audits));
 
     @Bean
     public ScheduledPurgeService scheduledPurgeService(@Value("${services.purge.enabled:true}") boolean enabled,
-                                                       @Value("${repositories.management.type:mongodb}") String managementRepositoryType,
                                                        @Value("${services.purge.cron:0 0 23 * * *}") String cron,
                                                        @Value("#{'${services.purge.exclude:}'.empty ? {} : '${services.purge.exclude}'.split(',')}") List<String> excluded,
                                                        TaskScheduler taskScheduler,
-                                                       ExpiredDataSweepers sweepers) {
-        enabled = enabled && "jdbc".equalsIgnoreCase(managementRepositoryType);
-        return factory.createPurgeService(enabled, cron, excluded, taskScheduler, sweepers);
+                                                       ExpiredDataSweeperProvider sweeper) {
+        return factory.createPurgeService(enabled, cron, excluded, taskScheduler, sweeper);
+    }
+
+    @Bean
+    public ManagementExpiredDataSweeperProvider expiredDataSweeperProvider() {
+        return new ManagementExpiredDataSweeperProvider();
     }
 
 

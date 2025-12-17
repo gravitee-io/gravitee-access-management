@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.purge;
+package io.gravitee.am.gateway.core.purge;
 
 import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneProvider;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
+import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
-import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.PushedAuthorizationRequestRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
-@Component
-public class ExpiredDataSweepers {
+@Slf4j
+public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProvider {
 
     @Lazy
     @Autowired
@@ -62,12 +62,9 @@ public class ExpiredDataSweepers {
 
     @Lazy
     @Autowired
-    protected EventRepository eventRepository;
-
-    @Lazy
-    @Autowired
     protected SingleDataPlaneProvider singleDataPlaneProvider;
 
+    @Override
     public ExpiredDataSweeper getExpiredDataSweeper(ExpiredDataSweeper.Target target){
         return switch (target) {
             case access_tokens -> accessTokenRepository;
@@ -77,7 +74,6 @@ public class ExpiredDataSweepers {
             case auth_flow_ctx -> authenticationFlowContextRepository;
             case pushed_authorization_requests -> pushedAuthRequestRepository;
             case ciba_auth_requests -> cibaAuthRequestRepository;
-            case events -> eventRepository;
 
             case scope_approvals -> singleDataPlaneProvider.get().getScopeApprovalRepository();
             case login_attempts -> singleDataPlaneProvider.get().getLoginAttemptRepository();
@@ -85,6 +81,10 @@ public class ExpiredDataSweepers {
             case user_activities -> singleDataPlaneProvider.get().getUserActivityRepository();
             case devices -> singleDataPlaneProvider.get().getDeviceRepository();
 
+            default -> {
+                log.warn("Target {} is not supported by Gateway provider", target);
+                yield null;
+            }
         };
     }
 }
