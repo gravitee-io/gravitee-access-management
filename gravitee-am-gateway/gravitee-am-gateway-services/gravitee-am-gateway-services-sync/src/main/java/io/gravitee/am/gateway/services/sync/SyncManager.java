@@ -282,7 +282,12 @@ public class SyncManager implements InitializingBean {
                 } else if (deployedDomain.getUpdatedAt().before(domain.getUpdatedAt())) {
                     securityDomainManager.update(domain);
                 }
-                domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
+
+                if (domain.isEnabled()) {
+                    domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED);
+                } else {
+                    domainReadinessService.removeDomain(domain.getId());
+                }
             }
             case DELETE -> {
                 domainReadinessService.updateDomainStatus(domainId, DomainState.Status.REMOVING);
