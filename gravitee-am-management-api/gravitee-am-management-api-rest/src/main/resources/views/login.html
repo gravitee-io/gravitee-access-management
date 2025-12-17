@@ -8,87 +8,121 @@
     <title>Login</title>
 
     <!-- CSS -->
-    <link rel="stylesheet" th:href="@{assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{assets/preview/css/main.css}">
     <link rel="stylesheet" th:href="@{assets/material/material.icons.css}">
     <link rel="stylesheet" th:href="@{assets/font-awesome/css/font-awesome.min.css}">
-    <link rel="stylesheet" th:href="@{assets/LibreFranklin/font-libre-franklin.css}">
-    <link rel="stylesheet" th:href="@{assets/css/login.css}">
 
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+
     <script th:if="${reCaptchaEnabled}" th:src="${'https://www.google.com/recaptcha/api.js?render=' + reCaptchaSiteKey}"></script>
 </head>
 
 <body>
-<div class="mdl-layout mdl-js-layout">
-    <div class="login-container">
-        <div class="login-form">
-            <div class="login-form-logo">
-                <img th:src="@{assets/images/gravitee-logo.png}" width="200">
-            </div>
-            <div class="login-form-title">
-                <label>Sign In</label>
-                <span>to continue to the AM Console</span></span>
-            </div>
-            <form id="form" role="form" th:action="@{login}" method="post">
-                <div class="login-form-content">
-                    <div class="input-textfield">
-                        <label class="w3-text-blue">Username</label>
-                        <input type="text" id="username" name="username" autofocus="autofocus" required />
-                    </div>
-                    <div class="input-textfield">
-                        <label class="w3-text-blue">Password</label>
-                        <input type="password" id="password" name="password" required />
-                    </div>
-                    <input type="hidden" id="org" name="org" required th:value="${org}"/>
-                    <div th:if="${param.error}" class="login-error-info">
-                            <span>
-                                <span class="error">login_failed</span>
-                                 <small class="error_description">Wrong user or password</small>
-                            </span>
-                    </div>
-                </div>
-
-                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <input type="hidden" id="X-Recaptcha-Token" name="X-Recaptcha-Token" />
-                <div class="login-form-actions">
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in</button>
-                </div>
-            </form>
-
-            <div th:if="${socialProviders}" class="social-login-buttons">
-                <div class="signup-or-separator">
-                    <h6 class="text">or Sign in with</h6>
-                    <hr>
-                </div>
-                <div class="mdl-social-button">
-                    <a th:href="${authorizeUrls.get(socialProvider.getId())}"
-                       th:class="'mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect btn-' + ${socialProvider.getType()}"
-                       th:each="socialProvider : ${socialProviders}">
-                        <img th:if="${socialProvider.getType()} == 'franceconnect'" th:src="@{assets/images/FCboutons-10.svg}" height="70">
-                        <span th:if="${socialProvider.getType()} != 'franceconnect'">
-                                <i th:class="'fab fa-' + ${socialProvider.getType()}"></i> <span th:text="${socialProvider.getName()}"></span>
-                            </span>
-                    </a>
-                </div>
-            </div>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="@{assets/images/gravitee-logo.png}">
+        <div class="title">
+            <span>Sign In</span>
         </div>
+        <div class="header-description">
+            <span>to continue to the AM Console</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <form class="form" id="form" role="form" th:action="@{login}" method="post">
+            <div class="form-field">
+                <input class="input-field" type="text" id="username" name="username"
+                       placeholder="Username"
+                       autofocus="autofocus"
+                       required />
+            </div>
+
+            <div class="form-field">
+                <input class="input-field" type="password" id="password" name="password"
+                       placeholder="Password"
+                       required />
+                <button type="button" class="icon-button icon-input-field toggle-password">
+                    <span class="icons primary">visibility_off</span>
+                </button>
+            </div>
+
+            <input type="hidden" id="org" name="org" required th:value="${org}"/>
+
+            <div th:if="${param.error}" class="item error-text">
+                <span>
+                    <span class="error">login_failed</span>
+                    <small class="error_description">Wrong user or password</small>
+                </span>
+            </div>
+
+            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" id="X-Recaptcha-Token" name="X-Recaptcha-Token" />
+
+            <div>
+                <button id="submitBtn" class="button primary">Sign in</button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${socialProviders}" class="section">
+        <a th:href="${authorizeUrls.get(socialProvider.getId())}"
+           th:class="${socialProvider.getType()} != 'franceconnect' ? 'button social btn-' + ${socialProvider.getType()} : ''"
+           th:each="socialProvider : ${socialProviders}">
+            <img th:if="${socialProvider.getType()} == 'franceconnect'" th:src="@{assets/images/FCboutons-10.svg}" height="70">
+            <span th:if="${socialProvider.getType()} != 'franceconnect'">
+                <i th:class="'fab fa-' + ${socialProvider.getType()}"></i> <span th:text="${socialProvider.getName()}"></span>
+            </span>
+        </a>
     </div>
 </div>
 
-<!--[if lt IE 10]>
-<script th:src="@{assets/js/placeholder.js}"></script>
-<![endif]-->
-<script th:src="@{assets/material/material.min.js}"></script>
 <script th:src="@{assets/js/jquery-3.5.1.min.js}"></script>
-<script th:if="${reCaptchaEnabled}" th:inline="javascript">
-    $("#form").submit(function(event) {
-        event.preventDefault();
-        grecaptcha.execute('[(${reCaptchaSiteKey})]', {action: 'login'}).then(function (token) {
-            $("#X-Recaptcha-Token").val(token);
-            $("#form").unbind('submit').submit();
+<script th:src="@{assets/material/material.min.js}"></script>
+
+<script th:inline="javascript">
+    $(document).ready(function () {
+        $("#submitBtn").on("click", function (event) {
+            /*[# th:if="${reCaptchaEnabled}"]*/
+            event.preventDefault();
+            grecaptcha.execute('[(${reCaptchaSiteKey})]', {action: 'login'}).then(function (token) {
+                $("#X-Recaptcha-Token").val(token);
+                $("#form").unbind('submit').submit();
+            });
+            /*[/]*/
         });
+
+        $(".toggle-password").on("click", function () {
+            const icon = $(this).find(".icons").first();
+            const input = $(this).parent().find("input").first();
+            icon.text() === "visibility" ? icon.text("visibility_off") : icon.text("visibility");
+            input.attr("type") === "password" ? input.attr("type", "text") : input.attr("type", "password");
+        });
+
+        $("#username, #password").on("input keyup change", toggleSubmit);
+
+        function toggleSubmit() {
+            const submitBtn = $("#submitBtn");
+            if ($("#username").val() === "" || $("#password").val() === "") {
+                submitBtn.prop('disabled', true);
+                submitBtn.addClass("button-disabled");
+            } else {
+                submitBtn.prop('disabled', false);
+                submitBtn.removeClass("button-disabled");
+            }
+        }
+       toggleSubmit();
     });
 </script>
+
+<script th:if="${reCaptchaEnabled}" th:inline="javascript">
+    /*[# th:if="${reCaptchaEnabled}"]*/
+    grecaptcha.ready(function () {
+        // reCAPTCHA is ready
+    });
+    /*[/]*/
+</script>
+
 </body>
 </html>
