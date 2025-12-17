@@ -68,9 +68,15 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
         }
 
         var user = new io.gravitee.am.model.User();
-        user.setId(details.get("id"));
-        user.setUsername(details.get("username"));
-        user.setDisplayName(details.get("displayName"));
+        if (details.containsKey("id")) {
+            user.setId(details.get("id"));
+        }
+        if (details.containsKey("username")) {
+            user.setUsername(details.get("username"));
+        }
+        if (details.containsKey("displayName")) {
+            user.setDisplayName(details.get("displayName"));
+        }
 
         auditEvent.principal(new DefaultUser(user));
     }

@@ -134,10 +134,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 // check account status
                 .flatMap(user -> {
                     if (isIndefinitelyLocked(user)) {
-                        return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername(), Map.of("id", user.getId(), "username", user.getUsername(),"displayName", user.getDisplayName())));
+                        return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername(), mapUserAttributes(user)));
                     }
                     if (!user.isEnabled()) {
-                        return Single.error(new AccountDisabledException("Account is disabled for user " + user.getUsername(), Map.of("id", user.getId(), "username", user.getUsername(),"displayName", user.getDisplayName())));
+                        return Single.error(new AccountDisabledException("Account is disabled for user " + user.getUsername(), mapUserAttributes(user)));
                     }
                     return Single.just(user);
                 })
@@ -268,6 +268,24 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                     }
                     return Single.error(ex);
                 });
+    }
+
+    private Map<String, String> mapUserAttributes(User user){
+       final Map<String,String> details = new HashMap<String, String>();
+
+        if (user.getId() != null){
+            details.put("id", user.getId());
+        }
+
+        if (user.getUsername() != null){
+            details.put("username", user.getUsername());
+        }
+
+        if (user.getDisplayName() != null){
+            details.put("displayName", user.getDisplayName());
+        }
+
+        return details;
     }
 
     private boolean isIndefinitelyLocked(User user) {
