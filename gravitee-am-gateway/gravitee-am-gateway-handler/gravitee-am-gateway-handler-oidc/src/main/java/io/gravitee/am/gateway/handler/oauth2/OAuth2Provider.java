@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
@@ -72,8 +73,11 @@ import io.gravitee.am.gateway.handler.root.handler.LoggerJsonMessageTokenHandler
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.RememberMeHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DeviceService;
@@ -92,8 +96,11 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME;
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 import static io.gravitee.am.gateway.handler.root.handler.LoggerJsonMessageTokenHandler.PROPERTY_REQUEST_JSON_LOGGER_ENABLED;
 
 /**
@@ -215,6 +222,18 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private DeviceIdentifierManager deviceIdentifierManager;
+
+    @Autowired
+    private UserService userService;
+
+    @Value("${http.cookie.rememberDevice.name:"+ DEFAULT_REMEMBER_DEVICE_COOKIE_NAME +"}")
+    private String rememberDeviceCookieName;
+
+    @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
+    private String rememberMeCookieName;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -282,6 +301,8 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
+                .handler(new RememberMeHandler(jwtService, userService, rememberMeCookieName))
+                .handler(new DeviceIdentifierHandler(deviceService, deviceIdentifierManager, jwtService, rememberDeviceCookieName))
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))

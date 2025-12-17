@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
+package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
@@ -26,53 +26,59 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
 
 /**
- * @author Aurélien PACAUD (aurelien.pacaud at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RememberMeStep extends AuthenticationFlowStep {
+public class RememberMeHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RememberMeStep.class);
+    private static final Logger logger = LoggerFactory.getLogger(RememberMeHandler.class);
 
     private final JWTService jwtService;
     private final UserService userService;
     private final String cookieName;
 
-    public RememberMeStep(Handler<RoutingContext> handler, JWTService jwtService, UserService userService, String cookieName) {
-        super(handler);
+    public RememberMeHandler(JWTService jwtService, UserService userService, String cookieName) {
         this.jwtService = jwtService;
         this.userService = userService;
         this.cookieName = cookieName;
     }
 
     @Override
-    public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    public void handle(RoutingContext routingContext) {
 
         // If the user is present, a valid session exists
         if (routingContext.user() != null) {
-            flow.doNext(routingContext);
+            if (routingContext.get(USER_CONTEXT_KEY) == null
+                && routingContext.user().getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User vertxUser) {
+                routingContext.put(USER_CONTEXT_KEY, vertxUser.getUser());
+            }
+            routingContext.next();
             return;
         }
 
         // If there is no remember-me cookie
-        if (routingContext.request().getCookie(cookieName) == null) {
-            flow.doNext(routingContext);
+        final Cookie rememberMeCookie = routingContext.request().getCookie(cookieName);
+        if (rememberMeCookie == null) {
+            routingContext.next();
             return;
         }
 
         // Extract current user form remember-me cookie
-        extractUserFormRememberMeCookie(routingContext.request().getCookie(cookieName))
+        extractUserFormRememberMeCookie(rememberMeCookie)
                 .subscribe(
                         user -> {
-                            routingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User((user))));
-                            flow.doNext(routingContext);
+                            routingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                            routingContext.put(USER_CONTEXT_KEY, user);
+                            routingContext.next();
                         },
                         throwable -> {
-                            logger.error("An error has occurred when parsing RememberMe cookie", throwable);
-                            flow.exit(this);
+                            logger.warn("An error has occurred when parsing RememberMe cookie", throwable);
+                            routingContext.response().removeCookie(cookieName);
+                            routingContext.next();
                         }
                 );
     }

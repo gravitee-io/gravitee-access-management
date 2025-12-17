@@ -13,42 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler;
+package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.RememberMeStep;
+import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.Cookie;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.List;
-
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * @author Aurélien PACAUD (aurelien.pacaud at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class RememberMeStepTest {
-
-    private static final Handler<RoutingContext> redirectHandler = RedirectHandler.create("/login");
+public class RememberMeHandlerTest {
 
     @Mock
     private JWTService jwtService;
@@ -62,56 +56,64 @@ public class RememberMeStepTest {
     @Mock
     private HttpServerRequest httpServerRequest;
 
-    private AuthenticationFlowChain authenticationFlowChain;
+    @Mock
+    private HttpServerResponse httpServerResponse;
 
-    private RememberMeStep step;
+    private RememberMeHandler handler;
 
     @Before
     public void setUp() {
-
-        step = new RememberMeStep(redirectHandler, jwtService, gatewayUserService, DEFAULT_REMEMBER_ME_COOKIE_NAME);
-        authenticationFlowChain = spy(new AuthenticationFlowChain(List.of(step)));
+        handler = new RememberMeHandler(jwtService, gatewayUserService, DEFAULT_REMEMBER_ME_COOKIE_NAME);
 
         when(routingContext.request()).thenReturn(httpServerRequest);
-        doNothing().when(authenticationFlowChain).exit(Mockito.any());
-        doNothing().when(authenticationFlowChain).doNext(Mockito.any());
+        when(routingContext.response()).thenReturn(httpServerResponse);
+        doNothing().when(routingContext).next();
     }
 
     @Test
     public void mustDoNext_userAlreadyAuthenticated() {
-        when(routingContext.user()).thenReturn(User.create(new JsonObject()));
+        when(routingContext.user()).thenReturn(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
 
-        step.execute(routingContext, authenticationFlowChain);
+        handler.handle(routingContext);
 
-        verify(authenticationFlowChain, times(0)).exit(step);
-        verify(authenticationFlowChain, times(1)).doNext(routingContext);
+        verify(routingContext, times(1)).next();
     }
 
     @Test
-    public void mustExit_userNotAuthenticatedAndRememberMeCookieNotFound() {
+    public void mustSynchronizeUserInRoutingContext_userAlreadyAuthenticated() {
+        final var user = new User();
+        user.setId("12345");
+        when(routingContext.user()).thenReturn(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+
+        handler.handle(routingContext);
+
+        verify(routingContext, times(1)).put(USER_CONTEXT_KEY, user);
+    }
+    
+    @Test
+    public void mustDoNext_userNotAuthenticatedAndRememberMeCookieNotFound() {
         when(routingContext.user()).thenReturn(null);
 
-        step.execute(routingContext, authenticationFlowChain);
+        handler.handle(routingContext);
 
-        verify(authenticationFlowChain, times(0)).exit(step);
-        verify(authenticationFlowChain, times(1)).doNext(routingContext);
+        verify(routingContext, times(1)).next();
     }
 
     @Test
-    public void mustExit_failedToDecodeRememberMeCookie() {
+    public void mustRemoveCookieAndDoNext_failedToDecodeRememberMeCookie() {
         when(routingContext.user()).thenReturn(null);
 
         when(httpServerRequest.getCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME)).thenReturn(Cookie.cookie(DEFAULT_REMEMBER_ME_COOKIE_NAME, "value"));
         when(jwtService.decode(anyString(), any(JWTService.TokenType.class))).thenReturn(Single.error(new IllegalArgumentException("Error during decoding")));
 
-        step.execute(routingContext, authenticationFlowChain);
+        handler.handle(routingContext);
 
-        verify(authenticationFlowChain, times(1)).exit(step);
-        verify(authenticationFlowChain, times(0)).doNext(routingContext);
+        verify(httpServerResponse, times(1)).removeCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);
+        verify(routingContext, times(1)).next();
     }
 
     @Test
-    public void mustExit_userNotFound() {
+    public void mustRemoveCookieAndDoNext_userNotFound() {
         when(routingContext.user()).thenReturn(null);
 
         when(httpServerRequest.getCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME)).thenReturn(Cookie.cookie(DEFAULT_REMEMBER_ME_COOKIE_NAME, "value"));
@@ -122,15 +124,14 @@ public class RememberMeStepTest {
 
         when(gatewayUserService.findById("12345")).thenReturn(Maybe.error(new IllegalStateException("User not found")));
 
-        step.execute(routingContext, authenticationFlowChain);
+        handler.handle(routingContext);
 
-        verify(authenticationFlowChain, times(1)).exit(step);
-        verify(authenticationFlowChain, times(0)).doNext(routingContext);
+        verify(httpServerResponse, times(1)).removeCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);
+        verify(routingContext, times(1)).next();
     }
 
     @Test
     public void mustDoNext_cookieCorrectlyDecodedAndRead() {
-
         when(routingContext.user()).thenReturn(null);
 
         when(httpServerRequest.getCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME)).thenReturn(Cookie.cookie(DEFAULT_REMEMBER_ME_COOKIE_NAME, "value"));
@@ -139,11 +140,13 @@ public class RememberMeStepTest {
         jwt.put(USER_ID_KEY, "12345");
         when(jwtService.decode(anyString(), any(JWTService.TokenType.class))).thenReturn(Single.just(jwt));
 
-        when(gatewayUserService.findById("12345")).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
+        final var user = new User();
+        when(gatewayUserService.findById("12345")).thenReturn(Maybe.just(user));
 
-        step.execute(routingContext, authenticationFlowChain);
+        handler.handle(routingContext);
 
-        verify(authenticationFlowChain, times(0)).exit(step);
-        verify(authenticationFlowChain, times(1)).doNext(routingContext);
+        verify(routingContext, times(1)).setUser(any(io.vertx.rxjava3.ext.auth.User.class));
+        verify(routingContext, times(1)).put(USER_CONTEXT_KEY, user);
+        verify(routingContext, times(1)).next();
     }
 }

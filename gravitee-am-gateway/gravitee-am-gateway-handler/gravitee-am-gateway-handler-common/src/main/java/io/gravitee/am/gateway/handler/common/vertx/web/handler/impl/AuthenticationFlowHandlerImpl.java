@@ -20,7 +20,6 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
-import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChainHandler;
@@ -28,7 +27,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.ForceResetPasswordStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.FormIdentifierFirstLoginStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.FormLoginStep;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.RememberMeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.SPNEGOStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.WebAuthnLoginStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.WebAuthnRegisterStep;
@@ -39,7 +37,6 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.CredentialService;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,9 +75,6 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     private JWTService jwtService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private CertificateManager certificateManager;
 
     @Autowired
@@ -92,7 +86,6 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
-        steps.add(new RememberMeStep(RedirectHandler.create("/login"), jwtService, userService, rememberMeCookieName));
         steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
         steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, credentialService, webAuthnCookieService));
