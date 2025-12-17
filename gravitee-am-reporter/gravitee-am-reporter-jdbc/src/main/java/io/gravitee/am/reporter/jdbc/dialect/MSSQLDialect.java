@@ -42,6 +42,11 @@ public class MSSQLDialect extends AbstractDialect {
     }
 
     @Override
+    public String buildLimitClause(int limit) {
+        return " OFFSET 0 ROWS FETCH NEXT " + limit + " ROWS ONLY";
+    }
+
+    @Override
     protected String groupByConcatQueryParts(AuditReportableCriteria criteria, StringBuilder queryBuilder, StringBuilder whereClauseBuilder, String field) {
         String top = (criteria.size() != null && criteria.size() > 0) ? "TOP " + criteria.size() + " " : "";
         return "SELECT " + top + field + ", COUNT(DISTINCT a.id) as counter, MAX(a.timestamp) " +

@@ -45,6 +45,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -55,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -81,15 +83,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.gravitee.am.reporter.jdbc.dialect.AbstractDialect.intervals;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.flowableToFlux;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -105,6 +110,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     public static final String AUDIT_FIELD_ACTOR = "actor";
     public static final String AUDIT_FIELD_TARGET = "target";
     public static final String NOT_BOOTSTRAPPED = "Reporter not yet bootstrapped";
+    public static final int DELETE_BATCH_SIZE = 2000;
 
     private final Pattern pattern = Pattern.compile("___");
 
@@ -192,6 +198,9 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     private boolean ready = false;
 
+    @Value("${services.purge.audits.retention.days:90}")
+    private int retentionDays;
+
     private String INSERT_AUDIT_STATEMENT;
     private String INSERT_ENTITY_STATEMENT;
     private String INSERT_OUTCOMES_STATEMENT;
@@ -200,6 +209,121 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     @Override
     public boolean canSearch() {
         return true;
+    }
+
+    @Override
+    public Completable purgeExpiredData() {
+        if (retentionDays <= 0 || !ready) {
+            LOGGER.debug("JDBC audit purge disabled (retention days: {}, ready: {})", retentionDays, ready);
+            return Completable.complete();
+        }
+
+        LocalDateTime threshold = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
+
+        LOGGER.info("Starting JDBC audit purge for records older than {} (retention: {} days)",
+                threshold, retentionDays);
+
+        final AtomicLong totalDeleted = new AtomicLong(0);
+
+        return deleteInBatches(threshold, totalDeleted)
+                .doOnComplete(() -> LOGGER.info("JDBC audit purge completed. Deleted {} records older than {} days",
+                        totalDeleted.get(), retentionDays))
+                .doOnError(error -> LOGGER.error("Error during JDBC audit purge. Deleted {} records before error",
+                        totalDeleted.get(), error));
+    }
+
+    private Completable deleteInBatches(LocalDateTime threshold, AtomicLong totalDeleted) {
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+
+        Mono<Long> oneBatch = Mono.defer(() ->
+                findAuditIdsToDelete(threshold, DELETE_BATCH_SIZE)
+                        .flatMap(ids -> {
+                            if (ids.isEmpty()) {
+                                LOGGER.debug("No more audit records to purge");
+                                return Mono.just(0L);
+                            }
+
+                            LOGGER.debug("Deleting batch of {} audit records", ids.size());
+
+                            Mono<Long> deleteChildren = Flux
+                                    .fromIterable(List.of(auditEntitiesTable, auditOutcomesTable, auditAccessPointsTable))
+                                    .concatMap(table -> deleteChildAuditsByIds(table, ids))
+                                    .reduce(0L, Long::sum);
+
+                            Mono<Long> deleteParents = deleteAuditsByIds(ids);
+
+                            return trx.transactional(deleteChildren.then(deleteParents))
+                                    .doOnSuccess(parentDeleted -> {
+                                        long total = totalDeleted.addAndGet(parentDeleted);
+                                        LOGGER.debug("Deleted {} parent audits (requested {}). Total deleted: {}",
+                                                parentDeleted, ids.size(), total);
+                                    });
+                        })
+        );
+
+        Mono<Void> execution = oneBatch
+                .repeat()
+                .takeUntil(deleted -> deleted == 0L)
+                .then();
+
+        return monoToCompletable(execution);
+    }
+
+    private Mono<List<String>> findAuditIdsToDelete(LocalDateTime threshold, int batchSize) {
+        String sql = "SELECT " + COL_ID +
+                " FROM " + auditsTable +
+                " WHERE " + COL_TIMESTAMP + " < :threshold" +
+                " ORDER BY " + COL_TIMESTAMP + ", " + COL_ID +
+                dialectHelper.buildLimitClause(batchSize);
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .bind("threshold", threshold)
+                .map((row, meta) -> row.get(COL_ID, String.class))
+                .all()
+                .collectList();
+    }
+
+    private Mono<Long> deleteChildAuditsByIds(String tableName, List<String> ids) {
+        if (ids.isEmpty()) {
+            return Mono.just(0L);
+        }
+
+        String inClause = IntStream.range(0, ids.size())
+                .mapToObj(i -> ":id" + i)
+                .collect(Collectors.joining(", "));
+
+        String sql = "DELETE FROM " + tableName +
+                " WHERE " + COL_AUDIT_ID + " IN (" + inClause + ")";
+
+        DatabaseClient.GenericExecuteSpec spec = template.getDatabaseClient().sql(sql);
+
+        for (int i = 0; i < ids.size(); i++) {
+            spec = spec.bind("id" + i, ids.get(i));
+        }
+
+        return spec.fetch().rowsUpdated();
+    }
+
+    private Mono<Long> deleteAuditsByIds(List<String> ids) {
+        if (ids.isEmpty()) {
+            return Mono.just(0L);
+        }
+
+        String inClause = IntStream.range(0, ids.size())
+                .mapToObj(i -> ":id" + i)
+                .collect(Collectors.joining(", "));
+
+        String sql = "DELETE FROM " + auditsTable +
+                " WHERE " + COL_ID + " IN (" + inClause + ")";
+
+        DatabaseClient.GenericExecuteSpec spec = template.getDatabaseClient().sql(sql);
+
+        for (int i = 0; i < ids.size(); i++) {
+            spec = spec.bind("id" + i, ids.get(i));
+        }
+
+        return spec.fetch().rowsUpdated();
     }
 
     protected String createInsertStatement(String table, List<String> columns) {

@@ -20,7 +20,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 

@@ -41,6 +41,8 @@ public interface DialectHelper {
 
     String buildPagingClause(int page, int size);
 
+    String buildLimitClause(int limit);
+
     void setAuditsTable(String auditsTable);
     void setAuditAccessPointsTable(String auditAccessPointsTable);
     void setAuditOutcomesTable(String auditOutcomesTable);

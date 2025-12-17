@@ -24,8 +24,8 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
 import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.common.component.Lifecycle;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
@@ -37,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -111,6 +110,12 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     @Override
     public Maybe<R> findById(ReferenceType referenceType, String referenceId, String id) {
         return reporter.findById(referenceType, referenceId, id);
+    }
+
+    @Override
+    public Completable purgeExpiredData() {
+        logger.debug("Delegating purge to underlying reporter: {}", reporter.getClass().getSimpleName());
+        return reporter.purgeExpiredData();
     }
 
     @Override

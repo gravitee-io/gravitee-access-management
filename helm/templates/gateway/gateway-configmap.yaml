@@ -166,7 +166,6 @@ data:
       purge:
 {{ toYaml .Values.gateway.services.purge | indent 8 }}
       {{- end }}
-
     {{- if ( and .Values.domains .Values.domains.secrets ) }}
     domains:
       secrets:

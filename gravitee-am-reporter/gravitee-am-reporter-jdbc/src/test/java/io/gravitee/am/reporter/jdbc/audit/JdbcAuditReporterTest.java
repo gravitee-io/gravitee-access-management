@@ -40,6 +40,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +49,9 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.common.audit.EventType.*;
+import static io.gravitee.am.common.audit.EventType.USER_CBA_LOGIN;
+import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
+import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -547,6 +550,53 @@ public class JdbcAuditReporterTest {
         accessPoint.setUserAgent("useragent" + random);
         reportable.setAccessPoint(accessPoint);
         return reportable;
+    }
+
+    @Test
+    public void shouldPurge() {
+        Instant now = Instant.now();
+
+        // Create old audit (older than 90 days)
+        Audit oldAudit = buildRandomAudit("shouldPurge");
+        oldAudit.setTimestamp(now.minus(100, ChronoUnit.DAYS));
+        auditReporter.report(oldAudit);
+
+        // Create recent audit (less than 90 days)
+        Audit recentAudit = buildRandomAudit("shouldPurge");
+        recentAudit.setTimestamp(now.minus(10, ChronoUnit.DAYS));
+        auditReporter.report(recentAudit);
+
+        waitBulkLoadFlush();
+
+        // Verify both audits exist before purge
+        TestObserver<Page<Audit>> searchBeforePurge = auditReporter.search(
+            ReferenceType.DOMAIN,
+            "shouldPurge",
+            new Builder().build(),
+            0,
+            20
+        ).test();
+        searchBeforePurge.awaitDone(10, TimeUnit.SECONDS);
+        searchBeforePurge.assertNoErrors();
+        searchBeforePurge.assertValue(page -> page.getTotalCount() == 2);
+
+        // Execute purge
+        TestObserver<Void> testPurge = auditReporter.purgeExpiredData().test();
+        testPurge.awaitDone(10, TimeUnit.SECONDS);
+        testPurge.assertNoErrors();
+
+        // Verify only recent audit remains after purge
+        TestObserver<Page<Audit>> searchAfterPurge = auditReporter.search(
+            ReferenceType.DOMAIN,
+            "shouldPurge",
+            new Builder().build(),
+            0,
+            20
+        ).test();
+        searchAfterPurge.awaitDone(10, TimeUnit.SECONDS);
+        searchAfterPurge.assertNoErrors();
+        searchAfterPurge.assertValue(page -> page.getTotalCount() == 1);
+        searchAfterPurge.assertValue(page -> page.getData().stream().findFirst().get().getId().equals(recentAudit.getId()));
     }
 
     protected void waitBulkLoadFlush() {

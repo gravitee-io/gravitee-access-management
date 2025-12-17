@@ -235,6 +235,11 @@ public abstract class AbstractDialect implements DialectHelper {
     }
 
     @Override
+    public String buildLimitClause(int limit) {
+        return " LIMIT " + limit;
+    }
+
+    @Override
     public Single<List<Map<String, Object>>> buildAndProcessHistogram(DatabaseClient dbClient, ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
         SearchQuery searchQuery = buildHistogramQuery(referenceType, referenceId, criteria);
         DatabaseClient.GenericExecuteSpec histogram = dbClient.sql(searchQuery.getQuery());

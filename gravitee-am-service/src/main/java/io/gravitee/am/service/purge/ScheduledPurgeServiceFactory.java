@@ -16,6 +16,7 @@
 package io.gravitee.am.service.purge;
 
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
+import io.gravitee.am.repository.common.ExpiredDataSweeperDispatcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
@@ -31,7 +32,7 @@ public class ScheduledPurgeServiceFactory {
                                                     String cron,
                                                     List<String> excludedTargets,
                                                     TaskScheduler taskScheduler,
-                                                    ExpiredDataSweepers sweepers) {
+                                                    ExpiredDataSweeperDispatcher sweepers) {
         List<ExpiredDataSweeper.Target> purgeTargets = purgeTargets(excludedTargets);
         return new ScheduledPurgeService(enabled, cron, taskScheduler, sweepers, purgeTargets);
     }
