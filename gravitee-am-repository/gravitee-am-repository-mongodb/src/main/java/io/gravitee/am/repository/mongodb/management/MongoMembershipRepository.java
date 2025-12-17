@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.repository.common.EnumParsingUtils;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.MembershipMongo;
@@ -33,6 +34,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -51,12 +54,13 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
 @Component
 public class MongoMembershipRepository extends AbstractManagementMongoRepository implements MembershipRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(MongoMembershipRepository.class);
     private static final String FIELD_MEMBER_ID = "memberId";
     private static final String FIELD_MEMBER_TYPE = "memberType";
     private static final String FIELD_ROLE = "role";
     private MongoCollection<MembershipMongo> membershipsCollection;
 
-    private final Set<String> UNUSED_INDEXES = Set.of("ri1rt1");
+    private final Set<String> unusedIndexes = Set.of("ri1rt1");
 
     @PostConstruct
     public void init() {
@@ -70,21 +74,27 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
 
         super.createIndex(membershipsCollection, indexes);
         if (ensureIndexOnStart) {
-            dropIndexes(membershipsCollection, UNUSED_INDEXES::contains).subscribe();
+            dropIndexes(membershipsCollection, unusedIndexes::contains).subscribe();
         }
     }
 
     @Override
     public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
         return Flowable.fromPublisher(withMaxTime(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))))
-                .map(this::convert)
+                .flatMapMaybe(membershipMongo -> {
+                    Membership membership = convert(membershipMongo);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
         return Flowable.fromPublisher(withMaxTime(membershipsCollection.find(and(eq(FIELD_MEMBER_ID, memberId), eq(FIELD_MEMBER_TYPE, memberType.name())))))
-                .map(this::convert)
+                .flatMapMaybe(membershipMongo -> {
+                    Membership membership = convert(membershipMongo);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -119,7 +129,11 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         return toBsonFilter(criteria.isLogicalOR(), eqGroupId, eqUserId)
                 .map(filter -> and(eqReference, filter))
                 .switchIfEmpty(Single.just(eqReference))
-                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(membershipsCollection.find(filter)))).map(this::convert)
+                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(membershipsCollection.find(filter))))
+                .flatMapMaybe(membershipMongo -> {
+                    Membership membership = convert(membershipMongo);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -128,13 +142,21 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         return Observable.fromPublisher(membershipsCollection.find(
                 and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
                         eq(FIELD_MEMBER_TYPE, memberType.name()), eq(FIELD_MEMBER_ID, memberId))).first())
-                .firstElement().map(this::convert)
+                .firstElement()
+                .flatMap(membershipMongo -> {
+                    Membership membership = convert(membershipMongo);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Membership> findById(String id) {
-        return Observable.fromPublisher(membershipsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+        return Observable.fromPublisher(membershipsCollection.find(eq(FIELD_ID, id)).first()).firstElement()
+                .flatMap(membershipMongo -> {
+                    Membership membership = convert(membershipMongo);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -160,13 +182,26 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     }
 
     private Membership convert(MembershipMongo membershipMongo) {
+        if (membershipMongo == null) {
+            return null;
+        }
+        
+        ReferenceType referenceType = EnumParsingUtils.safeValueOf(ReferenceType.class, membershipMongo.getReferenceType(), membershipMongo.getId(), "referenceType", log);
+        MemberType memberType = EnumParsingUtils.safeValueOf(MemberType.class, membershipMongo.getMemberType(), membershipMongo.getId(), "memberType", log);
+        boolean unknownRef = EnumParsingUtils.isUnknown(membershipMongo.getReferenceType(), referenceType);
+        boolean unknownMember = EnumParsingUtils.isUnknown(membershipMongo.getMemberType(), memberType);
+        if (unknownRef || unknownMember) {
+            EnumParsingUtils.logDiscard(membershipMongo.getId(), log, "contains incompatible enum values");
+            return null;
+        }
+        
         Membership membership = new Membership();
         membership.setId(membershipMongo.getId());
         membership.setDomain(membershipMongo.getDomain());
         membership.setMemberId(membershipMongo.getMemberId());
-        membership.setMemberType(MemberType.valueOf(membershipMongo.getMemberType()));
+        membership.setMemberType(memberType);
         membership.setReferenceId(membershipMongo.getReferenceId());
-        membership.setReferenceType(ReferenceType.valueOf(membershipMongo.getReferenceType()));
+        membership.setReferenceType(referenceType);
         membership.setRoleId(membershipMongo.getRole());
         membership.setCreatedAt(membershipMongo.getCreatedAt());
         membership.setUpdatedAt(membershipMongo.getUpdatedAt());
