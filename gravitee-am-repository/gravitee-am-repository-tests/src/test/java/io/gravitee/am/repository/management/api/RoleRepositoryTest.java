@@ -21,12 +21,14 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.AbstractManagementTest;
+import io.gravitee.am.repository.management.test.IncompatibleDataTestUtils;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,6 +39,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -45,6 +49,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class RoleRepositoryTest extends AbstractManagementTest {
     public static final String DOMAIN_ID = "domain#1";
+    private static final String TEST_ROLE_NAME = "testName";
+    private static final String FUTURE_REFERENCE_TYPE = "FUTURE_REFERENCE_TYPE";
+    private static final String FUTURE_ASSIGNABLE_TYPE = "FUTURE_ASSIGNABLE_TYPE";
 
     @Autowired
     private RoleRepository roleRepository;
@@ -53,7 +60,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     public void testFindByDomain() {
         // create role
         Role role = new Role();
-        role.setName("testName");
+        role.setName(TEST_ROLE_NAME);
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setReferenceId("testDomain");
         roleRepository.create(role).blockingGet();
@@ -71,14 +78,14 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     public void testFindByNamesAndAssignable() {
         // create role
         Role role = new Role();
-        final String NAME_1 = "testName";
-        role.setName(NAME_1);
+        role.setName(TEST_ROLE_NAME);
         role.setReferenceType(ReferenceType.PLATFORM);
         role.setReferenceId(Platform.DEFAULT);
         role.setAssignableType(ReferenceType.ORGANIZATION);
         roleRepository.create(role).blockingGet();
 
         Role role2 = new Role();
+        final String NAME_1 = TEST_ROLE_NAME;
         final String NAME_2 = "testName2";
         role2.setName(NAME_2);
         role2.setReferenceType(ReferenceType.PLATFORM);
@@ -218,7 +225,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     @Test
     public void testCreate() {
         Role role = new Role();
-        role.setName("testName");
+        role.setName(TEST_ROLE_NAME);
         TestObserver<Role> testObserver = roleRepository.create(role).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -231,7 +238,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     public void testUpdate() {
         // create role
         Role role = new Role();
-        role.setName("testName");
+        role.setName(TEST_ROLE_NAME);
         Role roleCreated = roleRepository.create(role).blockingGet();
 
         // update role
@@ -251,7 +258,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     public void testDelete() {
         // create role
         Role role = new Role();
-        role.setName("testName");
+        role.setName(TEST_ROLE_NAME);
         Role roleCreated = roleRepository.create(role).blockingGet();
 
         // fetch role
@@ -262,7 +269,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(r -> r.getName().equals(roleCreated.getName()));
 
         // delete role
-        TestObserver testObserver1 = roleRepository.delete(roleCreated.getId()).test();
+        TestObserver<Void> testObserver1 = roleRepository.delete(roleCreated.getId()).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch role
@@ -273,4 +280,104 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
     }
 
+    @Test
+    public void testFilterOutProtectedResourceRoles() throws Exception {
+        Role normalRole = new Role();
+        normalRole.setName("normalRole");
+        normalRole.setReferenceType(ReferenceType.DOMAIN);
+        normalRole.setReferenceId(DOMAIN_ID);
+        Role normalRoleCreated = roleRepository.create(normalRole).blockingGet();
+        
+        insertIncompatibleRoleDirectly("incompatibleRole", FUTURE_REFERENCE_TYPE, null, DOMAIN_ID);
+        insertIncompatibleRoleDirectly("incompatibleRole2", ReferenceType.DOMAIN.name(), FUTURE_ASSIGNABLE_TYPE, DOMAIN_ID);
+        TestSubscriber<Role> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        
+        List<Role> roles = testObserver.values();
+        assertTrue("Should return the normal role", 
+                roles.stream().anyMatch(role -> role.getId().equals(normalRoleCreated.getId())));
+        assertEquals("Should return exactly 1 role (incompatible ones filtered)", 1, roles.size());
+        assertFalse("Incompatible role with future referenceType should be filtered out",
+                roles.stream().anyMatch(role -> "incompatibleRole".equals(role.getName())));
+        assertFalse("Incompatible role with future assignableType should be filtered out",
+                roles.stream().anyMatch(role -> "incompatibleRole2".equals(role.getName())));
+    }
+
+    @Test
+    public void testFilterOutProtectedResourceRoles_NoCrash() throws Exception {
+        insertIncompatibleRoleDirectly("testFutureEnumRole", FUTURE_REFERENCE_TYPE, null, "test-id");
+        
+        TestSubscriber<Role> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        List<Role> roles = testObserver.values();
+        assertFalse("Role containing future referenceType should be filtered out",
+                roles.stream().anyMatch(role -> "testFutureEnumRole".equals(role.getName())));
+    }
+
+    @Test
+    public void testFilterOutProtectedResourceRole_FindById() throws Exception {
+        String incompatibleRoleId = insertIncompatibleRoleDirectlyAndGetId("testFutureEnumRoleFindById", FUTURE_REFERENCE_TYPE, null, "test-id");
+        TestObserver<Role> testObserver = roleRepository.findById(incompatibleRoleId).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
+    }
+    
+    private void insertIncompatibleRoleDirectly(String roleName, String referenceType, String assignableType, String referenceId) throws Exception {
+        insertIncompatibleRoleDirectlyAndGetId(roleName, referenceType, assignableType, referenceId);
+    }
+    
+    private String insertIncompatibleRoleDirectlyAndGetId(String roleName, String referenceType, String assignableType, String referenceId) throws Exception {
+        String repoClassName = roleRepository.getClass().getSimpleName();
+        String repoFullName = roleRepository.getClass().getName();
+        
+        if (repoClassName.contains("Mongo") || repoFullName.contains("mongodb")) {
+            return insertIncompatibleRoleMongoDB(roleName, referenceType, assignableType, referenceId);
+        } else if (repoClassName.contains("Jdbc") || repoFullName.contains("jdbc")) {
+            return insertIncompatibleRoleJDBC(roleName, referenceType, assignableType, referenceId);
+        } else {
+            throw new UnsupportedOperationException("Unknown repository type: " + repoClassName + " (" + repoFullName + ")");
+        }
+    }
+    
+    private String insertIncompatibleRoleMongoDB(String roleName, String referenceType, String assignableType, String referenceId) throws Exception {
+        return IncompatibleDataTestUtils.insertIncompatibleEntityMongoDB(
+            roleRepository,
+            "roles",
+            "io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo",
+            roleMongo -> {
+                ReflectionTestUtils.setField(roleMongo, "name", roleName);
+                ReflectionTestUtils.setField(roleMongo, "referenceType", referenceType);
+                ReflectionTestUtils.setField(roleMongo, "assignableType", assignableType);
+                ReflectionTestUtils.setField(roleMongo, "referenceId", referenceId);
+                ReflectionTestUtils.setField(roleMongo, "system", false);
+                ReflectionTestUtils.setField(roleMongo, "defaultRole", false);
+            }
+        );
+    }
+    
+    private String insertIncompatibleRoleJDBC(String roleName, String referenceType, String assignableType, String referenceId) throws Exception {
+        return IncompatibleDataTestUtils.insertIncompatibleEntityJDBC(
+            roleRepository,
+            "io.gravitee.am.repository.jdbc.management.api.model.JdbcRole",
+            jdbcRole -> {
+                ReflectionTestUtils.setField(jdbcRole, "name", roleName);
+                ReflectionTestUtils.setField(jdbcRole, "referenceType", referenceType);
+                ReflectionTestUtils.setField(jdbcRole, "assignableType", assignableType);
+                ReflectionTestUtils.setField(jdbcRole, "referenceId", referenceId);
+                ReflectionTestUtils.setField(jdbcRole, "system", false);
+                ReflectionTestUtils.setField(jdbcRole, "defaultRole", false);
+                ReflectionTestUtils.setField(jdbcRole, "description", null);
+                ReflectionTestUtils.setField(jdbcRole, "permissionAcls", null);
+                ReflectionTestUtils.setField(jdbcRole, "createdAt", null);
+                ReflectionTestUtils.setField(jdbcRole, "updatedAt", null);
+            }
+        );
+    }
 }

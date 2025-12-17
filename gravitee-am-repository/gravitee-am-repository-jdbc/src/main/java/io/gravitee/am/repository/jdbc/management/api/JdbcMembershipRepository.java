@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.repository.common.EnumParsingUtils;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcMembership;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringMembershipRepository;
@@ -29,12 +30,14 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Set;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
@@ -46,10 +49,26 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  */
 @Repository
 public class JdbcMembershipRepository extends AbstractJdbcRepository implements MembershipRepository {
+    
+    private static final Logger log = LoggerFactory.getLogger(JdbcMembershipRepository.class);
+    
     @Autowired
     private SpringMembershipRepository membershipRepository;
 
     protected Membership toEntity(JdbcMembership entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        ReferenceType referenceType = EnumParsingUtils.safeValueOf(ReferenceType.class, entity.getReferenceType(), entity.getId(), "referenceType", log);
+        MemberType memberType = EnumParsingUtils.safeValueOf(MemberType.class, entity.getMemberType(), entity.getId(), "memberType", log);
+        boolean unknownRef = EnumParsingUtils.isUnknown(entity.getReferenceType(), referenceType);
+        boolean unknownMember = EnumParsingUtils.isUnknown(entity.getMemberType(), memberType);
+        if (unknownRef || unknownMember) {
+            EnumParsingUtils.logDiscard(entity.getId(), log, "contains incompatible enum values");
+            return null;
+        }
+
         return mapper.map(entity, Membership.class);
     }
 
@@ -61,7 +80,10 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
         LOGGER.debug("findByReference({},{})", referenceId, referenceType);
         return this.membershipRepository.findByReference(referenceId, referenceType.name())
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -69,7 +91,10 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
         LOGGER.debug("findByMember({},{})", memberId, memberType);
         return this.membershipRepository.findByMember(memberId, memberType.name())
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -97,7 +122,10 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? userClause.or(groupClause) : userClause.and(groupClause)));
 
         return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcMembership.class))
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -125,7 +153,10 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? userClause.or(groupClause) : userClause.and(groupClause)));
 
         return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcMembership.class))
-                .map(this::toEntity)
+                .flatMapMaybe(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -133,7 +164,10 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Maybe<Membership> findByReferenceAndMember(ReferenceType referenceType, String referenceId, MemberType memberType, String memberId) {
         LOGGER.debug("findByReferenceAndMember({},{},{},{})", referenceType,referenceId,memberType,memberId);
         return this.membershipRepository.findByReferenceAndMember(referenceId, referenceType.name(), memberId, memberType.name())
-                .map(this::toEntity)
+                .flatMap(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -141,7 +175,10 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Maybe<Membership> findById(String id) {
         LOGGER.debug("findById({})", id);
         return membershipRepository.findById(id)
-                .map(this::toEntity)
+                .flatMap(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Maybe.just(membership) : Maybe.empty();
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -149,7 +186,12 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Single<Membership> create(Membership item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create Membership with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item)))
+                .flatMap(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Single.just(membership)
+                            : Single.error(new IllegalStateException("Failed to convert created membership with ID '" + jdbcMembership.getId() + "' due to incompatible type."));
+                })
                 .observeOn(Schedulers.computation());
     }
 
@@ -157,7 +199,11 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Single<Membership> update(Membership item) {
         LOGGER.debug("update membership with id {}", item.getId());
         return membershipRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
+                .flatMap(jdbcMembership -> {
+                    Membership membership = toEntity(jdbcMembership);
+                    return membership != null ? Single.just(membership)
+                            : Single.error(new IllegalStateException("Failed to convert updated membership with ID '" + jdbcMembership.getId() + "' due to incompatible type."));
+                })
                 .observeOn(Schedulers.computation());
     }
 
