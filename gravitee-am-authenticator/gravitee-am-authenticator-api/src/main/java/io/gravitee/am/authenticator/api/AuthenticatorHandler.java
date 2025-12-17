@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
                 .doOnSuccess(user -> auditService.report(authenticator.successAuditLog(routingContext, user)))
                 .doOnError(err -> {
                     var auditEvent = authenticator.failedAuditLog(routingContext, err);
-                    auditEvent.principal(setAuditUser(err));
+                    setAuditUser(err, auditEvent);
                     auditService.report(auditEvent);
                 })
                 .subscribe(
@@ -56,21 +57,22 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
         return ctx;
     }
 
-    private static DefaultUser setAuditUser(Throwable err) {
+    private static void setAuditUser(Throwable err, AuditBuilder auditEvent) {
         if (!(err instanceof AccountStatusException ase)) {
-            return null;
+            return;
         }
 
         var details = ase.getDetails();
         if (details == null) {
-            return null;
+            return;
         }
 
         var user = new io.gravitee.am.model.User();
         user.setId(details.get("id"));
         user.setUsername(details.get("username"));
         user.setDisplayName(details.get("displayName"));
-        return new DefaultUser(user);
+
+        auditEvent.principal(new DefaultUser(user));
     }
 
 }
