@@ -19,6 +19,7 @@ import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.Reportable;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -37,4 +38,8 @@ public interface Reporter<R extends Reportable, C extends ReportableCriteria> ex
     Maybe<R> findById(ReferenceType referenceType, String referenceId, String id);
 
     boolean canSearch();
+
+    default Completable purgeExpiredData(){
+        return Completable.complete();
+    }
 }

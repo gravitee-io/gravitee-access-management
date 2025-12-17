@@ -78,4 +78,26 @@ public class MySQLDialect extends AbstractDialect {
     public SearchQuery buildHistogramQuery(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
        throw new IllegalStateException("Not implemented for MySQL");
     }
+    @Override
+    public String tableExists(String table, String schema) {
+    return """
+            SELECT COUNT(*) AS count
+            FROM information_schema.tables
+            WHERE LOWER(table_name) = LOWER('%s')
+              AND LOWER(table_schema) = LOWER(DATABASE())
+            """.formatted(table);
+    }
+
+    @Override
+    public String checkForeignKeyExists(String tableName, String constraintName, String schema) {
+        // MySQL uses DATABASE() instead of schema parameter
+        return """
+                SELECT COUNT(*) AS count
+                FROM information_schema.table_constraints
+                WHERE LOWER(constraint_name) = LOWER('%s')
+                  AND LOWER(table_name) = LOWER('%s')
+                  AND LOWER(table_schema) = LOWER(DATABASE())
+                  AND constraint_type = 'FOREIGN KEY'
+                """.formatted(constraintName, tableName);
+    }
 }

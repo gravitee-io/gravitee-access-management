@@ -45,6 +45,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -55,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -81,15 +83,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.gravitee.am.reporter.jdbc.dialect.AbstractDialect.intervals;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.flowableToFlux;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -105,6 +110,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     public static final String AUDIT_FIELD_ACTOR = "actor";
     public static final String AUDIT_FIELD_TARGET = "target";
     public static final String NOT_BOOTSTRAPPED = "Reporter not yet bootstrapped";
+    public static final int DELETE_BATCH_SIZE = 2000;
 
     private final Pattern pattern = Pattern.compile("___");
 
@@ -192,6 +198,12 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     private boolean ready = false;
 
+    @Value("${services.purge.enabled:false}")
+    private boolean purgeEnabled;
+
+    @Value("${services.purge.audits.retention.days:90}")
+    private int retentionDays;
+
     private String INSERT_AUDIT_STATEMENT;
     private String INSERT_ENTITY_STATEMENT;
     private String INSERT_OUTCOMES_STATEMENT;
@@ -200,6 +212,96 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     @Override
     public boolean canSearch() {
         return true;
+    }
+
+    @Override
+    public Completable purgeExpiredData() {
+        if (!purgeEnabled || retentionDays <= 0 || !ready) {
+            LOGGER.debug("JDBC audit purge disabled (enabled: {}, retention days: {}, ready: {})",
+                    purgeEnabled, retentionDays, ready);
+            return Completable.complete();
+        }
+
+        LocalDateTime threshold = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
+
+        LOGGER.info("Starting JDBC audit purge for records older than {} (retention: {} days)",
+                threshold, retentionDays);
+
+        final AtomicLong totalDeleted = new AtomicLong(0);
+
+        return deleteInBatches(threshold, totalDeleted)
+                .doOnComplete(() -> LOGGER.info("JDBC audit purge completed. Deleted {} records older than {} days",
+                        totalDeleted.get(), retentionDays))
+                .doOnError(error -> LOGGER.error("Error during JDBC audit purge. Deleted {} records before error",
+                        totalDeleted.get(), error));
+    }
+
+    private Completable deleteInBatches(LocalDateTime threshold, AtomicLong totalDeleted) {
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+
+        Mono<Long> oneBatch = Mono.defer(() ->
+                findAuditIdsToDelete(threshold, DELETE_BATCH_SIZE)
+                        .flatMap(ids -> {
+                            if (ids.isEmpty()) {
+                                LOGGER.debug("No more audit records to purge");
+                                return Mono.just(0L);
+                            }
+
+                            LOGGER.debug("Deleting batch of {} audit records (CASCADE will delete child records)", ids.size());
+
+                            // DELETE parent audits - CASCADE will automatically delete child records
+                            // from auditEntitiesTable, auditOutcomesTable, and auditAccessPointsTable
+                            return trx.transactional(deleteAuditsByIds(ids))
+                                    .doOnSuccess(deleted -> {
+                                        long total = totalDeleted.addAndGet(deleted);
+                                        LOGGER.debug("Deleted {} audit records (requested {}). Total deleted: {}",
+                                                deleted, ids.size(), total);
+                                    });
+                        })
+        );
+
+        Mono<Void> execution = oneBatch
+                .repeat()
+                .takeUntil(deleted -> deleted == 0L)
+                .then();
+
+        return monoToCompletable(execution);
+    }
+
+    private Mono<List<String>> findAuditIdsToDelete(LocalDateTime threshold, int batchSize) {
+        String sql = "SELECT " + COL_ID +
+                " FROM " + auditsTable +
+                " WHERE " + COL_TIMESTAMP + " < :threshold" +
+                " ORDER BY " + COL_TIMESTAMP + ", " + COL_ID +
+                dialectHelper.buildLimitClause(batchSize);
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .bind("threshold", threshold)
+                .map((row, meta) -> row.get(COL_ID, String.class))
+                .all()
+                .collectList();
+    }
+
+    private Mono<Long> deleteAuditsByIds(List<String> ids) {
+        if (ids.isEmpty()) {
+            return Mono.just(0L);
+        }
+
+        String inClause = IntStream.range(0, ids.size())
+                .mapToObj(i -> ":id" + i)
+                .collect(Collectors.joining(", "));
+
+        String sql = "DELETE FROM " + auditsTable +
+                " WHERE " + COL_ID + " IN (" + inClause + ")";
+
+        DatabaseClient.GenericExecuteSpec spec = template.getDatabaseClient().sql(sql);
+
+        for (int i = 0; i < ids.size(); i++) {
+            spec = spec.bind("id" + i, ids.get(i));
+        }
+
+        return spec.fetch().rowsUpdated();
     }
 
     protected String createInsertStatement(String table, List<String> columns) {
@@ -546,6 +648,62 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         return value == null ? spec.bindNull(name, type) : spec.bind(name, value);
     }
 
+    private Mono<Boolean> checkForeignKeyExists(String tableName, String constraintName, String schema) {
+        String sql = dialectHelper.checkForeignKeyExists(tableName, constraintName, schema);
+        LOGGER.debug("Checking FK existence with SQL: {}", sql);
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .map((row, metadata) -> {
+                    Number count = row.get("count", Number.class);
+                    boolean exists = count != null && count.longValue() > 0;
+                    LOGGER.debug("FK check for constraint {} on table {}: count={}, exists={}",
+                            constraintName, tableName, count, exists);
+                    return exists;
+                })
+                .first()
+                .defaultIfEmpty(false)
+                .doOnNext(exists -> LOGGER.debug("Final FK check result for {}: {}", constraintName, exists))
+                .doOnError(error -> LOGGER.error("FK check query failed for constraint {} on table {}: {}",
+                        constraintName, tableName, error.getMessage(), error))
+                .onErrorReturn(false);
+    }
+
+    private Mono<Void> addForeignKey(String childTable, String constraintName) {
+        String sql = dialectHelper.addForeignKey(childTable, auditsTable, COL_AUDIT_ID, constraintName);
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .then()
+                .doOnSuccess(v -> LOGGER.info("Successfully added FK constraint {} to {}", constraintName, childTable))
+                .doOnError(error -> LOGGER.error("Failed to add FK constraint {} to {}: {}",
+                        constraintName, childTable, error.getMessage()));
+    }
+
+    private Mono<Void> createForeignKeyForTable(String childTable, String constraintName, String schema) {
+        return checkForeignKeyExists(childTable, constraintName, schema)
+                .flatMap(exists -> {
+                    if (exists) {
+                        LOGGER.debug("FK constraint {} already exists on {}", constraintName, childTable);
+                        return Mono.empty();
+                    }
+
+                    LOGGER.info("Creating FK constraint {} for table {}", constraintName, childTable);
+                    return addForeignKey(childTable, constraintName);
+                })
+                .onErrorResume(error -> {
+                    LOGGER.error("FK creation failed for {}: {}", childTable, error.getMessage());
+                    return Mono.empty();
+                })
+                .then();
+    }
+
+    private Mono<Void> createForeignKeys(String schema, String tableSuffix) {
+        return createForeignKeyForTable(auditOutcomesTable, "fk_audit_outcomes" + tableSuffix, schema)
+                .then(createForeignKeyForTable(auditAccessPointsTable, "fk_audit_access_points" + tableSuffix, schema))
+                .then(createForeignKeyForTable(auditEntitiesTable, "fk_audit_entities" + tableSuffix, schema));
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         final String tableSuffix = (configuration.getTableSuffix() == null || configuration.getTableSuffix().isEmpty()) ? "" : "_" + configuration.getTableSuffix();
@@ -574,8 +732,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             Function<Connection, Mono<Long>> resultFunction = connection -> {
                 Statement doesTableExist = connection.createStatement(dialectHelper.tableExists(auditsTable, schemaOpt.orElse("public")));
                 return flowableToFlux(Flowable.fromPublisher(doesTableExist.execute())
-                        .flatMap(Result::getRowsUpdated)
-                        .first(0l)
+                        .flatMap(result -> result.map((row, meta) -> {
+                            Number count = row.get("count", Number.class);
+                            return count == null ? 0L : count.longValue();
+                        }))
+                        .first(0L)
                         .flatMapPublisher(total -> {
                             if (total == 0) {
                                 LOGGER.debug("SQL datatable {} doest not exists, initialize all audit tables for the reporter.", auditsTable);
@@ -609,10 +770,26 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                         })).reduce(Long::sum);
             };
 
-            // init bulk processor
+            // Initialize schema and bulk processor
             template.getDatabaseClient().inConnection(resultFunction)
                     .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
-                    .doOnTerminate(this::initializeBulkProcessor)
+                    .doOnSuccess(rowsUpdated -> {
+
+                        initializeBulkProcessor();
+
+                        // Create FK constraints if purge is enabled (CASCADE DELETE needed for purging)
+                        if (purgeEnabled && retentionDays > 0) {
+                            LOGGER.debug("Purge enabled (retention: {} days), ensuring FK constraints with CASCADE DELETE exist", retentionDays);
+                            createForeignKeys(schemaOpt.orElse("public"), tableSuffix)
+                                    .subscribe(
+                                            v -> LOGGER.debug("FK constraints check/creation completed successfully"),
+                                            error -> LOGGER.warn("FK constraints check/creation failed: {}", error.getMessage())
+                                    );
+                        } else {
+                            LOGGER.debug("Purge disabled (enabled: {}, retention: {} days), skipping FK creation",
+                                    purgeEnabled, retentionDays);
+                        }
+                    })
                     .subscribe();
 
         } else {

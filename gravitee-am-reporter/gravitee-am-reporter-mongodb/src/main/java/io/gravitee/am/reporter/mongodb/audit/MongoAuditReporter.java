@@ -24,8 +24,11 @@ import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -67,6 +70,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,6 +82,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
@@ -114,6 +120,7 @@ import static java.util.stream.Collectors.toMap;
 public class MongoAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
+    private static final int DELETE_BATCH_SIZE = 10000;
 
     @Autowired
     private ConnectionProvider connectionProvider;
@@ -135,6 +142,9 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     @Value("${reporters.mongodb.readPreferenceMaxStaleness:90000}")
     private Long readPreferenceMaxStalenessMs = MIN_READ_PREFERENCE_STALENESS;
+
+    @Value("${services.purge.audits.retention.days:90}")
+    private int retentionDays;
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -259,6 +269,58 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         }
     }
 
+    public Completable purgeExpiredData() {
+        if (retentionDays <= 0) {
+            logger.debug("MongoDB audit purge disabled (retention days: {})", retentionDays);
+            return Completable.complete();
+        }
+
+        LocalDateTime threshold = LocalDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
+        Date thresholdDate = Date.from(threshold.toInstant(ZoneOffset.UTC));
+
+        logger.info("Starting MongoDB audit purge for records older than {} (retention: {} days)",
+                thresholdDate, retentionDays);
+        final AtomicLong totalDeleted = new AtomicLong(0);
+
+        return deleteInBatches(thresholdDate, totalDeleted)
+                .doOnComplete(() ->
+                        logger.info("MongoDB audit purge completed. Deleted {} records older than {} days",
+                                totalDeleted.get(), retentionDays)
+                )
+                .doOnError(error ->
+                        logger.error("Error during MongoDB audit purge. Deleted {} records before error",
+                                totalDeleted.get(), error)
+                );
+    }
+
+    private Completable deleteInBatches(Date threshold, AtomicLong totalDeleted) {
+
+        Flowable<Object> idStream = Flowable.fromPublisher(
+                reportableCollection
+                        .withDocumentClass(Document.class)
+                        .find(lte(FIELD_TIMESTAMP, threshold))
+                        .projection(Projections.include("_id"))
+                        .sort(Sorts.ascending(FIELD_TIMESTAMP, "_id"))
+                        .batchSize(DELETE_BATCH_SIZE)
+        ).map(doc -> doc.get("_id"));
+
+        return idStream
+                .buffer(batchSize)
+                .concatMapSingle(ids -> {
+                    if (ids.isEmpty()) {
+                        return Single.just(0L);
+                    }
+                    return Single.fromPublisher(reportableCollection.deleteMany(in("_id", ids)))
+                            .map(DeleteResult::getDeletedCount)
+                            .doOnSuccess(deleted -> {
+                                long total = totalDeleted.addAndGet(deleted);
+                                logger.debug("Deleted {} audits (requested {}). Total deleted: {}",
+                                        deleted, ids.size(), total);
+                            });
+                })
+                .ignoreElements();
+    }
+
     private void initIndexes() {
         if (ensureIndexOnStart) {
             // drop old indexes
@@ -281,6 +343,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_TIMESTAMP_NAME).background(true)));
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME).background(true)));
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME).background(true)));
+
             Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
                     .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
                     .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable));

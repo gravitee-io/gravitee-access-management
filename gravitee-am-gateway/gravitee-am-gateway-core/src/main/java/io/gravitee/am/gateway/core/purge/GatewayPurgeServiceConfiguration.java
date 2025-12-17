@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.gateway.core.purge;
 
-import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.common.ExpiredDataSweeper.Target;
-import io.gravitee.am.service.purge.ExpiredDataSweepers;
+import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.am.service.purge.ScheduledPurgeService;
 import io.gravitee.am.service.purge.ScheduledPurgeServiceFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -56,9 +55,14 @@ public class GatewayPurgeServiceConfiguration {
                                                        @Value("${services.purge.cron:0 0 23 * * *}") String cron,
                                                        @Value("#{'${services.purge.exclude:}'.empty ? {} : '${services.purge.exclude}'.split(',')}") List<String> excluded,
                                                        TaskScheduler taskScheduler,
-                                                       ExpiredDataSweepers sweepers) {
+                                                       ExpiredDataSweeperProvider sweepers) {
         enabled = enabled && ("jdbc".equalsIgnoreCase(gatewayRepositoryType) || "jdbc".equalsIgnoreCase(oAuth2repositoryType));
         return factory.createPurgeService(enabled, cron, excluded, taskScheduler, sweepers);
+    }
+
+    @Bean
+    public GatewayExpiredDataSweeperProvider expiredDataSweeperProvider() {
+        return new GatewayExpiredDataSweeperProvider();
     }
 
 }

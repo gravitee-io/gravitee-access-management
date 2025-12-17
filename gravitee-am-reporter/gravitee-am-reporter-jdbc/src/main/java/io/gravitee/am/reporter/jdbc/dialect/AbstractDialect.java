@@ -90,7 +90,7 @@ public abstract class AbstractDialect implements DialectHelper {
 
     @Override
     public String tableExists(String table, String schema) {
-            return "select 1 from information_schema.tables where table_name = '"+table+"'";
+            return "select 1 from information_schema.tables where LOWER(table_name) = LOWER('" + table + "')";
     }
 
     @Override
@@ -235,6 +235,11 @@ public abstract class AbstractDialect implements DialectHelper {
     }
 
     @Override
+    public String buildLimitClause(int limit) {
+        return " LIMIT " + limit;
+    }
+
+    @Override
     public Single<List<Map<String, Object>>> buildAndProcessHistogram(DatabaseClient dbClient, ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
         SearchQuery searchQuery = buildHistogramQuery(referenceType, referenceId, criteria);
         DatabaseClient.GenericExecuteSpec histogram = dbClient.sql(searchQuery.getQuery());
@@ -243,6 +248,28 @@ public abstract class AbstractDialect implements DialectHelper {
 
     protected Map<String, Object> toHistogramSlotValue(Row row, RowMetadata rowMetadata) {
         return Map.of(SLOT, row.get(SLOT), STATUS, row.get(STATUS), ATTEMPTS, row.get(ATTEMPTS), TYPE, row.get(TYPE));
+    }
+
+    @Override
+    public String checkForeignKeyExists(String tableName, String constraintName, String schema) {
+        return """
+                SELECT COUNT(*) AS count
+                FROM information_schema.table_constraints
+                WHERE LOWER(constraint_name) = LOWER('%s')
+                  AND LOWER(table_name) = LOWER('%s')
+                  AND LOWER(table_schema) = LOWER('%s')
+                  AND constraint_type = 'FOREIGN KEY'
+                """.formatted(constraintName, tableName, schema);
+    }
+
+    @Override
+    public String addForeignKey(String childTable, String parentTable, String fkColumnName, String constraintName) {
+        return """
+                ALTER TABLE %s
+                ADD CONSTRAINT %s
+                FOREIGN KEY (%s) REFERENCES %s(id)
+                ON DELETE CASCADE
+                """.formatted(childTable, constraintName, fkColumnName, parentTable);
     }
 
 }

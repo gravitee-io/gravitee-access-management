@@ -144,13 +144,16 @@ services:
     prometheus:
       enabled: true
 
-  # Data purge service (JDBC only).
-  # purge:
-    # enabled: true                               # enable the JDBC purge task (default: true)
-    # cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
-    # events:                                     # event retention period in days (default: 90 days)
-    #   retention:
-    #     days: 90
+#  Data purge service.
+#  purge:
+#    enabled: true                               # enable the JDBC purge task (default: true)
+#    cron: 0 0 23 * * *                         # configure the frequency (default: every day at 11 PM)
+#    events:                                     # event retention period in days (default: 90 days). Can be set only once on initial boot
+#      retention:
+#        days: 90
+#    audits:                                     # audits retention period in days (default: 90 days, 0 means disabled)
+#      retention:
+#        days: 90
 
   # platform notifier service
   notifier:
