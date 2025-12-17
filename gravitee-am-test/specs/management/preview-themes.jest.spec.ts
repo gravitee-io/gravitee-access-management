@@ -135,7 +135,7 @@ function requestPreview(template: String, content: String) {
     let preview = await testRequestPreview(template, content);
     expect(preview).toBeDefined;
     expect(preview['content']).toBeDefined;
-    expect(preview['content']).toContain('#6A4FF7');
+    expect(preview['content']).toContain('#DA3B00');
   });
 
   it('must render the form with draft theme', async () => {

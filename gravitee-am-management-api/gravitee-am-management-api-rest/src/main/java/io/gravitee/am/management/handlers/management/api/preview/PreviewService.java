@@ -133,9 +133,9 @@ public class PreviewService implements InitializingBean {
                 .switchIfEmpty(Maybe.fromCallable(() -> {
                     final Theme defaultTheme = new Theme();
                     defaultTheme.setPrimaryTextColorHex("#000000");
-                    defaultTheme.setPrimaryButtonColorHex("#6A4FF7");
+                    defaultTheme.setPrimaryButtonColorHex("#DA3B00");
                     defaultTheme.setSecondaryTextColorHex("#000000");
-                    defaultTheme.setSecondaryButtonColorHex("#DAD3FD");
+                    defaultTheme.setSecondaryButtonColorHex("#FFC2AC");
                     return defaultTheme;
                 }))
                 .map(theme -> merge(theme, overrideTheme))
