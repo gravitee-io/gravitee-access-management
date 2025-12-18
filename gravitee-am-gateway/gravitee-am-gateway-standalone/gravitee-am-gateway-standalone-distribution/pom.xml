@@ -503,13 +503,6 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>io.gravitee.am.authenticator</groupId>
-            <artifactId>gravitee-am-authenticator-cba</artifactId>
-            <version>${gravitee-am-authenticator-cba.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -1001,12 +994,6 @@
                                     <version>${gravitee-am-gateway-handler-authzen.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.authenticator</groupId>
-                                    <artifactId>gravitee-am-authenticator-cba</artifactId>
-                                    <version>${gravitee-am-authenticator-cba.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -1119,6 +1106,13 @@
                     <type>zip</type>
                     <scope>runtime</scope>
                 </dependency>
+                <dependency>
+                    <groupId>io.gravitee.am.authenticator</groupId>
+                    <artifactId>gravitee-am-authenticator-cba</artifactId>
+                    <version>${gravitee-am-authenticator-cba.version}</version>
+                    <type>zip</type>
+                    <scope>runtime</scope>
+                </dependency>
             </dependencies>
             <build>
                 <plugins>
@@ -1222,6 +1216,14 @@
                                             <groupId>com.graviteesource.service</groupId>
                                             <artifactId>gravitee-service-geoip</artifactId>
                                             <version>${gravitee-service-geoip.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+
+
+                                        <artifactItem>
+                                            <groupId>io.gravitee.am.authenticator</groupId>
+                                            <artifactId>gravitee-am-authenticator-cba</artifactId>
+                                            <version>${gravitee-am-authenticator-cba.version}</version>
                                             <type>zip</type>
                                         </artifactItem>
                                     </artifactItems>
