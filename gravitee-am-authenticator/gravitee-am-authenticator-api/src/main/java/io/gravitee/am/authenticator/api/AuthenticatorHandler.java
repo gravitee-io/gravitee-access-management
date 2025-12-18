@@ -15,12 +15,9 @@
  */
 package io.gravitee.am.authenticator.api;
 
-import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +34,7 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         authenticator.authenticate(routingContext)
                 .doOnSuccess(user -> auditService.report(authenticator.successAuditLog(routingContext, user)))
-                .doOnError(err -> {
-                    var auditEvent = authenticator.failedAuditLog(routingContext, err);
-                    setAuditUser(err, auditEvent);
-                    auditService.report(auditEvent);
-                })
+                .doOnError(err -> auditService.report(authenticator.failedAuditLog(routingContext, err)))
                 .subscribe(
                         user -> setupUserSession(routingContext, user).next(),
                         err -> {
@@ -56,29 +49,4 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
         ctx.put(ConstantKeys.USER_CONTEXT_KEY, user.getUser());
         return ctx;
     }
-
-    private static void setAuditUser(Throwable err, AuditBuilder auditEvent) {
-        if (!(err instanceof AccountStatusException ase)) {
-            return;
-        }
-
-        var details = ase.getDetails();
-        if (details == null) {
-            return;
-        }
-
-        var user = new io.gravitee.am.model.User();
-        if (details.containsKey("id")) {
-            user.setId(details.get("id"));
-        }
-        if (details.containsKey("username")) {
-            user.setUsername(details.get("username"));
-        }
-        if (details.containsKey("displayName")) {
-            user.setDisplayName(details.get("displayName"));
-        }
-
-        auditEvent.principal(new DefaultUser(user));
-    }
-
 }
