@@ -17,13 +17,13 @@
 /**
  * Provision environments from a JSON config.
  *
- * Requires environment variables:
- * - AM_MANAGEMENT_URL
- * - AM_MANAGEMENT_ENDPOINT
- * - AM_DEF_ORG_ID
- * - AM_DEF_ENV_ID
- * - AM_ADMIN_USERNAME
- * - AM_ADMIN_PASSWORD
+ * Optional environment variables (defaults shown):
+ * - AM_MANAGEMENT_URL (default: http://localhost:8093)
+ * - AM_MANAGEMENT_ENDPOINT (default: AM_MANAGEMENT_URL)
+ * - AM_DEF_ORG_ID (default: DEFAULT)
+ * - AM_DEF_ENV_ID (default: DEFAULT)
+ * - AM_ADMIN_USERNAME (default: admin)
+ * - AM_ADMIN_PASSWORD (default: adminadmin)
  *
  * Usage:
  *   npm run provision -- ./scripts/provision.example.json
@@ -37,96 +37,40 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { createMongoIdp } from '@utils-commands/idps-commands';
 import { createRandomString } from '@management-commands/service/utils';
 import { getDomainApi, getDomainManagerUrl, getApplicationApi, getUserApi } from '@management-commands/service/utils';
+import 'cross-fetch/polyfill';
 const request = require('supertest');
+import { banner, section, info, success, warn, errorLog, bullet, startSpinner, updateSpinner, stopSpinner, ansi, ICON } from './provisioning/logger';
 
-// ---------- pretty logging helpers ----------
-const ansi = {
-  reset: '\x1b[0m',
-  bold: '\x1b[1m',
-  dim: '\x1b[2m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  gray: '\x1b[90m',
-};
-const ICON = {
-  ok: '✔',
-  fail: '✖',
-  warn: '⚠',
-  info: 'ℹ',
-  rocket: '🚀',
-  broom: '🧹',
-  gear: '⚙',
-  sparkles: '✨',
-  hourglass: '⌛',
-};
-function banner(title: string) {
-  const line = '─'.repeat(Math.max(10, title.length + 4));
-  console.log(`${ansi.cyan}${'┌' + line + '┐'}${ansi.reset}`);
-  console.log(`${ansi.cyan}│${ansi.reset}  ${ansi.bold}${title}${ansi.reset}  ${ansi.cyan}│${ansi.reset}`);
-  console.log(`${ansi.cyan}${'└' + line + '┘'}${ansi.reset}`);
-}
-function section(label: string) {
-  console.log(`\n${ansi.magenta}${ICON.gear} ${label}${ansi.reset}`);
-}
-function info(msg: string) {
-  console.log(`${ansi.blue}${ICON.info} ${msg}${ansi.reset}`);
-}
-function success(msg: string) {
-  console.log(`${ansi.green}${ICON.ok} ${msg}${ansi.reset}`);
-}
-function warn(msg: string) {
-  console.log(`${ansi.yellow}${ICON.warn} ${msg}${ansi.reset}`);
-}
-function errorLog(msg: string) {
-  console.log(`${ansi.red}${ICON.fail} ${msg}${ansi.reset}`);
-}
-function bullet(msg: string) {
-  console.log(`${ansi.gray}  • ${msg}${ansi.reset}`);
+function setupEnvDefaults() {
+  process.env.AM_MANAGEMENT_URL ||= 'http://localhost:8093';
+  process.env.AM_MANAGEMENT_ENDPOINT ||= process.env.AM_MANAGEMENT_URL;
+  process.env.AM_DEF_ORG_ID ||= 'DEFAULT';
+  process.env.AM_DEF_ENV_ID ||= 'DEFAULT';
+  process.env.AM_ADMIN_USERNAME ||= 'admin';
+  process.env.AM_ADMIN_PASSWORD ||= 'adminadmin';
 }
 
-// ---------- spinners ----------
-const frames = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
-type Spinner = { timer?: NodeJS.Timeout; i: number; text: string; renderLen?: number };
-let activeSpinner: Spinner | null = null;
-function stripAnsi(s: string): string {
-  return s.replace(/\x1B\[[0-9;]*m/g, '');
-}
-function startSpinner(text: string): Spinner {
-  if (activeSpinner) {
-    stopSpinner(activeSpinner);
-  }
-  const s: Spinner = { i: 0, text, renderLen: 0 };
-  s.timer = setInterval(() => {
-    const frame = frames[(s.i = (s.i + 1) % frames.length)];
-    const line = `${ansi.cyan}${frame} ${ansi.reset}${s.text}${ansi.reset}   `;
-    process.stdout.write(`\r${line}`);
-    s.renderLen = stripAnsi(line).length;
-  }, 80);
-  activeSpinner = s;
-  return s;
-}
-function updateSpinner(s: Spinner, text: string) {
-  s.text = text;
-}
-function stopSpinner(s: Spinner, finalText?: string) {
-  if (s.timer) clearInterval(s.timer);
-  const len = s.renderLen || 0;
-  if (len > 0) {
-    process.stdout.write('\r' + ' '.repeat(len) + '\r');
-  } else {
-    process.stdout.write('\r');
-  }
-  if (finalText) {
-    console.log(finalText);
-  }
-  if (activeSpinner === s) {
-    activeSpinner = null;
+async function* iterateDomains(accessToken: string, prefix: string, size = 50) {
+  let page = 0;
+  while (true) {
+    const res = await request(getDomainManagerUrl(null))
+      .get('')
+      .query({ page, size })
+      .set('Authorization', 'Bearer ' + accessToken)
+      .expect(200);
+    const body = res.body;
+    const domains: any[] = Array.isArray(body) ? body : body?.data || body?.content || [];
+    if (!domains || domains.length === 0) break;
+    for (const dom of domains) {
+      if ((dom.name || '').startsWith(prefix)) {
+        yield dom;
+      }
+    }
+    if (domains.length < size) break;
+    page++;
   }
 }
+
 
 // ---------- concurrency helper ----------
 async function runWithConcurrency<I, O>(items: I[], limit: number, worker: (item: I, index: number) => Promise<O>): Promise<O[]> {
@@ -209,13 +153,7 @@ export async function provision(configPath: string, verify: boolean) {
   const cfg = readConfig(configPath);
 
   // Provide sensible defaults so users can run without exporting env vars
-  process.env.AM_MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL || 'http://localhost:8093';
-  process.env.AM_MANAGEMENT_ENDPOINT =
-    process.env.AM_MANAGEMENT_ENDPOINT || `${process.env.AM_MANAGEMENT_URL}`;
-  process.env.AM_DEF_ORG_ID = process.env.AM_DEF_ORG_ID || 'DEFAULT';
-  process.env.AM_DEF_ENV_ID = process.env.AM_DEF_ENV_ID || 'DEFAULT';
-  process.env.AM_ADMIN_USERNAME = process.env.AM_ADMIN_USERNAME || 'admin';
-  process.env.AM_ADMIN_PASSWORD = process.env.AM_ADMIN_PASSWORD || 'adminadmin';
+  setupEnvDefaults();
 
   banner(`${ICON.rocket} Provisioning`);
   section('Configuration');
@@ -434,26 +372,10 @@ export async function provision(configPath: string, verify: boolean) {
 
   if (verify) {
     // Verify that the expected number of domains with the prefix exist
-    const baseUrl = getDomainManagerUrl(null);
-    let page = 0;
-    const size = 50;
+    // Verify that the expected number of domains with the prefix exist
     let found = 0;
-    while (true) {
-      const res = await request(baseUrl)
-        .get('')
-        .query({ page, size })
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(200);
-      const body = res.body;
-      const domains: any[] = Array.isArray(body) ? body : body?.data || body?.content || [];
-      if (!domains || domains.length === 0) break;
-      for (const dom of domains) {
-        if ((dom.name || '').startsWith(namePrefix)) {
-          found++;
-        }
-      }
-      if (domains.length < size) break;
-      page++;
+    for await (const _ of iterateDomains(accessToken, namePrefix)) {
+      found++;
     }
     info(`Verification: found ${found} domain(s) with prefix "${namePrefix}". Expected >= ${cfg.domains}.`);
     if (found < cfg.domains) {
@@ -465,12 +387,7 @@ export async function provision(configPath: string, verify: boolean) {
 
 export async function purge(prefix: string, verify: boolean) {
   // Defaults aligned with provision()
-  process.env.AM_MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL || 'http://localhost:8093';
-  process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_ENDPOINT || `${process.env.AM_MANAGEMENT_URL}`;
-  process.env.AM_DEF_ORG_ID = process.env.AM_DEF_ORG_ID || 'DEFAULT';
-  process.env.AM_DEF_ENV_ID = process.env.AM_DEF_ENV_ID || 'DEFAULT';
-  process.env.AM_ADMIN_USERNAME = process.env.AM_ADMIN_USERNAME || 'admin';
-  process.env.AM_ADMIN_PASSWORD = process.env.AM_ADMIN_PASSWORD || 'adminadmin';
+  setupEnvDefaults();
 
   const accessToken = await requestAdminAccessToken();
   const api = getDomainApi(accessToken);
@@ -481,58 +398,26 @@ export async function purge(prefix: string, verify: boolean) {
   bullet(`Org/Env: ${process.env.AM_DEF_ORG_ID}/${process.env.AM_DEF_ENV_ID}`);
   bullet(`Prefix: ${prefix}`);
 
-  let page = 0;
-  const size = 50;
   let deleted = 0;
   // Iterate over pages, filter by prefix, delete
   // Stop when a page returns less than 'size' items
-  while (true) {
-    const res = await request(getDomainManagerUrl(null))
-      .get('')
-      .query({ page, size })
-      .set('Authorization', 'Bearer ' + accessToken)
-      .expect(200);
-    const body = res.body;
-    const domains: any[] = Array.isArray(body) ? body : body?.data || body?.content || [];
-    if (!domains || domains.length === 0) break;
-    for (const d of domains) {
-      const name = d.name || '';
-      if (name.startsWith(prefix)) {
-        info(`Deleting domain ${name} (${d.id})`);
-        await api.deleteDomain({
-          organizationId: process.env.AM_DEF_ORG_ID!,
-          environmentId: process.env.AM_DEF_ENV_ID!,
-          domain: d.id as string,
-        });
-        deleted++;
-      }
-    }
-    if (domains.length < size) break;
-    page++;
+  for await (const d of iterateDomains(accessToken, prefix)) {
+    info(`Deleting domain ${d.name} (${d.id})`);
+    await api.deleteDomain({
+      organizationId: process.env.AM_DEF_ORG_ID!,
+      environmentId: process.env.AM_DEF_ENV_ID!,
+      domain: d.id as string,
+    });
+    deleted++;
   }
   success(`Purged ${deleted} domain(s) with prefix "${prefix}".`);
 
   if (verify) {
     // Confirm no domains remain with the prefix
-    let page = 0;
-    const size = 50;
+    // Confirm no domains remain with the prefix
     let found = 0;
-    while (true) {
-      const res = await request(getDomainManagerUrl(null))
-        .get('')
-        .query({ page, size })
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(200);
-      const body = res.body;
-      const domains: any[] = Array.isArray(body) ? body : body?.data || body?.content || [];
-      if (!domains || domains.length === 0) break;
-      for (const dom of domains) {
-        if ((dom.name || '').startsWith(prefix)) {
-          found++;
-        }
-      }
-      if (domains.length < size) break;
-      page++;
+    for await (const _ of iterateDomains(accessToken, prefix)) {
+      found++;
     }
     info(`Verification after purge: found ${found} domain(s) with prefix "${prefix}". Expected 0.`);
     if (found !== 0) {
