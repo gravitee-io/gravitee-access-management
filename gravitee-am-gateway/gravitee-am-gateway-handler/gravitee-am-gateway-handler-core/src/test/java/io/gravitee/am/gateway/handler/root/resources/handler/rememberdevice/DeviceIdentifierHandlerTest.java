@@ -48,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -292,5 +293,31 @@ public class DeviceIdentifierHandlerTest {
         Assert.assertEquals(spyRoutingContext.session().get(DEVICE_ID), "deviceId2");
         Assert.assertEquals(spyRoutingContext.session().get(DEVICE_TYPE), "deviceType");
         verify(spyRoutingContext, times(1)).next();
+    }
+
+    @Test
+    public void mustResolveUserFromRoutingContextUserWhenUserContextKeyIsNull() {
+        final MFASettings mfaSettings = new MFASettings();
+        final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+        rememberDevice.setActive(true);
+        rememberDevice.setDeviceIdentifierId(UUID.randomUUID().toString());
+        mfaSettings.setRememberDevice(rememberDevice);
+        client.setMfaSettings(mfaSettings);
+        spyRoutingContext.put(CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.putParam(DEVICE_ID, "deviceId2");
+
+        final User user = new User();
+        user.setId(userId);
+        user.setExternalId(userId);
+        user.setSource("source");
+
+        spyRoutingContext.setUser(
+                new io.vertx.rxjava3.ext.auth.User(
+                        new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+
+        doReturn(Single.just(true)).when(deviceService).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
+        handler.handle(spyRoutingContext);
+
+        verify(deviceService, times(1)).deviceExists(anyString(), anyString(), eq(user.getFullId()), anyString(), anyString());
     }
 }
