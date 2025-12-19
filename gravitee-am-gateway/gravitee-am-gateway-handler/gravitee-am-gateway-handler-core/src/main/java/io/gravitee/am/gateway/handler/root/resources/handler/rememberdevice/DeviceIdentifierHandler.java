@@ -60,13 +60,25 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext routingContext) {
         final Client client = ofNullable(routingContext.<Client>get(CLIENT_CONTEXT_KEY)).orElse(new Client());
-        final User user = routingContext.get(USER_CONTEXT_KEY);
+        final User user = getUser(routingContext);
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         if (nonNull(user) && rememberDeviceSettings.isActive()) {
             checkIfDeviceExists(routingContext, client, user, rememberDeviceSettings);
         } else {
             routingContext.next();
         }
+    }
+
+    private User getUser(RoutingContext routingContext) {
+        final User user = routingContext.get(USER_CONTEXT_KEY);
+        if (user != null) {
+            return user;
+        }
+        if (routingContext.user() != null
+            && routingContext.user().getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User vertxUser) {
+            return vertxUser.getUser();
+        }
+        return null;    
     }
 
     private RememberDeviceSettings getRememberDeviceSettings(Client client) {
