@@ -31,16 +31,16 @@
 
 import fs from 'fs';
 import path from 'path';
-import faker from 'faker';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createMongoIdp } from '@utils-commands/idps-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
-import { createRandomString } from '@management-commands/service/utils';
-import { getDomainApi, getDomainManagerUrl, getApplicationApi, getUserApi } from '@management-commands/service/utils';
+import { getDomainApi, getDomainManagerUrl } from '@management-commands/service/utils';
 import 'cross-fetch/polyfill';
 const request = require('supertest');
-import { banner, section, info, success, warn, errorLog, bullet, startSpinner, updateSpinner, stopSpinner, ansi, ICON } from './provisioning/logger';
+import { banner, section, info, success, warn, bullet, ICON, ansi } from './provisioning/logger';
+import { createAndStartDomains, waitForDomainsReady } from './provisioning/provisioners/domain-provisioner';
+import { ensureIdp } from './provisioning/provisioners/idp-provisioner';
+import { createAppsForDomain, CreatedApp } from './provisioning/provisioners/app-provisioner';
+import { createUsersForDomain } from './provisioning/provisioners/user-provisioner';
 
 function setupEnvDefaults() {
   process.env.AM_MANAGEMENT_URL ||= 'http://localhost:8093';
@@ -72,22 +72,6 @@ async function* iterateDomains(accessToken: string, prefix: string, size = 50) {
   }
 }
 
-
-// ---------- concurrency helper ----------
-async function runWithConcurrency<I, O>(items: I[], limit: number, worker: (item: I, index: number) => Promise<O>): Promise<O[]> {
-  const results: O[] = new Array(items.length) as O[];
-  let idx = 0;
-  async function next(): Promise<void> {
-    const current = idx++;
-    if (current >= items.length) return;
-    results[current] = await worker(items[current], current);
-    return next();
-  }
-  const starters = Array.from({ length: Math.min(limit, items.length) }, () => next());
-  await Promise.all(starters);
-  return results;
-}
-
 type GrantMode = 'random' | 'code-only' | 'all';
 
 type ProvisionConfig = {
@@ -105,7 +89,7 @@ type CreatedSummary = {
   domains: Array<{
     id: string;
     name: string;
-    applications: Array<{ id: string; clientId: string; name: string }>;
+    applications: CreatedApp[];
     users: number;
     idp?: string;
   }>;
@@ -116,44 +100,6 @@ function readConfig(filePath: string): ProvisionConfig {
   const raw = fs.readFileSync(abs, 'utf-8');
   const cfg = JSON.parse(raw);
   return cfg as ProvisionConfig;
-}
-
-function buildName(prefix: string, parts: Array<string | number | undefined>): string {
-  return [prefix, ...parts].filter(Boolean).join('-');
-}
-
-function pickGrantTypes(mode: GrantMode | undefined): string[] {
-  const all = ['authorization_code', 'implicit', 'password', 'client_credentials', 'refresh_token'];
-  if (mode === 'all') return all;
-  if (mode === 'code-only') return ['authorization_code', 'refresh_token'];
-  // random
-  const choices = [...all];
-  const count = Math.max(2, Math.floor(Math.random() * choices.length));
-  const picked: string[] = [];
-  while (picked.length < count && choices.length > 0) {
-    const idx = Math.floor(Math.random() * choices.length);
-    picked.push(choices.splice(idx, 1)[0]);
-  }
-  if (!picked.includes('authorization_code')) picked.push('authorization_code');
-  if (!picked.includes('refresh_token')) picked.push('refresh_token');
-  return Array.from(new Set(picked));
-}
-
-async function ensureIdp(domainId: string, accessToken: string, kind?: string) {
-  if (kind === 'mongo') {
-    const idp = await createMongoIdp(domainId, accessToken);
-    return { idp: idp?.id || 'mongo' };
-  }
-  if (!kind || kind === 'default') {
-    // If default, try to find an existing IDP (e.g. inline-idp created by default)
-    const idps = await getAllIdps(domainId, accessToken);
-    if (idps && idps.length > 0) {
-      return { idp: idps[0].id };
-    }
-    return { idp: undefined };
-  }
-  console.warn(`Unsupported idp kind "${kind}", skipping`);
-  return { idp: undefined };
 }
 
 export async function provision(configPath: string, verify: boolean) {
@@ -197,45 +143,17 @@ export async function provision(configPath: string, verify: boolean) {
   const summary: CreatedSummary = { domains: [] };
 
   // 1) Create and start all domains first
-  section('Create and start domains');
-  const createdDomains: Array<{ id: string; name: string; ordinal: number }> = [];
-  for (let d = 1; d <= cfg.domains; d++) {
-    // Create a shorter, readable domain name: <prefix>-d<idx>-<shortTag>
-    const shortTag = (runTag || '').replace(/[^0-9A-Za-z]/g, '').slice(-6);
-    const domainName = `${namePrefix}-d${d}-${shortTag || d}`;
-    info(`Creating domain: ${domainName}`);
-    const domain = await getDomainApi(accessToken).createDomain({
-      organizationId: process.env.AM_DEF_ORG_ID!,
-      environmentId: process.env.AM_DEF_ENV_ID!,
-      newDomain: { name: domainName, description: 'Provisioned by provision.ts', dataPlaneId: 'default' },
-    });
-    const domainId = (domain as any).id;
-    info(`Starting domain: ${domainName} (${domainId})`);
-    await getDomainApi(accessToken).patchDomain({
-      organizationId: process.env.AM_DEF_ORG_ID!,
-      environmentId: process.env.AM_DEF_ENV_ID!,
-      domain: domainId,
-      patchDomain: { enabled: true },
-    });
-    const domainAfterStart = await getDomainApi(accessToken).findDomain({
-      organizationId: process.env.AM_DEF_ORG_ID!,
-      environmentId: process.env.AM_DEF_ENV_ID!,
-      domain: domainId,
-    });
-    if (!(domainAfterStart as any).enabled) {
-      throw new Error(`Domain ${domainName} (${domainId}) failed to enable`);
-    }
-    success(`Domain ready: ${domainName} (${domainId})`);
-    createdDomains.push({ id: domainId, name: domainName, ordinal: d });
-  }
+  const createdDomains = await createAndStartDomains(
+    accessToken,
+    process.env.AM_DEF_ORG_ID!,
+    process.env.AM_DEF_ENV_ID!,
+    namePrefix,
+    runTag,
+    cfg.domains,
+  );
 
   // 2) Wait for domains to be ready (5-10s); use 10s to be safe
-  section('Readiness wait');
-  const waitText = `${ICON.hourglass} Waiting 10s for domains to be ready...`;
-  const waitSpin = startSpinner(waitText);
-  await new Promise((r) => setTimeout(r, 10000));
-  stopSpinner(waitSpin, `${ansi.green}${ICON.ok} Domains are ready${ansi.reset}`);
-  success('Wait complete');
+  await waitForDomainsReady(10000);
 
   // 3) For each domain, create IDP, applications and users
   section('Populate domains (IDP, applications, users)');
@@ -250,99 +168,32 @@ export async function provision(configPath: string, verify: boolean) {
       warn('No IDP created (default)');
     }
 
-    const apps: Array<{ id: string; clientId: string; name: string }> = [];
-    if (cfg.applicationsPerDomain > 0) {
-      const totalApps = cfg.applicationsPerDomain;
-      let createdCount = 0;
-      const appSpin = startSpinner(`Creating ${totalApps} application(s): 0/${totalApps}`);
-      const appIdxs = Array.from({ length: totalApps }, (_, i) => i + 1);
-      const createdApps = await runWithConcurrency(
-        appIdxs,
-        Math.min(5, totalApps),
-        async (a) => {
-          // Readable single-word app name; clientId matches name; simple, memorable clientSecret
-          const appName = `${namePrefix}app${d}${a}`;
-          const clientId = appName;
-          const grantTypes = pickGrantTypes(cfg.grantTypes || 'random');
-          const newAppBody = {
-            name: appName,
-            type: 'web',
-            clientId: clientId,
-            clientSecret: 'test',
-            redirectUris: [`https://example.com/callback/${clientId}`],
-            settings: {
-              oauth: {
-                grantTypes: grantTypes,
-                responseTypes: ['code'],
-                applicationType: 'WEB',
-                tokenEndpointAuthMethod: 'client_secret_basic',
-              },
-            },
-          } as any;
-          const created = await getApplicationApi(accessToken).createApplication({
-            organizationId: process.env.AM_DEF_ORG_ID!,
-            environmentId: process.env.AM_DEF_ENV_ID!,
-            domain: domainId,
-            newApplication: newAppBody,
-          });
-          if (idp) {
-            await getApplicationApi(accessToken).patchApplication({
-              organizationId: process.env.AM_DEF_ORG_ID!,
-              environmentId: process.env.AM_DEF_ENV_ID!,
-              domain: domainId,
-              application: (created as any).id,
-              patchApplication: { identityProviders: [{ identity: idp, selectionRule: '', priority: 0 }] } as any,
-            });
-          }
-          createdCount++;
-          updateSpinner(appSpin, `Creating ${totalApps} application(s): ${createdCount}/${totalApps}`);
-          return { id: (created as any).id, clientId, name: appName };
-        },
-      );
-      stopSpinner(appSpin, `${ansi.green}${ICON.ok} Applications created: ${totalApps}/${totalApps}${ansi.reset}`);
-      apps.push(...createdApps);
-      for (const app of apps) {
-        bullet(`App ${app.name} id=${app.id} clientId=${app.clientId}`);
-      }
-    }
+    // Create applications
+    const apps = await createAppsForDomain(
+      accessToken,
+      process.env.AM_DEF_ORG_ID!,
+      process.env.AM_DEF_ENV_ID!,
+      domainId,
+      d,
+      namePrefix,
+      runTag,
+      cfg.applicationsPerDomain,
+      cfg.grantTypes,
+      idp,
+    );
 
-    let usersCreated = 0;
-    if (cfg.usersPerDomain > 0) {
-      const total = cfg.usersPerDomain;
-      const batchSize = Math.min(200, total); // safe bulk size
-      const userSpin = startSpinner(`Creating ${total} user(s): 0/${total}`);
-      const makeUser = (u: number) => {
-        const username = buildName(namePrefix, ['user', runTag, d, u]);
-        const email = `${username}@example.test`;
-        const password = 'SomeP@ssw0rd';
-        return {
-          username,
-          email,
-          firstName: faker.name.firstName(),
-          lastName: faker.name.lastName(),
-          password,
-          preRegistration: false,
-          registrationCompleted: true,
-          additionalInformation: {},
-          source: idp, // ensure user is created in the selected IDP
-        };
-      };
-      // Build all users then send in batches using bulk API
-      const allUsers = Array.from({ length: total }, (_, idx) => makeUser(idx + 1));
-      for (let start = 0; start < total; start += batchSize) {
-        const batch = allUsers.slice(start, start + batchSize);
-        updateSpinner(userSpin, `Creating ${total} user(s): ${Math.min(start + batch.length, total)}/${total}`);
-        await getUserApi(accessToken).bulkUserOperation({
-          organizationId: process.env.AM_DEF_ORG_ID!,
-          environmentId: process.env.AM_DEF_ENV_ID!,
-          domain: domainId,
-          domainUserBulkRequest: { action: 'CREATE', items: batch, failOnErrors: 0 },
-        });
-        usersCreated += batch.length;
-        updateSpinner(userSpin, `Creating ${total} user(s): ${usersCreated}/${total}`);
-      }
-      stopSpinner(userSpin, `${ansi.green}${ICON.ok} Users created: ${usersCreated}/${total}${ansi.reset}`);
-    }
+    // Create users
+    const usersCreated = await createUsersForDomain(
+      accessToken,
+      process.env.AM_DEF_ORG_ID!,
+      process.env.AM_DEF_ENV_ID!,
+      domainId,
+      d,
+      namePrefix,
+      runTag,
+      cfg.usersPerDomain,
+      idp,
+    );
 
     if (cfg.features && cfg.features.length > 0) {
       const unsupported = cfg.features.filter((f) => !['mfa', 'ciba', 'ratelimit'].includes(f));
@@ -351,7 +202,9 @@ export async function provision(configPath: string, verify: boolean) {
       }
       const requested = cfg.features.filter((f) => ['mfa', 'ciba', 'ratelimit'].includes(f));
       if (requested.length > 0) {
-        warn(`Feature flags requested (${requested.join(', ')}). Enabling requires additional config and was skipped in this initial version.`);
+        warn(
+          `Feature flags requested (${requested.join(', ')}). Enabling requires additional config and was skipped in this initial version.`,
+        );
       }
     }
 
@@ -379,7 +232,6 @@ export async function provision(configPath: string, verify: boolean) {
   success(`Done in ${Math.round((Date.now() - startedAt) / 1000)}s`);
 
   if (verify) {
-    // Verify that the expected number of domains with the prefix exist
     // Verify that the expected number of domains with the prefix exist
     let found = 0;
     for await (const _ of iterateDomains(accessToken, namePrefix)) {
@@ -421,7 +273,6 @@ export async function purge(prefix: string, verify: boolean) {
   success(`Purged ${deleted} domain(s) with prefix "${prefix}".`);
 
   if (verify) {
-    // Confirm no domains remain with the prefix
     // Confirm no domains remain with the prefix
     let found = 0;
     for await (const _ of iterateDomains(accessToken, prefix)) {
