@@ -69,7 +69,6 @@ In order to update them, execute:
 $ npm run update:sdk:mapi `http://AM_MANAGEMENT_API/management`
 ```
 
-<<<<<<< HEAD
 === Exterenal resources
 To run tests locally you need to have configure following resources:
 
@@ -135,7 +134,6 @@ Verify OpenFGA is running:
 curl http://localhost:8090/healthz
 ```
 
-=======
 ==== Provisioning CLI
 
 You can provision a predictable environment from a JSON file.
@@ -168,4 +166,3 @@ Config fields:
 - grantTypes: random | code-only | all
 - features: optional array; currently logged and skipped (mfa, ciba, ratelimit)
 - scopes: optional array; reserved for future use
->>>>>>> d714f2050 (Add provisioning CLI tool to automate Gravitee domain, application, and user creation)
