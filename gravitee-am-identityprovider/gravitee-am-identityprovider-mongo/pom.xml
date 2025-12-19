@@ -23,13 +23,13 @@
     <parent>
         <groupId>io.gravitee.am.identityprovider</groupId>
         <artifactId>gravitee-am-identityprovider</artifactId>
-        <version>4.6.29</version>
+        <version>4.6.30-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-identityprovider-mongo</artifactId>
     <packaging>jar</packaging>
 
-    <version>4.6.29</version>
+    <version>4.6.30-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Identity Provider - MongoDB</name>
 
     <dependencies>
