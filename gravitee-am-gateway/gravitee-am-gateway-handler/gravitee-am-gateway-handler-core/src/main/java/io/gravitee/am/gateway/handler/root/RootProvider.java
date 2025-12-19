@@ -103,6 +103,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideForm
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginPostWebAuthnHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginPageHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginRedirectToAuthorizeHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.mfa.MFAChallengeUserHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
@@ -178,6 +180,7 @@ public class RootProvider extends AbstractProtocolProvider {
     public static final String PATH_LOGIN_CALLBACK = "/login/callback";
     public static final String PATH_LOGIN_SSO_POST = "/login/SSO/POST";
     public static final String PATH_LOGIN_SSO_SPNEGO = "/login/SSO/SPNEGO";
+    public static final String PATH_REMEMBERED_LOGIN = "/rememberedLogin";
     public static final String PATH_MFA_ENROLL = "/mfa/enroll";
     public static final String PATH_MFA_CHALLENGE = "/mfa/challenge";
     public static final String PATH_MFA_CHALLENGE_ALTERNATIVES = "/mfa/challenge/alternatives";
@@ -497,6 +500,16 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(new LoginPostEndpoint());
 
+        // remembered login route (bridge after remember-me)
+        rootRouter.get(PATH_REMEMBERED_LOGIN)
+                .handler(clientRequestParseHandler)
+                .handler(new RememberedLoginPageHandler(thymeleafTemplateEngine, deviceIdentifierManager));
+
+        rootRouter.post(PATH_REMEMBERED_LOGIN)
+                .handler(clientRequestParseHandler)
+                .handler(deviceIdentifierHandler)
+                .handler(new RememberedLoginRedirectToAuthorizeHandler());
+
         // MFA route
         Handler<RoutingContext> mfaChallengeUserHandler = new MFAChallengeUserHandler(userService);
 
@@ -730,6 +743,8 @@ public class RootProvider extends AbstractProtocolProvider {
         // Login endpoint
         router.route(PATH_LOGIN)
                 .handler(sessionHandler);
+        router.route(PATH_REMEMBERED_LOGIN)
+                .handler(sessionHandler);
         router
                 .route(PATH_LOGIN_CALLBACK)
                 .handler(sessionHandler);
@@ -853,6 +868,7 @@ public class RootProvider extends AbstractProtocolProvider {
         // /oauth/consent csrf is managed by handler-oidc (see OAuth2Provider).
         router.route(PATH_FORGOT_PASSWORD).handler(csrfHandler);
         router.route(PATH_LOGIN).handler(csrfHandler);
+        router.route(PATH_REMEMBERED_LOGIN).handler(csrfHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(csrfHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(csrfHandler);
         router.route(PATH_MFA_CHALLENGE).handler(csrfHandler);
@@ -870,6 +886,7 @@ public class RootProvider extends AbstractProtocolProvider {
         // /login/callback does not need csp as it is not submit to our server.
         // /oauth/consent csp is managed by handler-oidc (see OAuth2Provider).
         router.route(PATH_LOGIN).handler(cspHandler);
+        router.route(PATH_REMEMBERED_LOGIN).handler(cspHandler);
         router.route(PATH_LOGIN_CALLBACK).handler(cspHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(cspHandler);
         router.route(PATH_LOGIN_SSO_SPNEGO).handler(cspHandler);
@@ -894,6 +911,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
     private void xFrameHandler(Router router) {
         router.route(PATH_LOGIN).handler(xframeHandler);
+        router.route(PATH_REMEMBERED_LOGIN).handler(xframeHandler);
         router.route(PATH_LOGIN_CALLBACK).handler(xframeHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(xframeHandler);
         router.route(PATH_LOGIN_SSO_SPNEGO).handler(xframeHandler);
@@ -917,6 +935,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
     private void xssHandler(Router router) {
         router.route(PATH_LOGIN).handler(xssHandler);
+        router.route(PATH_REMEMBERED_LOGIN).handler(xssHandler);
         router.route(PATH_LOGIN_CALLBACK).handler(xssHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(xssHandler);
         router.route(PATH_LOGIN_SSO_SPNEGO).handler(xssHandler);
