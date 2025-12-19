@@ -127,7 +127,7 @@ You can provision a predictable environment from a JSON file.
 
 Prerequisites:
 
-- AM_MANAGEMENT_URL, AM_MANAGEMENT_ENDPOINT, AM_DEF_ORG_ID, AM_DEF_ENV_ID, AM_ADMIN_USERNAME, AM_ADMIN_PASSWORD exported in your shell.
+- Optional environment vars (defaults provided): AM_MANAGEMENT_URL, AM_MANAGEMENT_ENDPOINT, AM_DEF_ORG_ID, AM_DEF_ENV_ID, AM_ADMIN_USERNAME, AM_ADMIN_PASSWORD.
 - Install dev deps once: `npm i`
 
 Usage:
