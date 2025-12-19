@@ -92,7 +92,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
-        steps.add(new RememberMeStep(RedirectHandler.create("/login"), jwtService, userService, rememberMeCookieName));
+        steps.add(new RememberMeStep(RedirectHandler.create("/rememberedLogin"), jwtService, userService, rememberMeCookieName));
         steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
         steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, credentialService, webAuthnCookieService));
