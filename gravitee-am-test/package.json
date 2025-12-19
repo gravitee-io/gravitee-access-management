@@ -20,8 +20,8 @@
     "prettier": "prettier --check \"**/*.{js,ts,html,css,scss,json}\"",
     "prettier:fix": "prettier --write \"**/*.{js,ts,html,css,scss,json}\"",
     "prettier:list": "prettier --list-different \"**/*.{js,ts,html,css,scss,json}\"",
-    "provision": "cross-env TS_NODE_PROJECT=scripts/provisioning/tsconfig.provision.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register scripts/provisioning/provision.ts",
-    "purge": "cross-env TS_NODE_PROJECT=scripts/provisioning/tsconfig.provision.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register scripts/provisioning/provision.ts --purge",
+    "provision": "cross-env TS_NODE_PROJECT=scripts/provisioning/tsconfig.provision.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register scripts/provision.ts",
+    "purge": "cross-env TS_NODE_PROJECT=scripts/provisioning/tsconfig.provision.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register scripts/provision.ts --purge",
     "provision:check": "TS_NODE_PROJECT=scripts/provisioning/tsconfig.provision.json tsc --noEmit -p scripts/provisioning/tsconfig.provision.json"
   },
   "license": "MIT License",
