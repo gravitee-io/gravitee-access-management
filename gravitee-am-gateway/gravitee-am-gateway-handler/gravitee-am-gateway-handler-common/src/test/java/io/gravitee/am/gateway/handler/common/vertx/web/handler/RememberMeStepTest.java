@@ -26,6 +26,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.Cookie;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Before;
@@ -62,6 +63,9 @@ public class RememberMeStepTest {
     @Mock
     private HttpServerRequest httpServerRequest;
 
+    @Mock
+    private HttpServerResponse httpServerResponse;
+
     private AuthenticationFlowChain authenticationFlowChain;
 
     private RememberMeStep step;
@@ -73,6 +77,7 @@ public class RememberMeStepTest {
         authenticationFlowChain = spy(new AuthenticationFlowChain(List.of(step)));
 
         when(routingContext.request()).thenReturn(httpServerRequest);
+        when(routingContext.response()).thenReturn(httpServerResponse);
         doNothing().when(authenticationFlowChain).exit(Mockito.any());
         doNothing().when(authenticationFlowChain).doNext(Mockito.any());
     }
@@ -88,7 +93,7 @@ public class RememberMeStepTest {
     }
 
     @Test
-    public void mustExit_userNotAuthenticatedAndRememberMeCookieNotFound() {
+    public void mustDoNext_userNotAuthenticatedAndRememberMeCookieNotFound() {
         when(routingContext.user()).thenReturn(null);
 
         step.execute(routingContext, authenticationFlowChain);
@@ -98,7 +103,7 @@ public class RememberMeStepTest {
     }
 
     @Test
-    public void mustExit_failedToDecodeRememberMeCookie() {
+    public void mustRemoveCookieAndDoNext_failedToDecodeRememberMeCookie() {
         when(routingContext.user()).thenReturn(null);
 
         when(httpServerRequest.getCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME)).thenReturn(Cookie.cookie(DEFAULT_REMEMBER_ME_COOKIE_NAME, "value"));
@@ -106,12 +111,13 @@ public class RememberMeStepTest {
 
         step.execute(routingContext, authenticationFlowChain);
 
-        verify(authenticationFlowChain, times(1)).exit(step);
-        verify(authenticationFlowChain, times(0)).doNext(routingContext);
+        verify(httpServerResponse, times(1)).removeCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);
+        verify(authenticationFlowChain, times(0)).exit(step);
+        verify(authenticationFlowChain, times(1)).doNext(routingContext);
     }
 
     @Test
-    public void mustExit_userNotFound() {
+    public void mustRemoveCookieAndDoNext_userNotFound() {
         when(routingContext.user()).thenReturn(null);
 
         when(httpServerRequest.getCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME)).thenReturn(Cookie.cookie(DEFAULT_REMEMBER_ME_COOKIE_NAME, "value"));
@@ -124,12 +130,13 @@ public class RememberMeStepTest {
 
         step.execute(routingContext, authenticationFlowChain);
 
-        verify(authenticationFlowChain, times(1)).exit(step);
-        verify(authenticationFlowChain, times(0)).doNext(routingContext);
+        verify(httpServerResponse, times(1)).removeCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);
+        verify(authenticationFlowChain, times(0)).exit(step);
+        verify(authenticationFlowChain, times(1)).doNext(routingContext);
     }
 
     @Test
-    public void mustDoNext_cookieCorrectlyDecodedAndRead() {
+    public void mustExit_cookieCorrectlyDecodedAndRead() {
 
         when(routingContext.user()).thenReturn(null);
 
@@ -143,7 +150,8 @@ public class RememberMeStepTest {
 
         step.execute(routingContext, authenticationFlowChain);
 
-        verify(authenticationFlowChain, times(0)).exit(step);
-        verify(authenticationFlowChain, times(1)).doNext(routingContext);
+        verify(routingContext, times(1)).setUser(any(io.vertx.rxjava3.ext.auth.User.class));
+        verify(authenticationFlowChain, times(1)).exit(step);
+        verify(authenticationFlowChain, times(0)).doNext(routingContext);
     }
 }
