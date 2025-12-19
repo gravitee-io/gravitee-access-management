@@ -315,9 +315,9 @@ public class DeviceIdentifierHandlerTest {
                 new io.vertx.rxjava3.ext.auth.User(
                         new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
-        doReturn(Single.just(true)).when(deviceService).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
+        doReturn(Single.just(true)).when(deviceService).deviceExists(any(), anyString(), any(), anyString(), anyString());
         handler.handle(spyRoutingContext);
 
-        verify(deviceService, times(1)).deviceExists(anyString(), anyString(), eq(user.getFullId()), anyString(), anyString());
+        verify(deviceService, times(1)).deviceExists(any(), anyString(), eq(user.getFullId()), anyString(), anyString());
     }
 }
