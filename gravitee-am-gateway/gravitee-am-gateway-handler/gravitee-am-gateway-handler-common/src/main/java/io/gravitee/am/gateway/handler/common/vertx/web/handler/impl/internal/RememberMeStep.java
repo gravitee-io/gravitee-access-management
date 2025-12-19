@@ -68,11 +68,12 @@ public class RememberMeStep extends AuthenticationFlowStep {
                 .subscribe(
                         user -> {
                             routingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User((user))));
-                            flow.doNext(routingContext);
+                            flow.exit(this);
                         },
                         throwable -> {
-                            logger.error("An error has occurred when parsing RememberMe cookie", throwable);
-                            flow.exit(this);
+                            logger.warn("An error has occurred when parsing RememberMe cookie", throwable);
+                            routingContext.response().removeCookie(cookieName);
+                            flow.doNext(routingContext);
                         }
                 );
     }
