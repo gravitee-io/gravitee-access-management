@@ -35,6 +35,7 @@ import faker from 'faker';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createMongoIdp } from '@utils-commands/idps-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createRandomString } from '@management-commands/service/utils';
 import { getDomainApi, getDomainManagerUrl, getApplicationApi, getUserApi } from '@management-commands/service/utils';
 import 'cross-fetch/polyfill';
@@ -139,10 +140,17 @@ function pickGrantTypes(mode: GrantMode | undefined): string[] {
 }
 
 async function ensureIdp(domainId: string, accessToken: string, kind?: string) {
-  if (!kind || kind === 'default') return { idp: undefined };
   if (kind === 'mongo') {
     const idp = await createMongoIdp(domainId, accessToken);
     return { idp: idp?.id || 'mongo' };
+  }
+  if (!kind || kind === 'default') {
+    // If default, try to find an existing IDP (e.g. inline-idp created by default)
+    const idps = await getAllIdps(domainId, accessToken);
+    if (idps && idps.length > 0) {
+      return { idp: idps[0].id };
+    }
+    return { idp: undefined };
   }
   console.warn(`Unsupported idp kind "${kind}", skipping`);
   return { idp: undefined };
