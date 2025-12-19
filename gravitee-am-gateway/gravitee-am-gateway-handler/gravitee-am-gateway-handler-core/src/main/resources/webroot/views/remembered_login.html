@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
+</head>
+
+<body>
+<form id="rememberedLoginForm" th:action="${action}" method="post">
+    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <noscript>
+        <div>
+            <input type="submit" value="Continue"/>
+        </div>
+    </noscript>
+</form>
+
+<script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
+        th:src="@{assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
+<script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
+    (function () {
+        loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
+            if (fp?.visitorId) {
+                let inputDeviceId = document.createElement("input");
+                inputDeviceId.setAttribute("type", "hidden");
+                inputDeviceId.setAttribute("name", "deviceId");
+                inputDeviceId.value = fp.visitorId;
+                document.getElementById('rememberedLoginForm').appendChild(inputDeviceId);
+            }
+            document.getElementById('rememberedLoginForm').submit();
+        });
+    })();
+</script>
+
+<script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:src="@{assets/js/fp/fp.min.js}"></script>
+<script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:src="@{assets/js/remember-device/fingerprintjs-v3-gravitee.js}"></script>
+<script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
+    (function () {
+        loadFingerprintJsV3Gravitee(fp => {
+            if (fp?.visitorId) {
+                let inputDeviceId = document.createElement("input");
+                inputDeviceId.setAttribute("type", "hidden");
+                inputDeviceId.setAttribute("name", "deviceId");
+                inputDeviceId.value = fp.visitorId;
+                document.getElementById('rememberedLoginForm').appendChild(inputDeviceId);
+            }
+            if (fp?.components?.platform?.value) {
+                let inputDeviceType = document.createElement("input");
+                inputDeviceType.setAttribute("type", "hidden");
+                inputDeviceType.setAttribute("name", "deviceType");
+                inputDeviceType.value = fp.components.platform.value
+                document.getElementById('rememberedLoginForm').appendChild(inputDeviceType);
+            }
+            document.getElementById('rememberedLoginForm').submit();
+        });
+    })();
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:src="@{assets/js/device-type-v1.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:attr="nonce=${script_inline_nonce}">
+    (function () {
+        const deviceId = "[[${cookieDeviceIdentifier}]]";
+
+        let inputDeviceId = document.createElement("input");
+        inputDeviceId.setAttribute("type", "hidden");
+        inputDeviceId.setAttribute("name", "deviceId");
+        inputDeviceId.value = deviceId;
+        document.getElementById('rememberedLoginForm').appendChild(inputDeviceId);
+
+        let inputDeviceType = document.createElement("input");
+        inputDeviceType.setAttribute("type", "hidden");
+        inputDeviceType.setAttribute("name", "deviceType");
+        inputDeviceType.value = retrievePlatform(window.navigator);
+        document.getElementById('rememberedLoginForm').appendChild(inputDeviceType);
+
+        document.getElementById('rememberedLoginForm').submit();
+    })();
+</script>
+
+<script th:if="${!rememberDeviceIsActive}" th:attr="nonce=${script_inline_nonce}">
+    (function () {
+        const form = document.getElementById('rememberedLoginForm');
+        if (form) {
+            form.submit();
+        }
+    })();
+</script>
+</body>
+</html>
+
+
