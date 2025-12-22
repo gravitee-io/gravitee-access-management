@@ -1,0 +1,17 @@
+.info-box {
+  padding: 15px;
+  border-radius: 7px;
+  border-left: 0.25em solid rgb(0 0 0 / 11%);
+  margin: 10px 0;
+  color: rgb(0 0 0 / 53.5%);
+  font-size: 13px;
+
+  mat-icon {
+    vertical-align: middle;
+  }
+
+  &.warning {
+    border-left-color: #fdd835;
+    background: #fff9c4;
+  }
+}
