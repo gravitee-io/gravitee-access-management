@@ -104,9 +104,9 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
 
         return super.parseRequest(tokenRequest, client)
                 .flatMap(tokenRequest1 -> authorizationCodeService.remove(code, client)
-                        .flatMap(authorizationCode ->
+                        .flatMapSingle(authorizationCode ->
                                 authenticationFlowContextService.removeContext(authorizationCode.getTransactionId(), authorizationCode.getContextVersion())
-                                    .onErrorResumeNext(error -> (exitOnError) ? Maybe.error(error) : Maybe.just(new AuthenticationFlowContext()))
+                                    .onErrorResumeNext(error -> (exitOnError) ? Single.error(error) : Single.just(new AuthenticationFlowContext()))
                                     .flatMap(ctx -> {
                                         checkRedirectUris(tokenRequest1, authorizationCode);
                                         checkPKCE( tokenRequest1, authorizationCode);
@@ -138,7 +138,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                                     Set<String> finalResources = resourceConsistencyValidationService.resolveFinalResources(tokenRequest1, authorizationCode.getResources());
                                                     tokenRequest1.setResources(finalResources);
                                                     return tokenRequest1;
-                                                }).toMaybe();
+                                                });
                                     })
                         ).toSingle());
     }
