@@ -1125,7 +1125,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"external\": true,\n\t\"type\": \"oauth2-generic-am-idp\",\n    \"domainWhitelist\" : [],\n\t\"configuration\": \"{\\\"clientId\\\":\\\"my-client\\\",\\\"clientAuthenticationMethod\\\":\\\"client_secret_post\\\",\\\"clientSecret\\\":\\\"my-client-secret\\\",\\\"wellKnownUri\\\":\\\"{{gateway_url}}/social/oidc/.well-known/openid-configuration\\\",\\\"responseType\\\":\\\"code\\\",\\\"responseMode\\\":\\\"default\\\",\\\"encodeRedirectUri\\\":false,\\\"useIdTokenForUserInfo\\\":false,\\\"signature\\\":\\\"RSA_RS256\\\",\\\"publicKeyResolver\\\":\\\"GIVEN_KEY\\\",\\\"connectTimeout\\\":10000,\\\"maxPoolSize\\\":200}\",\n\t\"name\": \"Social\"\n}",
+									"raw": "{\n\t\"external\": true,\n\t\"type\": \"oauth2-generic-am-idp\",\n    \"domainWhitelist\" : [],\n\t\"configuration\": \"{\\\"clientId\\\":\\\"my-client\\\",\\\"clientAuthenticationMethod\\\":\\\"client_secret_post\\\",\\\"clientSecret\\\":\\\"my-client-secret\\\",\\\"wellKnownUri\\\":\\\"{{internal_gateway_url}}/social/oidc/.well-known/openid-configuration\\\",\\\"responseType\\\":\\\"code\\\",\\\"responseMode\\\":\\\"default\\\",\\\"encodeRedirectUri\\\":false,\\\"useIdTokenForUserInfo\\\":false,\\\"signature\\\":\\\"RSA_RS256\\\",\\\"publicKeyResolver\\\":\\\"GIVEN_KEY\\\",\\\"connectTimeout\\\":10000,\\\"maxPoolSize\\\":200}\",\n\t\"name\": \"Social\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1301,7 +1301,8 @@
 											"    var xsrfToken = responseHTML.find('[name=\"_csrf\"]').val();",
 											"    pm.environment.set('xsrf', xsrfToken);",
 											"    var socialUrl = responseHTML.find('[class=\"mdl-social-button\"] > a');",
-											"    pm.environment.set('socialUrl', socialUrl.attr('href'));",
+											"    var socialUrlValue = socialUrl.attr('href').replace(pm.variables.get('internal_gateway_url'), pm.variables.get('gateway_url'));",
+											"    pm.environment.set('socialUrl', socialUrlValue);",
 											"});"
 										],
 										"type": "text/javascript"
