@@ -123,6 +123,9 @@
         <mat-slide-toggle (change)="enableCertificateBasedAuth($event)" [checked]="isCertificateBasedAuthEnabled()" [disabled]="readonly">
           Passwordless Certificate Based Authentication (CBA)
         </mat-slide-toggle>
+        <div class="info-box warning">
+          <mat-icon>warning_outline</mat-icon> Install the <b>CBA authenticator</b> plugin on the Gateway to enable this feature.
+        </div>
         <mat-hint style="font-size: 75%">Allows users to enroll and sign in using a digital certificate stored on their device.</mat-hint>
       </div>
       <div fxLayout="column" style="margin-top: 10px">
