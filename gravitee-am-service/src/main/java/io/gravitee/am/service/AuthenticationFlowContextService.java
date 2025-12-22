@@ -26,9 +26,9 @@ import io.reactivex.rxjava3.core.Single;
  */
 public interface AuthenticationFlowContextService {
 
-    Maybe<AuthenticationFlowContext> loadContext(final String transactionId, final int expectedVersion);
+    Single<AuthenticationFlowContext> loadContext(final String transactionId, final int expectedVersion);
 
-    Maybe<AuthenticationFlowContext> removeContext(final String transactionId, final int expectedVersion);
+    Single<AuthenticationFlowContext> removeContext(final String transactionId, final int expectedVersion);
 
     /**
      * Update the AuthFlowContext in the database. This method will manage the increment of the context version.

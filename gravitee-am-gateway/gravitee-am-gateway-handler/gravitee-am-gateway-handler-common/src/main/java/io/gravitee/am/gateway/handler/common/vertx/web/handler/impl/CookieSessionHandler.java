@@ -108,6 +108,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         CookieSession session = new CookieSession(jwtService, certificateManager, timeout);
 
         registerSession(context, session);
+        updateSessionWithTransactionId(context, session);
 
         Single<CookieSession> sessionObs = Single.just(session);
 
@@ -147,6 +148,14 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
                             }
                         }
                 );
+    }
+
+    private void updateSessionWithTransactionId(RoutingContext routingContext, CookieSession session) {
+        String transactionId = routingContext.get(ConstantKeys.TRANSACTION_ID_KEY);
+
+        if(transactionId != null && session.get(ConstantKeys.TRANSACTION_ID_KEY) == null) {
+            session.put(ConstantKeys.TRANSACTION_ID_KEY, transactionId);
+        }
     }
 
     private Single<CookieSession> cleanupSession(CookieSession currentSession) {
