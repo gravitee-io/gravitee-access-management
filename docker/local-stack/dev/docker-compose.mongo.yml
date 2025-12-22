@@ -24,7 +24,10 @@ services:
     links:
       - mongodb
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_started
+      management:
+        condition: service_healthy
     environment:
       - GRAVITEE_REPOSITORIES_MANAGEMENT_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
       - GRAVITEE_REPOSITORIES_OAUTH_2_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
@@ -33,7 +36,8 @@ services:
     links:
       - mongodb
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_started
     environment:
       - GRAVITEE_REPOSITORIES_MANAGEMENT_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
       - GRAVITEE_REPOSITORIES_OAUTH2_MONGODB_URI=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000

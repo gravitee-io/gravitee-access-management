@@ -27,7 +27,8 @@ services:
       timeout: 2s
       retries: 10
     depends_on:
-      - management
+      management:
+        condition: service_healthy
     ports:
       - 8092:8092
     environment:
