@@ -111,11 +111,12 @@ public class PermissionService {
             // When checking acls for multiple types in same time, we need to check if tuples [ReferenceType - ReferenceId] are consistent each other.
             // Ex: when we check for DOMAIN_READ permission on domain X or DOMAIN_READ environment Y, we need to make sure that domain X is effectively attached to domain Y and grand permission by inheritance.
             String applicationId = referenceMap.get(ReferenceType.APPLICATION);
+            String protectedResourceId = referenceMap.get(ReferenceType.PROTECTED_RESOURCE);
             String domainId = referenceMap.get(ReferenceType.DOMAIN);
             String environmentId = referenceMap.get(ReferenceType.ENVIRONMENT);
             String organizationId = referenceMap.get(ReferenceType.ORGANIZATION);
 
-            String key = StringUtils.arrayToDelimitedString(new String[]{applicationId, domainId, environmentId, organizationId}, "#");
+            String key = StringUtils.arrayToDelimitedString(new String[]{applicationId, protectedResourceId, domainId, environmentId, organizationId}, "#");
 
             if(consistencyCache.containsKey(key)) {
                 return Single.just(consistencyCache.get(key));
@@ -125,6 +126,10 @@ public class PermissionService {
 
             if (applicationId != null) {
                 obs.add(isApplicationIdConsistent(applicationId, domainId, environmentId, organizationId));
+            }
+
+            if (protectedResourceId != null) {
+                obs.add(isProtectedResourceIdConsistent(protectedResourceId, domainId, environmentId, organizationId));
             }
 
             if (domainId != null) {
@@ -152,7 +157,24 @@ public class PermissionService {
 
         return applicationService.findById(applicationId)
                 .map(Application::getDomain)
-                .switchIfEmpty(protectedResourceService.findById(applicationId).map(ProtectedResource::getDomainId)) // TODO AM-5850
+                .flatMapSingle(storedDomainId -> {
+                    if (domainId != null) {
+                        return Single.just(storedDomainId.equals(domainId));
+                    } else {
+                        // Need to fetch the domain to check if it belongs to the environment / organization.
+                        return isDomainIdConsistent(storedDomainId, environmentId, organizationId);
+                    }
+                }).toSingle();
+    }
+
+    private Single<Boolean> isProtectedResourceIdConsistent(String protectedResourceId, String domainId, String environmentId, String organizationId) {
+
+        if(domainId == null && environmentId == null && organizationId == null) {
+            return Single.just(true);
+        }
+
+        return protectedResourceService.findById(protectedResourceId)
+                .map(ProtectedResource::getDomainId)
                 .flatMapSingle(storedDomainId -> {
                     if (domainId != null) {
                         return Single.just(storedDomainId.equals(domainId));
