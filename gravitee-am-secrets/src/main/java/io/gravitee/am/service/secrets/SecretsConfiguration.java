@@ -15,14 +15,17 @@
  */
 package io.gravitee.am.service.secrets;
 
+import com.esotericsoftware.kryo.Kryo;
 import io.gravitee.am.service.secrets.cache.SecretsCache;
 import io.gravitee.am.service.secrets.cache.KryoSecureSecretsCache;
 import io.gravitee.am.service.secrets.evaluators.SecretsResolvingPluginConfigurationEvaluator;
+import io.gravitee.am.service.secrets.kryo.KryoPool;
 import io.gravitee.am.service.secrets.providers.SecretProviderRegistry;
 import io.gravitee.am.service.secrets.providers.deployer.FromConfigurationSecretProviderDeployer;
 import io.gravitee.am.service.secrets.resolver.CachingSecretResolver;
 import io.gravitee.am.service.secrets.resolver.RegistryBasedSecretResolver;
 import io.gravitee.am.service.secrets.resolver.SecretResolver;
+import io.gravitee.secrets.api.core.Secret;
 import io.gravitee.node.secrets.plugins.SecretProviderPluginManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.time.Duration;
+import java.time.Instant;
 
 /**
  * @author GraviteeSource Team
@@ -55,9 +59,17 @@ public class SecretsConfiguration {
     @Bean
     public SecretsCache secretsCache(
             @Value("${domains.secrets.cache.ttl:3600000}") Integer cacheTtlMillis,
-            @Value("${domains.secrets.cache.maxSize:#{null}}") Long cacheMaxSize
+            @Value("${domains.secrets.cache.maxSize:#{null}}") Long cacheMaxSize,
+            @Value("${domains.secrets.kryo.pool.size:8}") int poolMaxSize,
+            @Value("${domains.secrets.kryo.pool.borrowDuration:1000}") Long poolBorrowDuration
     ) {
-        return new KryoSecureSecretsCache(Duration.ofMillis(cacheTtlMillis), cacheMaxSize);
+        KryoPool kryoPool = new KryoPool(poolMaxSize, Duration.ofMillis(poolBorrowDuration), () -> {
+            Kryo kryo = new Kryo();
+            kryo.register(Secret.class);
+            kryo.register(Instant.class);
+            return kryo;
+        });
+        return new KryoSecureSecretsCache(kryoPool, Duration.ofMillis(cacheTtlMillis), cacheMaxSize);
     }
 
     @Bean
