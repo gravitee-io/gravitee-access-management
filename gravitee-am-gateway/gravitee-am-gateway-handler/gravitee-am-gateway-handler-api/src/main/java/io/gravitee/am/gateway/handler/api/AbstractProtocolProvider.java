@@ -30,9 +30,6 @@ public abstract class AbstractProtocolProvider extends AbstractService<ProtocolP
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${handlers.request.transaction.header:X-Gravitee-Transaction-Id}")
-    protected String transactionHeader;
-
     @Override
     protected void doStop() throws Exception {
         super.doStop();
