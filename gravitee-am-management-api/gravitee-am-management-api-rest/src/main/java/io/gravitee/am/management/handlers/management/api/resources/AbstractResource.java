@@ -72,12 +72,16 @@ public abstract class AbstractResource {
 
     protected Completable checkAnyPermission(String organizationId, String environmentId, String domainId, String applicationId, Permission permission, Acl... acls) {
 
-        return checkPermissions(getAuthenticatedUser(), or(of(ReferenceType.APPLICATION, applicationId, permission, acls),
+        return checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.APPLICATION, applicationId, permission, acls);
+    }
+
+    protected Completable checkAnyPermission(String organizationId, String environmentId, String domainId, ReferenceType resourceType, String resourceId, Permission permission, Acl... acls) {
+
+        return checkPermissions(getAuthenticatedUser(), or(of(resourceType, resourceId, permission, acls),
                 of(ReferenceType.DOMAIN, domainId, permission, acls),
                 of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
                 of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
     }
-
 
     protected Completable checkAnyPermission(User authenticatedUser, String organizationId, String environmentId, String domainId, Permission permission, Acl... acls) {
 

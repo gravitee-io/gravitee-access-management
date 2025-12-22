@@ -155,7 +155,7 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                         .filter(hasPermission -> hasPermission)
                         .flatMapSingle(__ ->  service.findByDomainAndType(domainId, resourceType, pageSortRequest))
                         .switchIfEmpty(
-                                getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.PROTECTED_RESOURCE, Acl.READ)
+                                getResourceIdsWithPermission(authenticatedUser, ReferenceType.PROTECTED_RESOURCE, Permission.PROTECTED_RESOURCE, Acl.READ)
                                         .toList()
                                         .flatMap(ids -> service.findByDomainAndTypeAndIds(domainId, resourceType, ids, pageSortRequest))))
                 .subscribe(response::resume, response::resume);

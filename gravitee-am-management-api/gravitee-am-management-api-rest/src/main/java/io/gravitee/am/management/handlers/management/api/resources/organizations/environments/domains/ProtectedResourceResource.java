@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -74,7 +75,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             @Suspended final AsyncResponse response) {
         ProtectedResource.Type resourceType = fromString(type);
 
-        checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, READ)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, READ)
                 .andThen(service.findByDomainAndIdAndType(domainId, protectedResourceId, resourceType)
                         .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId))))
                 .subscribe(response::resume, response::resume);
@@ -110,7 +111,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             return;
         }
 
-        checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> service.patch(domain, protectedResourceId, patchProtectedResource, authenticatedUser)))
@@ -142,7 +143,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> service.update(domain, protectedResourceId, updateProtectedResource, authenticatedUser)))
@@ -173,7 +174,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
         ProtectedResource.Type resourceType = fromString(type);
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, DELETE)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, DELETE)
                 .andThen(checkDomainExists(domainId))
                 .flatMapCompletable(domain -> service.delete(domain, protectedResourceId, resourceType, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
