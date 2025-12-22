@@ -29,6 +29,7 @@ import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,7 +84,7 @@ public class AuthorizationCodeTokenGranterTest {
         AuthorizationCode authorizationCode = new AuthorizationCode();
         authorizationCode.setRequestParameters(new LinkedMultiValueMap<>());
         Mockito.when(authorizationCodeService.remove(any(), any())).thenReturn(Maybe.just(authorizationCode));
-        Mockito.when(authenticationFlowContextService.removeContext(any(), Mockito.anyInt())).thenReturn(Maybe.just(new AuthenticationFlowContext()));
+        Mockito.when(authenticationFlowContextService.removeContext(any(), Mockito.anyInt())).thenReturn(Single.just(new AuthenticationFlowContext()));
         Mockito.when(userAuthenticationManager.loadPreAuthenticatedUser(any(), any())).thenReturn(Maybe.error(new RuntimeException("unknown error")));
         TokenRequest tokenRequest = Mockito.mock();
 

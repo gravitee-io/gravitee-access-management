@@ -68,8 +68,8 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
     }
 
     @Override
-    public Maybe<AuthenticationFlowContext> loadContext(final String transactionId, final int expectedVersion) {
-        return authContextRepository.findLastByTransactionId(transactionId).switchIfEmpty(Maybe.fromCallable(() -> {
+    public Single<AuthenticationFlowContext> loadContext(String transactionId, int expectedVersion) {
+        return authContextRepository.findLastByTransactionId(transactionId).switchIfEmpty(Single.fromCallable(() -> {
             AuthenticationFlowContext context = new AuthenticationFlowContext();
             context.setTransactionId(transactionId);
             context.setVersion(0);
@@ -85,7 +85,7 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
     }
 
     @Override
-    public Maybe<AuthenticationFlowContext> removeContext(String transactionId, int expectedVersion) {
+    public Single<AuthenticationFlowContext> removeContext(String transactionId, int expectedVersion) {
         return this.loadContext(transactionId, expectedVersion)
                 .doFinally(() -> {
                     // fire and forget the deletion, in case of error the AuthenticationFLowContext TTL will finally delete the entry

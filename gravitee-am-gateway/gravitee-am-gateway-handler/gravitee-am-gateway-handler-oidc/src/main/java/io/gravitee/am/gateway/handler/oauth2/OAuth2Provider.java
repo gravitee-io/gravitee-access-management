@@ -72,7 +72,6 @@ import io.gravitee.am.gateway.handler.root.handler.LoggerJsonMessageTokenHandler
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
@@ -272,7 +271,6 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(corsHandler);
         oauth2Router.route(HttpMethod.GET, "/authorize")
                 .handler(corsHandler)
-                .handler(new TransactionIdHandler(transactionHeader))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
