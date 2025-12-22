@@ -82,7 +82,6 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
@@ -109,7 +108,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginA
 import io.gravitee.am.gateway.handler.root.resources.handler.mfa.MFAChallengeUserHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRememberMeRequestHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRememberMeResponseHandler;
@@ -831,8 +829,6 @@ public class RootProvider extends AbstractProtocolProvider {
     private void authFlowContextHandler(Router router) {
         // Login endpoint
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
-        TransactionIdHandler transactionIdHandler = new TransactionIdHandler(transactionHeader);
-        router.route(GET, PATH_LOGIN).handler(transactionIdHandler);
         router.route(PATH_LOGIN).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_CALLBACK).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(authenticationFlowContextHandler);
@@ -851,15 +847,12 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_RESET_PASSWORD).handler(authenticationFlowContextHandler);
 
         // WebAuthn endpoint
-        router.route(GET, PATH_WEBAUTHN_REGISTER).handler(transactionIdHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
-        router.route(GET, PATH_WEBAUTHN_LOGIN).handler(transactionIdHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
 
         // Identifier First Login endpoint
-        router.route(GET, PATH_IDENTIFIER_FIRST_LOGIN).handler(transactionIdHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(authenticationFlowContextHandler);
     }
 
