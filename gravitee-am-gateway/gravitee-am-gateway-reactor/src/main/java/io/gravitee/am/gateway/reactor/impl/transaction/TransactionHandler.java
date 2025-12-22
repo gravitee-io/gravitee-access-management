@@ -19,6 +19,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.common.utils.UUID;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
+import lombok.RequiredArgsConstructor;
 
 /**
  * A {@link Handler} used to set the transaction ID of the request and the response.
@@ -26,18 +28,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RequiredArgsConstructor
 public class TransactionHandler implements Handler<RoutingContext> {
-
-    final static String DEFAULT_TRANSACTIONAL_ID_HEADER = "X-Gravitee-Transaction-Id";
-
-    private String transactionHeader = DEFAULT_TRANSACTIONAL_ID_HEADER;
-
-    TransactionHandler() {
-    }
-
-    TransactionHandler(String transactionHeader) {
-        this.transactionHeader = transactionHeader;
-    }
+    private final String transactionHeader;
 
     @Override
     public void handle(RoutingContext context) {
@@ -47,9 +40,10 @@ public class TransactionHandler implements Handler<RoutingContext> {
             transactionId = UUID.toString(UUID.random());
             context.request().headers().set(transactionHeader, transactionId);
         }
-        context.response().headers().set(transactionHeader,transactionId);
+        context.response().headers().set(transactionHeader, transactionId);
         context.put(ConstantKeys.TRANSACTION_ID_KEY, transactionId);
 
         context.next();
     }
+
 }
