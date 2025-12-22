@@ -17,14 +17,11 @@ package io.gravitee.am.gateway.reactor.impl.transaction;
 
 import org.springframework.beans.factory.annotation.Value;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class TransactionProcessorFactory {
+public class TransactionHandlerFactory {
+    private final static String DEFAULT_TRANSACTIONAL_ID_HEADER = "X-Gravitee-Transaction-Id";
 
-    @Value("${handlers.request.transaction.header:" + TransactionHandler.DEFAULT_TRANSACTIONAL_ID_HEADER + "}")
-    private String transactionHeader = TransactionHandler.DEFAULT_TRANSACTIONAL_ID_HEADER;
+    @Value("${handlers.request.transaction.header:" + DEFAULT_TRANSACTIONAL_ID_HEADER + "}")
+    private String transactionHeader = DEFAULT_TRANSACTIONAL_ID_HEADER;
 
     public TransactionHandler create() {
         return new TransactionHandler(transactionHeader);
