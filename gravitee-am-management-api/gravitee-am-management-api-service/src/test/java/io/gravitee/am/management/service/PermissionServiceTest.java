@@ -22,13 +22,14 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.EnvironmentNotFoundException;
+
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -43,7 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +57,7 @@ import static io.gravitee.am.model.Acl.READ;
 import static io.gravitee.am.model.permissions.Permission.APPLICATION;
 import static io.gravitee.am.model.permissions.Permission.DOMAIN;
 import static io.gravitee.am.model.permissions.Permission.ORGANIZATION;
+import static io.gravitee.am.model.permissions.Permission.PROTECTED_RESOURCE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -81,6 +83,7 @@ public class PermissionServiceTest {
     private static final String ROLE_ID2 = "role#2";
     private static final String ROLE_ID3 = "role#3";
     public static final String APPLICATION_ID = "application#1";
+    public static final String PROTECTED_RESOURCE_ID = "protected-resource#1";
 
     @Mock
     private MembershipService membershipService;
@@ -101,7 +104,7 @@ public class PermissionServiceTest {
     private ApplicationService applicationService;
 
     @Mock
-    private ProtectedResourceService protectedResourceService; // TODO AM-5850
+    private ProtectedResourceService protectedResourceService;
 
     private PermissionService cut;
 
@@ -593,7 +596,6 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
-        when(protectedResourceService.findById(any())).thenReturn(Maybe.empty()); // TODO AM-5850
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
 
@@ -708,7 +710,6 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
-        when(protectedResourceService.findById(any())).thenReturn(Maybe.empty()); // TODO AM-5850
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
 
@@ -736,6 +737,151 @@ public class PermissionServiceTest {
         obs.assertValue(true);
 
         verifyNoMoreInteractions(applicationService, domainService, environmentService);
+    }
+
+    @Test
+    public void haveConsistentIds_protectedResource() {
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId(PROTECTED_RESOURCE_ID);
+        protectedResource.setDomainId(DOMAIN_ID);
+
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+
+        Environment environment = new Environment();
+        environment.setOrganizationId(ORGANIZATION_ID);
+
+        when(protectedResourceService.findById(eq(PROTECTED_RESOURCE_ID))).thenReturn(Maybe.just(protectedResource));
+        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+
+        TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.PROTECTED_RESOURCE, PROTECTED_RESOURCE_ID, PROTECTED_RESOURCE, READ))).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(true);
+    }
+
+    @Test
+    public void haveConsistentIds_protectedResourceIdNotConsistent() {
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId(PROTECTED_RESOURCE_ID);
+        protectedResource.setDomainId("OTHER_DOMAIN");
+
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+
+        Environment environment = new Environment();
+        environment.setOrganizationId(ORGANIZATION_ID);
+
+        when(protectedResourceService.findById(eq(PROTECTED_RESOURCE_ID))).thenReturn(Maybe.just(protectedResource));
+
+        TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.PROTECTED_RESOURCE, PROTECTED_RESOURCE_ID, PROTECTED_RESOURCE, READ))).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(false);
+    }
+
+    @Test
+    public void haveConsistentIds_onlyOneReferenceType_protectedResource() {
+
+        TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(of(ReferenceType.PROTECTED_RESOURCE, PROTECTED_RESOURCE_ID, PROTECTED_RESOURCE, READ)).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(true);
+
+        verify(protectedResourceService, times(0)).findById(any());
+        verify(domainService, times(0)).findById(any());
+        verify(environmentService, times(0)).findById(any());
+    }
+
+    @Test
+    public void haveConsistentIds_protectedResource_cached() {
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId(PROTECTED_RESOURCE_ID);
+        protectedResource.setDomainId(DOMAIN_ID);
+
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+
+        Environment environment = new Environment();
+        environment.setOrganizationId(ORGANIZATION_ID);
+
+        when(protectedResourceService.findById(eq(PROTECTED_RESOURCE_ID))).thenReturn(Maybe.just(protectedResource));
+        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+
+        TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.PROTECTED_RESOURCE, PROTECTED_RESOURCE_ID, PROTECTED_RESOURCE, READ))).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(true);
+
+        verify(protectedResourceService, times(1)).findById(eq(PROTECTED_RESOURCE_ID));
+        verify(domainService, times(1)).findById(eq(DOMAIN_ID));
+        verify(environmentService, times(1)).findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID));
+
+        // Second call should hit the cache.
+        obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, PROTECTED_RESOURCE, READ),
+                of(ReferenceType.PROTECTED_RESOURCE, PROTECTED_RESOURCE_ID, PROTECTED_RESOURCE, READ))).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(true);
+
+        verifyNoMoreInteractions(protectedResourceService, domainService, environmentService);
+    }
+
+    @Test
+    public void haveConsistentIds_applicationAndProtectedResource() {
+
+        Application application = new Application();
+        application.setDomain(DOMAIN_ID);
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId(PROTECTED_RESOURCE_ID);
+        protectedResource.setDomainId(DOMAIN_ID);
+
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+
+        Environment environment = new Environment();
+        environment.setOrganizationId(ORGANIZATION_ID);
+
+        when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
+        when(protectedResourceService.findById(eq(PROTECTED_RESOURCE_ID))).thenReturn(Maybe.just(protectedResource));
+        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
+
+        TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
+                of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
+                of(ReferenceType.DOMAIN, DOMAIN_ID, APPLICATION, READ),
+                of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ),
+                of(ReferenceType.PROTECTED_RESOURCE, PROTECTED_RESOURCE_ID, PROTECTED_RESOURCE, READ))).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertValue(true);
     }
 
 }
