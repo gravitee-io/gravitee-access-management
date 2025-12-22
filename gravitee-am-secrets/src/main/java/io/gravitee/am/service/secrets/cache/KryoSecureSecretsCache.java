@@ -20,6 +20,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.gravitee.am.service.secrets.kryo.KryoPool;
 import io.gravitee.secrets.api.core.Secret;
 import io.gravitee.secrets.api.core.SecretURL;
 
@@ -29,7 +30,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -37,16 +37,15 @@ import java.util.Optional;
  */
 public class KryoSecureSecretsCache implements SecretsCache {
 
-    private final Kryo kryo;
+    private final KryoPool kryoPool;
     private final Cache<SecretURL, ByteBuffer> cache;
 
     public KryoSecureSecretsCache(
+            KryoPool kryoPool,
             @Nullable Duration ttl,
             @Nullable Long maxSize
     ) {
-        this.kryo = new Kryo();
-        this.kryo.register(Secret.class);
-        this.kryo.register(Instant.class);
+        this.kryoPool = kryoPool;
 
         Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
         Optional.ofNullable(ttl).ifPresent(cacheBuilder::expireAfterWrite);
@@ -82,13 +81,13 @@ public class KryoSecureSecretsCache implements SecretsCache {
         byteBuffer.position(0);
         byteBuffer.get(buf, 0, buf.length);
         try (Input in = new Input(buf)) {
-            return this.kryo.readObject(in, Secret.class);
+            return this.kryoPool.withKryo(kryo -> kryo.readObject(in, Secret.class));
         }
     }
 
     private ByteBuffer asByteBuffer(Secret value) {
         try (ByteArrayOutputStream bytes = new ByteArrayOutputStream(); Output out = new Output(bytes)) {
-            this.kryo.writeObject(out, value);
+            this.kryoPool.doWithKryo(kryo -> kryo.writeObject(out, value));
             byte[] result = out.toBytes();
             final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(result.length);
             byteBuffer.put(result);
