@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.router.VHostRouter;
-import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;
+import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.event.Event;
@@ -60,7 +60,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     private Router router;
 
     @Autowired
-    private TransactionProcessorFactory transactionHandlerFactory;
+    private TransactionHandlerFactory transactionHandlerFactory;
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
