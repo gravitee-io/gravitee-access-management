@@ -18,6 +18,10 @@
     "stack:dev:setup:psql": "JDBC_PLUGINS=./plugins/jdbc docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml up -d",
     "stack:dev:setup:psql:11": "JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=11.18-bullseye docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml up -d",
 
+    "stack:dev:mongo": "yarn run stack:init:ciba && yarn run stack:init:build && yarn run stack:dev:setup:mongo",
+    "stack:dev:psql": "yarn run stack:init:ciba && yarn run stack:init:plugins:psql && yarn run stack:init:build && yarn run stack:dev:setup:psql",
+
     "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml down"
+
   }
 }

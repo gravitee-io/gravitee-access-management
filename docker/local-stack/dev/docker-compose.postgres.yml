@@ -27,7 +27,10 @@ services:
     links:
       - postgres
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
+      management:
+        condition: service_healthy
     volumes:
       - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc/postgresql-jdbc.jar
       - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc/r2dbc-postgresql.jar
@@ -73,7 +76,8 @@ services:
     links:
       - postgres
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
     volumes:
       - ${JDBC_PLUGINS}/postgresql-jdbc.jar:/opt/graviteeio-am-management-api/plugins/ext/repository-am-jdbc/postgresql-jdbc.jar
       - ${JDBC_PLUGINS}/r2dbc-postgresql.jar:/opt/graviteeio-am-management-api/plugins/ext/repository-am-jdbc/r2dbc-postgresql.jar
