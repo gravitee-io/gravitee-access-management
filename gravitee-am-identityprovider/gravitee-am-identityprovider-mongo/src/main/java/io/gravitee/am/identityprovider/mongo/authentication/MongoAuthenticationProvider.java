@@ -37,7 +37,9 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
 
@@ -81,7 +84,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     }
 
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        String username = getSafeUsername((String) authentication.getPrincipal());
+        String username = (String) authentication.getPrincipal();
         return findUserByMultipleField(username)
                 .toList()
                 .flatMapPublisher(users -> {
@@ -133,30 +136,64 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                 });
     }
 
-    private Flowable<Document> findUserByMultipleField(String value) {
+    private Flowable<Document> findUserByMultipleField(String username) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         String findQuery = this.configuration.getFindUserByMultipleFieldsQuery() != null ? this.configuration.getFindUserByMultipleFieldsQuery() : this.configuration.getFindUserByUsernameQuery();
-        BsonDocument query = buildBsonQuery(findQuery, value);
+        Bson query = buildBsonQuery(findQuery, username);
         return Flowable.fromPublisher(usersCol.find(query));
     }
 
-    private BsonDocument buildBsonQuery(String findQuery, String value) {
-        String jsonQuery = convertToJsonString(findQuery).replace("?", value);
-        BsonDocument query = BsonDocument.parse(jsonQuery);
-        return query;
+    private Bson buildBsonQuery(String findQuery, String username) {
+        String safeUsername = getSafeUsername(username);
+        String jsonQuery = convertToJsonString(findQuery).replace("?", safeUsername);
+        BsonDocument bsonDocument = BsonDocument.parse(jsonQuery);
+
+        if (this.configuration.isUsernameCaseSensitive()) {
+            return bsonDocument;
+        }
+
+        Document document = new Document(bsonDocument);
+        String usernameField = this.configuration.getUsernameField();
+        applyCaseInsensitiveMatching(document, usernameField, username);
+
+        return document;
+    }
+
+    private void applyCaseInsensitiveMatching(Document document, String usernameField, String username) {
+        // Apply case-insensitive matching to the username field
+        document.computeIfPresent(usernameField, (key, value) -> {
+            if (value instanceof BsonString) {
+                String escapedValue = Pattern.quote(username);
+                return Pattern.compile(escapedValue, Pattern.CASE_INSENSITIVE);
+            }
+            return value;
+        });
+
+        // Recursively check nested documents for username field
+        for (Map.Entry<String, Object> entry : document.entrySet()) {
+            Object fieldValue = entry.getValue();
+            if (fieldValue instanceof Document documentValue) {
+                applyCaseInsensitiveMatching(documentValue, usernameField, username);
+            } else if (fieldValue instanceof List<?> list) {
+                for (Object item : list) {
+                    if (item instanceof Document documentValue) {
+                        applyCaseInsensitiveMatching(documentValue, usernameField, username);
+                    }
+                }
+            }
+        }
     }
 
     public Maybe<User> loadUserByUsername(String username) {
-        final String encodedUsername = getSafeUsername(username);
-        return findUserByUsername(encodedUsername)
+        return findUserByUsername(username)
                 .map(document -> createUser(new SimpleAuthenticationContext(), document))
                 .observeOn(Schedulers.computation());
     }
 
-    private Maybe<Document> findUserByUsername(String encodedUsername) {
+    private Maybe<Document> findUserByUsername(String username) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase())
             .getCollection(this.configuration.getUsersCollection());
-        BsonDocument query = buildBsonQuery(this.configuration.getFindUserByUsernameQuery(), encodedUsername);
+        Bson query = buildBsonQuery(this.configuration.getFindUserByUsernameQuery(), username);
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
     }
 

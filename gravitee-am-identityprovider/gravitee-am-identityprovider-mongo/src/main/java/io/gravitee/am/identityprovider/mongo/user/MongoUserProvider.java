@@ -192,7 +192,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
                 .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
                 .flatMap(foundUser -> {
                     var updates = Updates.combine(
-                            Updates.set(configuration.getUsernameField(), username.toLowerCase()),
+                            Updates.set(configuration.getUsernameField(), username),
                             Updates.set(FIELD_UPDATED_AT, new Date()));
                     return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, user.getId()), updates))
                             .flatMap(updateResult -> findById(user.getId()).toSingle());

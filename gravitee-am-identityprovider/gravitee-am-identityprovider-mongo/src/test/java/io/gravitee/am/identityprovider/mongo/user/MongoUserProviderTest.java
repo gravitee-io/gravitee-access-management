@@ -68,7 +68,7 @@ public class MongoUserProviderTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(u -> "BoB".toLowerCase().equals(u.getUsername()));
+        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
     }
 
     @Test
@@ -147,7 +147,7 @@ public class MongoUserProviderTest {
 
     @Test
     public void shouldCreateUser_insensitiveCase() {
-        final String usernameWithCase = "UsernameWithCase";
+        final String usernameWithCase = "UsernameWithCase1";
         DefaultUser user = createUserBean(usernameWithCase);
         TestObserver<User> testObserver = userProvider.create(user).test();
 
@@ -156,13 +156,13 @@ public class MongoUserProviderTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> assertUserMatch(user, u));
-        testObserver.assertValue(u -> u.getUsername().equals(usernameWithCase.toLowerCase()));
+        testObserver.assertValue(u -> u.getUsername().equals(usernameWithCase));
     }
 
     @Test
     public void shouldCreateUser_sensitiveCase() {
         configuration.setUsernameCaseSensitive(true);
-        final String usernameWithCase = "UsernameWithCase";
+        final String usernameWithCase = "UsernameWithCase2";
         DefaultUser user = createUserBean(usernameWithCase);
         TestObserver<User> testObserver = userProvider.create(user).test();
 
@@ -250,9 +250,7 @@ public class MongoUserProviderTest {
     }
 
     private boolean assertUserMatch(DefaultUser expectedUser, User testableUser) {
-        final String username = configuration.isUsernameCaseSensitive() ? expectedUser.getUsername()
-            : expectedUser.getUsername().toLowerCase();
-        assertEquals(username, testableUser.getUsername());
+        assertEquals(expectedUser.getUsername(), testableUser.getUsername());
         assertEquals(expectedUser.getEmail(), testableUser.getEmail());
         assertEquals(expectedUser.getFirstName(), testableUser.getFirstName());
         assertEquals(expectedUser.getLastName(), testableUser.getLastName());

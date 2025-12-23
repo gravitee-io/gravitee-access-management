@@ -124,11 +124,7 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     }
 
     protected String getSafeUsername(String username) {
-        return getEncodedUsername(username).replace(QUOTE, SAFE_QUOTE_REPLACEMENT);
-    }
-
-    protected String getEncodedUsername(String username) {
-        return this.configuration.isUsernameCaseSensitive() ? username : username.toLowerCase();
+        return username.replace(QUOTE, SAFE_QUOTE_REPLACEMENT);
     }
 
     private String determinePrefixFromDataSourceId(String datasourceId) {
