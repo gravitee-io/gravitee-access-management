@@ -1,23 +1,22 @@
-x-backport-action: &backport-action
-  assignees:
-    - "{{ author }}"
-  body: |
-    This is an automatic copy of pull request #{{number}} done by [Mergify](https://mergify.com).
-
-    ----
-
-    {{ body }}
-
-    ----
-    {{ cherry_pick_error }}
-
 pull_request_rules:
   - name: Apply commits on `master`
     conditions:
       - label=apply-on-master
     actions:
       backport:
-        <<: *backport-action
+        <<: &backport-action
+          assignees:
+            - "{{ author }}"
+          body: |
+            This is an automatic copy of pull request #{{number}} done by [Mergify](https://mergify.com).
+
+            ----
+
+            {{ body }}
+
+            ----
+            {{ cherry_pick_error }}
+
         branches:
           - master
         title: "[master] {{ title }}"
