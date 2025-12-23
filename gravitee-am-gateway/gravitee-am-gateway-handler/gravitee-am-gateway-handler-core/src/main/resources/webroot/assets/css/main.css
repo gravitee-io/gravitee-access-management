@@ -82,9 +82,9 @@
     --white: #FFFFFF;
     --font-light-color: var(--grey);
     --font-dark-color: #100C27;
-    --primary-background-color: #6A4FF7;
+    --primary-background-color: #DA3B00;
     --primary-foreground-color: #FFFFFF;
-    --secondary-background-color: #DAD3FD;
+    --secondary-background-color: #FFC2AC;
     --secondary-foreground-color: #000000;
     --disabled-background-color: #DFDFDF;
     --disabled-foreground-color: #7C7C7C;
@@ -98,11 +98,8 @@
     --input-height: 48px;
     --container-width: 600px;
     --container-background-color: var(--white);
-    --container-border-color: rgba(0, 0, 0, 0.12);
-    --container-border-radius: 4px;
-    --container-border-width: 1px;
-    --container-border-top-width: 5px;
-    --container-border-top-color: var(--primary-background-color);
+    --container-border-radius: 8px;
+    --container-border-width: 2px;
     --icon-primary-color: var(--primary-background-color);
     --title-text-color: var(--deep-blue);
     --header-description-text-color: var(--font-light-color);
@@ -196,6 +193,9 @@ body, body * {
 
 .container {
     box-sizing: border-box;
+    background: var(--container-background-color);
+    border: var(--container-border-width) solid var(--primary-background-color);
+    border-radius: var(--container-border-radius);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -205,11 +205,7 @@ body, body * {
     max-width: 600px;
     min-width: 350px;
     width: var(--container-width);
-    top: 100px;
-    background: var(--container-background-color);
-    border: var(--container-border-width) solid var(--container-border-color);
-    border-radius: var(--container-border-radius);
-    border-top: var(--container-border-top-width) solid var(--container-border-top-color);
+    position: relative;
 }
 
 .header {
@@ -302,6 +298,12 @@ form div {
     border-radius: var(--input-border-radius);
 }
 
+.input-field:focus {
+    outline: none;
+    border-width: 2px;
+    border-color: var(--primary-background-color);
+}
+
 .short {
     width: 50%;
 }
@@ -362,7 +364,7 @@ div.section > form {
 
 .button.primary {
     color: var(--button-primary-text-color);
-    background: var(--button-primary-background-color);
+    background: var(--primary-background-color);
 }
 
 .button.secondary {
