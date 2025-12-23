@@ -7,3 +7,7 @@ CREATE TABLE IF NOT EXISTS reporter_audits___ (id NVARCHAR(64) NOT NULL, transac
 CREATE TABLE IF NOT EXISTS reporter_audits_outcomes___ (audit_id NVARCHAR(64) NOT NULL, status NVARCHAR(64) NULL, message LONGTEXT NULL, INDEX(audit_id), INDEX (status))
 CREATE TABLE IF NOT EXISTS reporter_audits_access_points___ (audit_id NVARCHAR(64) NOT NULL, id VARCHAR(255), alternative_id NVARCHAR(64) NULL, display_name NVARCHAR(255) NULL, ip_address NVARCHAR(255) NULL, user_agent NVARCHAR(255) NULL, INDEX(audit_id), INDEX (alternative_id))
 CREATE TABLE IF NOT EXISTS reporter_audits_entities___ (audit_id NVARCHAR(64) NOT NULL, audit_field NVARCHAR(64) NOT NULL, id VARCHAR(64), alternative_id NVARCHAR(320) NULL, display_name NVARCHAR(255) NULL, type NVARCHAR(64) NULL, display_ame NVARCHAR(255) NULL, reference_type NVARCHAR(64) NULL, reference_id NVARCHAR(64) NULL, attributes LONGTEXT NULL, INDEX(audit_id), INDEX(id), INDEX(alternative_id))
+
+ALTER TABLE reporter_audits_outcomes___ ADD CONSTRAINT fk_audit_outcomes___ FOREIGN KEY (audit_id) REFERENCES reporter_audits___(id) ON DELETE CASCADE
+ALTER TABLE reporter_audits_access_points___ ADD CONSTRAINT fk_audit_access_points___ FOREIGN KEY (audit_id) REFERENCES reporter_audits___(id) ON DELETE CASCADE
+ALTER TABLE reporter_audits_entities___ ADD CONSTRAINT fk_audit_entities___ FOREIGN KEY (audit_id) REFERENCES reporter_audits___(id) ON DELETE CASCADE

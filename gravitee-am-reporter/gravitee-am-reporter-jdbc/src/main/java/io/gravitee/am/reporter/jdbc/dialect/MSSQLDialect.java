@@ -32,11 +32,6 @@ import java.util.stream.Collectors;
 public class MSSQLDialect extends AbstractDialect {
 
     @Override
-    public String tableExists(String table, String schema) {
-        return "SELECT 1 FROM sysobjects WHERE name = '" + table + "' AND xtype = 'U'";
-    }
-
-    @Override
     public String buildPagingClause(int page, int size) {
         return " ORDER BY a.timestamp DESC OFFSET " + (page * size) + " ROWS FETCH NEXT " + size + " ROWS ONLY ";
     }
@@ -89,5 +84,29 @@ public class MSSQLDialect extends AbstractDialect {
         }
 
         return new SearchQuery(query, null, bindings);
+    }
+
+    @Override
+    public String tableExists(String table, String schema) {
+        return """
+        SELECT COUNT(*) AS count
+        FROM sys.tables t
+        JOIN sys.schemas s ON t.schema_id = s.schema_id
+        WHERE LOWER(t.name) = LOWER('%s')
+          AND LOWER(s.name) = LOWER('%s')
+        """.formatted(table, schema);
+    }
+
+    @Override
+    public String checkForeignKeyExists(String tableName, String constraintName, String schema) {
+        return """
+                SELECT COUNT(*) AS count
+                FROM sys.foreign_keys fk
+                JOIN sys.tables t ON fk.parent_object_id = t.object_id
+                JOIN sys.schemas s ON t.schema_id = s.schema_id
+                WHERE LOWER(fk.name) = LOWER('%s')
+                  AND LOWER(t.name) = LOWER('%s')
+                  AND LOWER(s.name) = LOWER('%s')
+                """.formatted(constraintName, tableName, schema);
     }
 }

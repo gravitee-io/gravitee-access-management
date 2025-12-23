@@ -36,6 +36,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
@@ -60,6 +61,9 @@ import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {DatabaseUrlProvider.class, JdbcReporterJUnitConfiguration.class}, loader = AnnotationConfigContextLoader.class)
+@TestPropertySource(properties = {
+    "services.purge.enabled=true"
+})
 public class JdbcAuditReporterTest {
 
     public static final String MY_USER = "MyUser";

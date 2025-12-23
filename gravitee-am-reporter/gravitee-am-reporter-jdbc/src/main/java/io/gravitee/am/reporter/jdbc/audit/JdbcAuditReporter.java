@@ -198,6 +198,9 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     private boolean ready = false;
 
+    @Value("${services.purge.enabled:false}")
+    private boolean purgeEnabled;
+
     @Value("${services.purge.audits.retention.days:90}")
     private int retentionDays;
 
@@ -213,8 +216,9 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Override
     public Completable purgeExpiredData() {
-        if (retentionDays <= 0 || !ready) {
-            LOGGER.debug("JDBC audit purge disabled (retention days: {}, ready: {})", retentionDays, ready);
+        if (!purgeEnabled || retentionDays <= 0 || !ready) {
+            LOGGER.debug("JDBC audit purge disabled (enabled: {}, retention days: {}, ready: {})",
+                    purgeEnabled, retentionDays, ready);
             return Completable.complete();
         }
 
@@ -243,20 +247,15 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                                 return Mono.just(0L);
                             }
 
-                            LOGGER.debug("Deleting batch of {} audit records", ids.size());
+                            LOGGER.debug("Deleting batch of {} audit records (CASCADE will delete child records)", ids.size());
 
-                            Mono<Long> deleteChildren = Flux
-                                    .fromIterable(List.of(auditEntitiesTable, auditOutcomesTable, auditAccessPointsTable))
-                                    .concatMap(table -> deleteChildAuditsByIds(table, ids))
-                                    .reduce(0L, Long::sum);
-
-                            Mono<Long> deleteParents = deleteAuditsByIds(ids);
-
-                            return trx.transactional(deleteChildren.then(deleteParents))
-                                    .doOnSuccess(parentDeleted -> {
-                                        long total = totalDeleted.addAndGet(parentDeleted);
-                                        LOGGER.debug("Deleted {} parent audits (requested {}). Total deleted: {}",
-                                                parentDeleted, ids.size(), total);
+                            // DELETE parent audits - CASCADE will automatically delete child records
+                            // from auditEntitiesTable, auditOutcomesTable, and auditAccessPointsTable
+                            return trx.transactional(deleteAuditsByIds(ids))
+                                    .doOnSuccess(deleted -> {
+                                        long total = totalDeleted.addAndGet(deleted);
+                                        LOGGER.debug("Deleted {} audit records (requested {}). Total deleted: {}",
+                                                deleted, ids.size(), total);
                                     });
                         })
         );
@@ -282,27 +281,6 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 .map((row, meta) -> row.get(COL_ID, String.class))
                 .all()
                 .collectList();
-    }
-
-    private Mono<Long> deleteChildAuditsByIds(String tableName, List<String> ids) {
-        if (ids.isEmpty()) {
-            return Mono.just(0L);
-        }
-
-        String inClause = IntStream.range(0, ids.size())
-                .mapToObj(i -> ":id" + i)
-                .collect(Collectors.joining(", "));
-
-        String sql = "DELETE FROM " + tableName +
-                " WHERE " + COL_AUDIT_ID + " IN (" + inClause + ")";
-
-        DatabaseClient.GenericExecuteSpec spec = template.getDatabaseClient().sql(sql);
-
-        for (int i = 0; i < ids.size(); i++) {
-            spec = spec.bind("id" + i, ids.get(i));
-        }
-
-        return spec.fetch().rowsUpdated();
     }
 
     private Mono<Long> deleteAuditsByIds(List<String> ids) {
@@ -670,6 +648,81 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         return value == null ? spec.bindNull(name, type) : spec.bind(name, value);
     }
 
+    private Mono<Long> cleanOrphanedRecords(String childTable) {
+        String sql = "DELETE FROM " + childTable +
+                     " WHERE " + COL_AUDIT_ID + " NOT IN (SELECT " + COL_ID + " FROM " + auditsTable + ")";
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .fetch()
+                .rowsUpdated()
+                .doOnSuccess(deleted -> {
+                    if (deleted > 0) {
+                        LOGGER.warn("Cleaned {} orphaned records from {} before adding FK constraint", deleted, childTable);
+                    } else {
+                        LOGGER.debug("No orphaned records found in {}", childTable);
+                    }
+                });
+    }
+
+    private Mono<Boolean> checkForeignKeyExists(String tableName, String constraintName, String schema) {
+        String sql = dialectHelper.checkForeignKeyExists(tableName, constraintName, schema);
+        LOGGER.debug("Checking FK existence with SQL: {}", sql);
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .map((row, metadata) -> {
+                    Number count = row.get("count", Number.class);
+                    boolean exists = count != null && count.longValue() > 0;
+                    LOGGER.debug("FK check for constraint {} on table {}: count={}, exists={}",
+                            constraintName, tableName, count, exists);
+                    return exists;
+                })
+                .first()
+                .defaultIfEmpty(false)
+                .doOnNext(exists -> LOGGER.debug("Final FK check result for {}: {}", constraintName, exists))
+                .doOnError(error -> LOGGER.error("FK check query failed for constraint {} on table {}: {}",
+                        constraintName, tableName, error.getMessage(), error))
+                .onErrorReturn(false);
+    }
+
+    private Mono<Void> addForeignKey(String childTable, String constraintName) {
+        String sql = dialectHelper.addForeignKey(childTable, auditsTable, COL_AUDIT_ID, constraintName);
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .then()
+                .doOnSuccess(v -> LOGGER.info("Successfully added FK constraint {} to {}", constraintName, childTable))
+                .doOnError(error -> LOGGER.error("Failed to add FK constraint {} to {}: {}",
+                        constraintName, childTable, error.getMessage()));
+    }
+
+    private Mono<Void> createForeignKeyForTable(String childTable, String constraintName, String schema) {
+        return checkForeignKeyExists(childTable, constraintName, schema)
+                .flatMap(exists -> {
+                    if (exists) {
+                        LOGGER.debug("FK constraint {} already exists on {}", constraintName, childTable);
+                        return Mono.empty();
+                    }
+
+                    LOGGER.info("Creating FK constraint {} for table {}", constraintName, childTable);
+                    return cleanOrphanedRecords(childTable)
+                            .then(addForeignKey(childTable, constraintName));
+                })
+                .onErrorResume(error -> {
+                    LOGGER.warn("FK migration failed for {} {}",
+                            childTable, error.getMessage());
+                    return Mono.empty();
+                })
+                .then();
+    }
+
+    private Mono<Void> createForeignKeys(String schema, String tableSuffix) {
+        return createForeignKeyForTable(auditOutcomesTable, "fk_audit_outcomes" + tableSuffix, schema)
+                .then(createForeignKeyForTable(auditAccessPointsTable, "fk_audit_access_points" + tableSuffix, schema))
+                .then(createForeignKeyForTable(auditEntitiesTable, "fk_audit_entities" + tableSuffix, schema));
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         final String tableSuffix = (configuration.getTableSuffix() == null || configuration.getTableSuffix().isEmpty()) ? "" : "_" + configuration.getTableSuffix();
@@ -698,8 +751,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             Function<Connection, Mono<Long>> resultFunction = connection -> {
                 Statement doesTableExist = connection.createStatement(dialectHelper.tableExists(auditsTable, schemaOpt.orElse("public")));
                 return flowableToFlux(Flowable.fromPublisher(doesTableExist.execute())
-                        .flatMap(Result::getRowsUpdated)
-                        .first(0l)
+                        .flatMap(result -> result.map((row, meta) -> {
+                            Number count = row.get("count", Number.class);
+                            return count == null ? 0L : count.longValue();
+                        }))
+                        .first(0L)
                         .flatMapPublisher(total -> {
                             if (total == 0) {
                                 LOGGER.debug("SQL datatable {} doest not exists, initialize all audit tables for the reporter.", auditsTable);
@@ -720,8 +776,18 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
                                     LOGGER.debug("Found {} statements to execute", sqlStatements.size());
                                     return Flowable.fromIterable(sqlStatements)
-                                            .flatMap(statement -> Flowable.fromPublisher(connection.createStatement(statement).execute()))
-                                            .flatMap(Result::getRowsUpdated);
+                                            .flatMap(statement -> Flowable.fromPublisher(connection.createStatement(statement).execute())
+                                                    .flatMap(Result::getRowsUpdated)
+                                                    .onErrorResumeNext(error -> {
+                                                        // Ignore duplicate FK constraint errors - they can occur when schema file
+                                                        // runs multiple times (e.g., in tests) with CREATE TABLE IF NOT EXISTS
+                                                        if (error.getMessage() != null && error.getMessage().contains("Duplicate foreign key constraint")) {
+                                                            LOGGER.debug("FK constraint already exists, ignoring: {}", error.getMessage());
+                                                            return Flowable.just(0L);  // Continue processing other statements
+                                                        }
+                                                        // Re-throw other errors
+                                                        return Flowable.error(error);
+                                                    }));
 
                                 } catch (Exception e) {
                                     LOGGER.error("Unable to initialize the reporter schema", e);
@@ -733,10 +799,28 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                         })).reduce(Long::sum);
             };
 
-            // init bulk processor
+            // Initialize schema and bulk processor
             template.getDatabaseClient().inConnection(resultFunction)
                     .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
-                    .doOnTerminate(this::initializeBulkProcessor)
+                    .doOnSuccess(rowsUpdated -> {
+
+                        initializeBulkProcessor();
+
+                        boolean isNewInstallation = rowsUpdated != null && rowsUpdated > 0;
+                        if (isNewInstallation) {
+                            LOGGER.debug("New installation detected, schema file already contains FK constraints, skipping migration");
+                        } else if (purgeEnabled && retentionDays > 0) {
+                            LOGGER.debug("Purge enabled (retention: {} days), creating FK constraints with CASCADE DELETE in background", retentionDays);
+                            createForeignKeys(schemaOpt.orElse("public"), tableSuffix)
+                                    .subscribe(
+                                            v -> LOGGER.info("FK constraints migration completed successfully"),
+                                            error -> LOGGER.warn("FK constraints migration failed: {}", error.getMessage())
+                                    );
+                        } else {
+                            LOGGER.debug("Purge disabled (enabled: {}, retention: {} days), skipping FK migration",
+                                    purgeEnabled, retentionDays);
+                        }
+                    })
                     .subscribe();
 
         } else {

@@ -44,7 +44,14 @@ public interface DialectHelper {
     String buildLimitClause(int limit);
 
     void setAuditsTable(String auditsTable);
+
     void setAuditAccessPointsTable(String auditAccessPointsTable);
+
     void setAuditOutcomesTable(String auditOutcomesTable);
+
     void setAuditEntitiesTable(String auditEntitiesTable);
+
+    String checkForeignKeyExists(String tableName, String constraintName, String schema);
+
+    String addForeignKey(String childTable, String parentTable, String fkColumnName, String constraintName);
 }
