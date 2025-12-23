@@ -32,6 +32,7 @@ import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -201,6 +202,36 @@ public class UpdateUsernameRuleTest {
         defaultUser.setId("idp-user-id");
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.error(new InvalidUserException("Could not update find user")));
+
+        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidUserException.class);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    void must_not_reset_username_when_userProvider_reports_existing_username() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
+
+        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+                .thenReturn(Maybe.empty());
+
+        final UserProvider userProvider = mock(UserProvider.class);
+        final DefaultUser defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.error(new UserAlreadyExistsException(USERNAME)));
 
         var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 

@@ -36,8 +36,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -49,7 +47,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
 
@@ -139,49 +136,8 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private Flowable<Document> findUserByMultipleField(String username) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         String findQuery = this.configuration.getFindUserByMultipleFieldsQuery() != null ? this.configuration.getFindUserByMultipleFieldsQuery() : this.configuration.getFindUserByUsernameQuery();
-        Bson query = buildBsonQuery(findQuery, username);
+        Bson query = buildUsernameQuery(findQuery, username, configuration.isUsernameCaseSensitive());
         return Flowable.fromPublisher(usersCol.find(query));
-    }
-
-    private Bson buildBsonQuery(String findQuery, String username) {
-        String safeUsername = getSafeUsername(username);
-        String jsonQuery = convertToJsonString(findQuery).replace("?", safeUsername);
-        BsonDocument bsonDocument = BsonDocument.parse(jsonQuery);
-
-        if (this.configuration.isUsernameCaseSensitive()) {
-            return bsonDocument;
-        }
-
-        Document document = new Document(bsonDocument);
-        String usernameField = this.configuration.getUsernameField();
-        applyCaseInsensitiveMatching(document, usernameField, username);
-
-        return document;
-    }
-
-    private void applyCaseInsensitiveMatching(Document document, String usernameField, String username) {
-        // Apply case-insensitive matching to the username field
-        document.computeIfPresent(usernameField, (key, value) -> {
-            if (value instanceof BsonString) {
-                String escapedValue = Pattern.quote(username);
-                return Pattern.compile(escapedValue, Pattern.CASE_INSENSITIVE);
-            }
-            return value;
-        });
-
-        // Recursively check nested documents for username field
-        for (Map.Entry<String, Object> entry : document.entrySet()) {
-            Object fieldValue = entry.getValue();
-            if (fieldValue instanceof Document documentValue) {
-                applyCaseInsensitiveMatching(documentValue, usernameField, username);
-            } else if (fieldValue instanceof List<?> list) {
-                for (Object item : list) {
-                    if (item instanceof Document documentValue) {
-                        applyCaseInsensitiveMatching(documentValue, usernameField, username);
-                    }
-                }
-            }
-        }
     }
 
     public Maybe<User> loadUserByUsername(String username) {
@@ -193,7 +149,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private Maybe<Document> findUserByUsername(String username) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase())
             .getCollection(this.configuration.getUsersCollection());
-        Bson query = buildBsonQuery(this.configuration.getFindUserByUsernameQuery(), username);
+        Bson query = buildUsernameQuery(this.configuration.getFindUserByUsernameQuery(), username, configuration.isUsernameCaseSensitive());
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
     }
 
@@ -250,11 +206,6 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
 
     private String getClaim(Map<String, Object> claims, String userAttribute, String defaultValue) {
         return claims.containsKey(userAttribute) ? claims.get(userAttribute).toString() : defaultValue;
-    }
-
-    private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^" + JSON_SPECIAL_CHARS + "\\s]+", "\"$0\"").replaceAll("\\s+", "");
-        return rawString;
     }
 
     private Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {

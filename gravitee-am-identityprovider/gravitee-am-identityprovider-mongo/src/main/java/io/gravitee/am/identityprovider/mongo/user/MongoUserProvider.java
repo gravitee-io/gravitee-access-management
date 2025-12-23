@@ -99,23 +99,29 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     @Override
     public Maybe<User> findByUsername(String username) {
-        final String encodedUsername = getSafeUsername(username);
+        return findByUsernameInternal(username, configuration.isUsernameCaseSensitive())
+                .firstElement()
+                .observeOn(Schedulers.computation());
+    }
 
-        String rawQuery = this.configuration.getFindUserByUsernameQuery();
-        String jsonQuery = convertToJsonString(rawQuery).replace("?", encodedUsername);
-        BsonDocument query = BsonDocument.parse(jsonQuery);
-        return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert)
+    private Observable<User> findByUsernameInternal(String username, boolean isCaseSensitive) {
+        String findQuery = this.configuration.getFindUserByUsernameQuery();
+        Bson query = buildUsernameQuery(findQuery, username, isCaseSensitive);
+        return Observable.fromPublisher(usersCollection.find(query))
+                .map(this::convert)
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<User> create(User user) {
-        final String username = getSafeUsername(user.getUsername());
+        final String username = user.getUsername();
 
-        return findByUsername(username)
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (!isEmpty) {
+        // Uniqueness must always be checked case-insensitively, regardless of configuration,
+        // to avoid conflicts when configuration changes
+        return findByUsernameInternal(username, false)
+                .toList()
+                .flatMap(matchingUsers -> {
+                    if (!matchingUsers.isEmpty()) {
                         return Single.error(new UserAlreadyExistsException(user.getUsername()));
                     } else {
                         Document document = new Document();
@@ -190,13 +196,27 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
         return findById(user.getId())
                 .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
-                .flatMap(foundUser -> {
-                    var updates = Updates.combine(
-                            Updates.set(configuration.getUsernameField(), username),
-                            Updates.set(FIELD_UPDATED_AT, new Date()));
-                    return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, user.getId()), updates))
-                            .flatMap(updateResult -> findById(user.getId()).toSingle());
-                })
+                .flatMap(foundUser ->
+                        // Case-insensitive uniqueness check: if another user already has this username (any case),
+                        // we must prevent the update.
+                        findByUsernameInternal(username, false)
+                                .toList()
+                                .flatMap(matchingUsers -> {
+                                    boolean hasMatchingUsername = matchingUsers.stream()
+                                            .anyMatch(existingUser -> !existingUser.getId().equals(foundUser.getId()));
+                                    
+                                    if (hasMatchingUsername) {
+                                        return Single.error(new UserAlreadyExistsException(username));
+                                    }
+                                    
+                                    // No conflicts, proceed with update
+                                    var updates = Updates.combine(
+                                            Updates.set(configuration.getUsernameField(), username),
+                                            Updates.set(FIELD_UPDATED_AT, new Date()));
+                                    return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, foundUser.getId()), updates))
+                                            .flatMap(updateResult -> findById(foundUser.getId()).toSingle());
+                                })
+                )
                 .observeOn(Schedulers.computation());
     }
 
@@ -280,12 +300,6 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
         user.setAdditionalInformation(claims);
         return user;
-    }
-
-    private String convertToJsonString(String rawString) {
-        return rawString
-                .replaceAll("[^" + JSON_SPECIAL_CHARS + "\\s]+", "\"$0\"")
-                .replaceAll("\\s+", "");
     }
 
     private byte[] createSalt() {

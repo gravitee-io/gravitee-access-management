@@ -30,6 +30,7 @@ import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -69,12 +70,12 @@ public class UpdateUsernameRule {
                                 //If the user is empty we throw a UserNotFoundException to allow the update
                                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getReferenceId(), username)))
                                 //If the user is not empty we throw a InvalidUserException to prevent username update
-                                .flatMap(existingUser -> Single.<User>error(new InvalidUserException(String.format("User with username [%s] and idp [%s] already exists", username, user.getSource()))))
+                                .flatMap(existingUser -> Single.<User>error(new UserAlreadyExistsException(username)))
                                 .onErrorResumeNext(ex -> {
                                     if (ex instanceof UserNotFoundException) {
                                         return Single.just(user);
                                     }
-                                    return Single.error(ex);
+                                    return Single.error(mapUserAlreadyExistsException(ex, username, user.getSource()));
                                 })
                         ).flatMap(user -> userProviderSupplier.apply(user).flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
                                         .switchIfEmpty(Single.error(UserNotFoundException::new))
@@ -98,7 +99,7 @@ public class UpdateUsernameRule {
                                                         .flatMap(rolledBackUser -> Single.error(ex));
                                             });
                                         })
-                                ))
+                                ).onErrorResumeNext(ex -> Single.error(mapUserAlreadyExistsException(ex, username, user.getSource()))))
                         .doOnSuccess(user1 -> {
                             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1));
                             if (DOMAIN.equals(user1.getReferenceType())) {
@@ -137,6 +138,15 @@ public class UpdateUsernameRule {
                 .toList()
                 .flatMapMaybe(singles -> Maybe.just(newUsername))
                 .toSingle();
+    }
+
+    private Throwable mapUserAlreadyExistsException(Throwable ex, String username, String idp) {
+        if (ex instanceof UserAlreadyExistsException) {
+            return new InvalidUserException(
+                    String.format("User with username [%s] and idp [%s] already exists", username, idp)
+            );
+        }
+        return ex;
     }
 
     private void generateNewMovingFactorBasedOnUserId(User user) {

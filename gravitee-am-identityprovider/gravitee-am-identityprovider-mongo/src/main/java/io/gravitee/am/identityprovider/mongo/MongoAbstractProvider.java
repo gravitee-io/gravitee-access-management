@@ -16,18 +16,26 @@
 package io.gravitee.am.identityprovider.mongo;
 
 import com.mongodb.reactivestreams.client.MongoClient;
-import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import static java.util.Objects.isNull;
 
@@ -64,6 +72,7 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     protected static final String JSON_SPECIAL_CHARS = "\\{\\}\\[\\],:";
     protected static final String QUOTE = "\"";
     protected static final String SAFE_QUOTE_REPLACEMENT = "\\\\\\\\\\\\" + QUOTE;
+    protected static final int MAX_RECURSION_DEPTH = 100;
 
 
     /**
@@ -125,6 +134,72 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     protected String getSafeUsername(String username) {
         return username.replace(QUOTE, SAFE_QUOTE_REPLACEMENT);
+    }
+    
+    protected String convertToJsonString(String rawString) {
+        return rawString
+                .replaceAll("[^" + JSON_SPECIAL_CHARS + "\\s]+", "\"$0\"")
+                .replaceAll("\\s+", "");
+    }
+
+    protected Bson buildUsernameQuery(String findQuery, String username, boolean isCaseSensitive) {
+        final String safeUsername = getSafeUsername(username);
+        final String jsonQuery = convertToJsonString(findQuery).replace("?", safeUsername);
+        final BsonDocument bsonDocument = BsonDocument.parse(jsonQuery);
+
+        if (isCaseSensitive) {
+            return bsonDocument;
+        }
+
+        final Document document = new Document(bsonDocument);
+        final String usernameField = this.configuration.getUsernameField();
+        applyCaseInsensitiveUsernameMatching(document, usernameField, username);
+
+        return document;
+    }
+
+    protected void applyCaseInsensitiveUsernameMatching(Document document, String usernameField, String username) {
+        applyCaseInsensitiveUsernameMatchingToDocument(document, usernameField, username, 0);
+    }
+
+    private void applyCaseInsensitiveUsernameMatchingToDocument(Document document, String usernameField, String username, int depth) {
+        if (depth > MAX_RECURSION_DEPTH) {
+            log.warn("Maximum recursion depth reached while applying case-insensitive username matching.");
+            return;
+        }
+
+        // Apply case-insensitive matching to the username field
+        document.computeIfPresent(usernameField, (key, value) -> {
+            if (value instanceof String || value instanceof BsonString) {
+                String escapedValue = Pattern.quote(username);
+                return Pattern.compile("^" + escapedValue + "$", Pattern.CASE_INSENSITIVE);
+            }
+            return value;
+        });
+
+        // Recursively check nested documents and lists for username field
+        for (Map.Entry<String, Object> entry : document.entrySet()) {
+            applyCaseInsensitiveUsernameMatchingToValue(entry.getValue(), usernameField, username, depth + 1);
+        }
+    }
+
+    private void applyCaseInsensitiveUsernameMatchingToValue(Object value, String usernameField, String username, int depth) {
+        if (value instanceof Document nestedDocument) {
+            applyCaseInsensitiveUsernameMatchingToDocument(nestedDocument, usernameField, username, depth);
+        } else if (value instanceof List<?> nestedList) {
+            applyCaseInsensitiveUsernameMatchingToList(nestedList, usernameField, username, depth);
+        }
+    }
+
+    private void applyCaseInsensitiveUsernameMatchingToList(List<?> list, String usernameField, String username, int depth) {
+        if (depth > MAX_RECURSION_DEPTH) {
+            log.warn("Maximum recursion depth reached while applying case-insensitive username matching.");
+            return;
+        }
+
+        for (Object item : list) {
+            applyCaseInsensitiveUsernameMatchingToValue(item, usernameField, username, depth + 1);
+        }
     }
 
     private String determinePrefixFromDataSourceId(String datasourceId) {

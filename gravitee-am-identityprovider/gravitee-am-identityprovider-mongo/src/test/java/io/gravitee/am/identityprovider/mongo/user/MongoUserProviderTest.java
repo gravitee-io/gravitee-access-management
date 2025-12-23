@@ -21,7 +21,12 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.reactivex.rxjava3.core.Observable;
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import com.mongodb.reactivestreams.client.MongoCollection;
+import org.bson.Document;
 import io.gravitee.common.util.Maps;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -55,6 +60,9 @@ public class MongoUserProviderTest {
 
     @Autowired
     private MongoIdentityProviderConfiguration configuration;
+
+    @Autowired
+    private MongoDatabase mongoDatabase;
 
     @Before
     public void setup(){
@@ -328,5 +336,26 @@ public class MongoUserProviderTest {
         testObserver2.assertComplete();
         testObserver2.assertNoErrors();
         testObserver2.assertValue(u -> "newusername".equals(u.getUsername()));
+    }
+
+    @Test
+    public void must_not_updateUsername_when_same_username_with_different_casing_exists() {
+        var existingUser = userProvider.findByUsername("changeme").blockingGet();
+
+        // And another record inserted directly in Mongo with username differing only by case
+        MongoCollection<Document> collection = mongoDatabase.getCollection(configuration.getUsersCollection());
+        Document duplicateDoc = new Document("username", "ChangeMe")
+                .append("password", "pwd")
+                .append("_id", RandomString.generate());
+        Observable.fromPublisher(collection.insertOne(duplicateDoc)).blockingFirst();
+
+        var userToUpdate = new DefaultUser();
+        userToUpdate.setId(existingUser.getId());
+
+        TestObserver<User> observer = userProvider.updateUsername(userToUpdate, "ChangeMe").test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertError(UserAlreadyExistsException.class);
+        observer.assertNoValues();
     }
 }
