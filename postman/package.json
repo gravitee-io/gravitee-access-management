@@ -1,0 +1,12 @@
+{
+  "name": "gravitee-am-test-postman",
+  "private": true,
+  "description": "Gravitee.io AM - Tests - Postman",
+  "license": "MIT License",
+  "scripts": {
+    "test:collections": "for f in collections/*.json; do echo \"Running $f\" && newman run \"$f\" -e environment/docker.json --ignore-redirects --insecure --bail || { echo \"Failed: $f\"; exit 1; }; done"
+  },
+  "devDependencies": {
+    "newman": "^6.1.0"
+  }
+}

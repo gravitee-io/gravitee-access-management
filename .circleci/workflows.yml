@@ -486,17 +486,6 @@ jobs:
           name: Spin up stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
       - run:
-          name: Wait services bootstrap
-          command: |
-            # Wait for Mongo, FakeSMTP, Wiremock, CIBA, OpenFGA to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 27017; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 5025; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8181; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8080; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8090; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
-      - run:
           name: Run Management Jest tests (parallel)
           command: npm --prefix gravitee-am-test run ci:management:parallel
       - run:
@@ -504,6 +493,7 @@ jobs:
           command: npm --prefix gravitee-am-test run ci:gateway
       - run:
           name: Stop
+          when: always
           command: npm --prefix docker/local-stack run stack:down
 
   run_jest_tests_psql:
@@ -539,15 +529,6 @@ jobs:
           name: Spin up stack with Postgres << parameters.psql_version >>
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
       - run:
-          name: Wait services bootstrap
-          command: |
-            # Wait for JDBC, FakeSMTP, Wiremock, CIBA, OpenFGA to be up and running
-            timeout 30s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 5025; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8181; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8080; do sleep 2; done'
-            timeout 30s bash -c 'until nc -vz localhost 8090; do sleep 2; done'
-      - run:
           name: Run Management Jest tests (parallel)
           command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
       - run:
@@ -555,14 +536,15 @@ jobs:
           command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
       - run:
           name: Stop
+          when: always
           command: npm --prefix docker/local-stack run stack:down
   run_postman_tests_mongo:
     parameters:
       mongo_version:
         type: string
-    docker:
-      - image: cimg/openjdk:21.0.9-node
-      - image: mongo:<< parameters.mongo_version >>
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
     resource_class: large
     steps:
       - attach_workspace:
@@ -572,56 +554,31 @@ jobs:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
-          name: Install Newman
-          command: sudo npm i -g newman
+          name: Install test module dependencies
+          command: npm --prefix postman install
       - run:
-          name: Wait for Mongo to be up and running
-          command: timeout 15s bash -c 'until nc -vz localhost 27017; do sleep 2; done'
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
       - run:
-          name: Run API, GW and Postman tests
-          command: |
-            # Prepare AM
-            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
-            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-            
-            # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="*/2 * * * * *"
-            export gravitee_services_sync_timeframeBeforeDelay=5000
-            export gravitee_services_sync_timeframeAfterDelay=5000
-            export GIO_MAX_MEM=512m
-            
-            # accept | in the user names as it is can ve part of the sub now
-            export gravitee_user_username_policy_pattern="^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;=,]{1,100}$"
-            export gravitee_user_name_strict_policy_pattern="^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\/<>?:;=.,]{0,100}$"
-            export gravitee_user_name_lax_policy_pattern="^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?=]{0,100}$"
-            
-            # Start AM Management
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
-            
-            # Start AM Gateway
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
-            
-            # Run Postman tests
-            make postman
-      - keeper/env-export:
-          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
-          var-name: SLACK_ACCESS_TOKEN
-      - slack/notify:
-          branch_pattern: ".+"
-          event: fail
-          mentions: "@am_team"
-          template: basic_fail_1
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Spin up stack with Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
+      - run:
+          name: Run Postman tests
+          command: npm --prefix postman run test:collections
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
   run_postman_tests_psql:
     parameters:
       psql_version:
         type: string
-    docker:
-      - image: cimg/openjdk:21.0.9-node
-      - image: postgres:<< parameters.psql_version >>
-        environment:
-          POSTGRES_PASSWORD: T0pS3cr3t
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
     resource_class: large
     steps:
       - attach_workspace:
@@ -631,99 +588,27 @@ jobs:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
-          name: Install Newman
-          command: sudo npm i -g newman
+          name: Install test module dependencies
+          command: npm --prefix postman install
       - run:
-          name: Wait for PSQL to be up and running
-          command: timeout 15s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
       - run:
-          name: Run API, GW and Postman tests
-          command: |
-            # Prepare AM
-            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
-            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
-            export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-            
-            # copy r2dbc & jdbc drivers
-            # Try jdbc.postgresql.org first, fallback to Maven Central if it fails
-            curl --retry 2 --retry-delay 5 --max-time 30 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar || \
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar -o postgresql-jdbc.jar
-            curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
-
-            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
-            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
-
-            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
-
-            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
-            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
-            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
-            # EXPORT env vart to start AM using PSQL
-            
-            export GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
-            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
-            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=localhost
-            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT=5432
-            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE=postgres
-            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME=postgres
-            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
-            export GRAVITEE_REPOSITORIES_OAUTH2_TYPE=jdbc
-            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER=postgresql
-            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST=localhost
-            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT=5432
-            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE=postgres
-            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME=postgres
-            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
-            export GRAVITEE_REPOSITORIES_GATEWAY_TYPE=jdbc
-            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER=postgresql
-            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST=localhost
-            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT=5432
-            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
-            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
-            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
-            export gravitee_dataPlanes_0_id=default
-            export gravitee_dataPlanes_0_jdbc_database=postgres
-            export gravitee_dataPlanes_0_jdbc_driver=postgresql
-            export gravitee_dataPlanes_0_jdbc_host=localhost
-            export gravitee_dataPlanes_0_jdbc_password=T0pS3cr3t
-            export gravitee_dataPlanes_0_jdbc_port=5432
-            export gravitee_dataPlanes_0_jdbc_username=postgres
-            export gravitee_dataPlanes_0_type=jdbc
-            
-            # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="*/2 * * * * *"
-            export gravitee_services_sync_timeframeBeforeDelay=5000
-            export gravitee_services_sync_timeframeAfterDelay=5000
-            export GIO_MAX_MEM=512m
-
-            # accept | in the user names as it is can ve part of the sub now
-            export gravitee_user_username_policy_pattern="^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;=,]{1,100}$"
-            export gravitee_user_name_strict_policy_pattern="^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\/<>?:;=.,]{0,100}$"
-            export gravitee_user_name_lax_policy_pattern="^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?=]{0,100}$"
-            
-            # Start AM Management
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
-            
-            # Start AM Gateway
-            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
-            
-            # Run Postman tests
-            make postman
-      - keeper/env-export:
-          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
-          var-name: SLACK_ACCESS_TOKEN
-      - slack/notify:
-          branch_pattern: ".+"
-          event: fail
-          mentions: "@am_team"
-          template: basic_fail_1
+          name: Prepare JDBC plugins
+          command: npm --prefix docker/local-stack run stack:init:plugins:psql
+      - run:
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Spin up stack with Postgres << parameters.psql_version >>
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
+      - run:
+          name: Run Postman tests
+          command: npm --prefix postman run test:collections
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
   run_testcontainer_tests_mongo:
     executor:
       name: ubuntu

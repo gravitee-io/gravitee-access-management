@@ -4,7 +4,7 @@
 	"values": [
 		{
 			"key": "management_url",
-			"value": "http://localhost/am",
+			"value": "http://localhost:8093",
 			"description": {
 				"content": "",
 				"type": "text/plain"
@@ -13,7 +13,7 @@
 		},
 		{
 			"key": "gateway_url",
-			"value": "http://localhost/am",
+			"value": "http://localhost:8092",
 			"description": {
 				"content": "",
 				"type": "text/plain"
