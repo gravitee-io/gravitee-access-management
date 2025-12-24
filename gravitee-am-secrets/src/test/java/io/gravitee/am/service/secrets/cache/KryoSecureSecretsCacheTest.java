@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.service.secrets.cache;
 
+import com.esotericsoftware.kryo.Kryo;
 import com.google.common.collect.ArrayListMultimap;
+import io.gravitee.am.service.secrets.kryo.KryoPool;
 import io.gravitee.secrets.api.core.Secret;
 import io.gravitee.secrets.api.core.SecretURL;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,10 +41,16 @@ public class KryoSecureSecretsCacheTest {
     private static final Duration CLEANUP_ENFORCE_RATE = Duration.ofMillis(10);
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final KryoPool kryoPool = new KryoPool(8, Duration.ofSeconds(1), () -> {
+        Kryo kryo = new Kryo();
+        kryo.register(Secret.class);
+        kryo.register(Instant.class);
+        return kryo;
+    });
 
     @Test
     public void shouldCacheSecretValue() {
-        SecretsCache cache = new KryoSecureSecretsCache(null, null);
+        SecretsCache cache = new KryoSecureSecretsCache(kryoPool, null, null);
 
         SecretURL secretURL = new SecretURL("validProvider", "secretPath", "secretKey", ArrayListMultimap.create(), false);
         assertThat(cache.get(secretURL)).isEmpty();
@@ -52,7 +61,7 @@ public class KryoSecureSecretsCacheTest {
 
     @Test
     public void shouldEvictSecretValueAfterTtlPasses() {
-        SecretsCache cache = new KryoSecureSecretsCache(SHORT_CACHE_TTL, null);
+        SecretsCache cache = new KryoSecureSecretsCache(kryoPool, SHORT_CACHE_TTL, null);
         scheduleEnforcedCleanup(cache);
 
         SecretURL secretURL = new SecretURL("validProvider", "secretPath", "secretKey", ArrayListMultimap.create(), false);
@@ -63,7 +72,7 @@ public class KryoSecureSecretsCacheTest {
 
     @Test
     public void shouldEvictSecretValueAfterMaxSizeReached() {
-        SecretsCache cache = new KryoSecureSecretsCache(null, 1L);
+        SecretsCache cache = new KryoSecureSecretsCache(kryoPool, null, 1L);
         scheduleEnforcedCleanup(cache);
 
         SecretURL secretUrl1 = new SecretURL("validProvider", "secretPath", "secretKey1", ArrayListMultimap.create(), false);
