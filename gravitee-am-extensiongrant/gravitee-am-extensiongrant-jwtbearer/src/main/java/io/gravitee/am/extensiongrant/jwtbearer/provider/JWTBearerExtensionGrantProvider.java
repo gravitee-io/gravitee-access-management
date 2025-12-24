@@ -40,8 +40,8 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcess
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +102,9 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
 
     @Autowired
     private JWTBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
+
+    @Autowired
+    private WebClient webClient;
 
     @Override
     public Maybe<User> grant(TokenRequest tokenRequest) throws InvalidGrantException {
@@ -174,7 +177,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
         AbstractKeyProcessor<?> keyProcessor = null;
         if (JWTBearerExtensionGrantConfiguration.KeyResolver.JWKS_URL.equals(jwtBearerTokenGranterConfiguration.getPublicKeyResolver())) {
             keyProcessor = new JWKSKeyProcessor<>();
-            keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(jwtBearerTokenGranterConfiguration.getPublicKey()));
+            keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(webClient, jwtBearerTokenGranterConfiguration.getPublicKey()));
         } else {
             // get the corresponding key processor
             final String publicKey = jwtBearerTokenGranterConfiguration.getPublicKey();
