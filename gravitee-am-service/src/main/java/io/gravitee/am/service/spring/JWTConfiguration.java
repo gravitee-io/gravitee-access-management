@@ -15,13 +15,21 @@
  */
 package io.gravitee.am.service.spring;
 
+import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jose.util.ResourceRetriever;
 import io.gravitee.am.certificate.api.Keys;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.jwt.DefaultJWTBuilder;
 import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
+import io.gravitee.am.service.http.WebClientBuilder;
+import io.gravitee.am.service.nimbusds.WebClientResourceRetriever;
+import io.vertx.rxjava3.core.Vertx;
+import io.vertx.rxjava3.ext.web.client.WebClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,7 +43,13 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRE
  * @author GraviteeSource Team
  */
 @Configuration
+@Slf4j
 public class JWTConfiguration {
+    public enum RetrieverType {
+        JOSE,
+        WEBCLIENT
+    }
+
     @Bean("managementSecretKey")
     protected Key key(io.gravitee.node.api.configuration.Configuration configuration) throws InvalidKeyException {
         return Keys.hmacShaKeyFor(signingKeySecret(configuration).getBytes());
@@ -50,6 +64,36 @@ public class JWTConfiguration {
     @Bean("managementJwtParser")
     protected JWTParser jwtParser(@Qualifier("managementSecretKey") Key key) throws InvalidKeyException {
         return new DefaultJWTParser(key);
+    }
+
+    @Bean("defaultResourceRetriever")
+    protected ResourceRetriever defaultResourceRetriever(Vertx vertx,
+                                                         @Value("${jwt.jwks.retriever.type:JOSE}") RetrieverType type,
+                                                         WebClientBuilder webClientBuilder,
+                                                         @Value("${httpClient.timeout:10000}") int connectionTimeout,
+                                                         @Value("${httpClient.readTimeout:5000}") int readTimeout) {
+        return switch (type) {
+            case JOSE -> createJoseResourceRetriever(connectionTimeout, readTimeout);
+            case WEBCLIENT -> createWebClientResourceRetriever(vertx, webClientBuilder);
+        };
+    }
+
+    private ResourceRetriever createWebClientResourceRetriever(Vertx vertx, WebClientBuilder webClientBuilder) {
+        log.info("Creating WebClient for all JWKs retrievers");
+        WebClient webClient = webClientBuilder.createWebClient(vertx);
+        return new WebClientResourceRetriever(webClient);
+    }
+
+    private ResourceRetriever createJoseResourceRetriever(@Value("${httpClient.timeout:10000}") int connectionTimeout,
+                                                          @Value("${httpClient.readTimeout:5000}") int readTimeout) {
+        log.warn("JOSE DefaultResourceRetriever is in use for JWKs retrieval. " +
+                "This option is DEPRECATED and will be REMOVED in version 4.14. " +
+                "Configure 'jwt.jwks.retriever.type=WEBCLIENT' to switch to WebClient-based retriever.");
+        if (connectionTimeout == 0 || readTimeout == 0) {
+            return new DefaultResourceRetriever();
+        } else {
+            return new DefaultResourceRetriever(connectionTimeout, readTimeout);
+        }
     }
 
     private String signingKeySecret(io.gravitee.node.api.configuration.Configuration configuration) {

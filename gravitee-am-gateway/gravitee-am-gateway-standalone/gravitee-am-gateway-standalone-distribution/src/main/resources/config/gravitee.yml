@@ -199,6 +199,9 @@ services:
 
 # JWT used to generate signed token for OAuth 2.0/OpenID Connect protocols and to verify emails
 jwt:
+  jwks:
+    retriever:
+      type: JOSE # JOSE | WEBCLIENT
   secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y # jwt secret used to sign JWT tokens (HMAC algorithm)
   #kid: default-gravitee-AM-key # kid (key ID) Header Parameter is a hint indicating which key was used to secure the JWT
   #expire-after: 604800 # the end of validity of the token in seconds (default 604800 = a week)

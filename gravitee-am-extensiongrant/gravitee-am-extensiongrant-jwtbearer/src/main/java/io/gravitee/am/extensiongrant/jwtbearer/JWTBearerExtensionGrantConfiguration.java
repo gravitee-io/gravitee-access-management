@@ -38,6 +38,10 @@ public class JWTBearerExtensionGrantConfiguration implements ExtensionGrantConfi
         GIVEN_KEY,
         JWKS_URL
     }
+
+    public boolean usesJWKs(){
+        return publicKeyResolver == KeyResolver.JWKS_URL;
+    }
 }
 
 
