@@ -18,9 +18,11 @@ package io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jose.util.health.HealthStatus;
 import io.gravitee.am.identityprovider.api.oidc.jwt.JWKSourceResolver;
+import io.gravitee.am.service.nimbusds.WebClientResourceRetriever;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URL;
@@ -33,28 +35,17 @@ import java.net.URL;
 public class RemoteJWKSourceResolver<C extends SecurityContext> implements JWKSourceResolver<C> {
 
     private final String url;
-    private int connectionTimeout;
-    private int readTimeout;
+    private final WebClient webClient;
 
-    public RemoteJWKSourceResolver(String url, int connectionTimeout, int readTimeout) {
-        this.url = url;
-        this.connectionTimeout = connectionTimeout;
-        this.readTimeout = readTimeout;
-    }
-
-    public RemoteJWKSourceResolver(String url) {
+    public RemoteJWKSourceResolver(WebClient webClient, String url) {
+        this.webClient = webClient;
         this.url = url;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public JWKSource<C> resolve() {
-        DefaultResourceRetriever retriever;
-        if (connectionTimeout == 0 || readTimeout == 0) {
-            retriever = new DefaultResourceRetriever();
-        } else {
-            retriever = new DefaultResourceRetriever(connectionTimeout, readTimeout);
-        }
+        ResourceRetriever retriever = new WebClientResourceRetriever(webClient);
         try {
             return (JWKSource<C>) JWKSourceBuilder.create(new URL(url), retriever)
                     .outageTolerant(true)
