@@ -49,7 +49,7 @@ public class GraviteeAuthenticationProvider implements AuthenticationProvider {
             return Maybe.empty();
         }
 
-        String username = ((String) authentication.getPrincipal()).toLowerCase();
+        String username = (String) authentication.getPrincipal();
         return userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, (String)context.get(KEY_ORGANIZATION_ID), username, "gravitee")
                 .filter(user -> {
                     String presentedPassword = authentication.getCredentials().toString();

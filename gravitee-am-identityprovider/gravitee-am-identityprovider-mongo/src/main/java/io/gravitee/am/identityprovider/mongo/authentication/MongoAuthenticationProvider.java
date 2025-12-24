@@ -36,8 +36,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +81,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     }
 
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        String username = getSafeUsername((String) authentication.getPrincipal());
+        String username = (String) authentication.getPrincipal();
         return findUserByMultipleField(username)
                 .toList()
                 .flatMapPublisher(users -> {
@@ -133,30 +133,23 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                 });
     }
 
-    private Flowable<Document> findUserByMultipleField(String value) {
+    private Flowable<Document> findUserByMultipleField(String username) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         String findQuery = this.configuration.getFindUserByMultipleFieldsQuery() != null ? this.configuration.getFindUserByMultipleFieldsQuery() : this.configuration.getFindUserByUsernameQuery();
-        BsonDocument query = buildBsonQuery(findQuery, value);
+        Bson query = buildUsernameQuery(findQuery, username, configuration.isUsernameCaseSensitive());
         return Flowable.fromPublisher(usersCol.find(query));
     }
 
-    private BsonDocument buildBsonQuery(String findQuery, String value) {
-        String jsonQuery = convertToJsonString(findQuery).replace("?", value);
-        BsonDocument query = BsonDocument.parse(jsonQuery);
-        return query;
-    }
-
     public Maybe<User> loadUserByUsername(String username) {
-        final String encodedUsername = getSafeUsername(username);
-        return findUserByUsername(encodedUsername)
+        return findUserByUsername(username)
                 .map(document -> createUser(new SimpleAuthenticationContext(), document))
                 .observeOn(Schedulers.computation());
     }
 
-    private Maybe<Document> findUserByUsername(String encodedUsername) {
+    private Maybe<Document> findUserByUsername(String username) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase())
             .getCollection(this.configuration.getUsersCollection());
-        BsonDocument query = buildBsonQuery(this.configuration.getFindUserByUsernameQuery(), encodedUsername);
+        Bson query = buildUsernameQuery(this.configuration.getFindUserByUsernameQuery(), username, configuration.isUsernameCaseSensitive());
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
     }
 
@@ -213,11 +206,6 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
 
     private String getClaim(Map<String, Object> claims, String userAttribute, String defaultValue) {
         return claims.containsKey(userAttribute) ? claims.get(userAttribute).toString() : defaultValue;
-    }
-
-    private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^" + JSON_SPECIAL_CHARS + "\\s]+", "\"$0\"").replaceAll("\\s+", "");
-        return rawString;
     }
 
     private Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
