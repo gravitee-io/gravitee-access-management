@@ -17,7 +17,6 @@ package io.gravitee.am.reporter.jdbc.dialect;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
-import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -81,6 +80,11 @@ public class PostgresqlDialect extends AbstractDialect {
 
     @Override
     public String tableExists(String table, String schema) {
-        return "select 1 from information_schema.tables where table_name = '"+table+"' and table_schema = '" + (StringUtils.hasText(schema) ? schema : "public") + "'";
+        return """
+        SELECT COUNT(*) AS count
+        FROM information_schema.tables
+        WHERE LOWER(table_name) = LOWER('%s')
+          AND LOWER(table_schema) = LOWER('%s')
+        """.formatted(table, schema);
     }
 }

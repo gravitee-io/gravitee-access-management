@@ -17,3 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_access_pts_alt_id___ ON reporter_audits_acc
 CREATE INDEX IF NOT EXISTS idx_audit_ent_id___ ON reporter_audits_entities___(audit_id)
 CREATE INDEX IF NOT EXISTS idx_audit_ent_alt_id___ ON reporter_audits_entities___(alternative_id)
 CREATE INDEX IF NOT EXISTS idx_audit_ent_internal_id___ ON reporter_audits_entities___(id)
+
+ALTER TABLE reporter_audits_outcomes___ ADD CONSTRAINT fk_audit_outcomes___ FOREIGN KEY (audit_id) REFERENCES reporter_audits___(id) ON DELETE CASCADE
+ALTER TABLE reporter_audits_access_points___ ADD CONSTRAINT fk_audit_access_points___ FOREIGN KEY (audit_id) REFERENCES reporter_audits___(id) ON DELETE CASCADE
+ALTER TABLE reporter_audits_entities___ ADD CONSTRAINT fk_audit_entities___ FOREIGN KEY (audit_id) REFERENCES reporter_audits___(id) ON DELETE CASCADE

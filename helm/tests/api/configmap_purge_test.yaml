@@ -58,3 +58,86 @@ tests:
                 events:
                   retention:
                     days: 90
+
+  - it: should include purge service with audits retention
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          purge:
+            enabled: true
+            audits:
+              retention:
+                days: 90
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                audits:
+                  retention:
+                    days: 90
+                enabled: true
+
+  - it: should include purge service with both events and audits retention
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          purge:
+            enabled: true
+            cron: "0 0 23 * * *"
+            events:
+              retention:
+                days: 30
+            audits:
+              retention:
+                days: 90
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                audits:
+                  retention:
+                    days: 90
+                cron: 0 0 23 \* \* \*
+                enabled: true
+                events:
+                  retention:
+                    days: 30
+
+  - it: should include purge service with custom audits retention
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          purge:
+            enabled: true
+            audits:
+              retention:
+                days: 365
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            .*
+              purge:
+                audits:
+                  retention:
+                    days: 365
+                enabled: true
