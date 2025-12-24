@@ -376,7 +376,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_rsa256_ssh_key() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_KEY);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -394,7 +394,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_rsa384_ssh_key() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA384_KEY);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -412,7 +412,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_rsa512_ssh_key() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA512_KEY);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -430,7 +430,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_rsa256_certificate() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_CERT);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -448,7 +448,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_rsa384_certificate() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA384_CERT);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -466,7 +466,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_rsa512_certificate() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA512_CERT);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -484,7 +484,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_ecdsa256_ssh_key() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_256);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -502,7 +502,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_ecdsa384_ssh_key() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_384);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -520,7 +520,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_ecdsa512_ssh_key() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_512);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -538,7 +538,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_ecdsa256_certificate() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_256_CERT);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -556,7 +556,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_ecdsa384_certificate() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_284_CERT);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -574,7 +574,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_ecdsa512_certificate() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_512_CERT);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -592,7 +592,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_hmac256() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -610,7 +610,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_hmac384() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_384_SECRET);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -628,7 +628,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_grant_with_new_processor_hmac512() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_512_SECRET);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -646,7 +646,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_fail_with_new_processor_rsa_algorithm_mismatch_256_384() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_KEY);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -662,7 +662,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_fail_with_new_processor_rsa_algorithm_mismatch_384_512() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA384_KEY);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -678,7 +678,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_fail_with_new_processor_ecdsa_algorithm_mismatch_256_384() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_256);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -694,7 +694,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_fail_with_new_processor_ecdsa_algorithm_mismatch_384_512() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_384);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -710,7 +710,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_fail_with_new_processor_hmac_algorithm_mismatch_256_384() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
 
         final TokenRequest tokenRequest = new TokenRequest();
@@ -726,7 +726,7 @@ public class JWTBearerExtensionGrantProviderTest {
      */
     @Test
     public void must_fail_with_new_processor_hmac_algorithm_mismatch_384_512() throws Exception {
-        when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
+        when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_384_SECRET);
 
         final TokenRequest tokenRequest = new TokenRequest();

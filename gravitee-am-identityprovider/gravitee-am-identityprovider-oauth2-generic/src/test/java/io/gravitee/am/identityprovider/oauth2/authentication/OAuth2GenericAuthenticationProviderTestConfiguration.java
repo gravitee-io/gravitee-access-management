@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
+import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jose.util.ResourceRetriever;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
@@ -93,5 +95,10 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
     @Bean
     public WebClientBuilder webClientBuilder() {
         return new WebClientBuilder(environment);
+    }
+
+    @Bean
+    public ResourceRetriever defaultResourceRetriever(){
+        return new DefaultResourceRetriever();
     }
 }

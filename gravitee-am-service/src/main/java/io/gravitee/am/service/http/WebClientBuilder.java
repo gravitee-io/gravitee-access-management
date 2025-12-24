@@ -55,6 +55,18 @@ public class WebClientBuilder {
         this.environment = environment;
     }
 
+    public WebClient createWebClient(Vertx vertx) {
+        WebClientOptions options = new WebClientOptions()
+                .setKeepAlive(true)
+                .setMaxPoolSize(10)
+                .setTcpKeepAlive(true)
+                .setConnectTimeout(httpClientTimeout());
+
+        configureHttp2Settings(options);
+
+        return createWebClient(vertx, options);
+    }
+
     public WebClient createWebClient(Vertx vertx, URL url) {
         final boolean isSsl = url.getProtocol().equals(HTTPS_SCHEME);
         final int port = url.getPort() != -1 ? url.getPort() : (isSsl ? 443 : 80);
