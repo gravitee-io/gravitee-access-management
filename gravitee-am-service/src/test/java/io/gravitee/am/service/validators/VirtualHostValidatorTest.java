@@ -285,7 +285,7 @@ public class VirtualHostValidatorTest {
 
         Domain domain = getValidDomain();
         domain.setVhostMode(true);
-        domain.getVhosts().get(0).setPath("/"); // same host, "/" path overlap.
+        domain.getVhosts().get(0).setPath("/"); // same host, "/" path is allowed as fallback
 
         Domain otherDomain = getValidDomain();
         otherDomain.setId("otherDomain");
@@ -294,7 +294,8 @@ public class VirtualHostValidatorTest {
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
-        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);
+        // Fallback pattern: "/" can coexist with specific paths like "/test"
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertNoErrors();
     }
 
     @Test
@@ -306,12 +307,77 @@ public class VirtualHostValidatorTest {
         Domain otherDomain = getValidDomain();
         otherDomain.setId("otherDomain");
         otherDomain.setVhostMode(true);
-        otherDomain.getVhosts().get(0).setPath("/"); // same host, "/" path overlap.
+        otherDomain.getVhosts().get(0).setPath("/"); // same host, "/" path is allowed as fallback
 
         List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
+        // Fallback pattern: a specific path "/test" can coexist with "/" from another domain
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertNoErrors();
+    }
+
+    @Test
+    public void validateDomainVhosts_twoDomainsBothWithSlashPath() {
+
+        Domain domain = getValidDomain();
+        domain.setVhostMode(true);
+        domain.getVhosts().get(0).setPath("/"); // First domain with "/" path
+
+        Domain otherDomain = getValidDomain();
+        otherDomain.setId("otherDomain");
+        otherDomain.setVhostMode(true);
+        otherDomain.getVhosts().get(0).setPath("/"); // The second domain also with "/" path
+
+        List<Domain> otherDomains = new ArrayList<>();
+        otherDomains.add(otherDomain);
+
+        // Two domains with "/" on the same host is still not allowed (exact duplicate)
         virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);
+    }
+
+    @Test
+    public void validateDomainVhosts_nonSlashPathOverlapStillBlocked() {
+
+        Domain domain = getValidDomain();
+        domain.setVhostMode(true);
+        domain.getVhosts().get(0).setPath("/api"); // Path /api
+
+        Domain otherDomain = getValidDomain();
+        otherDomain.setId("otherDomain");
+        otherDomain.setVhostMode(true);
+        otherDomain.getVhosts().get(0).setPath("/api/v1"); // Path /api/v1 overlaps with /api
+
+        List<Domain> otherDomains = new ArrayList<>();
+        otherDomains.add(otherDomain);
+
+        // Non-slash path overlaps are still blocked (only "/" fallback pattern is allowed)
+        virtualHostValidator.validateDomainVhosts(domain, otherDomains).test().assertError(InvalidVirtualHostException.class);
+    }
+
+    @Test
+    public void validateDomainVhosts_multipleDomainsDifferentSpecificPathsWithSlashFallback() {
+
+        Domain domain1 = getValidDomain();
+        domain1.setId("domain1");
+        domain1.setVhostMode(true);
+        domain1.getVhosts().get(0).setPath("/api");
+
+        Domain domain2 = getValidDomain();
+        domain2.setId("domain2");
+        domain2.setVhostMode(true);
+        domain2.getVhosts().get(0).setPath("/auth");
+
+        Domain domainFallback = getValidDomain();
+        domainFallback.setId("domainFallback");
+        domainFallback.setVhostMode(true);
+        domainFallback.getVhosts().get(0).setPath("/"); // Fallback domain
+
+        List<Domain> otherDomains = new ArrayList<>();
+        otherDomains.add(domain1);
+        otherDomains.add(domain2);
+
+        // Fallback domain with "/" should work with multiple specific paths
+        virtualHostValidator.validateDomainVhosts(domainFallback, otherDomains).test().assertNoErrors();
     }
 
     private VirtualHost getValidVirtualHost() {
