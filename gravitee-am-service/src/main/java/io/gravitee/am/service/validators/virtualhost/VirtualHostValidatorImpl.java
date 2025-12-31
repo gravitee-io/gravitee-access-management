@@ -134,6 +134,16 @@ public class VirtualHostValidatorImpl implements VirtualHostValidator {
 
     private static Completable checkIfOverlaps(String sourcePath, List<String> pathsToCheck) {
         for (String otherPath : pathsToCheck) {
+            // Allow fallback pattern: "/" can coexist with specific paths
+            // This enables catch-all routing where "/" handles unmatched requests
+            // while more specific paths take precedence in the router
+            boolean isFallbackPattern = (sourcePath.equals("/") && !otherPath.equals("/"))
+                    || (otherPath.equals("/") && !sourcePath.equals("/"));
+
+            if (isFallbackPattern) {
+                continue; // Skip overlap check for fallback pattern
+            }
+
             if (overlap(sourcePath, otherPath)) {
                 return Completable.error(new InvalidVirtualHostException("Path [" + sourcePath + "] overlap path defined in another security domain"));
             }
