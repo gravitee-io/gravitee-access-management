@@ -209,6 +209,8 @@ spec:
               mountPath: /opt/graviteeio-am-management-api/plugins/ext/repository-am-jdbc
             - name: graviteeio-am-jdbc-ext
               mountPath: /opt/graviteeio-am-management-api/plugins/ext/reporter-am-jdbc
+            - name: graviteeio-am-jdbc-ext
+              mountPath: /opt/graviteeio-am-management-api/plugins/ext/dataplane-am-jdbc
           {{- end }}
           {{- if .Values.cockpit.enabled }}
             - name: gravitee-cockpit-certificates
