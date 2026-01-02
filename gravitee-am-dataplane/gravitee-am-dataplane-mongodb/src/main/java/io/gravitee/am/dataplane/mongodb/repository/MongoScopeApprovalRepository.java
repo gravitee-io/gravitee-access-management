@@ -78,20 +78,13 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1u1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
         indexes.put(new Document(FIELD_DOMAIN, 1)
-                .append(FIELD_USER_ID, 1)
                 .append(FIELD_USER_EXTERNAL_ID, 1)
-                .append(FIELD_USER_SOURCE, 1), new IndexOptions().name("d1u1ue1us1"));
+                .append(FIELD_USER_SOURCE, 1), new IndexOptions().name("d1ue1us1"));
         indexes.put(new Document(FIELD_DOMAIN, 1)
                 .append(FIELD_CLIENT_ID, 1)
-                .append(FIELD_USER_ID, 1)
-                .append(FIELD_USER_EXTERNAL_ID, 1)
-                .append(FIELD_USER_SOURCE, 1), new IndexOptions().name("d1c1u1ue1us1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1)
-                .append(FIELD_CLIENT_ID, 1)
-                .append(FIELD_USER_ID, 1)
                 .append(FIELD_USER_EXTERNAL_ID, 1)
                 .append(FIELD_USER_SOURCE, 1)
-                .append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1ue1us1s1"));
+                .append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1ue1us1s1"));
         // expire after index
         indexes.put(new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
 
