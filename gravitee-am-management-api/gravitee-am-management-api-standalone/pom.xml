@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.management</groupId>
         <artifactId>gravitee-am-management-api</artifactId>
-        <version>4.7.26</version>
+        <version>4.7.27-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
