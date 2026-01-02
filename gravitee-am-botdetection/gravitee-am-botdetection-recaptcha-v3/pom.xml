@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-botdetection</artifactId>
         <groupId>io.gravitee.am.botdetection</groupId>
-        <version>4.9.8-SNAPSHOT</version>
+        <version>4.9.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
