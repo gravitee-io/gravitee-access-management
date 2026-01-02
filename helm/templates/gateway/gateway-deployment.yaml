@@ -157,6 +157,8 @@ spec:
               mountPath: /opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc
             - name: graviteeio-am-jdbc-ext
               mountPath: /opt/graviteeio-am-gateway/plugins/ext/reporter-am-jdbc
+            - name: graviteeio-am-jdbc-ext
+              mountPath: /opt/graviteeio-am-gateway/plugins/ext/dataplane-am-jdbc
           {{- end }}
           {{- with .Values.license }}
           {{- if .key }}
