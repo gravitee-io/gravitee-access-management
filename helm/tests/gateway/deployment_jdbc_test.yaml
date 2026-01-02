@@ -1,0 +1,52 @@
+suite: Test API Gateway JDBC volume mounts
+templates:
+  - "gateway/gateway-deployment.yaml"
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Should mount JDBC drivers to plugin directory when JDBC is enabled
+    template: gateway/gateway-deployment.yaml
+    set:
+      management:
+        type: jdbc
+      jdbc:
+        drivers:
+          - https://example.com/mysql-connector.jar
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: graviteeio-am-jdbc-ext
+            mountPath: /opt/graviteeio-am-gateway/plugins/ext/dataplane-am-jdbc
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: graviteeio-am-jdbc-ext
+            mountPath: /opt/graviteeio-am-gateway/plugins/ext/repository-am-jdbc
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: graviteeio-am-jdbc-ext
+            mountPath: /opt/graviteeio-am-gateway/plugins/ext/reporter-am-jdbc
+
+  - it: Should not mount JDBC volumes when management type is not JDBC
+    template: gateway/gateway-deployment.yaml
+    set:
+      management:
+        type: mongodb
+      jdbc:
+        drivers:
+          - https://example.com/mysql-connector.jar
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: graviteeio-am-jdbc-ext
+            mountPath: /opt/graviteeio-am-gateway/plugins/ext/dataplane-am-jdbc
