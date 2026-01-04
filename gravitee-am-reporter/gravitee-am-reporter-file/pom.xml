@@ -32,7 +32,7 @@
     <properties>
         <commons-validator.version>1.7</commons-validator.version>
         <freemarker.version>2.3.30</freemarker.version>
-        <msgpack.version>0.8.21</msgpack.version>
+        <msgpack.version>0.9.11</msgpack.version>
     </properties>
 
     <dependencies>
