@@ -700,7 +700,7 @@ public class AccountFactorsEndpointHandler {
         final Factor factor = factorManager.getFactor(enrolledFactor.getFactorId());
 
         if (rateLimiterService.isRateLimitEnabled()) {
-            rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
+            rateLimiterService.tryConsume(endUser.getId(), factor.getId(), client.getId(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
                                     sendChallenge(routingContext, factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
