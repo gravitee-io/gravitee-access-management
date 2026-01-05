@@ -18,18 +18,17 @@
 </head>
 
 <body>
-<div class="mdl-layout mdl-js-layout">
-    <div class="access-error-container">
-        <div class="access-error-content">
-            <h1 th:text="#{error.header}"/>
-            <p th:text="#{error.description}"/>
-        </div>
-        <div th:if="${error}" class="access-error-info">
-            <span th:text="${error}" class="error"></span>
-            <span th:if="${error_description}" class="error_description" th:text="${error_description}"></span>
+    <div class="mdl-layout mdl-js-layout">
+        <div class="access-error-container">
+            <div class="access-error-content">
+                <h1 th:text="#{error.header}"/>
+                <p th:text="#{error.description}"/>
+            </div>
+            <div th:if="${error}" class="access-error-info">
+                <span th:text="${error}" class="error"></span>
+                <span th:if="${error_description}" class="error_description" th:text="${error_description}"></span>
+            </div>
         </div>
     </div>
-</div>
-
 </body>
 </html>
