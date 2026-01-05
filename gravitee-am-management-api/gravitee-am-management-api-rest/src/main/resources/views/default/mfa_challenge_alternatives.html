@@ -18,7 +18,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img class="logo" th:src="${theme.logoUrl} ?: @{../../assets/images/gravitee-logo.png}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../../assets/images/gravitee-logo.svg}">
         <div class="title">
             <span id="enrollment-title" th:text="#{mfa_alternative.title}"/>
         </div>
@@ -112,18 +112,6 @@
                         </span>
                     </span>
                 </div>
-
-                <div th:if="${factor.factorType == 'MOCK'}" class="radio-card">
-                    <div class="card-content">
-                        <span class="radio">
-                            <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" class="mock"/>
-                        </span>
-                        <span class="radio-detail">
-                            <span class="enroll-name" th:text="'Mock factor'"/>
-                            <span class="enroll-description" th:text="'This is just a mock factor'"/>
-                        </span>
-                    </div>
-                </div>
             </div>
 
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -135,6 +123,7 @@
         </form>
     </div>
 </div>
+
 <script th:src="@{../../assets/js/jquery-3.5.1.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
     // init next button
