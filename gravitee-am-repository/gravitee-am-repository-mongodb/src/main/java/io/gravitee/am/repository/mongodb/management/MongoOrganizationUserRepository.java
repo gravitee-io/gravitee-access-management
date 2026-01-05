@@ -16,21 +16,30 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.client.model.Updates;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationUserMongo;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.regex.Pattern;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.regex;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class MongoOrganizationUserRepository extends AbstractUserRepository<OrganizationUserMongo>  implements OrganizationUserRepository {
+public class MongoOrganizationUserRepository extends AbstractUserRepository<OrganizationUserMongo> implements OrganizationUserRepository {
 
     public static final String IDP_GRAVITEE = "gravitee";
 
@@ -79,5 +88,28 @@ public class MongoOrganizationUserRepository extends AbstractUserRepository<Orga
     @Override
     protected boolean acceptUpsert() {
         return false;
+    }
+
+    @Override
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        if (!IDP_GRAVITEE.equals(source)) {
+            return super.findByUsernameAndSource(referenceType, referenceId, username, source);
+        }
+
+        // Apply case-insensitive matching to the username field
+        String escapedUsername = Pattern.quote(username);
+        Pattern pattern = Pattern.compile("^" + escapedUsername + "$", Pattern.CASE_INSENSITIVE);
+        return Observable.fromPublisher(withMaxTime(
+                        usersCollection
+                                .find(and(
+                                        eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                        eq(FIELD_REFERENCE_ID, referenceId),
+                                        regex(FIELD_USERNAME, pattern),
+                                        eq(FIELD_SOURCE, source))))
+                                .limit(1)
+                                .first())
+                .firstElement()
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 }
