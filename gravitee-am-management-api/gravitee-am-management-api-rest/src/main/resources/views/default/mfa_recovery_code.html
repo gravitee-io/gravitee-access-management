@@ -18,7 +18,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.png}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
             <span id="enrollment-title" th:text="#{mfa_recovery.title}"/>
         </div>
@@ -50,6 +50,7 @@
         </form>
     </div>
 </div>
+
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
 <script th:src="@{../assets/js/jspdf.umd.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">

@@ -19,7 +19,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.png}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
             <span id="enrollment-title" th:text="#{mfa_enroll.title}"/>
         </div>
@@ -117,6 +117,12 @@
                         </div>
                     </div>
                 </div>
+                <div th:if="${error}" class="item error-text">
+                  <span>
+                      <span class="error" th:text="${error}"></span>
+                      <small th:text="*{error_description}?: #{mfa_enroll.error.default.message}"></small>
+                  </span>
+                </div>
                 <button id="next" type="button" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
 
             </div>
@@ -189,7 +195,7 @@
 </div>
 
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
-<script th:src="@{../assets/js/intl-tel-input-17.0.8.min.js}"></script>
+<script th:src="@{../assets/js/intl-tel-input-19.5.7.min.js}"></script>
 <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
     /*<![CDATA[*/
     let intlTelInput = {};
@@ -200,147 +206,147 @@
             autoPlaceholder: "off",
             dropdownContainer: document.body,
             onlyCountries: countries,
-            utilsScript: "../assets/js/intl-tel-input-17.0.8-utils.js",
+            utilsScript: "../assets/js/intl-tel-input-19.5.7-utils.js",
         });
     }
 
-    (function() {
+(function() {
 
-        // next button function
-        const nextBtnHandler = function () {
-            const title=/*[[#{mfa_enroll.on.select.title}]]*/ '';
-            const description=/*[[#{mfa_enroll.on.select.description}]]*/ '';
-            const factors = /*[[${factors}]]*/ [];
-            const phoneNumber = /*[[${phoneNumber}]]*/ '';
-            const emailAddress = /*[[${emailAddress}]]*/ '';
-            const factorId = document.querySelector('input[name="factorId"]:checked').value;
-            const selectedFactor = factors.find(factor => factor.id === factorId);
-            let inputElement;
+    // next button function
+    const nextBtnHandler = function () {
+        const title=/*[[#{mfa_enroll.on.select.title}]]*/ '';
+        const description=/*[[#{mfa_enroll.on.select.description}]]*/ '';
+        const factors = /*[[${factors}]]*/ [];
+        const phoneNumber = /*[[${phoneNumber}]]*/ '';
+        const emailAddress = /*[[${emailAddress}]]*/ '';
+        const factorId = document.querySelector('input[name="factorId"]:checked').value;
+        const selectedFactor = factors.find(factor => factor.id === factorId);
+        let inputElement;
 
-            if (selectedFactor.factorType === 'TOTP') {
-                document.getElementById('qrCode').src = selectedFactor.enrollment.barCode;
-                document.getElementById('otp-factor').classList.remove('hide');
-            }
-
-            if (selectedFactor.factorType === 'SMS' || selectedFactor.factorType === 'CALL') {
-                document.getElementById('phone').value = phoneNumber;
-                initializeIntlTelInput(document.getElementById('phone'), selectedFactor.enrollment.countries);
-                const smsFactorDiv = document.getElementById('sms-call-factor');
-
-                smsFactorDiv.classList.remove('hide');
-                if (selectedFactor.factorType === 'SMS'){
-                    document.getElementById('call-factor').classList.add('hide')
-                } else {
-                    document.getElementById('sms-factor').classList.add('hide')
-                }
-                inputElement = smsFactorDiv.getElementsByTagName('INPUT')[0];
-                // Hide the phoneNumber validation error just after the click on next button
-                // to avoid a remaining error if the user go a first time on SMS factor
-                document.getElementById('invalidPhoneNumber').classList.add('hide');
-            }
-
-            if (selectedFactor.factorType === 'EMAIL') {
-                document.getElementById('email').value = emailAddress;
-                document.getElementById('email').setAttribute('required', '');
-                const emailFactorDiv = document.getElementById('email-factor');
-                emailFactorDiv.classList.remove('hide');
-                inputElement = emailFactorDiv.getElementsByTagName('INPUT')[0];
-            }
-
-            if (selectedFactor.factorType === 'HTTP') {
-                document.getElementById('http-factor').classList.remove('hide');
-            }
-
-            if (selectedFactor.factorType === 'FIDO2') {
-                document.getElementById('fido2-factor').classList.remove('hide');
-            }
-
-            if (selectedFactor.factorType === 'MOCK') {
-                document.getElementById('mock-factor').classList.remove('hide');
-            }
-
-            if (selectedFactor.enrollment.key) {
-                document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
-            }
-
-            document.getElementById('enrollment-title').innerHTML = title;
-            document.getElementById('enrollment-description').innerHTML = description;
-            document.getElementById('mfa-enroll-step1').classList.add('hide');
-            document.getElementById('mfa-enroll-step2').classList.remove('hide');
-            document.getElementById('previous').classList.remove('hide');
-            if (inputElement) {
-                inputElement.focus();
-            }
+        if (selectedFactor.factorType === 'TOTP') {
+            document.getElementById('qrCode').src = selectedFactor.enrollment.barCode;
+            document.getElementById('otp-factor').classList.remove('hide');
         }
 
-        const nextBtn = document.getElementById('next');
-        nextBtn.disabled = true;
-        nextBtn.classList.add('button-disabled');
-        nextBtn.addEventListener('click', nextBtnHandler);
+        if (selectedFactor.factorType === 'SMS' || selectedFactor.factorType === 'CALL') {
+            document.getElementById('phone').value = phoneNumber;
+            initializeIntlTelInput(document.getElementById('phone'), selectedFactor.enrollment.countries);
+            const smsFactorDiv = document.getElementById('sms-call-factor');
 
-        // previous button function
-        const previousBtn = document.getElementById('previous');
-        previousBtn.addEventListener('click', function () {
-            const title=/*[[#{mfa_enroll.title}]]*/ '';
-            const description=/*[[#{mfa_enroll.description}]]*/ '';
-            document.getElementById('enrollment-title').innerHTML = title;
-            document.getElementById('enrollment-description').innerHTML = description;
-            [...document.querySelectorAll('.enrollment-item')].forEach(el => el.classList.add('hide'));
-            document.getElementById('mfa-enroll-step1').classList.remove('hide');
-            document.getElementById('mfa-enroll-step2').classList.add('hide');
-            document.getElementById('previous').classList.add('hide');
-            document.getElementById('email').removeAttribute('required');
-        });
-
-        // radio buttons function
-        const inputRadios = document.querySelectorAll('input[type="radio"]');
-        inputRadios.forEach(el => el.addEventListener('click', function () {
-            // remove active class for every radio cards
-            [...document.querySelectorAll('.radio-card')].forEach(el1 => el1.classList.remove('active'));
-            // add active class for the selected radio card
-            el.closest('.radio-card').classList.add('active');
-            // enable next button if at least one factor option is enabled
-            nextBtn.disabled = false;
-            nextBtn.classList.remove('button-disabled');
-        }));
-
-        // submit form function
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.addEventListener('click', function($event) {
-
-            //do not submit the form on 'enter' key press if the following condition satisfied
-            //rather call the next button handler functionality
-            if(document.getElementById('mfa-enroll-step2').classList.contains("hide")){
-                $event.preventDefault();
-                nextBtnHandler();
-                return;
+            smsFactorDiv.classList.remove('hide');
+            if (selectedFactor.factorType === 'SMS'){
+                document.getElementById('call-factor').classList.add('hide')
+            } else {
+                document.getElementById('sms-factor').classList.add('hide')
             }
-
-            // check phone number value if any
-            const factors = /*[[${factors}]]*/ [];
-            const factorId = document.querySelector('input[name="factorId"]:checked').value;
-            const selectedFactor = factors.find(factor => factor.id === factorId);
-
-            if (selectedFactor.factorType === 'SMS' || selectedFactor.factorType === 'CALL') {
-                const phoneInput = intlTelInput;
-                const phoneNumber = phoneInput.getNumber();
-                if (phoneInput.isValidNumber()) {
-                    document.getElementById('invalidPhoneNumber').classList.add('hide');
-                    document.getElementById('phone').value = phoneNumber;
-                } else {
-                    // do not submit form in case of wrong number
-                    document.getElementById('invalidPhoneNumber').classList.remove('hide');
-                    $event.preventDefault();
-                }
-            }
-        });
-
-        // phone input function
-        const phoneInput = document.getElementById('phone');
-        phoneInput.addEventListener('keydown', function() {
+            inputElement = smsFactorDiv.getElementsByTagName('INPUT')[0];
+            // Hide the phoneNumber validation error just after the click on next button
+            // to avoid a remaining error if the user go a first time on SMS factor
             document.getElementById('invalidPhoneNumber').classList.add('hide');
-        });
-    })();
+        }
+
+        if (selectedFactor.factorType === 'EMAIL') {
+            document.getElementById('email').value = emailAddress;
+            document.getElementById('email').setAttribute('required', '');
+            const emailFactorDiv = document.getElementById('email-factor');
+            emailFactorDiv.classList.remove('hide');
+            inputElement = emailFactorDiv.getElementsByTagName('INPUT')[0];
+        }
+
+        if (selectedFactor.factorType === 'HTTP') {
+            document.getElementById('http-factor').classList.remove('hide');
+        }
+
+        if (selectedFactor.factorType === 'FIDO2') {
+            document.getElementById('fido2-factor').classList.remove('hide');
+        }
+
+        if (selectedFactor.factorType === 'MOCK') {
+            document.getElementById('mock-factor').classList.remove('hide');
+        }
+
+        if (selectedFactor.enrollment.key) {
+            document.getElementById('sharedSecret').value = selectedFactor.enrollment.key;
+        }
+
+        document.getElementById('enrollment-title').innerHTML = title;
+        document.getElementById('enrollment-description').innerHTML = description;
+        document.getElementById('mfa-enroll-step1').classList.add('hide');
+        document.getElementById('mfa-enroll-step2').classList.remove('hide');
+        document.getElementById('previous').classList.remove('hide');
+        if (inputElement) {
+            inputElement.focus();
+        }
+    }
+
+    const nextBtn = document.getElementById('next');
+    nextBtn.disabled = true;
+    nextBtn.classList.add('button-disabled');
+    nextBtn.addEventListener('click', nextBtnHandler);
+
+    // previous button function
+    const previousBtn = document.getElementById('previous');
+    previousBtn.addEventListener('click', function () {
+        const title=/*[[#{mfa_enroll.title}]]*/ '';
+        const description=/*[[#{mfa_enroll.description}]]*/ '';
+        document.getElementById('enrollment-title').innerHTML = title;
+        document.getElementById('enrollment-description').innerHTML = description;
+        [...document.querySelectorAll('.enrollment-item')].forEach(el => el.classList.add('hide'));
+        document.getElementById('mfa-enroll-step1').classList.remove('hide');
+        document.getElementById('mfa-enroll-step2').classList.add('hide');
+        document.getElementById('previous').classList.add('hide');
+        document.getElementById('email').removeAttribute('required');
+    });
+
+    // radio buttons function
+    const inputRadios = document.querySelectorAll('input[type="radio"]');
+    inputRadios.forEach(el => el.addEventListener('click', function () {
+        // remove active class for every radio cards
+        [...document.querySelectorAll('.radio-card')].forEach(el1 => el1.classList.remove('active'));
+        // add active class for the selected radio card
+        el.closest('.radio-card').classList.add('active');
+        // enable next button if at least one factor option is enabled
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('button-disabled');
+    }));
+
+    // submit form function
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.addEventListener('click', function($event) {
+
+        //do not submit the form on 'enter' key press if the following condition satisfied
+        //rather call the next button handler functionality
+        if(document.getElementById('mfa-enroll-step2').classList.contains("hide")){
+            $event.preventDefault();
+            nextBtnHandler();
+            return;
+        }
+
+        // check phone number value if any
+        const factors = /*[[${factors}]]*/ [];
+        const factorId = document.querySelector('input[name="factorId"]:checked').value;
+        const selectedFactor = factors.find(factor => factor.id === factorId);
+
+        if (selectedFactor.factorType === 'SMS' || selectedFactor.factorType === 'CALL') {
+            const phoneInput = intlTelInput;
+            const phoneNumber = phoneInput.getNumber();
+            if (phoneInput.isValidNumber()) {
+                document.getElementById('invalidPhoneNumber').classList.add('hide');
+                document.getElementById('phone').value = phoneNumber;
+            } else {
+                // do not submit form in case of wrong number
+                document.getElementById('invalidPhoneNumber').classList.remove('hide');
+                $event.preventDefault();
+            }
+        }
+    });
+
+    // phone input function
+    const phoneInput = document.getElementById('phone');
+    phoneInput.addEventListener('keydown', function() {
+        document.getElementById('invalidPhoneNumber').classList.add('hide');
+    });
+})();
     /*]]>*/
 </script>
 </body>
