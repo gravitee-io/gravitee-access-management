@@ -98,6 +98,44 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByUserAndSource_gravitee_caseInsensitive() {
+        // create user with Gravitee IDP
+        User user = new User();
+        user.setUsername("TestUsername");
+        user.setSource("gravitee");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+        organizationUserRepository.create(user).blockingGet();
+
+        // fetch user with different case
+        TestObserver<User> testObserver = organizationUserRepository.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "testusername", "gravitee").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals("TestUsername"));
+    }
+
+    @Test
+    public void testFindByUserAndSource_gravitee_caseInsensitive_uppercase() {
+        // create user with Gravitee IDP
+        User user = new User();
+        user.setUsername("testusername");
+        user.setSource("gravitee");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+        organizationUserRepository.create(user).blockingGet();
+
+        // fetch user with different case
+        TestObserver<User> testObserver = organizationUserRepository.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "TestUsername", "gravitee").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals("testusername"));
+    }
+
+    @Test
     public void testFindAll() {
         // create user
         User user = new User();
