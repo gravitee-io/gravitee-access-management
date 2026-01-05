@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Registration confirmation</title>
+    <title>Registration verification</title>
 
     <!-- CSS -->
     <link rel="stylesheet" th:href="@{assets/css/main.css}">
@@ -19,9 +19,9 @@
 </head>
 
 <body>
-    <div class="container">
+    <div class="container" th:if="${success}">
         <div class="header">
-            <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.png}">
+            <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
             <div class="title">
                 <span th:text="#{registration_verify.success.title}"/>
             </div>

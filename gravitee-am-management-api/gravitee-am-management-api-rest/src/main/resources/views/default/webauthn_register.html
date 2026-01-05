@@ -19,7 +19,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.png}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
             <span th:text="#{webauthn.register.title}"/>
         </div>
@@ -47,6 +47,6 @@
     </div>
 </div>
 <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
-<script th:src="@{../assets/js/webauthn-register-v2.js}"></script>
+<script th:src="@{../assets/js/webauthn-register-v3.js}"></script>
 </body>
 </html>
