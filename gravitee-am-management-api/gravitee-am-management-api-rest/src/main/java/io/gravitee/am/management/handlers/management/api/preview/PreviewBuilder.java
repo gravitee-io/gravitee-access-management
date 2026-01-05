@@ -125,6 +125,9 @@ public class PreviewBuilder {
         variables.put("theme", this.theme);
 
         variables.put(PARAM_CONTEXT_KEY, Map.of());
+        if (request.getTemplate().equals(Template.REGISTRATION_VERIFY.template())) {
+            variables.put(SUCCESS_PARAM_KEY, REGISTRATION_VERIFY_SUCCESS);
+        }
 
         org.thymeleaf.context.Context context = new org.thymeleaf.context.Context();
         context.setLocale(this.locale);
@@ -134,6 +137,8 @@ public class PreviewBuilder {
         previewForm.setContent(request.getContent());
         previewForm.setReferenceId(this.domain.getId());
         previewForm.setReferenceType(ReferenceType.DOMAIN);
+
+
 
         final String previewId = "preview-" + UUID.randomUUID();
         previewForm.setReferenceId(previewId);
