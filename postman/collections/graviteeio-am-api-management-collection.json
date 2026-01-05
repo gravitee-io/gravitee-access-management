@@ -1300,7 +1300,7 @@
 											"    var responseHTML = cheerio(pm.response.text());",
 											"    var xsrfToken = responseHTML.find('[name=\"_csrf\"]').val();",
 											"    pm.environment.set('xsrf', xsrfToken);",
-											"    var socialUrl = responseHTML.find('[class=\"mdl-social-button\"] > a');",
+											"    var socialUrl = responseHTML.find('[class=\"button social btn-oauth2-generic-am-idp\"]');",
 											"    var socialUrlValue = socialUrl.attr('href').replace(pm.variables.get('internal_gateway_url'), pm.variables.get('gateway_url'));",
 											"    pm.environment.set('socialUrl', socialUrlValue);",
 											"});"
