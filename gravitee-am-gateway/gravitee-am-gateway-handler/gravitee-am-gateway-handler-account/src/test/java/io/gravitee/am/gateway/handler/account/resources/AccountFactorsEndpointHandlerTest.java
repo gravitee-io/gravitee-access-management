@@ -820,16 +820,23 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
     public void shouldAuditLog_rateLimit() throws Exception {
         Factor factor = mock(Factor.class);
         Client client = mock(Client.class);
-        user.setClient("any-client-id");
+
+        final String domainId = "any-domain-id";
+        final String clientId = "any-client-id";
+        final String factorId = "any-factor-id";
+
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
         when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
         when(factorManager.get("factor-id")).thenReturn(factorProvider);
         when(factorManager.getFactor("factor-id")).thenReturn(factor);
-        when(factor.getId()).thenReturn("any-factor-id");
+        when(factor.getId()).thenReturn(factorId);
         when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
-        when(rateLimiterService.tryConsume(anyString(), anyString(), anyString(), anyString())).thenReturn(Single.just(Boolean.FALSE));
-        when(client.getDomain()).thenReturn("any-domain-id");
+        when(client.getDomain()).thenReturn(domainId);
+        when(client.getId()).thenReturn(clientId);
+
+        when(rateLimiterService.tryConsume("xxx-xxx-xxx", factorId, clientId, domainId))
+                .thenReturn(Single.just(Boolean.FALSE));
 
         router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
                 .handler(rc -> {
