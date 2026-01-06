@@ -25,12 +25,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.service.spring.email.EmailPropertiesLoader.AUTH_METHOD_BASIC;
+import static io.gravitee.am.service.spring.email.EmailPropertiesLoader.AUTH_METHOD_OAUTH2;
 import static java.util.Objects.isNull;
 
 /**
@@ -57,8 +58,6 @@ public class EmailConfiguration {
     private static final String EMAIL_OAUTH2_REFRESH_TOKEN = "email.oauth2.refreshToken";
     private static final String EMAIL_OAUTH2_SCOPE = "email.oauth2.scope";
 
-    private static final String AUTH_METHOD_BASIC = "basic";
-    private static final String AUTH_METHOD_OAUTH2 = "oauth2";
 
     @Autowired
     private OAuth2TokenService oauth2TokenService;
@@ -86,16 +85,11 @@ public class EmailConfiguration {
             log.warn("Cannot configure JavaMail Sender", e);
         }
 
-        javaMailSender.setProtocol(getProtocol());
-<<<<<<< HEAD
-        javaMailSender.setJavaMailProperties(propertiesLoader.load(environment));
-        return javaMailSender;
-    }
-
-=======
-        javaMailSender.setJavaMailProperties(loadProperties());
-
         String authMethod = getAuthMethod();
+
+        javaMailSender.setProtocol(getProtocol());
+        javaMailSender.setJavaMailProperties(propertiesLoader.load(environment, authMethod));
+
         if (AUTH_METHOD_OAUTH2.equalsIgnoreCase(authMethod)) {
             configureOAuth2Authentication(javaMailSender);
             return new OAuth2JavaMailSenderWrapper(javaMailSender, oauth2TokenService);
@@ -131,25 +125,6 @@ public class EmailConfiguration {
         javaMailSender.setPassword(accessToken);
     }
 
-    private Properties loadProperties() {
-        Map<String, Object> envProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
-
-        Properties properties = new Properties();
-        envProperties.forEach((key, value) -> properties.setProperty(
-                MAILAPI_PROPERTIES_PREFIX + key.substring(EMAIL_PROPERTIES_PREFIX.length() + 1),
-                value.toString()));
-
-        if (AUTH_METHOD_OAUTH2.equalsIgnoreCase(getAuthMethod())) {
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.mechanisms", "XOAUTH2");
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.plain.disable", "true");
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.login.disable", "true");
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth", "true");
-        }
-
-        return properties;
-    }
-
->>>>>>> 6f4980ba3 (feat: use oauth2 for smtp auth)
     public String getHost() {
         return configuration.getProperty(EMAIL_HOST);
     }
@@ -163,43 +138,23 @@ public class EmailConfiguration {
     }
 
     public String getOAuth2TokenEndpoint() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_TOKEN_ENDPOINT);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 token endpoint (email.oauth2.tokenEndpoint) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_TOKEN_ENDPOINT);
     }
 
     public String getOAuth2ClientId() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_CLIENT_ID);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 client ID (email.oauth2.clientId) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_CLIENT_ID);
     }
 
     public String getOAuth2ClientSecret() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_CLIENT_SECRET);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 client secret (email.oauth2.clientSecret) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_CLIENT_SECRET);
     }
 
     public String getOAuth2RefreshToken() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_REFRESH_TOKEN);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 refresh token (email.oauth2.refreshToken) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_REFRESH_TOKEN);
     }
 
     public String getOAuth2Scope() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_SCOPE);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 scope (email.oauth2.scope) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_SCOPE);
     }
 
     public String getUsername() {
@@ -261,3 +216,4 @@ public class EmailConfiguration {
     }
 
 }
+
