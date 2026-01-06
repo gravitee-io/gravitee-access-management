@@ -38,6 +38,12 @@ public final class UpgraderOrder {
     public static final int ORG_DEFAULT_REPORTER_UPGRADER = 17;
     public static final int DOMAIN_DATA_PLANE_UPGRADER = 18;
     public static final int IDP_DATA_PLANE_UPGRADER = 19;
+<<<<<<< HEAD
+=======
+    public static final int APPLICATION_CLIENT_SECRETS_UPGRADER = 20;
+    public static final int EMAIL_CONFIGURATION_UPGRADER = 21;
+
+>>>>>>> f852c93f6 (feat: oauth2 for smtp resource)
 
     private UpgraderOrder() {
         throw new UnsupportedOperationException("utility class, don't instantiate");
