@@ -25,7 +25,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,43 +156,23 @@ public class EmailConfiguration {
     }
 
     public String getOAuth2TokenEndpoint() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_TOKEN_ENDPOINT);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 token endpoint (email.oauth2.tokenEndpoint) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_TOKEN_ENDPOINT);
     }
 
     public String getOAuth2ClientId() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_CLIENT_ID);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 client ID (email.oauth2.clientId) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_CLIENT_ID);
     }
 
     public String getOAuth2ClientSecret() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_CLIENT_SECRET);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 client secret (email.oauth2.clientSecret) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_CLIENT_SECRET);
     }
 
     public String getOAuth2RefreshToken() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_REFRESH_TOKEN);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 refresh token (email.oauth2.refreshToken) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_REFRESH_TOKEN);
     }
 
     public String getOAuth2Scope() {
-        String value = configuration.getProperty(EMAIL_OAUTH2_SCOPE);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalStateException("OAuth2 scope (email.oauth2.scope) is required when authMethod is 'oauth2'");
-        }
-        return value;
+        return configuration.getProperty(EMAIL_OAUTH2_SCOPE);
     }
 
     public String getUsername() {

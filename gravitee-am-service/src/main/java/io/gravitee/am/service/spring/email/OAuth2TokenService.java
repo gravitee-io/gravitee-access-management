@@ -21,6 +21,7 @@ import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,8 +73,8 @@ public class OAuth2TokenService {
         this.objectMapper = new ObjectMapper();
     }
 
-    public void initialize(String tokenEndpoint, String clientId, String clientSecret,
-                           String refreshToken, String scope) {
+    public void initialize(@NotBlank String tokenEndpoint, @NotBlank String clientId, @NotBlank String clientSecret,
+                           @NotBlank String refreshToken, @NotBlank String scope) {
         this.tokenEndpoint = tokenEndpoint;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
@@ -113,7 +114,6 @@ public class OAuth2TokenService {
 
             URI uri = new URI(tokenEndpoint);
             String path = uri.getPath();
-            boolean ssl = uri.getScheme().equals("https");
 
             String formData = String.format(
                     "client_id=%s&client_secret=%s&refresh_token=%s&grant_type=refresh_token&scope=%s",
@@ -124,7 +124,6 @@ public class OAuth2TokenService {
             );
 
             HttpResponse<Buffer> response = webClient.post(path)
-                    .ssl(ssl)
                     .putHeader("Content-Type", "application/x-www-form-urlencoded")
                     .rxSendBuffer(Buffer.buffer(formData))
                     .blockingGet();
@@ -148,6 +147,8 @@ public class OAuth2TokenService {
             if (tokenResponse.getExpiresIn() != null) {
                 tokenExpiryTime = Instant.now().plusSeconds(tokenResponse.getExpiresIn());
                 logger.debug("Access token refreshed, expires at: {}", tokenExpiryTime);
+            } else {
+                tokenExpiryTime = null;
             }
 
         } catch (Exception e) {
