@@ -34,7 +34,7 @@ public class OAuth2JavaMailSenderWrapper implements JavaMailSender {
         this.oauth2TokenService = oauth2TokenService;
     }
 
-    private void getAccessToken() {
+    private void updateAccessToken() {
         String freshToken = oauth2TokenService.getAccessToken();
         wrappedSender.setPassword(freshToken);
     }
@@ -51,37 +51,37 @@ public class OAuth2JavaMailSenderWrapper implements JavaMailSender {
 
     @Override
     public void send(MimeMessage mimeMessage) throws MailException {
-        getAccessToken();
+        updateAccessToken();
         wrappedSender.send(mimeMessage);
     }
 
     @Override
     public void send(MimeMessage... mimeMessages) throws MailException {
-        getAccessToken();
+        updateAccessToken();
         wrappedSender.send(mimeMessages);
     }
 
     @Override
     public void send(MimeMessagePreparator mimeMessagePreparator) throws MailException {
-        getAccessToken();
+        updateAccessToken();
         wrappedSender.send(mimeMessagePreparator);
     }
 
     @Override
     public void send(MimeMessagePreparator... mimeMessagePreparators) throws MailException {
-        getAccessToken();
+        updateAccessToken();
         wrappedSender.send(mimeMessagePreparators);
     }
 
     @Override
     public void send(SimpleMailMessage simpleMessage) throws MailException {
-        getAccessToken();
+        updateAccessToken();
         wrappedSender.send(simpleMessage);
     }
 
     @Override
     public void send(SimpleMailMessage... simpleMessages) throws MailException {
-        getAccessToken();
+        updateAccessToken();
         wrappedSender.send(simpleMessages);
     }
 }

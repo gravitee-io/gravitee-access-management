@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "id": "urn:jsonschema:io:gravitee:am:resource:smtp:SmtpResourceConfiguration",
+  "id": "urn:jsonschema:io:gravitee:am:resource:smtp:configuration:SmtpResourceConfiguration",
   "properties": {
     "host": {
       "type": "string",
@@ -29,22 +29,76 @@
     "authentication": {
       "type": "boolean",
       "title": "Authentication",
-      "description": "Does the SMTP server requires authentication",
+      "description": "Enable SMTP authentication",
       "default": false
+    },
+    "authenticationType": {
+      "type": "string",
+      "title": "Authentication Type",
+      "description": "Type of authentication to use",
+      "default": "basic",
+      "enum": [
+        "basic",
+        "oauth2"
+      ],
+      "condition": "model.authentication"
     },
     "username": {
       "type": "string",
       "title": "Username",
-      "description": "Username used for authentication",
-      "condition": "model.authentication"
+      "description": "Username for basic authentication",
+      "condition": { "functionBody": "return model.authentication && model.authenticationType === 'basic';" }
     },
     "password": {
       "type": "string",
       "title": "Password",
-      "description": "Password used for authentication",
-      "condition": "model.authentication",
+      "description": "Password for basic authentication",
+      "condition": { "functionBody": "return model.authentication && model.authenticationType === 'basic';" },
       "widget": "password",
       "sensitive": true
+    },
+    "oauth2Configuration": {
+      "title": " ",
+      "type": "object",
+      "id": "urn:jsonschema:io:gravitee:am:resource:smtp:configuration:OAuthSmtpResourceConfiguration",
+      "condition": { "functionBody": "return model.authentication && model.authenticationType === 'oauth2';" },
+      "properties": {
+        "oauth2Username": {
+          "type": "string",
+          "title": "SMTP Username",
+          "description": "SMTP username for OAuth2 authentication (email address)"
+        },
+        "tokenEndpoint": {
+          "type": "string",
+          "title": "OAuth2 Token Endpoint",
+          "description": "OAuth2 token endpoint URL. Examples: Gmail: https://oauth2.googleapis.com/token, Microsoft 365: https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+          "format": "uri"
+        },
+        "oauth2ClientId": {
+          "type": "string",
+          "title": "OAuth2 Client ID",
+          "description": "OAuth2 application client ID"
+        },
+        "oauth2ClientSecret": {
+          "type": "string",
+          "title": "OAuth2 Client Secret",
+          "description": "OAuth2 application client secret",
+          "widget": "password",
+          "sensitive": true
+        },
+        "oauth2RefreshToken": {
+          "type": "string",
+          "title": "OAuth2 Refresh Token",
+          "description": "OAuth2 refresh token (obtain from your OAuth2 provider)",
+          "widget": "password",
+          "sensitive": true
+        },
+        "oauth2Scope": {
+          "type": "string",
+          "title": "OAuth2 Scope",
+          "description": "OAuth2 scope. Examples: Gmail: https://mail.google.com/, Microsoft 365: https://outlook.office365.com/.default"
+        }
+      }
     },
     "startTls": {
       "type": "boolean",
@@ -63,5 +117,49 @@
       "description": "SSL protocols that are enabled for SSL connections. Must be a whitespace separated list of protocols.(ex: TLSv1 TLSv1.1)"
     }
   },
-  "required": ["host", "port", "from", "protocol"]
+  "required": [
+    "host",
+    "port",
+    "from",
+    "protocol"
+  ],
+  "allOf": [
+    {
+      "if": { "properties": { "authentication": { "const": true } } },
+      "then": { "required": ["authenticationType"] }
+    },
+    {
+      "if": {
+        "properties": {
+          "authentication": { "const": true },
+          "authenticationType": { "const": "basic" }
+        }
+      },
+      "then": { "required": ["username", "password"] }
+    },
+    {
+      "if": {
+        "properties": {
+          "authentication": { "const": true },
+          "authenticationType": { "const": "oauth2" }
+        }
+      },
+      "then": {
+        "required": ["oauth2Configuration"],
+        "properties": {
+          "oauth2Configuration": {
+            "required": [
+              "oauth2Username",
+              "tokenEndpoint",
+              "oauth2ClientId",
+              "oauth2ClientSecret",
+              "oauth2RefreshToken",
+              "oauth2Scope"
+            ]
+          }
+        }
+      }
+    }
+  ]
+
 }
