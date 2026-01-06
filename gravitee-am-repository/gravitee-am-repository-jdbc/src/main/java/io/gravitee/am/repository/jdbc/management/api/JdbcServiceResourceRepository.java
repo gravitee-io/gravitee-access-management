@@ -63,6 +63,14 @@ public class JdbcServiceResourceRepository extends AbstractJdbcRepository implem
     }
 
     @Override
+    public Flowable<ServiceResource> findByType(String type) {
+        LOGGER.debug("findByType({})", type);
+        return serviceResourceRepository.findByType(type)
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<ServiceResource> create(ServiceResource item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create Reporter with id {}", item.getId());
