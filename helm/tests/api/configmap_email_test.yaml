@@ -339,7 +339,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data["gravitee.yml"]
+          path: data.[gravitee.yml]
           pattern: " *email:\n
                      *  authMethod: oauth2\n
                      *  enabled: true\n

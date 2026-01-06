@@ -25,9 +25,12 @@ import java.util.Properties;
 class EmailPropertiesLoader {
 
     static final String EMAIL_PROPERTIES_PREFIX = "email.properties";
+    static final String AUTH_METHOD_BASIC = "basic";
+    static final String AUTH_METHOD_OAUTH2 = "oauth2";
+
     private static final String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
 
-    Properties load(ConfigurableEnvironment environment) {
+    Properties load(ConfigurableEnvironment environment, String authMethod) {
         Map<String, Object> envProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
 
         Properties properties = new Properties();
@@ -36,6 +39,13 @@ class EmailPropertiesLoader {
             String normalizedKey = isAllCaps(propertyKey) ? propertyKey.toLowerCase(Locale.ROOT) : propertyKey;
             properties.setProperty(MAILAPI_PROPERTIES_PREFIX + normalizedKey, value.toString());
         });
+
+        if (AUTH_METHOD_OAUTH2.equalsIgnoreCase(authMethod)) {
+            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.mechanisms", "XOAUTH2");
+            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.plain.disable", "true");
+            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.login.disable", "true");
+            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth", "true");
+        }
 
         return properties;
     }
