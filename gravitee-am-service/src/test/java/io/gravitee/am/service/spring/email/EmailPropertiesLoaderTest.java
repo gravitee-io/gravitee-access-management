@@ -47,7 +47,7 @@ class EmailPropertiesLoaderTest {
                     .when(() -> EnvironmentUtils.getPropertiesStartingWith(any(ConfigurableEnvironment.class), eq(EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX)))
                     .thenReturn(envProperties);
 
-            Properties properties = loader.load(environment);
+            Properties properties = loader.load(environment, "basic");
 
             assertThat(properties).hasSize(3);
             assertThat(properties.getProperty("mail.smtp.starttls.enable")).isEqualTo("true");
@@ -67,9 +67,38 @@ class EmailPropertiesLoaderTest {
                     .when(() -> EnvironmentUtils.getPropertiesStartingWith(any(ConfigurableEnvironment.class), eq(EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX)))
                     .thenReturn(Map.of());
 
-            Properties properties = loader.load(environment);
+            Properties properties = loader.load(environment, "basic");
 
             assertThat(properties).isEmpty();
+        }
+    }
+
+    @Test
+    void shouldLoadOAuthSettings() {
+        ConfigurableEnvironment environment = mock(ConfigurableEnvironment.class);
+        Map<String, Object> envProperties = new HashMap<>();
+        envProperties.put("email.properties.STARTTLS.ENABLE", "true");
+        envProperties.put("email.properties.AUTH", "true");
+        envProperties.put("email.properties.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+
+        EmailPropertiesLoader loader = new EmailPropertiesLoader();
+
+        try (MockedStatic<EnvironmentUtils> mockedEnvironmentUtils = mockStatic(EnvironmentUtils.class)) {
+            mockedEnvironmentUtils
+                    .when(() -> EnvironmentUtils.getPropertiesStartingWith(any(ConfigurableEnvironment.class), eq(EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX)))
+                    .thenReturn(envProperties);
+
+            Properties properties = loader.load(environment, "oauth2");
+            assertThat(properties).hasSize(6);
+
+            assertThat(properties.getProperty("mail.smtp.auth.mechanisms")).isEqualTo("XOAUTH2");
+            assertThat(properties.getProperty("mail.smtp.auth.plain.disable")).isEqualTo("true");
+            assertThat(properties.getProperty("mail.smtp.auth.login.disable")).isEqualTo("true");
+
+            assertThat(properties.getProperty("mail.smtp.starttls.enable")).isEqualTo("true");
+            assertThat(properties.getProperty("mail.smtp.auth")).isEqualTo("true");
+            assertThat(properties.getProperty("mail.smtp.socketFactory.class"))
+                    .isEqualTo("javax.net.ssl.SSLSocketFactory");
         }
     }
 }
