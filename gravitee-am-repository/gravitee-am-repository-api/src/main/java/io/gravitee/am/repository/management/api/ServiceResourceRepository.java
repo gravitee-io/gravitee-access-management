@@ -30,5 +30,7 @@ public interface ServiceResourceRepository extends CrudRepository<ServiceResourc
 
     Flowable<ServiceResource> findByReference(ReferenceType referenceType, String referenceId);
 
+    Flowable<ServiceResource> findByType(String type);
+
     Completable deleteByReference(Reference reference);
 }
