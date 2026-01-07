@@ -1,3 +1,6 @@
+@use '@gravitee/ui-particles-angular' as palettes;
+@use '@angular/material' as mat;
+
 .mfa-section-title {
   display: flex;
   width: 100%;
@@ -50,8 +53,8 @@
     justify-content: center;
     padding: 15px;
     border-radius: 50px;
-    background: rgb(30 202 211 / 54%);
-    color: rgb(30 102 112);
+    background: mat.m2-get-color-from-palette(palettes.$mat-primary-palette, lighter);
+    color: mat.m2-get-color-from-palette(palettes.$mat-primary-palette, 'darker');
   }
 }
 
