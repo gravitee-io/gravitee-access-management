@@ -133,8 +133,13 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(subject)))
                 // check account status
                 .flatMap(user -> {
+<<<<<<< HEAD
                     if (isIndefinitelyLocked(user)) {
                         return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername(), mapUserAttributes(user)));
+=======
+                    if (isIndefinitelyLocked(user) || (user.getAccountLockedUntil() != null && user.getAccountLockedUntil().after(new Date()))) {
+                        return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername()));
+>>>>>>> 637963d12 (fix: do not allow user to log in via passwordless if their account is locked)
                     }
                     if (!user.isEnabled()) {
                         return Single.error(new AccountDisabledException("Account is disabled for user " + user.getUsername(), mapUserAttributes(user)));
