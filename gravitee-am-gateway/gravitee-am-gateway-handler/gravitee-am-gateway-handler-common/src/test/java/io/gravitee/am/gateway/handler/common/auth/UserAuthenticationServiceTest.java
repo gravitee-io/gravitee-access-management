@@ -1170,6 +1170,28 @@ public class UserAuthenticationServiceTest {
         testObserver.assertError(AccountEnforcePasswordException.class);
     }
 
+    @Test
+    public void shouldNotConnect_passwordless_accountLocked_temporarily() {
+        String id = "id";
+        String username = "username";
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        final User foundUser = new User();
+        foundUser.setId(id);
+        foundUser.setUsername(username);
+        foundUser.setAccountNonLocked(false);
+        foundUser.setAccountLockedUntil(new Date(System.currentTimeMillis() + 10000)); // Locked for 10 seconds
+
+        when(userService.findById(id)).thenReturn(Maybe.just(foundUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.connectWithPasswordless(id, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountLockedException.class);
+    }
+
     private Client initClient() {
         final Client client = new Client();
         TreeSet<ApplicationIdentityProvider> identityProviders = new TreeSet<>();
