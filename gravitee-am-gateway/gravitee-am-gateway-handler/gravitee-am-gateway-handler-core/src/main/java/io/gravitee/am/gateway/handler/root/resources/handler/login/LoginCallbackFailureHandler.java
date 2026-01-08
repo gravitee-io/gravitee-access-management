@@ -291,10 +291,12 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         if (!(throwable instanceof UserAuthenticationAbortedException)) {
             params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
-            String errorDescription = encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage());
-            params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
-
-            String toHash = "social_authentication_failed" + "$" + errorDescription;
+            String errorDescription = throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage();
+            String toHash = "social_authentication_failed";
+            if (!StringUtils.isEmpty(errorDescription)) {
+                params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, encodeURIComponent(errorDescription));
+                toHash += "$" + errorDescription;
+            }
             if (context.session() != null) {
                 context.session().put(ERROR_HASH, HashUtil.generateSHA256(toHash));
             }
