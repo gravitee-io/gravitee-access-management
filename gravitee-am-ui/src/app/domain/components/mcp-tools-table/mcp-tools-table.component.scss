@@ -1,3 +1,6 @@
+@use '@gravitee/ui-particles-angular' as palettes;
+@use '@angular/material' as mat;
+
 mcp-tools-table {
   .tools-empty-state {
     overflow: hidden;
@@ -21,15 +24,15 @@ mcp-tools-table {
       height: 80px;
       align-items: center;
       justify-content: center;
-      border: 2px solid #b2ebf2;
+      border: 2px solid mat.m2-get-color-from-palette(palettes.$mat-primary-palette, 'lighter20');
       border-radius: 50%;
       margin-bottom: 24px;
-      background: #e0f7fa;
+      background: mat.m2-get-color-from-palette(palettes.$mat-primary-palette, 'lighter80');
 
       mat-icon {
         width: 48px;
         height: 48px;
-        color: #00838f;
+        color: mat.m2-get-color-from-palette(palettes.$mat-primary-palette, 'darker');
         font-size: 48px;
       }
     }
