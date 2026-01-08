@@ -183,7 +183,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> renewSecret(Client client, String basePath) {
-
         Optional<ClientSecret> clientSecretToRenew = determinateClientSecret(client);
 
         //Mapping client secret to list to handle the rotation.
@@ -191,7 +190,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             ApplicationSecretSettings noneSettings;
             if (client.getSecretSettings() == null || client.getSecretSettings().isEmpty() || client.getSecretSettings().stream().noneMatch(setting -> setting.getAlgorithm().equalsIgnoreCase(SecretHashAlgorithm.NONE.name()))) {
                 noneSettings = buildNoneSecretSettings();
-                client.setSecretSettings(List.of(noneSettings));
+                client.setSecretSettings(new ArrayList<>(List.of(noneSettings)));
             } else {
                 noneSettings = client.getSecretSettings().stream().filter(setting -> setting.getAlgorithm().equalsIgnoreCase(SecretHashAlgorithm.NONE.name())).findFirst().get();
             }
@@ -202,7 +201,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 rawClientSecret = SecureRandomString.generate();
             }
             clientSecretToRenew = Optional.of(secretService.generateClientSecret("Default", rawClientSecret, noneSettings, domain.getSecretExpirationSettings(), client.getSecretExpirationSettings()));
-            client.setClientSecrets(List.of(clientSecretToRenew.get()));
+            client.setClientSecrets(new ArrayList<>(List.of(clientSecretToRenew.get())));
         }
         String clientSecretId = clientSecretToRenew.get().getId();
 
