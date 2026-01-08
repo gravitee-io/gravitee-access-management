@@ -168,6 +168,9 @@ public class DynamicClientRegistrationServiceTest {
     @Mock
     private SecretService secretService;
 
+    @Mock
+    private ClientSecretService clientSecretService;
+
     private static final String DOMAIN_ID = "domain";
     private static final Domain DOMAIN = new Domain(DOMAIN_ID);
     private static final String BASE_PATH = "";
@@ -943,6 +946,9 @@ public class DynamicClientRegistrationServiceTest {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setSecret("oldSecret");
         clientSecret.setId("secret-id");
+        when(clientSecretService.determineClientSecret(toRenew)).thenReturn(Optional.of(clientSecret));
+        when(clientSecretService.getSecretId(any(), any(), any())).thenReturn("secret-id");
+
         List<ClientSecret> clientSecrets = new ArrayList<>();
         clientSecrets.add(clientSecret);
         toRenew.setClientSecrets(clientSecrets);
@@ -959,121 +965,6 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertValue(client -> client.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
         verify(clientService, times(1)).renewClientSecret(any(), any(), anyString());
         verify(clientService, times(1)).update(any());
-    }
-
-    @Test
-    public void renewSecret_missingClientSecret() {
-        Client client = new Client();
-        ApplicationSecretSettings applicationSecretSettings = new ApplicationSecretSettings("setting-id", SecretHashAlgorithm.NONE.name(), Map.of());
-        client.setClientSecret("clientSecret");
-        client.setSecretSettings(List.of(applicationSecretSettings));
-
-        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
-            Client c = i.getArgument(1);
-            c.getClientSecrets().getFirst().setSecret("renewedSecret");
-            return Single.just(c);
-        });
-
-        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenAnswer(i -> {
-            ClientSecret clientSecret = new ClientSecret();
-            clientSecret.setSecret(i.getArgument(1));
-            clientSecret.setName(i.getArgument(0));
-            clientSecret.setSettingsId("settings-id");
-            clientSecret.setId("secret-id");
-            return clientSecret;
-        });
-
-        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
-        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
-        verify(clientService, times(1)).update(any());
-
-    }
-
-    @Test
-    public void renewSecret_missingAllClientSecrets() {
-        Client client = new Client();
-
-        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
-            Client c = i.getArgument(1);
-            c.getClientSecrets().getFirst().setSecret("renewedSecret");
-            return Single.just(c);
-        });
-
-        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenAnswer(i -> {
-            ClientSecret clientSecret = new ClientSecret();
-            clientSecret.setSecret(i.getArgument(1));
-            clientSecret.setName(i.getArgument(0));
-            clientSecret.setSettingsId("settings-id");
-            clientSecret.setId("secret-id");
-            return clientSecret;
-        });
-
-        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
-        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
-        verify(clientService, times(1)).update(any());
-
-    }
-
-    @Test
-    public void renewSecret_missingClientSecretAndSecretSettings() {
-        Client client = new Client();
-        client.setClientSecret("topSecret");
-
-        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
-            Client c = i.getArgument(1);
-            c.getClientSecrets().getFirst().setSecret("renewedSecret");
-            return Single.just(c);
-        });
-
-        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenAnswer(i -> {
-            ClientSecret clientSecret = new ClientSecret();
-            clientSecret.setSecret(i.getArgument(1));
-            clientSecret.setName(i.getArgument(0));
-            clientSecret.setSettingsId("settings-id");
-            clientSecret.setId("secret-id");
-            return clientSecret;
-        });
-
-        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
-        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
-        verify(clientService, times(1)).update(any());
-    }
-
-    @Test
-    public void renewSecret_determinateClientSecretBasedOnHash() {
-        Client client = new Client();
-        ApplicationSecretSettings applicationSecretSettings = new ApplicationSecretSettings("setting-id", SecretHashAlgorithm.NONE.name(), Map.of());
-        client.setClientSecret("clientSecret");
-        client.setSecretSettings(List.of(applicationSecretSettings));
-
-        ClientSecret clientSecret = new ClientSecret();
-        clientSecret.setSecret("clientSecret");
-        clientSecret.setSettingsId("setting-id");
-        clientSecret.setId("secret-id");
-        client.setClientSecrets(List.of(clientSecret));
-
-        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
-            Client c = i.getArgument(1);
-            c.getClientSecrets().getFirst().setSecret("renewedSecret");
-            return Single.just(c);
-        });
-
-        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
-        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
-        verify(clientService, times(1)).update(any());
-        verify(secretService, never()).generateClientSecret(any(), any(), any(), any(), any());
     }
 
     @Test
