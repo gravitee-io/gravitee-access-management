@@ -956,32 +956,22 @@ jobs:
             - ./docker-tag.txt
             - ./built-docker-images.txt
 
-  deploy-on-aks:
+  gitops-deploy:
+    description: Deploy Docker images to GitOps repository (cloud-am) for ArgoCD sync
     docker:
-      - image: mcr.microsoft.com/azure-cli:2.42.0
+      - image: cimg/base:stable
     resource_class: small
     steps:
       - checkout
       - attach_workspace:
           at: /tmp
-      - run:
-          name: Install Helm
-          command: |
-            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-            helm version
-      - run:
-          name: Install Kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-            chmod +x ./kubectl
-            mv ./kubectl /usr/local/bin/kubectl
-            kubectl version --client=true
       - add_ssh_keys:
           fingerprints:
             - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
       - run:
-          name: Setup Git config and clone cloud-am repo
+          name: GitOps Deployment
           command: |
+<<<<<<< HEAD
             # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
             ssh-keyscan github.com >> ~/.ssh/known_hosts
             # Add SSH Key
@@ -1052,7 +1042,18 @@ jobs:
                                       --set "gateway.image.tag=${TAG}" \
                                       --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                                       --set "ui.image.tag=${TAG}"
+=======
+            # Get tag from build output
+            if [ ! -f /tmp/docker-tag.txt ]; then
+              echo "❌ Error: docker-tag.txt not found. Build must complete successfully first."
+              exit 1
+>>>>>>> a995fd3aa (feat: am master deployments via argoCD)
             fi
+            export TAG=$(cat /tmp/docker-tag.txt)
+            
+            echo "GitOps Deployment for ${CIRCLE_BRANCH} with tag: ${TAG}"
+            ./.circleci/scripts/gitops-deploy.sh "${CIRCLE_BRANCH}" "${TAG}"
+
   purge-azure-registry:
     docker:
       - image: mcr.microsoft.com/azure-cli:latest
@@ -2132,18 +2133,8 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
-      - deploy-on-aks:
+      - gitops-deploy:
           context: cicd-orchestrator
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/login
-                var-name: AZURE_APPLICATION_ID
-            - keeper/env-export:
-                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/custom_field/tenant
-                var-name: AZURE_TENANT
-            - keeper/env-export:
-                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
-                var-name: AZURE_APPLICATION_SECRET
           requires:
             - publish-images-azure-registry
           filters:
