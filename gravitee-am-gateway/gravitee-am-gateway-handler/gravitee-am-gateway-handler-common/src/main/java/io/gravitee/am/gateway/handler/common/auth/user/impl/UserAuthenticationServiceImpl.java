@@ -133,7 +133,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(subject)))
                 // check account status
                 .flatMap(user -> {
-                    if (isIndefinitelyLocked(user) || (user.getAccountLockedUntil() != null && user.getAccountLockedUntil().after(new Date()))) {
+                    if (user.isIndefinitelyLocked() || user.isTemporarilyLocked()) {
                         return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername()));
                     }
                     if (!user.isEnabled()) {
@@ -188,7 +188,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private Maybe<User> internalLoadPreAuthenticateUser(String subject, Request request, Maybe<User> maybeFindUser) {
         return maybeFindUser
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(subject)))
-                .flatMap(user -> isIndefinitelyLocked(user) ?
+                .flatMap(user -> user.isIndefinitelyLocked() ?
                         Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Maybe.just(user)
                 )
@@ -256,7 +256,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
         return findExistingUser
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(username)))
-                .flatMap(user -> isIndefinitelyLocked(user) ?
+                .flatMap(user -> user.isIndefinitelyLocked() ?
                         Single.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Single.just(user)
                 )
@@ -269,9 +269,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 });
     }
 
-    private boolean isIndefinitelyLocked(User user) {
-        return !user.isAccountNonLocked() && user.getAccountLockedUntil() == null;
-    }
+
 
     /**
      * Check the user account status
