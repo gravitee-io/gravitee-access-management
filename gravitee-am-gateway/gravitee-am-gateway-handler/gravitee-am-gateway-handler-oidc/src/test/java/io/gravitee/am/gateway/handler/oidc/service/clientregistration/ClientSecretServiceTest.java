@@ -195,4 +195,48 @@ public class ClientSecretServiceTest {
         client.getSecretSettings().add(new ApplicationSecretSettings());
         assertEquals(2, client.getSecretSettings().size());
     }
+
+    @Test
+    public void getSecretId_shouldPreserveExistingData() {
+        // Setup initial client state with existing (but different) settings and secrets
+        ApplicationSecretSettings existingSetting = new ApplicationSecretSettings();
+        existingSetting.setId("existing-setting-id");
+        existingSetting.setAlgorithm("HMAC");
+
+        ClientSecret existingSecret = new ClientSecret();
+        existingSecret.setId("existing-secret-id");
+        existingSecret.setSecret("old-secret");
+
+        Client client = new Client();
+        // Use mutable lists to start with, imitating a loaded client
+        client.setSecretSettings(new ArrayList<>(List.of(existingSetting)));
+        client.setClientSecrets(new ArrayList<>(List.of(existingSecret)));
+
+        // Setup mocks
+        ClientSecret generatedSecret = new ClientSecret();
+        generatedSecret.setId("new-secret-id");
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(generatedSecret);
+
+        // Execute
+        String result = clientSecretService.getSecretId(client, Optional.empty(), domain);
+
+        // Assertions
+        assertEquals("new-secret-id", result);
+
+        // Verify Settings were preserved + new one added
+        List<ApplicationSecretSettings> settings = client.getSecretSettings();
+        assertEquals("Should have 2 settings (old + new)", 2, settings.size());
+        boolean hasExisting = settings.stream().anyMatch(s -> "existing-setting-id".equals(s.getId()));
+        boolean hasNone = settings.stream().anyMatch(s -> SecretHashAlgorithm.NONE.name().equals(s.getAlgorithm()));
+        assertTrue("Should still have existing setting", hasExisting);
+        assertTrue("Should have new NONE setting", hasNone);
+
+        // Verify Secrets were preserved + new one added
+        List<ClientSecret> secrets = client.getClientSecrets();
+        assertEquals("Should have 2 secrets (old + new)", 2, secrets.size());
+        boolean hasOldSecret = secrets.stream().anyMatch(s -> "existing-secret-id".equals(s.getId()));
+        boolean hasNewSecret = secrets.stream().anyMatch(s -> "new-secret-id".equals(s.getId()));
+        assertTrue("Should still have existing secret", hasOldSecret);
+        assertTrue("Should have new secret", hasNewSecret);
+    }
 }
