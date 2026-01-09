@@ -134,10 +134,14 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 // check account status
                 .flatMap(user -> {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     if (isIndefinitelyLocked(user)) {
                         return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername(), mapUserAttributes(user)));
 =======
                     if (isIndefinitelyLocked(user) || (user.getAccountLockedUntil() != null && user.getAccountLockedUntil().after(new Date()))) {
+=======
+                    if (user.isIndefinitelyLocked() || user.isTemporarilyLocked()) {
+>>>>>>> aeeeb29a5 (refactor: move locked methods to user class)
                         return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername()));
 >>>>>>> 637963d12 (fix: do not allow user to log in via passwordless if their account is locked)
                     }
@@ -194,7 +198,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private Maybe<User> internalLoadPreAuthenticateUser(String subject, Request request, Maybe<User> maybeFindUser) {
         return maybeFindUser
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(subject)))
-                .flatMap(user -> isIndefinitelyLocked(user) ?
+                .flatMap(user -> user.isIndefinitelyLocked() ?
                         Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Maybe.just(user)
                 )
@@ -262,7 +266,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
         return findExistingUser
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(username)))
-                .flatMap(user -> isIndefinitelyLocked(user) ?
+                .flatMap(user -> user.isIndefinitelyLocked() ?
                         Single.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Single.just(user)
                 )
@@ -275,6 +279,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 });
     }
 
+<<<<<<< HEAD
     private Map<String, String> mapUserAttributes(User user){
        final Map<String,String> details = new HashMap<String, String>();
 
@@ -296,6 +301,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private boolean isIndefinitelyLocked(User user) {
         return !user.isAccountNonLocked() && user.getAccountLockedUntil() == null;
     }
+=======
+
+>>>>>>> aeeeb29a5 (refactor: move locked methods to user class)
 
     /**
      * Check the user account status
