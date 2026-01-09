@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.common.oauth2.authentication;
 
 import com.google.common.base.Strings;
+import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
@@ -60,7 +61,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
@@ -84,17 +85,14 @@ import static java.util.function.Predicate.not;
  */
 public abstract class AbstractOpenIDConnectAuthenticationProvider extends AbstractSocialAuthenticationProvider implements OpenIDConnectAuthenticationProvider, InitializingBean {
 
-    @Value("${httpClient.timeout:10000}")
-    protected int connectionTimeout;
-
-    @Value("${httpClient.readTimeout:5000}")
-    protected int readTimeout;
-
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     public static final String ID_TOKEN_PARAMETER = "id_token";
 
     protected JWTProcessor jwtProcessor;
+
+    @Autowired
+    protected ResourceRetriever retriever;
 
     @Override
     public AuthenticationFlow authenticationFlow() {
@@ -392,7 +390,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             // init JWT key source (Remote URL or from configuration file)
             if (KeyResolver.JWKS_URL.equals(getConfiguration().getPublicKeyResolver())) {
                 keyProcessor = new JWKSKeyProcessor();
-                keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver(getConfiguration().getResolverParameter(), connectionTimeout, readTimeout));
+                keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver(retriever, getConfiguration().getResolverParameter()));
             } else {
                 // get the corresponding key processor
                 final String resolverParameter = getConfiguration().getResolverParameter();

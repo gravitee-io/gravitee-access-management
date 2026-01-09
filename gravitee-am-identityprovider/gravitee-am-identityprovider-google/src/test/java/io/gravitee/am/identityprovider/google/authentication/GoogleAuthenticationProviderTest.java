@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.google.authentication;
 
+import com.nimbusds.jose.util.ResourceRetriever;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.utils.RandomString;
@@ -81,6 +82,9 @@ public class GoogleAuthenticationProviderTest {
 
     @Mock
     private DefaultIdentityProviderMapper mapper;
+
+    @Mock
+    private ResourceRetriever retriever;
 
     @Spy
     private DefaultIdentityProviderRoleMapper roleMapper = new DefaultIdentityProviderRoleMapper();

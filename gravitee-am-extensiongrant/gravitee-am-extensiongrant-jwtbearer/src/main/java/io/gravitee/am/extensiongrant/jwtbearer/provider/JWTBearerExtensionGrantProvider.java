@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
@@ -40,8 +41,8 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcess
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,8 @@ import org.springframework.util.Assert;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
@@ -77,6 +80,7 @@ import static java.util.Objects.nonNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTBearerExtensionGrantProvider.class);
@@ -102,6 +106,9 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
 
     @Autowired
     private JWTBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
+
+    @Autowired
+    private ResourceRetriever resourceRetriever;
 
     @Override
     public Maybe<User> grant(TokenRequest tokenRequest) throws InvalidGrantException {
@@ -172,9 +179,9 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
         }
 
         AbstractKeyProcessor<?> keyProcessor = null;
-        if (JWTBearerExtensionGrantConfiguration.KeyResolver.JWKS_URL.equals(jwtBearerTokenGranterConfiguration.getPublicKeyResolver())) {
+        if (jwtBearerTokenGranterConfiguration.usesJWKs()) {
             keyProcessor = new JWKSKeyProcessor<>();
-            keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(jwtBearerTokenGranterConfiguration.getPublicKey()));
+            keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(resourceRetriever, jwtBearerTokenGranterConfiguration.getPublicKey()));
         } else {
             // get the corresponding key processor
             final String publicKey = jwtBearerTokenGranterConfiguration.getPublicKey();
@@ -346,4 +353,5 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
     private static String resolveAlgorithm(int keySize) {
         return OPENSSH_KEY_LENGHTS.get(keySize);
     }
+
 }

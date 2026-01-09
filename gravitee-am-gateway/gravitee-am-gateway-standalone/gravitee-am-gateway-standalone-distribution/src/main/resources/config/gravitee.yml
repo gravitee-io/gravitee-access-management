@@ -425,6 +425,7 @@ gateway:
 
 # global configuration of the http client
 #httpClient:
+#  jwksRetriever: false
 #  timeout: 10000 # in milliseconds
 #  readTimeout: 5000 # in milliseconds
 #  proxy:
