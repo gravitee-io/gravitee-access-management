@@ -9,6 +9,8 @@ The AM installation targeted by those simulation needs to have a valid EE licens
 * [SMS factor](https://download.gravitee.io/#graviteeio-ee/am/plugins/factors/gravitee-am-factor-sms/) (present in the default bundle)
 * [Mock MFA Resource](https://download.gravitee.io/graviteeio-am/plugins/resources/gravitee-am-resource-mfa-mock/gravitee-am-resource-mfa-mock-1.0.0.zip)
 
+For authorization simulations, an instance of an **OpenFGA** server is required. See [Authorization Simulations](./src/test/scala/io/gravitee/am/performance/authorization/README.md).
+
 # Maven execution
 
 ## Create Dataset
@@ -234,7 +236,11 @@ Once authenticated, a token is generated, and UserInfo endpoint is requested bef
 * `number_of_introspections`: number of token introspection (default: 10)
 * `app`: the app name targeted by the simulation (default: appweb)
 * `scopes`: comma separated list of scopes (openid is set by default)
- 
+
+### OpenFGAProvision
+
+See [Authorization Simulations](./src/test/scala/io/gravitee/am/performance/authorization/README.md).
+
 # Docker
 
 ## Build Docker Image

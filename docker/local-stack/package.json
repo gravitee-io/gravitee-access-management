@@ -21,7 +21,10 @@
     "stack:dev:mongo": "yarn run stack:init:ciba && yarn run stack:init:build && yarn run stack:dev:setup:mongo",
     "stack:dev:psql": "yarn run stack:init:ciba && yarn run stack:init:plugins:psql && yarn run stack:init:build && yarn run stack:dev:setup:psql",
 
-    "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml down"
+    "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml down",
 
+    "stack:perf:openfga": "docker compose -f perf/docker-compose.yml up -d && docker compose -f perf/docker-compose.yml logs --follow openfga-import",
+    "stack:perf:down": "docker compose -f perf/docker-compose.yml down",
+    "stack:perf:clear-volumes": "docker volume rm am-perf-openfga_openfga-perf-postgres-data"
   }
 }
