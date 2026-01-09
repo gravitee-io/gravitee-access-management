@@ -37,15 +37,14 @@ import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class MongoServiceResourceRepository extends AbstractManagementMongoRepository implements ServiceResourceRepository {
+
+    public static final String FIELD_TYPE = "type";
 
     private MongoCollection<ServiceResourceMongo> resourceCollection;
 
@@ -65,6 +64,12 @@ public class MongoServiceResourceRepository extends AbstractManagementMongoRepos
     @Override
     public Maybe<ServiceResource> findById(String id) {
         return Observable.fromPublisher(resourceCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<ServiceResource> findByType(String type) {
+        return Flowable.fromPublisher(resourceCollection.find(eq(FIELD_TYPE, type))).map(this::convert)
                 .observeOn(Schedulers.computation());
     }
 

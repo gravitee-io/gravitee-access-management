@@ -30,4 +30,7 @@ import org.springframework.stereotype.Repository;
 public interface SpringServiceResourceRepository extends RxJava3CrudRepository<JdbcServiceResource, String> {
     @Query("select * from service_resources r where r.reference_id = :refId and r.reference_type = :refType")
     Flowable<JdbcServiceResource> findByReference(@Param("refType") String referenceType, @Param("refId") String referenceId);
+
+    @Query("select * from service_resources r where r.type = :type")
+    Flowable<JdbcServiceResource> findByType(@Param("type") String type);
 }

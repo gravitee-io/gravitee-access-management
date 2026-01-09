@@ -16,6 +16,7 @@
 package io.gravitee.am.resource.smtp;
 
 import io.gravitee.am.resource.api.Resource;
+import io.gravitee.am.resource.smtp.configuration.SmtpResourceConfiguration;
 import io.gravitee.am.resource.smtp.provider.SmtpResourceProvider;
 
 /**

@@ -99,6 +99,24 @@ smtp:
 #    ssl.trust: smtp.example.com
 #    ssl.protocols: TLSv1.2
 #    localhost: am.example.com
+  # OAuth2 authentication (alternative to basic username/password)
+  # When authMethod is set to 'oauth2', the following OAuth2 settings are required
+#  authMethod: basic # basic or oauth2
+#  oauth2:
+#    # OAuth2 token endpoint URL
+#    # Gmail: https://oauth2.googleapis.com/token
+#    # Microsoft 365: https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token
+#    tokenEndpoint: https://oauth2.googleapis.com/token
+#    # OAuth2 application client ID
+#    clientId: your-client-id
+#    # OAuth2 application client secret
+#    clientSecret: your-client-secret
+#    # OAuth2 refresh token (long-lived token for getting access tokens)
+#    refreshToken: your-refresh-token
+#    # OAuth2 scope
+#    # Gmail: https://mail.google.com/
+#    # Microsoft 365: https://outlook.office365.com/SMTP.Send offline_access
+#    scope: https://mail.google.com/
 
 mongo:
   # uri: mongodb://mongo-mongodb-replicaset:27017/gravitee?connectTimeoutMS=30000
