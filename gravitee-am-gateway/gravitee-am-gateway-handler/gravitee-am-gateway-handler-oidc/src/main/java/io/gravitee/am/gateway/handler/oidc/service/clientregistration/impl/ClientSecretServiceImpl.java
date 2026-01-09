@@ -79,7 +79,9 @@ public class ClientSecretServiceImpl implements ClientSecretService {
                 || client.getSecretSettings().stream().noneMatch(
                         setting -> setting.getAlgorithm().equalsIgnoreCase(SecretHashAlgorithm.NONE.name()))) {
             noneSettings = buildNoneSecretSettings();
-            client.setSecretSettings(new ArrayList<>(List.of(noneSettings)));
+            List<ApplicationSecretSettings> settings = client.getSecretSettings() != null ? new ArrayList<>(client.getSecretSettings()) : new ArrayList<>();
+            settings.add(noneSettings);
+            client.setSecretSettings(settings);
         } else {
             noneSettings = client.getSecretSettings().stream()
                     .filter(setting -> setting.getAlgorithm().equalsIgnoreCase(SecretHashAlgorithm.NONE.name()))
@@ -91,7 +93,9 @@ public class ClientSecretServiceImpl implements ClientSecretService {
         clientSecretToRenew = Optional.of(secretService.generateClientSecret("Default", rawClientSecret, noneSettings,
                 domain.getSecretExpirationSettings(), client.getSecretExpirationSettings()));
 
-        client.setClientSecrets(new ArrayList<>(List.of(clientSecretToRenew.get())));
+        List<ClientSecret> secrets = client.getClientSecrets() != null ? new ArrayList<>(client.getClientSecrets()) : new ArrayList<>();
+        secrets.add(clientSecretToRenew.get());
+        client.setClientSecrets(secrets);
         return clientSecretToRenew.get().getId();
     }
 
