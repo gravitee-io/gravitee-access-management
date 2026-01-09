@@ -559,4 +559,12 @@ public class User implements IUser {
     public boolean isDisabled(){
         return Boolean.FALSE.equals(enabled);
     }
+
+    public boolean isIndefinitelyLocked() {
+        return Boolean.FALSE.equals(accountNonLocked) && accountLockedUntil == null;
+    }
+
+    public boolean isTemporarilyLocked() {
+        return accountLockedUntil != null && accountLockedUntil.after(new Date());
+    }
 }

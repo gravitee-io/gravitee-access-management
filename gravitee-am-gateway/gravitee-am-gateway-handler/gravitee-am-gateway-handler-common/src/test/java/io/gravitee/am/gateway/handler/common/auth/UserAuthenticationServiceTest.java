@@ -271,8 +271,8 @@ public class UserAuthenticationServiceTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         when(domain.getId()).thenReturn(domainId);
-        final User foundUser = mock(User.class);
-        when(foundUser.isAccountNonLocked()).thenReturn(false);
+        final User foundUser = new User();
+        foundUser.setAccountNonLocked(false);
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -299,8 +299,8 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(false);
 
         when(domain.getId()).thenReturn(domainId);
-        final User foundUser = mock(User.class);
-        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        final User foundUser = new User();
+        foundUser.setAccountNonLocked(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
@@ -364,7 +364,7 @@ public class UserAuthenticationServiceTest {
 
         when(domain.getId()).thenReturn(domainId);
         final User foundUser = spy(new User());
-        when(foundUser.isAccountNonLocked()).thenReturn(true);
+
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
@@ -438,7 +438,7 @@ public class UserAuthenticationServiceTest {
         when(domain.getId()).thenReturn(domainId);
 
         final User foundUser = mock(User.class);
-        when(foundUser.isAccountNonLocked()).thenReturn(true);
+
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
@@ -1168,6 +1168,28 @@ public class UserAuthenticationServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(AccountEnforcePasswordException.class);
+    }
+
+    @Test
+    public void shouldNotConnect_passwordless_accountLocked_temporarily() {
+        String id = "id";
+        String username = "username";
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        final User foundUser = new User();
+        foundUser.setId(id);
+        foundUser.setUsername(username);
+        foundUser.setAccountNonLocked(false);
+        foundUser.setAccountLockedUntil(new Date(System.currentTimeMillis() + 10000)); // Locked for 10 seconds
+
+        when(userService.findById(id)).thenReturn(Maybe.just(foundUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.connectWithPasswordless(id, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountLockedException.class);
     }
 
     private Client initClient() {
