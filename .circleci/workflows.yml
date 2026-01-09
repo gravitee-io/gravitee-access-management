@@ -956,103 +956,31 @@ jobs:
             - ./docker-tag.txt
             - ./built-docker-images.txt
 
-  deploy-on-aks:
+  gitops-deploy:
+    description: Deploy Docker images to GitOps repository (cloud-am) for ArgoCD sync
     docker:
-      - image: mcr.microsoft.com/azure-cli:2.42.0
+      - image: cimg/base:stable
     resource_class: small
     steps:
       - checkout
       - attach_workspace:
           at: /tmp
-      - run:
-          name: Install Helm
-          command: |
-            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-            helm version
-      - run:
-          name: Install Kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-            chmod +x ./kubectl
-            mv ./kubectl /usr/local/bin/kubectl
-            kubectl version --client=true
       - add_ssh_keys:
           fingerprints:
             - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
       - run:
-          name: Setup Git config and clone cloud-am repo
+          name: GitOps Deployment
           command: |
-            # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
-            # Add SSH Key
-            export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
-            ssh-add -D
-            ssh-add "${LOCAL_SSH_PRVIKEY}"
-            git clone --branch devs-preprod git@github.com:gravitee-io/cloud-am.git
-      - run:
-          name: Helm upgrade and 🚀 Mongo and JDBC instances
-          command: |
-            export TAG=$(cat /tmp/docker-tag.txt)
-
-            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
-            az aks get-credentials --admin --resource-group Devs-Preprod-Hosted --name gravitee-devs-preprod-aks-cluster
-            
-            # install helm chart dependency 
-            helm repo add bitnami https://charts.bitnami.com/bitnami
-            helm dependency build helm/
-            
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              helm upgrade \
-                          --install am-master \
-                          -n am-master-dev \
-                          -f ./cloud-am/devs-preprod/values.yaml ./helm/ \
-                          --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                          --set "api.image.tag=${TAG}" \
-                          --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                          --set "gateway.image.tag=${TAG}" \
-                          --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                          --set "ui.image.tag=${TAG}"
-            
-              helm upgrade \
-                          --install am-master-ce \
-                          -n am-master-ce-dev \
-                          -f ./cloud-am/devs-preprod/values-ce.yaml ./helm/ \
-                          --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                          --set "api.image.tag=${TAG}" \
-                          --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                          --set "gateway.image.tag=${TAG}" \
-                          --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                          --set "ui.image.tag=${TAG}"
-            
-              helm upgrade \
-                          --install am-psql \
-                          -n am-master-postgres-dev \
-                          -f ./cloud-am/devs-preprod/values-psql.yaml ./helm/ \
-                          --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                          --set "api.image.tag=${TAG}" \
-                          --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                          --set "gateway.image.tag=${TAG}" \
-                          --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                          --set "ui.image.tag=${TAG}"
-            else
-              # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
-              kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
-              
-              # replace verison Pattern into generic maint configuration
-              sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
-              
-              echo "running: helm upgrade for am-${CIRCLE_BRANCH//./-}-dev"
-              helm upgrade \
-                                      --install am-${CIRCLE_BRANCH//./-} \
-                                      -n am-${CIRCLE_BRANCH//./-}-dev \
-                                      -f ./cloud-am/devs-preprod/values-maint.yaml ./helm/ \
-                                      --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                                      --set "api.image.tag=${TAG}" \
-                                      --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                                      --set "gateway.image.tag=${TAG}" \
-                                      --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                                      --set "ui.image.tag=${TAG}"
+            # Get tag from build output
+            if [ ! -f /tmp/docker-tag.txt ]; then
+              echo "❌ Error: docker-tag.txt not found. Build must complete successfully first."
+              exit 1
             fi
+            export TAG=$(cat /tmp/docker-tag.txt)
+            
+            echo "GitOps Deployment for ${CIRCLE_BRANCH} with tag: ${TAG}"
+            ./.circleci/scripts/gitops-deploy.sh "${CIRCLE_BRANCH}" "${TAG}"
+
   purge-azure-registry:
     docker:
       - image: mcr.microsoft.com/azure-cli:latest
@@ -2132,18 +2060,8 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
-      - deploy-on-aks:
+      - gitops-deploy:
           context: cicd-orchestrator
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/login
-                var-name: AZURE_APPLICATION_ID
-            - keeper/env-export:
-                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/custom_field/tenant
-                var-name: AZURE_TENANT
-            - keeper/env-export:
-                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
-                var-name: AZURE_APPLICATION_SECRET
           requires:
             - publish-images-azure-registry
           filters:
