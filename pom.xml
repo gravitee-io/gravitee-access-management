@@ -114,7 +114,7 @@
         <wiremock.version>2.6.0</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <json-smart.version>2.4.10</json-smart.version>
-        <reactor-netty.version>1.0.44</reactor-netty.version>
+        <reactor-netty.version>1.2.14</reactor-netty.version>
         <commons-io.version>2.11.0</commons-io.version>
         <common-text.version>1.10.0</common-text.version>
         <ognl.version>3.3.4</ognl.version>
