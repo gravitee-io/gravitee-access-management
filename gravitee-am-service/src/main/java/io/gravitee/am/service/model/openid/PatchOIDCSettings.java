@@ -20,6 +20,7 @@ import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.oidc.TokenExchangeSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 import lombok.NoArgsConstructor;
@@ -44,6 +45,9 @@ public class PatchOIDCSettings {
 
     @JsonProperty("cibaSettings")
     private Optional<PatchCIBASettings> cibaSettings;
+
+    @JsonProperty("tokenExchangeSettings")
+    private Optional<PatchTokenExchangeSettings> tokenExchangeSettings;
 
     private Optional<Boolean> redirectUriStrictMatching;
 
@@ -98,6 +102,14 @@ public class PatchOIDCSettings {
         this.cibaSettings = cibaSettings;
     }
 
+    public Optional<PatchTokenExchangeSettings> getTokenExchangeSettings() {
+        return tokenExchangeSettings;
+    }
+
+    public void setTokenExchangeSettings(Optional<PatchTokenExchangeSettings> tokenExchangeSettings) {
+        this.tokenExchangeSettings = tokenExchangeSettings;
+    }
+
     public OIDCSettings patch(OIDCSettings toPatch) {
 
         //If source may be null, in such case init with default values
@@ -139,6 +151,16 @@ public class PatchOIDCSettings {
             }
         }
 
+        if (getTokenExchangeSettings() != null) {
+            if (getTokenExchangeSettings().isPresent()) {
+                final PatchTokenExchangeSettings patcher = getTokenExchangeSettings().get();
+                final TokenExchangeSettings source = toPatch.getTokenExchangeSettings();
+                toPatch.setTokenExchangeSettings(patcher.patch(source));
+            } else {
+                toPatch.setTokenExchangeSettings(TokenExchangeSettings.defaultSettings());
+            }
+        }
+
         return toPatch;
     }
 
@@ -150,6 +172,7 @@ public class PatchOIDCSettings {
         if ((clientRegistrationSettings != null && clientRegistrationSettings.isPresent())
                 || (redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent())
                 || (cibaSettings != null && cibaSettings.isPresent())
+                || (tokenExchangeSettings != null && tokenExchangeSettings.isPresent())
                 || (postLogoutRedirectUris != null && postLogoutRedirectUris.isPresent())
                 || (requestUris != null && requestUris.isPresent())
                 || (securityProfileSettings != null && securityProfileSettings.isPresent())) {

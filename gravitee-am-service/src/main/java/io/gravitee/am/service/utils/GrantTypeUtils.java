@@ -37,6 +37,7 @@ import static io.gravitee.am.common.oauth2.GrantType.IMPLICIT;
 import static io.gravitee.am.common.oauth2.GrantType.JWT_BEARER;
 import static io.gravitee.am.common.oauth2.GrantType.PASSWORD;
 import static io.gravitee.am.common.oauth2.GrantType.REFRESH_TOKEN;
+import static io.gravitee.am.common.oauth2.GrantType.TOKEN_EXCHANGE;
 import static io.gravitee.am.common.oauth2.GrantType.UMA;
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
@@ -56,7 +57,7 @@ public class GrantTypeUtils {
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER, UMA, CIBA_GRANT_TYPE//, DEVIDE_CODE, SAML2_BEARER
+            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER, UMA, CIBA_GRANT_TYPE, TOKEN_EXCHANGE//, DEVIDE_CODE, SAML2_BEARER
     )));
 
     /**

@@ -215,6 +215,7 @@ import { BotDetectionComponent } from './domain/settings/botdetections/bot-detec
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from './resolvers/scopes-all.resolver';
 import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
+import { TokenExchangeComponent } from './domain/settings/openid/token-exchange/token-exchange.component';
 import { DomainSettingsDeviceIdentifiersComponent } from './domain/settings/deviceidentifiers/device-identifiers.component';
 import { DeviceIdentifierPluginsResolver } from './resolvers/device-identifier-plugins.resolver';
 import { DeviceIdentifierCreationComponent } from './domain/settings/deviceidentifiers/creation/device-identifier-creation.component';
@@ -2849,6 +2850,21 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Security Profile',
+                            section: 'Openid',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_openid_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'token-exchange',
+                        component: TokenExchangeComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Token Exchange',
                             section: 'Openid',
                             level: 'level2',
                           },

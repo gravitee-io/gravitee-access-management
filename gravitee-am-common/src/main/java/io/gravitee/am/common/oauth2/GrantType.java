@@ -87,4 +87,11 @@ public interface GrantType {
      * See <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.4"> 4. Registration and Discovery Metadata </a>
      */
     String CIBA_GRANT_TYPE = "urn:openid:params:grant-type:ciba";
+
+    /**
+     * Token Exchange grant type
+     *
+     * See <a href="https://tools.ietf.org/html/rfc8693">RFC 8693 - OAuth 2.0 Token Exchange</a>
+     */
+    String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
 }

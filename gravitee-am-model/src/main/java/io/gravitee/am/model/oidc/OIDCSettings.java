@@ -46,6 +46,11 @@ public class OIDCSettings {
 
     private CIBASettings cibaSettings;
 
+    /**
+     * Token Exchange settings (RFC 8693)
+     */
+    private TokenExchangeSettings tokenExchangeSettings;
+
     public ClientRegistrationSettings getClientRegistrationSettings() {
         return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();
     }
@@ -94,12 +99,21 @@ public class OIDCSettings {
         this.cibaSettings = cibaSettings;
     }
 
+    public TokenExchangeSettings getTokenExchangeSettings() {
+        return tokenExchangeSettings != null ? tokenExchangeSettings : TokenExchangeSettings.defaultSettings();
+    }
+
+    public void setTokenExchangeSettings(TokenExchangeSettings tokenExchangeSettings) {
+        this.tokenExchangeSettings = tokenExchangeSettings;
+    }
+
     public static OIDCSettings defaultSettings() {
         OIDCSettings defaultSettings = new OIDCSettings();
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
         defaultSettings.setSecurityProfileSettings(SecurityProfileSettings.defaultSettings());
         defaultSettings.setRedirectUriStrictMatching(false);
         defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
+        defaultSettings.setTokenExchangeSettings(TokenExchangeSettings.defaultSettings());
         return defaultSettings;
     }
 

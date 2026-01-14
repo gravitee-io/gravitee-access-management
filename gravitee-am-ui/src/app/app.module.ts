@@ -347,6 +347,7 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { NotFoundComponent } from './not-found/not-found.component';
 import { UmaComponent } from './domain/settings/uma/uma.component';
 import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
+import { TokenExchangeComponent } from './domain/settings/openid/token-exchange/token-exchange.component';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
 import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
@@ -704,6 +705,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     NotFoundComponent,
     UmaComponent,
     OIDCProfileComponent,
+    TokenExchangeComponent,
     CibaComponent,
     CibaSettingsComponent,
     Saml2Component,
