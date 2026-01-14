@@ -1,0 +1,12 @@
+description: "Run Jest tests against the deployed environment"
+parameters:
+  suite_name:
+    type: string
+    description: "Name of the test suite run"
+steps:
+  - run:
+      name: "Run Tests (<< parameters.suite_name >>)"
+      command: |
+        echo "Running tests for: << parameters.suite_name >>"
+        # Using the migration config created in Task 1.4
+        yarn test --config=api/config/migration.config.js

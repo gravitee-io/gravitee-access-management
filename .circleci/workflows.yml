@@ -63,6 +63,18 @@ executors:
     resource_class: << parameters.class >>
 
 parameters:
+  migration_test_from_tag:
+    type: string
+    default: ""
+    description: "Source version tag for migration test"
+  migration_test_to_tag:
+    type: string
+    default: ""
+    description: "Target version tag for migration test"
+  migration_test_db_type:
+    type: string
+    default: "mongodb"
+    description: "Database type for migration test"
   gio_action:
     type: enum
     enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version ]
@@ -395,6 +407,54 @@ commands:
       - run:
           name: Lint the helm charts available in << parameters.folder >>
           command: helm lint << parameters.folder >>
+
+  migration-test_deploy_version:
+    description: "Deploy a specific version via GitOps"
+    parameters:
+      tag:
+        type: string
+        description: "Image tag to deploy"
+      component:
+        type: string
+        default: "all"
+        description: "Component to deploy (mapi, gateway, all)"
+    steps:
+      - run:
+          name: "Deploy Version << parameters.tag >> (<< parameters.component >>)"
+          command: |
+             chmod +x .circleci/migration-test/scripts/push-image-tag.sh
+             .circleci/migration-test/scripts/push-image-tag.sh \
+              "${CIRCLE_BRANCH}" \
+              "<< parameters.tag >>" \
+              "<< parameters.component >>"
+
+  migration-test_wait_argocd_sync:
+    description: "Wait for ArgoCD application to sync"
+    parameters:
+      timeout:
+        type: integer
+        default: 10
+        description: "Timeout in minutes"
+    steps:
+      - run:
+          name: "Wait for ArgoCD Sync"
+          command: |
+            chmod +x .circleci/migration-test/scripts/wait-argocd-sync.sh
+            .circleci/migration-test/scripts/wait-argocd-sync.sh << parameters.timeout >>
+
+  migration-test_run_tests:
+    description: "Run Jest tests against the deployed environment"
+    parameters:
+      suite_name:
+        type: string
+        description: "Name of the test suite run"
+    steps:
+      - run:
+          name: "Run Tests (<< parameters.suite_name >>)"
+          command: |
+            echo "Running tests for: << parameters.suite_name >>"
+            cd gravitee-am-test
+            yarn test --config=api/config/migration.config.js
 
 jobs:
   setup:
@@ -1544,6 +1604,106 @@ jobs:
                   helm registry login graviteeio.azurecr.io --username $ACR_USER_NAME --password $ACR_PASSWORD
                   helm push charts/am-${VERSION}.tgz oci://graviteeio.azurecr.io/helm/
 
+  migration-test-job:
+    parameters:
+      from_tag:
+        type: string
+      to_tag:
+        type: string
+      db_type:
+        type: string
+        default: "mongodb"
+    machine:
+      image: ubuntu-2204:2024.04.4
+    resource_class: large
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            npm --prefix gravitee-am-test install
+      - run:
+          name: "Clean Environment"
+          command: echo "Cleaning environment... (Skipped for POC)"
+      - migration-test_deploy_version:
+          tag: << parameters.from_tag >>
+          component: "all"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Initial Deployment (<< parameters.from_tag >>)"
+      - migration-test_deploy_version:
+          tag: << parameters.to_tag >>
+          component: "mapi"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Post-MAPI Upgrade"
+      - migration-test_deploy_version:
+          tag: << parameters.to_tag >>
+          component: "gateway"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Full Upgrade (<< parameters.to_tag >>)"
+      - migration-test_deploy_version:
+          tag: << parameters.from_tag >>
+          component: "all"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Downgrade (Back to << parameters.from_tag >>)"
+
+  migration-test-job:
+    parameters:
+      from_tag:
+        type: string
+      to_tag:
+        type: string
+      db_type:
+        type: string
+        default: "mongodb"
+    machine:
+      image: ubuntu-2204:2024.04.4
+    resource_class: large
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            npm --prefix gravitee-am-test install
+      - run:
+          name: "Clean Environment"
+          command: echo "Cleaning environment... (Skipped for POC)"
+      - migration-test_deploy_version:
+          tag: << parameters.from_tag >>
+          component: "all"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Initial Deployment (<< parameters.from_tag >>)"
+      - migration-test_deploy_version:
+          tag: << parameters.to_tag >>
+          component: "mapi"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Post-MAPI Upgrade"
+      - migration-test_deploy_version:
+          tag: << parameters.to_tag >>
+          component: "gateway"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Full Upgrade (<< parameters.to_tag >>)"
+      - migration-test_deploy_version:
+          tag: << parameters.from_tag >>
+          component: "all"
+      - migration-test_wait_argocd_sync:
+          timeout: 10
+      - migration-test_run_tests:
+          suite_name: "Downgrade (Back to << parameters.from_tag >>)"
+
 workflows:
   version: 2.1
   # Workflow triggered by CircleCI API HTTP call or "Trigger Pipeline" button in the CircleCI website
@@ -2101,3 +2261,16 @@ workflows:
           context: cicd-orchestrator
           requires:
             - build
+  migration-test-workflow:
+    when:
+      not:
+        equal: [ "", << pipeline.parameters.migration_test_from_tag >> ]
+    jobs:
+      - migration-test-job:
+          from_tag: << pipeline.parameters.migration_test_from_tag >>
+          to_tag: << pipeline.parameters.migration_test_to_tag >>
+          db_type: << pipeline.parameters.migration_test_db_type >>
+          filters:
+            branches:
+              only: /.*/
+

@@ -1,0 +1,17 @@
+description: "Deploy a specific version via GitOps"
+parameters:
+  tag:
+    type: string
+    description: "Image tag to deploy"
+  component:
+    type: string
+    default: "all"
+    description: "Component to deploy (mapi, gateway, all)"
+steps:
+  - run:
+      name: "Deploy Version << parameters.tag >> (<< parameters.component >>)"
+      command: |
+        .circleci/migration-test/scripts/push-image-tag.sh \
+          "$CIRCLE_BRANCH" \
+          "<< parameters.tag >>" \
+          "<< parameters.component >>"

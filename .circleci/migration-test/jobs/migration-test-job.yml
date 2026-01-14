@@ -1,0 +1,68 @@
+description: "End-to-end migration test job"
+parameters:
+  from_tag:
+    type: string
+    description: "Source version tag"
+  to_tag:
+    type: string
+    description: "Target version tag"
+  db_type:
+    type: string
+    default: "mongodb"
+    description: "Database type"
+
+executor:
+  name: "ubuntu-2004" # Assuming standard executor, will adjust if needed based on existing config
+
+working_directory: ~/gravitee-am
+
+steps:
+  - checkout
+#  - run: yarn install # Assuming dependencies needed for tests
+  
+  # 1. Clean Environment
+  - clean-environment
+  
+  # 2. Deploy "From" Version
+  - deploy-version:
+      tag: << parameters.from_tag >>
+      component: "all"
+      
+  - wait-argocd-sync:
+      timeout: 10
+      
+  - run-tests:
+      suite_name: "Initial Deployment (<< parameters.from_tag >>)"
+
+  # 3. Upgrade MAPI
+  - deploy-version:
+      tag: << parameters.to_tag >>
+      component: "mapi"
+      
+  - wait-argocd-sync:
+      timeout: 10
+      
+  - run-tests:
+      suite_name: "Post-MAPI Upgrade"
+
+  # 4. Upgrade Gateway
+  - deploy-version:
+      tag: << parameters.to_tag >>
+      component: "gateway"
+      
+  - wait-argocd-sync:
+      timeout: 10
+      
+  - run-tests:
+      suite_name: "Full Upgrade (<< parameters.to_tag >>)"
+
+  # 5. Downgrade (Back to From Version)
+  - deploy-version:
+      tag: << parameters.from_tag >>
+      component: "all"
+      
+  - wait-argocd-sync:
+      timeout: 10
+      
+  - run-tests:
+      suite_name: "Downgrade (Back to << parameters.from_tag >>)"
