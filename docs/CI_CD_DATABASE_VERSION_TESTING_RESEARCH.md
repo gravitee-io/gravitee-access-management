@@ -1,5 +1,11 @@
 # CI/CD Database Version Backward Compatibility Testing - Implementation Plan
 
+> **Document Navigation**:
+> - 📋 **[This Document](./CI_CD_DATABASE_VERSION_TESTING_RESEARCH.md)** - High-level architecture, workflow design, and key decisions
+> - 🔧 **[Implementation Plan](./MIGRATION_TEST_IMPLEMENTATION_PLAN.md)** - Detailed task breakdown, dependencies, and parallel work suggestions
+> - 🧪 **[Test Scenarios](./MIGRATION_TEST_SCENARIOS.md)** - Test scenarios, data seeding strategies, and success criteria
+> - 📚 **[Backward Compatibility Plan](./BACKWARD_COMPATIBILITY_IMPLEMENTATION_PLAN.md)** - Background on PROTECTED_RESOURCE enum issue and solutions
+
 ## Summary
 
 This plan implements automated testing for database version backward compatibility in Gravitee AM. The solution uses a **manual trigger** (via zx script or label) to start a CircleCI workflow that:
@@ -426,6 +432,7 @@ flowchart TD
 
 ## References
 
-- [Backward Compatibility Implementation Plan](./BACKWARD_COMPATIBILITY_IMPLEMENTATION_PLAN.md)
-- [Migration Test Scenarios](./MIGRATION_TEST_SCENARIOS.md) (to be created)
+- [Migration Test Implementation Plan](./MIGRATION_TEST_IMPLEMENTATION_PLAN.md) - Detailed task breakdown for POC implementation
+- [Migration Test Scenarios](./MIGRATION_TEST_SCENARIOS.md) - Test scenarios and data seeding strategies
+- [Backward Compatibility Implementation Plan](./BACKWARD_COMPATIBILITY_IMPLEMENTATION_PLAN.md) - Background on compatibility issues and solutions
 - [cloud-am Repository](https://github.com/gravitee-io/cloud-am) - ApplicationSet and environment setup
