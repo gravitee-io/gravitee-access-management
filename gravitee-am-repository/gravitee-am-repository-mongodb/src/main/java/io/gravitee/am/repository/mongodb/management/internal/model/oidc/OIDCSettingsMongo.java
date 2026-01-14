@@ -29,6 +29,7 @@ public class OIDCSettingsMongo {
     private List<String> postLogoutRedirectUris;
     private List<String> requestUris;
     private CIBASettingsMongo cibaSettings;
+    private TokenExchangeSettingsMongo tokenExchangeSettings;
 
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
@@ -76,5 +77,13 @@ public class OIDCSettingsMongo {
 
     public void setCibaSettings(CIBASettingsMongo cibaSettings) {
         this.cibaSettings = cibaSettings;
+    }
+
+    public TokenExchangeSettingsMongo getTokenExchangeSettings() {
+        return tokenExchangeSettings;
+    }
+
+    public void setTokenExchangeSettings(TokenExchangeSettingsMongo tokenExchangeSettings) {
+        this.tokenExchangeSettings = tokenExchangeSettings;
     }
 }

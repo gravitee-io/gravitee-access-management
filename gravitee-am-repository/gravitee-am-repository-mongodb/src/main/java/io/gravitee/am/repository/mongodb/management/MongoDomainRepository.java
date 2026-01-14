@@ -36,6 +36,7 @@ import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.oidc.TokenExchangeSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -54,6 +55,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASett
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.TokenExchangeSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -288,6 +290,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setCibaSettings(convert(oidcMongo.getCibaSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidcMongo.getRequestUris());
+        oidcSettings.setTokenExchangeSettings(convert(oidcMongo.getTokenExchangeSettings()));
 
         return oidcSettings;
     }
@@ -374,6 +377,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setCibaSettings(convert(oidc.getCibaSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidc.getRequestUris());
+        oidcSettings.setTokenExchangeSettings(convert(oidc.getTokenExchangeSettings()));
 
         return oidcSettings;
     }
@@ -434,6 +438,32 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         }
 
         return result;
+    }
+
+    private static TokenExchangeSettings convert(TokenExchangeSettingsMongo tokenExchangeMongo) {
+        if (tokenExchangeMongo == null) {
+            return null;
+        }
+
+        TokenExchangeSettings tokenExchangeSettings = new TokenExchangeSettings();
+        tokenExchangeSettings.setEnabled(tokenExchangeMongo.isEnabled());
+        tokenExchangeSettings.setAllowImpersonation(tokenExchangeMongo.isAllowImpersonation());
+        tokenExchangeSettings.setAllowDelegation(tokenExchangeMongo.isAllowDelegation());
+        tokenExchangeSettings.setAllowScopeDownscoping(tokenExchangeMongo.isAllowScopeDownscoping());
+        return tokenExchangeSettings;
+    }
+
+    private static TokenExchangeSettingsMongo convert(TokenExchangeSettings tokenExchange) {
+        if (tokenExchange == null) {
+            return null;
+        }
+
+        TokenExchangeSettingsMongo tokenExchangeMongo = new TokenExchangeSettingsMongo();
+        tokenExchangeMongo.setEnabled(tokenExchange.isEnabled());
+        tokenExchangeMongo.setAllowImpersonation(tokenExchange.isAllowImpersonation());
+        tokenExchangeMongo.setAllowDelegation(tokenExchange.isAllowDelegation());
+        tokenExchangeMongo.setAllowScopeDownscoping(tokenExchange.isAllowScopeDownscoping());
+        return tokenExchangeMongo;
     }
 
     private static SCIMSettings convert(SCIMSettingsMongo scimMongo) {

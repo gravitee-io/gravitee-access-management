@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter;
 
+
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -100,6 +102,17 @@ public class AbstractTokenGranter implements TokenGranter {
                 && !client.getAuthorizedGrantTypes().contains(grantType)) {
             throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
         }
+        
+        // Validate that token exchange parameters are not present for non-token-exchange grant types
+        if (!GrantType.TOKEN_EXCHANGE.equals(grantType)) {
+            String subjectToken = tokenRequest.parameters().getFirst(io.gravitee.am.common.oauth2.TokenExchangeParameters.SUBJECT_TOKEN);
+            String subjectTokenType = tokenRequest.parameters().getFirst(io.gravitee.am.common.oauth2.TokenExchangeParameters.SUBJECT_TOKEN_TYPE);
+            
+            if (subjectToken != null || subjectTokenType != null) {
+                throw new UnsupportedGrantTypeException("Token exchange parameters (subject_token, subject_token_type) are only allowed with grant_type=urn:ietf:params:oauth:grant-type:token-exchange");
+            }
+        }
+        
         return Single.just(tokenRequest);
     }
 

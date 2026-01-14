@@ -31,6 +31,7 @@ import { DomainStoreService } from '../../../../../../stores/domain.store';
 })
 export class ApplicationGrantFlowsComponent implements OnInit {
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
+  private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
   private domainId: string;
   formChanged: boolean;
   application: any;
@@ -52,6 +53,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     { name: 'PASSWORD', value: 'password', checked: false },
     { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false },
     { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false },
+    { name: 'TOKEN EXCHANGE', value: this.TOKEN_EXCHANGE_GRANT_TYPE, checked: false, disabled: false },
     { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false },
   ];
   customGrantTypes: any[];
@@ -229,6 +231,10 @@ export class ApplicationGrantFlowsComponent implements OnInit {
       if (this.CIBA_GRANT_TYPE === grantType.value && this.route.snapshot.data['domain']) {
         const domain = deepClone(this.domainStore.current);
         grantType.disabled = domain.oidc.cibaSettings && !domain.oidc.cibaSettings.enabled;
+      }
+      if (this.TOKEN_EXCHANGE_GRANT_TYPE === grantType.value && this.route.snapshot.data['domain']) {
+        const domain = deepClone(this.domainStore.current);
+        grantType.disabled = domain.oidc.tokenExchangeSettings && !domain.oidc.tokenExchangeSettings.enabled;
       }
     });
   }

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.exchange;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.exception.oauth2.UnsupportedTokenTypeException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenExchangeParameters;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -101,22 +103,12 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
         this.domain = domain;
     }
 
-    @Override
-    public boolean handle(String grantType, Client client) {
-        // Check if this is a token exchange request and if the feature is enabled at domain level
-        if (!super.handle(grantType, client)) {
-            return false;
-        }
-        
-        // Token exchange must be explicitly enabled at domain level
-        TokenExchangeSettings settings = getTokenExchangeSettings();
-        return settings != null && settings.isEnabled();
-    }
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return parseRequest(tokenRequest, client)
                 .flatMap(request -> validateSubjectToken(request, client))
+                .flatMap(request -> checkPermissions(request, client))
                 .flatMapMaybe(request -> resolveResourceOwner(request, client))
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
@@ -130,6 +122,7 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
     public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
         return parseRequest(tokenRequest, client)
                 .flatMap(request -> validateSubjectToken(request, client))
+                .flatMap(request -> checkPermissions(request, client))
                 .flatMapMaybe(request -> resolveResourceOwner(request, client))
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
@@ -137,6 +130,37 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
                     User user = userOpt.orElse(null);
                     return handleTokenExchange(tokenRequest, response, client, user);
                 });
+    }
+
+    /**
+     * Check domain-level permissions (Impersonation vs Delegation).
+     * This verification is done after token validation to prioritize invalid_grant errors for bad tokens.
+     */
+    private Single<TokenRequest> checkPermissions(TokenRequest tokenRequest, Client client) {
+        // Token exchange must be explicitly enabled at domain level
+        // (This is already checked in parseRequest, but settings are needed here too)
+        TokenExchangeSettings settings = getTokenExchangeSettings();
+        if (settings == null) {
+            // Should not happen as it's checked in parseRequest
+            return Single.error(new UnsupportedGrantTypeException("Unsupported grant type: " + GrantType.TOKEN_EXCHANGE));
+        }
+
+        String actorToken = (String) tokenRequest.getContext().get(ACTOR_TOKEN_KEY);
+        boolean hasActorToken = StringUtils.hasText(actorToken);
+
+        // If no actor token is provided, this is impersonation
+        if (!hasActorToken && !settings.isAllowImpersonation()) {
+            return Single.error(new UnauthorizedClientException(
+                    "Impersonation is not allowed. An actor_token must be provided for delegation."));
+        }
+
+        // Check if client is authorized to use this grant type
+        if (client.getAuthorizedGrantTypes() != null && !client.getAuthorizedGrantTypes().isEmpty()
+                && !client.getAuthorizedGrantTypes().contains(GrantType.TOKEN_EXCHANGE)) {
+            return Single.error(new UnauthorizedClientException("Unauthorized grant type: " + GrantType.TOKEN_EXCHANGE));
+        }
+
+        return Single.just(tokenRequest);
     }
 
     @Override
@@ -163,14 +187,20 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
             return Single.error(new InvalidRequestException("Missing required parameter: subject_token_type"));
         }
 
+        // Token exchange must be explicitly enabled at domain level
+        TokenExchangeSettings settings = getTokenExchangeSettings();
+        if (settings == null || !settings.isEnabled()) {
+            return Single.error(new UnsupportedGrantTypeException("Unsupported grant type: " + GrantType.TOKEN_EXCHANGE));
+        }
+
         // Validate subject_token_type is a supported type
         try {
             TokenExchangeTokenType subjectType = TokenExchangeTokenType.fromValue(subjectTokenType);
             if (!subjectType.isSupportedAsSubjectToken()) {
-                return Single.error(new InvalidRequestException("Unsupported subject_token_type: " + subjectTokenType));
+                return Single.error(new UnsupportedTokenTypeException("Unsupported subject_token_type: " + subjectTokenType));
             }
         } catch (IllegalArgumentException e) {
-            return Single.error(new InvalidRequestException("Invalid subject_token_type: " + subjectTokenType));
+            return Single.error(new UnsupportedTokenTypeException("Invalid subject_token_type: " + subjectTokenType));
         }
 
         // If actor_token is provided, actor_token_type is required
@@ -183,10 +213,10 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
             try {
                 TokenExchangeTokenType actorType = TokenExchangeTokenType.fromValue(actorTokenType);
                 if (!actorType.isSupportedAsActorToken()) {
-                    return Single.error(new InvalidRequestException("Unsupported actor_token_type: " + actorTokenType));
+                    return Single.error(new UnsupportedTokenTypeException("Unsupported actor_token_type: " + actorTokenType));
                 }
             } catch (IllegalArgumentException e) {
-                return Single.error(new InvalidRequestException("Invalid actor_token_type: " + actorTokenType));
+                return Single.error(new UnsupportedTokenTypeException("Invalid actor_token_type: " + actorTokenType));
             }
         }
 
@@ -195,23 +225,8 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
             try {
                 TokenExchangeTokenType.fromValue(requestedTokenType);
             } catch (IllegalArgumentException e) {
-                return Single.error(new InvalidRequestException("Invalid requested_token_type: " + requestedTokenType));
+                return Single.error(new UnsupportedTokenTypeException("Invalid requested_token_type: " + requestedTokenType));
             }
-        }
-
-        // Check domain-level settings for impersonation vs delegation
-        TokenExchangeSettings settings = getTokenExchangeSettings();
-        boolean hasActorToken = StringUtils.hasText(actorToken);
-        
-        // If no actor token is provided, this is impersonation
-        if (!hasActorToken && !settings.isAllowImpersonation()) {
-            return Single.error(new UnauthorizedClientException(
-                    "Impersonation is not allowed. An actor_token must be provided for delegation."));
-        }
-
-        // If actor token is provided, this is delegation
-        if (hasActorToken && !settings.isAllowDelegation()) {
-            return Single.error(new UnauthorizedClientException("Delegation is not allowed."));
         }
 
         // Store parameters in the request context for later use
@@ -234,7 +249,7 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
             tokenRequest.getContext().put(TokenExchangeParameters.RESOURCE, resource);
         }
 
-        return super.parseRequest(tokenRequest, client);
+        return Single.just(tokenRequest);
     }
 
     /**
@@ -272,7 +287,11 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
                     if (ex instanceof InvalidTokenException) {
                         return Single.error(new InvalidGrantException("Invalid subject_token: " + ex.getMessage()));
                     }
-                    return Single.error(new InvalidGrantException("Failed to validate subject_token"));
+                    if (ex instanceof io.gravitee.gateway.api.handler.Handler) {
+                        // This handles cases where the error might be wrapped
+                        return Single.error(new InvalidGrantException("Invalid subject_token"));
+                    }
+                    return Single.error(new InvalidGrantException("Invalid subject_token: " + ex.getMessage()));
                 });
     }
 

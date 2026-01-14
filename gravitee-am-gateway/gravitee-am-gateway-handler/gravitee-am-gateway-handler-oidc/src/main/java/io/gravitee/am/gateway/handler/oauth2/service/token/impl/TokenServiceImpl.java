@@ -401,6 +401,13 @@ public class TokenServiceImpl implements TokenService {
         // set custom claims
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
+        // set 'act' claim for delegation (RFC 8693)
+        // TokenExchangeTokenGranter puts the 'act' claim in the execution context
+        Object act = executionContext.getAttribute("act");
+        if (act != null) {
+            jwt.put("act", act);
+        }
+
         // Apply resource to aud
         setResources(request, jwt);
 
