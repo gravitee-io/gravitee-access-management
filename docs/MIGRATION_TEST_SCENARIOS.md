@@ -1,8 +1,16 @@
 # Migration Test Scenarios - Database Version Compatibility Testing
 
+> **Document Navigation**:
+> - 📋 **[High-Level Plan](./CI_CD_DATABASE_VERSION_TESTING_RESEARCH.md)** - Architecture, workflow design, and key decisions
+> - 🔧 **[Implementation Plan](./MIGRATION_TEST_IMPLEMENTATION_PLAN.md)** - Detailed task breakdown, dependencies, and implementation steps
+> - 🧪 **[This Document](./MIGRATION_TEST_SCENARIOS.md)** - Test scenarios, data seeding strategies, and success criteria
+> - ☁️ **[cloud-am Setup Plan](./CLOUD_AM_ENVIRONMENT_SETUP_PLAN.md)** - Prerequisite work in cloud-am repository
+
 ## Overview
 
 This document defines test scenarios for validating database version backward compatibility during upgrades and downgrades. Tests focus on detecting issues with enum compatibility, data integrity, and application functionality across version transitions.
+
+**Note**: For POC, we use existing Jest tests. The scenarios below describe what we're testing, but implementation uses existing test suites rather than new migration-specific tests.
 
 ## High-Level Test Plan
 
@@ -603,6 +611,7 @@ yarn test --testPathPattern=migration.*downgrade
 
 ## References
 
-- [Backward Compatibility Implementation Plan](./BACKWARD_COMPATIBILITY_IMPLEMENTATION_PLAN.md)
-- [CI/CD Database Version Testing Plan](./CI_CD_DATABASE_VERSION_TESTING_RESEARCH.md)
-- [API-Based Test Data Creation](./API_BASED_TEST_DATA_CREATION.md)
+- [CI/CD Database Version Testing Plan](./CI_CD_DATABASE_VERSION_TESTING_RESEARCH.md) - High-level architecture, workflow design, and implementation approach
+- [Migration Test Implementation Plan](./MIGRATION_TEST_IMPLEMENTATION_PLAN.md) - Detailed task breakdown, dependencies, and parallel work suggestions
+- [cloud-am Environment Setup Plan](./CLOUD_AM_ENVIRONMENT_SETUP_PLAN.md) - Prerequisite work in cloud-am repository
+- [API-Based Test Data Creation](./API_BASED_TEST_DATA_CREATION.md) - Strategies for creating test data via API
