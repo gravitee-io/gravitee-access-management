@@ -35,7 +35,11 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
@@ -122,27 +126,62 @@ public class PostLoginActionCallbackEndpoint implements Handler<RoutingContext> 
     }
 
     private JWSVerifier createVerifier(String publicKeyPem) throws Exception {
-        // Remove PEM headers and decode
-        String publicKeyContent = publicKeyPem
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replace("-----BEGIN RSA PUBLIC KEY-----", "")
-                .replace("-----END RSA PUBLIC KEY-----", "")
-                .replaceAll("\\s", "");
-
-        byte[] keyBytes = Base64.getDecoder().decode(publicKeyContent);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-
-        // Try RSA first, then EC
-        try {
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            RSAPublicKey rsaPublicKey = (RSAPublicKey) kf.generatePublic(spec);
+        PublicKey publicKey = parsePublicKey(publicKeyPem);
+        if (publicKey instanceof RSAPublicKey rsaPublicKey) {
             return new RSASSAVerifier(rsaPublicKey);
-        } catch (Exception e) {
-            // Try EC
-            KeyFactory kf = KeyFactory.getInstance("EC");
-            ECPublicKey ecPublicKey = (ECPublicKey) kf.generatePublic(spec);
+        }
+        if (publicKey instanceof ECPublicKey ecPublicKey) {
             return new ECDSAVerifier(ecPublicKey);
+        }
+        throw new IllegalArgumentException("Unsupported public key algorithm: " + publicKey.getAlgorithm());
+    }
+
+    private PublicKey parsePublicKey(String publicKeyPem) throws Exception {
+        if (publicKeyPem == null || publicKeyPem.isBlank()) {
+            throw new IllegalArgumentException("Response public key is missing");
+        }
+
+        String pem = publicKeyPem.trim();
+        if (pem.contains("BEGIN RSA PUBLIC KEY")) {
+            throw new IllegalArgumentException("Unsupported key format: use a certificate or BEGIN PUBLIC KEY");
+        }
+        if (pem.contains("BEGIN CERTIFICATE")) {
+            return parseCertificatePublicKey(pem);
+        }
+
+        try {
+            return parseCertificatePublicKey(pem);
+        } catch (Exception ex) {
+            return parseX509PublicKey(pem);
+        }
+    }
+
+    private PublicKey parseX509PublicKey(String pem) throws Exception {
+        byte[] keyBytes = decodePemBody(pem);
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+        try {
+            return KeyFactory.getInstance("RSA").generatePublic(spec);
+        } catch (Exception ex) {
+            return KeyFactory.getInstance("EC").generatePublic(spec);
+        }
+    }
+
+    private PublicKey parseCertificatePublicKey(String pem) throws Exception {
+        byte[] keyBytes = decodePemBody(pem);
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        Certificate certificate = factory.generateCertificate(new ByteArrayInputStream(keyBytes));
+        return certificate.getPublicKey();
+    }
+
+    private byte[] decodePemBody(String pem) {
+        String publicKeyContent = pem
+                .replaceAll("-----BEGIN [^-]+-----", "")
+                .replaceAll("-----END [^-]+-----", "")
+                .replaceAll("\\s", "");
+        try {
+            return Base64.getDecoder().decode(publicKeyContent);
+        } catch (IllegalArgumentException ex) {
+            return Base64.getUrlDecoder().decode(publicKeyContent);
         }
     }
 

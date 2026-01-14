@@ -21,6 +21,9 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PostLoginAction;
+import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -46,13 +49,16 @@ public class PostLoginActionCallbackParseHandler implements Handler<RoutingConte
     private final ClientSyncService clientSyncService;
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
+    private final Domain domain;
 
     public PostLoginActionCallbackParseHandler(ClientSyncService clientSyncService,
                                                 JWTService jwtService,
-                                                CertificateManager certificateManager) {
+                                                CertificateManager certificateManager,
+                                                Domain domain) {
         this.clientSyncService = clientSyncService;
         this.jwtService = jwtService;
         this.certificateManager = certificateManager;
+        this.domain = domain;
     }
 
     @Override
@@ -73,11 +79,27 @@ public class PostLoginActionCallbackParseHandler implements Handler<RoutingConte
             return;
         }
 
-        // Verify AM's state JWT
-        jwtService.decodeAndVerify(state, certificateManager.defaultCertificateProvider(), STATE)
+        jwtService.decode(state, STATE)
+                .flatMap(stateJwt -> {
+                    String clientId = (String) stateJwt.get(PostLoginActionHandler.CLAIM_CLIENT_ID);
+                    if (clientId == null || clientId.isEmpty()) {
+                        logger.error("Missing client ID in state token");
+                        return io.reactivex.rxjava3.core.Single.error(new InvalidRequestException("Invalid state token"));
+                    }
+                    return clientSyncService.findByClientId(clientId)
+                            .switchIfEmpty(io.reactivex.rxjava3.core.Single.error(new InvalidRequestException("Client not found")))
+                            .flatMap(client -> {
+                                PostLoginAction settings = PostLoginAction.getInstance(domain, client);
+                                return resolveCertificateProvider(settings)
+                                        .flatMap(provider -> jwtService.decodeAndVerify(state, provider, STATE))
+                                        .map(verifiedJwt -> new VerifiedState(verifiedJwt, client));
+                            });
+                })
                 .subscribe(
-                        stateJwt -> {
-                            // Check expiration
+                        result -> {
+                            JWT stateJwt = result.stateJwt;
+                            Client client = result.client;
+
                             Long exp = stateJwt.getExp();
                             if (exp != null && Instant.now().getEpochSecond() > exp) {
                                 logger.error("State token expired");
@@ -85,38 +107,34 @@ public class PostLoginActionCallbackParseHandler implements Handler<RoutingConte
                                 return;
                             }
 
-                            // Extract client ID from state
-                            String clientId = (String) stateJwt.get(PostLoginActionHandler.CLAIM_CLIENT_ID);
-                            if (clientId == null || clientId.isEmpty()) {
-                                logger.error("Missing client ID in state token");
-                                context.fail(new InvalidRequestException("Invalid state token"));
-                                return;
-                            }
-
-                            // Fetch client
-                            clientSyncService.findByClientId(clientId)
-                                    .subscribe(
-                                            client -> {
-                                                // Store state JWT and response token in context
-                                                context.put(POST_LOGIN_ACTION_STATE_KEY, stateJwt);
-                                                context.put(POST_LOGIN_ACTION_RESPONSE_TOKEN_KEY, responseToken);
-                                                context.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-                                                context.next();
-                                            },
-                                            error -> {
-                                                logger.error("Failed to fetch client: {}", clientId, error);
-                                                context.fail(new InvalidRequestException("Invalid client"));
-                                            },
-                                            () -> {
-                                                logger.error("Client not found: {}", clientId);
-                                                context.fail(new InvalidRequestException("Client not found"));
-                                            }
-                                    );
+                            context.put(POST_LOGIN_ACTION_STATE_KEY, stateJwt);
+                            context.put(POST_LOGIN_ACTION_RESPONSE_TOKEN_KEY, responseToken);
+                            context.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                            context.next();
                         },
                         error -> {
                             logger.error("Failed to verify state JWT", error);
                             context.fail(new InvalidRequestException("Invalid state token"));
                         }
                 );
+    }
+
+    private io.reactivex.rxjava3.core.Single<io.gravitee.am.gateway.certificate.CertificateProvider> resolveCertificateProvider(PostLoginAction settings) {
+        String certificateId = settings != null ? settings.getCertificateId() : null;
+        if (certificateId == null || certificateId.isEmpty()) {
+            return io.reactivex.rxjava3.core.Single.just(certificateManager.defaultCertificateProvider());
+        }
+        return certificateManager.get(certificateId)
+                .switchIfEmpty(io.reactivex.rxjava3.core.Single.just(certificateManager.defaultCertificateProvider()));
+    }
+
+    private static final class VerifiedState {
+        private final JWT stateJwt;
+        private final Client client;
+
+        private VerifiedState(JWT stateJwt, Client client) {
+            this.stateJwt = stateJwt;
+            this.client = client;
+        }
     }
 }

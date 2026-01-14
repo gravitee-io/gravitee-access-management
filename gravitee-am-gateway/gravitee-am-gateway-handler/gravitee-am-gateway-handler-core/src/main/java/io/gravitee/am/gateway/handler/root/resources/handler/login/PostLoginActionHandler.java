@@ -64,6 +64,11 @@ public class PostLoginActionHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
+        if (context.session() != null && Boolean.TRUE.equals(context.session().get(ConstantKeys.POST_LOGIN_ACTION_COMPLETED_KEY))) {
+            context.next();
+            return;
+        }
+
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final PostLoginAction settings = PostLoginAction.getInstance(domain, client);
 
@@ -98,7 +103,8 @@ public class PostLoginActionHandler implements Handler<RoutingContext> {
         final JWT stateJwt = buildStateJwt(context, client, user, settings);
 
         // Encode JWT and redirect
-        jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
+        resolveCertificateProvider(settings)
+                .flatMap(certificateProvider -> jwtService.encode(stateJwt, certificateProvider))
                 .subscribe(
                         encodedState -> {
                             String redirectUrl = buildExternalServiceUrl(context, settings, encodedState);
@@ -179,5 +185,14 @@ public class PostLoginActionHandler implements Handler<RoutingContext> {
                 .putHeader(HttpHeaders.LOCATION, url)
                 .setStatusCode(302)
                 .end();
+    }
+
+    private io.reactivex.rxjava3.core.Single<io.gravitee.am.gateway.certificate.CertificateProvider> resolveCertificateProvider(PostLoginAction settings) {
+        String certificateId = settings != null ? settings.getCertificateId() : null;
+        if (certificateId == null || certificateId.isEmpty()) {
+            return io.reactivex.rxjava3.core.Single.just(certificateManager.defaultCertificateProvider());
+        }
+        return certificateManager.get(certificateId)
+                .switchIfEmpty(io.reactivex.rxjava3.core.Single.just(certificateManager.defaultCertificateProvider()));
     }
 }

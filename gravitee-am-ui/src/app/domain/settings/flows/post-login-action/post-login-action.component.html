@@ -15,5 +15,22 @@
     limitations under the License.
 
 -->
-<gv-policy-studio #studio [policies]="policies" [flowSchema]="flowSchema" [hasConditionalSteps]="true" [definition]="definition" can-add>
-</gv-policy-studio>
+<h1>Post Login Action</h1>
+<div class="gv-page-content">
+  <div fxFlex="70">
+    <app-post-login-action-settings
+      [postLoginAction]="postLoginAction"
+      [inheritMode]="false"
+      [readonly]="readonly"
+      [certificates]="certificates"
+      (onSavedPostLoginAction)="updatePostLoginAction($event)"
+    >
+    </app-post-login-action-settings>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>Post login action</h3>
+    <div class="gv-page-description-content">
+      <p>Redirect users to an external service after login to approve or enrich the authentication flow.</p>
+    </div>
+  </div>
+</div>

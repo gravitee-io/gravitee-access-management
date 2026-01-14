@@ -148,6 +148,7 @@ import { ApplicationMetadataComponent } from './domain/applications/application/
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
+import { ApplicationPostLoginActionComponent } from './domain/applications/application/design/post-login-action/post-login-action.component';
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
 import { ManagementRoleComponent } from './settings/management/roles/role/role.component';
 import { MembershipsResolver } from './resolvers/memberships.resolver';
@@ -180,6 +181,8 @@ import { ApplicationResourcePolicyComponent } from './domain/applications/applic
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
 import { DomainSettingsEntrypointsComponent } from './domain/settings/entrypoints/entrypoints.component';
+import { DomainSettingsFlowsRootComponent } from './domain/settings/flows/flows-root/flows-root.component';
+import { DomainSettingsPostLoginActionComponent } from './domain/settings/flows/post-login-action/post-login-action.component';
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
 import { IdentitiesResolver } from './resolvers/identities.resolver';
@@ -1130,6 +1133,21 @@ export const routes: Routes = [
                                   },
                                 },
                               },
+                              {
+                                path: 'post-login-action',
+                                component: ApplicationPostLoginActionComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Post Login Action',
+                                    section: 'Design',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_flow_list', 'application_flow_read'],
+                                  },
+                                },
+                              },
                             ],
                           },
                           {
@@ -1787,14 +1805,8 @@ export const routes: Routes = [
                       },
                       {
                         path: 'flows',
-                        component: DomainSettingsFlowsComponent,
+                        component: DomainSettingsFlowsRootComponent,
                         canActivate: [AuthGuard],
-                        resolve: {
-                          flows: DomainFlowsResolver,
-                          policies: PluginPoliciesResolver,
-                          flowSettingsForm: PlatformFlowSchemaResolver,
-                          factors: FactorsResolver,
-                        },
                         data: {
                           menu: {
                             label: 'Flows',
@@ -1805,6 +1817,45 @@ export const routes: Routes = [
                             only: ['domain_flow_list'],
                           },
                         },
+                        children: [
+                          {
+                            path: '',
+                            component: DomainSettingsFlowsComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              flows: DomainFlowsResolver,
+                              policies: PluginPoliciesResolver,
+                              flowSettingsForm: PlatformFlowSchemaResolver,
+                              factors: FactorsResolver,
+                            },
+                            data: {
+                              menu: {
+                                label: 'Flows',
+                                section: 'Design',
+                                level: 'level3',
+                                routerLinkActiveOptions: { exact: true },
+                              },
+                              perms: {
+                                only: ['domain_flow_list'],
+                              },
+                            },
+                          },
+                          {
+                            path: 'post-login-action',
+                            component: DomainSettingsPostLoginActionComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              menu: {
+                                label: 'Post Login Action',
+                                section: 'Design',
+                                level: 'level3',
+                              },
+                              perms: {
+                                only: ['domain_flow_list'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'providers',

@@ -460,7 +460,11 @@ public class RootProvider extends AbstractProtocolProvider {
                 .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
 
         // Post Login Action callback route
-        Handler<RoutingContext> postLoginActionCallbackParseHandler = new PostLoginActionCallbackParseHandler(clientSyncService, jwtService, certificateManager);
+        Handler<RoutingContext> postLoginActionCallbackParseHandler = new PostLoginActionCallbackParseHandler(
+                clientSyncService,
+                jwtService,
+                certificateManager,
+                domain);
         Handler<RoutingContext> postLoginActionCallbackEndpoint = new PostLoginActionCallbackEndpoint(domain);
         Handler<RoutingContext> postLoginActionCallbackFailureHandler = new PostLoginActionCallbackFailureHandler(domain);
         rootRouter.get(PATH_POST_LOGIN_ACTION_CALLBACK)

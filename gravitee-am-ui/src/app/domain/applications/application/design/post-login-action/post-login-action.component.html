@@ -15,5 +15,23 @@
     limitations under the License.
 
 -->
-<gv-policy-studio #studio [policies]="policies" [flowSchema]="flowSchema" [hasConditionalSteps]="true" [definition]="definition" can-add>
-</gv-policy-studio>
+<div>
+  <div>
+    <div fxFlex="70">
+      <app-post-login-action-settings
+        [postLoginAction]="postLoginAction"
+        [inheritMode]="true"
+        [readonly]="readonly"
+        [certificates]="certificates"
+        (onSavedPostLoginAction)="updatePostLoginAction($event)"
+      >
+      </app-post-login-action-settings>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>Post login action</h3>
+      <div class="gv-page-description-content">
+        <p>Apply application-specific post login verification or data enrichment before continuing the flow.</p>
+      </div>
+    </div>
+  </div>
+</div>
