@@ -80,6 +80,11 @@ public interface ConstantKeys {
     String ERROR_HASH = "errorHash";
     String STORE_ORIGINAL_TOKEN_KEY = "store_original_token";
 
+    // Post Login Action keys
+    String POST_LOGIN_ACTION_STATE_KEY = "postLoginActionState";
+    String POST_LOGIN_ACTION_DATA_KEY = "postLoginActionData";
+    String POST_LOGIN_ACTION_COMPLETED_KEY = "postLoginActionCompleted";
+    String POST_LOGIN_ACTION_DENIED = "post_login_action_denied";
 
     // enrich authentication flow keys
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";

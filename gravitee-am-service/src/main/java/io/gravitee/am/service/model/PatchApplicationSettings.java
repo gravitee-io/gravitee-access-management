@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.CookieSettings;
+import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -46,6 +47,7 @@ public class PatchApplicationSettings {
 
     private Optional<AccountSettings> account;
     private Optional<LoginSettings> login;
+    private Optional<PostLoginAction> postLoginAction;
     private Optional<PatchApplicationOAuthSettings> oauth;
     private Optional<PatchApplicationSAMLSettings> saml;
     private Optional<PatchApplicationAdvancedSettings> advanced;
@@ -62,6 +64,7 @@ public class PatchApplicationSettings {
         // set values
         SetterUtils.safeSet(toPatch::setAccount, this.getAccount());
         SetterUtils.safeSet(toPatch::setLogin, this.getLogin());
+        SetterUtils.safeSet(toPatch::setPostLoginAction, this.getPostLoginAction());
         SetterUtils.safeSet(toPatch::setCookieSettings, this.getCookieSettings());
         SetterUtils.safeSet(toPatch::setRiskAssessment, this.getRiskAssessment());
         SetterUtils.safeSet(toPatch::setSecretExpirationSettings, this.getSecretExpirationSettings());

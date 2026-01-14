@@ -55,6 +55,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbac
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginSSOPOSTEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.login.PostLoginActionCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
@@ -102,6 +103,9 @@ import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideForm
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginPostWebAuthnHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.PostLoginActionCallbackFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.PostLoginActionCallbackParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.PostLoginActionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginPageHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginRedirectToAuthorizeHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
@@ -197,6 +201,7 @@ public class RootProvider extends AbstractProtocolProvider {
     public static final String PATH_WEBAUTHN_LOGIN_CREDENTIALS = "/webauthn/login/credentials";
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
+    public static final String PATH_POST_LOGIN_ACTION_CALLBACK = "/login/postaction/callback";
     public static final String PATH_ERROR = "/error";
     private static final String PASSWORD_HISTORY = "/passwordHistory";
 
@@ -447,11 +452,21 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
+                .handler(new PostLoginActionHandler(domain, jwtService, certificateManager))
                 .handler(loginPostWebAuthnHandler)
                 .handler(new LoginPostEndpoint());
 
         rootRouter.route(PATH_LOGIN)
                 .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
+
+        // Post Login Action callback route
+        Handler<RoutingContext> postLoginActionCallbackParseHandler = new PostLoginActionCallbackParseHandler(clientSyncService, jwtService, certificateManager);
+        Handler<RoutingContext> postLoginActionCallbackEndpoint = new PostLoginActionCallbackEndpoint(domain);
+        Handler<RoutingContext> postLoginActionCallbackFailureHandler = new PostLoginActionCallbackFailureHandler(domain);
+        rootRouter.get(PATH_POST_LOGIN_ACTION_CALLBACK)
+                .handler(postLoginActionCallbackParseHandler)
+                .handler(postLoginActionCallbackEndpoint)
+                .failureHandler(postLoginActionCallbackFailureHandler);
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
@@ -752,6 +767,9 @@ public class RootProvider extends AbstractProtocolProvider {
         router
                 .route(PATH_LOGIN_SSO_SPNEGO)
                 .handler(sessionHandler);
+        router
+                .route(PATH_POST_LOGIN_ACTION_CALLBACK)
+                .handler(sessionHandler);
 
         // MFA endpoint
         router.route(PATH_MFA_ENROLL)
@@ -833,6 +851,7 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_LOGIN_CALLBACK).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_SSO_SPNEGO).handler(authenticationFlowContextHandler);
+        router.route(PATH_POST_LOGIN_ACTION_CALLBACK).handler(authenticationFlowContextHandler);
 
         // MFA endpoint
         router.route(PATH_MFA_ENROLL).handler(authenticationFlowContextHandler);

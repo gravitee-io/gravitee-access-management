@@ -66,6 +66,10 @@
             <a>secretExpirationSettings</a>
             <b>secretExpirationSettings</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.PostLoginActionConverter">
+            <a>postLoginAction</a>
+            <b>postLoginAction</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">
