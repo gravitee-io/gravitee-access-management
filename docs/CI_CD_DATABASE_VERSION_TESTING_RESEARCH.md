@@ -4,7 +4,7 @@
 > - 📋 **[This Document](./CI_CD_DATABASE_VERSION_TESTING_RESEARCH.md)** - High-level architecture, workflow design, and key decisions
 > - 🔧 **[Implementation Plan](./MIGRATION_TEST_IMPLEMENTATION_PLAN.md)** - Detailed task breakdown, dependencies, and parallel work suggestions
 > - 🧪 **[Test Scenarios](./MIGRATION_TEST_SCENARIOS.md)** - Test scenarios, data seeding strategies, and success criteria
-> - 📚 **[Backward Compatibility Plan](./BACKWARD_COMPATIBILITY_IMPLEMENTATION_PLAN.md)** - Background on PROTECTED_RESOURCE enum issue and solutions
+> - ☁️ **[cloud-am Setup Plan](./CLOUD_AM_ENVIRONMENT_SETUP_PLAN.md)** - Prerequisite work in cloud-am repository (MUST COMPLETE FIRST)
 
 ## Summary
 
@@ -434,5 +434,5 @@ flowchart TD
 
 - [Migration Test Implementation Plan](./MIGRATION_TEST_IMPLEMENTATION_PLAN.md) - Detailed task breakdown for POC implementation
 - [Migration Test Scenarios](./MIGRATION_TEST_SCENARIOS.md) - Test scenarios and data seeding strategies
-- [Backward Compatibility Implementation Plan](./BACKWARD_COMPATIBILITY_IMPLEMENTATION_PLAN.md) - Background on compatibility issues and solutions
+- [cloud-am Environment Setup Plan](./CLOUD_AM_ENVIRONMENT_SETUP_PLAN.md) - Prerequisite work in cloud-am repository
 - [cloud-am Repository](https://github.com/gravitee-io/cloud-am) - ApplicationSet and environment setup
