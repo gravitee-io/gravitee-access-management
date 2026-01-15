@@ -15,9 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
@@ -35,16 +32,6 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.interfaces.ECPublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.X509EncodedKeySpec;
-import java.time.Instant;
-import java.util.Base64;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -81,25 +68,8 @@ public class PostLoginActionCallbackEndpoint implements Handler<RoutingContext> 
         }
 
         try {
-            // Parse and verify the external service's response JWT
+            // Parse the external service's response JWT (no signature validation)
             SignedJWT signedJWT = SignedJWT.parse(responseToken);
-
-            // Verify signature using configured public key
-            JWSVerifier verifier = createVerifier(settings.getResponsePublicKey());
-            if (!signedJWT.verify(verifier)) {
-                logger.warn("Invalid signature on response JWT, continuing login flow");
-                handleSuccess(context, stateJwt, null);
-                return;
-            }
-
-            // Check expiration
-            if (signedJWT.getJWTClaimsSet().getExpirationTime() != null) {
-                if (Instant.now().isAfter(signedJWT.getJWTClaimsSet().getExpirationTime().toInstant())) {
-                    logger.warn("Response JWT has expired, continuing login flow");
-                    handleSuccess(context, stateJwt, null);
-                    return;
-                }
-            }
 
             // Extract claims using configured claim names
             String statusClaim = settings.getSuccessClaim() != null ? settings.getSuccessClaim() : PostLoginAction.DEFAULT_SUCCESS_CLAIM;
@@ -120,68 +90,8 @@ public class PostLoginActionCallbackEndpoint implements Handler<RoutingContext> 
             }
 
         } catch (Exception e) {
-            logger.warn("Failed to process response JWT, continuing login flow", e);
-            handleSuccess(context, stateJwt, null);
-        }
-    }
-
-    private JWSVerifier createVerifier(String publicKeyPem) throws Exception {
-        PublicKey publicKey = parsePublicKey(publicKeyPem);
-        if (publicKey instanceof RSAPublicKey rsaPublicKey) {
-            return new RSASSAVerifier(rsaPublicKey);
-        }
-        if (publicKey instanceof ECPublicKey ecPublicKey) {
-            return new ECDSAVerifier(ecPublicKey);
-        }
-        throw new IllegalArgumentException("Unsupported public key algorithm: " + publicKey.getAlgorithm());
-    }
-
-    private PublicKey parsePublicKey(String publicKeyPem) throws Exception {
-        if (publicKeyPem == null || publicKeyPem.isBlank()) {
-            throw new IllegalArgumentException("Response public key is missing");
-        }
-
-        String pem = publicKeyPem.trim();
-        if (pem.contains("BEGIN RSA PUBLIC KEY")) {
-            throw new IllegalArgumentException("Unsupported key format: use a certificate or BEGIN PUBLIC KEY");
-        }
-        if (pem.contains("BEGIN CERTIFICATE")) {
-            return parseCertificatePublicKey(pem);
-        }
-
-        try {
-            return parseCertificatePublicKey(pem);
-        } catch (Exception ex) {
-            return parseX509PublicKey(pem);
-        }
-    }
-
-    private PublicKey parseX509PublicKey(String pem) throws Exception {
-        byte[] keyBytes = decodePemBody(pem);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-        try {
-            return KeyFactory.getInstance("RSA").generatePublic(spec);
-        } catch (Exception ex) {
-            return KeyFactory.getInstance("EC").generatePublic(spec);
-        }
-    }
-
-    private PublicKey parseCertificatePublicKey(String pem) throws Exception {
-        byte[] keyBytes = decodePemBody(pem);
-        CertificateFactory factory = CertificateFactory.getInstance("X.509");
-        Certificate certificate = factory.generateCertificate(new ByteArrayInputStream(keyBytes));
-        return certificate.getPublicKey();
-    }
-
-    private byte[] decodePemBody(String pem) {
-        String publicKeyContent = pem
-                .replaceAll("-----BEGIN [^-]+-----", "")
-                .replaceAll("-----END [^-]+-----", "")
-                .replaceAll("\\s", "");
-        try {
-            return Base64.getDecoder().decode(publicKeyContent);
-        } catch (IllegalArgumentException ex) {
-            return Base64.getUrlDecoder().decode(publicKeyContent);
+            logger.error("Failed to process response JWT", e);
+            handleFailure(context, stateJwt, "invalid_response", "Failed to process response");
         }
     }
 
