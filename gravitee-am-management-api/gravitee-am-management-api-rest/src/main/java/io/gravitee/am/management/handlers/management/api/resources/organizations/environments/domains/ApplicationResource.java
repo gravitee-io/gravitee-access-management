@@ -323,6 +323,7 @@ public class ApplicationResource extends AbstractResource {
                 filteredApplicationSettings.setAdvanced(settings.getAdvanced());
                 filteredApplicationSettings.setAccount(settings.getAccount());
                 filteredApplicationSettings.setLogin(settings.getLogin());
+                filteredApplicationSettings.setPostLoginAction(settings.getPostLoginAction());
                 filteredApplicationSettings.setPasswordSettings(settings.getPasswordSettings());
                 filteredApplicationSettings.setMfa(settings.getMfa());
                 filteredApplicationSettings.setCookieSettings(settings.getCookieSettings());

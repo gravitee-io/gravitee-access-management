@@ -31,6 +31,7 @@ public class ApplicationSettingsMongo {
     private ApplicationSAMLSettingsMongo saml;
     private AccountSettingsMongo account;
     private LoginSettingsMongo login;
+    private PostLoginActionMongo postLoginAction;
     private ApplicationAdvancedSettingsMongo advanced;
     private PasswordSettingsMongo passwordSettings;
     private MFASettingsMongo mfa;
