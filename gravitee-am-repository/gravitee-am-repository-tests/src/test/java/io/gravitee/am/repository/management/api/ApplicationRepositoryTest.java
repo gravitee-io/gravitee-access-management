@@ -21,6 +21,7 @@ import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.MfaEnrollType;
+import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
@@ -536,6 +537,145 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(updatedApp, testObserver);
+    }
+
+    @Test
+    public void testCreateWithPostLoginAction() {
+        // create app with PostLoginAction
+        Application app = buildApplication();
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        app.getSettings().setPostLoginAction(postLoginAction);
+
+        TestObserver<Application> testObserver = applicationRepository.create(app).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(createdApp -> {
+            ApplicationSettings settings = createdApp.getSettings();
+            return settings != null &&
+                    settings.getPostLoginAction() != null &&
+                    settings.getPostLoginAction().isEnabled() == postLoginAction.isEnabled() &&
+                    settings.getPostLoginAction().getUrl().equals(postLoginAction.getUrl()) &&
+                    settings.getPostLoginAction().getResponsePublicKey().equals(postLoginAction.getResponsePublicKey()) &&
+                    settings.getPostLoginAction().getCertificateId().equals(postLoginAction.getCertificateId());
+        });
+    }
+
+    @Test
+    public void testUpdatePostLoginAction() {
+        // create app without PostLoginAction
+        Application app = buildApplication();
+        Application appCreated = applicationRepository.create(app).blockingGet();
+
+        // update app with PostLoginAction
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        appCreated.getSettings().setPostLoginAction(postLoginAction);
+
+        TestObserver<Application> testObserver = applicationRepository.update(appCreated).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(updatedApp -> {
+            ApplicationSettings settings = updatedApp.getSettings();
+            return settings != null &&
+                    settings.getPostLoginAction() != null &&
+                    settings.getPostLoginAction().isEnabled() == postLoginAction.isEnabled() &&
+                    settings.getPostLoginAction().getUrl().equals(postLoginAction.getUrl()) &&
+                    settings.getPostLoginAction().getResponsePublicKey().equals(postLoginAction.getResponsePublicKey()) &&
+                    settings.getPostLoginAction().getCertificateId().equals(postLoginAction.getCertificateId()) &&
+                    settings.getPostLoginAction().getTimeout() == postLoginAction.getTimeout() &&
+                    settings.getPostLoginAction().getResponseTokenParam().equals(postLoginAction.getResponseTokenParam()) &&
+                    settings.getPostLoginAction().getSuccessClaim().equals(postLoginAction.getSuccessClaim()) &&
+                    settings.getPostLoginAction().getSuccessValue().equals(postLoginAction.getSuccessValue()) &&
+                    settings.getPostLoginAction().getErrorClaim().equals(postLoginAction.getErrorClaim()) &&
+                    settings.getPostLoginAction().getDataClaim().equals(postLoginAction.getDataClaim());
+        });
+    }
+
+    @Test
+    public void testUpdatePostLoginActionModifyValues() {
+        // create app with PostLoginAction
+        Application app = buildApplication();
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        app.getSettings().setPostLoginAction(postLoginAction);
+        Application appCreated = applicationRepository.create(app).blockingGet();
+
+        // update PostLoginAction with new values
+        PostLoginAction updatedPostLoginAction = new PostLoginAction();
+        updatedPostLoginAction.setEnabled(false);
+        updatedPostLoginAction.setUrl("https://updated.example.com/callback");
+        updatedPostLoginAction.setCertificateId("updatedCert123");
+        updatedPostLoginAction.setTimeout(60000);
+        updatedPostLoginAction.setResponsePublicKey("-----BEGIN CERTIFICATE-----\nUPDATED_CERT_CONTENT\n-----END CERTIFICATE-----");
+        updatedPostLoginAction.setResponseTokenParam("updatedToken");
+        updatedPostLoginAction.setSuccessClaim("updatedStatus");
+        updatedPostLoginAction.setSuccessValue("updatedOK");
+        updatedPostLoginAction.setErrorClaim("updatedError");
+        updatedPostLoginAction.setDataClaim("updatedData");
+
+        appCreated.getSettings().setPostLoginAction(updatedPostLoginAction);
+
+        TestObserver<Application> testObserver = applicationRepository.update(appCreated).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(updatedApp -> {
+            PostLoginAction pla = updatedApp.getSettings().getPostLoginAction();
+            return pla != null &&
+                    !pla.isEnabled() &&
+                    pla.getUrl().equals("https://updated.example.com/callback") &&
+                    pla.getCertificateId().equals("updatedCert123") &&
+                    pla.getTimeout() == 60000 &&
+                    pla.getResponsePublicKey().equals("-----BEGIN CERTIFICATE-----\nUPDATED_CERT_CONTENT\n-----END CERTIFICATE-----") &&
+                    pla.getResponseTokenParam().equals("updatedToken") &&
+                    pla.getSuccessClaim().equals("updatedStatus") &&
+                    pla.getSuccessValue().equals("updatedOK") &&
+                    pla.getErrorClaim().equals("updatedError") &&
+                    pla.getDataClaim().equals("updatedData");
+        });
+    }
+
+    @Test
+    public void testUpdateRemovePostLoginAction() {
+        // create app with PostLoginAction
+        Application app = buildApplication();
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        app.getSettings().setPostLoginAction(postLoginAction);
+        Application appCreated = applicationRepository.create(app).blockingGet();
+
+        // verify PostLoginAction is present
+        TestObserver<Application> verifyObserver = applicationRepository.findById(appCreated.getId()).test();
+        verifyObserver.awaitDone(10, TimeUnit.SECONDS);
+        verifyObserver.assertValue(a -> a.getSettings().getPostLoginAction() != null);
+
+        // update app to remove PostLoginAction
+        appCreated.getSettings().setPostLoginAction(null);
+
+        TestObserver<Application> testObserver = applicationRepository.update(appCreated).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(updatedApp -> updatedApp.getSettings().getPostLoginAction() == null);
+    }
+
+    private static PostLoginAction buildPostLoginAction() {
+        PostLoginAction postLoginAction = new PostLoginAction();
+        postLoginAction.setEnabled(true);
+        postLoginAction.setInherited(false);
+        postLoginAction.setUrl("https://example.com/post-login");
+        postLoginAction.setCertificateId("cert123");
+        postLoginAction.setTimeout(30000);
+        postLoginAction.setResponsePublicKey("-----BEGIN CERTIFICATE-----\nTEST_CERT_CONTENT\n-----END CERTIFICATE-----");
+        postLoginAction.setResponseTokenParam("responseToken");
+        postLoginAction.setSuccessClaim("status");
+        postLoginAction.setSuccessValue("success");
+        postLoginAction.setErrorClaim("error");
+        postLoginAction.setDataClaim("data");
+        return postLoginAction;
     }
 
 }
