@@ -15,14 +15,20 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.PostLoginActionCallbackParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.PostLoginActionHandler;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.ecdsa.ECDSAJWKSourceResolver;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.rsa.RSAJWKSourceResolver;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.AbstractKeyProcessor;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcessor;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.oidc.Client;
@@ -68,8 +74,28 @@ public class PostLoginActionCallbackEndpoint implements Handler<RoutingContext> 
         }
 
         try {
-            // Parse the external service's response JWT (no signature validation)
-            SignedJWT signedJWT = SignedJWT.parse(responseToken);
+            JWTClaimsSet claimsSet;
+
+            // Validate signature if public key is configured
+            if (settings.getResponsePublicKey() != null && !settings.getResponsePublicKey().trim().isEmpty()) {
+                try {
+                    // Create JWT processor using the same mechanism as AbstractOpenIDConnectAuthenticationProvider
+                    JWTProcessor jwtProcessor = createJWTProcessor(settings.getResponsePublicKey());
+
+                    // Process and validate the JWT token (validates signature, exp, nbf)
+                    claimsSet = jwtProcessor.process(responseToken, null);
+                    logger.debug("Response token signature validated successfully");
+                } catch (Exception e) {
+                    logger.error("Failed to validate response token signature", e);
+                    handleFailure(context, stateJwt, "signature_validation_error", "Failed to validate response token signature: " + e.getMessage());
+                    return;
+                }
+            } else {
+                logger.warn("No public key configured for response token validation - signature not verified");
+                // Parse without validation if no public key configured
+                com.nimbusds.jwt.SignedJWT signedJWT = com.nimbusds.jwt.SignedJWT.parse(responseToken);
+                claimsSet = signedJWT.getJWTClaimsSet();
+            }
 
             // Extract claims using configured claim names
             String statusClaim = settings.getSuccessClaim() != null ? settings.getSuccessClaim() : PostLoginAction.DEFAULT_SUCCESS_CLAIM;
@@ -77,9 +103,9 @@ public class PostLoginActionCallbackEndpoint implements Handler<RoutingContext> 
             String errorClaim = settings.getErrorClaim() != null ? settings.getErrorClaim() : PostLoginAction.DEFAULT_ERROR_CLAIM;
             String dataClaim = settings.getDataClaim() != null ? settings.getDataClaim() : PostLoginAction.DEFAULT_DATA_CLAIM;
 
-            Object statusValue = signedJWT.getJWTClaimsSet().getClaim(statusClaim);
-            Object errorValue = signedJWT.getJWTClaimsSet().getClaim(errorClaim);
-            Object dataValue = signedJWT.getJWTClaimsSet().getClaim(dataClaim);
+            Object statusValue = claimsSet.getClaim(statusClaim);
+            Object errorValue = claimsSet.getClaim(errorClaim);
+            Object dataValue = claimsSet.getClaim(dataClaim);
 
             // Check if status indicates success
             if (successValue.equals(statusValue) || successValue.equals(String.valueOf(statusValue))) {
@@ -153,5 +179,37 @@ public class PostLoginActionCallbackEndpoint implements Handler<RoutingContext> 
                 .putHeader(HttpHeaders.LOCATION, url)
                 .setStatusCode(302)
                 .end();
+    }
+
+    /**
+     * Creates a JWTProcessor to validate JWT signatures using the provided PEM public key or certificate.
+     * Uses the same mechanism as AbstractOpenIDConnectAuthenticationProvider.
+     * Supports both PEM certificates (BEGIN CERTIFICATE) and PEM public keys (BEGIN PUBLIC KEY).
+     *
+     * @param pemPublicKeyOrCert PEM-encoded public key or certificate string
+     * @return JWTProcessor configured for signature validation
+     * @throws Exception if key parsing or processor creation fails
+     */
+    private JWTProcessor createJWTProcessor(String pemPublicKeyOrCert) throws Exception {
+        // Try RSA first (most common case)
+        try {
+            AbstractKeyProcessor keyProcessor = new RSAKeyProcessor<>();
+            // RSAJWKSourceResolver can parse both PEM certificates and PEM public keys
+            keyProcessor.setJwkSourceResolver(new RSAJWKSourceResolver<>(pemPublicKeyOrCert));
+            // Default to RS256 for RSA keys
+            return keyProcessor.create(SignatureAlgorithm.RS256);
+        } catch (IllegalArgumentException | IllegalStateException rsaException) {
+            // If RSA parsing fails, try EC
+            try {
+                AbstractKeyProcessor keyProcessor = new RSAKeyProcessor<>(); // RSAKeyProcessor also handles EC keys
+                // ECDSAJWKSourceResolver can parse both PEM certificates and PEM public keys
+                keyProcessor.setJwkSourceResolver(new ECDSAJWKSourceResolver<>(pemPublicKeyOrCert));
+                // Default to ES256 for EC keys
+                return keyProcessor.create(SignatureAlgorithm.ES256);
+            } catch (Exception ecException) {
+                logger.error("Failed to parse public key/certificate as RSA or EC", ecException);
+                throw new Exception("Invalid certificate or public key. Must be PEM-encoded RSA or EC certificate/key.", ecException);
+            }
+        }
     }
 }
