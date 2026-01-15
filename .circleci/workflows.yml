@@ -1677,13 +1677,11 @@ jobs:
              echo "export MIGRATION_GITOPS_REPO='git@github.com:gravitee-io/cloud-am.git'" >> $BASH_ENV
              echo "export MIGRATION_GITOPS_BRANCH='gko-2k26-ai-hackathon/migration-test-tool'" >> $BASH_ENV
              echo "export MIGRATION_ARGOCD_APP_NAME='am-migration-tool'" >> $BASH_ENV
-      # TODO: Inject remaining secrets from Keeper when paths are available
+             echo "export MIGRATION_ARGOCD_SERVER='am.management.migration-tool.gravitee.dev'" >> $BASH_ENV
+      # TODO: Inject MIGRATION_ARGOCD_TOKEN from Keeper when path is available
       # - keeper/env-export:
       #     secret-url: keeper://.../field/password
       #     var-name: MIGRATION_ARGOCD_TOKEN
-      # - keeper/env-export:
-      #     secret-url: keeper://.../field/url
-      #     var-name: MIGRATION_ARGOCD_SERVER
       - run:
           name: Install dependencies
           command: |
