@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
@@ -375,5 +376,144 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver1.assertValueCount(1);
         testObserver1.assertValue(d -> d.getDataPlaneId().equals("dataPlaneId"));
 
+    }
+
+    @Test
+    public void testCreateDomainWithPostLoginAction() {
+        // create domain with PostLoginAction
+        Domain domain = initDomain();
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        domain.setPostLoginAction(postLoginAction);
+
+        TestObserver<Domain> testObserver = domainRepository.create(domain).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(createdDomain -> {
+            PostLoginAction pla = createdDomain.getPostLoginAction();
+            return pla != null &&
+                    pla.isEnabled() == postLoginAction.isEnabled() &&
+                    pla.getUrl().equals(postLoginAction.getUrl()) &&
+                    pla.getResponsePublicKey().equals(postLoginAction.getResponsePublicKey()) &&
+                    pla.getCertificateId().equals(postLoginAction.getCertificateId());
+        });
+    }
+
+    @Test
+    public void testUpdateDomainPostLoginAction() {
+        // create domain without PostLoginAction
+        Domain domain = initDomain();
+        Domain domainCreated = domainRepository.create(domain).blockingGet();
+
+        // update domain with PostLoginAction
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        domainCreated.setPostLoginAction(postLoginAction);
+
+        TestObserver<Domain> testObserver = domainRepository.update(domainCreated).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(updatedDomain -> {
+            PostLoginAction pla = updatedDomain.getPostLoginAction();
+            return pla != null &&
+                    pla.isEnabled() == postLoginAction.isEnabled() &&
+                    pla.getUrl().equals(postLoginAction.getUrl()) &&
+                    pla.getResponsePublicKey().equals(postLoginAction.getResponsePublicKey()) &&
+                    pla.getCertificateId().equals(postLoginAction.getCertificateId()) &&
+                    pla.getTimeout() == postLoginAction.getTimeout() &&
+                    pla.getResponseTokenParam().equals(postLoginAction.getResponseTokenParam()) &&
+                    pla.getSuccessClaim().equals(postLoginAction.getSuccessClaim()) &&
+                    pla.getSuccessValue().equals(postLoginAction.getSuccessValue()) &&
+                    pla.getErrorClaim().equals(postLoginAction.getErrorClaim()) &&
+                    pla.getDataClaim().equals(postLoginAction.getDataClaim());
+        });
+    }
+
+    @Test
+    public void testUpdateDomainPostLoginActionModifyValues() {
+        // create domain with PostLoginAction
+        Domain domain = initDomain();
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        domain.setPostLoginAction(postLoginAction);
+        Domain domainCreated = domainRepository.create(domain).blockingGet();
+
+        // update PostLoginAction with new values
+        PostLoginAction updatedPostLoginAction = new PostLoginAction();
+        updatedPostLoginAction.setEnabled(false);
+        updatedPostLoginAction.setInherited(true);
+        updatedPostLoginAction.setUrl("https://updated-domain.example.com/callback");
+        updatedPostLoginAction.setCertificateId("updatedDomainCert");
+        updatedPostLoginAction.setTimeout(45000);
+        updatedPostLoginAction.setResponsePublicKey("-----BEGIN CERTIFICATE-----\nUPDATED_DOMAIN_CERT\n-----END CERTIFICATE-----");
+        updatedPostLoginAction.setResponseTokenParam("newToken");
+        updatedPostLoginAction.setSuccessClaim("newStatus");
+        updatedPostLoginAction.setSuccessValue("newOK");
+        updatedPostLoginAction.setErrorClaim("newError");
+        updatedPostLoginAction.setDataClaim("newData");
+
+        domainCreated.setPostLoginAction(updatedPostLoginAction);
+
+        TestObserver<Domain> testObserver = domainRepository.update(domainCreated).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(updatedDomain -> {
+            PostLoginAction pla = updatedDomain.getPostLoginAction();
+            return pla != null &&
+                    !pla.isEnabled() &&
+                    pla.isInherited() &&
+                    pla.getUrl().equals("https://updated-domain.example.com/callback") &&
+                    pla.getCertificateId().equals("updatedDomainCert") &&
+                    pla.getTimeout() == 45000 &&
+                    pla.getResponsePublicKey().equals("-----BEGIN CERTIFICATE-----\nUPDATED_DOMAIN_CERT\n-----END CERTIFICATE-----") &&
+                    pla.getResponseTokenParam().equals("newToken") &&
+                    pla.getSuccessClaim().equals("newStatus") &&
+                    pla.getSuccessValue().equals("newOK") &&
+                    pla.getErrorClaim().equals("newError") &&
+                    pla.getDataClaim().equals("newData");
+        });
+    }
+
+    @Test
+    public void testUpdateDomainRemovePostLoginAction() {
+        // create domain with PostLoginAction
+        Domain domain = initDomain();
+        PostLoginAction postLoginAction = buildPostLoginAction();
+        domain.setPostLoginAction(postLoginAction);
+        Domain domainCreated = domainRepository.create(domain).blockingGet();
+
+        // verify PostLoginAction is present
+        TestObserver<Domain> verifyObserver = domainRepository.findById(domainCreated.getId()).test();
+        verifyObserver.awaitDone(10, TimeUnit.SECONDS);
+        verifyObserver.assertValue(d -> d.getPostLoginAction() != null);
+
+        // update domain to remove PostLoginAction
+        domainCreated.setPostLoginAction(null);
+
+        TestObserver<Domain> testObserver = domainRepository.update(domainCreated).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(updatedDomain -> updatedDomain.getPostLoginAction() == null);
+    }
+
+    private static PostLoginAction buildPostLoginAction() {
+        PostLoginAction postLoginAction = new PostLoginAction();
+        postLoginAction.setEnabled(true);
+        postLoginAction.setInherited(false);
+        postLoginAction.setUrl("https://domain.example.com/post-login-callback");
+        postLoginAction.setCertificateId("domainCert456");
+        postLoginAction.setTimeout(30000);
+        postLoginAction.setResponsePublicKey("-----BEGIN CERTIFICATE-----\nDOMAIN_TEST_CERT\n-----END CERTIFICATE-----");
+        postLoginAction.setResponseTokenParam("domainResponseToken");
+        postLoginAction.setSuccessClaim("domainStatus");
+        postLoginAction.setSuccessValue("domainSuccess");
+        postLoginAction.setErrorClaim("domainError");
+        postLoginAction.setDataClaim("domainData");
+        return postLoginAction;
     }
 }

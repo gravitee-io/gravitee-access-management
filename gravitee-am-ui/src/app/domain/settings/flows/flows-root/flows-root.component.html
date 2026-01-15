@@ -15,5 +15,8 @@
     limitations under the License.
 
 -->
-<gv-policy-studio #studio [policies]="policies" [flowSchema]="flowSchema" [hasConditionalSteps]="true" [definition]="definition" can-add>
-</gv-policy-studio>
+<div fxLayout="column" class="gv-page-container">
+  <gv-tab-navbar>
+    <router-outlet></router-outlet>
+  </gv-tab-navbar>
+</div>

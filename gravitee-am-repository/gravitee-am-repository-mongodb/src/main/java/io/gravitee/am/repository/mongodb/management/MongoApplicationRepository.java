@@ -61,6 +61,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.PostLoginActionMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
@@ -437,6 +438,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setSaml(convert(other.getSaml()));
         applicationSettingsMongo.setAccount(convert(other.getAccount()));
         applicationSettingsMongo.setLogin(convert(other.getLogin()));
+        applicationSettingsMongo.setPostLoginAction(PostLoginActionMongo.convert(other.getPostLoginAction()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
         applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettingsMongo.setMfa(convert(other.getMfa()));
@@ -456,6 +458,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setSaml(convert(other.getSaml()));
         applicationSettings.setAccount(convert(other.getAccount()));
         applicationSettings.setLogin(convert(other.getLogin()));
+        applicationSettings.setPostLoginAction(other.getPostLoginAction() != null ? other.getPostLoginAction().convert() : null);
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
         applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettings.setMfa(convert(other.getMfa()));

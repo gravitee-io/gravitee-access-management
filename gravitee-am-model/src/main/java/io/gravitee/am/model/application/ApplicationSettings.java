@@ -18,6 +18,7 @@ package io.gravitee.am.model.application;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -59,6 +60,10 @@ public class ApplicationSettings {
      */
     private LoginSettings login;
     /**
+     * Post Login Action settings
+     */
+    private PostLoginAction postLoginAction;
+    /**
      * Advanced settings
      */
     private ApplicationAdvancedSettings advanced;
@@ -99,6 +104,7 @@ public class ApplicationSettings {
         this.saml = other.saml != null ? new ApplicationSAMLSettings(other.saml) : null;
         this.account = other.account != null ? new AccountSettings(other.account) : null;
         this.login = other.login != null ? new LoginSettings(other.login) : null;
+        this.postLoginAction = other.postLoginAction != null ? new PostLoginAction(other.postLoginAction) : null;
         this.advanced = other.advanced != null ? new ApplicationAdvancedSettings(other.advanced) : null;
         this.passwordSettings = Optional.ofNullable(other.passwordSettings).map(PasswordSettings::new).orElse(null);
         this.mfa = other.mfa != null ? new MFASettings(other.mfa) : null;
@@ -110,6 +116,7 @@ public class ApplicationSettings {
     public void copyTo(Client client) {
         client.setAccountSettings(this.account);
         client.setLoginSettings(this.login);
+        client.setPostLoginAction(this.postLoginAction);
         client.setPasswordSettings(this.passwordSettings);
         Optional.ofNullable(this.oauth).ifPresent(o -> o.copyTo(client));
         Optional.ofNullable(getAdvanced()).ifPresent(a -> a.copyTo(client));

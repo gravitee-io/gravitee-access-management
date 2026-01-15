@@ -71,6 +71,8 @@ public class JdbcDomain {
     private String dataPlaneId;
     @Column("secret_expiration_settings")
     private String secretExpirationSettings;
+    @Column("post_login_action")
+    private String postLoginAction;
 
 
     /**

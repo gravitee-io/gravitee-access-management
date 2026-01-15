@@ -119,6 +119,7 @@ public class PermissionSettingUtils {
     private static void setApplicationSettingsPermission(PatchApplicationSettings settings, Set<Permission> requiredPermissions) {
         var account = settings.getAccount();
         var login = settings.getLogin();
+        var postLoginAction = settings.getPostLoginAction();
         var advanced = settings.getAdvanced();
         var passwordSettings = settings.getPasswordSettings();
         var mfa = settings.getMfa();
@@ -127,6 +128,7 @@ public class PermissionSettingUtils {
 
         if (account != null && account.isPresent()
                 || login != null && login.isPresent()
+                || postLoginAction != null && postLoginAction.isPresent()
                 || advanced != null && advanced.isPresent()
                 || passwordSettings != null && passwordSettings.isPresent()
                 || mfa != null && mfa.isPresent()

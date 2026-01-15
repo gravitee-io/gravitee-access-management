@@ -24,6 +24,7 @@ import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
@@ -44,6 +45,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettin
 import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.PostLoginActionMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SAMLSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
@@ -232,6 +234,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setIdentities(domainMongo.getIdentities());
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
+        domain.setPostLoginAction(convert(domainMongo.getPostLoginAction()));
         domain.setDataPlaneId(domainMongo.getDataPlaneId());
         domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
 
@@ -271,6 +274,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
+        domainMongo.setPostLoginAction(convert(domain.getPostLoginAction()));
         domainMongo.setDataPlaneId(domain.getDataPlaneId());
         domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
         return domainMongo;
@@ -550,5 +554,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private static SecretSettingsMongo convert(SecretExpirationSettings secretExpirationSettings){
         return SecretSettingsMongo.fromModel(secretExpirationSettings);
+    }
+
+    private static PostLoginAction convert(PostLoginActionMongo postLoginActionMongo) {
+        return postLoginActionMongo != null ? postLoginActionMongo.convert() : null;
+    }
+
+    private static PostLoginActionMongo convert(PostLoginAction postLoginAction) {
+        return PostLoginActionMongo.convert(postLoginAction);
     }
 }

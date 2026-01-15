@@ -182,6 +182,11 @@ public class Domain implements Resource {
     private CorsSettings corsSettings;
 
     /**
+     * Post Login Action settings
+     */
+    private PostLoginAction postLoginAction;
+
+    /**
      * ID of Data Plane
      */
     private String dataPlaneId;
@@ -231,6 +236,7 @@ public class Domain implements Resource {
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
         this.saml = other.saml;
         this.corsSettings = other.corsSettings;
+        this.postLoginAction = other.postLoginAction;
         this.dataPlaneId = other.dataPlaneId;
         this.secretExpirationSettings = other.secretExpirationSettings;
     }
@@ -450,6 +456,14 @@ public class Domain implements Resource {
 
     public void setCorsSettings(CorsSettings corsSettings) {
         this.corsSettings = corsSettings;
+    }
+
+    public PostLoginAction getPostLoginAction() {
+        return postLoginAction;
+    }
+
+    public void setPostLoginAction(PostLoginAction postLoginAction) {
+        this.postLoginAction = postLoginAction;
     }
 
     public String getDataPlaneId() {

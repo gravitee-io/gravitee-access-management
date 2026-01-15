@@ -78,6 +78,8 @@ public class DomainMongo extends Auditable {
 
     private CorsSettings corsSettings;
 
+    private PostLoginActionMongo postLoginAction;
+
     private Set<String> tags;
 
     private ReferenceType referenceType;
