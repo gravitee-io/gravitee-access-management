@@ -1,0 +1,11 @@
+description: "Wait for ArgoCD application to sync"
+parameters:
+  timeout:
+    type: integer
+    default: 10
+    description: "Timeout in minutes"
+steps:
+  - run:
+      name: "Wait for ArgoCD Sync"
+      command: |
+        .circleci/migration-test/scripts/wait-argocd-sync.sh << parameters.timeout >>
