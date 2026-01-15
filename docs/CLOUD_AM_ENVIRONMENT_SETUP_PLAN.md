@@ -10,6 +10,38 @@
 
 This document outlines the work needed in the **cloud-am repository** to set up the test environment for database version compatibility testing. This is a **prerequisite** for the migration testing workflow and must be completed before Phase 1 tasks in the AM repository.
 
+## Quick Reference: MongoDB Image Version
+
+**⚠️ IMPORTANT**: Use **`mongo:8.0`** for MongoDB deployment (matches Jest test environment).
+
+- ✅ **Correct**: `image: mongo:8.0`
+- ❌ **Avoid**: `image: mongo:latest` or `image: mongo` (no tag)
+
+This matches the version used in:
+- Local Jest tests: `docker/local-stack/dev/docker-compose.mongo.yml` → `mongo:${MONGO_VERSION:-8.0}`
+- Testcontainers: `mongo:8.0`
+
+If MongoDB pod is stuck in `ContainerCreating`, verify the image tag is `mongo:8.0` (see [Troubleshooting](#troubleshooting-mongodb-containercreating-issues) section below).
+
+## Key Difference: Current Jest Tests vs Migration Tests
+
+### Current Jest Test Setup (Existing CI)
+- **Deployment**: Local Docker Compose stack in CircleCI
+- **MongoDB**: Local MongoDB container in docker-compose
+- **Connection**: `mongodb://mongodb:27017/graviteeam` (docker network)
+- **AM Applications**: Deployed as Docker containers in same compose stack
+- **Tests**: Connect to localhost AM APIs
+
+### Migration Test Setup (New)
+- **Deployment**: ArgoCD-deployed to remote Kubernetes cluster
+- **MongoDB**: Deployed via ArgoCD (or accessible from cluster)
+- **Connection for AM**: Internal cluster connection (e.g., `mongodb://mongodb-service:27017/graviteeam`)
+- **Connection for CircleCI**: External connection (must be accessible from CircleCI network)
+- **AM Applications**: Deployed via ArgoCD to test environment
+- **Tests**: Connect to remote ArgoCD-deployed AM APIs
+
+**Critical Requirement**: MongoDB must be accessible from CircleCI for cleanup script and potentially for test data operations.
+
 ## Prerequisites Status
 
 ⚠️ **This work must be completed before starting Phase 1 tasks in AM repository**
@@ -162,30 +194,126 @@ am:
 
 **Description**: Set up MongoDB instance for test environment
 
+**⚠️ CRITICAL REQUIREMENT**: 
+- MongoDB must be **accessible from CircleCI** (not just from within the cluster)
+- Jest tests run in CircleCI and need to connect to MongoDB remotely
+- Current Jest tests use local Docker Compose MongoDB, but migration tests need remote MongoDB
+
+**Current Jest Test Setup** (for reference):
+- Uses local Docker Compose stack with MongoDB container
+- Connection: `mongodb://mongodb:27017/graviteeam` (local docker network)
+- MongoDB runs in same docker-compose as AM applications
+
+**Migration Test Requirements**:
+- MongoDB deployed via ArgoCD (or accessible from cluster)
+- MongoDB accessible from CircleCI (external connection)
+- Connection string must be reachable from CircleCI network
+- MongoDB in same namespace/cluster as AM applications (for AM to connect)
+
 **Options**:
 - **Option A**: ArgoCD ApplicationSet for MongoDB (recommended)
+  - Deploy MongoDB via ArgoCD in same namespace as AM
+  - Expose MongoDB service (NodePort, LoadBalancer, or Ingress)
+  - Ensure MongoDB is accessible from CircleCI network
 - **Option B**: Existing MongoDB instance (document connection details)
+  - Must be accessible from CircleCI
+  - Document external connection string
+  - Ensure network access from CircleCI
 
-**Steps (Option A)**:
+**Steps (Option A - Recommended)**:
 1. Create MongoDB ApplicationSet or Helm chart reference
-2. Configure persistent volume (optional)
-3. Set up connection details in values.yaml
-4. Test MongoDB deployment
+2. **Configure MongoDB image version**:
+   - **Recommended**: `mongo:8.0` (matches local Jest test setup)
+   - Alternative: `mongo:6.0` (also used in some dev setups)
+   - **DO NOT use**: `mongo:latest` (unpredictable, may cause compatibility issues)
+   - Example: `image: mongo:8.0` in deployment manifest
+3. Configure MongoDB service exposure (NodePort/LoadBalancer for external access)
+4. Configure persistent volume (optional - may be cleaned anyway)
+5. Set up connection details in values.yaml for AM applications
+6. Document external MongoDB connection string for CircleCI
+7. Test MongoDB deployment and external connectivity
+8. Verify AM applications can connect to MongoDB
+9. Verify CircleCI can connect to MongoDB (for cleanup script)
+
+**MongoDB Image Version Reference**:
+- **Jest tests (local-stack)**: `mongo:${MONGO_VERSION:-8.0}` (defaults to 8.0)
+- **Testcontainers**: `mongo:8.0`
+- **Dev compose**: `mongo:6.0` or `mongo:8.0`
+- **Recommended for migration tests**: `mongo:8.0` (matches test environment)
 
 **Steps (Option B)**:
 1. Document existing MongoDB connection details
-2. Ensure accessibility from test environment namespace
-3. Update values.yaml with connection string
+2. Ensure external accessibility from CircleCI network
+3. Update values.yaml with connection string for AM applications
+4. Provide external connection string for CircleCI workflow
+5. Test connectivity from CircleCI
+
+**MongoDB Connection Requirements**:
+- **For AM Applications** (deployed via ArgoCD):
+  - Internal connection: `mongodb://mongodb-service:27017/graviteeam` (within cluster)
+  - Or external if using external MongoDB
+- **For CircleCI Workflow** (cleanup script):
+  - External connection string: `mongodb://<external-host>:<port>/graviteeam`
+  - Must be accessible from CircleCI network
+  - May require network configuration (firewall rules, VPN, etc.)
 
 **Acceptance Criteria**:
-- ✅ MongoDB accessible from test environment
-- ✅ Connection details documented
-- ✅ Connection string in values.yaml (or environment variables)
-- ✅ MongoDB can be cleaned/recreated if needed
+- ✅ MongoDB image version specified correctly (`mongo:8.0` recommended)
+- ✅ MongoDB pod starts successfully (not stuck in ContainerCreating)
+- ✅ MongoDB deployed and accessible from AM applications
+- ✅ MongoDB accessible from CircleCI (external connection)
+- ✅ Connection details documented (internal for AM, external for CircleCI)
+- ✅ Connection string in values.yaml for AM applications
+- ✅ External connection string provided for CircleCI workflow
+- ✅ MongoDB can be cleaned via external connection (for cleanup script)
+- ✅ Network connectivity tested from CircleCI
 
-**Estimated Time**: 2-3 hours (Option A) or 1 hour (Option B)
+**Estimated Time**: 3-4 hours (Option A) or 1-2 hours (Option B)
 
 **Dependencies**: Task 1 (branch must exist)
+
+**Network Considerations**:
+- May need to configure firewall rules or network policies
+- May need LoadBalancer or Ingress for external access
+- Consider security (authentication, TLS) for external connections
+
+**Troubleshooting MongoDB ContainerCreating Issues**:
+
+If MongoDB pod is stuck in `ContainerCreating` state, check:
+
+1. **Image Version**:
+   ```yaml
+   # ✅ CORRECT
+   image: mongo:8.0
+   
+   # ❌ AVOID
+   image: mongo:latest
+   image: mongo  # no tag specified
+   ```
+
+2. **Image Pull Issues**:
+   - Verify image exists: `docker pull mongo:8.0`
+   - Check if image pull secrets are needed
+   - Verify registry access from cluster
+
+3. **Resource Constraints**:
+   - Check if cluster has enough resources
+   - Verify resource requests/limits in deployment
+
+4. **Network Policies**:
+   - Ensure network policies allow MongoDB traffic
+   - Check if security policies are blocking
+
+5. **Check Pod Events**:
+   ```bash
+   kubectl describe pod <mongodb-pod-name> -n <namespace>
+   # Look for Events section for specific error messages
+   ```
+
+6. **Common Fixes**:
+   - Use specific image tag: `mongo:8.0` (not `latest`)
+   - Ensure image pull policy: `IfNotPresent` or `Always`
+   - Verify namespace and service account permissions
 
 ---
 
@@ -333,6 +461,36 @@ am:
    - Document Gateway imageTag field
    - Document MongoDB connection configuration
 
+## Network Access Requirements
+
+### MongoDB External Access
+
+**Critical**: MongoDB must be accessible from CircleCI for:
+1. Cleanup script (Task 1.1 in AM repository)
+2. Potentially test data operations (future)
+
+**Options for External Access**:
+- **Option 1**: LoadBalancer service type
+  - Creates external IP
+  - Accessible from internet (with security considerations)
+- **Option 2**: NodePort service type
+  - Exposes on cluster node IPs
+  - May require firewall rules
+- **Option 3**: Ingress with authentication
+  - More secure
+  - Requires ingress controller
+- **Option 4**: VPN/Tunnel
+  - Most secure
+  - Requires VPN setup between CircleCI and cluster
+
+**Security Considerations**:
+- Use MongoDB authentication (username/password)
+- Consider TLS/SSL for external connections
+- Restrict network access (firewall rules, IP whitelisting)
+- Use secrets for credentials
+
+**Recommendation**: Start with LoadBalancer for POC, add security hardening later.
+
 ## Testing Checklist
 
 Before AM repository work can begin:
@@ -341,11 +499,18 @@ Before AM repository work can begin:
 - [ ] ArgoCD ApplicationSet configured and working
 - [ ] MAPI deploys successfully with image tag from values.yaml
 - [ ] Gateways deploy successfully with image tag from values.yaml
-- [ ] MongoDB accessible and connection works
+- [ ] MongoDB deployed and accessible from AM applications (internal)
+- [ ] MongoDB accessible from CircleCI (external connection tested)
+- [ ] External MongoDB connection string documented
 - [ ] Can update image tags via git push
 - [ ] ArgoCD syncs changes automatically
 - [ ] Applications reach "Synced" and "Healthy" states
 - [ ] Health check endpoints work
+- [ ] Network connectivity verified from CircleCI
+- [ ] ArgoCD access configured and tested from CircleCI
+  - [ ] API token or username/password stored in secret manager
+  - [ ] ArgoCD server URL accessible from CircleCI
+  - [ ] Test script can authenticate and query application status
 - [ ] Documentation complete
 
 ## Handoff to AM Repository
@@ -353,11 +518,40 @@ Before AM repository work can begin:
 Once cloud-am setup is complete, provide to AM repository team:
 
 1. **Branch name**: `migration-test-env` (or actual name)
-2. **MongoDB connection details**: Connection string, credentials (if needed)
-3. **ArgoCD application names**: MAPI app name, Gateway app name
-4. **ArgoCD server URL**: For sync status checking
-5. **values.yaml structure**: Documented structure for image tag updates
-6. **SSH access**: Ensure AM repository CI has SSH access to cloud-am
+2. **MongoDB connection details**:
+   - **Internal connection** (for AM applications): `mongodb://mongodb-service:27017/graviteeam`
+   - **External connection** (for CircleCI cleanup script): `mongodb://<external-host>:<port>/graviteeam`
+   - Credentials (if needed)
+   - Database name: `graviteeam` (or actual name)
+3. **ArgoCD application names**: 
+   - MAPI app name (e.g., `am-migration-test-env-mapi`)
+   - Gateway app name (e.g., `am-migration-test-env-gateway`)
+   - Or single app name if using ApplicationSet
+4. **ArgoCD server URL**: 
+   - Full URL (e.g., `https://argocd.example.com`)
+   - Must be accessible from CircleCI network
+   - Note if self-signed certificate (will need `ARGOCD_INSECURE=true`)
+5. **ArgoCD access credentials** (for CircleCI):
+   - **Option A (Recommended)**: API token
+     - Generate token: `argocd account generate-token --account <account-name>`
+     - Store in Keeper secret manager
+     - Provide secret identifier to AM team
+   - **Option B**: Username/password
+     - Service account username
+     - Service account password
+     - Store both in Keeper secret manager
+   - **Note**: See [ArgoCD Access Setup](../docs/MIGRATION_TEST_IMPLEMENTATION_PLAN.md#argocd-access-setup) in AM repository docs for details
+6. **values.yaml structure**: Documented structure for image tag updates
+   - Path to values.yaml file
+   - YAML path for MAPI imageTag (e.g., `.management.imageTag`)
+   - YAML path for Gateway imageTag (e.g., `.gateway.imageTag`)
+7. **SSH access**: Ensure AM repository CI has SSH access to cloud-am
+   - SSH key fingerprint (if using CircleCI SSH keys)
+   - Or deploy key configured in cloud-am repository
+8. **Network access**: 
+   - Ensure CircleCI can reach MongoDB (may require firewall/VPN configuration)
+   - Ensure CircleCI can reach ArgoCD server (may require firewall/VPN configuration)
+   - Document any required network policies or whitelisting
 
 ## References
 

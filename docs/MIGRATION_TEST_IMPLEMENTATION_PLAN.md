@@ -79,19 +79,25 @@ These tasks provide the building blocks needed by the workflow. Complete in orde
 **Location**: `.circleci/migration-test/scripts/clean-mongodb.sh`
 
 **Requirements**:
-- Connect to MongoDB instance
+- Connect to MongoDB instance **remotely from CircleCI** (not local)
+- MongoDB connection string provided from cloud-am setup (external connection)
 - Drop collections or entire database
 - Handle connection errors gracefully
 - Support MongoDB connection string from environment variables
 - Idempotent (safe to run multiple times)
+- **Note**: Unlike current Jest tests (which use local Docker Compose MongoDB), migration tests connect to remote ArgoCD-deployed MongoDB
 
 **Implementation Details**:
 ```bash
 #!/bin/bash
 # Usage: clean-mongodb.sh <mongodb-connection-string>
-# Example: clean-mongodb.sh "mongodb://user:pass@host:27017/gravitee_am"
+# Example: clean-mongodb.sh "mongodb://user:pass@external-host:27017/gravitee_am"
+#
+# IMPORTANT: This connects to REMOTE MongoDB (ArgoCD-deployed), not local
+# Connection string must be external/accessible from CircleCI network
+# Provided by cloud-am setup (external connection string)
 
-# Connect and drop database or collections
+# Connect to remote MongoDB and drop database or collections
 # Handle errors gracefully
 # Log cleanup actions
 ```
@@ -563,9 +569,225 @@ These tasks require all previous tasks to be complete.
 
 1. **Access Requirements**:
    - ✅ CircleCI API token
-   - ✅ ArgoCD API access or CLI configured
+   - ✅ ArgoCD API access or CLI configured (see [ArgoCD Access Setup](#argocd-access-setup) below)
    - ✅ SSH access to cloud-am repository
-   - ✅ MongoDB connection details for test environment (from cloud-am setup)
+   - ✅ MongoDB **external** connection string for test environment (from cloud-am setup)
+     - Must be accessible from CircleCI network
+     - Different from internal connection used by AM applications
+
+## ArgoCD Access Setup
+
+### Overview
+
+The migration test scripts need to access ArgoCD to check sync status. This section explains how to configure ArgoCD access in CircleCI.
+
+### Option 1: ArgoCD API Token (Recommended)
+
+**Steps**:
+
+1. **Generate ArgoCD API Token** (choose one method):
+   
+   **Method A: Via ArgoCD UI** (Easiest - No installation needed):
+   - Log into ArgoCD UI
+   - Go to User Settings → Account → Generate New Token
+   - Click "Generate New Token"
+   - Copy and save the token securely (you won't be able to see it again)
+   
+   **Method B: Via ArgoCD CLI** (If you have CLI installed):
+   ```bash
+   argocd account generate-token --account <account-name>
+   ```
+   
+   **Method C: Via ArgoCD API** (If you have existing credentials):
+   ```bash
+   curl -X POST "https://argocd.example.com/api/v1/session" \
+     -d '{"username":"admin","password":"password"}' \
+     -H "Content-Type: application/json"
+   # Then use the token from response
+   ```
+   
+   **Note**: Method A (UI) is the simplest and doesn't require any CLI installation.
+
+2. **Store Token in Secret Manager** (Keeper):
+   - Add secret to Keeper with identifier (e.g., `ARGOCD_TOKEN`)
+   - Store the token value
+
+3. **Export in CircleCI Workflow**:
+   ```yaml
+   - keeper/env-export:
+       secret-url: keeper://<keeper-secret-id>/field/password
+       var-name: ARGOCD_TOKEN
+   ```
+
+4. **Use in Scripts**:
+   - Scripts will read `ARGOCD_TOKEN` environment variable
+   - Pass to ArgoCD API: `Authorization: Bearer ${ARGOCD_TOKEN}`
+
+### Option 2: ArgoCD CLI with Username/Password
+
+**⚠️ Note**: This option requires installing ArgoCD CLI in CircleCI. Option 1 (API Token) is recommended as it doesn't require CLI installation.
+
+**Steps**:
+
+1. **Store Credentials in Secret Manager**:
+   - Add `ARGOCD_USERNAME` secret
+   - Add `ARGOCD_PASSWORD` secret
+
+2. **Export in CircleCI Workflow**:
+   ```yaml
+   - keeper/env-export:
+       secret-url: keeper://<username-secret-id>/field/login
+       var-name: ARGOCD_USERNAME
+   - keeper/env-export:
+       secret-url: keeper://<password-secret-id>/field/password
+       var-name: ARGOCD_PASSWORD
+   ```
+
+3. **Install ArgoCD CLI** (required for this option):
+   ```yaml
+   - run:
+       name: Install ArgoCD CLI
+       command: |
+         curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+         chmod +x /usr/local/bin/argocd
+         # Verify installation
+         argocd version --client
+   ```
+
+4. **Login in Script**:
+   ```bash
+   argocd login ${ARGOCD_SERVER_URL} \
+     --username ${ARGOCD_USERNAME} \
+     --password ${ARGOCD_PASSWORD} \
+     --insecure  # if using self-signed cert
+   ```
+
+### Required Environment Variables
+
+The scripts expect these environment variables:
+
+| Variable | Description | Example | Required |
+|----------|-------------|---------|----------|
+| `ARGOCD_SERVER_URL` | ArgoCD server URL | `https://argocd.example.com` | ✅ Yes |
+| `ARGOCD_TOKEN` | API token (Option 1) | `eyJhbGc...` | ✅ If using API |
+| `ARGOCD_USERNAME` | Username (Option 2) | `admin` | ✅ If using CLI |
+| `ARGOCD_PASSWORD` | Password (Option 2) | `password` | ✅ If using CLI |
+| `ARGOCD_INSECURE` | Skip TLS verification | `true` or `false` | ❌ Optional |
+
+### CircleCI Workflow Configuration Example
+
+```yaml
+jobs:
+  migration-test:
+    executor: ubuntu
+    steps:
+      - checkout
+      # Export ArgoCD credentials
+      - keeper/env-export:
+          secret-url: keeper://<argocd-token-secret-id>/field/password
+          var-name: ARGOCD_TOKEN
+      # Or for CLI approach:
+      # - keeper/env-export:
+      #     secret-url: keeper://<username-secret-id>/field/login
+      #     var-name: ARGOCD_USERNAME
+      # - keeper/env-export:
+      #     secret-url: keeper://<password-secret-id>/field/password
+      #     var-name: ARGOCD_PASSWORD
+      
+      # Set ArgoCD server URL (can be from context or parameter)
+      - run:
+          name: Set ArgoCD environment
+          command: |
+            echo "export ARGOCD_SERVER_URL=${ARGOCD_SERVER_URL:-https://argocd.example.com}" >> $BASH_ENV
+            echo "export ARGOCD_INSECURE=${ARGOCD_INSECURE:-false}" >> $BASH_ENV
+      
+      # Run migration test workflow
+      - run:
+          name: Wait for ArgoCD sync
+          command: |
+            .circleci/migration-test/scripts/wait-argocd-sync.sh \
+              "am-migration-test-env" \
+              "${ARGOCD_SERVER_URL}" \
+              10
+```
+
+### Script Implementation Pattern
+
+The `wait-argocd-sync.sh` script should handle both authentication methods. **Recommended approach**: Use API token (no CLI installation needed):
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+APP_NAME="${1}"
+ARGOCD_SERVER="${2:-${ARGOCD_SERVER_URL}}"
+MAX_WAIT_MINUTES="${3:-10}"
+
+# Authenticate with ArgoCD
+if [[ -n "${ARGOCD_TOKEN:-}" ]]; then
+  # Use API token (RECOMMENDED - no CLI needed)
+  AUTH_HEADER="Authorization: Bearer ${ARGOCD_TOKEN}"
+  API_URL="${ARGOCD_SERVER}/api/v1/applications/${APP_NAME}"
+  
+  # Poll using curl (no CLI installation required)
+  # Example:
+  # curl -H "${AUTH_HEADER}" "${API_URL}" | jq -r '.status.sync.status'
+  
+elif [[ -n "${ARGOCD_USERNAME:-}" && -n "${ARGOCD_PASSWORD:-}" ]]; then
+  # Use CLI with username/password (requires CLI installation)
+  # Check if CLI is installed
+  if ! command -v argocd &> /dev/null; then
+    echo "❌ Error: ArgoCD CLI not found. Install it or use ARGOCD_TOKEN instead."
+    exit 1
+  fi
+  
+  argocd login "${ARGOCD_SERVER}" \
+    --username "${ARGOCD_USERNAME}" \
+    --password "${ARGOCD_PASSWORD}" \
+    ${ARGOCD_INSECURE:+--insecure}
+else
+  echo "❌ Error: Either ARGOCD_TOKEN or ARGOCD_USERNAME/ARGOCD_PASSWORD must be set"
+  exit 1
+fi
+
+# Poll for sync status...
+```
+
+### Security Considerations
+
+1. **Token Rotation**: Rotate ArgoCD tokens periodically
+2. **Least Privilege**: Use service account with minimal required permissions
+3. **Secret Storage**: Never commit tokens to git; use Keeper or CircleCI contexts
+4. **TLS**: Use HTTPS for ArgoCD server (avoid `ARGOCD_INSECURE=true` in production)
+
+### Testing Access
+
+Before running the full workflow, test ArgoCD access:
+
+```bash
+# Test API access
+curl -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
+  "${ARGOCD_SERVER_URL}/api/v1/applications/am-migration-test-env"
+
+# Or test CLI access
+argocd app get am-migration-test-env --server "${ARGOCD_SERVER_URL}"
+```
+
+### Troubleshooting
+
+**Issue**: "Authentication failed"
+- ✅ Verify token/credentials are correct
+- ✅ Check token hasn't expired
+- ✅ Verify ArgoCD server URL is accessible from CircleCI
+
+**Issue**: "Connection refused" or "Timeout"
+- ✅ Verify ArgoCD server URL is correct
+- ✅ Check network access from CircleCI to ArgoCD
+- ✅ Verify firewall rules allow access
+
+**Issue**: "Certificate validation failed"
+- ✅ Set `ARGOCD_INSECURE=true` for self-signed certs (dev/test only)
+- ✅ Or configure proper CA certificates
 
 2. **Environment Setup** (from cloud-am setup):
    - ✅ Test environment with ArgoCD application configured
