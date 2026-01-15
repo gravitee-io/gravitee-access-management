@@ -1668,6 +1668,22 @@ jobs:
     resource_class: large
     steps:
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
+      - run:
+          name: "Export Migration Environment Variables"
+          command: |
+             echo "export MIGRATION_GITOPS_REPO='git@github.com:gravitee-io/cloud-am.git'" >> $BASH_ENV
+             echo "export MIGRATION_GITOPS_BRANCH='gko-2k26-ai-hackathon/migration-test-tool'" >> $BASH_ENV
+             echo "export MIGRATION_ARGOCD_APP_NAME='am-migration-tool'" >> $BASH_ENV
+      # TODO: Inject remaining secrets from Keeper when paths are available
+      # - keeper/env-export:
+      #     secret-url: keeper://.../field/password
+      #     var-name: MIGRATION_ARGOCD_TOKEN
+      # - keeper/env-export:
+      #     secret-url: keeper://.../field/url
+      #     var-name: MIGRATION_ARGOCD_SERVER
       - run:
           name: Install dependencies
           command: |
