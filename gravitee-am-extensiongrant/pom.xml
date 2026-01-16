@@ -37,6 +37,7 @@
     <modules>
         <module>gravitee-am-extensiongrant-api</module>
         <module>gravitee-am-extensiongrant-jwtbearer</module>
+        <module>gravitee-am-extensiongrant-token-exchange</module>
     </modules>
 
     <dependencies>

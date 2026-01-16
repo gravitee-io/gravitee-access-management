@@ -46,4 +46,29 @@ public class AccessToken extends Token {
      */
     private Map<String, Object> confirmationMethod;
 
+    /**
+     * RFC 8693 Token Exchange - Actor claim for delegation scenarios.
+     * Contains information about the acting party when this token was obtained through token exchange.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-4.1">RFC 8693 Section 4.1</a>
+     */
+    private Map<String, Object> actor;
+
+    /**
+     * RFC 8693 Token Exchange - The type of the source token used in the exchange.
+     * Stored for audit purposes.
+     */
+    private String sourceTokenType;
+
+    /**
+     * RFC 8693 Token Exchange - The ID of the source token used in the exchange.
+     * Stored for audit purposes and potential token revocation propagation.
+     */
+    private String sourceTokenId;
+
+    /**
+     * RFC 8693 Token Exchange - The issued token type URI.
+     * Indicates the type of token that was issued (e.g., urn:ietf:params:oauth:token-type:access_token).
+     */
+    private String issuedTokenType;
+
 }

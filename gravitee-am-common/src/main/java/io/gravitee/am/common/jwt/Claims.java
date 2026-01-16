@@ -134,6 +134,30 @@ public interface Claims {
      */
     String ORIG_RESOURCES = "orig_resources";
 
+    /**
+     * RFC 8693 Token Exchange - Actor claim.
+     * The "act" (actor) claim provides a means within a JWT to express that delegation has occurred
+     * and identify the acting party to whom authority has been delegated.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-4.1">RFC 8693 Section 4.1</a>
+     */
+    String ACT = "act";
+
+    /**
+     * RFC 8693 Token Exchange - May Act claim.
+     * The "may_act" claim makes a statement that one party is authorized to become the actor
+     * and act on behalf of another party.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-4.4">RFC 8693 Section 4.4</a>
+     */
+    String MAY_ACT = "may_act";
+
+    /**
+     * RFC 8693 Token Exchange - Client ID claim.
+     * The "client_id" claim carries the client identifier of the OAuth 2.0 client
+     * that requested the token.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-4.3">RFC 8693 Section 4.3</a>
+     */
+    String CLIENT_ID = "client_id";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF);

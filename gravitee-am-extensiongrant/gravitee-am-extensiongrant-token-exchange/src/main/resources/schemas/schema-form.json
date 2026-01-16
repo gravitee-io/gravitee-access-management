@@ -1,0 +1,204 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:extensiongrant:tokenexchange:TokenExchangeExtensionGrantConfiguration",
+  "description": "RFC 8693 OAuth 2.0 Token Exchange.\n\nEnables exchanging one security token for another, supporting impersonation and delegation scenarios.\n\nExample request:\nPOST /oauth/token HTTP/1.1\ngrant_type=urn:ietf:params:oauth:grant-type:token-exchange\n&subject_token=|token-value|\n&subject_token_type=urn:ietf:params:oauth:token-type:access_token",
+  "properties": {
+    "grantType": {
+      "title": "Grant Type",
+      "description": "OAuth 2.0 grant type for token exchange as defined in RFC 8693.",
+      "type": "string",
+      "default": "urn:ietf:params:oauth:grant-type:token-exchange",
+      "readOnly": true
+    },
+    "allowedSubjectTokenTypes": {
+      "title": "Allowed Subject Token Types",
+      "description": "Token types that can be accepted as the subject_token parameter.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "urn:ietf:params:oauth:token-type:access_token",
+          "urn:ietf:params:oauth:token-type:id_token",
+          "urn:ietf:params:oauth:token-type:jwt",
+          "urn:ietf:params:oauth:token-type:saml2",
+          "urn:ietf:params:oauth:token-type:saml1"
+        ]
+      },
+      "default": [
+        "urn:ietf:params:oauth:token-type:access_token",
+        "urn:ietf:params:oauth:token-type:id_token",
+        "urn:ietf:params:oauth:token-type:jwt"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "multiple": true,
+        "titleMap": {
+          "urn:ietf:params:oauth:token-type:access_token": "Access Token",
+          "urn:ietf:params:oauth:token-type:id_token": "ID Token (OpenID Connect)",
+          "urn:ietf:params:oauth:token-type:jwt": "JWT",
+          "urn:ietf:params:oauth:token-type:saml2": "SAML 2.0 Assertion",
+          "urn:ietf:params:oauth:token-type:saml1": "SAML 1.1 Assertion"
+        }
+      }
+    },
+    "allowedActorTokenTypes": {
+      "title": "Allowed Actor Token Types",
+      "description": "Token types that can be accepted as the actor_token parameter for delegation scenarios.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "urn:ietf:params:oauth:token-type:access_token",
+          "urn:ietf:params:oauth:token-type:jwt"
+        ]
+      },
+      "default": [
+        "urn:ietf:params:oauth:token-type:access_token",
+        "urn:ietf:params:oauth:token-type:jwt"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "multiple": true,
+        "titleMap": {
+          "urn:ietf:params:oauth:token-type:access_token": "Access Token",
+          "urn:ietf:params:oauth:token-type:jwt": "JWT"
+        }
+      }
+    },
+    "allowedRequestedTokenTypes": {
+      "title": "Allowed Requested Token Types",
+      "description": "Token types that can be requested as the output token.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "urn:ietf:params:oauth:token-type:access_token",
+          "urn:ietf:params:oauth:token-type:jwt"
+        ]
+      },
+      "default": [
+        "urn:ietf:params:oauth:token-type:access_token",
+        "urn:ietf:params:oauth:token-type:jwt"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "multiple": true,
+        "titleMap": {
+          "urn:ietf:params:oauth:token-type:access_token": "Access Token",
+          "urn:ietf:params:oauth:token-type:jwt": "JWT"
+        }
+      }
+    },
+    "allowDelegation": {
+      "title": "Allow Delegation",
+      "description": "Allow delegation scenarios where an actor acts on behalf of a subject. The issued token will contain an 'act' claim identifying the actor.",
+      "type": "boolean",
+      "default": true
+    },
+    "allowImpersonation": {
+      "title": "Allow Impersonation",
+      "description": "Allow impersonation scenarios where the actor becomes indistinguishable from the subject. Use with caution - this is a sensitive operation.",
+      "type": "boolean",
+      "default": false
+    },
+    "maxDelegationChainDepth": {
+      "title": "Max Delegation Chain Depth",
+      "description": "Maximum depth of nested 'act' claims in delegation chains. Prevents excessive delegation for security.",
+      "type": "integer",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    },
+    "validateSignature": {
+      "title": "Validate Token Signature",
+      "description": "Validate the cryptographic signature of input tokens. Highly recommended for security.",
+      "type": "boolean",
+      "default": true
+    },
+    "requireAudience": {
+      "title": "Require Audience Parameter",
+      "description": "Require the 'audience' parameter in token exchange requests.",
+      "type": "boolean",
+      "default": false
+    },
+    "scopePolicy": {
+      "title": "Scope Policy",
+      "description": "How to handle scopes during token exchange.",
+      "type": "string",
+      "default": "REDUCE",
+      "enum": [
+        "REDUCE",
+        "PRESERVE",
+        "CUSTOM"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "REDUCE": "Reduce - Only allow subset of original scopes (most secure)",
+          "PRESERVE": "Preserve - Keep original scopes unchanged",
+          "CUSTOM": "Custom - Allow any requested scopes (least restrictive)"
+        }
+      }
+    },
+    "trustedIssuers": {
+      "title": "Trusted Issuers",
+      "description": "List of trusted token issuers (by 'iss' claim). Leave empty to accept tokens from any issuer.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "x-schema-form": {
+        "type": "tag"
+      }
+    },
+    "publicKeyResolver": {
+      "title": "External Token Validation",
+      "description": "Method for validating external JWT tokens (from other issuers).",
+      "type": "string",
+      "enum": [
+        "GIVEN_KEY",
+        "JWKS_URL"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "GIVEN_KEY": "GIVEN_KEY: Provide a public key (PEM format)",
+          "JWKS_URL": "JWKS_URL: Retrieve keys from JWKS endpoint"
+        }
+      }
+    },
+    "publicKey": {
+      "title": "Public Key / JWKS URL",
+      "description": "Public key in PEM format (for GIVEN_KEY) or JWKS URL (for JWKS_URL) for validating external tokens.",
+      "type": "string",
+      "widget": "textarea"
+    },
+    "issueRefreshToken": {
+      "title": "Issue Refresh Token",
+      "description": "Issue a refresh token along with the access token during token exchange.",
+      "type": "boolean",
+      "default": false
+    },
+    "claimsMapper": {
+      "title": "Claims Mapper",
+      "description": "Map claims from the subject token to the issued token.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceClaim": {
+            "title": "Source Claim",
+            "description": "Claim name in the subject token",
+            "type": "string"
+          },
+          "targetClaim": {
+            "title": "Target Claim",
+            "description": "Claim name in the issued token",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": []
+}
