@@ -448,6 +448,23 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
             oAuth2Request.getContext().put(TokenExchangeParameters.AUDIENCE, audience);
         }
 
+        // Remove token exchange parameters from the request to prevent them from being echoed in the response
+        // as per default TokenService behavior which returns all unknown parameters.
+        if (oAuth2Request.getParameters() != null) {
+            oAuth2Request.getParameters().remove(TokenExchangeParameters.SUBJECT_TOKEN);
+            oAuth2Request.getParameters().remove(TokenExchangeParameters.SUBJECT_TOKEN_TYPE);
+            oAuth2Request.getParameters().remove(TokenExchangeParameters.ACTOR_TOKEN);
+            oAuth2Request.getParameters().remove(TokenExchangeParameters.ACTOR_TOKEN_TYPE);
+            oAuth2Request.getParameters().remove(TokenExchangeParameters.REQUESTED_TOKEN_TYPE);
+        }
+        if (oAuth2Request.getAdditionalParameters() != null) {
+            oAuth2Request.getAdditionalParameters().remove(TokenExchangeParameters.SUBJECT_TOKEN);
+            oAuth2Request.getAdditionalParameters().remove(TokenExchangeParameters.SUBJECT_TOKEN_TYPE);
+            oAuth2Request.getAdditionalParameters().remove(TokenExchangeParameters.ACTOR_TOKEN);
+            oAuth2Request.getAdditionalParameters().remove(TokenExchangeParameters.ACTOR_TOKEN_TYPE);
+            oAuth2Request.getAdditionalParameters().remove(TokenExchangeParameters.REQUESTED_TOKEN_TYPE);
+        }
+
         return Single.just(oAuth2Request);
     }
 
@@ -463,6 +480,11 @@ public class TokenExchangeTokenGranter extends AbstractTokenGranter {
             
             if (actorJwt.getIss() != null) {
                 actClaim.put("iss", actorJwt.getIss());
+            }
+
+            // Check if actor token itself has an 'act' claim (recursive delegation)
+            if (actorJwt.containsKey("act")) {
+                actClaim.put("act", actorJwt.get("act"));
             }
             
             // Store the act claim in the execution context for JWT generation

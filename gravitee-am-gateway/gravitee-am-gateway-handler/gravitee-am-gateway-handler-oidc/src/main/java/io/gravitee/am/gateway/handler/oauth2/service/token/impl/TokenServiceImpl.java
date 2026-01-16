@@ -404,6 +404,11 @@ public class TokenServiceImpl implements TokenService {
         // set 'act' claim for delegation (RFC 8693)
         // TokenExchangeTokenGranter puts the 'act' claim in the execution context
         Object act = executionContext.getAttribute("act");
+        if (act == null) {
+            // Fallback: Check request execution context directly
+            act = request.getExecutionContext().get("act");
+        }
+        
         if (act != null) {
             jwt.put("act", act);
         }
