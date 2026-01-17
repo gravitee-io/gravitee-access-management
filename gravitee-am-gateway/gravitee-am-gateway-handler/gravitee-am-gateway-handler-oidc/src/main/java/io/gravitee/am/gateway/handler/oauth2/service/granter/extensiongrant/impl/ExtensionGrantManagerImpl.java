@@ -176,7 +176,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                                 minDate = extensionGrant.getCreatedAt();
                             }
                             updateExtensionGrantProvider(extensionGrant);
-                            logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName());
+                            logger.info("Extension grant {} {} for domain {}", extensionGrantId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
                         () -> logger.error("No extension grant found with id {}", extensionGrantId));

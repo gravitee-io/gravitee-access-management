@@ -195,6 +195,14 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.extensiongrant</groupId>
+            <artifactId>gravitee-am-extensiongrant-token-exchange</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
             <artifactId>gravitee-am-gateway-services-sync</artifactId>
             <version>${project.version}</version>
@@ -650,6 +658,13 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.extensiongrant</groupId>
                                     <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.extensiongrant</groupId>
+                                    <artifactId>gravitee-am-extensiongrant-token-exchange</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
