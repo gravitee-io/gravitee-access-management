@@ -335,6 +335,13 @@ public class TokenServiceImpl implements TokenService {
                     .filter(e -> !Token.getStandardParameters().contains(e.getKey()) && !e.getKey().equals(ID_TOKEN))
                     .forEach(e -> token.getAdditionalInformation().put(e.getKey(), e.getValue()));
         }
+        // RFC 8693 Token Exchange: set issued_token_type if present in the context
+        if (oAuth2Request.getContext() != null) {
+            Object issuedTokenType = oAuth2Request.getContext().get(Token.ISSUED_TOKEN_TYPE);
+            if (issuedTokenType != null) {
+                token.setIssuedTokenType(issuedTokenType.toString());
+            }
+        }
         // set refresh token
         Optional.ofNullable(encodedRefreshToken).map(EncodedJWT::encodedToken).ifPresent(token::setRefreshToken);
         return new TokenWithCertificateInfo(token, encodedAccessToken.certificateInfo());

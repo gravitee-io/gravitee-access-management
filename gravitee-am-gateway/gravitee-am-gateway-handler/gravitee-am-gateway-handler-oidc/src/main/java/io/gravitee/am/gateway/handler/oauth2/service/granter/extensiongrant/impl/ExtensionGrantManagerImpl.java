@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranterV2;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
+import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.TokenExchangeExtensionGrantGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
@@ -41,6 +42,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantProviderConfiguration;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.common.event.Event;
@@ -110,6 +112,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public void afterPropertiesSet() {
@@ -224,6 +229,22 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     }
 
     private ExtensionGrantGranter buildGranter(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
+        // Use specialized granter for Token Exchange (RFC 8693)
+        if (TokenExchangeExtensionGrantGranter.isTokenExchangeGrantType(extensionGrant.getGrantType())) {
+            logger.info("\tCreating Token Exchange Extension Grant Granter for: {}", extensionGrant.getName());
+            return new TokenExchangeExtensionGrantGranter(
+                    extensionGrantProvider,
+                    extensionGrant,
+                    userAuthenticationManager,
+                    tokenService,
+                    tokenRequestResolver,
+                    identityProviderManager,
+                    userService,
+                    rulesEngine,
+                    domain,
+                    auditService);
+        }
+
         if (domain.getVersion() == DomainVersion.V1_0) {
             return new ExtensionGrantGranter(
                             extensionGrantProvider,

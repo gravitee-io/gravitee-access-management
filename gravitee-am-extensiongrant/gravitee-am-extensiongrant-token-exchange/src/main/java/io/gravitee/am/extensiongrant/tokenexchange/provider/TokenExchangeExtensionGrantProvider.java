@@ -22,6 +22,10 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.tokenexchange.TokenExchangeExtensionGrantConfiguration;
+import io.gravitee.am.extensiongrant.tokenexchange.delegation.ActorClaimBuilder;
+import io.gravitee.am.extensiongrant.tokenexchange.delegation.DelegationContext;
+import io.gravitee.am.extensiongrant.tokenexchange.delegation.ImpersonationHandler;
+import io.gravitee.am.extensiongrant.tokenexchange.delegation.MayActValidator;
 import io.gravitee.am.extensiongrant.tokenexchange.validation.SubjectTokenValidator;
 import io.gravitee.am.extensiongrant.tokenexchange.validation.SubjectTokenValidatorFactory;
 import io.gravitee.am.extensiongrant.tokenexchange.validation.ValidatedToken;
@@ -36,7 +40,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * RFC 8693 OAuth 2.0 Token Exchange Extension Grant Provider.
@@ -55,10 +66,16 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
     private TokenExchangeExtensionGrantConfiguration configuration;
 
     private SubjectTokenValidatorFactory validatorFactory;
+    private ActorClaimBuilder actorClaimBuilder;
+    private MayActValidator mayActValidator;
+    private ImpersonationHandler impersonationHandler;
 
     @PostConstruct
     public void init() {
         this.validatorFactory = new SubjectTokenValidatorFactory();
+        this.actorClaimBuilder = new ActorClaimBuilder();
+        this.mayActValidator = new MayActValidator();
+        this.impersonationHandler = new ImpersonationHandler();
         LOGGER.info("Token Exchange Extension Grant Provider initialized with supported token types: {}",
                 validatorFactory.getSupportedTokenTypes());
     }
@@ -67,14 +84,105 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
     public Maybe<User> grant(TokenRequest tokenRequest) throws InvalidGrantException {
         return Single.fromCallable(() -> parseRequest(tokenRequest))
                 .flatMap(request -> validateSubjectToken(request)
-                        .flatMap(subjectToken -> validateActorTokenIfPresent(request)
-                                .map(actorToken -> createUser(subjectToken, actorToken, request))
-                                .switchIfEmpty(Single.fromCallable(() -> createUser(subjectToken, null, request)))
-                        )
+                        .flatMap((ValidatedToken subjectToken) -> {
+                            Maybe<ValidatedToken> actorTokenMaybe = validateActorTokenIfPresent(request);
+                            return actorTokenMaybe
+                                    .flatMapSingle((ValidatedToken actorToken) ->
+                                            buildDelegationContext(subjectToken, actorToken, request)
+                                                    .map(context -> createUser(context, request)))
+                                    .switchIfEmpty(Single.defer(() ->
+                                            buildDelegationContext(subjectToken, null, request)
+                                                    .map(context -> createUser(context, request))));
+                        })
                 )
                 .subscribeOn(Schedulers.io())
                 .toMaybe()
                 .observeOn(Schedulers.computation());
+    }
+
+    /**
+     * Build the delegation context based on the validated tokens and request.
+     */
+    private Single<DelegationContext> buildDelegationContext(ValidatedToken subjectToken,
+                                                              ValidatedToken actorToken,
+                                                              TokenExchangeRequest request) {
+        return Single.fromCallable(() -> {
+            DelegationContext.DelegationContextBuilder builder = DelegationContext.builder()
+                    .subjectToken(subjectToken)
+                    .actorToken(actorToken)
+                    .audience(request.getAudience())
+                    .resource(request.getResource())
+                    .requestedTokenType(request.getRequestedTokenType())
+                    .clientId(request.getClientId());
+
+            // Determine delegation vs impersonation scenario
+            boolean hasActorToken = actorToken != null;
+            boolean isImpersonation = impersonationHandler.isImpersonationScenario(configuration, hasActorToken);
+
+            if (isImpersonation) {
+                // Validate impersonation is allowed
+                if (!configuration.isAllowImpersonation()) {
+                    throw new InvalidGrantException("Impersonation is not allowed");
+                }
+
+                // Determine impersonation type
+                if (!hasActorToken) {
+                    builder.asDirectImpersonation();
+                    LOGGER.debug("Processing direct impersonation for subject: {}", subjectToken.getSubject());
+                } else {
+                    builder.asDelegatedImpersonation();
+                    LOGGER.debug("Processing delegated impersonation for subject: {} by actor: {}",
+                            subjectToken.getSubject(), actorToken.getSubject());
+                }
+
+                // Create audit info for impersonation
+                ImpersonationHandler.ImpersonationType impersonationType = hasActorToken ?
+                        ImpersonationHandler.ImpersonationType.DELEGATED :
+                        ImpersonationHandler.ImpersonationType.DIRECT;
+                Map<String, Object> auditInfo = impersonationHandler.createAuditInfo(
+                        subjectToken, actorToken, request.getClientId(), impersonationType);
+                builder.auditInfo(auditInfo);
+
+            } else if (hasActorToken && configuration.isAllowDelegation()) {
+                // Delegation scenario - validate may_act claim
+                MayActValidator.ValidationResult mayActResult = mayActValidator.validateMayAct(
+                        subjectToken, actorToken, request.getAudience());
+
+                if (!mayActResult.isValid()) {
+                    throw new InvalidGrantException("Delegation denied: " + mayActResult.getReason());
+                }
+
+                // Build actor claim
+                Map<String, Object> actClaim = actorClaimBuilder.buildActorClaim(
+                        actorToken, subjectToken.getActClaim(), configuration);
+                int chainDepth = actorClaimBuilder.calculateDelegationDepth(actClaim);
+
+                builder.asDelegation(actClaim, chainDepth);
+                LOGGER.debug("Processing delegation for subject: {} by actor: {}, chain depth: {}",
+                        subjectToken.getSubject(), actorToken.getSubject(), chainDepth);
+
+                // Create delegation audit info
+                Map<String, Object> auditInfo = new LinkedHashMap<>();
+                auditInfo.put("event_type", "TOKEN_EXCHANGE_DELEGATION");
+                auditInfo.put("subject", subjectToken.getSubject());
+                auditInfo.put("actor", actorToken.getSubject());
+                auditInfo.put("chain_depth", chainDepth);
+                auditInfo.put("client_id", request.getClientId());
+                auditInfo.put("timestamp", System.currentTimeMillis());
+                builder.auditInfo(auditInfo);
+
+            } else {
+                // Simple token exchange (no delegation, no impersonation)
+                builder.asSimpleExchange();
+                LOGGER.debug("Processing simple token exchange for subject: {}", subjectToken.getSubject());
+            }
+
+            // Determine granted scopes
+            Set<String> grantedScopes = determineGrantedScopes(subjectToken.getScopes(), request.getScope());
+            builder.grantedScopes(grantedScopes);
+
+            return builder.build();
+        });
     }
 
     /**
@@ -132,6 +240,9 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
             throw new InvalidGrantException("Delegation is not allowed");
         }
 
+        // Extract client_id from request
+        String clientId = tokenRequest.getClientId();
+
         return TokenExchangeRequest.builder()
                 .subjectToken(subjectToken)
                 .subjectTokenType(subjectTokenType)
@@ -141,6 +252,7 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
                 .audience(audience)
                 .scope(scope)
                 .requestedTokenType(requestedTokenType != null ? requestedTokenType : TokenTypeURN.ACCESS_TOKEN)
+                .clientId(clientId)
                 .build();
     }
 
@@ -178,11 +290,11 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
     }
 
     /**
-     * Create a user from the validated tokens.
+     * Create a user from the delegation context.
      */
-    private User createUser(ValidatedToken subjectToken, ValidatedToken actorToken,
-                           TokenExchangeRequest request) {
-        String subject = subjectToken.getSubject();
+    private User createUser(DelegationContext context, TokenExchangeRequest request) {
+        ValidatedToken subjectToken = context.getSubjectToken();
+        String subject = context.getEffectiveSubject();
 
         // Get username from claims or use subject
         String username = subject;
@@ -206,28 +318,47 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
             additionalInformation.put(Claims.GIO_INTERNAL_SUB, gioInternalSub);
         }
 
-        // Handle scopes based on policy
-        Set<String> grantedScopes = determineGrantedScopes(subjectToken.getScopes(), request.getScope());
+        // Handle scopes from delegation context
+        Set<String> grantedScopes = context.getGrantedScopes();
         if (grantedScopes != null && !grantedScopes.isEmpty()) {
             additionalInformation.put(Claims.SCOPE, String.join(" ", grantedScopes));
         }
 
-        // Build actor claim for delegation
-        if (actorToken != null && configuration.isAllowDelegation()) {
-            Map<String, Object> actClaim = buildActorClaim(actorToken, subjectToken.getActClaim());
-            additionalInformation.put(Claims.ACT, actClaim);
+        // Add actor claim for delegation (but not for impersonation)
+        if (context.isDelegation() && context.getActorClaim() != null) {
+            additionalInformation.put(Claims.ACT, context.getActorClaim());
         }
 
         // Store token exchange metadata
         additionalInformation.put("token_exchange", true);
         additionalInformation.put("subject_token_type", request.getSubjectTokenType());
         additionalInformation.put("requested_token_type", request.getRequestedTokenType());
+        additionalInformation.put("delegation_type", context.getDelegationType().name());
+
+        if (context.isImpersonation()) {
+            additionalInformation.put("impersonation", true);
+        }
 
         if (request.getAudience() != null) {
             additionalInformation.put("audience", request.getAudience());
         }
         if (request.getResource() != null) {
             additionalInformation.put("resource", request.getResource());
+        }
+
+        // Add actor information for audit purposes (even in impersonation)
+        if (context.hasActorToken()) {
+            additionalInformation.put("actor_subject", context.getActorSubject());
+        }
+
+        // Add delegation chain depth if applicable
+        if (context.getDelegationChainDepth() > 0) {
+            additionalInformation.put("delegation_chain_depth", context.getDelegationChainDepth());
+        }
+
+        // Store audit info
+        if (context.getAuditInfo() != null) {
+            additionalInformation.put("audit_info", context.getAuditInfo());
         }
 
         // Apply claims mapping if configured
@@ -278,30 +409,6 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
     }
 
     /**
-     * Build the actor claim for delegation scenarios.
-     * See RFC 8693 Section 4.1.
-     */
-    private Map<String, Object> buildActorClaim(ValidatedToken actorToken, Object existingActClaim) {
-        Map<String, Object> actClaim = new LinkedHashMap<>();
-
-        // Add actor's subject
-        actClaim.put("sub", actorToken.getSubject());
-
-        // Add client_id if available
-        String clientId = actorToken.getClientId();
-        if (clientId != null) {
-            actClaim.put("client_id", clientId);
-        }
-
-        // Nest existing act claim if present (for chained delegation)
-        if (existingActClaim != null) {
-            actClaim.put("act", existingActClaim);
-        }
-
-        return actClaim;
-    }
-
-    /**
      * Internal class representing a parsed token exchange request.
      */
     @lombok.Builder
@@ -315,5 +422,6 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
         private final String audience;
         private final String scope;
         private final String requestedTokenType;
+        private final String clientId;
     }
 }

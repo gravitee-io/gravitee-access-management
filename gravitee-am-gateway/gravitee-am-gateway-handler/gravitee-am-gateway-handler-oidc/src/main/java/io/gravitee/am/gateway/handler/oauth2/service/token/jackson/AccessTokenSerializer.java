@@ -60,6 +60,11 @@ public class AccessTokenSerializer extends StdSerializer<AccessToken> {
             jsonGenerator.writeBooleanField(Token.UPGRADED, token.getUpgraded());
         }
 
+        // RFC 8693 Token Exchange: issued_token_type
+        if (token.getIssuedTokenType() != null) {
+            jsonGenerator.writeStringField(Token.ISSUED_TOKEN_TYPE, token.getIssuedTokenType());
+        }
+
         jsonGenerator.writeEndObject();
     }
 }
