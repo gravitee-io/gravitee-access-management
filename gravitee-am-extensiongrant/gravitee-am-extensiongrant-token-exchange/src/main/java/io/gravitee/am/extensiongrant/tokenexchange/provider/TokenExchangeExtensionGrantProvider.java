@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.extensiongrant.tokenexchange.provider;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidTargetException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeURN;
@@ -110,8 +112,8 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
             DelegationContext.DelegationContextBuilder builder = DelegationContext.builder()
                     .subjectToken(subjectToken)
                     .actorToken(actorToken)
-                    .audience(request.getAudience())
-                    .resource(request.getResource())
+                    .audiences(request.getAudiences())
+                    .resources(request.getResources())
                     .requestedTokenType(request.getRequestedTokenType())
                     .clientId(request.getClientId());
 
@@ -146,7 +148,7 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
             } else if (hasActorToken && configuration.isAllowDelegation()) {
                 // Delegation scenario - validate may_act claim
                 MayActValidator.ValidationResult mayActResult = mayActValidator.validateMayAct(
-                        subjectToken, actorToken, request.getAudience());
+                        subjectToken, actorToken, request.getAudiences());
 
                 if (!mayActResult.isValid()) {
                     throw new InvalidGrantException("Delegation denied: " + mayActResult.getReason());
@@ -195,49 +197,62 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
         String subjectTokenType = params.get(Parameters.SUBJECT_TOKEN_TYPE);
         String actorToken = params.get(Parameters.ACTOR_TOKEN);
         String actorTokenType = params.get(Parameters.ACTOR_TOKEN_TYPE);
-        String resource = params.get(Parameters.RESOURCE);
-        String audience = params.get(Parameters.AUDIENCE);
         String scope = params.get(Parameters.SCOPE);
         String requestedTokenType = params.get(Parameters.REQUESTED_TOKEN_TYPE);
+        java.util.Set<String> resources = new java.util.LinkedHashSet<>(tokenRequest.getResources() == null ? java.util.Collections.emptySet() : tokenRequest.getResources());
+        java.util.List<String> audiences = new java.util.ArrayList<>(tokenRequest.getAudiences() == null ? java.util.Collections.emptyList() : tokenRequest.getAudiences());
+
+        String singleResource = params.get(Parameters.RESOURCE);
+        if ((resources == null || resources.isEmpty()) && singleResource != null && !singleResource.isEmpty()) {
+            resources = new java.util.LinkedHashSet<>();
+            resources.add(singleResource);
+        }
+        String singleAudience = params.get(Parameters.AUDIENCE);
+        if ((audiences == null || audiences.isEmpty()) && singleAudience != null && !singleAudience.isEmpty()) {
+            audiences = new java.util.ArrayList<>();
+            audiences.add(singleAudience);
+        }
 
         // Validate required parameters
         if (subjectToken == null || subjectToken.isEmpty()) {
-            throw new InvalidGrantException("Missing required parameter: subject_token");
+            throw new InvalidRequestException("Missing required parameter: subject_token");
         }
         if (subjectTokenType == null || subjectTokenType.isEmpty()) {
-            throw new InvalidGrantException("Missing required parameter: subject_token_type");
+            throw new InvalidRequestException("Missing required parameter: subject_token_type");
         }
 
         // Validate actor_token_type is present when actor_token is provided
         if (actorToken != null && !actorToken.isEmpty()) {
             if (actorTokenType == null || actorTokenType.isEmpty()) {
-                throw new InvalidGrantException("actor_token_type is required when actor_token is present");
+                throw new InvalidRequestException("actor_token_type is required when actor_token is present");
             }
         }
 
         // Validate subject_token_type is allowed
         if (!configuration.getAllowedSubjectTokenTypes().contains(subjectTokenType)) {
-            throw new InvalidGrantException("Unsupported subject_token_type: " + subjectTokenType);
+            throw new InvalidRequestException("Unsupported subject_token_type: " + subjectTokenType);
         }
 
         // Validate actor_token_type is allowed (if present)
         if (actorTokenType != null && !configuration.getAllowedActorTokenTypes().contains(actorTokenType)) {
-            throw new InvalidGrantException("Unsupported actor_token_type: " + actorTokenType);
+            throw new InvalidRequestException("Unsupported actor_token_type: " + actorTokenType);
         }
 
         // Validate requested_token_type is allowed (if present)
         if (requestedTokenType != null && !configuration.getAllowedRequestedTokenTypes().contains(requestedTokenType)) {
-            throw new InvalidGrantException("Unsupported requested_token_type: " + requestedTokenType);
+            throw new InvalidRequestException("Unsupported requested_token_type: " + requestedTokenType);
         }
 
+        validateTargets(resources, audiences);
+
         // Validate audience if required
-        if (configuration.isRequireAudience() && (audience == null || audience.isEmpty())) {
-            throw new InvalidGrantException("Missing required parameter: audience");
+        if (configuration.isRequireAudience() && (audiences == null || audiences.isEmpty())) {
+            throw new InvalidRequestException("Missing required parameter: audience");
         }
 
         // Check delegation is allowed when actor_token is present
         if (actorToken != null && !actorToken.isEmpty() && !configuration.isAllowDelegation()) {
-            throw new InvalidGrantException("Delegation is not allowed");
+            throw new InvalidRequestException("Delegation is not allowed");
         }
 
         // Extract client_id from request
@@ -248,12 +263,41 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
                 .subjectTokenType(subjectTokenType)
                 .actorToken(actorToken)
                 .actorTokenType(actorTokenType)
-                .resource(resource)
-                .audience(audience)
+                .resources(resources == null ? java.util.Collections.emptySet() : resources)
+                .audiences(audiences == null ? java.util.Collections.emptyList() : audiences)
                 .scope(scope)
                 .requestedTokenType(requestedTokenType != null ? requestedTokenType : TokenTypeURN.ACCESS_TOKEN)
                 .clientId(clientId)
                 .build();
+    }
+
+    private void validateTargets(java.util.Set<String> resources, java.util.List<String> audiences) {
+        if (resources != null) {
+            for (String resource : resources) {
+                if (resource == null || resource.isEmpty()) {
+                    throw new InvalidTargetException("resource parameter must not be empty");
+                }
+                try {
+                    java.net.URI uri = java.net.URI.create(resource);
+                    if (!uri.isAbsolute()) {
+                        throw new InvalidTargetException("resource must be an absolute URI: " + resource);
+                    }
+                    if (uri.getFragment() != null) {
+                        throw new InvalidTargetException("resource must not contain fragment component: " + resource);
+                    }
+                } catch (IllegalArgumentException ex) {
+                    throw new InvalidTargetException("Invalid resource URI: " + resource, ex);
+                }
+            }
+        }
+
+        if (audiences != null) {
+            for (String aud : audiences) {
+                if (aud == null || aud.trim().isEmpty()) {
+                    throw new InvalidTargetException("audience parameter must not be empty");
+                }
+            }
+        }
     }
 
     /**
@@ -318,6 +362,10 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
             additionalInformation.put(Claims.GIO_INTERNAL_SUB, gioInternalSub);
         }
 
+        if (subjectToken.getMayActClaim() != null) {
+            additionalInformation.put(Claims.MAY_ACT, subjectToken.getMayActClaim());
+        }
+
         // Handle scopes from delegation context
         Set<String> grantedScopes = context.getGrantedScopes();
         if (grantedScopes != null && !grantedScopes.isEmpty()) {
@@ -333,22 +381,34 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
         additionalInformation.put("token_exchange", true);
         additionalInformation.put("subject_token_type", request.getSubjectTokenType());
         additionalInformation.put("requested_token_type", request.getRequestedTokenType());
+        if (subjectToken.getTokenId() != null) {
+            additionalInformation.put("subject_token_id", subjectToken.getTokenId());
+        }
         additionalInformation.put("delegation_type", context.getDelegationType().name());
 
         if (context.isImpersonation()) {
             additionalInformation.put("impersonation", true);
         }
 
-        if (request.getAudience() != null) {
-            additionalInformation.put("audience", request.getAudience());
+        if (request.getAudiences() != null && !request.getAudiences().isEmpty()) {
+            additionalInformation.put("audiences", request.getAudiences());
+            if (request.getAudiences().size() == 1) {
+                additionalInformation.put("audience", request.getAudiences().get(0));
+            }
         }
-        if (request.getResource() != null) {
-            additionalInformation.put("resource", request.getResource());
+        if (request.getResources() != null && !request.getResources().isEmpty()) {
+            additionalInformation.put("resources", request.getResources());
+            if (request.getResources().size() == 1) {
+                additionalInformation.put("resource", request.getResources().iterator().next());
+            }
         }
 
         // Add actor information for audit purposes (even in impersonation)
         if (context.hasActorToken()) {
             additionalInformation.put("actor_subject", context.getActorSubject());
+            if (context.getActorToken().getTokenId() != null) {
+                additionalInformation.put("actor_token_id", context.getActorToken().getTokenId());
+            }
         }
 
         // Add delegation chain depth if applicable
@@ -418,8 +478,8 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
         private final String subjectTokenType;
         private final String actorToken;
         private final String actorTokenType;
-        private final String resource;
-        private final String audience;
+        private final java.util.Set<String> resources;
+        private final java.util.List<String> audiences;
         private final String scope;
         private final String requestedTokenType;
         private final String clientId;

@@ -175,7 +175,7 @@ public class ImpersonationHandler {
             // by checking if the requesting client is authorized
             if (actorToken != null) {
                 MayActValidator.ValidationResult result = mayActValidator.validateMayAct(
-                        subjectToken, actorToken, null);
+                        subjectToken, actorToken, java.util.Collections.emptyList());
 
                 if (!result.isValid()) {
                     throw new InvalidGrantException(

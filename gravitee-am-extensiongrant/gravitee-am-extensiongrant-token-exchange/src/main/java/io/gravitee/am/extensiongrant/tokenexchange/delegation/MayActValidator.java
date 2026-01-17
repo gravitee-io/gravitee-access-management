@@ -91,7 +91,7 @@ public class MayActValidator {
      */
     public ValidationResult validateMayAct(ValidatedToken subjectToken,
                                            ValidatedToken actorToken,
-                                           String targetAudience) {
+                                           java.util.List<String> targetAudiences) {
         Object mayActClaim = subjectToken.getMayActClaim();
 
         // If no may_act claim, delegation is allowed by default
@@ -117,7 +117,7 @@ public class MayActValidator {
         }
 
         // Validate audience if specified in may_act
-        ValidationResult audienceValidation = validateAudience(mayAct, targetAudience);
+        ValidationResult audienceValidation = validateAudience(mayAct, targetAudiences);
         if (!audienceValidation.isValid()) {
             return audienceValidation;
         }
@@ -166,7 +166,7 @@ public class MayActValidator {
     /**
      * Validate that the target audience is allowed by may_act.
      */
-    private ValidationResult validateAudience(Map<String, Object> mayAct, String targetAudience) {
+    private ValidationResult validateAudience(Map<String, Object> mayAct, java.util.List<String> targetAudiences) {
         Object allowedAudience = mayAct.get(Claims.AUD);
 
         if (allowedAudience == null) {
@@ -174,27 +174,20 @@ public class MayActValidator {
             return ValidationResult.valid();
         }
 
-        if (targetAudience == null || targetAudience.isEmpty()) {
-            // may_act specifies audience but request doesn't have one
-            // This could be valid depending on policy, we'll allow it
-            LOGGER.debug("may_act specifies audience constraints but no target audience provided");
-            return ValidationResult.valid();
-        }
+        java.util.List<String> requestedAudiences = targetAudiences == null ? java.util.Collections.emptyList() : targetAudiences;
 
         if (allowedAudience instanceof String) {
-            if (!allowedAudience.equals(targetAudience)) {
-                LOGGER.debug("Target audience '{}' does not match allowed audience '{}'",
-                        targetAudience, allowedAudience);
-                return ValidationResult.invalid(
-                        "Target audience is not authorized for delegation");
+            if (!requestedAudiences.isEmpty() && requestedAudiences.stream().anyMatch(aud -> !allowedAudience.equals(aud))) {
+                LOGGER.debug("One of the requested audiences {} does not match allowed audience '{}'",
+                        requestedAudiences, allowedAudience);
+                return ValidationResult.invalid("Target audience is not authorized for delegation");
             }
         } else if (allowedAudience instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> allowedAudiences = (List<String>) allowedAudience;
-            if (!allowedAudiences.contains(targetAudience)) {
-                LOGGER.debug("Target audience '{}' not in allowed audiences list", targetAudience);
-                return ValidationResult.invalid(
-                        "Target audience is not in the list of authorized audiences");
+            if (!requestedAudiences.isEmpty() && !allowedAudiences.containsAll(requestedAudiences)) {
+                LOGGER.debug("Requested audiences {} are not fully contained in allowed audiences {}", requestedAudiences, allowedAudiences);
+                return ValidationResult.invalid("Target audience is not in the list of authorized audiences");
             }
         }
 

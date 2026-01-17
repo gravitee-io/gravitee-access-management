@@ -19,6 +19,7 @@ import io.gravitee.am.extensiongrant.tokenexchange.validation.ValidatedToken;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,14 +76,14 @@ public class DelegationContext {
     private final int delegationChainDepth;
 
     /**
-     * The target audience for the issued token.
+     * The requested audiences for the issued token.
      */
-    private final String audience;
+    private final java.util.List<String> audiences;
 
     /**
-     * The target resource for the issued token.
+     * The requested resources for the issued token.
      */
-    private final String resource;
+    private final java.util.Set<String> resources;
 
     /**
      * The requested token type.

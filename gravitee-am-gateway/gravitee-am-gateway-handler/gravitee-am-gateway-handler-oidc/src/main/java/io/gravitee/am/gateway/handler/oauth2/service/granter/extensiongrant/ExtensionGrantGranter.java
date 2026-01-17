@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant;
 
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
@@ -133,6 +134,9 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                     }
                 })
                 .onErrorResumeNext(ex -> {
+                    if (ex instanceof OAuth2Exception) {
+                        return Maybe.error(ex);
+                    }
                     String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();
                     return Maybe.error(new InvalidGrantException(msg));
                 });
@@ -202,6 +206,8 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         tokenRequest.setGrantType(_tokenRequest.getGrantType());
         tokenRequest.setScope(_tokenRequest.getScopes());
         tokenRequest.setRequestParameters(_tokenRequest.parameters().toSingleValueMap());
+        tokenRequest.setResources(_tokenRequest.getResources());
+        tokenRequest.setAudiences(_tokenRequest.getAudiences());
 
         return tokenRequest;
     }

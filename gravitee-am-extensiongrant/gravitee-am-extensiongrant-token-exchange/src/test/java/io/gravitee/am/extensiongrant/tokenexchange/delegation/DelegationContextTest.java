@@ -19,6 +19,7 @@ import io.gravitee.am.extensiongrant.tokenexchange.validation.ValidatedToken;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,7 +52,7 @@ class DelegationContextTest {
                 .actorToken(actorToken)
                 .asDelegation(actorClaim, 1)
                 .grantedScopes(Set.of("read", "write"))
-                .audience("https://api.example.com")
+                .audiences(List.of("https://api.example.com"))
                 .clientId("client-123")
                 .build();
 
@@ -65,7 +66,7 @@ class DelegationContextTest {
         assertNotNull(context.getActorClaim());
         assertEquals("admin@example.com", context.getActorClaim().get("sub"));
         assertTrue(context.getGrantedScopes().contains("read"));
-        assertEquals("https://api.example.com", context.getAudience());
+        assertEquals(List.of("https://api.example.com"), context.getAudiences());
     }
 
     @Test
@@ -281,11 +282,11 @@ class DelegationContextTest {
         DelegationContext context = DelegationContext.builder()
                 .subjectToken(createSubjectToken())
                 .asSimpleExchange()
-                .resource(resource)
+                .resources(Set.of(resource))
                 .build();
 
         // Then
-        assertEquals(resource, context.getResource());
+        assertTrue(context.getResources().contains(resource));
     }
 
     @Test
@@ -314,8 +315,8 @@ class DelegationContextTest {
                 .actorToken(actorToken)
                 .asDelegation(actorClaim, 1)
                 .grantedScopes(Set.of("read", "write", "admin"))
-                .audience("https://api.example.com")
-                .resource("https://api.example.com/v1/users")
+                .audiences(List.of("https://api.example.com"))
+                .resources(Set.of("https://api.example.com/v1/users"))
                 .requestedTokenType("urn:ietf:params:oauth:token-type:access_token")
                 .clientId("requesting-client")
                 .auditInfo(auditInfo)
@@ -328,8 +329,8 @@ class DelegationContextTest {
         assertTrue(context.isDelegation());
         assertEquals(1, context.getDelegationChainDepth());
         assertEquals(3, context.getGrantedScopes().size());
-        assertEquals("https://api.example.com", context.getAudience());
-        assertEquals("https://api.example.com/v1/users", context.getResource());
+        assertEquals(List.of("https://api.example.com"), context.getAudiences());
+        assertTrue(context.getResources().contains("https://api.example.com/v1/users"));
         assertEquals("urn:ietf:params:oauth:token-type:access_token", context.getRequestedTokenType());
         assertEquals("requesting-client", context.getClientId());
         assertNotNull(context.getAuditInfo());

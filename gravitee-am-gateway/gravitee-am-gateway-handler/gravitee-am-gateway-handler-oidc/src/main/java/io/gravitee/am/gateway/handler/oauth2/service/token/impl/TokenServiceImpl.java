@@ -88,6 +88,26 @@ public class TokenServiceImpl implements TokenService {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private static final String PERMISSIONS = "permissions";
+    private static final String TOKEN_EXCHANGE_FLAG = "token_exchange";
+    private static final Set<String> TOKEN_EXCHANGE_ADDITIONAL_CLAIMS = Set.of(
+            TOKEN_EXCHANGE_FLAG,
+            "delegation_type",
+            "impersonation",
+            "audiences",
+            "resources",
+            "audience",
+            "resource",
+            "subject_token_type",
+            "requested_token_type",
+            "subject_token_id",
+            "actor_subject",
+            "actor_token_id",
+            "delegation_chain_depth",
+            "audit_info",
+            Claims.ACT,
+            Claims.MAY_ACT,
+            Claims.GIO_INTERNAL_SUB
+    );
 
     public static final String SIGNING_CERTIFICATE_ID = "SIGNING_CERTIFICATE_ID";
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
@@ -297,6 +317,27 @@ public class TokenServiceImpl implements TokenService {
         accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
         accessToken.setRefreshToken(refreshToken != null ? refreshToken.getJti() : null);
+        Object actClaim = token.get(Claims.ACT);
+        if (actClaim instanceof Map) {
+            accessToken.setActor((Map<String, Object>) actClaim);
+        }
+        Object subjectTokenType = token.get("subject_token_type");
+        if (subjectTokenType != null) {
+            accessToken.setSourceTokenType(subjectTokenType.toString());
+        }
+        Object subjectTokenId = token.get("subject_token_id");
+        if (subjectTokenId != null) {
+            accessToken.setSourceTokenId(subjectTokenId.toString());
+        }
+        Object issuedTokenType = token.get(Token.ISSUED_TOKEN_TYPE);
+        if (issuedTokenType != null) {
+            accessToken.setIssuedTokenType(issuedTokenType.toString());
+        } else if (oAuth2Request.getContext() != null) {
+            Object requested = oAuth2Request.getContext().get(Token.ISSUED_TOKEN_TYPE);
+            if (requested != null) {
+                accessToken.setIssuedTokenType(requested.toString());
+            }
+        }
         return accessToken;
     }
 
@@ -407,6 +448,7 @@ public class TokenServiceImpl implements TokenService {
 
         // set custom claims
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
+        applyTokenExchangeClaims(jwt, user);
 
         // Apply resource to aud
         setResources(request, jwt);
@@ -426,6 +468,29 @@ public class TokenServiceImpl implements TokenService {
         logger.debug("resources: {}, JTI: {}, client ID:{}", jsonArray, jwt.getJti(), request.getClientId());
 
         jwt.put(Claims.AUD, jsonArray);
+    }
+
+    private void applyTokenExchangeClaims(JWT jwt, User user) {
+        if (user == null || user.getAdditionalInformation() == null) {
+            return;
+        }
+
+        Map<String, Object> additionalInformation = user.getAdditionalInformation();
+        Object mayAct = additionalInformation.get(Claims.MAY_ACT);
+        if (mayAct != null) {
+            jwt.put(Claims.MAY_ACT, mayAct);
+        }
+
+        if (!Boolean.TRUE.equals(additionalInformation.get(TOKEN_EXCHANGE_FLAG))) {
+            return;
+        }
+
+        TOKEN_EXCHANGE_ADDITIONAL_CLAIMS.forEach(claim -> {
+            Object value = additionalInformation.get(claim);
+            if (value != null) {
+                jwt.put(claim, value);
+            }
+        });
     }
 
     private JWT createRefreshTokenJWT(OAuth2Request request, Client client, User user, JWT accessToken) {

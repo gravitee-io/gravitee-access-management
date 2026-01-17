@@ -98,6 +98,11 @@ public class OAuth2Request extends BaseRequest {
     private Set<String> resources = new HashSet<>();
 
     /**
+     * Logical audience values requested via RFC 8693.
+     */
+    private List<String> audiences = new ArrayList<>();
+
+    /**
      * Original resources approved during the authorization step (RFC 8707)
      * Used to preserve the initial grant when issuing refresh tokens
      */
@@ -163,6 +168,7 @@ public class OAuth2Request extends BaseRequest {
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
         this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
+        this.audiences = other.audiences != null ? new ArrayList<>(other.audiences) : new ArrayList<>();
 
         //BaseRequest
         this.setId(other.getId());

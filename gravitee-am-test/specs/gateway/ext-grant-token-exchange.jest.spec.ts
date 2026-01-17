@@ -89,6 +89,10 @@ export const testTokenData = {
     // SSH RSA public key for JWT signature validation
     sshRsa:
         'AAAAB3NzaC1yc2EAAAADAQABAAABAQC7VJTUt9Us8cKjMzEfYyjiWA4R4/M2bS1GB4t7NXp98C3SC6dVMvDuictGeurT8jNbvJZHtCSuYEvuNMoSfm76oqFvAp8Gy0iz5sxjZmSnXyCdPEovGhLa0VzMaQ8s+CLOyS56YyCFGeJZqgtzJ6GR3eqoYSW9b9UMvkBpZODSctWSNGj3P7jRFDO5VoTwCQAWbFnOjDfH5Ulgp2PKSQnSJP3AJLQNFNe7br1XbrhV//eO+t51mIpGSDCUv3E0DDFcWDTH9cXDTTlRZVEiR2BwpZOOkE/Z0/BVnhZYL71oZV34bKfWjQIt6V/isSMahdsAASACp4ZTGtwiVuNd9tyb',
+    saml2Assertion:
+        'PHNhbWwyOkFzc2VydGlvbiB4bWxuczpzYW1sMj0ndXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmFzc2VydGlvbicgSUQ9J19pZDEyMycgSXNzdWVJbnN0YW50PScyMDI0LTAxLTAxVDAwOjAwOjAwWic+PHNhbWwyOklzc3Vlcj5odHRwczovL2lzc3Vlci5leGFtcGxlLmNvbTwvc2FtbDI6SXNzdWVyPjxzYW1sMjpTdWJqZWN0PjxzYW1sMjpOYW1lSUQ+dXNlckBleGFtcGxlLmNvbTwvc2FtbDI6TmFtZUlEPjwvc2FtbDI6U3ViamVjdD48c2FtbDI6Q29uZGl0aW9ucyBOb3RCZWZvcmU9JzIwMjMtMDEtMDFUMDA6MDA6MDBaJyBOb3RPbk9yQWZ0ZXI9JzI5OTktMDEtMDFUMDA6MDA6MDBaJz48c2FtbDI6QXVkaWVuY2VSZXN0cmljdGlvbj48c2FtbDI6QXVkaWVuY2U+aHR0cHM6Ly9hcGkuZXhhbXBsZS5jb208L3NhbWwyOkF1ZGllbmNlPjwvc2FtbDI6QXVkaWVuY2VSZXN0cmljdGlvbj48L3NhbWwyOkNvbmRpdGlvbnM+PC9zYW1sMjpBc3NlcnRpb24+',
+    saml1Assertion:
+        'PHNhbWwxOkFzc2VydGlvbiB4bWxuczpzYW1sMT0ndXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6MS4wOmFzc2VydGlvbicgSXNzdWVyPSdodHRwczovL2lzc3Vlci5leGFtcGxlLmNvbSc+PHNhbWwxOlN1YmplY3Q+PHNhbWwxOk5hbWVJZGVudGlmaWVyPnVzZXJAZXhhbXBsZS5jb208L3NhbWwxOk5hbWVJZGVudGlmaWVyPjwvc2FtbDE6U3ViamVjdD48c2FtbDE6Q29uZGl0aW9ucyBOb3RCZWZvcmU9JzIwMjMtMDEtMDFUMDA6MDA6MDBaJyBOb3RPbk9yQWZ0ZXI9JzI5OTktMDEtMDFUMDA6MDA6MDBaJz48c2FtbDE6QXVkaWVuY2VSZXN0cmljdGlvbkNvbmRpdGlvbj48c2FtbDE6QXVkaWVuY2U+aHR0cHM6Ly9sZWdhY3ktYXBpLmV4YW1wbGUuY29tPC9zYW1sMTpBdWRpZW5jZT48L3NhbWwxOkF1ZGllbmNlUmVzdHJpY3Rpb25Db25kaXRpb24+PC9zYW1sMTpDb25kaXRpb25zPjwvc2FtbDE6QXNzZXJ0aW9uPg==',
 };
 
 beforeAll(async () => {
@@ -107,6 +111,9 @@ beforeAll(async () => {
                 'urn:ietf:params:oauth:token-type:access_token',
                 'urn:ietf:params:oauth:token-type:jwt',
                 'urn:ietf:params:oauth:token-type:id_token',
+                'urn:ietf:params:oauth:token-type:saml2',
+                'urn:ietf:params:oauth:token-type:saml1',
+                'urn:ietf:params:oauth:token-type:refresh_token',
             ],
             allowedActorTokenTypes: ['urn:ietf:params:oauth:token-type:access_token', 'urn:ietf:params:oauth:token-type:jwt'],
             allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token', 'urn:ietf:params:oauth:token-type:jwt'],
@@ -350,6 +357,38 @@ describe('Scenario: RFC 8693 Token Exchange - Basic Exchange', () => {
         // Audience should be stored in additional information
         expect(newToken.payload['audience']).toBeDefined();
     });
+
+    it('Should accept multiple audiences', async () => {
+        const subjectTokenResponse = await performPost(
+            openIdConfiguration.token_endpoint,
+            '?grant_type=client_credentials',
+            null,
+            {
+                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        ).expect(200);
+
+        const response = await performPost(
+            openIdConfiguration.token_endpoint,
+            `?grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+                `&subject_token=${subjectTokenResponse.body.access_token}` +
+                `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+                `&audience=https://api.one.example.com` +
+                `&audience=https://api.two.example.com`,
+            null,
+            {
+                Authorization: `Basic ${basicAuth}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        ).expect(200);
+
+        const newToken = parseJwt(response.body.access_token);
+        expect(Array.isArray(newToken.payload['audiences'])).toBeTruthy();
+        expect(newToken.payload['audiences']).toEqual(
+            expect.arrayContaining(['https://api.one.example.com', 'https://api.two.example.com']),
+        );
+    });
 });
 
 describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
@@ -521,6 +560,46 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
     });
 });
 
+describe('Scenario: RFC 8693 Token Exchange - SAML Assertions', () => {
+    it('Should exchange SAML 2.0 assertion', async () => {
+        const response = await performPost(
+            openIdConfiguration.token_endpoint,
+            `?grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+                `&subject_token=${encodeURIComponent(testTokenData.saml2Assertion)}` +
+                `&subject_token_type=urn:ietf:params:oauth:token-type:saml2` +
+                `&audience=https://downstream.example.com`,
+            null,
+            {
+                Authorization: `Basic ${basicAuth}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        ).expect(200);
+
+        const token = parseJwt(response.body.access_token);
+        expect(token.payload.sub).toBe('user@example.com');
+        expect(token.payload.token_exchange).toBeTruthy();
+        expect(token.payload.audiences).toEqual(expect.arrayContaining(['https://downstream.example.com']));
+    });
+
+    it('Should exchange SAML 1.1 assertion', async () => {
+        const response = await performPost(
+            openIdConfiguration.token_endpoint,
+            `?grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+                `&subject_token=${encodeURIComponent(testTokenData.saml1Assertion)}` +
+                `&subject_token_type=urn:ietf:params:oauth:token-type:saml1`,
+            null,
+            {
+                Authorization: `Basic ${basicAuth}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        ).expect(200);
+
+        const token = parseJwt(response.body.access_token);
+        expect(token.payload.sub).toBe('user@example.com');
+        expect(token.payload.token_exchange).toBeTruthy();
+    });
+});
+
 describe('Scenario: RFC 8693 Token Exchange - Error Handling', () => {
     it('Should reject request with missing subject_token', async () => {
         await performPost(
@@ -577,13 +656,40 @@ describe('Scenario: RFC 8693 Token Exchange - Error Handling', () => {
             openIdConfiguration.token_endpoint,
             `?grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
             `&subject_token=${subjectToken}` +
-            `&subject_token_type=urn:ietf:params:oauth:token-type:saml2`, // Unsupported type
+            `&subject_token_type=urn:ietf:params:oauth:token-type:unknown_type`, // Unsupported type
             null,
             {
                 Authorization: `Basic ${basicAuth}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(400);
+    });
+
+    it('Should reject malformed resource parameter with invalid_target error', async () => {
+        const subjectTokenResponse = await performPost(
+            openIdConfiguration.token_endpoint,
+            '?grant_type=client_credentials',
+            null,
+            {
+                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        ).expect(200);
+
+        const response = await performPost(
+            openIdConfiguration.token_endpoint,
+            `?grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+                `&subject_token=${subjectTokenResponse.body.access_token}` +
+                `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+                `&resource=relative-path`,
+            null,
+            {
+                Authorization: `Basic ${basicAuth}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        ).expect(400);
+
+        expect(response.body.error).toBe('invalid_target');
     });
 
     it('Should reject expired subject token', async () => {

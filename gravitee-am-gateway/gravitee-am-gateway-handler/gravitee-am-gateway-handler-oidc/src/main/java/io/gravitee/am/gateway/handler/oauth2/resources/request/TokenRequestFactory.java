@@ -78,6 +78,7 @@ public final class TokenRequestFactory {
         String scope = request.params().get(Parameters.SCOPE);
         tokenRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));
+        tokenRequest.setAudiences(AudienceParameterUtils.parseAudienceParameters(request));
 
         // set RFC 8707 resource indicators
         tokenRequest.setResources(ResourceParameterUtils.parseResourceParameters(request));

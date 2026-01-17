@@ -16,11 +16,13 @@
 package io.gravitee.am.repository.oauth2.model.request;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,6 +33,8 @@ public abstract class BaseRequest implements Serializable {
     private String clientId;
     private Set<String> scope = new HashSet<>();
     private Map<String, String> requestParameters = Collections.unmodifiableMap(new HashMap<String, String>());
+    private Set<String> resources = new HashSet<>();
+    private List<String> audiences = new ArrayList<>();
 
     public String getClientId() {
         return clientId;
@@ -54,5 +58,21 @@ public abstract class BaseRequest implements Serializable {
 
     public void setRequestParameters(Map<String, String> requestParameters) {
         this.requestParameters = requestParameters;
+    }
+
+    public Set<String> getResources() {
+        return resources;
+    }
+
+    public void setResources(Set<String> resources) {
+        this.resources = resources;
+    }
+
+    public List<String> getAudiences() {
+        return audiences;
+    }
+
+    public void setAudiences(List<String> audiences) {
+        this.audiences = audiences;
     }
 }

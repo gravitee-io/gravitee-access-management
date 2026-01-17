@@ -19,6 +19,8 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeURN;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidTargetException;
 import io.gravitee.am.extensiongrant.tokenexchange.TokenExchangeExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
@@ -74,7 +76,7 @@ class TokenExchangeExtensionGrantProviderTest {
         TokenRequest tokenRequest = createTokenRequest(null, TokenTypeURN.ACCESS_TOKEN, null, null);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test
@@ -83,7 +85,7 @@ class TokenExchangeExtensionGrantProviderTest {
         TokenRequest tokenRequest = createTokenRequest("test-token", null, null, null);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test
@@ -95,7 +97,7 @@ class TokenExchangeExtensionGrantProviderTest {
         TokenRequest tokenRequest = createTokenRequest("test-token", TokenTypeURN.JWT, null, null);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test
@@ -111,7 +113,21 @@ class TokenExchangeExtensionGrantProviderTest {
         when(tokenRequest.getRequestParameters()).thenReturn(params);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
+    }
+
+    @Test
+    void shouldRejectInvalidResourceUri() {
+        Map<String, String> params = new HashMap<>();
+        params.put(Parameters.SUBJECT_TOKEN, "test-subject-token");
+        params.put(Parameters.SUBJECT_TOKEN_TYPE, TokenTypeURN.ACCESS_TOKEN);
+        params.put(Parameters.RESOURCE, "relative/path");
+
+        TokenRequest tokenRequest = mock(TokenRequest.class);
+        when(tokenRequest.getRequestParameters()).thenReturn(params);
+        when(tokenRequest.getResources()).thenReturn(Set.of("relative/path"));
+
+        assertThrows(InvalidTargetException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test
@@ -130,7 +146,7 @@ class TokenExchangeExtensionGrantProviderTest {
         when(tokenRequest.getRequestParameters()).thenReturn(params);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test
@@ -148,7 +164,7 @@ class TokenExchangeExtensionGrantProviderTest {
         when(tokenRequest.getRequestParameters()).thenReturn(params);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test
@@ -159,7 +175,7 @@ class TokenExchangeExtensionGrantProviderTest {
         TokenRequest tokenRequest = createTokenRequest("test-token", TokenTypeURN.ACCESS_TOKEN, null, null);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test
@@ -177,7 +193,7 @@ class TokenExchangeExtensionGrantProviderTest {
         when(tokenRequest.getRequestParameters()).thenReturn(params);
 
         // When/Then
-        assertThrows(InvalidGrantException.class, () -> provider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidRequestException.class, () -> provider.grant(tokenRequest).blockingGet());
     }
 
     @Test

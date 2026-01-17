@@ -59,9 +59,13 @@ public class SubjectTokenValidatorFactory {
         AccessTokenValidator accessTokenValidator = new AccessTokenValidator();
         validators.put(TokenTypeURN.ACCESS_TOKEN, accessTokenValidator);
 
-        // Note: SAML validators would be registered here when implemented
-        // validators.put(TokenTypeURN.SAML2, new Saml2SubjectTokenValidator());
-        // validators.put(TokenTypeURN.SAML1, new Saml1SubjectTokenValidator());
+        // Refresh Token validator
+        RefreshTokenValidator refreshTokenValidator = new RefreshTokenValidator();
+        validators.put(TokenTypeURN.REFRESH_TOKEN, refreshTokenValidator);
+
+        // SAML validators
+        validators.put(TokenTypeURN.SAML2, new Saml2SubjectTokenValidator());
+        validators.put(TokenTypeURN.SAML1, new Saml1SubjectTokenValidator());
 
         LOGGER.info("Registered {} subject token validators: {}", validators.size(), validators.keySet());
     }

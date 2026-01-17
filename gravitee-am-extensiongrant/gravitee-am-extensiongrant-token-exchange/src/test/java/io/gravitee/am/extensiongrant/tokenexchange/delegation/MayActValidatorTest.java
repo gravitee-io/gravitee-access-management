@@ -53,7 +53,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertTrue(result.isValid());
@@ -76,7 +76,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertTrue(result.isValid());
@@ -98,7 +98,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertFalse(result.isValid());
@@ -122,7 +122,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertTrue(result.isValid());
@@ -144,7 +144,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertFalse(result.isValid());
@@ -167,7 +167,7 @@ class MayActValidatorTest {
 
         // When
         MayActValidator.ValidationResult result = validator.validateMayAct(
-                subjectToken, actorToken, "https://api.example.com");
+                subjectToken, actorToken, java.util.List.of("https://api.example.com"));
 
         // Then
         assertTrue(result.isValid());
@@ -190,7 +190,7 @@ class MayActValidatorTest {
 
         // When
         MayActValidator.ValidationResult result = validator.validateMayAct(
-                subjectToken, actorToken, "https://other-api.example.com");
+                subjectToken, actorToken, java.util.List.of("https://other-api.example.com"));
 
         // Then
         assertFalse(result.isValid());
@@ -214,7 +214,7 @@ class MayActValidatorTest {
 
         // When
         MayActValidator.ValidationResult result = validator.validateMayAct(
-                subjectToken, actorToken, "https://api2.example.com");
+                subjectToken, actorToken, java.util.List.of("https://api2.example.com"));
 
         // Then
         assertTrue(result.isValid());
@@ -237,7 +237,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertTrue(result.isValid());
@@ -260,7 +260,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertFalse(result.isValid());
@@ -280,7 +280,7 @@ class MayActValidatorTest {
                 .build();
 
         // When
-        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, null);
+        MayActValidator.ValidationResult result = validator.validateMayAct(subjectToken, actorToken, java.util.Collections.emptyList());
 
         // Then
         assertFalse(result.isValid());
@@ -307,7 +307,7 @@ class MayActValidatorTest {
 
         // When - all constraints match
         MayActValidator.ValidationResult result = validator.validateMayAct(
-                subjectToken, actorToken, "https://api.example.com");
+                subjectToken, actorToken, java.util.List.of("https://api.example.com"));
 
         // Then
         assertTrue(result.isValid());

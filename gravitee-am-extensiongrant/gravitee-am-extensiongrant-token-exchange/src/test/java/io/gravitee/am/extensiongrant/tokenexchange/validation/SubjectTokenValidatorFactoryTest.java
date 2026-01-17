@@ -22,6 +22,8 @@ import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +55,10 @@ class SubjectTokenValidatorFactoryTest {
         assertTrue(supportedTypes.contains(TokenTypeURN.JWT));
         assertTrue(supportedTypes.contains(TokenTypeURN.ID_TOKEN));
         assertTrue(supportedTypes.contains(TokenTypeURN.ACCESS_TOKEN));
-        assertEquals(3, supportedTypes.size());
+        assertTrue(supportedTypes.contains(TokenTypeURN.REFRESH_TOKEN));
+        assertTrue(supportedTypes.contains(TokenTypeURN.SAML1));
+        assertTrue(supportedTypes.contains(TokenTypeURN.SAML2));
+        assertEquals(6, supportedTypes.size());
     }
 
     @Test
@@ -101,6 +106,9 @@ class SubjectTokenValidatorFactoryTest {
         assertTrue(factory.hasValidator(TokenTypeURN.JWT));
         assertTrue(factory.hasValidator(TokenTypeURN.ID_TOKEN));
         assertTrue(factory.hasValidator(TokenTypeURN.ACCESS_TOKEN));
+        assertTrue(factory.hasValidator(TokenTypeURN.REFRESH_TOKEN));
+        assertTrue(factory.hasValidator(TokenTypeURN.SAML1));
+        assertTrue(factory.hasValidator(TokenTypeURN.SAML2));
         assertFalse(factory.hasValidator("urn:unsupported:token:type"));
     }
 
@@ -160,14 +168,51 @@ class SubjectTokenValidatorFactoryTest {
     }
 
     @Test
-    void shouldHaveSaml2NotSupportedYet() {
-        // SAML2 is not yet implemented
-        assertFalse(factory.hasValidator(TokenTypeURN.SAML2));
+    void shouldExposeSamlValidators() {
+        assertTrue(factory.hasValidator(TokenTypeURN.SAML2));
+        assertTrue(factory.hasValidator(TokenTypeURN.SAML1));
     }
 
     @Test
-    void shouldHaveSaml1NotSupportedYet() {
-        // SAML1 is not yet implemented
-        assertFalse(factory.hasValidator(TokenTypeURN.SAML1));
+    void shouldValidateSaml2Assertion() throws InvalidGrantException {
+        String assertion = encode(
+                "<saml2:Assertion xmlns:saml2='urn:oasis:names:tc:SAML:2.0:assertion' ID='_id123' IssueInstant='2024-01-01T00:00:00Z'>" +
+                "<saml2:Issuer>https://issuer.example.com</saml2:Issuer>" +
+                "<saml2:Subject><saml2:NameID>user@example.com</saml2:NameID></saml2:Subject>" +
+                "<saml2:Conditions NotBefore='2023-01-01T00:00:00Z' NotOnOrAfter='2999-01-01T00:00:00Z'>" +
+                "<saml2:AudienceRestriction><saml2:Audience>https://api.example.com</saml2:Audience></saml2:AudienceRestriction>" +
+                "</saml2:Conditions></saml2:Assertion>");
+        TokenExchangeExtensionGrantConfiguration configuration = new TokenExchangeExtensionGrantConfiguration();
+        configuration.setTrustedIssuers(Set.of("https://issuer.example.com"));
+
+        SubjectTokenValidator validator = factory.getValidator(TokenTypeURN.SAML2);
+        ValidatedToken validatedToken = validator.validate(assertion, configuration).blockingGet();
+
+        assertEquals("user@example.com", validatedToken.getSubject());
+        assertEquals("https://issuer.example.com", validatedToken.getIssuer());
+        assertTrue(validatedToken.getAudience().contains("https://api.example.com"));
+    }
+
+    @Test
+    void shouldValidateSaml1Assertion() throws InvalidGrantException {
+        String assertion = encode(
+                "<saml1:Assertion xmlns:saml1='urn:oasis:names:tc:SAML:1.0:assertion' Issuer='https://issuer.example.com'>" +
+                "<saml1:Subject><saml1:NameIdentifier>user@example.com</saml1:NameIdentifier></saml1:Subject>" +
+                "<saml1:Conditions NotBefore='2023-01-01T00:00:00Z' NotOnOrAfter='2999-01-01T00:00:00Z'>" +
+                "<saml1:AudienceRestrictionCondition><saml1:Audience>https://legacy-api.example.com</saml1:Audience></saml1:AudienceRestrictionCondition>" +
+                "</saml1:Conditions></saml1:Assertion>");
+        TokenExchangeExtensionGrantConfiguration configuration = new TokenExchangeExtensionGrantConfiguration();
+        configuration.setTrustedIssuers(Set.of("https://issuer.example.com"));
+
+        SubjectTokenValidator validator = factory.getValidator(TokenTypeURN.SAML1);
+        ValidatedToken validatedToken = validator.validate(assertion, configuration).blockingGet();
+
+        assertEquals("user@example.com", validatedToken.getSubject());
+        assertEquals("https://issuer.example.com", validatedToken.getIssuer());
+        assertTrue(validatedToken.getAudience().contains("https://legacy-api.example.com"));
+    }
+
+    private static String encode(String xml) {
+        return Base64.getEncoder().encodeToString(xml.getBytes(StandardCharsets.UTF_8));
     }
 }

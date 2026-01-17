@@ -65,7 +65,7 @@ public interface TokenTypeURN {
     /**
      * Default token types supported for subject_token.
      */
-    List<String> DEFAULT_SUBJECT_TOKEN_TYPES = Arrays.asList(ACCESS_TOKEN, ID_TOKEN, JWT);
+    List<String> DEFAULT_SUBJECT_TOKEN_TYPES = Arrays.asList(ACCESS_TOKEN, ID_TOKEN, JWT, REFRESH_TOKEN);
 
     /**
      * Default token types supported for actor_token.
