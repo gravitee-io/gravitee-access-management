@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import {
   buildCreateAndTestUser,
@@ -39,11 +38,11 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { ResponseError } from '../../api/management/runtime';
 import { checkBulkResponse, uniqueName } from '@utils-commands/misc';
 import { BulkResponse } from '@management-models/BulkResponse';
+import { setup } from '../test-fixture';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createRandomString, getDomainManagerUrl } from '@management-commands/service/utils';
 
-global.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let accessToken;
 let domain;

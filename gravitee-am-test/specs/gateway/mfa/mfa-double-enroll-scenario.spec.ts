@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, beforeEach, expect, it, jest } from '@jest/globals';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { afterAll, beforeAll, beforeEach, expect, it } from '@jest/globals';
+import {
+  createDomain,
+  safeDeleteDomain,
+  startDomain,
+  waitForDomainStart,
+  waitForDomainSync,
+} from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createApplication,
@@ -23,7 +29,6 @@ import {
   updateApplicationFlows,
 } from '@management-commands/application-management-commands';
 
-import fetch from 'cross-fetch';
 import { buildCreateAndTestUser, deleteUser, deleteUserFactor, getUserFactors } from '@management-commands/user-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import { extractXsrfTokenAndActionResponse, performDelete, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -33,8 +38,9 @@ import { lookupFlowAndResetPolicies } from '@management-commands/flow-management
 import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { extractSharedSecret, extractSmsCode } from './fixture/mfa-extract-fixture';
 import { createCallFactor, createSMSFactor } from './fixture/mfa-setup-fixture';
+import { setup } from '../../test-fixture';
 
-globalThis.fetch = fetch;
+setup(200000);
 
 let domain;
 let accessToken;
@@ -42,8 +48,6 @@ let openIdConfiguration;
 let smsFactor;
 let app;
 let callFactor;
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
@@ -78,7 +82,6 @@ describe('MFA double enrollment scenario', () => {
   });
 
   it('When user enrolls and verify SMS factor, the CALL factor is added along', async () => {
-
     const loginResponse = await loginUserNameAndPassword(
       app.settings.oauth.clientId,
       user,

@@ -31,6 +31,7 @@ services:
         condition: service_healthy
     ports:
       - 8092:8092
+      - 18092:18092
     environment:
       - GRAVITEE_EMAIL_ENABLED=true
       - GRAVITEE_EMAIL_HOST=smtp
@@ -44,6 +45,7 @@ services:
       - GRAVITEE_SERVICES_SYNC_TIMEFRAMEAFTERDELAY=5000
       - GRAVITEE_HTTP_SSL_CERTIFICATEHEADER=X-Client-Cert
       - GIO_MAX_MEM=512m
+      - GRAVITEE_SERVICES_CORE_HTTP_HOST=0.0.0.0
 
   management:
     build:

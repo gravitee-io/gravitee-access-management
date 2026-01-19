@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import {
   ProtectedResourcesFixture,
@@ -24,11 +23,11 @@ import {
   PROTECTED_RESOURCES_TEST,
 } from './fixtures/protected-resources-fixture';
 import { expectResourceValidationErrorAfterLogin } from './fixtures/test-utils';
+import { setup } from '../../test-fixture';
 
 // RFC 8707 Authorization Endpoint: resource indicators handling and error redirects
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let fixture: ProtectedResourcesFixture;
 
@@ -37,7 +36,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) await fixture.cleanup();
+  if (fixture) await fixture.cleanUp();
 });
 
 describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {

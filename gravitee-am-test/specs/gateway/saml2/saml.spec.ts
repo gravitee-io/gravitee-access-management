@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { followRedirectTag, uniqueName } from '@utils-commands/misc';
 import { setupSamlTestDomains, cleanupSamlTestDomains, SamlTestDomains, SamlFixture, setupSamlProviderTest, TEST_USER } from './setup';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { performGet, performFormPost, requestToken } from '@gateway-commands/oauth-oidc-commands';
 import * as zlib from 'zlib';
 import { getCurrentUser } from '@management-commands/organisation-user-commands';
+import { setup } from '../../test-fixture';
 
-jest.setTimeout(200000);
+setup(200000);
 
 let domains: SamlTestDomains;
 let accessToken: string;

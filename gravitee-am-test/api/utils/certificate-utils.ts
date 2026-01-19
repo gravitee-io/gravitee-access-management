@@ -26,12 +26,14 @@ import * as forge from 'node-forge';
  * @param options.serialNumber Optional serial number (default: timestamp-based)
  * @returns PEM-encoded certificate string
  */
-export function generateCertificatePEM(options: {
-  subjectDN?: string;
-  validDays?: number;
-  expired?: boolean;
-  serialNumber?: string;
-} = {}): string {
+export function generateCertificatePEM(
+  options: {
+    subjectDN?: string;
+    validDays?: number;
+    expired?: boolean;
+    serialNumber?: string;
+  } = {},
+): string {
   const { subjectDN = 'CN=Test Certificate, O=Test Org, C=US', validDays = 365, expired = false, serialNumber } = options;
 
   // Generate a key pair
@@ -63,20 +65,20 @@ export function generateCertificatePEM(options: {
 
   // Parse subjectDN or use default attributes
   let subjectAttrs;
-  
+
   if (subjectDN && subjectDN.includes('=')) {
     // Parse DN string format: "CN=Name, O=Org, C=US"
     const parts = subjectDN.split(',').map((p) => p.trim());
     const attrMap: { [key: string]: string } = {
-      'CN': 'commonName',
-      'C': 'countryName',
-      'O': 'organizationName',
-      'OU': 'organizationalUnitName',
-      'L': 'localityName',
-      'ST': 'stateOrProvinceName',
-      'E': 'emailAddress',
+      CN: 'commonName',
+      C: 'countryName',
+      O: 'organizationName',
+      OU: 'organizationalUnitName',
+      L: 'localityName',
+      ST: 'stateOrProvinceName',
+      E: 'emailAddress',
     };
-    
+
     subjectAttrs = parts.map((part) => {
       const [key, ...valueParts] = part.split('=');
       const keyTrimmed = key.trim().toUpperCase();
@@ -117,13 +119,13 @@ export function generateCertificatePEM(options: {
 
   // Convert to PEM format
   const pem = forge.pki.certificateToPem(cert);
-  
+
   // Ensure proper PEM format (should already be correct, but verify)
   // PEM should start with -----BEGIN CERTIFICATE----- and end with -----END CERTIFICATE-----
   if (!pem.includes('-----BEGIN CERTIFICATE-----') || !pem.includes('-----END CERTIFICATE-----')) {
     throw new Error('Generated certificate is not in valid PEM format');
   }
-  
+
   return pem;
 }
 
@@ -154,4 +156,3 @@ export function generateExpiredCertificatePEM(): string {
     subjectDN: 'CN=Expired Test Certificate, O=Test Org, C=US',
   });
 }
-

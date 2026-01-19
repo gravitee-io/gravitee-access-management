@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, safeDeleteDomain, patchDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { afterAll, beforeAll, expect } from '@jest/globals';
+import {
+  createDomain,
+  safeDeleteDomain,
+  patchDomain,
+  setupDomainForTest,
+  startDomain,
+} from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, resetUserPassword } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { ResponseError } from '../../api/management/runtime';
 import { createPasswordPolicy } from '@management-commands/password-policy-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let accessToken;
 let domain;

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { decodeJwt } from '@utils-commands/jwt';
 import { validateAudienceClaim } from './fixtures/test-utils';
 import { setupProtectedResourcesFixture, ProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
+import { setup } from '../../test-fixture';
 
 // RFC 8707 Authorization Code Flow: resource consistency between authorization and token requests
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let fixture: ProtectedResourcesFixture;
 
@@ -33,7 +32,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (fixture) {
-    await fixture.cleanup();
+    await fixture.cleanUp();
   }
 });
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect, it } from '@jest/globals';
 import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
@@ -23,7 +23,6 @@ import {
   updateApplicationFlows,
 } from '@management-commands/application-management-commands';
 
-import fetch from 'cross-fetch';
 import { buildCreateAndTestUser, deleteUser, getUserFactors } from '@management-commands/user-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import {
@@ -39,6 +38,7 @@ import * as faker from 'faker';
 import { initiateLoginFlow, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
+import { setup } from '../../test-fixture';
 import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { extractSharedSecret, extractSmsCode } from './fixture/mfa-extract-fixture';
 import {
@@ -52,7 +52,7 @@ import {
 
 const cheerio = require('cheerio');
 
-global.fetch = fetch;
+setup(200000);
 
 let domain;
 let accessToken;
@@ -73,8 +73,6 @@ let callFactor2;
 
 const validMFACode = '333333';
 const sharedSecret = 'K546JFR2PK5CGQLLUTFG4W46IKDFWWUE';
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
