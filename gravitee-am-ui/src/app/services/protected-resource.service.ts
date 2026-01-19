@@ -57,6 +57,22 @@ export class ProtectedResourceService {
   delete(domainId: string, id: string, type: ProtectedResourceType): Observable<any> {
     return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${id}?type=${type}`);
   }
+
+  getSecrets(domainId: string, id: string): Observable<ClientSecret[]> {
+    return this.http.get<ClientSecret[]>(this.baseURL + `${domainId}/protected-resources/${id}/secrets`);
+  }
+
+  createSecret(domainId: string, id: string, name: string): Observable<ClientSecret> {
+    return this.http.post<ClientSecret>(this.baseURL + `${domainId}/protected-resources/${id}/secrets`, { name });
+  }
+
+  renewSecret(domainId: string, id: string, secretId: string): Observable<ClientSecret> {
+    return this.http.post<ClientSecret>(this.baseURL + `${domainId}/protected-resources/${id}/secrets/${secretId}/_renew`, {});
+  }
+
+  deleteSecret(domainId: string, id: string, secretId: string): Observable<any> {
+    return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${id}/secrets/${secretId}`);
+  }
 }
 
 export enum ProtectedResourceType {
@@ -80,6 +96,8 @@ export interface ProtectedResource extends ProtectedResourcePrimaryData {
   description?: string;
   domainId: string;
   clientId: string;
+  clientSecrets?: ClientSecret[];
+  secretSettings?: any;
 }
 
 export interface ProtectedResourceFeature {
@@ -115,4 +133,11 @@ export interface PatchProtectedResourceRequest {
   description?: string;
   resourceIdentifiers?: string[];
   features?: ProtectedResourceFeature[];
+  secretSettings?: any;
+}
+
+export interface ClientSecret {
+  id: string;
+  name: string;
+  value?: string;
 }

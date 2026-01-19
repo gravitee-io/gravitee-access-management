@@ -22,7 +22,7 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   CopyClientSecretComponent,
   CopyClientSecretCopyDialogData,
-} from '../../applications/application/advanced/secrets-certificates/copy-client-secret/copy-client-secret.component';
+} from '../../../components/client-secrets-management/dialog/copy-client-secret/copy-client-secret.component';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { McpServersService, NewMcpServer, McpServerTool } from '../mcp-servers.service';
 

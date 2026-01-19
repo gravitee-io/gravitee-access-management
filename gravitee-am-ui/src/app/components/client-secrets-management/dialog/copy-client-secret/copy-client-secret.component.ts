@@ -16,7 +16,7 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
-import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 export interface CopyClientSecretCopyDialogData {
   secret: string;
@@ -26,7 +26,7 @@ export interface CopyClientSecretCopyDialogData {
 @Component({
   selector: 'app-copy-client-secret',
   templateUrl: './copy-client-secret.component.html',
-  styleUrl: '../secrets-certificates.component.scss',
+  styleUrl: '../../client-secrets-management.component.scss',
   standalone: false,
 })
 export class CopyClientSecretComponent {

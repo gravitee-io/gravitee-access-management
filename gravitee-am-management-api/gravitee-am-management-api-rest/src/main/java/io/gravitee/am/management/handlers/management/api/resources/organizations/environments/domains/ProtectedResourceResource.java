@@ -40,6 +40,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.core.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.gravitee.am.model.Acl.READ;
@@ -51,6 +53,14 @@ public class ProtectedResourceResource extends AbstractDomainResource {
 
     @Autowired
     private ProtectedResourceService service;
+
+    @Context
+    private ResourceContext resourceContext;
+
+    @Path("secrets")
+    public ProtectedResourceSecretsResource getSecretsResource() {
+        return resourceContext.getResource(ProtectedResourceSecretsResource.class);
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

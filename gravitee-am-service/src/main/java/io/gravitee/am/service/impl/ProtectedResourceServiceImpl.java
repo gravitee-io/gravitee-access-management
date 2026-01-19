@@ -45,6 +45,7 @@ import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateMcpTool;
 import io.gravitee.am.service.model.UpdateProtectedResource;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
@@ -52,6 +53,10 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.Optional;
+import java.util.ArrayList;
+import org.springframework.beans.factory.annotation.Value;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +77,9 @@ import static org.springframework.util.StringUtils.hasText;
 @Component
 public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProtectedResourceServiceImpl.class);
+
+    @Value("${applications.secretsMax:10}")
+    private int secretsMax;
 
     @Autowired
     @Lazy
@@ -158,8 +166,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers().stream().map(String::trim).map(String::toLowerCase).toList());
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
-        toCreate.setSecretSettings(List.of(secretSettings));
-        toCreate.setClientSecrets(List.of(buildClientSecret(domain, secretSettings, rawSecret)));
+        toCreate.setSecretSettings(new ArrayList<>(List.of(secretSettings)));
+        toCreate.setClientSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
         toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
             ProtectedResourceFeature feature = f.asFeature();
             feature.setCreatedAt(toCreate.getCreatedAt());
@@ -461,6 +469,156 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
+    }
+
+    @Override
+    public Single<ClientSecret> createSecret(Domain domain, String id, String name, User principal) {
+        return repository.findByDomainAndId(domain.getId(), id)
+                .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
+                .toSingle()
+                .flatMap(protectedResource -> {
+                    List<ClientSecret> secrets = protectedResource.getClientSecrets() != null ? protectedResource.getClientSecrets() : new ArrayList<>();
+                    String newSecretName = name != null ? name.trim() : name;
+                    if (newSecretName != null && secrets.stream().map(ClientSecret::getName).anyMatch(newSecretName::equals)) {
+                        return Single.error(() -> new ClientSecretInvalidException(String.format("Secret with description %s already exists", newSecretName)));
+                    }
+                    if (secrets.size() >= secretsMax) {
+                        return Single.error(() -> new TooManyClientSecretsException(secretsMax));
+                    }
+                    final var rawSecret = SecureRandomString.generate();
+                    final var secretSettings = this.applicationSecretConfig.toSecretSettings();
+                    
+                    // Add secret settings if not present
+                    if (protectedResource.getSecretSettings() == null) {
+                        protectedResource.setSecretSettings(new ArrayList<>());
+                    }
+                    if (!doesResourceReferenceSecretSettings(protectedResource, secretSettings)) {
+                        protectedResource.getSecretSettings().add(secretSettings);
+                    }
+
+                    ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings, domain.getSecretExpirationSettings(), null);
+                    secrets.add(clientSecret);
+                    protectedResource.setClientSecrets(secrets);
+
+                    return repository.update(protectedResource)
+                        .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
+                        .flatMap(resource -> {
+                            Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
+                            return eventService.create(event, domain).flatMap(e -> Single.just(resource));
+                        })
+                        .map(__ -> {
+                            clientSecret.setSecret(rawSecret);
+                            return clientSecret;
+                        });
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to create secret for protected resource {}", id, ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create secret for protected resource", ex));
+                });
+    }
+
+    @Override
+    public Single<ClientSecret> renewSecret(Domain domain, String id, String secretId, User principal) {
+        return repository.findByDomainAndId(domain.getId(), id)
+                .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
+                .toSingle()
+                .flatMap(protectedResource -> {
+                    Optional<ClientSecret> clientSecretOptional = protectedResource.getClientSecrets().stream().filter(clientSecret -> clientSecret.getId().equals(secretId)).findFirst();
+                    if (clientSecretOptional.isEmpty()) {
+                        return Single.error(new ClientSecretNotFoundException(secretId));
+                    }
+                    var clientSecret = clientSecretOptional.get();
+
+                    final var secretSettings = this.applicationSecretConfig.toSecretSettings();
+                    if (protectedResource.getSecretSettings() == null) {
+                        protectedResource.setSecretSettings(new ArrayList<>());
+                    }
+                    if (!doesResourceReferenceSecretSettings(protectedResource, secretSettings)) {
+                        protectedResource.getSecretSettings().add(secretSettings);
+                    }
+
+                    final var rawSecret = SecureRandomString.generate();
+                    clientSecret.setSecret(secretService.getOrCreatePasswordEncoder(secretSettings).encode(rawSecret));
+                    clientSecret.setSettingsId(secretSettings.getId());
+                    // Protected resources don't have separate secret expiration settings currently, relying on domain settings or defaults inside service
+                    clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretExpirationSettings(), null));
+
+                    return repository.update(protectedResource)
+                        .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
+                        .flatMap(resource -> {
+                            Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
+                            return eventService.create(event, domain).flatMap(e -> Single.just(resource));
+                        })
+                        .map(__ -> {
+                            var secret = protectedResource.getClientSecrets().stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
+                            secret.setSecret(rawSecret);
+                            return secret;
+                        });
+                })
+                .onErrorResumeNext(ex -> {
+                     if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to renew secret for protected resource {}", id, ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to renew secret for protected resource", ex));
+                });
+    }
+
+    @Override
+    public Completable deleteSecret(Domain domain, String id, String secretId, User principal) {
+        return repository.findByDomainAndId(domain.getId(), id)
+                .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
+                .toSingle()
+                .flatMapCompletable(protectedResource -> {
+                    if (protectedResource.getClientSecrets().size() <= 1) {
+                        return Completable.error(new ClientSecretDeleteException("Cannot remove last secret"));
+                    }
+                    var secretToRemoveOptional = protectedResource.getClientSecrets().stream().filter(sc -> sc.getId().equals(secretId)).findFirst();
+                    if (secretToRemoveOptional.isEmpty()) {
+                        return Completable.error(new ClientSecretNotFoundException(secretId));
+                    }
+                    
+                    var secretToRemove = secretToRemoveOptional.get();
+                    String secretSettingsId = secretToRemove.getSettingsId();
+
+                    protectedResource.getClientSecrets().removeIf(cs -> cs.getId().equals(secretId));
+
+                    boolean isSecretSettingsStillUsed = protectedResource.getClientSecrets().stream()
+                            .anyMatch(cs -> cs.getSettingsId().equals(secretSettingsId));
+                    
+                    if (!isSecretSettingsStillUsed && protectedResource.getSecretSettings() != null) {
+                         protectedResource.getSecretSettings().removeIf(ss -> ss.getId().equals(secretSettingsId));
+                    }
+
+                    return repository.update(protectedResource)
+                         .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
+                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
+                         .flatMap(resource -> {
+                            Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
+                            return eventService.create(event, domain).flatMap(e -> Single.just(resource));
+                         })
+                         .ignoreElement();
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to delete secret for protected resource {}", id, ex);
+                    return Completable.error(new TechnicalManagementException("An error occurs while trying to delete secret for protected resource", ex));
+                });
+    }
+
+    private static boolean doesResourceReferenceSecretSettings(ProtectedResource resource, ApplicationSecretSettings secretSettings) {
+        return Optional.ofNullable(resource.getSecretSettings())
+                .map(settings -> settings
+                        .stream()
+                        .anyMatch(conf -> conf.getId() != null && conf.getId().equals(secretSettings.getId()))
+                ).orElse(false);
     }
 
     private Single<ProtectedResource> doCreate(ProtectedResource toCreate, User principal, Domain domain) {

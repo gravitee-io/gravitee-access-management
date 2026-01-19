@@ -35,27 +35,18 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-label>Client ID</mat-label>
-              <input matInput type="text" name="clientId" [value]="protectedResource.clientId" disabled />
-              <mat-hint>Public identifier for the MCP server required for OAuth 2.0 protocol.</mat-hint>
-              <button
-                mat-icon-button
-                matSuffix
-                matTooltip="Copy to clipboard"
-                ngxClipboard
-                [cbContent]="protectedResource.clientId"
-                (cbOnSuccess)="valueCopied('Client ID copied to the clipboard')"
-                (click)="$event.preventDefault()"
-              >
-                <mat-icon>content_copy</mat-icon>
-              </button>
-            </mat-form-field>
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-label>Client Secret</mat-label>
-              <input matInput type="text" name="clientSecret" value="************" disabled />
-              <mat-hint>Secret used by the MCP server to request OAuth 2.0 tokens.</mat-hint>
-            </mat-form-field>
+            <app-client-secrets-management
+              [adapter]="mcpServerClientSecretService"
+              [domainId]="domainId"
+              [parentId]="protectedResource.id"
+              [clientId]="protectedResource.clientId"
+              [hasCreatePermission]="editMode"
+              [hasUpdatePermission]="editMode"
+              [hasDeletePermission]="deleteMode"
+              [showSettings]="true"
+              (settingsClicked)="openSettings($event)"
+            >
+            </app-client-secrets-management>
           </div>
         </div>
 

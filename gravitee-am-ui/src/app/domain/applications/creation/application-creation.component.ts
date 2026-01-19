@@ -26,7 +26,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import {
   CopyClientSecretComponent,
   CopyClientSecretCopyDialogData,
-} from '../application/advanced/secrets-certificates/copy-client-secret/copy-client-secret.component';
+} from '../../../components/client-secrets-management/dialog/copy-client-secret/copy-client-secret.component';
 
 @Component({
   selector: 'app-creation',

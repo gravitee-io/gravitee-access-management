@@ -26,6 +26,7 @@ import {
   ProtectedResourceFeatureType,
   ProtectedResourceService,
   ProtectedResourceType,
+  ClientSecret,
 } from '../../services/protected-resource.service';
 
 @Injectable({
@@ -82,6 +83,22 @@ export class McpServersService {
 
   delete(domainId: string, id: string): Observable<any> {
     return this.service.delete(domainId, id, ProtectedResourceType.MCP_SERVER);
+  }
+
+  getSecrets(domainId: string, id: string): Observable<ClientSecret[]> {
+    return this.service.getSecrets(domainId, id);
+  }
+
+  createSecret(domainId: string, id: string, name: string): Observable<ClientSecret> {
+    return this.service.createSecret(domainId, id, name);
+  }
+
+  renewSecret(domainId: string, id: string, secretId: string): Observable<ClientSecret> {
+    return this.service.renewSecret(domainId, id, secretId);
+  }
+
+  deleteSecret(domainId: string, id: string, secretId: string): Observable<any> {
+    return this.service.deleteSecret(domainId, id, secretId);
   }
 }
 

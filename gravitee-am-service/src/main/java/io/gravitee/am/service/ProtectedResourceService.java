@@ -21,6 +21,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResource.Type;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.ProtectedResourceSecret;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.service.model.NewProtectedResource;
@@ -56,6 +57,12 @@ public interface ProtectedResourceService {
 
     Completable delete(Domain domain, String id, Type expectedType, User principal);
 
+
     Flowable<ProtectedResource> findByDomain(String domain);
 
+    Single<ClientSecret> createSecret(Domain domain, String id, String name, User principal);
+
+    Single<ClientSecret> renewSecret(Domain domain, String id, String secretId, User principal);
+
+    Completable deleteSecret(Domain domain, String id, String secretId, User principal);
 }

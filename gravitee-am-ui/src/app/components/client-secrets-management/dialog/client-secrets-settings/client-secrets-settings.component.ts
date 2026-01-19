@@ -19,12 +19,12 @@ import { Router } from '@angular/router';
 import { duration } from 'moment';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 
-import { TimeConverterService } from '../../../../../../services/time-converter.service';
+import { TimeConverterService } from '../../../../services/time-converter.service';
 
 @Component({
   selector: 'app-client-secrets-settings',
   templateUrl: './client-secrets-settings.component.html',
-  styleUrl: '../secrets-certificates.component.scss',
+  styleUrl: '../../client-secrets-management.component.scss',
   standalone: false,
 })
 export class ClientSecretsSettingsComponent implements OnInit {
