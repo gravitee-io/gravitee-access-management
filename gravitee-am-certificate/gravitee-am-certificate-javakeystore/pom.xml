@@ -22,14 +22,14 @@
     <parent>
         <artifactId>gravitee-am-certificate</artifactId>
         <groupId>io.gravitee.am.certificate</groupId>
-        <version>4.7.27-SNAPSHOT</version>
+        <version>4.7.27</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-certificate-javakeystore</artifactId>
     <packaging>jar</packaging>
 
-    <version>4.7.27-SNAPSHOT</version>
+    <version>4.7.27</version>
     <name>Gravitee IO - Access Management - Certificate - JavaKeyStore</name>
 
     <dependencies>
