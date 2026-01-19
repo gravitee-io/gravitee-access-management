@@ -120,7 +120,7 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
         return Single.fromPublisher(scopeApprovalsCollection.replaceOne(
                 and(eq(FIELD_DOMAIN, scopeApproval.getDomain()),
                         eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
-                        eq(FIELD_USER_ID, scopeApproval.getUserId()),
+                        userIdMatches(scopeApproval.getUserId(), DEFAULT_USER_FIELDS),
                         eq(FIELD_SCOPE, scopeApproval.getScope())),
                 scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval))
                 .observeOn(Schedulers.computation());
