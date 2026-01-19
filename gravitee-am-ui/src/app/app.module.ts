@@ -460,6 +460,7 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
 import { DataPlaneService } from './services/data-plane.service';
 import { DataPlanesResolver } from './resolvers/data-planes.resolver';
 import { SecretsCertificatesModule } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.module';
+import { ClientSecretsManagementModule } from './components/client-secrets-management/client-secrets-management.module';
 import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
 import { DomainStoreService } from './stores/domain.store';
 import { DomainMcpServersComponent } from './domain/mcp-servers/mcp-servers.component';
@@ -818,6 +819,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     AccountTokenDialogModule,
     NgOptimizedImage,
     SecretsCertificatesModule,
+    ClientSecretsManagementModule,
   ],
   providers: [
     DomainService,

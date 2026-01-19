@@ -17,28 +17,17 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { EMPTY, Observable } from 'rxjs';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { CertificateService } from '../../../../../services/certificate.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
-
-import { NewClientSecretComponent } from './new-client-secret/new-client-secret.component';
-import { CopyClientSecretComponent, CopyClientSecretCopyDialogData } from './copy-client-secret/copy-client-secret.component';
-import { RenewClientSecretComponent } from './renew-client-secret/renew-client-secret.component';
-import { ClientSecretsSettingsComponent } from './client-secrets-settings/client-secrets-settings.component';
-import { DeleteClientSecretComponent, DeleteClientSecretData } from './delete-client-secret/delete-client-secret.component';
-
-export interface ClientSecret {
-  id: string;
-  name: string;
-  status: string;
-  createdAt: string;
-  expiryDate: string;
-}
+import { ClientSecretsSettingsComponent } from '../../../../../components/client-secrets-management/dialog/client-secrets-settings/client-secrets-settings.component';
+import { ApplicationClientSecretService } from '../../../../../services/client-secret.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-certificates',
@@ -53,9 +42,9 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
   selectedCertificate: string;
-  clientSecrets: ClientSecret[] = [];
   clientId: any;
   secretSettings: any;
+  editMode = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -63,8 +52,10 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
     private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private certificateService: CertificateService,
+    public applicationClientSecretService: ApplicationClientSecretService,
     private matDialog: MatDialog,
     private domainStore: DomainStoreService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -75,8 +66,8 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
       this.selectedCertificate = this.application.certificate;
       this.publicKeys(this.application.certificate);
     }
-    this.clientSecrets = this.application.secrets.map((cs) => this.mapClientSecret(cs));
     this.secretSettings = this.application.settings.secretExpirationSettings;
+    this.editMode = this.authService.hasPermissions(['application_openid_update']);
   }
 
   patch(): void {
@@ -107,174 +98,6 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
       this.certificatePublicKeys = response;
     });
   }
-
-  openNewSecret(event: Event): void {
-    event.preventDefault();
-
-    this.matDialog
-      .open<NewClientSecretComponent, void, string>(NewClientSecretComponent, {
-        width: GIO_DIALOG_WIDTH.MEDIUM,
-        disableClose: true,
-        role: 'alertdialog',
-        id: 'newClientSecretDialog',
-      })
-      .afterClosed()
-      .pipe(
-        filter((description) => !!description),
-        switchMap((description) =>
-          this.applicationService.createClientSecret(this.domain.id, this.application.id, description).pipe(
-            tap(() => {
-              this.snackbarService.open(`Client secret created - ${description}`);
-            }),
-            map((secretResponse) => ({
-              secret: secretResponse.secret,
-              renew: false,
-            })),
-            catchError((e: unknown): Observable<never> => {
-              if (typeof e === 'object' && e !== null) {
-                const httpStatus = (e as any).error.http_status;
-                const message = (e as any).error.message || 'An error occurred';
-                this.snackbarService.open(httpStatus < 500 ? message : 'Failed to create client secret');
-              } else {
-                this.snackbarService.open('Unknown error occurred');
-              }
-              return EMPTY;
-            }),
-          ),
-        ),
-        switchMap((dialogData) =>
-          this.matDialog
-            .open<CopyClientSecretComponent, CopyClientSecretCopyDialogData, void>(CopyClientSecretComponent, {
-              width: GIO_DIALOG_WIDTH.MEDIUM,
-              disableClose: true,
-              data: dialogData,
-              role: 'alertdialog',
-              id: 'copyClientSecretDialog',
-            })
-            .afterClosed()
-            .pipe(
-              switchMap(() =>
-                this.applicationService.getClientSecrets(this.domain.id, this.application.id).pipe(
-                  catchError(() => {
-                    this.snackbarService.open('Failed to fetch client secrets');
-                    return EMPTY;
-                  }),
-                ),
-              ),
-            ),
-        ),
-      )
-      .subscribe({
-        next: (clientSecrets) => {
-          this.clientSecrets = clientSecrets.map((cs) => this.mapClientSecret(cs));
-        },
-        error: () => {
-          this.snackbarService.open('Error fetching client secrets');
-        },
-      });
-  }
-
-  mapClientSecret(clientSecret: any): ClientSecret {
-    if (clientSecret.expiresAt) {
-      return {
-        ...clientSecret,
-        status: clientSecret.expiresAt > Date.now() ? 'Running' : 'Expired',
-      } as ClientSecret;
-    } else {
-      return {
-        ...clientSecret,
-        status: 'Running',
-      } as ClientSecret;
-    }
-  }
-
-  deleteSecret(row: ClientSecret, event: Event): void {
-    event.preventDefault();
-    this.matDialog
-      .open<DeleteClientSecretComponent, DeleteClientSecretData, string>(DeleteClientSecretComponent, {
-        width: GIO_DIALOG_WIDTH.MEDIUM,
-        disableClose: true,
-        data: { description: row.name },
-        role: 'alertdialog',
-        id: 'renewClientSecretDialog',
-      })
-      .afterClosed()
-      .pipe(
-        filter((result) => result === 'delete'),
-        switchMap(() => this.applicationService.deleteClientSecret(this.domain.id, this.application.id, row.id)),
-        switchMap(() =>
-          this.applicationService.getClientSecrets(this.domain.id, this.application.id).pipe(
-            catchError(() => {
-              this.snackbarService.open('Failed to fetch client secrets');
-              return EMPTY;
-            }),
-          ),
-        ),
-      )
-      .subscribe({
-        next: (secrets) => {
-          this.clientSecrets = secrets.map((s) => this.mapClientSecret(s));
-          this.snackbarService.open(`Secret ${row.name} deleted`);
-        },
-        error: () => this.snackbarService.open(`Cannot delete ${row.name}.`),
-      });
-  }
-
-  renewSecret(row: any, event: any) {
-    event.preventDefault();
-    this.matDialog
-      .open<RenewClientSecretComponent, void, string>(RenewClientSecretComponent, {
-        width: GIO_DIALOG_WIDTH.SMALL,
-        disableClose: true,
-        role: 'alertdialog',
-        id: 'renewClientSecretDialog',
-      })
-      .afterClosed()
-      .pipe(
-        filter((result) => result === 'renew'),
-        switchMap(() =>
-          this.applicationService.renewClientSecret(this.domain.id, this.application.id, row.id).pipe(
-            tap(() => {
-              this.snackbarService.open(`Client secret renewed - ${row.name}`);
-            }),
-            map((secretResponse) => ({
-              secret: secretResponse.secret,
-              renew: true,
-            })),
-            catchError(() => {
-              this.snackbarService.open('Failed to renew client secret');
-              return EMPTY;
-            }),
-          ),
-        ),
-        switchMap((dialogData) =>
-          this.matDialog
-            .open<CopyClientSecretComponent, CopyClientSecretCopyDialogData, void>(CopyClientSecretComponent, {
-              width: GIO_DIALOG_WIDTH.SMALL,
-              disableClose: true,
-              data: dialogData,
-              role: 'alertdialog',
-              id: 'copyClientSecretDialog',
-            })
-            .afterClosed(),
-        ),
-        switchMap(() =>
-          this.applicationService.getClientSecrets(this.domain.id, this.application.id).pipe(
-            catchError(() => {
-              this.snackbarService.open('Failed to fetch client secrets');
-              return EMPTY;
-            }),
-          ),
-        ),
-      )
-      .subscribe({
-        next: (secrets) => {
-          this.clientSecrets = secrets.map((s) => this.mapClientSecret(s));
-        },
-        error: () => this.snackbarService.open(`Cannot renew ${row.name}.`),
-      });
-  }
-
   openSettings(event: any) {
     event.preventDefault();
     this.matDialog

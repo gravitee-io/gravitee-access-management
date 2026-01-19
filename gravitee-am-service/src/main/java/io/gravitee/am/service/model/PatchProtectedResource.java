@@ -22,6 +22,7 @@ import io.gravitee.am.service.validators.url.Url;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,6 +44,7 @@ public class PatchProtectedResource {
     private Optional<String> description;
     private Optional<List<@NotBlank @Url(allowFragment = false) String>> resourceIdentifiers;
     private Optional<List<@Valid UpdateProtectedResourceFeature>> features;
+    private Optional<List<ApplicationSecretSettings>> secretSettings;
 
     public ProtectedResource patch(ProtectedResource protectedResource) {
         // create new object for audit purpose (patch json result)
@@ -56,6 +58,8 @@ public class PatchProtectedResource {
             List<ProtectedResourceFeature> patchedFeatures = buildProtectedResourceFeatures(getFeatures().get());
             toPatch.setFeatures(patchedFeatures);
         }
+
+        SetterUtils.safeSet(toPatch::setSecretSettings, this.getSecretSettings());
 
         return toPatch;
     }
@@ -80,6 +84,7 @@ public class PatchProtectedResource {
         return (getName() != null && getName().isPresent())
                 || (getDescription() != null && getDescription().isPresent())
                 || (getResourceIdentifiers() != null && getResourceIdentifiers().isPresent())
-                || (getFeatures() != null && getFeatures().isPresent());
+                || (getFeatures() != null && getFeatures().isPresent())
+                || (getSecretSettings() != null && getSecretSettings().isPresent());
     }
 }

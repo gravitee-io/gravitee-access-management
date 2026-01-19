@@ -24,7 +24,7 @@ export interface DeleteClientSecretData {
 @Component({
   selector: 'app-delete-client-secret',
   templateUrl: './delete-client-secret.component.html',
-  styleUrl: '../secrets-certificates.component.scss',
+  styleUrl: '../../client-secrets-management.component.scss',
   standalone: false,
 })
 export class DeleteClientSecretComponent {

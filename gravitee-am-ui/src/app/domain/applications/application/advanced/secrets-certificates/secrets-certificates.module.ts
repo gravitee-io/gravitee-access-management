@@ -27,27 +27,11 @@ import { MatButton, MatButtonModule, MatIconButton } from '@angular/material/but
 import { ClipboardModule } from 'ngx-clipboard';
 import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 
-import { RenewClientSecretComponent } from './renew-client-secret/renew-client-secret.component';
-import { NewClientSecretComponent } from './new-client-secret/new-client-secret.component';
-import { CopyClientSecretComponent } from './copy-client-secret/copy-client-secret.component';
-import { ClientSecretsSettingsComponent } from './client-secrets-settings/client-secrets-settings.component';
-import { DeleteClientSecretComponent } from './delete-client-secret/delete-client-secret.component';
+import { ClientSecretsManagementModule } from '../../../../../components/client-secrets-management/client-secrets-management.module';
 
 @NgModule({
-  declarations: [
-    ClientSecretsSettingsComponent,
-    CopyClientSecretComponent,
-    NewClientSecretComponent,
-    RenewClientSecretComponent,
-    DeleteClientSecretComponent,
-  ],
-  exports: [
-    ClientSecretsSettingsComponent,
-    CopyClientSecretComponent,
-    NewClientSecretComponent,
-    RenewClientSecretComponent,
-    DeleteClientSecretComponent,
-  ],
+  declarations: [],
+  exports: [],
   imports: [
     CommonModule,
     MatDialogActions,
@@ -74,6 +58,7 @@ import { DeleteClientSecretComponent } from './delete-client-secret/delete-clien
     MatInputModule,
     MatIconModule,
     MatTooltipModule,
+    ClientSecretsManagementModule,
   ],
 })
 export class SecretsCertificatesModule {}

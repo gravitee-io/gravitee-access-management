@@ -58,6 +58,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import io.gravitee.am.service.exception.ClientSecretDeleteException;
+import io.gravitee.am.service.exception.ClientSecretInvalidException;
+import io.gravitee.am.service.exception.ClientSecretNotFoundException;
+import io.gravitee.am.service.exception.TooManyClientSecretsException;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.util.ReflectionTestUtils;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -106,6 +113,11 @@ public class ProtectedResourceServiceImplTest {
 
     @InjectMocks
     private ProtectedResourceServiceImpl service;
+
+    @BeforeEach
+    public void setup() {
+        ReflectionTestUtils.setField(service, "secretsMax", 10);
+    }
 
     // Helper methods
     private Domain createDomain() {
@@ -762,5 +774,130 @@ public class ProtectedResourceServiceImplTest {
         verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+    }
+
+    // ========== SECRET Tests ==========
+
+    @Test
+    public void shouldCreateSecret() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        existingResource.setClientSecrets(new ArrayList<>());
+        
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        service.createSecret(createDomain(), RESOURCE_ID, "My New Secret", createUser())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(repository, times(1)).update(argThat(res -> res.getClientSecrets().size() == 1));
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldNotCreateSecretWhenLimitReached() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        List<ClientSecret> secrets = new ArrayList<>();
+        for(int i=0; i<10; i++) { 
+            ClientSecret s = new ClientSecret();
+            s.setName("secret-" + i);
+            secrets.add(s); 
+        }
+        existingResource.setClientSecrets(secrets);
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+
+        service.createSecret(createDomain(), RESOURCE_ID, "New Secret", createUser())
+                .test()
+                .assertError(TooManyClientSecretsException.class);
+    }
+
+    @Test
+    public void shouldNotCreateSecretWhenDuplicateName() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        ClientSecret existing = new ClientSecret(); existing.setName("Taken Name");
+        existingResource.setClientSecrets(new ArrayList<>(List.of(existing)));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+
+        service.createSecret(createDomain(), RESOURCE_ID, "Taken Name", createUser())
+                .test()
+                .assertError(ClientSecretInvalidException.class);
+    }
+
+    @Test
+    public void shouldRenewSecret() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        ClientSecret secret = new ClientSecret();
+        secret.setId("secret-1");
+        existingResource.setClientSecrets(new ArrayList<>(List.of(secret)));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        // Mock password encoder for renew
+        io.gravitee.am.service.authentication.crypto.password.PasswordEncoder passwordEncoder = org.mockito.Mockito.mock(io.gravitee.am.service.authentication.crypto.password.PasswordEncoder.class);
+        when(secretService.getOrCreatePasswordEncoder(any())).thenReturn(passwordEncoder);
+        when(passwordEncoder.encode(any())).thenReturn("hashed-secret");
+
+        service.renewSecret(createDomain(), RESOURCE_ID, "secret-1", createUser())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(repository, times(1)).update(any());
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldNotRenewSecretWhenNotFound() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        existingResource.setClientSecrets(new ArrayList<>());
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+
+        service.renewSecret(createDomain(), RESOURCE_ID, "missing-secret", createUser())
+                .test()
+                .assertError(ClientSecretNotFoundException.class);
+    }
+
+    @Test
+    public void shouldDeleteSecret() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        ClientSecret secret1 = new ClientSecret(); secret1.setId("secret-1"); secret1.setSettingsId("set-1");
+        ClientSecret secret2 = new ClientSecret(); secret2.setId("secret-2"); secret2.setSettingsId("set-1");
+        existingResource.setClientSecrets(new ArrayList<>(List.of(secret1, secret2)));
+        existingResource.setSecretSettings(new ArrayList<>(List.of(new ApplicationSecretSettings())));
+        existingResource.getSecretSettings().get(0).setId("set-1");
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        service.deleteSecret(createDomain(), RESOURCE_ID, "secret-1", createUser())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(repository, times(1)).update(argThat(res -> res.getClientSecrets().size() == 1));
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldNotDeleteLastSecret() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        ClientSecret secret1 = new ClientSecret(); secret1.setId("secret-1");
+        existingResource.setClientSecrets(new ArrayList<>(List.of(secret1)));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+
+        service.deleteSecret(createDomain(), RESOURCE_ID, "secret-1", createUser())
+                .test()
+                .assertError(ClientSecretDeleteException.class);
     }
 }
