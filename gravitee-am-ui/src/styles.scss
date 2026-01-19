@@ -227,9 +227,11 @@ ngx-datatable {
 }
 
 @keyframes pulse-loader {
-  0%, 100% {
+  0%,
+  100% {
     background-size: 5%;
   }
+
   50% {
     background-size: 5.5%;
   }
@@ -238,12 +240,13 @@ ngx-datatable {
 .gv-splash-screen {
   position: absolute;
   z-index: 99999;
+
+  /* Add the animation */
+  animation: pulse-loader 2s ease-in-out infinite;
   background-image: url('assets/gravitee-icon.svg');
   background-position: center center;
   background-repeat: no-repeat;
   inset: 0;
-  /* Add the animation */
-  animation: pulse-loader 2s ease-in-out infinite;
 }
 
 .gv-page-container {
