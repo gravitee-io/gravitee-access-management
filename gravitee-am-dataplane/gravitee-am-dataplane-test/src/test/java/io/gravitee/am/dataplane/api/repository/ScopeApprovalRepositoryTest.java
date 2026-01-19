@@ -105,6 +105,98 @@ public class ScopeApprovalRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertNoErrors();
     }
 
+    @Test
+    public void shouldUpdateDeniedToApprovedOnUpsert() {
+        // given - user initially denies consent
+        var deniedApproval = basicApprovalFor(fullUserId);
+        deniedApproval.setStatus(ScopeApproval.ApprovalStatus.DENIED);
+        deniedApproval.setScope("read:profile");
+        deniedApproval.setClientId("test-app");
+
+        var createdApproval = repository.create(deniedApproval)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .values().get(0);
+
+        assertThat(createdApproval.getStatus()).isEqualTo(ScopeApproval.ApprovalStatus.DENIED);
+
+        // when - user later accepts consent (upsert with APPROVED status)
+        var approvedApproval = new ScopeApproval();
+        approvedApproval.setDomain(TEST_DOMAIN);
+        approvedApproval.setUserId(fullUserId);
+        approvedApproval.setClientId("test-app");
+        approvedApproval.setScope("read:profile");
+        approvedApproval.setStatus(ScopeApproval.ApprovalStatus.APPROVED);
+        approvedApproval.setExpiresAt(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)));
+
+        var upsertedApproval = repository.upsert(approvedApproval)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .values().get(0);
+
+        // then - the approval should be updated to APPROVED
+        assertThat(upsertedApproval.getStatus()).isEqualTo(ScopeApproval.ApprovalStatus.APPROVED);
+        assertThat(upsertedApproval.getId()).isEqualTo(createdApproval.getId());
+
+        // and - when queried, it should return the APPROVED status
+        var foundApprovals = repository.findByDomainAndUserAndClient(TEST_DOMAIN, fullUserId, "test-app")
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .values();
+
+        assertThat(foundApprovals).hasSize(1);
+        assertThat(foundApprovals.get(0).getStatus()).isEqualTo(ScopeApproval.ApprovalStatus.APPROVED);
+        assertThat(foundApprovals.get(0).getScope()).isEqualTo("read:profile");
+    }
+
+    @Test
+    public void shouldUpdateDeniedToApprovedWithExternalUserId() {
+        // given - user with external ID initially denies consent
+        var deniedApproval = basicApprovalFor(externalUserId);
+        deniedApproval.setStatus(ScopeApproval.ApprovalStatus.DENIED);
+        deniedApproval.setScope("write:data");
+        deniedApproval.setClientId("external-app");
+
+        var createdApproval = repository.create(deniedApproval)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .values().get(0);
+
+        assertThat(createdApproval.getStatus()).isEqualTo(ScopeApproval.ApprovalStatus.DENIED);
+
+        // when - user later accepts consent using full user ID (which should match external ID)
+        var approvedApproval = new ScopeApproval();
+        approvedApproval.setDomain(TEST_DOMAIN);
+        approvedApproval.setUserId(fullUserId); // Using full ID to update record created with external ID
+        approvedApproval.setClientId("external-app");
+        approvedApproval.setScope("write:data");
+        approvedApproval.setStatus(ScopeApproval.ApprovalStatus.APPROVED);
+        approvedApproval.setExpiresAt(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)));
+
+        var upsertedApproval = repository.upsert(approvedApproval)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .values().get(0);
+
+        // then - the approval should be updated to APPROVED
+        assertThat(upsertedApproval.getStatus()).isEqualTo(ScopeApproval.ApprovalStatus.APPROVED);
+
+        // and - when queried by external ID, it should return the APPROVED status
+        var foundApprovals = repository.findByDomainAndUserAndClient(TEST_DOMAIN, externalUserId, "external-app")
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .values();
+
+        assertThat(foundApprovals).hasSize(1);
+        assertThat(foundApprovals.get(0).getStatus()).isEqualTo(ScopeApproval.ApprovalStatus.APPROVED);
+    }
+
     // common test data
     private void givenStandardTestApprovalsExist() {
         List.of(basicApprovalFor(fullUserId),
