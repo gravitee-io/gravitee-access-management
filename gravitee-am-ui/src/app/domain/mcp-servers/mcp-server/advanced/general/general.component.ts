@@ -15,11 +15,8 @@
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
-import { MatDialog } from '@angular/material/dialog';
-import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { EMPTY } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { McpServersService } from '../../../../mcp-servers/mcp-servers.service';
@@ -27,7 +24,6 @@ import { DialogService } from '../../../../../services/dialog.service';
 import { AuthService } from '../../../../../services/auth.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
 import { ProtectedResource, PatchProtectedResourceRequest } from '../../../../../services/protected-resource.service';
-
 
 @Component({
   selector: 'app-domain-mcp-server-general',
@@ -55,8 +51,6 @@ export class DomainMcpServerGeneralComponent implements OnInit {
     private authService: AuthService,
     private dialogService: DialogService,
     private domainStore: DomainStoreService,
-
-    private matDialog: MatDialog,
   ) {}
 
   ngOnInit() {
@@ -180,6 +174,4 @@ export class DomainMcpServerGeneralComponent implements OnInit {
   hasFormChanges(): boolean {
     return this.formChanged;
   }
-
-
 }

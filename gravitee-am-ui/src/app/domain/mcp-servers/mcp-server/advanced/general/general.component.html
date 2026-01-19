@@ -29,8 +29,6 @@
           (onSettingsChange)="onSettingsChange($event)"
         ></app-mcp-server-settings>
 
-
-
         <div fxLayout="row" *ngIf="editMode">
           <button mat-raised-button color="primary" [disabled]="!settingsComponent?.isFormValid() || !hasFormChanges()" type="submit">
             SAVE

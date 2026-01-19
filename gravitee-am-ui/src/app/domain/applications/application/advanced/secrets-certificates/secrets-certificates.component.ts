@@ -16,15 +16,16 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
+import { MatDialog } from '@angular/material/dialog';
+import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
+
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { CertificateService } from '../../../../../services/certificate.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
 import { AuthService } from '../../../../../services/auth.service';
-import { MatDialog } from '@angular/material/dialog';
-import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
 import { ClientSecretsSettingsComponent } from '../../../../../components/client-secrets-management/dialog/client-secrets-settings/client-secrets-settings.component';
 import { ApplicationClientSecretService } from '../../../../../services/client-secret.service';
 

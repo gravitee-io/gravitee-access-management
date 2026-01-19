@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -100,10 +101,13 @@ public class KryoPoolTest {
             kryoPool.doWithKryo(kryo -> kryo.writeClassAndObject(output, now));
         }
 
+        CountDownLatch latch = new CountDownLatch(1);
+
         // long read
         executor.submit(() -> {
             try(var input = new Input(new FileInputStream(timestampFile))){
                 Object o = kryoPool.withKryo(kryo -> {
+                    latch.countDown();
                     try {
                         Thread.sleep(3000);
                         return kryo.readClassAndObject(input);
@@ -116,6 +120,8 @@ public class KryoPoolTest {
                 Assertions.fail(e);
             }
         });
+
+        latch.await();
 
         // next read
         executor.submit(() -> {
