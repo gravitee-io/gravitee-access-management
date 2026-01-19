@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-reporter</artifactId>
         <groupId>io.gravitee.am.reporter</groupId>
-        <version>4.6.31</version>
+        <version>4.6.32-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
