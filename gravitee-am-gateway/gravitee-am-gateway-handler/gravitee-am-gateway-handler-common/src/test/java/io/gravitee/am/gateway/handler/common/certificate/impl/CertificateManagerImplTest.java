@@ -16,10 +16,19 @@
 package io.gravitee.am.gateway.handler.common.certificate.impl;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.common.event.CertificateEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.common.event.Event;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +40,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
@@ -50,6 +60,18 @@ public class CertificateManagerImplTest {
 
     @Mock
     private Domain domain;
+
+    @Mock
+    private DomainReadinessService domainReadinessService;
+
+    @Mock
+    private CertificateRepository certificateRepository;
+
+    @Mock
+    private io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderCertificateReloader identityProviderReloader;
+
+    private static final String DOMAIN_ID = "test-domain-id";
+    private static final String CERTIFICATE_ID = "test-certificate-id";
 
     io.gravitee.am.gateway.certificate.CertificateProvider defaultProvider;
 
@@ -167,5 +189,76 @@ public class CertificateManagerImplTest {
                 .test()
                 .assertError(th -> th instanceof TemporarilyUnavailableException);
 
+    }
+
+    @Test
+    public void deployCertificate_shouldCallInitPluginSync() throws InterruptedException {
+        // Arrange
+        when(domain.getId()).thenReturn(DOMAIN_ID);
+
+        Certificate certificate = new Certificate();
+        certificate.setId(CERTIFICATE_ID);
+        certificate.setName("Test Certificate");
+        certificate.setDomain(DOMAIN_ID);
+
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
+        when(identityProviderReloader.reloadIdentityProvidersWithCertificate(CERTIFICATE_ID))
+                .thenReturn(io.reactivex.rxjava3.core.Completable.complete());
+
+        // Create a mock event for DEPLOY
+        Event<CertificateEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(CertificateEvent.DEPLOY);
+        when(event.content()).thenReturn(new Payload(CERTIFICATE_ID, ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.CREATE));
+
+        // Act
+        certificateManager.onEvent(event);
+
+        // Wait for async processing
+        TimeUnit.MILLISECONDS.sleep(200);
+
+        // Assert - initPluginSync should be called before the certificate is loaded
+        verify(domainReadinessService, timeout(1000)).initPluginSync(DOMAIN_ID, CERTIFICATE_ID, Type.CERTIFICATE.name());
+        verify(domainReadinessService, timeout(1000)).pluginLoaded(DOMAIN_ID, CERTIFICATE_ID);
+    }
+
+    @Test
+    public void deployCertificate_shouldCallPluginFailedOnError() throws InterruptedException {
+        // Arrange
+        when(domain.getId()).thenReturn(DOMAIN_ID);
+
+        when(certificateRepository.findById(CERTIFICATE_ID))
+                .thenReturn(Maybe.error(new RuntimeException("Database error")));
+
+        // Create a mock event for DEPLOY
+        Event<CertificateEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(CertificateEvent.DEPLOY);
+        when(event.content()).thenReturn(new Payload(CERTIFICATE_ID, ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.CREATE));
+
+        // Act
+        certificateManager.onEvent(event);
+
+        // Wait for async processing
+        TimeUnit.MILLISECONDS.sleep(200);
+
+        // Assert - initPluginSync should be called, followed by pluginFailed
+        verify(domainReadinessService, timeout(1000)).initPluginSync(DOMAIN_ID, CERTIFICATE_ID, Type.CERTIFICATE.name());
+        verify(domainReadinessService, timeout(1000)).pluginFailed(eq(DOMAIN_ID), eq(CERTIFICATE_ID), anyString());
+    }
+
+    @Test
+    public void undeployCertificate_shouldCallPluginUnloaded() {
+        // Arrange
+        when(domain.getId()).thenReturn(DOMAIN_ID);
+
+        // Create a mock event for UNDEPLOY
+        Event<CertificateEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(CertificateEvent.UNDEPLOY);
+        when(event.content()).thenReturn(new Payload(CERTIFICATE_ID, ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.DELETE));
+
+        // Act
+        certificateManager.onEvent(event);
+
+        // Assert
+        verify(domainReadinessService).pluginUnloaded(DOMAIN_ID, CERTIFICATE_ID);
     }
 }
