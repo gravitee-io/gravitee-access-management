@@ -144,6 +144,8 @@ import { ApplicationScopesComponent } from './domain/applications/application/ad
 import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
+
+import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/client-secrets/domain-mcp-server-client-secrets.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
@@ -1180,7 +1182,7 @@ export const routes: Routes = [
                                 },
                               },
                               {
-                                path: 'secrets-certificates',
+                                path: 'certificates',
                                 component: ApplicationSecretsCertificatesComponent,
                                 canActivate: [AuthGuard],
                                 resolve: { certificates: SignCertificatesResolver },
@@ -1195,6 +1197,7 @@ export const routes: Routes = [
                                   },
                                 },
                               },
+
                               {
                                 path: 'metadata',
                                 component: ApplicationMetadataComponent,
@@ -1532,6 +1535,7 @@ export const routes: Routes = [
                               entrypoint: DomainEntrypointResolver,
                             },
                           },
+
                           {
                             path: 'settings',
                             component: DomainMcpServerAdvancedComponent,
@@ -1559,6 +1563,20 @@ export const routes: Routes = [
                                   perms: {
                                     only: ['protected_resource_read'],
                                   },
+                                },
+                              },
+                              {
+                                path: 'secrets',
+                                component: DomainMcpServerClientSecretsComponent,
+                                data: {
+                                  menu: {
+                                    label: 'Secrets & Certificates',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                },
+                                resolve: {
+                                  entrypoint: DomainEntrypointResolver,
                                 },
                               },
                             ],

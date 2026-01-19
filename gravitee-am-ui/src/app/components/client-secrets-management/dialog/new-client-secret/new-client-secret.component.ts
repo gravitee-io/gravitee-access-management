@@ -20,7 +20,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 @Component({
   selector: 'app-new-client-secret',
   templateUrl: './new-client-secret.component.html',
-  styleUrl: '../../client-secrets-management.component.scss',
+  styleUrls: ['../../client-secrets-management.component.scss'],
   standalone: false,
 })
 export class NewClientSecretComponent {

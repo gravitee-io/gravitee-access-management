@@ -15,19 +15,18 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
-import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
-
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { CertificateService } from '../../../../../services/certificate.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
+import { AuthService } from '../../../../../services/auth.service';
+import { MatDialog } from '@angular/material/dialog';
+import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
 import { ClientSecretsSettingsComponent } from '../../../../../components/client-secrets-management/dialog/client-secrets-settings/client-secrets-settings.component';
 import { ApplicationClientSecretService } from '../../../../../services/client-secret.service';
-import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-certificates',
@@ -42,9 +41,8 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
   selectedCertificate: string;
-  clientId: any;
-  secretSettings: any;
   editMode = false;
+  secretSettings: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -52,10 +50,10 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
     private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private certificateService: CertificateService,
-    public applicationClientSecretService: ApplicationClientSecretService,
-    private matDialog: MatDialog,
     private domainStore: DomainStoreService,
     private authService: AuthService,
+    public applicationClientSecretService: ApplicationClientSecretService,
+    private matDialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
@@ -98,6 +96,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
       this.certificatePublicKeys = response;
     });
   }
+
   openSettings(event: any) {
     event.preventDefault();
     this.matDialog
