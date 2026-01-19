@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const request = require('supertest');
+import request from 'supertest';
 
 const openFgaSettingsPath = (domainId: string, engineId: string) =>
   `/management/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${domainId}/authorization-engines/${engineId}/settings`;

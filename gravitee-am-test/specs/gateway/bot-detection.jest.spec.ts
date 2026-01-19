@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { delay } from '@utils-commands/misc';
-import fetch from 'cross-fetch';
+import { setup } from '../test-fixture';
 import {
   createBotDetection,
   deleteBotDetection,
@@ -27,8 +27,7 @@ import {
   updateBotDetection,
 } from '@management-commands/bot-detection-management-commands';
 
-global.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let accessToken;
 let domain;

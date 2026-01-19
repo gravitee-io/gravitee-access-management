@@ -23,9 +23,10 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { expect } from '@jest/globals';
 import faker from 'faker';
 
-const request = require('supertest');
+import request from 'supertest';
 
 export type DomainOidcConfig = {
+  authorization_endpoint: string;
   userinfo_endpoint: string;
   token_endpoint: string;
   end_session_endpoint: string;
@@ -82,7 +83,7 @@ export const deleteDomain = (domainId, accessToken): Promise<void> =>
  * Safely deletes a domain, handling common errors gracefully.
  * Logs success/failure but never throws - ensures cleanup continues.
  * Use this in afterAll() blocks to ensure all domains are cleaned up even if one fails.
- * 
+ *
  * @param domainId - The domain ID to delete
  * @param accessToken - Admin access token
  * @returns Promise<void> - Always resolves (never rejects)
@@ -92,7 +93,7 @@ export const safeDeleteDomain = async (domainId: string | null | undefined, acce
     console.warn('⚠️  Cannot delete domain: domainId or accessToken is missing');
     return;
   }
-  
+
   try {
     await deleteDomain(domainId, accessToken);
     console.log(`✅ Deleted domain: ${domainId}`);
@@ -181,25 +182,25 @@ export const waitForDomainStart: (domain: Domain) => Promise<DomainWithOidcConfi
 
 /**
  * Wait for domain sync to complete.
- * 
+ *
  * This function polls the domain's updatedAt timestamp to detect when sync is complete.
  * Sync is considered complete when the domain's updatedAt timestamp has been stable
  * for a short period (indicating no new updates are in progress).
- * 
+ *
  * Uses the existing `retryUntil` utility for consistency with other wait operations.
- * 
+ *
  * Note: This is a heuristic approach - without a direct sync status API, we infer sync
  * completion by checking if the domain's updatedAt timestamp has been stable. This works
  * because domain updates trigger sync operations, and once updatedAt stabilizes, sync is
  * typically complete.
- * 
+ *
  * @param domainId - Optional domain ID to poll. If not provided, uses a shorter fixed wait.
  * @param accessToken - Optional access token for polling. Required if domainId is provided.
  * @param options - Optional configuration:
  *   - timeoutMillis: Maximum time to wait (default: 30000ms)
  *   - intervalMillis: Polling interval (default: 500ms)
  *   - stabilityMillis: Time domain must be stable before considering sync complete (default: 2000ms)
- * 
+ *
  * @returns Promise that resolves when sync is complete
  */
 // Constants for domain sync timing
@@ -216,7 +217,7 @@ export const waitForDomainSync = async (
     timeoutMillis?: number;
     intervalMillis?: number;
     stabilityMillis?: number;
-  }
+  },
 ): Promise<void> => {
   const {
     timeoutMillis = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS,
@@ -234,111 +235,111 @@ export const waitForDomainSync = async (
   }
 
   // Use polling with retryUntil when domainId and accessToken are provided
-    // State tracking for stability check
-    const state = {
-      lastUpdatedAt: null as number | null,
-      stableSince: null as number | null,
-    };
+  // State tracking for stability check
+  const state = {
+    lastUpdatedAt: null as number | null,
+    stableSince: null as number | null,
+  };
 
-    try {
-      await retryUntil(
-        async () => {
-          try {
-            const domain = await getDomain(domainId, accessToken);
-            const currentUpdatedAt = domain.updatedAt ? new Date(domain.updatedAt).getTime() : null;
-            return { updatedAt: currentUpdatedAt, timestamp: Date.now() };
-          } catch (error: unknown) {
-            // If domain fetch fails, return null as fallback
-            // This allows retry logic to continue (domain might not be ready yet)
-            // Log at debug level to handle the exception while avoiding log spam
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            console.debug(`Error fetching domain ${domainId} for sync check: ${errorMessage}`);
-            return { updatedAt: null, timestamp: Date.now() };
-          }
-        },
-        (result) => {
-          const { updatedAt, timestamp } = result;
-
-          // If updatedAt is null, domain is not ready or has no timestamp. Continue polling.
-          if (updatedAt === null) {
-            return false;
-          }
-
-          // First check - initialize state
-          if (state.lastUpdatedAt === null) {
-            state.lastUpdatedAt = updatedAt;
-            state.stableSince = timestamp;
-            return false;
-          }
-
-          // Domain was updated - reset stability timer
-          if (updatedAt !== state.lastUpdatedAt) {
-            state.lastUpdatedAt = updatedAt;
-            state.stableSince = timestamp;
-            return false;
-          }
-
-          // Domain hasn't been updated - check if stable long enough
-          const stableDuration = timestamp - (state.stableSince || timestamp);
-          return stableDuration >= stabilityMillis;
-        },
-        {
-          timeoutMillis,
-          intervalMillis,
-          onDone: () => {
-            const duration = state.stableSince ? Date.now() - (state.stableSince || 0) : 0;
-            console.debug(`Domain ${domainId} sync complete (stable for ${duration}ms)`);
-          },
-          onRetry: () => {
-            // Silent retry - avoid log spam
-          },
+  try {
+    await retryUntil(
+      async () => {
+        try {
+          const domain = await getDomain(domainId, accessToken);
+          const currentUpdatedAt = domain.updatedAt ? new Date(domain.updatedAt).getTime() : null;
+          return { updatedAt: currentUpdatedAt, timestamp: Date.now() };
+        } catch (error: unknown) {
+          // If domain fetch fails, return null as fallback
+          // This allows retry logic to continue (domain might not be ready yet)
+          // Log at debug level to handle the exception while avoiding log spam
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.debug(`Error fetching domain ${domainId} for sync check: ${errorMessage}`);
+          return { updatedAt: null, timestamp: Date.now() };
         }
-      );
+      },
+      (result) => {
+        const { updatedAt, timestamp } = result;
 
-      // Additional minimum wait to ensure domain is ready to serve requests
-      // Stability check doesn't guarantee domain is ready to handle requests
-      await waitFor(DOMAIN_READY_MIN_WAIT_MS);
-    } catch (error: unknown) {
-      // Timeout or error - log warning but don't throw (backward compatibility)
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
-    }
+        // If updatedAt is null, domain is not ready or has no timestamp. Continue polling.
+        if (updatedAt === null) {
+          return false;
+        }
+
+        // First check - initialize state
+        if (state.lastUpdatedAt === null) {
+          state.lastUpdatedAt = updatedAt;
+          state.stableSince = timestamp;
+          return false;
+        }
+
+        // Domain was updated - reset stability timer
+        if (updatedAt !== state.lastUpdatedAt) {
+          state.lastUpdatedAt = updatedAt;
+          state.stableSince = timestamp;
+          return false;
+        }
+
+        // Domain hasn't been updated - check if stable long enough
+        const stableDuration = timestamp - (state.stableSince || timestamp);
+        return stableDuration >= stabilityMillis;
+      },
+      {
+        timeoutMillis,
+        intervalMillis,
+        onDone: () => {
+          const duration = state.stableSince ? Date.now() - (state.stableSince || 0) : 0;
+          console.debug(`Domain ${domainId} sync complete (stable for ${duration}ms)`);
+        },
+        onRetry: () => {
+          // Silent retry - avoid log spam
+        },
+      },
+    );
+
+    // Additional minimum wait to ensure domain is ready to serve requests
+    // Stability check doesn't guarantee domain is ready to handle requests
+    await waitFor(DOMAIN_READY_MIN_WAIT_MS);
+  } catch (error: unknown) {
+    // Timeout or error - log warning but don't throw (backward compatibility)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
+  }
 };
 
 export async function waitForOidcReady(
-    domainHrid: string,
-    options?: {
-        timeoutMs?: number;
-        intervalMs?: number;
-    },
+  domainHrid: string,
+  options?: {
+    timeoutMs?: number;
+    intervalMs?: number;
+  },
 ) {
-    const { timeoutMs = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS, intervalMs = DEFAULT_DOMAIN_SYNC_INTERVAL_MS } = options || {};
+  const { timeoutMs = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS, intervalMs = DEFAULT_DOMAIN_SYNC_INTERVAL_MS } = options || {};
 
-    const start = Date.now();
-    let lastStatus: number | undefined;
-    let lastError: unknown;
+  const start = Date.now();
+  let lastStatus: number | undefined;
+  let lastError: unknown;
 
-    while (Date.now() - start < timeoutMs) {
-        try {
-            const res = await getWellKnownOpenIdConfiguration(domainHrid);
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await getWellKnownOpenIdConfiguration(domainHrid);
 
-            lastStatus = res.status;
+      lastStatus = res.status;
 
-            if (res.status === 200 && res.body) {
-                return res;
-            }
-        } catch (err) {
-            lastError = err;
-        }
-
-        await waitFor(DOMAIN_READY_MIN_WAIT_MS);
+      if (res.status === 200 && res.body) {
+        return res;
+      }
+    } catch (err) {
+      lastError = err;
     }
 
-    throw new Error(
-        `Timed out waiting for OIDC config for domain "${domainHrid}" after ${timeoutMs}ms. ` +
-        (lastStatus ? `Last status: ${lastStatus}` : '') +
-        (lastError instanceof Error ? ` Last error: ${lastError.message}` : ''),
-    );
+    await waitFor(DOMAIN_READY_MIN_WAIT_MS);
+  }
+
+  throw new Error(
+    `Timed out waiting for OIDC config for domain "${domainHrid}" after ${timeoutMs}ms. ` +
+      (lastStatus ? `Last status: ${lastStatus}` : '') +
+      (lastError instanceof Error ? ` Last error: ${lastError.message}` : ''),
+  );
 }
 
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));

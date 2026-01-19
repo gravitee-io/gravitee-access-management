@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain, waitFor } from '@management-commands/domain-management-commands';
 import {
@@ -26,15 +25,14 @@ import {
   updateDevice,
 } from '@management-commands/device-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
+setup(200000);
 
 let accessToken: any;
 let domain: any;
 let device: any;
 let deviceProId: any;
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();

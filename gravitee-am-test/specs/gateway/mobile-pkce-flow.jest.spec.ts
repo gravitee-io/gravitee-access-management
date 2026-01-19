@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import fetch from 'cross-fetch';
+import { afterAll, beforeAll, expect } from '@jest/globals';
+import { setup } from '../test-fixture';
 
 // Gateway commands
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -31,8 +31,7 @@ import {
 } from './fixtures/mobile-pkce-fixture';
 
 // Global setup
-global.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 // Test constants
 const MOBILE_REDIRECT_URI = 'net.openid.appauthdemo:/oauth2redirect';
@@ -48,7 +47,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (fixture) {
-    await fixture.cleanup();
+    await fixture.cleanUp();
   }
 });
 

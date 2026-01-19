@@ -118,7 +118,6 @@ export const waitForProtectedResourceRemovedFromList = async (
   );
 };
 
-
 export const listMcpClientSecrets = (domainId: string, accessToken: string, resourceId: string) =>
   getProtectedResourcesApi(accessToken).getSecrets({
     organizationId: process.env.AM_DEF_ORG_ID,

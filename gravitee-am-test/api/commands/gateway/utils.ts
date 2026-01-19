@@ -15,12 +15,13 @@
  */
 
 import { expect } from '@jest/globals';
+import { Application } from '@management-models/Application';
 
-export function getBase64BasicAuth(clientId, clientSecret) {
+export function getBase64BasicAuth(clientId: string, clientSecret: string) {
   return Buffer.from(clientId + ':' + clientSecret).toString('base64');
 }
 
-export function applicationBase64Token(app) {
+export function applicationBase64Token(app: Application) {
   return getBase64BasicAuth(app.settings.oauth.clientId, app.settings.oauth.clientSecret);
 }
 

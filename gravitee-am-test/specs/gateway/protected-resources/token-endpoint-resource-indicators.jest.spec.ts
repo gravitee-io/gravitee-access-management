@@ -14,35 +14,25 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, jest } from '@jest/globals';
+import { afterAll, beforeAll } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
-import {
-  validateSuccessfulTokenResponse,
-  validateErrorResponse,
-  validateClientIdAudience,
-} from './fixtures/test-utils';
+import { validateSuccessfulTokenResponse, validateErrorResponse, validateClientIdAudience } from './fixtures/test-utils';
 import { setupProtectedResourcesFixture, ProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
+import { setup } from '../../test-fixture';
 
 // RFC 8707 Token Endpoint: resource indicators and audience population
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let fixture: ProtectedResourcesFixture;
 
 // Helper function to make token requests
 async function makeTokenRequest(resourceParams: string, expectedStatus: number = 200) {
-  return await performPost(
-    fixture.openIdConfiguration.token_endpoint,
-    '',
-    `grant_type=client_credentials${resourceParams}`,
-    {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: 'Basic ' + applicationBase64Token(fixture.serviceApplication),
-    },
-  ).expect(expectedStatus);
+  return await performPost(fixture.openIdConfiguration.token_endpoint, '', `grant_type=client_credentials${resourceParams}`, {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    Authorization: 'Basic ' + applicationBase64Token(fixture.serviceApplication),
+  }).expect(expectedStatus);
 }
 
 beforeAll(async () => {
@@ -50,7 +40,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) await fixture.cleanup();
+  if (fixture) await fixture.cleanUp();
 });
 
 describe('Token Endpoint - Resource Indicators (RFC 8707)', () => {

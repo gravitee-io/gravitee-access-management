@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const request = require('supertest');
+import request from 'supertest';
 const btoa = require('btoa');
 
 export const requestAdminAccessToken = () => requestAccessToken(process.env.AM_ADMIN_USERNAME, process.env.AM_ADMIN_PASSWORD);

@@ -15,6 +15,7 @@
  */
 
 import { createIdp } from '@management-commands/idp-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 export const createMongoIdp = async (domainId, accessToken) => {
   console.log('creating mongodb  idp');
@@ -23,13 +24,11 @@ export const createMongoIdp = async (domainId, accessToken) => {
     type: 'mongo-am-idp',
     domainWhitelist: [],
     configuration: JSON.stringify({
-      uri: 'mongodb://mongodb:27017',
-      host: 'localhost',
-      port: 27017,
+      uri: process.env.AM_MONGODB_URI,
       enableCredentials: false,
       databaseCredentials: 'gravitee-am',
       database: 'gravitee-am',
-      usersCollection: 'idp-test-users',
+      usersCollection: uniqueName('test-idp', true),
       findUserByUsernameQuery: '{$or: [{username: ?}, {contract: ?}]}',
       findUserByEmailQuery: '{email: ?}',
       usernameField: 'username',
@@ -51,7 +50,12 @@ export const createJdbcIdp = async (domainId, accessToken) => {
     external: false,
     type: 'jdbc-am-idp',
     domainWhitelist: [],
-    configuration: `{\"host\":\"postgres\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
+    configuration: `{\"host\":\"${process.env.AM_POSTGRES_HOST}\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
     name: 'other-jdbc-idp',
   });
+};
+
+export const createCustomIdp = async (domainId, accessToken) => {
+  const jdbc = process.env.REPOSITORY_TYPE;
+  return jdbc === 'jdbc' ? await createJdbcIdp(domainId, accessToken) : await createMongoIdp(domainId, accessToken);
 };

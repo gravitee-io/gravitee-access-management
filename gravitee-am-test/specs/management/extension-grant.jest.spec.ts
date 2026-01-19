@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
@@ -31,8 +30,9 @@ import { buildCreateAndTestUser, deleteUser, getAllUsers } from '@management-com
 import { delay, uniqueName } from '@utils-commands/misc';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { generateSignedJwt, getPublicKey } from '@utils-commands/jwt';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
+setup(200000);
 
 let accessToken: any;
 let domain: any;
@@ -42,8 +42,6 @@ let tokenEndpoint: any;
 let defaultIdp: any;
 let pub: any;
 let user: any;
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();

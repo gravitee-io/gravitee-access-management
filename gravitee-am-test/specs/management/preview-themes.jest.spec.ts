@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { preview } from '@management-commands/form-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { setup } from '../test-fixture';
 
 const path = require('path');
 const fs = require('fs');
 
-global.fetch = fetch;
-
-jest.setTimeout(200000);
+setup(200000);
 
 let accessToken;
 let domain;
@@ -106,19 +104,17 @@ describe('Testing invalid preview form api...', () => {
                 </body>
                 </html>
                     `,
-        )
+        ),
       ).rejects.toMatchObject({
-        response: { status: 400 }
+        response: { status: 400 },
       });
     });
   });
 
   describe('With unknown template', () => {
     it('must return an error', async () => {
-      await expect(
-        testRequestPreview('unknown', 'content')
-      ).rejects.toMatchObject({
-        response: { status: 400 }
+      await expect(testRequestPreview('unknown', 'content')).rejects.toMatchObject({
+        response: { status: 400 },
       });
     });
   });

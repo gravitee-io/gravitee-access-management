@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {
-  safeDeleteDomain,
-  getDomain,
-  startDomain,
-  createDomain,
-  listDomains,
-} from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, getDomain, startDomain, createDomain, listDomains } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import type { Domain } from '@management-models/Domain';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
+setup(200000);
 
 const SMALL_BATCH_SIZE = 5;
 const LARGE_BATCH_SIZE = 55;
@@ -37,8 +31,6 @@ const SMALL_PREFIX = `${RUN_PREFIX}-small`;
 const LARGE_PREFIX = `${RUN_PREFIX}-large`;
 const WILDCARD_PREFIX = `${RUN_PREFIX}-shared`;
 const SEEDED_DOMAIN_COUNT = SMALL_BATCH_SIZE + LARGE_BATCH_SIZE;
-
-jest.setTimeout(200000);
 
 let accessToken: string;
 const createdDomainIds: string[] = [];
@@ -81,21 +73,17 @@ beforeAll(async () => {
     buildName: (index) => `${SMALL_PREFIX}-${index}-${uniqueName('domain', true)}`,
   });
 
-  await seedBatch(
-    LARGE_BATCH_SIZE,
-    largeBatch,
-    {
-      buildName: (index) =>
-        index < WILDCARD_BATCH_SIZE
-          ? `${WILDCARD_PREFIX}-${index}-${uniqueName('domain', true)}`
-          : `${LARGE_PREFIX}-${index}-${uniqueName('domain', true)}`,
-      onDomainCreated: (domain, index) => {
-        if (index < WILDCARD_BATCH_SIZE) {
-          wildcardBatch.push(domain);
-        }
-      },
+  await seedBatch(LARGE_BATCH_SIZE, largeBatch, {
+    buildName: (index) =>
+      index < WILDCARD_BATCH_SIZE
+        ? `${WILDCARD_PREFIX}-${index}-${uniqueName('domain', true)}`
+        : `${LARGE_PREFIX}-${index}-${uniqueName('domain', true)}`,
+    onDomainCreated: (domain, index) => {
+      if (index < WILDCARD_BATCH_SIZE) {
+        wildcardBatch.push(domain);
+      }
     },
-  );
+  });
 
   await createAndStartDomain(`${RUN_PREFIX}-unique123`);
 });

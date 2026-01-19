@@ -34,18 +34,17 @@ import { uniqueName } from '@utils-commands/misc';
 import { performGet, performPost, getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import { Fixture } from '../../../test-fixture';
 
-export interface ProtectedResourcesFixture {
+export interface ProtectedResourcesFixture extends Fixture {
   domain: Domain;
   application: Application;
   serviceApplication: Application;
   user: any;
   defaultIdp: IdentityProvider;
   openIdConfiguration: any;
-  accessToken: string;
   redirectUri: string;
   protectedResources: any[];
-  cleanup: () => Promise<void>;
   completeAuthorizationFlow: (resources: string[]) => Promise<string>;
   exchangeAuthCodeForToken: (authCode: string, resources?: string[]) => any;
   exchangeAuthCodeForTokenWithoutResources: (authCode: string) => any;
@@ -226,68 +225,68 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     domain = envResult.domain;
     accessToken = envResult.accessToken;
     const { defaultIdp } = envResult;
-    
+
     const application = await createTestApplication(domain, defaultIdp, accessToken, PROTECTED_RESOURCES_TEST.REDIRECT_URI);
     const serviceApplication = await createServiceApplication(domain, accessToken);
     const user = await createTestUser(domain, application, defaultIdp, accessToken);
     const protectedResources = await createTestProtectedResources(domain, accessToken);
     // Ensure protected resources are synced to gateway before using them
     await waitForDomainSync(domain.id, accessToken);
-    
+
     // Domain is already ready from setupTestEnvironment, just get OIDC config
     const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
     const openIdConfiguration = openIdConfigurationResponse.body;
     expect(openIdConfiguration).toBeDefined();
     expect(openIdConfiguration.authorization_endpoint).toBeDefined();
 
-  const completeAuthorizationFlowWithResources = async (resources: string[]): Promise<string> => {
-    const clientId = application.settings.oauth.clientId;
-    const authUrl = buildAuthorizationUrlWithResources(
-      openIdConfiguration.authorization_endpoint,
-      clientId,
-      PROTECTED_RESOURCES_TEST.REDIRECT_URI,
-      resources,
-    );
-    const authResponse = await performGet(authUrl).expect(302);
-    const loginResponse = await login(authResponse, user.username, clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD, false, false);
-    const authorizeResponse = await performGet(loginResponse.headers['location'], '', {
-      Cookie: loginResponse.headers['set-cookie'],
-    }).expect(302);
-    const redirectUrl = authorizeResponse.headers['location'];
-    expect(redirectUrl).toContain(PROTECTED_RESOURCES_TEST.REDIRECT_URI);
-    expect(redirectUrl).toContain('code=');
-    return extractAuthorizationCode(redirectUrl);
-  };
+    const completeAuthorizationFlowWithResources = async (resources: string[]): Promise<string> => {
+      const clientId = application.settings.oauth.clientId;
+      const authUrl = buildAuthorizationUrlWithResources(
+        openIdConfiguration.authorization_endpoint,
+        clientId,
+        PROTECTED_RESOURCES_TEST.REDIRECT_URI,
+        resources,
+      );
+      const authResponse = await performGet(authUrl).expect(302);
+      const loginResponse = await login(authResponse, user.username, clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD, false, false);
+      const authorizeResponse = await performGet(loginResponse.headers['location'], '', {
+        Cookie: loginResponse.headers['set-cookie'],
+      }).expect(302);
+      const redirectUrl = authorizeResponse.headers['location'];
+      expect(redirectUrl).toContain(PROTECTED_RESOURCES_TEST.REDIRECT_URI);
+      expect(redirectUrl).toContain('code=');
+      return extractAuthorizationCode(redirectUrl);
+    };
 
-  const exchangeCodeForTokenWithResources = (authCode: string, resources?: string[]) => {
-    const tokenParams = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code: authCode,
-      redirect_uri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
-    });
-    for (const r of resources || []) {
-      tokenParams.append('resource', r);
-    }
-    return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${applicationBase64Token(application)}`,
-    });
-  };
+    const exchangeCodeForTokenWithResources = (authCode: string, resources?: string[]) => {
+      const tokenParams = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: authCode,
+        redirect_uri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
+      });
+      for (const r of resources || []) {
+        tokenParams.append('resource', r);
+      }
+      return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${applicationBase64Token(application)}`,
+      });
+    };
 
-  const exchangeCodeForTokenWithoutResources = (authCode: string) => exchangeCodeForTokenWithResources(authCode, []);
+    const exchangeCodeForTokenWithoutResources = (authCode: string) => exchangeCodeForTokenWithResources(authCode, []);
 
-  const exchangeRefreshForTokenWithResources = (refreshToken: string, resources?: string[]) => {
-    const tokenParams = new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken });
-    for (const r of resources || []) {
-      tokenParams.append('resource', r);
-    }
-    return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${applicationBase64Token(application)}`,
-    });
-  };
+    const exchangeRefreshForTokenWithResources = (refreshToken: string, resources?: string[]) => {
+      const tokenParams = new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken });
+      for (const r of resources || []) {
+        tokenParams.append('resource', r);
+      }
+      return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${applicationBase64Token(application)}`,
+      });
+    };
 
-    const cleanup = async () => {
+    const cleanUp = async () => {
       // Delete domain (this will cascade delete applications, users, protected resources, etc.)
       await safeDeleteDomain(domain?.id, accessToken);
     };
@@ -302,7 +301,7 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
       accessToken,
       redirectUri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
       protectedResources,
-      cleanup,
+      cleanUp,
       completeAuthorizationFlow: completeAuthorizationFlowWithResources,
       exchangeAuthCodeForToken: exchangeCodeForTokenWithResources,
       exchangeAuthCodeForTokenWithoutResources: exchangeCodeForTokenWithoutResources,

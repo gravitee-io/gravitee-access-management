@@ -112,7 +112,7 @@ export const configureRateLimitPolicy = async (domainId: string, accessToken: st
   // Restart domain to apply policy
   const restartedDomain = await startDomain(domainId, accessToken);
   await waitForDomainSync(domainId, accessToken);
-  
+
   // Additional delay to ensure rate limit policy is fully applied
   // Domain sync doesn't guarantee policy application is complete
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -217,10 +217,7 @@ export const verifyRateLimitHeadersMissing = (requests: any[]) => {
  * @param periodSeconds - Rate limit period in seconds (default: 2)
  * @param bufferSeconds - Additional buffer time in seconds (default: 1.0)
  */
-export const waitForRateLimitReset = async (
-  periodSeconds: number = 2,
-  bufferSeconds: number = 1.0
-): Promise<void> => {
+export const waitForRateLimitReset = async (periodSeconds: number = 2, bufferSeconds: number = 1.0): Promise<void> => {
   const waitTime = (periodSeconds + bufferSeconds) * 1000;
   console.log(`⏳ Waiting ${periodSeconds + bufferSeconds}s for rate limit window to reset (period: ${periodSeconds}s)...`);
   await new Promise((resolve) => setTimeout(resolve, waitTime));

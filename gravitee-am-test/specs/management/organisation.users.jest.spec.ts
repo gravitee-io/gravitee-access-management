@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import {
   createOrganisationUser,
   deleteOrganisationUser,
@@ -32,9 +31,9 @@ import { User } from '@management-models/User';
 import { waitFor } from '@management-commands/domain-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createRandomString, getOrganisationManagementUrl } from '@management-commands/service/utils';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let accessToken;
 let organisationUser: User;

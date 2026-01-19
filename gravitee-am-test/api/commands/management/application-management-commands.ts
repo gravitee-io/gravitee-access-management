@@ -39,11 +39,7 @@ export const getApplication = (domainId, accessToken, applicationId) =>
     application: applicationId,
   });
 
-export const listApplications = (
-  domainId: string,
-  accessToken: string,
-  options?: ApplicationListOptions,
-): Promise<ApplicationPage> =>
+export const listApplications = (domainId: string, accessToken: string, options?: ApplicationListOptions): Promise<ApplicationPage> =>
   getApplicationApi(accessToken).listApplications({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,

@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { OIDCFixture, setupOidcProviderTest, TEST_USER } from './common';
 import { uniqueName } from '@utils-commands/misc';
-jest.setTimeout(200000);
+import { setup } from '../../test-fixture';
+
+setup(200000);
 
 let fixture: OIDCFixture;
 

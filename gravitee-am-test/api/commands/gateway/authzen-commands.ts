@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const request = require('supertest');
+import request from 'supertest';
 
 export interface AuthZenSubject {
   type: string;

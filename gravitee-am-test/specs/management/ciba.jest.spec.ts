@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { delay, uniqueName } from '@utils-commands/misc';
@@ -27,8 +26,9 @@ import { getBase64BasicAuth } from '@gateway-commands/utils';
 import jwt from 'jsonwebtoken';
 import jwkToPem from 'jwk-to-pem';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
+setup(200000);
 
 let accessToken: any;
 let cibaDomain: any;
@@ -38,9 +38,6 @@ let cibaApp: any;
 const managementUrl = `${process.env.AM_MANAGEMENT_URL}/management/organizations/DEFAULT/environments/DEFAULT/domains/`;
 const cibaUrl = `${process.env.AM_CIBA_NOTIFIER_URL}`;
 const internalCibaUrl = `${process.env.AM_INTERNAL_CIBA_NOTIFIER_URL}`;
-
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
@@ -293,8 +290,7 @@ describe('CIBA valid Flow', () => {
       '',
       {
         type: 'http-am-authdevice-notifier',
-        configuration:
-          `{"endpoint":"${internalCibaUrl}/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
+        configuration: `{"endpoint":"${internalCibaUrl}/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
         name: 'Always OK notifier',
       },
       {
@@ -499,8 +495,7 @@ describe('CIBA valid Flow', () => {
       '',
       {
         type: 'http-am-authdevice-notifier',
-        configuration:
-          `{"endpoint":"${internalCibaUrl}/notify/reject-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
+        configuration: `{"endpoint":"${internalCibaUrl}/notify/reject-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
         name: 'Always reject notifier',
       },
       {

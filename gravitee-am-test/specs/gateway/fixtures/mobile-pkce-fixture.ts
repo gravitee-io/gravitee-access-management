@@ -16,7 +16,13 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  safeDeleteDomain,
+  startDomain,
+  waitForDomainStart,
+  waitForDomainSync,
+} from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -27,16 +33,15 @@ import { uniqueName } from '@utils-commands/misc';
 import { performGet, performPost, getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import { Fixture } from '../../test-fixture';
 
-export interface MobilePKCEFixture {
+export interface MobilePKCEFixture extends Fixture {
   domain: Domain;
   application: Application;
   user: any;
   defaultIdp: IdentityProvider;
   openIdConfiguration: any;
-  accessToken: string;
   redirectUri: string;
-  cleanup: () => Promise<void>;
   completeAuthorizationFlow: (codeChallenge: string) => Promise<string>;
   exchangeCodeForToken: (authCode: string, codeVerifier: string) => any;
   buildInvalidAuthUrl: (params: Record<string, string>) => string;
@@ -119,7 +124,15 @@ async function setupTestEnvironment() {
   return { domain: domainReady.domain, defaultIdp, accessToken };
 }
 
-async function createTestApplication(domain: Domain, defaultIdp: IdentityProvider, accessToken: string, redirectUri: string, clientId: string, clientSecret: string, appName: string) {
+async function createTestApplication(
+  domain: Domain,
+  defaultIdp: IdentityProvider,
+  accessToken: string,
+  redirectUri: string,
+  clientId: string,
+  clientSecret: string,
+  appName: string,
+) {
   const application = await createApplication(domain.id, accessToken, {
     name: appName,
     type: TEST_CONSTANTS.APP_TYPE,
@@ -162,7 +175,13 @@ async function createTestApplication(domain: Domain, defaultIdp: IdentityProvide
   return application;
 }
 
-async function createTestUser(domain: Domain, application: Application, defaultIdp: IdentityProvider, accessToken: string, username: string) {
+async function createTestUser(
+  domain: Domain,
+  application: Application,
+  defaultIdp: IdentityProvider,
+  accessToken: string,
+  username: string,
+) {
   const testUser = await createUser(domain.id, accessToken, {
     firstName: TEST_CONSTANTS.USER_FIRST_NAME,
     lastName: TEST_CONSTANTS.USER_LAST_NAME,
@@ -196,7 +215,7 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
 
   // Create test user
   const user = await createTestUser(domain, application, defaultIdp, accessToken, username);
-  
+
   // Ensure application and user are synced before using them
   await waitForDomainSync(domain.id, accessToken);
 
@@ -251,7 +270,7 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   };
 
   // Cleanup function
-  const cleanup = async () => {
+  const cleanUp = async () => {
     if (domain && accessToken) {
       await safeDeleteDomain(domain.id, accessToken);
     }
@@ -265,7 +284,7 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
     openIdConfiguration,
     accessToken,
     redirectUri,
-    cleanup,
+    cleanUp,
     completeAuthorizationFlow,
     exchangeCodeForToken,
     buildInvalidAuthUrl,
