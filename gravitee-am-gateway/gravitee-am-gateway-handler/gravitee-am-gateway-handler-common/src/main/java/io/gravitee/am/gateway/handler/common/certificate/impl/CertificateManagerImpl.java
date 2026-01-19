@@ -208,6 +208,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     private void deployCertificate(String certificateId) {
         logger.info("Deploying certificate {} for domain {}", certificateId, domain.getName());
+        domainReadinessService.initPluginSync(domain.getId(), certificateId, Type.CERTIFICATE.name());
         certificateRepository.findById(certificateId)
                 .observeOn(Schedulers.io())
                 .subscribe(
