@@ -226,14 +226,24 @@ ngx-datatable {
   }
 }
 
+@keyframes pulse-loader {
+  0%, 100% {
+    background-size: 5%;
+  }
+  50% {
+    background-size: 5.5%;
+  }
+}
+
 .gv-splash-screen {
   position: absolute;
   z-index: 99999;
   background-image: url('assets/gravitee-icon.svg');
   background-position: center center;
   background-repeat: no-repeat;
-  background-size: 5%;
   inset: 0;
+  /* Add the animation */
+  animation: pulse-loader 2s ease-in-out infinite;
 }
 
 .gv-page-container {
