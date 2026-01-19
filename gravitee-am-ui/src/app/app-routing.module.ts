@@ -144,7 +144,6 @@ import { ApplicationScopesComponent } from './domain/applications/application/ad
 import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
-
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/client-secrets/domain-mcp-server-client-secrets.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
