@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.dataplane</groupId>
         <artifactId>gravitee-am-dataplane</artifactId>
-        <version>4.7.27</version>
+        <version>4.7.28-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-dataplane-mongodb</artifactId>
