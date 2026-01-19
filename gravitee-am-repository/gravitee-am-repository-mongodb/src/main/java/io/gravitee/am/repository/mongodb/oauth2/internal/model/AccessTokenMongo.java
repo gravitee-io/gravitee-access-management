@@ -19,6 +19,7 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -49,6 +50,29 @@ public class AccessTokenMongo {
 
     @BsonProperty("refresh_token")
     private String refreshToken;
+
+    /**
+     * RFC 8693 Token Exchange - Actor claim for delegation scenarios.
+     */
+    private Map<String, Object> actor;
+
+    /**
+     * RFC 8693 Token Exchange - The type of the source token used in the exchange.
+     */
+    @BsonProperty("source_token_type")
+    private String sourceTokenType;
+
+    /**
+     * RFC 8693 Token Exchange - The ID of the source token used in the exchange.
+     */
+    @BsonProperty("source_token_id")
+    private String sourceTokenId;
+
+    /**
+     * RFC 8693 Token Exchange - The issued token type URI.
+     */
+    @BsonProperty("issued_token_type")
+    private String issuedTokenType;
 
     public String getId() {
         return id;
@@ -120,6 +144,38 @@ public class AccessTokenMongo {
 
     public void setExpireAt(Date expireAt) {
         this.expireAt = expireAt;
+    }
+
+    public Map<String, Object> getActor() {
+        return actor;
+    }
+
+    public void setActor(Map<String, Object> actor) {
+        this.actor = actor;
+    }
+
+    public String getSourceTokenType() {
+        return sourceTokenType;
+    }
+
+    public void setSourceTokenType(String sourceTokenType) {
+        this.sourceTokenType = sourceTokenType;
+    }
+
+    public String getSourceTokenId() {
+        return sourceTokenId;
+    }
+
+    public void setSourceTokenId(String sourceTokenId) {
+        this.sourceTokenId = sourceTokenId;
+    }
+
+    public String getIssuedTokenType() {
+        return issuedTokenType;
+    }
+
+    public void setIssuedTokenType(String issuedTokenType) {
+        this.issuedTokenType = issuedTokenType;
     }
 
     @Override

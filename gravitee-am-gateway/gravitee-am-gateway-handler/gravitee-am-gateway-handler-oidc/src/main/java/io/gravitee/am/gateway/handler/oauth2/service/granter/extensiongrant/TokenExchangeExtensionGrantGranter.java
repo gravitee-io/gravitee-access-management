@@ -90,8 +90,46 @@ public class TokenExchangeExtensionGrantGranter extends ExtensionGrantGranter {
         oAuth2Request.getContext().put(Token.ISSUED_TOKEN_TYPE, issuedTokenType);
 
         return super.createAccessToken(oAuth2Request, client, endUser)
+                .map(token -> applyTokenExchangeTokenType(token, issuedTokenType))
                 .doOnSuccess(token -> reportTokenExchangeAudit(oAuth2Request, client, endUser, token))
                 .doOnError(error -> reportTokenExchangeFailure(oAuth2Request, client, endUser, error));
+    }
+
+    /**
+     * Apply RFC 8693 token_type based on issued_token_type.
+     *
+     * Per RFC 8693 Section 2.2.1: "If the issued token is not an access token or
+     * usable as an access token, then the token_type value N_A is used to indicate
+     * that an OAuth 2.0 token_type identifier is not applicable."
+     *
+     * @param token the token to modify
+     * @param issuedTokenType the issued token type URN
+     * @return the modified token
+     */
+    private Token applyTokenExchangeTokenType(Token token, String issuedTokenType) {
+        // Set token_type to "N_A" for non-access-token types per RFC 8693 Section 2.2.1
+        if (issuedTokenType != null && requiresNonApplicableTokenType(issuedTokenType)) {
+            token.setTokenType(Token.N_A_TYPE);
+            log.debug("Token type set to N_A for issued_token_type: {}", issuedTokenType);
+        }
+        return token;
+    }
+
+    /**
+     * Determine if the issued token type requires token_type="N_A".
+     *
+     * According to RFC 8693, token_type should be "N_A" when the issued token
+     * is not an access token or not usable as an access token.
+     *
+     * @param issuedTokenType the issued token type URN
+     * @return true if token_type should be "N_A"
+     */
+    private boolean requiresNonApplicableTokenType(String issuedTokenType) {
+        // ID tokens, SAML assertions are not access tokens
+        return TokenTypeURN.ID_TOKEN.equals(issuedTokenType)
+                || TokenTypeURN.SAML1.equals(issuedTokenType)
+                || TokenTypeURN.SAML2.equals(issuedTokenType);
+        // Note: JWT and ACCESS_TOKEN types are usable as access tokens, so they get "Bearer"
     }
 
     /**

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -33,6 +36,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Map;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -47,6 +51,9 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 @Repository
 public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements AccessTokenRepository {
     public static final String SUBJECT = "subject";
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private SpringAccessTokenRepository accessTokenRepository;
 
@@ -65,6 +72,17 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         if (entity.getExpireAt() != null) {
             result.setExpireAt(Date.from(entity.getExpireAt().atZone(UTC).toInstant()));
         }
+        // RFC 8693 Token Exchange fields
+        if (entity.getActor() != null) {
+            try {
+                result.setActor(objectMapper.readValue(entity.getActor(), MAP_TYPE_REF));
+            } catch (JsonProcessingException e) {
+                LOGGER.warn("Unable to deserialize actor claim", e);
+            }
+        }
+        result.setSourceTokenType(entity.getSourceTokenType());
+        result.setSourceTokenId(entity.getSourceTokenId());
+        result.setIssuedTokenType(entity.getIssuedTokenType());
         return result;
     }
 
@@ -83,6 +101,17 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         if (entity.getExpireAt() != null) {
             result.setExpireAt(LocalDateTime.ofInstant(entity.getExpireAt().toInstant(), UTC));
         }
+        // RFC 8693 Token Exchange fields
+        if (entity.getActor() != null) {
+            try {
+                result.setActor(objectMapper.writeValueAsString(entity.getActor()));
+            } catch (JsonProcessingException e) {
+                LOGGER.warn("Unable to serialize actor claim", e);
+            }
+        }
+        result.setSourceTokenType(entity.getSourceTokenType());
+        result.setSourceTokenId(entity.getSourceTokenId());
+        result.setIssuedTokenType(entity.getIssuedTokenType());
         return result;
     }
 

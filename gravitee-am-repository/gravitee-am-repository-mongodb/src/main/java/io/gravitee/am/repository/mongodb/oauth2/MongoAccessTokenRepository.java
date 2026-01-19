@@ -168,6 +168,11 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessTokenMongo.setRefreshToken(accessToken.getRefreshToken());
         accessTokenMongo.setCreatedAt(accessToken.getCreatedAt());
         accessTokenMongo.setExpireAt(accessToken.getExpireAt());
+        // RFC 8693 Token Exchange fields
+        accessTokenMongo.setActor(accessToken.getActor());
+        accessTokenMongo.setSourceTokenType(accessToken.getSourceTokenType());
+        accessTokenMongo.setSourceTokenId(accessToken.getSourceTokenId());
+        accessTokenMongo.setIssuedTokenType(accessToken.getIssuedTokenType());
 
         return accessTokenMongo;
     }
@@ -187,6 +192,11 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         accessToken.setRefreshToken(accessTokenMongo.getRefreshToken());
         accessToken.setCreatedAt(accessTokenMongo.getCreatedAt());
         accessToken.setExpireAt(accessTokenMongo.getExpireAt());
+        // RFC 8693 Token Exchange fields
+        accessToken.setActor(accessTokenMongo.getActor());
+        accessToken.setSourceTokenType(accessTokenMongo.getSourceTokenType());
+        accessToken.setSourceTokenId(accessTokenMongo.getSourceTokenId());
+        accessToken.setIssuedTokenType(accessTokenMongo.getIssuedTokenType());
 
         return accessToken;
     }

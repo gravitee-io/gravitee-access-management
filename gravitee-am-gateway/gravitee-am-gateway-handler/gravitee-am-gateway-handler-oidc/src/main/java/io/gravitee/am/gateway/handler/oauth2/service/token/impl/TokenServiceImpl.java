@@ -456,16 +456,45 @@ public class TokenServiceImpl implements TokenService {
         return jwt;
     }
 
+    /**
+     * Set the JWT aud claim based on resource and audience parameters.
+     *
+     * Per RFC 8693 Section 2.1: Both 'resource' (URI) and 'audience' (logical name)
+     * parameters can be used to indicate the target services for the issued token.
+     * They may be used together to indicate multiple target services.
+     *
+     * @param request the OAuth2 request containing resource and audience parameters
+     * @param jwt the JWT to modify
+     */
     private void setResources(OAuth2Request request, JWT jwt) {
-        Set<String> resource = request.getResources();
-        if (resource == null || resource.isEmpty()) {
+        Set<String> resources = request.getResources();
+        List<String> audiences = request.getAudiences();
+
+        boolean hasResources = resources != null && !resources.isEmpty();
+        boolean hasAudiences = audiences != null && !audiences.isEmpty();
+
+        if (!hasResources && !hasAudiences) {
             return;
         }
 
-        var jsonArray = new JSONArray();
-        jsonArray.addAll(resource);
+        // Use LinkedHashSet to preserve order and avoid duplicates
+        var combinedAudiences = new LinkedHashSet<String>();
 
-        logger.debug("resources: {}, JTI: {}, client ID:{}", jsonArray, jwt.getJti(), request.getClientId());
+        // Add resources first (URIs)
+        if (hasResources) {
+            combinedAudiences.addAll(resources);
+        }
+
+        // Add logical audiences (RFC 8693)
+        if (hasAudiences) {
+            combinedAudiences.addAll(audiences);
+        }
+
+        var jsonArray = new JSONArray();
+        jsonArray.addAll(combinedAudiences);
+
+        logger.debug("Setting JWT aud claim - resources: {}, audiences: {}, combined: {}, JTI: {}, client ID:{}",
+                resources, audiences, combinedAudiences, jwt.getJti(), request.getClientId());
 
         jwt.put(Claims.AUD, jsonArray);
     }

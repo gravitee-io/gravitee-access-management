@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-token-exchange-fields
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: access_tokens
+              columnName: actor
+      changes:
+        ############################
+        # RFC 8693 Token Exchange  #
+        ############################
+        - addColumn:
+            tableName: access_tokens
+            columns:
+              - column: { name: actor, type: clob, constraints: { nullable: true } }
+              - column: { name: source_token_type, type: nvarchar(128), constraints: { nullable: true } }
+              - column: { name: source_token_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: issued_token_type, type: nvarchar(128), constraints: { nullable: true } }

@@ -29,6 +29,30 @@ public class JdbcAccessToken extends JdbcToken {
     @Column("authorization_code")
     private String authorizationCode;
 
+    /**
+     * RFC 8693 Token Exchange - Actor claim for delegation scenarios (stored as JSON).
+     */
+    @Column("actor")
+    private String actor;
+
+    /**
+     * RFC 8693 Token Exchange - The type of the source token used in the exchange.
+     */
+    @Column("source_token_type")
+    private String sourceTokenType;
+
+    /**
+     * RFC 8693 Token Exchange - The ID of the source token used in the exchange.
+     */
+    @Column("source_token_id")
+    private String sourceTokenId;
+
+    /**
+     * RFC 8693 Token Exchange - The issued token type URI.
+     */
+    @Column("issued_token_type")
+    private String issuedTokenType;
+
     public String getRefreshToken() {
         return refreshToken;
     }
@@ -43,5 +67,37 @@ public class JdbcAccessToken extends JdbcToken {
 
     public void setAuthorizationCode(String authorizationCode) {
         this.authorizationCode = authorizationCode;
+    }
+
+    public String getActor() {
+        return actor;
+    }
+
+    public void setActor(String actor) {
+        this.actor = actor;
+    }
+
+    public String getSourceTokenType() {
+        return sourceTokenType;
+    }
+
+    public void setSourceTokenType(String sourceTokenType) {
+        this.sourceTokenType = sourceTokenType;
+    }
+
+    public String getSourceTokenId() {
+        return sourceTokenId;
+    }
+
+    public void setSourceTokenId(String sourceTokenId) {
+        this.sourceTokenId = sourceTokenId;
+    }
+
+    public String getIssuedTokenType() {
+        return issuedTokenType;
+    }
+
+    public void setIssuedTokenType(String issuedTokenType) {
+        this.issuedTokenType = issuedTokenType;
     }
 }
