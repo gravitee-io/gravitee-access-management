@@ -478,6 +478,7 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
+import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/client-secrets/domain-mcp-server-client-secrets.component';
 import {
   DomainNewMcpServerToolDialogComponent,
   DomainNewMcpServerToolDialogFactory,
@@ -534,6 +535,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     DomainMcpServerToolsComponent,
     DomainMcpServerAdvancedComponent,
     DomainMcpServerGeneralComponent,
+    DomainMcpServerClientSecretsComponent,
     DomainNewMcpServerToolDialogComponent,
     DomainMcpServerToolEditDialogComponent,
     ConfirmComponent,
@@ -675,6 +677,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     ApplicationTokensComponent,
     ApplicationGrantFlowsComponent,
     ApplicationSecretsCertificatesComponent,
+
     ApplicationMetadataComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,

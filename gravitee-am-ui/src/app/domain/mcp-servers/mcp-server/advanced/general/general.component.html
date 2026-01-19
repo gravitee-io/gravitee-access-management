@@ -29,26 +29,7 @@
           (onSettingsChange)="onSettingsChange($event)"
         ></app-mcp-server-settings>
 
-        <div class="gv-form-section">
-          <div class="gv-form-section-title">
-            <h5>OAuth 2.0 Settings (Optional)</h5>
-            <mat-divider></mat-divider>
-          </div>
-          <div>
-            <app-client-secrets-management
-              [adapter]="mcpServerClientSecretService"
-              [domainId]="domainId"
-              [parentId]="protectedResource.id"
-              [clientId]="protectedResource.clientId"
-              [hasCreatePermission]="editMode"
-              [hasUpdatePermission]="editMode"
-              [hasDeletePermission]="deleteMode"
-              [showSettings]="true"
-              (settingsClicked)="openSettings($event)"
-            >
-            </app-client-secrets-management>
-          </div>
-        </div>
+
 
         <div fxLayout="row" *ngIf="editMode">
           <button mat-raised-button color="primary" [disabled]="!settingsComponent?.isFormValid() || !hasFormChanges()" type="submit">
