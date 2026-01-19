@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientExcepti
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -119,6 +120,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         return extensionGrantProvider.grant(convert(tokenRequest))
                 .flatMap(endUser -> {
+                    enrichTokenExchangeContext(tokenRequest, endUser);
                     if (extensionGrant.isCreateUser()) {
                         return manageUserConnect(client, endUser, tokenRequest);
                     } else {
@@ -140,6 +142,36 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                     String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();
                     return Maybe.error(new InvalidGrantException(msg));
                 });
+    }
+
+    /**
+     * RFC 8693 Token Exchange: Transfer metadata from user to request context.
+     * This ensures TokenService can access issued_token_type and other metadata.
+     */
+    private void enrichTokenExchangeContext(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser) {
+        if (endUser == null || endUser.getAdditionalInformation() == null) {
+            return;
+        }
+
+        Map<String, Object> additionalInfo = endUser.getAdditionalInformation();
+
+        // Initialize context if needed
+        if (tokenRequest.getContext() == null) {
+            tokenRequest.setContext(new HashMap<>());
+        }
+
+        // Transfer issued_token_type to context for TokenService
+        Object issuedTokenType = additionalInfo.get("issued_token_type");
+        if (issuedTokenType != null) {
+            tokenRequest.getContext().put(Token.ISSUED_TOKEN_TYPE, issuedTokenType.toString());
+            log.debug("RFC 8693: Set issued_token_type={} in request context", issuedTokenType);
+        }
+
+        // Transfer token_type hint to context for TokenService
+        Object tokenType = additionalInfo.get("token_type");
+        if (tokenType != null) {
+            tokenRequest.getContext().put("token_type", tokenType.toString());
+        }
     }
 
     protected Maybe<User> forgeUserProfile(io.gravitee.am.identityprovider.api.User endUser) {

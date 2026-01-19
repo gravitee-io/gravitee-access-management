@@ -16,11 +16,18 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import {
+    createDomain,
+    safeDeleteDomain,
+    startDomain,
+    waitFor,
+    waitForDomainSync, waitForOidcReady
+} from '@management-commands/domain-management-commands';
 import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createServiceApplication } from './fixtures/rate-limit-fixture';
 import { createExtensionGrant, updateExtensionGrant } from '@management-commands/extension-grant-commands';
 import { updateApplication } from '@management-commands/application-management-commands';
+import { createScope } from '@management-commands/scope-management-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { parseJwt } from '@api-fixtures/jwt';
 import { uniqueName } from '@utils-commands/misc';
@@ -128,8 +135,14 @@ beforeAll(async () => {
     };
     tokenExchangeExtGrant = await createExtensionGrant(domain.id, accessToken, extGrantRequest);
 
+    // Create scopes required for testing
+    await createScope(domain.id, accessToken, { key: 'read', name: 'Read', description: 'Read access' });
+    await createScope(domain.id, accessToken, { key: 'write', name: 'Write', description: 'Write access' });
+    await createScope(domain.id, accessToken, { key: 'admin', name: 'Admin', description: 'Admin access' });
+    await createScope(domain.id, accessToken, { key: 'delete', name: 'Delete', description: 'Delete access' });
+
     // Create application for token exchange
-    const application = await createServiceApplication(domain.id, accessToken, 'exchange-app', 'exchange-secret', 'Token Exchange App').then(
+    const application = await createServiceApplication(domain.id, accessToken, 'Token Exchange App', 'exchange-app', 'exchange-secret').then(
         (app) =>
             updateApplication(
                 domain.id,
@@ -149,7 +162,7 @@ beforeAll(async () => {
     basicAuth = getBase64BasicAuth('exchange-app', 'exchange-secret');
 
     // Create subject application (for generating subject tokens)
-    subjectApp = await createServiceApplication(domain.id, accessToken, 'subject-app', 'subject-secret', 'Subject App').then((app) =>
+    subjectApp = await createServiceApplication(domain.id, accessToken, 'Subject App', 'subject-app', 'subject-secret').then((app) =>
         updateApplication(
             domain.id,
             accessToken,
@@ -157,7 +170,24 @@ beforeAll(async () => {
                 settings: {
                     oauth: {
                         grantTypes: ['client_credentials'],
-                        scopes: ['read', 'write', 'admin', 'delete'],
+                        scopeSettings: [
+                            {
+                                scope: 'read',
+                                "defaultScope": false
+                            },
+                            {
+                                scope: 'write',
+                                "defaultScope": false
+                            },
+                            {
+                                scope: 'admin',
+                                "defaultScope": false
+                            },
+                            {
+                                scope: 'delete',
+                                "defaultScope": false
+                            }
+                        ],
                     },
                 },
             },
@@ -166,7 +196,7 @@ beforeAll(async () => {
     );
 
     // Create actor application (for generating actor tokens)
-    actorApp = await createServiceApplication(domain.id, accessToken, 'actor-app', 'actor-secret', 'Actor App').then((app) =>
+    actorApp = await createServiceApplication(domain.id, accessToken, 'Actor App', 'actor-app', 'actor-secret').then((app) =>
         updateApplication(
             domain.id,
             accessToken,
@@ -174,7 +204,6 @@ beforeAll(async () => {
                 settings: {
                     oauth: {
                         grantTypes: ['client_credentials'],
-                        scopes: ['service'],
                     },
                 },
             },
@@ -183,7 +212,7 @@ beforeAll(async () => {
     );
 
     // Create second actor for delegation chaining tests
-    actor2App = await createServiceApplication(domain.id, accessToken, 'actor2-app', 'actor2-secret', 'Actor 2 App').then((app) =>
+    actor2App = await createServiceApplication(domain.id, accessToken, 'Actor 2 App', 'actor2-app', 'actor2-secret').then((app) =>
         updateApplication(
             domain.id,
             accessToken,
@@ -200,9 +229,13 @@ beforeAll(async () => {
 
     await startDomain(domain.id, accessToken);
     await waitForDomainSync(domain.id, accessToken);
-
-    const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-    openIdConfiguration = result.body;
+    // 3. Wait for OIDC to be ready
+    const oidcResponse = await waitForOidcReady(domain.hrid, {
+        timeoutMs: 30000,
+        intervalMs: 500,
+    });
+    expect(oidcResponse.status).toBe(200);
+    openIdConfiguration = oidcResponse.body;
 });
 
 afterAll(async () => {
@@ -219,7 +252,7 @@ describe('Scenario: RFC 8693 Token Exchange - Basic Exchange', () => {
             '?grant_type=client_credentials&scope=read write',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -243,7 +276,7 @@ describe('Scenario: RFC 8693 Token Exchange - Basic Exchange', () => {
         // Validate response structure
         expect(response.body.access_token).toBeDefined();
         expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
-        expect(response.body.token_type).toBe('Bearer');
+        expect(response.body.token_type).toBe('bearer');
         expect(response.body.expires_in).toBeGreaterThan(0);
 
         // Parse and validate the new token
@@ -262,7 +295,7 @@ describe('Scenario: RFC 8693 Token Exchange - Basic Exchange', () => {
             '?grant_type=client_credentials&scope=read write admin',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -299,7 +332,7 @@ describe('Scenario: RFC 8693 Token Exchange - Basic Exchange', () => {
             '?grant_type=client_credentials&scope=read',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -333,7 +366,7 @@ describe('Scenario: RFC 8693 Token Exchange - Basic Exchange', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -364,7 +397,7 @@ describe('Scenario: RFC 8693 Token Exchange - Basic Exchange', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -399,7 +432,7 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
             '?grant_type=client_credentials&scope=read write',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -412,7 +445,7 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('actor-app', 'actor-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('actor-app', 'actor-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -453,7 +486,7 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -466,7 +499,7 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('actor-app', 'actor-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('actor-app', 'actor-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -500,7 +533,7 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('actor2-app', 'actor2-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('actor2-app', 'actor2-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -516,7 +549,7 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
             `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
             null,
             {
-                Authorization: getBase64BasicAuth('actor2-app', 'actor2-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('actor2-app', 'actor2-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -536,7 +569,7 @@ describe('Scenario: RFC 8693 Token Exchange - Delegation', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -645,7 +678,7 @@ describe('Scenario: RFC 8693 Token Exchange - Error Handling', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -671,7 +704,7 @@ describe('Scenario: RFC 8693 Token Exchange - Error Handling', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -717,7 +750,7 @@ describe('Scenario: RFC 8693 Token Exchange - Introspection', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -758,7 +791,7 @@ describe('Scenario: RFC 8693 Token Exchange - Introspection', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -768,7 +801,7 @@ describe('Scenario: RFC 8693 Token Exchange - Introspection', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('actor-app', 'actor-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('actor-app', 'actor-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -856,7 +889,7 @@ describe('Scenario: RFC 8693 Token Exchange - Configuration Tests', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -866,7 +899,7 @@ describe('Scenario: RFC 8693 Token Exchange - Configuration Tests', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('actor-app', 'actor-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('actor-app', 'actor-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);
@@ -941,7 +974,7 @@ describe('Scenario: RFC 8693 Token Exchange - Configuration Tests', () => {
             '?grant_type=client_credentials',
             null,
             {
-                Authorization: getBase64BasicAuth('subject-app', 'subject-secret'),
+                Authorization: 'Basic ' + getBase64BasicAuth('subject-app', 'subject-secret'),
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         ).expect(200);

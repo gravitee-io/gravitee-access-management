@@ -382,6 +382,10 @@ public class TokenServiceImpl implements TokenService {
             if (issuedTokenType != null) {
                 token.setIssuedTokenType(issuedTokenType.toString());
             }
+            Object tokenType = oAuth2Request.getContext().get(Token.TOKEN_TYPE);
+            if (tokenType != null) {
+                token.setTokenType(tokenType.toString());
+            }
         }
         // set refresh token
         Optional.ofNullable(encodedRefreshToken).map(EncodedJWT::encodedToken).ifPresent(token::setRefreshToken);

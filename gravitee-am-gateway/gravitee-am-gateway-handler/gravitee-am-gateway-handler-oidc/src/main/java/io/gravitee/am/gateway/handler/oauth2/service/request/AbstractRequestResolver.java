@@ -25,7 +25,12 @@ import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.OPENID;
@@ -120,6 +125,15 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             });
         }
 
+        // token exchange scopes
+        if (isTokenExchange(request)) {
+            if(endUser !=null && endUser.getAdditionalInformation() != null && endUser.getAdditionalInformation().get("scope")!= null){
+                String scopes = (String) endUser.getAdditionalInformation().get("scope");
+                request.setScopes(Arrays.stream(scopes.split("\\s+")).collect(Collectors.toSet()));
+            }
+            return Single.just(request);
+        }
+
         if (!invalidScopes.isEmpty()) {
             return Single.error(new InvalidScopeException("Invalid scope(s): " + String.join(SCOPE_DELIMITER, invalidScopes)));
         }
@@ -138,6 +152,12 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             request.setScopes(resolvedScopes);
         }
         return Single.just(request);
+    }
+
+    // For token exchange, scopes come from the subject token, not the client and are already calculated
+    private boolean isTokenExchange(R request) {
+        return request.getGrantType() != null &&
+                request.getGrantType().startsWith("urn:ietf:params:oauth:grant-type:token-exchange");
     }
 
 

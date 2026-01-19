@@ -37,6 +37,8 @@ import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import lombok.Builder;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -421,6 +423,14 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
             additionalInformation.put("audit_info", context.getAuditInfo());
         }
 
+        // Store issued_token_type
+        if (request.getRequestedTokenType() != null) {
+            additionalInformation.put("issued_token_type", request.getRequestedTokenType());
+            if(!request.getRequestedTokenType().contains(TokenTypeURN.ACCESS_TOKEN)) {
+                additionalInformation.put("token_type", "N_A");
+            }
+        }
+
         // Apply claims mapping if configured
         List<TokenExchangeExtensionGrantConfiguration.ClaimMapping> claimsMapper = configuration.getClaimsMapper();
         if (claimsMapper != null && !claimsMapper.isEmpty()) {
@@ -471,8 +481,8 @@ public class TokenExchangeExtensionGrantProvider implements ExtensionGrantProvid
     /**
      * Internal class representing a parsed token exchange request.
      */
-    @lombok.Builder
-    @lombok.Getter
+    @Builder
+    @Getter
     private static class TokenExchangeRequest {
         private final String subjectToken;
         private final String subjectTokenType;

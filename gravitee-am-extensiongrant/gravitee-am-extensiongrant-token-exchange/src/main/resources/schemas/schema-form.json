@@ -6,7 +6,6 @@
     "grantType": {
       "title": "Grant Type",
       "description": "OAuth 2.0 grant type for token exchange as defined in RFC 8693.",
-      "type": "string",
       "default": "urn:ietf:params:oauth:grant-type:token-exchange",
       "readOnly": true
     },
@@ -21,7 +20,8 @@
           "urn:ietf:params:oauth:token-type:id_token",
           "urn:ietf:params:oauth:token-type:jwt",
           "urn:ietf:params:oauth:token-type:saml2",
-          "urn:ietf:params:oauth:token-type:saml1"
+          "urn:ietf:params:oauth:token-type:saml1",
+          "urn:ietf:params:oauth:token-type:refresh_token"
         ]
       },
       "default": [
@@ -37,7 +37,8 @@
           "urn:ietf:params:oauth:token-type:id_token": "ID Token (OpenID Connect)",
           "urn:ietf:params:oauth:token-type:jwt": "JWT",
           "urn:ietf:params:oauth:token-type:saml2": "SAML 2.0 Assertion",
-          "urn:ietf:params:oauth:token-type:saml1": "SAML 1.1 Assertion"
+          "urn:ietf:params:oauth:token-type:saml1": "SAML 1.1 Assertion",
+          "urn:ietf:params:oauth:token-type:refresh_token": "Refresh Token"
         }
       }
     },
@@ -104,7 +105,7 @@
     "maxDelegationChainDepth": {
       "title": "Max Delegation Chain Depth",
       "description": "Maximum depth of nested 'act' claims in delegation chains. Prevents excessive delegation for security.",
-      "type": "integer",
+      "type": "number",
       "default": 3,
       "minimum": 1,
       "maximum": 10

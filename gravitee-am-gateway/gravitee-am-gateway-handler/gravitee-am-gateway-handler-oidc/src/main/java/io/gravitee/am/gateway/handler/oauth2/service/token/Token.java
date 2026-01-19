@@ -58,13 +58,6 @@ public abstract class Token implements Serializable {
     public static final String BEARER_TYPE = "Bearer";
 
     /**
-     * RFC 8693 Token Exchange: Token type value used when the issued token is not
-     * an access token or usable as an access token.
-     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.2.1">RFC 8693 Section 2.2.1</a>
-     */
-    public static final String N_A_TYPE = "N_A";
-
-    /**
      * REQUIRED. The access token issued by the authorization server.
      */
     public static final String ACCESS_TOKEN = "access_token";

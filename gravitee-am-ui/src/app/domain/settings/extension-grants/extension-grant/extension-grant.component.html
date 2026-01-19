@@ -48,54 +48,55 @@
             >
           </mat-form-field>
         </div>
+        @if (this.extensionGrant && this.extensionGrant.grantType === 'urn:ietf:params:oauth:grant-type:jwt-bearer'){
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>User creation</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div fxLayout="column">
+              <mat-slide-toggle (change)="enableCreateUser($event)" [checked]="extensionGrant.createUser" [disabled]="!editMode">
+                Create user account
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%">Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
+            </div>
+          </div>
 
-        <div class="gv-form-section">
-          <div class="gv-form-section-title">
-            <h5>User creation</h5>
-            <mat-divider></mat-divider>
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Check user</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div fxLayout="column">
+              <mat-slide-toggle (change)="enableCheckUser($event)" [checked]="extensionGrant.userExists" [disabled]="!editMode">
+                User existence
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%">Check that the user is existing in the identity provider.</mat-hint>
+            </div>
           </div>
-          <div fxLayout="column">
-            <mat-slide-toggle (change)="enableCreateUser($event)" [checked]="extensionGrant.createUser" [disabled]="!editMode">
-              Create user account
-            </mat-slide-toggle>
-            <mat-hint style="font-size: 75%">Used for user account activity and OAuth 2.0 refresh token flow.</mat-hint>
-          </div>
-        </div>
 
-        <div class="gv-form-section">
-          <div class="gv-form-section-title">
-            <h5>Check user</h5>
-            <mat-divider></mat-divider>
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Identity provider</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div>
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-select
+                  placeholder="Identity provider"
+                  name="identityProvider"
+                  [(ngModel)]="extensionGrant.identityProvider"
+                  [disabled]="!editMode"
+                >
+                  <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{
+                      identityProvider.name
+                    }}</mat-option>
+                </mat-select>
+                <mat-hint>Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
+              </mat-form-field>
+            </div>
           </div>
-          <div fxLayout="column">
-            <mat-slide-toggle (change)="enableCheckUser($event)" [checked]="extensionGrant.userExists" [disabled]="!editMode">
-              User existence
-            </mat-slide-toggle>
-            <mat-hint style="font-size: 75%">Check that the user is existing in the identity provider.</mat-hint>
-          </div>
-        </div>
-
-        <div class="gv-form-section">
-          <div class="gv-form-section-title">
-            <h5>Identity provider</h5>
-            <mat-divider></mat-divider>
-          </div>
-          <div>
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-select
-                placeholder="Identity provider"
-                name="identityProvider"
-                [(ngModel)]="extensionGrant.identityProvider"
-                [disabled]="!editMode"
-              >
-                <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{
-                  identityProvider.name
-                }}</mat-option>
-              </mat-select>
-              <mat-hint>Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
-            </mat-form-field>
-          </div>
-        </div>
+        }
 
         <div class="gv-form-section">
           <div class="gv-form-section-title">

@@ -26,6 +26,7 @@ import { OrganizationService } from '../../../../../../services/organization.ser
 export class ExtensionGrantCreationStep1Component implements OnInit {
   private extensionGrantTypes: any = {
     'jwtbearer-am-extension-grant': 'Extension Grant JWT Bearer',
+    'token-exchange-am-extension-grant': 'Extension Grant Token Exchange'
   };
   @Input() extensionGrant: any;
   extensionGrants: any[];
