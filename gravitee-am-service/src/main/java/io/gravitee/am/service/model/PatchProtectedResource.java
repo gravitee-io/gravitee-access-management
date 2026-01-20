@@ -43,6 +43,7 @@ public class PatchProtectedResource {
     private Optional<@Size(min = 1, max = NewProtectedResource.NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
             @Pattern(regexp = NewProtectedResource.NAME_PATTERN, message = "Name must begin with a non-whitespace character") String> name;
     private Optional<String> description;
+    private Optional<String> certificate;
     private Optional<List<@NotBlank @Url(allowFragment = false) String>> resourceIdentifiers;
     private Optional<List<@Valid UpdateProtectedResourceFeature>> features;
     private Optional<List<ApplicationSecretSettings>> secretSettings;
@@ -54,6 +55,7 @@ public class PatchProtectedResource {
 
         SetterUtils.safeSet(toPatch::setName, this.getName());
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
+        SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
         SetterUtils.safeSet(toPatch::setResourceIdentifiers, this.getResourceIdentifiers());
 
         if (this.getFeatures() != null && this.getFeatures().isPresent()) {
@@ -83,9 +85,11 @@ public class PatchProtectedResource {
      * Indicates whether this patch contains at least one field to update.
      * This is used to validate empty PATCH requests early at the resource layer.
      */
+
     public boolean hasAnyField() {
         return (getName() != null && getName().isPresent())
                 || (getDescription() != null && getDescription().isPresent())
+                || (getCertificate() != null) // certificate can be set to null to reset the certificate field
                 || (getResourceIdentifiers() != null && getResourceIdentifiers().isPresent())
                 || (getFeatures() != null && getFeatures().isPresent())
                 || (getSecretSettings() != null && getSecretSettings().isPresent())

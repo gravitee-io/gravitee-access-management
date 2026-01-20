@@ -52,6 +52,8 @@ public class ProtectedResource implements Notifiable {
 
     private String description;
 
+    private String certificate;
+
     private Type type = Type.MCP_SERVER;
 
     private List<String> resourceIdentifiers;
@@ -86,6 +88,7 @@ public class ProtectedResource implements Notifiable {
         this.createdAt = protectedResource.getCreatedAt();
         this.updatedAt = protectedResource.getUpdatedAt();
         this.features = protectedResource.getFeatures();
+        this.certificate = protectedResource.getCertificate();
     }
 
     public Client toClient() {
@@ -99,6 +102,7 @@ public class ProtectedResource implements Notifiable {
         client.setClientSecrets(this.clientSecrets);
         client.setCreatedAt(this.createdAt);
         client.setUpdatedAt(this.updatedAt);
+        client.setCertificate(this.certificate);
         return client;
     }
 }

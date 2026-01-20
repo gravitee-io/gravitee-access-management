@@ -23,7 +23,9 @@
         <small>{{ description || 'Certificates are used to sign tokens.' }}</small>
       </div>
       <div *ngIf="showSaveButton" fxFlex="30" fxLayout="row" fxLayoutAlign="end center">
-        <button mat-raised-button color="primary" type="button" [disabled]="!formChanged" (click)="onSave()">SAVE</button>
+        <button mat-raised-button color="primary" type="button" [disabled]="!formChanged" (keydown.enter)="(false)" (click)="onSave()">
+          SAVE
+        </button>
       </div>
     </div>
   </div>

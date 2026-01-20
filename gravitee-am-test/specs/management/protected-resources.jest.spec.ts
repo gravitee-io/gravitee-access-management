@@ -39,6 +39,8 @@ import {
     waitForProtectedResourceRemovedFromList
 } from "@management-commands/protected-resources-management-commands";
 import {createScope} from "@management-commands/scope-management-commands";
+import {createCertificate, getAllCertificates} from "@management-commands/certificate-management-commands";
+import {createJksCertificateRequest} from "./certificates/fixtures/certificates-fixture";
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import {uniqueName} from "@utils-commands/misc";
@@ -1807,6 +1809,64 @@ describe('When patching protected resource', () => {
         ).rejects.toMatchObject({
             response: { status: 400 }
         });
+    });
+
+    it('Should patch protected resource with valid certificateId', async () => {
+        // First, get the list of certificates
+        const certificates = await getAllCertificates(domain.id, accessToken);
+        expect(certificates).toBeDefined();
+        let validCertificateId = certificates[0].id;
+
+        // Patch the protected resource with the valid certificate ID
+        const patchRequest = {
+            certificate: validCertificateId
+        };
+
+        const patched = await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest);
+
+        expect(patched).toBeDefined();
+        expect(patched.id).toEqual(createdResource.id);
+        expect(patched.certificate).toEqual(validCertificateId);
+        expect(patched.updatedAt).not.toEqual(createdResource.updatedAt);
+
+        createdResource = patched;
+    });
+
+    it('Should fail when patching with invalid certificateId', async () => {
+        const invalidCertificateId = 'invalid-certificate-id-that-does-not-exist';
+
+        const patchRequest = {
+            certificate: invalidCertificateId
+        };
+
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
+
+        // Verify the resource was not updated
+        const fetched = await getMcpServer(domain.id, accessToken, createdResource.id);
+        expect(fetched.certificate).not.toEqual(invalidCertificateId);
+    });
+
+    it('Should reset certificate value when patching with empty certificate', async () => {
+        // First verify the resource has a certificate set from the previous test
+        const before = await getMcpServer(domain.id, accessToken, createdResource.id);
+        expect(before.certificate).toBeDefined();
+
+        // Reset the certificate by patching with empty/null value
+        const patchRequest = {
+            certificate: null
+        };
+
+        const patched = await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest);
+
+        expect(patched).toBeDefined();
+        expect(patched.id).toEqual(createdResource.id);
+        expect(patched.certificate).toBeUndefined();
+        expect(patched.updatedAt).not.toEqual(before.updatedAt);
+        createdResource = patched;
     });
 });
 

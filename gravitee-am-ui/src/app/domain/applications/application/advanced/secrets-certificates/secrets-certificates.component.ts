@@ -40,6 +40,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   application: any;
   certificates: any[] = [];
   secretSettings: any;
+  editMode: boolean;
 
   constructor(
     private route: ActivatedRoute,

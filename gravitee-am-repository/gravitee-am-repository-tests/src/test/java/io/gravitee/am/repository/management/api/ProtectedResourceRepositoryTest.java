@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ProtectedResource.Type.MCP_SERVER;
@@ -68,6 +69,72 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> toSave.getResourceIdentifiers().containsAll(a.getResourceIdentifiers()));
         testObserver.assertValue(a -> a.getName().equals(toSave.getName()));
         testObserver.assertValue(a -> a.getClientId().equals(toSave.getClientId()));
+        testObserver.assertValue(a -> a.getCertificate().equals(toSave.getCertificate()));
+
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getId().equals(clientSecret.getId()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getName().equals(clientSecret.getName()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSettingsId().equals(clientSecret.getSettingsId()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSecret().equals(clientSecret.getSecret()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getExpiresAt().equals(clientSecret.getExpiresAt()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getCreatedAt().equals(clientSecret.getCreatedAt()));
+
+        testObserver.assertValue(a -> a.getSecretSettings().get(0).getId().equals(secretSettings.getId()));
+        testObserver.assertValue(a -> a.getSecretSettings().get(0).getAlgorithm().equals(secretSettings.getAlgorithm()));
+
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getKey().equals(tool1.getKey())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getDescription().equals(tool1.getDescription())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getType().equals(tool1.getType())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getCreatedAt().equals(tool1.getCreatedAt())));
+        testObserver.assertValue(a -> a.getFeatures().stream().map(McpTool.class::cast).toList().stream()
+                .anyMatch(f -> f.getScopes().equals(tool1.getScopes())));
+
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getKey().equals(tool2.getKey())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getDescription().equals(tool2.getDescription())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getType().equals(tool2.getType())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getCreatedAt().equals(tool2.getCreatedAt())));
+        testObserver.assertValue(a -> a.getFeatures().stream().map(McpTool.class::cast).toList().stream()
+                .anyMatch(f -> f.getScopes().equals(tool2.getScopes())));
+
+
+    }
+
+    @Test
+    public void testUpdate() {
+        ClientSecret clientSecret = generateClientSecret();
+        McpTool tool1 = generateMcpTool("key1");
+        McpTool tool2 = generateMcpTool("key2");
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource toSave = generateResource(clientSecret, secretSettings, List.of(tool1, tool2));
+
+        ProtectedResource createdResource = repository.create(toSave)
+                .flatMapMaybe(created -> repository.findById(created.getId()))
+                .timeout(10, TimeUnit.SECONDS)
+                .blockingGet();
+
+
+        toSave.setId(createdResource.getId());
+        // update fields
+        toSave.setCertificate(UUID.randomUUID().toString());
+        toSave.setDescription("Updated description");
+
+        var testObserver = repository.update(toSave)
+                .flatMapMaybe(created -> repository.findById(created.getId())).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> a.getId().equals(toSave.getId()));
+        testObserver.assertValue(a -> a.getName().equals(toSave.getName()));
+        testObserver.assertValue(a -> a.getDomainId().equals(toSave.getDomainId()));
+        testObserver.assertValue(a -> a.getUpdatedAt().equals(toSave.getUpdatedAt()));
+        testObserver.assertValue(a -> a.getCreatedAt().equals(toSave.getCreatedAt()));
+        testObserver.assertValue(a -> a.getDescription().equals(toSave.getDescription()) && !a.getDescription().equals(createdResource.getDescription()));
+        testObserver.assertValue(a -> a.getType().equals(toSave.getType()));
+        testObserver.assertValue(a -> a.getResourceIdentifiers().containsAll(toSave.getResourceIdentifiers()));
+        testObserver.assertValue(a -> toSave.getResourceIdentifiers().containsAll(a.getResourceIdentifiers()));
+        testObserver.assertValue(a -> a.getName().equals(toSave.getName()));
+        testObserver.assertValue(a -> a.getClientId().equals(toSave.getClientId()));
+        testObserver.assertValue(a -> a.getCertificate().equals(toSave.getCertificate()) && !a.getCertificate().equals(createdResource.getCertificate()));
 
         testObserver.assertValue(a -> a.getClientSecrets().get(0).getId().equals(clientSecret.getId()));
         testObserver.assertValue(a -> a.getClientSecrets().get(0).getName().equals(clientSecret.getName()));
@@ -767,6 +834,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
         toSave.setClientSecrets(List.of(clientSecret));
         toSave.setFeatures(features);
+        toSave.setCertificate(UUID.randomUUID().toString());
         return toSave;
     }
 

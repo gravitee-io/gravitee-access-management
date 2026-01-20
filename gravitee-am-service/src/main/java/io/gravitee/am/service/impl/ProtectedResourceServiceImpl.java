@@ -73,6 +73,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.valueOf;
+import static java.lang.String.format;
 import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
 
@@ -110,6 +111,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Autowired
     private ScopeService scopeService;
+    @Autowired
+    private CertificateService certificateService;
 
     @Override
     public Maybe<ProtectedResource> findById(String id) {
@@ -118,7 +121,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find protected resource by and id={}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find protected resources by  and id=%s", id), ex));
+                            format("An error occurs while trying to find protected resources by  and id=%s", id), ex));
                 });
     }
 
@@ -146,7 +149,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     }
                     LOGGER.error("An error occurs while trying to delete protected resource: {}", id, ex);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete protected resource: %s", id), ex));
+                            format("An error occurs while trying to delete protected resource: %s", id), ex));
                 });
     }
 
@@ -262,7 +265,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         }
         LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
         return Single.error(new TechnicalManagementException(
-                String.format("An error occurs while trying to update protected resource %s", id), ex));
+                format("An error occurs while trying to update protected resource %s", id), ex));
     }
 
     /**
@@ -342,6 +345,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         return checkFeatureKeyUniqueness(resource)
                 .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldResource.getResourceIdentifiers(), resource.getResourceIdentifiers()))
                 .andThen(validateFeatureScopes(domain.getId(), resource))
+                .andThen(validateCertificate(resource))
                 .andThen(Single.defer(() -> doUpdate(resource, oldResource, principal, domain)))
                 .map(ProtectedResourcePrimaryData::of);
     }
@@ -422,6 +426,21 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 });
     }
 
+    private Completable validateCertificate(ProtectedResource resource) {
+        if (!hasText(resource.getCertificate())) {
+            return Completable.complete();
+        }
+
+        return certificateService.findById(resource.getCertificate())
+                .filter(cert -> cert.getDomain().equals(resource.getDomainId()))
+                .switchIfEmpty(Maybe.error(() -> {
+                    final var msg = format("Certificate %s not found", resource.getCertificate());
+                    LOGGER.error(msg);
+                    return new InvalidProtectedResourceException(msg);
+                }))
+                .ignoreElement();
+    }
+
     private Single<ProtectedResource> doUpdate(ProtectedResource toUpdate, ProtectedResource oldResource, User principal, Domain domain) {
         return repository.update(toUpdate)
                 .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class)
@@ -447,7 +466,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
+                            format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
     }
 
@@ -458,7 +477,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find protected resources by domainId={} and type={}", domain, type, ex);
                     return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
+                            format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
     }
 
@@ -479,7 +498,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
                     return Flowable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
+                            format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
     }
 
@@ -492,7 +511,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     List<ClientSecret> secrets = protectedResource.getClientSecrets() != null ? protectedResource.getClientSecrets() : new ArrayList<>();
                     String newSecretName = name != null ? name.trim() : name;
                     if (newSecretName != null && secrets.stream().map(ClientSecret::getName).anyMatch(newSecretName::equals)) {
-                        return Single.error(() -> new ClientSecretInvalidException(String.format("Secret with description %s already exists", newSecretName)));
+                        return Single.error(() -> new ClientSecretInvalidException(format("Secret with description %s already exists", newSecretName)));
                     }
                     if (secrets.size() >= secretsMax) {
                         return Single.error(() -> new TooManyClientSecretsException(secretsMax));

@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ApplicationSettings } from './ApplicationSettings';
+import {
+  ApplicationSettingsFromJSON,
+  ApplicationSettingsFromJSONTyped,
+  ApplicationSettingsToJSON,
+  ApplicationSettingsToJSONTyped,
+} from './ApplicationSettings';
 import type { UpdateProtectedResourceFeature } from './UpdateProtectedResourceFeature';
 import {
   UpdateProtectedResourceFeatureFromJSON,
@@ -64,6 +71,12 @@ export interface UpdateProtectedResource {
    * @memberof UpdateProtectedResource
    */
   features?: Array<UpdateProtectedResourceFeature>;
+  /**
+   *
+   * @type {ApplicationSettings}
+   * @memberof UpdateProtectedResource
+   */
+  settings?: ApplicationSettings;
 }
 
 /**
@@ -88,6 +101,7 @@ export function UpdateProtectedResourceFromJSONTyped(json: any, ignoreDiscrimina
     description: json['description'] == null ? undefined : json['description'],
     resourceIdentifiers: json['resourceIdentifiers'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON),
+    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
   };
 }
 
@@ -105,5 +119,6 @@ export function UpdateProtectedResourceToJSONTyped(value?: UpdateProtectedResour
     description: value['description'],
     resourceIdentifiers: value['resourceIdentifiers'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(UpdateProtectedResourceFeatureToJSON),
+    settings: ApplicationSettingsToJSON(value['settings']),
   };
 }

@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ApplicationSettings } from './ApplicationSettings';
+import {
+  ApplicationSettingsFromJSON,
+  ApplicationSettingsFromJSONTyped,
+  ApplicationSettingsToJSON,
+  ApplicationSettingsToJSONTyped,
+} from './ApplicationSettings';
 import type { UpdateProtectedResourceFeature } from './UpdateProtectedResourceFeature';
 import {
   UpdateProtectedResourceFeatureFromJSON,
@@ -33,6 +40,13 @@ import {
   UpdateProtectedResourceFeatureToJSON,
   UpdateProtectedResourceFeatureToJSONTyped,
 } from './UpdateProtectedResourceFeature';
+import type { ApplicationSecretSettings } from './ApplicationSecretSettings';
+import {
+  ApplicationSecretSettingsFromJSON,
+  ApplicationSecretSettingsFromJSONTyped,
+  ApplicationSecretSettingsToJSON,
+  ApplicationSecretSettingsToJSONTyped,
+} from './ApplicationSecretSettings';
 
 /**
  *
@@ -54,6 +68,12 @@ export interface PatchProtectedResource {
   description?: string;
   /**
    *
+   * @type {string}
+   * @memberof PatchProtectedResource
+   */
+  certificate?: string;
+  /**
+   *
    * @type {Array<string>}
    * @memberof PatchProtectedResource
    */
@@ -64,6 +84,18 @@ export interface PatchProtectedResource {
    * @memberof PatchProtectedResource
    */
   features?: Array<UpdateProtectedResourceFeature>;
+  /**
+   *
+   * @type {Array<ApplicationSecretSettings>}
+   * @memberof PatchProtectedResource
+   */
+  secretSettings?: Array<ApplicationSecretSettings>;
+  /**
+   *
+   * @type {ApplicationSettings}
+   * @memberof PatchProtectedResource
+   */
+  settings?: ApplicationSettings;
 }
 
 /**
@@ -84,8 +116,12 @@ export function PatchProtectedResourceFromJSONTyped(json: any, ignoreDiscriminat
   return {
     name: json['name'] == null ? undefined : json['name'],
     description: json['description'] == null ? undefined : json['description'],
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
     resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON),
+    secretSettings:
+      json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
+    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
   };
 }
 
@@ -101,7 +137,11 @@ export function PatchProtectedResourceToJSONTyped(value?: PatchProtectedResource
   return {
     name: value['name'],
     description: value['description'],
+    certificate: value['certificate'],
     resourceIdentifiers: value['resourceIdentifiers'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(UpdateProtectedResourceFeatureToJSON),
+    secretSettings:
+      value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
+    settings: ApplicationSettingsToJSON(value['settings']),
   };
 }

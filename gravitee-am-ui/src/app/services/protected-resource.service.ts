@@ -105,6 +105,7 @@ export interface ProtectedResource extends ProtectedResourcePrimaryData {
   description?: string;
   domainId: string;
   clientId: string;
+  certificate?: string;
   clientSecrets?: ClientSecret[];
   secretSettings?: any;
 }
@@ -146,6 +147,7 @@ export interface PatchProtectedResourceRequest {
   features?: ProtectedResourceFeature[];
   secretSettings?: any;
   settings?: any;
+  certificate?: string;
 }
 
 export interface ClientSecret {
