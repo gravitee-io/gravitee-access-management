@@ -93,10 +93,7 @@ export class ClientSecretsManagementComponent implements OnInit {
               this.snackbarService.open(`Client secret created - ${description}`);
             }),
             map((secretResponse) => ({
-              secret: secretResponse.value, // Adapter should map to value or specific field?
-              // Backend returns ClientSecret with raw secret in value.
-              // Application returns response.secret?
-              // I need to unify in Adapter.  ApplicationClientSecretService returns Service response.
+              secret: secretResponse.secret,
               renew: false,
             })),
             catchError((_e: unknown): Observable<never> => {
@@ -152,7 +149,7 @@ export class ClientSecretsManagementComponent implements OnInit {
         disableClose: true,
         data: { description: row.name },
         role: 'alertdialog',
-        id: 'renewClientSecretDialog',
+        id: 'deleteClientSecretDialog',
       })
       .afterClosed()
       .pipe(
@@ -187,7 +184,7 @@ export class ClientSecretsManagementComponent implements OnInit {
               this.snackbarService.open(`Client secret renewed - ${row.name}`);
             }),
             map((secretResponse) => ({
-              secret: secretResponse.value,
+              secret: secretResponse.secret,
               renew: true,
             })),
             catchError(() => {

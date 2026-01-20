@@ -527,7 +527,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(protectedResource -> {
-                    Optional<ClientSecret> clientSecretOptional = protectedResource.getClientSecrets().stream().filter(clientSecret -> clientSecret.getId().equals(secretId)).findFirst();
+                    Optional<ClientSecret> clientSecretOptional = Optional.ofNullable(protectedResource.getClientSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(clientSecret -> clientSecret.getId().equals(secretId)).findFirst();
                     if (clientSecretOptional.isEmpty()) {
                         return Single.error(new ClientSecretNotFoundException(secretId));
                     }
@@ -555,7 +555,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                             return eventService.create(event, domain).flatMap(e -> Single.just(resource));
                         })
                         .map(__ -> {
-                            var secret = protectedResource.getClientSecrets().stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
+                            var secret = Optional.ofNullable(protectedResource.getClientSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
                             secret.setSecret(rawSecret);
                             return secret;
                         });

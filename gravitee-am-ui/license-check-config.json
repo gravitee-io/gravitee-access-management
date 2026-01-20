@@ -33,7 +33,8 @@
     "package-json.lock",
     ".tmp/**",
     ".vscode/**",
-    "**/*.spec.ts.snap"
+    "**/*.spec.ts.snap",
+    "target/**"
   ],
   "license": "LICENSE_TEMPLATE.txt",
   "licenseFormats": {
