@@ -33,6 +33,13 @@ import {
   UpdateProtectedResourceFeatureToJSON,
   UpdateProtectedResourceFeatureToJSONTyped,
 } from './UpdateProtectedResourceFeature';
+import type { ApplicationSecretSettings } from './ApplicationSecretSettings';
+import {
+  ApplicationSecretSettingsFromJSON,
+  ApplicationSecretSettingsFromJSONTyped,
+  ApplicationSecretSettingsToJSON,
+  ApplicationSecretSettingsToJSONTyped,
+} from './ApplicationSecretSettings';
 
 /**
  *
@@ -64,6 +71,12 @@ export interface PatchProtectedResource {
    * @memberof PatchProtectedResource
    */
   features?: Array<UpdateProtectedResourceFeature>;
+  /**
+   *
+   * @type {Array<ApplicationSecretSettings>}
+   * @memberof PatchProtectedResource
+   */
+  secretSettings?: Array<ApplicationSecretSettings>;
 }
 
 /**
@@ -86,6 +99,8 @@ export function PatchProtectedResourceFromJSONTyped(json: any, ignoreDiscriminat
     description: json['description'] == null ? undefined : json['description'],
     resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON),
+    secretSettings:
+      json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
   };
 }
 
@@ -103,5 +118,7 @@ export function PatchProtectedResourceToJSONTyped(value?: PatchProtectedResource
     description: value['description'],
     resourceIdentifiers: value['resourceIdentifiers'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(UpdateProtectedResourceFeatureToJSON),
+    secretSettings:
+      value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
   };
 }
