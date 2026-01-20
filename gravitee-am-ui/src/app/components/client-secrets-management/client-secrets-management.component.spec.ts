@@ -56,14 +56,7 @@ describe('ClientSecretsManagementComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [ClientSecretsManagementComponent],
-      imports: [
-        MatDialogModule,
-        MatButtonModule,
-        MatIconModule,
-        MatTooltipModule,
-        ClipboardModule,
-        NgxDatatableModule,
-      ],
+      imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule, ClipboardModule, NgxDatatableModule],
       providers: [
         { provide: ClientSecretService, useValue: clientSecretServiceSpy },
         { provide: SnackbarService, useValue: snackbarServiceSpy },
@@ -113,9 +106,7 @@ describe('ClientSecretsManagementComponent', () => {
         close: jest.fn(),
       };
 
-      matDialogSpy.open
-        .mockReturnValueOnce(dialogRefSpyObj as any)
-        .mockReturnValueOnce(copyDialogRefSpyObj as any);
+      matDialogSpy.open.mockReturnValueOnce(dialogRefSpyObj as any).mockReturnValueOnce(copyDialogRefSpyObj as any);
 
       const newSecret: ClientSecret = { id: '3', name: 'New Secret Description', value: 'new-value' };
       clientSecretServiceSpy.create.mockReturnValue(of({ value: newSecret } as any));
@@ -171,9 +162,7 @@ describe('ClientSecretsManagementComponent', () => {
         close: jest.fn(),
       };
 
-      matDialogSpy.open
-        .mockReturnValueOnce(dialogRefSpyObj as any)
-        .mockReturnValueOnce(copyDialogRefSpyObj as any);
+      matDialogSpy.open.mockReturnValueOnce(dialogRefSpyObj as any).mockReturnValueOnce(copyDialogRefSpyObj as any);
 
       const renewedSecret: ClientSecret = { ...secretToRenew, value: 'renewed-value' };
       clientSecretServiceSpy.renew.mockReturnValue(of({ value: renewedSecret } as any));
@@ -214,4 +203,3 @@ describe('ClientSecretsManagementComponent', () => {
     });
   });
 });
-
