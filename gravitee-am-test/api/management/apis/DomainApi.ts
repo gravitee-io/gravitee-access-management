@@ -372,6 +372,14 @@ import {
   UsernameEntityToJSON,
 } from '../models';
 
+export interface DeleteRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  secretId: string;
+}
+
 export interface AddGroupMemberRequest {
   organizationId: string;
   environmentId: string;
@@ -424,6 +432,14 @@ export interface BulkUserOperationRequest {
   environmentId: string;
   domain: string;
   domainUserBulkRequest: DomainUserBulkRequest;
+}
+
+export interface CreateRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  newClientSecret: NewClientSecret;
 }
 
 export interface CreateAlertNotifierRequest {
@@ -1153,6 +1169,13 @@ export interface GetResourceRequest {
   resource: string;
 }
 
+export interface GetSecretsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+}
+
 export interface GetThemeRequest {
   organizationId: string;
   environmentId: string;
@@ -1543,6 +1566,14 @@ export interface RenderDomainTemplateRequest {
   previewRequest: PreviewRequest;
 }
 
+export interface RenewRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  secretId: string;
+}
+
 export interface RenewClientSecretRequest {
   organizationId: string;
   environmentId: string;
@@ -1887,6 +1918,84 @@ export interface UpdateUsernameRequest {
  *
  */
 export class DomainApi extends runtime.BaseAPI {
+  /**
+   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * Remove a secret for a protected resource
+   */
+  async _deleteRaw(
+    requestParameters: DeleteRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling _delete.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling _delete.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling _delete.');
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling _delete.',
+      );
+    }
+
+    if (requestParameters.secretId === null || requestParameters.secretId === undefined) {
+      throw new runtime.RequiredError(
+        'secretId',
+        'Required parameter requestParameters.secretId was null or undefined when calling _delete.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/secrets/{secretId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource)))
+          .replace(`{${'secretId'}}`, encodeURIComponent(String(requestParameters.secretId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * Remove a secret for a protected resource
+   */
+  async _delete(requestParameters: DeleteRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this._deleteRaw(requestParameters, initOverrides);
+  }
+
   /**
    * User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain or DOMAIN_GROUP[UPDATE] permission on the specified environment or DOMAIN_GROUP[UPDATE] permission on the specified organization
    * Add a group member
@@ -2466,6 +2575,87 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<BulkResponse> {
     const response = await this.bulkUserOperationRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[CREATE] permission on the specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization.
+   * Create a secret for a protected resource
+   */
+  async createRaw(
+    requestParameters: CreateRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<ClientSecret>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling create.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling create.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create.');
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling create.',
+      );
+    }
+
+    if (requestParameters.newClientSecret === null || requestParameters.newClientSecret === undefined) {
+      throw new runtime.RequiredError(
+        'newClientSecret',
+        'Required parameter requestParameters.newClientSecret was null or undefined when calling create.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/secrets`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewClientSecretToJSON(requestParameters.newClientSecret),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ClientSecretFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[CREATE] permission on the specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization.
+   * Create a secret for a protected resource
+   */
+  async create(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ClientSecret> {
+    const response = await this.createRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -10223,6 +10413,83 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource or PROTECTED_RESOURCE[LIST] permission on the specified domain or PROTECTED_RESOURCE[LIST] permission on the specified environment or PROTECTED_RESOURCE[LIST] permission on the specified organization.
+   * List secrets of a protected resource
+   */
+  async getSecretsRaw(
+    requestParameters: GetSecretsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<ClientSecret>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getSecrets.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getSecrets.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getSecrets.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling getSecrets.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/secrets`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ClientSecretFromJSON));
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource or PROTECTED_RESOURCE[LIST] permission on the specified domain or PROTECTED_RESOURCE[LIST] permission on the specified environment or PROTECTED_RESOURCE[LIST] permission on the specified organization.
+   * List secrets of a protected resource
+   */
+  async getSecrets(
+    requestParameters: GetSecretsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<ClientSecret>> {
+    const response = await this.getSecretsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_THEME[READ] permission on the specified domain or DOMAIN_THEME[READ] permission on the specified environment or DOMAIN_THEME[READ] permission on the specified organization
    * Get the theme linked to the specified security domain
    */
@@ -14252,6 +14519,85 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<PreviewResponse> {
     const response = await this.renderDomainTemplateRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * Renew a secret for a protected resource
+   */
+  async renewRaw(
+    requestParameters: RenewRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<ClientSecret>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling renew.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling renew.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling renew.');
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling renew.',
+      );
+    }
+
+    if (requestParameters.secretId === null || requestParameters.secretId === undefined) {
+      throw new runtime.RequiredError(
+        'secretId',
+        'Required parameter requestParameters.secretId was null or undefined when calling renew.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/secrets/{secretId}/_renew`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource)))
+          .replace(`{${'secretId'}}`, encodeURIComponent(String(requestParameters.secretId))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ClientSecretFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * Renew a secret for a protected resource
+   */
+  async renew(requestParameters: RenewRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ClientSecret> {
+    const response = await this.renewRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
