@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
+
 import java.util.Date;
 import java.util.List;
 
@@ -25,7 +28,8 @@ public record ProtectedResourcePrimaryData (
         String description,
         ProtectedResource.Type type,
         List<String> resourceIdentifiers,
-
+        ApplicationSettings settings,
+        List<ApplicationSecretSettings> secretSettings,
         List<? extends ProtectedResourceFeature> features,
         Date updatedAt){
 
@@ -37,6 +41,8 @@ public record ProtectedResourcePrimaryData (
                 protectedResource.getDescription(),
                 protectedResource.getType(),
                 protectedResource.getResourceIdentifiers(),
+                protectedResource.getSettings(),
+                protectedResource.getSecretSettings(),
                 protectedResource.getFeatures(),
                 protectedResource.getUpdatedAt()
         );

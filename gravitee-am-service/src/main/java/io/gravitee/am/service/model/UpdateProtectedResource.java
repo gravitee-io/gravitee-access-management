@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.validators.url.Url;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -44,6 +45,8 @@ public class UpdateProtectedResource {
 
     private List<@Valid UpdateProtectedResourceFeature> features;
 
+    private ApplicationSettings settings;
+    
     public List<UpdateProtectedResourceFeature> getFeatures() {
         return Objects.requireNonNullElseGet(features, ArrayList::new);
     }

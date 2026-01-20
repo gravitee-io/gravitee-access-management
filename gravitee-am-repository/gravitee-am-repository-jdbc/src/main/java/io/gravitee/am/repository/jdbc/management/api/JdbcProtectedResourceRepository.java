@@ -122,7 +122,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                             list.add(sec);
                             return list;
                         })
-                        .doOnNext(stored::setClientSecrets)
+                        .doOnNext(stored::setSecrets)
                         .then(Mono.just(stored)))
                 .flatMap(stored -> persistIdentifiers(item)
                         .map(JdbcProtectedResourceIdentifier::getIdentifier)
@@ -239,7 +239,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                                     List<ClientSecret> mapped = secretsForRes == null ? List.of() : secretsForRes.stream()
                                             .map(j -> mapper.map(j, ClientSecret.class))
                                             .toList();
-                                    res.setClientSecrets(mapped);
+                                    res.setSecrets(mapped);
                                 });
                                 return Flowable.fromIterable(resources);
                             });
@@ -367,7 +367,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         .map(jdbcClientSecret -> mapper.map(jdbcClientSecret, ClientSecret.class))
                         .toList()
                         .map(secrets -> {
-                            app.setClientSecrets(secrets);
+                            app.setSecrets(secrets);
                             return app;
                         }))
                 .flatMap(app -> identifierSpring.findAllByProtectedResourceId(app.getId())
@@ -387,7 +387,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     }
 
     private Flux<ClientSecret> persistClientSecrets(ProtectedResource protectedResource) {
-        List<JdbcProtectedResourceClientSecret> jdbcSecrets = protectedResource.getClientSecrets() == null ? List.of() : protectedResource.getClientSecrets()
+        List<JdbcProtectedResourceClientSecret> jdbcSecrets = protectedResource.getSecrets() == null ? List.of() : protectedResource.getSecrets()
                 .stream()
                 .map(secret -> mapper.map(secret, JdbcProtectedResourceClientSecret.class))
                 .map(secret -> {

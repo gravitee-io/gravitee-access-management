@@ -81,7 +81,7 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         ProtectedResourcePrimaryData protectedResource = new ProtectedResourcePrimaryData(
-                "id", "clientId", "name", "desc", ProtectedResource.Type.MCP_SERVER, List.of("https://onet.pl"), List.of(), new Date());
+                "id", "clientId", "name", "desc", ProtectedResource.Type.MCP_SERVER, List.of("https://onet.pl"), null, List.of(), List.of(), new Date());
 
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);

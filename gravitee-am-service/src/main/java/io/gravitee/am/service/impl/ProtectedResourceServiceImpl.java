@@ -35,39 +35,41 @@ import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.ClientSecretInvalidException;
+import io.gravitee.am.service.exception.ClientSecretNotFoundException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.TooManyClientSecretsException;
 import io.gravitee.am.service.model.NewMcpTool;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateMcpTool;
 import io.gravitee.am.service.model.UpdateProtectedResource;
-import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.service.exception.ClientSecretDeleteException;
+import org.apache.commons.lang3.StringUtils;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-
-import java.util.Optional;
-import java.util.ArrayList;
-import org.springframework.beans.factory.annotation.Value;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.valueOf;
@@ -167,7 +169,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
         toCreate.setSecretSettings(new ArrayList<>(List.of(secretSettings)));
-        toCreate.setClientSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
+        toCreate.setSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
         toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
             ProtectedResourceFeature feature = f.asFeature();
             feature.setCreatedAt(toCreate.getCreatedAt());
@@ -487,7 +489,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(protectedResource -> {
-                    List<ClientSecret> secrets = protectedResource.getClientSecrets() != null ? protectedResource.getClientSecrets() : new ArrayList<>();
+                    List<ClientSecret> secrets = protectedResource.getSecrets() != null ? protectedResource.getSecrets() : new ArrayList<>();
                     String newSecretName = name != null ? name.trim() : name;
                     if (newSecretName != null && secrets.stream().map(ClientSecret::getName).anyMatch(newSecretName::equals)) {
                         return Single.error(() -> new ClientSecretInvalidException(String.format("Secret with description %s already exists", newSecretName)));
@@ -506,9 +508,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         protectedResource.getSecretSettings().add(secretSettings);
                     }
 
-                    ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings, domain.getSecretExpirationSettings(), null);
+                    ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings, domain.getSecretExpirationSettings(), protectedResource.getSettings().getSecretExpirationSettings());
                     secrets.add(clientSecret);
-                    protectedResource.setClientSecrets(secrets);
+                    protectedResource.setSecrets(secrets);
 
                     return repository.update(protectedResource)
                         .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
@@ -540,7 +542,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(protectedResource -> {
-                    Optional<ClientSecret> clientSecretOptional = Optional.ofNullable(protectedResource.getClientSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(clientSecret -> clientSecret.getId().equals(secretId)).findFirst();
+                    Optional<ClientSecret> clientSecretOptional = Optional.ofNullable(protectedResource.getSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(clientSecret -> clientSecret.getId().equals(secretId)).findFirst();
                     if (clientSecretOptional.isEmpty()) {
                         return Single.error(new ClientSecretNotFoundException(secretId));
                     }
@@ -558,7 +560,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     clientSecret.setSecret(secretService.getOrCreatePasswordEncoder(secretSettings).encode(rawSecret));
                     clientSecret.setSettingsId(secretSettings.getId());
                     // Protected resources don't have separate secret expiration settings currently, relying on domain settings or defaults inside service
-                    clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretExpirationSettings(), null));
+                    clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretExpirationSettings(), protectedResource.getSettings().getSecretExpirationSettings()));
 
                     return repository.update(protectedResource)
                         .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
@@ -571,7 +573,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                                     .flatMap(e -> Single.just(resource));
                         })
                         .map(__ -> {
-                            var secret = Optional.ofNullable(protectedResource.getClientSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
+                            var secret = Optional.ofNullable(protectedResource.getSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
                             secret.setSecret(rawSecret);
                             return secret;
                         });
@@ -591,10 +593,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMapCompletable(protectedResource -> {
-                    if (protectedResource.getClientSecrets().size() <= 1) {
+                    if (protectedResource.getSecrets().size() <= 1) {
                         return Completable.error(new ClientSecretDeleteException("Cannot remove last secret"));
                     }
-                    var secretToRemoveOptional = protectedResource.getClientSecrets().stream().filter(sc -> sc.getId().equals(secretId)).findFirst();
+                    var secretToRemoveOptional = protectedResource.getSecrets().stream().filter(sc -> sc.getId().equals(secretId)).findFirst();
                     if (secretToRemoveOptional.isEmpty()) {
                         return Completable.error(new ClientSecretNotFoundException(secretId));
                     }
@@ -602,9 +604,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     var secretToRemove = secretToRemoveOptional.get();
                     String secretSettingsId = secretToRemove.getSettingsId();
 
-                    protectedResource.getClientSecrets().removeIf(cs -> cs.getId().equals(secretId));
+                    protectedResource.getSecrets().removeIf(cs -> cs.getId().equals(secretId));
 
-                    boolean isSecretSettingsStillUsed = protectedResource.getClientSecrets().stream()
+                    boolean isSecretSettingsStillUsed = protectedResource.getSecrets().stream()
                             .anyMatch(cs -> cs.getSettingsId().equals(secretSettingsId));
                     
                     if (!isSecretSettingsStillUsed && protectedResource.getSecretSettings() != null) {
