@@ -95,7 +95,7 @@ public class ProtectedResourceSecretManager extends AbstractService<ProtectedRes
     }
 
     private Completable initClientSecretNotifications(ProtectedResource resource) {
-        return Flowable.fromIterable(Optional.ofNullable(resource.getClientSecrets()).orElse(Collections.emptyList()))
+        return Flowable.fromIterable(Optional.ofNullable(resource.getSecrets()).orElse(Collections.emptyList()))
                 .flatMapCompletable(secret ->
                         clientSecretNotifierService.unregisterClientSecretExpiration(secret.getId())
                                 .andThen(clientSecretNotifierService.registerClientSecretExpiration(resource, secret)));
@@ -103,7 +103,7 @@ public class ProtectedResourceSecretManager extends AbstractService<ProtectedRes
 
     private Single<ClientSecret> findSecret(ProtectedResource resource, String secretId) {
         return Single.fromCallable(() ->
-                Optional.ofNullable(resource.getClientSecrets())
+                Optional.ofNullable(resource.getSecrets())
                         .orElse(Collections.emptyList())
                         .stream()
                         .filter(s -> s.getId().equals(secretId))

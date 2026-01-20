@@ -71,7 +71,7 @@ export class DomainMcpServerClientSecretsComponent implements OnInit {
         data: {
           domainSettingsUrl: this.getDomainSettingsUrl(),
           domainSettings: this.domain.secretExpirationSettings,
-          secretSettings: this.protectedResource.secretSettings,
+          secretSettings: this.protectedResource.settings?.secretExpirationSettings,
         },
       })
       .afterClosed()
@@ -79,11 +79,13 @@ export class DomainMcpServerClientSecretsComponent implements OnInit {
         filter((result) => result !== undefined),
         switchMap((result) => {
           const patchData: PatchProtectedResourceRequest = {
-            secretSettings: result,
+            settings: {
+              secretExpirationSettings: result,
+            },
           };
           return this.mcpServersService.patch(this.domainId, this.protectedResource.id, patchData).pipe(
             tap((resource) => {
-              this.protectedResource.secretSettings = resource.secretSettings;
+              this.protectedResource.settings = resource.settings;
               this.snackbarService.open('Secret settings updated');
             }),
             catchError(() => {

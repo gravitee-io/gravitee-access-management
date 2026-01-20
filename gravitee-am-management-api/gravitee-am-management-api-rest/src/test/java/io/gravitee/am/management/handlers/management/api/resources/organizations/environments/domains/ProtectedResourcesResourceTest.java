@@ -256,7 +256,7 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
         ProtectedResource protectedResource = new ProtectedResource();
         protectedResource.setId("app-id");
         protectedResource.setName("name");
-        protectedResource.setClientSecrets(List.of(clientSecret));
+        protectedResource.setSecrets(List.of(clientSecret));
         protectedResource.setClientId("client-id");
         protectedResource.setUpdatedAt(new Date());
 
@@ -291,7 +291,7 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
         ProtectedResource protectedResource = new ProtectedResource();
         protectedResource.setId("app-id");
         protectedResource.setName("name");
-        protectedResource.setClientSecrets(List.of(clientSecret));
+        protectedResource.setSecrets(List.of(clientSecret));
         protectedResource.setClientId("client-id");
         protectedResource.setUpdatedAt(new Date());
 
@@ -332,7 +332,7 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
         ProtectedResource protectedResource = new ProtectedResource();
         protectedResource.setId("app-id");
         protectedResource.setName("name");
-        protectedResource.setClientSecrets(List.of(clientSecret));
+        protectedResource.setSecrets(List.of(clientSecret));
         protectedResource.setClientId("client-id");
         protectedResource.setUpdatedAt(new Date());
 

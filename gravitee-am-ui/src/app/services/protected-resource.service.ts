@@ -90,6 +90,7 @@ export interface ProtectedResourcePrimaryData {
   resourceIdentifiers: string[];
   updatedAt: string;
   features: ProtectedResourceFeature[];
+  settings?: any;
 }
 
 export interface ProtectedResource extends ProtectedResourcePrimaryData {
@@ -115,6 +116,7 @@ export interface NewProtectedResourceRequest {
   clientId?: string;
   clientSecret?: string;
   features: ProtectedResourceFeature[];
+  settings?: any;
 }
 
 export interface NewProtectedResourceResponse extends ProtectedResource {
@@ -126,6 +128,7 @@ export interface UpdateProtectedResourceRequest {
   resourceIdentifiers: string[];
   description?: string;
   features: ProtectedResourceFeature[];
+  settings?: any;
 }
 
 export interface PatchProtectedResourceRequest {
@@ -134,6 +137,7 @@ export interface PatchProtectedResourceRequest {
   resourceIdentifiers?: string[];
   features?: ProtectedResourceFeature[];
   secretSettings?: any;
+  settings?: any;
 }
 
 export interface ClientSecret {

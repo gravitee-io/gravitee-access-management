@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,9 +56,11 @@ public class ProtectedResource {
 
     private List<String> resourceIdentifiers;
 
-    private List<ClientSecret> clientSecrets;
+    private List<ClientSecret> secrets;
 
     private List<ApplicationSecretSettings> secretSettings;
+
+    private ApplicationSettings settings;
 
     private List<? extends ProtectedResourceFeature> features;
 
@@ -77,7 +80,8 @@ public class ProtectedResource {
         this.domainId = protectedResource.getDomainId();
         this.description = protectedResource.getDescription();
         this.resourceIdentifiers = protectedResource.getResourceIdentifiers();
-        this.clientSecrets = protectedResource.getClientSecrets();
+        this.secrets = protectedResource.getSecrets();
+        this.settings = protectedResource.getSettings();
         this.secretSettings = protectedResource.getSecretSettings();
         this.createdAt = protectedResource.getCreatedAt();
         this.updatedAt = protectedResource.getUpdatedAt();
@@ -92,7 +96,7 @@ public class ProtectedResource {
         client.setDomain(this.domainId);
         client.setEnabled(true);
         client.setSecretSettings(this.secretSettings);
-        client.setClientSecrets(this.clientSecrets);
+        client.setClientSecrets(this.secrets);
         client.setCreatedAt(this.createdAt);
         client.setUpdatedAt(this.updatedAt);
         return client;
