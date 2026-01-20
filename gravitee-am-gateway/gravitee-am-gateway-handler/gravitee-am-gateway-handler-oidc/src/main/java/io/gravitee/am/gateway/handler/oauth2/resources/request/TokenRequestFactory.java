@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
-import java.util.List;
-
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpHeaders;
@@ -52,7 +50,10 @@ public final class TokenRequestFactory {
 
     public TokenRequest create(RoutingContext context) {
         HttpServerRequest request = context.request();
+        String grantType = request.params().get(Parameters.GRANT_TYPE);
+
         TokenRequest tokenRequest = new TokenRequest();
+
         // set technical information
         tokenRequest.setTimestamp(System.currentTimeMillis());
         tokenRequest.setId(RandomString.generate());
@@ -74,7 +75,7 @@ public final class TokenRequestFactory {
 
         // set OAuth 2.0 information
         tokenRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
-        tokenRequest.setGrantType(request.params().get(Parameters.GRANT_TYPE));
+        tokenRequest.setGrantType(grantType);
         String scope = request.params().get(Parameters.SCOPE);
         tokenRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));

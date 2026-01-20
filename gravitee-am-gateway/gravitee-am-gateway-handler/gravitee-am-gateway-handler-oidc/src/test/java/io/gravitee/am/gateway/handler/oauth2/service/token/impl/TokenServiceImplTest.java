@@ -16,15 +16,18 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
@@ -36,6 +39,7 @@ import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
+import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -50,6 +54,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -109,6 +114,81 @@ public class TokenServiceImplTest {
                 .assertValue(token -> token.getValue().equals("id"));
     }
 
+    @Test
+    public void shouldUseTokenExchangeExpirationAndClientIdClaim() {
+        // Create OAuth2Request with token exchange fields
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        Date expiration = new Date(System.currentTimeMillis() + 60000);
+
+        // Set token exchange specific fields
+        request.setExchangeExpiration(expiration);
+        request.setIssuedTokenType(TokenType.ACCESS_TOKEN);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("test-client");
+        User user = createUser("user");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+        observer.assertValue(token -> {
+            assertThat(token.getExpireAt()).isNotNull();
+            assertThat(token.getExpireAt().toInstant().getEpochSecond()).isEqualTo(expiration.toInstant().getEpochSecond());
+            assertThat(token.getIssuedTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
+            return true;
+        });
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(1)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        JWT captured = jwtCaptor.getValue();
+        assertThat(captured.getExp()).isEqualTo(expiration.toInstant().getEpochSecond());
+        // client_id is now always set to request.getClientId() for all tokens
+        assertThat(captured.get(Claims.CLIENT_ID)).isEqualTo("test-client");
+    }
+
+    @Test
+    public void shouldNotExceedClientExpirationWhenSubjectTokenLivesLonger() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ACCESS_TOKEN);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+
+        // Subject token expiration two hours in the future, default client expiration is 1 hour
+        Date longExpiration = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(2));
+        request.setExchangeExpiration(longExpiration);
+
+        Client client = createClient("test-client");
+        User user = createUser("user");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+        observer.assertValue(token -> token.getExpireAt() != null);
+        Token createdToken = observer.values().get(0);
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(1)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        JWT captured = jwtCaptor.getValue();
+
+        long defaultExpiration = captured.getIat() + client.getAccessTokenValiditySeconds();
+        long subjectExpiration = request.getExchangeExpiration().toInstant().getEpochSecond();
+        long expectedExpiration = Math.min(defaultExpiration, subjectExpiration);
+
+        assertThat(captured.getExp()).isEqualTo(expectedExpiration);
+        assertThat(createdToken.getExpireAt().toInstant().getEpochSecond()).isEqualTo(expectedExpiration);
+    }
+
     // ========== Helper Methods ==========
 
     private void setupDefaultRepositoryMocks() {
@@ -144,6 +224,10 @@ public class TokenServiceImplTest {
     }
 
     private void setupCommonMocks(AuthorizationRequest request) {
+        setupCommonMocks((OAuth2Request) request);
+    }
+
+    private void setupCommonMocks(OAuth2Request request) {
         when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
         when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
@@ -180,6 +264,10 @@ public class TokenServiceImplTest {
     }
 
     private TestObserver<Token> executeTokenCreation(AuthorizationRequest request, Client client, User user) {
+        return executeTokenCreation((OAuth2Request) request, client, user);
+    }
+
+    private TestObserver<Token> executeTokenCreation(OAuth2Request request, Client client, User user) {
         TestObserver<Token> observer = tokenService.create(request, client, user).test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();

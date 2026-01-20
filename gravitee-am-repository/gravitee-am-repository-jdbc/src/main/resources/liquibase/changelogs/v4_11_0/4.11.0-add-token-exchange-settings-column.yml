@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.0-add-token-exchange-column
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: domains
+              columnName: token_exchange_settings
+      changes:
+        #############################
+        # domains #
+        ############################
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: { name: token_exchange_settings, type: clob, constraints: { nullable: true } }

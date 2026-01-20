@@ -200,6 +200,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_10_0/4.10.0-protected-resource-permissions.yml
   - include:
+      - file: liquibase/changelogs/v4_11_0/4.11.0-add-token-exchange-settings-column.yml
+  - include:
       - file: liquibase/changelogs/v4_11_0/4.11.0-protected-resources-add-settings.yml
   - include:
       - file: liquibase/changelogs/v4_11_0/4.11.0-protected-resource-add-certificate.yml

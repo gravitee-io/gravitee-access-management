@@ -71,6 +71,8 @@ public class JdbcDomain {
     private String dataPlaneId;
     @Column("secret_expiration_settings")
     private String secretExpirationSettings;
+    @Column("token_exchange_settings")
+    private String tokenExchangeSettings;
 
 
     /**

@@ -116,6 +116,12 @@ export class DomainService {
     });
   }
 
+  patchTokenExchangeSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
+      tokenExchangeSettings: domain.tokenExchangeSettings,
+    });
+  }
+
   patchUmaSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       uma: domain.uma,

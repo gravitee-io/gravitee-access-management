@@ -48,6 +48,7 @@ public abstract class Token implements Serializable {
     private Date createdAt;
     private Date expireAt;
     private Boolean upgraded;
+    private String issuedTokenType;
 
     public static final String BEARER_TYPE = "Bearer";
 
@@ -86,6 +87,13 @@ public abstract class Token implements Serializable {
      * UMA 2.0 is introduced the capability to upgrade a previous (Requesting Party) Token with new permissions
      */
     public static final String UPGRADED = "upgraded";
+
+    /**
+     * RFC 8693 Token Exchange: The issued_token_type parameter indicates the type of the security token
+     * in the issued_token_type response parameter.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.2.1">RFC 8693 Section 2.2.1</a>
+     */
+    public static final String ISSUED_TOKEN_TYPE = "issued_token_type";
 
     public static List<String> getStandardParameters(){
         return List.of(ACCESS_TOKEN, TOKEN_TYPE, EXPIRES_IN, REFRESH_TOKEN);

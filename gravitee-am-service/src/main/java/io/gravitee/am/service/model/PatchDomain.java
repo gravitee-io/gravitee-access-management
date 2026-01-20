@@ -19,6 +19,7 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -68,6 +69,7 @@ public class PatchDomain {
     private Optional<CorsSettings> corsSettings;
     private Optional<String> dataPlaneId;
     private Optional<SecretExpirationSettings> secretSettings;
+    private Optional<TokenExchangeSettings> tokenExchangeSettings;
 
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -91,6 +93,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
         SetterUtils.safeSet(toPatch::setDataPlaneId, this.getDataPlaneId());
         SetterUtils.safeSet(toPatch::setSecretExpirationSettings, this.getSecretSettings());
+        SetterUtils.safeSet(toPatch::setTokenExchangeSettings, this.getTokenExchangeSettings());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {
@@ -143,7 +146,8 @@ public class PatchDomain {
                 || selfServiceAccountManagementSettings != null && selfServiceAccountManagementSettings.isPresent()
                 || tags != null && tags.isPresent()
                 || master != null && master.isPresent()
-                || secretSettings != null && secretSettings.isPresent()) {
+                || secretSettings != null && secretSettings.isPresent()
+                || tokenExchangeSettings != null && tokenExchangeSettings.isPresent()) {
 
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);
         }

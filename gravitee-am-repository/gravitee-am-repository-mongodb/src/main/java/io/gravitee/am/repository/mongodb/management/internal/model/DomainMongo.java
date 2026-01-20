@@ -92,6 +92,8 @@ public class DomainMongo extends Auditable {
 
     private SecretSettingsMongo secretSettings;
 
+    private TokenExchangeSettingsMongo tokenExchangeSettings;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

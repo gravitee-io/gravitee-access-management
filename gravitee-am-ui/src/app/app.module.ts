@@ -484,6 +484,7 @@ import { TokensComponent } from './domain/components/oauth2-settings/tokens/toke
 import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
+import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
 
 @NgModule({
   declarations: [
@@ -761,6 +762,7 @@ import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolve
     ScopesComponent,
     AddScopeComponent,
     TokensComponent,
+    TokenExchangeComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],

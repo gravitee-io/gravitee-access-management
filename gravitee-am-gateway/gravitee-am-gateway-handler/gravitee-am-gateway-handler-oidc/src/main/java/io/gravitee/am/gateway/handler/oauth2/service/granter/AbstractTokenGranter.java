@@ -72,7 +72,7 @@ public class AbstractTokenGranter implements TokenGranter {
 
     /**
      * Executes the authorization grant flow, orchestrating the parsing of the request,
-     * resolving the resource owner, and handling the request. compo
+     * resolving the resource owner, and handling the request.
      * This method is used to implement specific grant types.
      *
      * @param tokenRequest the access token request containing client credentials and grant-specific parameters

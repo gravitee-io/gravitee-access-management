@@ -35,6 +35,7 @@ public interface JWTService {
         ACCESS_TOKEN,
         ID_TOKEN,
         REFRESH_TOKEN,
+        JWT,
         SESSION,
         JARM,
         STATE

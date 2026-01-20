@@ -145,6 +145,16 @@ public class OAuth2Request extends BaseRequest {
      */
     private String confirmationMethodX5S256;
 
+    /**
+     * Token Exchange (RFC 8693) - issued token type
+     */
+    private String issuedTokenType;
+
+    /**
+     * Token Exchange (RFC 8693) - expiration from subject token
+     */
+    private Date exchangeExpiration;
+
     public OAuth2Request(OAuth2Request other){
         this.clientId = other.clientId;
         this.grantType = other.grantType;
@@ -161,6 +171,8 @@ public class OAuth2Request extends BaseRequest {
         this.permissions = other.permissions;
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
+        this.issuedTokenType = other.issuedTokenType;
+        this.exchangeExpiration = other.exchangeExpiration;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
         this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
 
