@@ -50,5 +50,6 @@ public enum Type {
     AUTHORIZATION_ENGINE,
     UNKNOWN, // used during unmarshalling to avoid Exception which will block the sync process
     REVOKE_TOKEN,
-    PROTECTED_RESOURCE
+    PROTECTED_RESOURCE,
+    PROTECTED_RESOURCE_SECRET
 }

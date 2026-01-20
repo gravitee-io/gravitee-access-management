@@ -27,6 +27,7 @@ public interface NotifierSubject {
     String NOTIFIER_DATA_CERTIFICATE = "certificate";
     String NOTIFIER_DATA_CLIENT_SECRET = "clientSecret";
     String NOTIFIER_DATA_APPLICATION = "application";
+    String NOTIFIER_DATA_PROTECTED_RESOURCE = "protectedResource";
 
     String getResourceType();
     String getResourceId();
