@@ -78,6 +78,7 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setMaster(domain.isMaster());
             filteredDomain.setDataPlaneId(domain.getDataPlaneId());
             filteredDomain.setSecretExpirationSettings(domain.getSecretExpirationSettings());
+            filteredDomain.setTokenExchangeSettings(domain.getTokenExchangeSettings());
         }
 
         if(hasAnyPermission(userPermissions, Permission.DOMAIN_ALERT, Acl.READ)) {

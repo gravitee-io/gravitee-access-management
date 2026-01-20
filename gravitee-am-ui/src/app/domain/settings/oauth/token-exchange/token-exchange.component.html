@@ -1,0 +1,109 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <div>
+    <div fxFlex="70">
+      <form (ngSubmit)="save()">
+        <div class="gv-form-section" fxLayout="column">
+          <mat-slide-toggle (change)="enableTokenExchange($event)" [checked]="isTokenExchangeEnabled()" [disabled]="!editMode">
+            Enable Token Exchange
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Enable RFC 8693 OAuth 2.0 Token Exchange</mat-hint>
+        </div>
+
+        <div *ngIf="isTokenExchangeEnabled()">
+          <!-- Token Types Section -->
+          <div class="gv-form-section" fxLayout="column">
+            <div class="gv-form-section-title">
+              <h5>Subject Token Configuration</h5>
+              <mat-divider></mat-divider>
+            </div>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Allowed Subject Token Types</mat-label>
+              <mat-select
+                multiple
+                name="allowedSubjectTokenTypes"
+                [(ngModel)]="domain.tokenExchangeSettings.allowedSubjectTokenTypes"
+                (selectionChange)="modelChanged()"
+                [disabled]="!editMode"
+              >
+                <mat-option *ngFor="let tokenType of TOKEN_TYPES" [value]="tokenType.value">{{ tokenType.label }}</mat-option>
+              </mat-select>
+              <mat-hint>Token types that can be submitted as subject_token for exchange</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <!-- Impersonation Settings Section -->
+          <div class="gv-form-section" fxLayout="column">
+            <div class="gv-form-section-title">
+              <h5>Impersonation Settings</h5>
+              <mat-divider></mat-divider>
+            </div>
+
+            <mat-slide-toggle
+              name="allowImpersonation"
+              [(ngModel)]="domain.tokenExchangeSettings.allowImpersonation"
+              (change)="modelChanged()"
+              [disabled]="!editMode"
+            >
+              Allow Impersonation
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%; margin-bottom: 16px"> Allow token exchange for impersonation scenarios </mat-hint>
+          </div>
+        </div>
+        <div fxLayout="row" *ngIf="editMode">
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!formChanged || !domain.tokenExchangeSettings.allowImpersonation"
+            type="submit"
+          >
+            SAVE
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>What is Token Exchange?</h3>
+      <div class="gv-page-description-content">
+        <p>
+          OAuth 2.0 Token Exchange (<a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>) is a protocol for requesting and
+          obtaining security tokens from an authorization server.
+        </p>
+        <p>
+          This implementation supports the <strong>Impersonation</strong> use case, where an access token can be exchanged for a new access
+          token. The exchanged token inherits the subject's identity and permissions.
+        </p>
+        <p>
+          <strong>Key features:</strong>
+        </p>
+        <ul>
+          <li>Exchange valid access tokens for new tokens (only access token is allowed)</li>
+          <li>Generated tokens include the client_id claim identifying the requesting client</li>
+          <li>No refresh tokens are issued during token exchange</li>
+        </ul>
+        <p>
+          Applications must have the <code>Token Exchange</code> grant type enabled to use token exchange.
+          <br />
+          Token request must have the <code>urn:ietf:params:oauth:grant-type:token-exchange</code> as <code>grant_type</code> parameter.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

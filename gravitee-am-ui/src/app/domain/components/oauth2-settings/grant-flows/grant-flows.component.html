@@ -28,7 +28,7 @@
             <mat-checkbox
               name="grantTypes"
               value="{{ grantType.value }}"
-              [checked]="grantType.checked"
+              [checked]="isGrantTypeVisuallyChecked(grantType)"
               (change)="selectGrantType($event)"
               [disabled]="readonly || grantType.disabled"
             >

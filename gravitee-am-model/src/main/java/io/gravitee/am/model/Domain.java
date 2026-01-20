@@ -192,6 +192,11 @@ public class Domain implements Resource {
 
     private SecretExpirationSettings secretExpirationSettings;
 
+    /**
+     * OAuth 2.0 Token Exchange settings (RFC 8693)
+     */
+    private TokenExchangeSettings tokenExchangeSettings;
+
     public Domain() {
     }
 
@@ -233,6 +238,7 @@ public class Domain implements Resource {
         this.corsSettings = other.corsSettings;
         this.dataPlaneId = other.dataPlaneId;
         this.secretExpirationSettings = other.secretExpirationSettings;
+        this.tokenExchangeSettings = other.tokenExchangeSettings;
     }
 
     @Override
@@ -468,10 +474,23 @@ public class Domain implements Resource {
         this.secretExpirationSettings = secretExpirationSettings;
     }
 
+    public TokenExchangeSettings getTokenExchangeSettings() {
+        return tokenExchangeSettings;
+    }
+
+    public void setTokenExchangeSettings(TokenExchangeSettings tokenExchangeSettings) {
+        this.tokenExchangeSettings = tokenExchangeSettings;
+    }
+
     public boolean isDynamicClientRegistrationEnabled() {
         return this.getOidc() != null &&
                 this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled();
+    }
+
+    public boolean useTokenExchange() {
+        return this.getTokenExchangeSettings() != null &&
+                this.getTokenExchangeSettings().isEnabled();
     }
 
     public boolean isOpenDynamicClientRegistrationEnabled() {

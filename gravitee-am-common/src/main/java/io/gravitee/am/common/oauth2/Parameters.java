@@ -132,7 +132,25 @@ public interface Parameters {
 
     String RESOURCE = "resource";
 
+    /**
+     * Token Exchange: The security token representing the identity of the party on behalf of whom the request is being made.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+     */
+    String SUBJECT_TOKEN = "subject_token";
+
+    /**
+     * Token Exchange: An identifier for the type of the security token in the "subject_token" parameter.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+     */
+    String SUBJECT_TOKEN_TYPE = "subject_token_type";
+
+    /**
+     * Token Exchange: An identifier for the type of the requested security token.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+     */
+    String REQUESTED_TOKEN_TYPE = "requested_token_type";
+
     Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, RESPONSE_MODE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
                 REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
-                CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR, RESOURCE);
+                CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR, RESOURCE, SUBJECT_TOKEN, SUBJECT_TOKEN_TYPE, REQUESTED_TOKEN_TYPE);
 }

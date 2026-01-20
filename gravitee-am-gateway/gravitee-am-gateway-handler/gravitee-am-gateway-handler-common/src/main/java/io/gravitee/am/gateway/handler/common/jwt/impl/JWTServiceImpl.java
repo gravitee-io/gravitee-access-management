@@ -146,10 +146,10 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType) {
-        if (getDefaultCertificateId == null) {
-            return Single.error(new IllegalArgumentException("getDefaultCertificateId is required"));
-        }
         String certificateId = extractKid(jwt).orElse(getDefaultCertificateId.get());
+        if(certificateId == null) {
+            return Single.error(new IllegalArgumentException("Certificate identifier is required"));
+        }
         return certificateManager.get(certificateId)
                 .switchIfEmpty(Single.defer(() -> {
                     logger.warn("Falling back to default certificate provider for certificateId: {}", certificateId);
@@ -188,6 +188,7 @@ public class JWTServiceImpl implements JWTService {
             case STATE -> new InvalidTokenException("The state token is invalid", ex);
             case ID_TOKEN -> new InvalidTokenException("The id token is invalid", ex);
             case REFRESH_TOKEN -> new InvalidTokenException("The refresh token is invalid", ex);
+            case JWT -> new InvalidTokenException("The jwt token is invalid", ex);
             case SESSION -> new InvalidTokenException("The session token is invalid", ex);
             default -> new InvalidTokenException("The access token is invalid", ex);
         };

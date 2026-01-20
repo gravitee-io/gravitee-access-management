@@ -260,6 +260,7 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
+import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { ApplicationOAuth2Service, McpServerOAuth2Service, OAUTH2_SETTINGS_SERVICE } from './services/oauth2-settings.service';
 
@@ -2812,6 +2813,21 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'UMA',
+                            section: 'OAuth 2.0',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_uma_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'token-exchange',
+                        component: TokenExchangeComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Token Exchange',
                             section: 'OAuth 2.0',
                             level: 'level2',
                           },

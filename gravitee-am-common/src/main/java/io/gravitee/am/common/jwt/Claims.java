@@ -134,9 +134,11 @@ public interface Claims {
      */
     String ORIG_RESOURCES = "orig_resources";
 
+    String CLIENT_ID = "client_id";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
-                JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF);
+                JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF, CLIENT_ID);
     }
 
     static Set<String> requireEncryption() {

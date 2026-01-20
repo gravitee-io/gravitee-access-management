@@ -32,12 +32,14 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.code.AuthorizationC
 import io.gravitee.am.gateway.handler.oauth2.service.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.refresh.RefreshTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.granter.tokenexchange.TokenExchangeGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.uma.UMATokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -116,6 +118,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private ResourceConsistencyValidationService resourceConsistencyValidationService;
 
+    @Autowired
+    private TokenExchangeService tokenExchangeService;
+
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return findGranter(tokenRequest, client)
@@ -163,5 +168,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, resourceConsistencyValidationService, rulesEngine));
         addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain, executionContextFactory, rulesEngine, subjectManager));
         addTokenGranter(GrantType.CIBA_GRANT_TYPE, new CibaTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, authenticationRequestService, domain, rulesEngine));
+        addTokenGranter(GrantType.TOKEN_EXCHANGE, new TokenExchangeGranter(tokenRequestResolver, tokenService, tokenExchangeService, domain, rulesEngine));
     }
 }

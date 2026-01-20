@@ -252,7 +252,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     // Propagate UMA 2.0 permissions
                     if (refreshToken1.getAdditionalInformation().get(PERMISSIONS) != null) {
-                        tokenRequest.setPermissions((List<PermissionRequest>)refreshToken1.getAdditionalInformation().get(PERMISSIONS));
+                        tokenRequest.setPermissions((List<PermissionRequest>) refreshToken1.getAdditionalInformation().get(PERMISSIONS));
                     }
 
                     // if client has disabled refresh token rotation, do not remove the refresh token
@@ -283,7 +283,7 @@ public class TokenServiceImpl implements TokenService {
 
     private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
         // store access token
-        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request, user));
+        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request, user));
         // store refresh token (if exists)
         if (refreshToken != null) {
             return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request.getClientId())));
@@ -329,6 +329,16 @@ public class TokenServiceImpl implements TokenService {
         token.setSubject(accessToken.getSub());
         token.setExpiresIn(Instant.ofEpochSecond(accessToken.getExp()).minusMillis(System.currentTimeMillis()).getEpochSecond());
         token.setScope(accessToken.getScope());
+
+        // Token Exchange (RFC 8693) specific fields
+        if (oAuth2Request.getIssuedTokenType() != null) {
+            token.setIssuedTokenType(oAuth2Request.getIssuedTokenType());
+        }
+
+        if (accessToken.getExp() > 0) {
+            token.setExpireAt(new Date(accessToken.getExp() * 1000L));
+        }
+
         // set additional information
         if (!strictResponse && oAuth2Request.getAdditionalParameters() != null && !oAuth2Request.getAdditionalParameters().isEmpty()) {
             oAuth2Request.getAdditionalParameters().toSingleValueMap().entrySet().stream()
@@ -384,9 +394,21 @@ public class TokenServiceImpl implements TokenService {
 
     private JWT createAccessTokenJWT(OAuth2Request request, Client client, User user, ExecutionContext executionContext) {
         JWT jwt = createJWT(request, client, user);
-        // set exp claim
-        jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getAccessTokenValiditySeconds()).getEpochSecond());
 
+        long defaultExpiration = Instant.ofEpochSecond(jwt.getIat())
+                .plusSeconds(client.getAccessTokenValiditySeconds())
+                .getEpochSecond();
+        long exp = defaultExpiration;
+
+        // Token Exchange (RFC 8693) - do not exceed subject token expiration
+        if (request.getExchangeExpiration() != null) {
+            long subjectExpiration = request.getExchangeExpiration().toInstant().getEpochSecond();
+            exp = Math.min(defaultExpiration, subjectExpiration);
+        }
+
+        jwt.setExp(exp);
+
+        jwt.put(Claims.CLIENT_ID, request.getClientId());
         final String cnfValue = request.getConfirmationMethodX5S256();
         if (cnfValue != null) {
             jwt.setConfirmationMethod(Maps.<String, Object>builder().put(JWT.CONFIRMATION_METHOD_X509_THUMBPRINT, cnfValue).build());
@@ -572,7 +594,7 @@ public class TokenServiceImpl implements TokenService {
         return originalResources == null ? java.util.Set.of() : new java.util.LinkedHashSet<>(originalResources);
     }
 
-    private ClientTokenAuditBuilder buildTokenCreatedAudit(OAuth2Request oAuth2Request, Client client, User endUser, 
+    private ClientTokenAuditBuilder buildTokenCreatedAudit(OAuth2Request oAuth2Request, Client client, User endUser,
                                                            JWT accessToken, JWT refreshToken, TokenWithCertificateInfo tokenWithCertInfo) {
         Token enhancedToken = tokenWithCertInfo.token;
 
@@ -590,11 +612,11 @@ public class TokenServiceImpl implements TokenService {
         var params = new HashMap<String, Object>();
         params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE, oAuth2Request.getGrantType());
         params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, oAuth2Request.getResponseType());
-        
+
         if (!isEmpty(oAuth2Request.getScopes())) {
             params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE, String.join(" ", oAuth2Request.getScopes()));
         }
-        
+
         if (!isEmpty(oAuth2Request.getResources())) {
             params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE, String.join(" ", oAuth2Request.getResources()));
         }
@@ -603,7 +625,7 @@ public class TokenServiceImpl implements TokenService {
             params.put(SIGNING_CERTIFICATE_ID, certificateInfo.certificateId());
             params.put(SIGNING_CERTIFICATE_NAME, certificateInfo.certificateAlias());
         }
-        
+
         return params;
     }
 }

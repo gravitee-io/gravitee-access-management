@@ -28,6 +28,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -48,6 +49,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.SAMLSettingsM
 import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SelfServiceAccountManagementSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingNotifierMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingsMongo;
@@ -76,9 +78,6 @@ import java.util.stream.Collectors;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -234,6 +233,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setCorsSettings(domainMongo.getCorsSettings());
         domain.setDataPlaneId(domainMongo.getDataPlaneId());
         domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
+        domain.setTokenExchangeSettings(convert(domainMongo.getTokenExchangeSettings()));
 
         return domain;
     }
@@ -273,6 +273,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setCorsSettings(domain.getCorsSettings());
         domainMongo.setDataPlaneId(domain.getDataPlaneId());
         domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
+        domainMongo.setTokenExchangeSettings(convert(domain.getTokenExchangeSettings()));
         return domainMongo;
     }
 
@@ -550,5 +551,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private static SecretSettingsMongo convert(SecretExpirationSettings secretExpirationSettings){
         return SecretSettingsMongo.fromModel(secretExpirationSettings);
+    }
+
+    private static TokenExchangeSettings convert(TokenExchangeSettingsMongo tokenExchangeMongo) {
+        return tokenExchangeMongo != null ? tokenExchangeMongo.convert() : null;
+    }
+
+    private static TokenExchangeSettingsMongo convert(TokenExchangeSettings tokenExchangeSettings) {
+        return TokenExchangeSettingsMongo.convert(tokenExchangeSettings);
     }
 }

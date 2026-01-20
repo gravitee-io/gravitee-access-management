@@ -42,6 +42,7 @@ export class GrantFlowsComponent implements OnInit {
   @Output() formChanged = new EventEmitter<boolean>();
 
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
+  private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
 
   tokenEndpointAuthMethods: any[] = [
     { name: 'client_secret_basic', value: 'client_secret_basic' },
@@ -61,6 +62,7 @@ export class GrantFlowsComponent implements OnInit {
     { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false },
     { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false },
     { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false },
+    { name: 'TOKEN EXCHANGE', value: this.TOKEN_EXCHANGE_GRANT_TYPE, checked: false, disabled: false },
   ];
 
   constructor(@Inject(DomainStoreService) private domainStore: DomainStoreService) {}
@@ -96,6 +98,15 @@ export class GrantFlowsComponent implements OnInit {
 
   customGrantTypeIsDisabled(extensionGrant): boolean {
     return !extensionGrant.checked && this.selectedCustomGrantTypes.length > 0;
+  }
+
+  isGrantTypeVisuallyChecked(grantType: any): boolean {
+    if (grantType.disabled) {
+      if (grantType.value === this.CIBA_GRANT_TYPE || grantType.value === this.TOKEN_EXCHANGE_GRANT_TYPE) {
+        return false;
+      }
+    }
+    return grantType.checked;
   }
 
   selectGrantType(event) {
@@ -206,6 +217,10 @@ export class GrantFlowsComponent implements OnInit {
       if (this.CIBA_GRANT_TYPE === grantType.value && this.domainStore.current) {
         const domain = deepClone(this.domainStore.current);
         grantType.disabled = domain.oidc.cibaSettings && !domain.oidc.cibaSettings.enabled;
+      }
+      if (this.TOKEN_EXCHANGE_GRANT_TYPE === grantType.value && this.domainStore.current) {
+        const domain = deepClone(this.domainStore.current);
+        grantType.disabled = domain.tokenExchangeSettings && !domain.tokenExchangeSettings.enabled;
       }
     });
   }
