@@ -263,6 +263,7 @@ import { HttpRequestInterceptor } from './interceptors/http-request.interceptor'
 import { PolicyService } from './services/policy.service';
 import { ScopeSelectionComponent } from './domain/components/scope-selection/scope-selection.component';
 import { RoleSelectionComponent } from './domain/components/role-selection/role-selection.component';
+import { CertificateSelectionComponent } from './domain/components/certificate-selection/certificate-selection.component';
 import { ApplicationsComponent } from './domain/applications/applications.component';
 import { ApplicationService } from './services/application.service';
 import { ApplicationsResolver } from './resolvers/applications.resolver';
@@ -650,6 +651,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     ScopeSelectionComponent,
     ClaimsInfoDialogComponent,
     RoleSelectionComponent,
+    CertificateSelectionComponent,
     ApplicationsComponent,
     ApplicationAnalyticsComponent,
     ApplicationCreationComponent,
