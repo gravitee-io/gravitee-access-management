@@ -23,7 +23,6 @@ import { EMPTY } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
-import { CertificateService } from '../../../../../services/certificate.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
 import { AuthService } from '../../../../../services/auth.service';
 import { ClientSecretsSettingsComponent } from '../../../../../components/client-secrets-management/dialog/client-secrets-settings/client-secrets-settings.component';
@@ -40,9 +39,6 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   formChanged = false;
   application: any;
   certificates: any[] = [];
-  certificatePublicKeys: any[] = [];
-  selectedCertificate: string;
-  editMode = false;
   secretSettings: any;
 
   constructor(
@@ -50,7 +46,6 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
     private router: Router,
     private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
-    private certificateService: CertificateService,
     private domainStore: DomainStoreService,
     private authService: AuthService,
     public applicationClientSecretService: ApplicationClientSecretService,
@@ -61,41 +56,22 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
     this.domain = deepClone(this.domainStore.current);
     this.application = structuredClone(this.route.snapshot.data['application']);
     this.certificates = this.route.snapshot.data['certificates'];
-    if (this.application.certificate) {
-      this.selectedCertificate = this.application.certificate;
-      this.publicKeys(this.application.certificate);
-    }
     this.secretSettings = this.application.settings.secretExpirationSettings;
     this.editMode = this.authService.hasPermissions(['application_openid_update']);
   }
 
-  patch(): void {
-    const data = { certificate: this.selectedCertificate ? this.selectedCertificate : null };
+  onCertificateSave(certificateId: string): void {
+    const data = { certificate: certificateId ? certificateId : null };
     this.applicationService.patch(this.domain.id, this.application.id, data).subscribe((data) => {
       this.application = data;
       this.route.snapshot.data['application'] = this.application;
-      this.certificatePublicKeys = [];
-      this.formChanged = false;
       this.snackbarService.open('Application updated');
-      if (this.application.certificate) {
-        this.publicKeys(this.application.certificate);
-      }
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 
-  onChange() {
-    this.formChanged = true;
-  }
-
   valueCopied(message: string) {
     this.snackbarService.open(message);
-  }
-
-  private publicKeys(certificateId) {
-    this.certificateService.publicKeys(this.domain.id, certificateId).subscribe((response) => {
-      this.certificatePublicKeys = response;
-    });
   }
 
   openSettings(event: any) {
