@@ -413,6 +413,16 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.authorizedGrantTypes = grantTypes;
     }
 
+    /**
+     * Check if the client supports the specified grant type.
+     *
+     * @param grantType the grant type to check
+     * @return true if the client supports the grant type, false otherwise
+     */
+    public boolean hasGrantType(String grantType) {
+        return authorizedGrantTypes != null && authorizedGrantTypes.contains(grantType);
+    }
+
     public List<String> getResponseTypes() {
         return responseTypes;
     }

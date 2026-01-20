@@ -578,6 +578,29 @@ public class TokenExchangeServiceImplTest {
         assertThat(result.user().getAdditionalInformation()).doesNotContainKey(Claims.SCOPE);
     }
 
+    @Test
+    public void shouldFailWhenImpersonationNotAllowed() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowImpersonation(false);
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("Impersonation is not allowed");
+    }
+
     private Domain domainWithTokenExchange() {
         return domainWithTokenExchange(Collections.singletonList(TokenType.ACCESS_TOKEN));
     }

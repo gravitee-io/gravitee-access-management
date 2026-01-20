@@ -25,9 +25,13 @@ import java.util.Date;
  * @param user the user representing the subject of the exchanged token
  * @param issuedTokenType the type of token being issued (e.g., access_token)
  * @param exchangeExpiration the expiration time from the subject token
+ * @param subjectTokenId the ID of the subject token (if available)
+ * @param subjectTokenType the type of the subject token (e.g., access_token, id_token)
  */
 public record TokenExchangeResult(
         User user,
         String issuedTokenType,
-        Date exchangeExpiration
+        Date exchangeExpiration,
+        String subjectTokenId,
+        String subjectTokenType
 ) {}

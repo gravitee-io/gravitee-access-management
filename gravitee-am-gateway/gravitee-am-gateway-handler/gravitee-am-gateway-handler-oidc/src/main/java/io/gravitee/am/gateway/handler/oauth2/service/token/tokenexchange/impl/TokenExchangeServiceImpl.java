@@ -76,15 +76,22 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         if (StringUtils.isEmpty(requestedTokenType)) {
             requestedTokenType = TokenType.ACCESS_TOKEN;
         }
-
+        // For now use only
         validateParameters(subjectToken, subjectTokenType, requestedTokenType, settings);
+
+        // Currently only impersonation is supported — reject if not allowed
+        boolean impersonationRequested = true;
+        if (!settings.isAllowImpersonation() && impersonationRequested) {
+            throw new InvalidRequestException("Impersonation is not allowed for this domain");
+        }
 
         return new ParsedRequest(
                 subjectToken,
                 subjectTokenType,
                 scope,
                 requestedTokenType,
-                tokenRequest.getClientId()
+                tokenRequest.getClientId(),
+                impersonationRequested
         );
     }
 
@@ -135,7 +142,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             Set<String> grantedScopes = subjectToken.getScopes();
 
             // Build user
-            User user = createUser(subjectToken, parsedRequest, grantedScopes, client.getClientId());
+        User user = createUser(subjectToken, parsedRequest, grantedScopes, client.getClientId());
 
             // Set scopes on the token request
             tokenRequest.setScopes(grantedScopes);
@@ -144,7 +151,9 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             return new TokenExchangeResult(
                     user,
                     parsedRequest.requestedTokenType(), // issued_token_type = requested_token_type
-                    subjectToken.getExpiration()
+                    subjectToken.getExpiration(),
+                    subjectToken.getTokenId(),
+                    parsedRequest.subjectTokenType()
             );
         });
     }
@@ -191,14 +200,12 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
         // Store token exchange metadata
         additionalInformation.put("token_exchange", true);
+        additionalInformation.put("impersonation", request.impersonationRequested());
         additionalInformation.put("subject_token_type", request.subjectTokenType());
         additionalInformation.put("requested_token_type", request.requestedTokenType());
         if (subjectToken.getTokenId() != null) {
             additionalInformation.put("subject_token_id", subjectToken.getTokenId());
         }
-
-        // Mark as impersonation
-        additionalInformation.put("impersonation", true);
 
         user.setAdditionalInformation(additionalInformation);
         return user;
@@ -213,6 +220,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             String subjectTokenType,
             String scope,
             String requestedTokenType,
-            String clientId
+            String clientId,
+            boolean impersonationRequested
     ) {}
 }

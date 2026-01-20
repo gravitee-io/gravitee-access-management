@@ -146,8 +146,8 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Supplier<String> getDefaultCertificateId, TokenType tokenType) {
-        String certificateId = extractKid(jwt).orElse(getDefaultCertificateId.get());
-        if(certificateId == null) {
+        String certificateId = extractKid(jwt).orElseGet(() -> getDefaultCertificateId != null ? getDefaultCertificateId.get() : null);
+        if (certificateId == null) {
             return Single.error(new IllegalArgumentException("Certificate identifier is required"));
         }
         return certificateManager.get(certificateId)
