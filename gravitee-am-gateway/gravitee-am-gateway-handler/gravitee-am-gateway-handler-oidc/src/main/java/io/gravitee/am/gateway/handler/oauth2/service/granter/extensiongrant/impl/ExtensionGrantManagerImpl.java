@@ -25,10 +25,10 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.ExtensionGrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranterV2;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -66,7 +66,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     private static final Logger logger = LoggerFactory.getLogger(ExtensionGrantManagerImpl.class);
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
     private final ConcurrentMap<String, ExtensionGrant> extensionGrants = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, ExtensionGrantGranter> extensionGrantGranters = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ExtensionGrantStrategy> extensionGrantStrategies = new ConcurrentHashMap<>();
     private Date minDate;
 
     @Autowired
@@ -181,11 +181,11 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         logger.info("Domain {} has received extension grant event, delete extension grant {}", domain.getName(), extensionGrantId);
         ((CompositeTokenGranter) tokenGranter).removeTokenGranter(extensionGrantId);
         extensionGrants.remove(extensionGrantId);
-        extensionGrantGranters.remove(extensionGrantId);
-        // backward compatibility, update remaining granters for the min date
+        extensionGrantStrategies.remove(extensionGrantId);
+        // backward compatibility, update remaining strategies for the min date
         if (!extensionGrants.isEmpty()) {
             minDate = Collections.min(extensionGrants.values().stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
-            extensionGrantGranters.values().forEach(extensionGrantGranter -> extensionGrantGranter.setMinDate(minDate));
+            extensionGrantStrategies.values().forEach(strategy -> strategy.setMinDate(minDate));
         }
     }
 
@@ -204,12 +204,16 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
                 var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, authenticationProvider);
                 var extensionGrantProvider = extensionGrantPluginManager.create(providerConfiguration);
-                var extensionGrantGranter = buildGranter(extensionGrant, extensionGrantProvider);
-                // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients
-                extensionGrantGranter.setMinDate(minDate);
-                ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
+                var extensionGrantStrategy = buildStrategy(extensionGrant, extensionGrantProvider);
+                // backward compatibility, set min date to the extension grant strategy to choose the good one for the old clients
+                extensionGrantStrategy.setMinDate(minDate);
+
+                // Wrap strategy with adapter to integrate with CompositeTokenGranter
+                var adapter = new StrategyGranterAdapter(extensionGrantStrategy, domain, tokenService, rulesEngine, tokenRequestResolver);
+
+                ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), adapter);
                 extensionGrants.put(extensionGrant.getId(), extensionGrant);
-                extensionGrantGranters.put(extensionGrant.getId(), extensionGrantGranter);
+                extensionGrantStrategies.put(extensionGrant.getId(), extensionGrantStrategy);
                 domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
             } else {
                 logger.info("Extension grant {} already loaded for domain {}", extensionGrant.getId(), domain.getName());
@@ -223,28 +227,24 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         }
     }
 
-    private ExtensionGrantGranter buildGranter(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
+    private ExtensionGrantStrategy buildStrategy(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
         if (domain.getVersion() == DomainVersion.V1_0) {
-            return new ExtensionGrantGranter(
-                            extensionGrantProvider,
-                            extensionGrant,
-                            userAuthenticationManager,
-                            tokenService,
-                            tokenRequestResolver,
-                            identityProviderManager,
-                            userService,
-                            rulesEngine,
-                            domain);
-        } else {
-            return new ExtensionGrantGranterV2(
+            // V1 mode - without SubjectManager
+            return new ExtensionGrantStrategy(
                     extensionGrantProvider,
                     extensionGrant,
                     userAuthenticationManager,
-                    tokenService,
-                    tokenRequestResolver,
                     identityProviderManager,
                     userService,
-                    rulesEngine,
+                    domain);
+        } else {
+            // V2 mode - with SubjectManager
+            return new ExtensionGrantStrategy(
+                    extensionGrantProvider,
+                    extensionGrant,
+                    userAuthenticationManager,
+                    identityProviderManager,
+                    userService,
                     subjectManager,
                     domain);
         }
