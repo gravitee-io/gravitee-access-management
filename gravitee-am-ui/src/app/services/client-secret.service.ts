@@ -25,6 +25,7 @@ export interface ClientSecret {
   id: string;
   name: string;
   value?: string;
+  secret?: string;
   createdAt?: string;
   // Add other fields as necessary
 }

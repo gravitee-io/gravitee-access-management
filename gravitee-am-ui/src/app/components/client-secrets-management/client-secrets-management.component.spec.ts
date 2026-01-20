@@ -108,8 +108,8 @@ describe('ClientSecretsManagementComponent', () => {
 
       matDialogSpy.open.mockReturnValueOnce(dialogRefSpyObj as any).mockReturnValueOnce(copyDialogRefSpyObj as any);
 
-      const newSecret: ClientSecret = { id: '3', name: 'New Secret Description', value: 'new-value' };
-      clientSecretServiceSpy.create.mockReturnValue(of({ value: newSecret } as any));
+      const newSecret: ClientSecret = { id: '3', name: 'New Secret Description', secret: 'new-value' };
+      clientSecretServiceSpy.create.mockReturnValue(of(newSecret));
       clientSecretServiceSpy.list.mockReturnValue(of([...mockSecrets, newSecret]));
 
       const event = new MouseEvent('click');
@@ -164,8 +164,8 @@ describe('ClientSecretsManagementComponent', () => {
 
       matDialogSpy.open.mockReturnValueOnce(dialogRefSpyObj as any).mockReturnValueOnce(copyDialogRefSpyObj as any);
 
-      const renewedSecret: ClientSecret = { ...secretToRenew, value: 'renewed-value' };
-      clientSecretServiceSpy.renew.mockReturnValue(of({ value: renewedSecret } as any));
+      const renewedSecret: ClientSecret = { ...secretToRenew, secret: 'renewed-value' };
+      clientSecretServiceSpy.renew.mockReturnValue(of(renewedSecret));
       clientSecretServiceSpy.list.mockReturnValue(of([renewedSecret, mockSecrets[1]]));
 
       const event = new MouseEvent('click');
