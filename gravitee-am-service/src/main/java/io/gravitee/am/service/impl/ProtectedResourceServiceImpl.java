@@ -461,6 +461,16 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
+    public Flowable<ProtectedResource> findAll() {
+        LOGGER.debug("Find all protected resources");
+        return repository.findAll()
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find all protected resources", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all protected resources", ex));
+                });
+    }
+
+    @Override
     public Flowable<ProtectedResource> findByDomain(String domain) {
         LOGGER.debug("Find protected resources by domainId={}", domain);
         return repository.findByDomain(domain)
@@ -505,7 +515,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
                         .flatMap(resource -> {
                             Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
-                            return eventService.create(event, domain).flatMap(e -> Single.just(resource));
+                            Event secretEvent = new Event(Type.PROTECTED_RESOURCE_SECRET, new Payload(clientSecret.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.CREATE));
+                            return eventService.create(event, domain)
+                                    .flatMap(e -> eventService.create(secretEvent, domain))
+                                    .flatMap(e -> Single.just(resource));
                         })
                         .map(__ -> {
                             clientSecret.setSecret(rawSecret);
@@ -552,7 +565,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
                         .flatMap(resource -> {
                             Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
-                            return eventService.create(event, domain).flatMap(e -> Single.just(resource));
+                            Event secretEvent = new Event(Type.PROTECTED_RESOURCE_SECRET, new Payload(clientSecret.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.UPDATE));
+                            return eventService.create(event, domain)
+                                    .flatMap(e -> eventService.create(secretEvent, domain))
+                                    .flatMap(e -> Single.just(resource));
                         })
                         .map(__ -> {
                             var secret = Optional.ofNullable(protectedResource.getClientSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
@@ -600,7 +616,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                          .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
                          .flatMap(resource -> {
                             Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
-                            return eventService.create(event, domain).flatMap(e -> Single.just(resource));
+                            Event secretEvent = new Event(Type.PROTECTED_RESOURCE_SECRET, new Payload(secretToRemove.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.DELETE));
+                            return eventService.create(event, domain)
+                                    .flatMap(e -> eventService.create(secretEvent, domain))
+                                    .flatMap(e -> Single.just(resource));
                          })
                          .ignoreElement();
                 })

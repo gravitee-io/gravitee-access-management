@@ -17,28 +17,45 @@ package io.gravitee.am.management.service.impl.notifications.definition;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.safe.ApplicationProperties;
 import io.gravitee.am.model.safe.ClientSecretProperties;
 import io.gravitee.am.model.safe.DomainProperties;
+import io.gravitee.am.model.safe.ProtectedResourceProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@RequiredArgsConstructor
 @Getter
 public class ClientSecretNotifierSubject implements NotifierSubject {
     public final static String RESOURCE_TYPE = "application/secret";
 
     private final ClientSecret clientSecret;
     private final Application application;
+    private final ProtectedResource protectedResource;
     private final Domain domain;
     private final User user;
+
+    public ClientSecretNotifierSubject(ClientSecret clientSecret, Application application, Domain domain, User user) {
+        this.clientSecret = clientSecret;
+        this.application = application;
+        this.protectedResource = null;
+        this.domain = domain;
+        this.user = user;
+    }
+
+    public ClientSecretNotifierSubject(ClientSecret clientSecret, ProtectedResource protectedResource, Domain domain, User user) {
+        this.clientSecret = clientSecret;
+        this.application = null;
+        this.protectedResource = protectedResource;
+        this.domain = domain;
+        this.user = user;
+    }
 
     @Override
     public String getResourceId() {
@@ -64,6 +81,10 @@ public class ClientSecretNotifierSubject implements NotifierSubject {
             result.put(NOTIFIER_DATA_APPLICATION, new ApplicationProperties(application.getName()));
         }
 
+        if (protectedResource != null) {
+            result.put(NOTIFIER_DATA_PROTECTED_RESOURCE, new ProtectedResourceProperties(protectedResource.getName()));
+        }
+
         return result;
     }
 
@@ -73,6 +94,7 @@ public class ClientSecretNotifierSubject implements NotifierSubject {
         Optional.ofNullable(domain).ifPresent(o -> result.put("domainId", o.getId()));
         Optional.ofNullable(user).ifPresent(o -> result.put("domainOwner", o.getId()));
         Optional.ofNullable(application).ifPresent(o -> result.put("applicationId", o.getId()));
+        Optional.ofNullable(protectedResource).ifPresent(o -> result.put("protectedResourceId", o.getId()));
         Optional.ofNullable(clientSecret).ifPresent(o -> result.put("clientSecretId", o.getId()));
         return Map.copyOf(result);
     }

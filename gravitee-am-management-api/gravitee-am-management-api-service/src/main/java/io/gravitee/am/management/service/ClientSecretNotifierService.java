@@ -17,12 +17,15 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.application.ClientSecret;
 import io.reactivex.rxjava3.core.Completable;
 
 public interface ClientSecretNotifierService {
 
     Completable registerClientSecretExpiration(Application application, ClientSecret clientSecret);
+
+    Completable registerClientSecretExpiration(ProtectedResource protectedResource, ClientSecret clientSecret);
 
     Completable unregisterClientSecretExpiration(String clientSecretId);
 

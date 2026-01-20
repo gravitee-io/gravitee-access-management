@@ -19,10 +19,10 @@ import io.gravitee.am.management.service.AlertTriggerManager;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuthorizationEngineManager;
 import io.gravitee.am.management.service.CertificateManager;
-import io.gravitee.am.management.service.ClientSecretNotifierService;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.ClientSecretManager;
+import io.gravitee.am.management.service.impl.ProtectedResourceSecretManager;
 import io.gravitee.am.management.service.spring.ManagementUpgraderConfiguration;
 import io.gravitee.am.management.service.tasks.TasksLoader;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
@@ -84,6 +84,7 @@ public class ManagementNode extends JettyNode {
         components.add(AlertEventProducerManager.class);
         components.add(TasksLoader.class);
         components.add(ClientSecretManager.class);
+        components.add(ProtectedResourceSecretManager.class);
         components.add(ScheduledPurgeService.class);
         return components;
     }

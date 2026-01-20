@@ -56,6 +56,7 @@ public abstract class Event {
             case USER -> UserEvent.actionOf(action);
             case AUTHORIZATION_ENGINE ->  AuthorizationEngineEvent.actionOf(action);
             case PROTECTED_RESOURCE -> ProtectedResourceEvent.actionOf(action);
+            case PROTECTED_RESOURCE_SECRET -> ProtectedResourceSecretEvent.actionOf(action);
             default -> null;
         };
     }

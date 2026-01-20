@@ -16,17 +16,15 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.event.Action;
-import io.gravitee.am.common.event.ApplicationSecretEvent;
+import io.gravitee.am.common.event.ProtectedResourceSecretEvent;
 import io.gravitee.am.management.service.ClientSecretNotifierService;
-import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.service.ApplicationSecretService;
-import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.SimpleEvent;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Before;
@@ -42,15 +40,10 @@ import static io.reactivex.rxjava3.core.Completable.complete;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-
-public class ClientSecretManagerTest {
-
+public class ProtectedResourceSecretManagerTest {
 
     @Mock
-    private ApplicationService applicationService;
-
-    @Mock
-    private ApplicationSecretService applicationSecretService;
+    private ProtectedResourceService protectedResourceService;
 
     @Mock
     private EventManager eventManager;
@@ -59,7 +52,7 @@ public class ClientSecretManagerTest {
     private ClientSecretNotifierService clientSecretNotifierService;
 
     @InjectMocks
-    private ClientSecretManager manager;
+    private ProtectedResourceSecretManager manager;
 
     @Before
     public void setUp() throws Exception {
@@ -73,13 +66,13 @@ public class ClientSecretManagerTest {
         ClientSecret clientSecret2 = new ClientSecret();
         clientSecret2.setId("id2");
 
-        Application application = new Application();
-        application.setSecrets(List.of(clientSecret1, clientSecret2));
+        ProtectedResource resource = new ProtectedResource();
+        resource.setClientSecrets(List.of(clientSecret1, clientSecret2));
 
-        Mockito.when(applicationService.findAll()).thenReturn(Flowable.just(application));
+        Mockito.when(protectedResourceService.findAll()).thenReturn(Flowable.just(resource));
         Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
         Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id2"))).thenReturn(complete());
-        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(Application.class), any())).thenReturn(complete());
+        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
 
         manager.doStart();
     }
@@ -89,18 +82,15 @@ public class ClientSecretManagerTest {
         ClientSecret clientSecret1 = new ClientSecret();
         clientSecret1.setId("id1");
 
-        Application application = new Application();
-        application.setId("applicationId");
-        application.setSecrets(List.of(clientSecret1));
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resourceId");
+        resource.setClientSecrets(List.of(clientSecret1));
 
-        Mockito.when(applicationService.findById("applicationId")).thenReturn(Maybe.just(application));
-        Mockito.when(applicationSecretService.findById(application.getId(), clientSecret1.getId())).thenReturn(Maybe.just(clientSecret1));
+        Mockito.when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
 
-        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(Application.class), any())).thenReturn(complete());
-        Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration("id1")).thenReturn(complete());
+        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
 
-
-        manager.handle(new SimpleEvent<>(ApplicationSecretEvent.CREATE, new Payload(clientSecret1.getId(), ReferenceType.APPLICATION, application.getId(), Action.CREATE)))
+        manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.CREATE, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.CREATE)))
                 .test()
                 .assertComplete();
     }
@@ -110,19 +100,17 @@ public class ClientSecretManagerTest {
         ClientSecret clientSecret1 = new ClientSecret();
         clientSecret1.setId("id1");
 
-        Application application = new Application();
-        application.setId("applicationId");
-        application.setSecrets(List.of(clientSecret1));
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resourceId");
+        resource.setClientSecrets(List.of(clientSecret1));
 
-        Mockito.when(applicationService.findById("applicationId")).thenReturn(Maybe.just(application));
-        Mockito.when(applicationSecretService.findById(application.getId(), clientSecret1.getId())).thenReturn(Maybe.just(clientSecret1));
+        Mockito.when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
 
-        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(Application.class), any())).thenReturn(complete());
+        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
         Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration("id1")).thenReturn(complete());
         Mockito.when(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement("id1")).thenReturn(complete());
 
-
-        manager.handle(new SimpleEvent<>(ApplicationSecretEvent.RENEW, new Payload(clientSecret1.getId(), ReferenceType.APPLICATION, application.getId(), Action.UPDATE)))
+        manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.RENEW, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.UPDATE)))
                 .test()
                 .assertComplete();
     }
@@ -132,22 +120,15 @@ public class ClientSecretManagerTest {
         ClientSecret clientSecret1 = new ClientSecret();
         clientSecret1.setId("id1");
 
-        Application application = new Application();
-        application.setId("applicationId");
-        application.setSecrets(List.of(clientSecret1));
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resourceId");
+        resource.setClientSecrets(List.of(clientSecret1));
 
-        Mockito.when(applicationService.findById("applicationId")).thenReturn(Maybe.just(application));
-
-        Completable spy = Mockito.spy(complete());
-
-        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(Application.class), any())).thenReturn(spy);
         Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
         Mockito.when(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement("id1")).thenReturn(complete());
 
-        manager.handle(new SimpleEvent<>(ApplicationSecretEvent.DELETE, new Payload(clientSecret1.getId(), ReferenceType.APPLICATION, application.getId(), Action.DELETE)))
+        manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.DELETE, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.DELETE)))
                 .test()
                 .assertComplete();
-
     }
-
 }

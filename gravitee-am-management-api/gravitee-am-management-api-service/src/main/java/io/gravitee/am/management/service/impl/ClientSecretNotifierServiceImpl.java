@@ -24,6 +24,7 @@ import io.gravitee.am.management.service.impl.notifications.definition.Notificat
 import io.gravitee.am.management.service.impl.notifications.definition.ClientSecretNotifierSubject;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.node.api.notifier.NotifierService;
@@ -65,6 +66,23 @@ public class ClientSecretNotifierServiceImpl implements ClientSecretNotifierServ
                     .flatMapPublisher(domain ->
                             domainOwnersProvider.retrieveDomainOwners(domain)
                                     .map(user -> new ClientSecretNotifierSubject(clientSecret, application, domain, user))
+                                    .flatMap(subject -> Flowable.fromIterable(notificationDefinitionFactories)
+                                            .flatMapMaybe(factory -> factory.buildNotificationDefinition(subject))))
+                    .flatMapCompletable(definition -> Completable.fromRunnable(() -> notifierService.register(definition,
+                            new ExpireThresholdsNotificationCondition(clientSecretNotifierSettings.expiryThresholds()),
+                            new ExpireThresholdsResendNotificationCondition(clientSecretNotifierSettings.expiryThresholds()))));
+        } else {
+            return Completable.complete();
+        }
+    }
+
+    @Override
+    public Completable registerClientSecretExpiration(ProtectedResource protectedResource, ClientSecret clientSecret) {
+        if (clientSecretNotifierSettings.enabled() && clientSecret.getExpiresAt() != null) {
+            return findDomain(protectedResource.getDomainId())
+                    .flatMapPublisher(domain ->
+                            domainOwnersProvider.retrieveDomainOwners(domain)
+                                    .map(user -> new ClientSecretNotifierSubject(clientSecret, protectedResource, domain, user))
                                     .flatMap(subject -> Flowable.fromIterable(notificationDefinitionFactories)
                                             .flatMapMaybe(factory -> factory.buildNotificationDefinition(subject))))
                     .flatMapCompletable(definition -> Completable.fromRunnable(() -> notifierService.register(definition,

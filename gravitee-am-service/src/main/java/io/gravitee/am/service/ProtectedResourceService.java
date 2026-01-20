@@ -58,6 +58,8 @@ public interface ProtectedResourceService {
     Completable delete(Domain domain, String id, Type expectedType, User principal);
 
 
+    Flowable<ProtectedResource> findAll();
+
     Flowable<ProtectedResource> findByDomain(String domain);
 
     Single<ClientSecret> createSecret(Domain domain, String id, String name, User principal);
