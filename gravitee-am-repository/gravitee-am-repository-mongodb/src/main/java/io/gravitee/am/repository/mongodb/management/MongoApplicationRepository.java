@@ -427,7 +427,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return result;
     }
 
-    private static ApplicationSettingsMongo convert(ApplicationSettings other) {
+    static ApplicationSettingsMongo convert(ApplicationSettings other) {
         if (other == null) {
             return null;
         }
@@ -446,7 +446,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return applicationSettingsMongo;
     }
 
-    private static ApplicationSettings convert(ApplicationSettingsMongo other) {
+    static ApplicationSettings convert(ApplicationSettingsMongo other) {
         if (other == null) {
             return null;
         }

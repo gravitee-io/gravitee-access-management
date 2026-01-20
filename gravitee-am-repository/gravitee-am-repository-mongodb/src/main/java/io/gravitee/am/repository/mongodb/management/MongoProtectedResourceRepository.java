@@ -182,6 +182,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         mongo.setDescription(other.getDescription());
         mongo.setClientSecrets(convertToClientSecretMongo(other.getSecrets()));
         mongo.setSecretSettings(convertToSecretSettingsMongo(other.getSecretSettings()));
+        mongo.setSettings(MongoApplicationRepository.convert(other.getSettings()));
         mongo.setType(other.getType().toString());
         mongo.setCreatedAt(other.getCreatedAt());
         mongo.setUpdatedAt(other.getUpdatedAt());
@@ -199,6 +200,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setDescription(mongo.getDescription());
         result.setSecrets(convertToClientSecret(mongo.getClientSecrets()));
         result.setSecretSettings(convertToSecretSettings(mongo.getSecretSettings()));
+        result.setSettings(MongoApplicationRepository.convert(mongo.getSettings()));
         result.setType(Type.valueOf(mongo.getType()));
         result.setCreatedAt(mongo.getCreatedAt());
         result.setUpdatedAt(mongo.getUpdatedAt());

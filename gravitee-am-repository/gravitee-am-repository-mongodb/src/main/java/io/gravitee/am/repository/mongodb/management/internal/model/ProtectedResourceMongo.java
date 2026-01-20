@@ -52,6 +52,8 @@ public class ProtectedResourceMongo extends Auditable {
 
     private List<ApplicationSecretSettingsMongo> secretSettings;
 
+    private ApplicationSettingsMongo settings;
+
     private List<ProtectedResourceFeatureMongo> features = new ArrayList<>();
 
     @Getter
