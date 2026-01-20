@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.management.api.CertificateRepository;
@@ -29,9 +30,11 @@ import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithIdpException;
+import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -55,6 +58,9 @@ class CertificateServiceImplTest {
 
     @Mock
     private ApplicationService applicationService;
+
+    @Mock
+    private ProtectedResourceService protectedResourceService;
 
     @Mock
     private IdentityProviderService identityProviderService;
@@ -87,7 +93,7 @@ class CertificateServiceImplTest {
     private CertificateServiceImpl service;
 
     @Test
-    void shouldDeleteCertificateWhenNoApplicationNorIdpIsAssociated() {
+    void shouldDeleteCertificateWhenItIsNotAssociated() {
         // given
         String certId = "certId";
         Certificate cert = new Certificate();
@@ -98,6 +104,9 @@ class CertificateServiceImplTest {
                 .thenReturn(certificate);
 
         Mockito.when(applicationService.findByCertificate(certId))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(protectedResourceService.findByCertificate(certId))
                 .thenReturn(Flowable.empty());
 
         Mockito.when(identityProviderService.findByDomain("domainId"))
@@ -134,6 +143,33 @@ class CertificateServiceImplTest {
 
         // then
         observer.assertError(ex -> ex instanceof CertificateWithApplicationsException);
+    }
+
+    @Test
+    void onCertificateDeleteShouldThrowExIfAnyProtectedResourceIsAssociated() {
+        // given
+        String certId = "certId";
+        Certificate cert = new Certificate();
+        cert.setId(certId);
+        cert.setDomain("domainId");
+        Maybe<Certificate> certificate = Maybe.just(cert);
+        Mockito.when(certificateRepository.findById(certId))
+                .thenReturn(certificate);
+
+        Mockito.when(identityProviderService.findByDomain("domainId"))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(applicationService.findByCertificate(certId))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(protectedResourceService.findByCertificate(certId))
+                .thenReturn(Flowable.just(new ProtectedResource()));
+
+        // when
+        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+
+        // then
+        observer.assertError(ex -> ex instanceof CertificateWithProtectedResourceException);
     }
 
     @Test

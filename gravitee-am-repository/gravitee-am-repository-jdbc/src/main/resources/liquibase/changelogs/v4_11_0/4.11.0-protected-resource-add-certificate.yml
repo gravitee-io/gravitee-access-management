@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.0-protected-resource-add-certificate
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: protected_resources
+                columnName: certificate
+      changes:
+        - addColumn:
+            tableName: protected_resources
+            columns:
+              - column: {name: certificate, type: nvarchar(64), constraints: { nullable: true } }

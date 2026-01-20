@@ -116,6 +116,7 @@ public class PatchProtectedResourceTest {
     public void patchAllFields() {
         final var newName = "MyNewName";
         final var newDescription2 = "MyNewDescription";
+        final var newCertificate = "NewCertficate";
         final var newResourceIdentifiers = List.of("https://new.example.com");
         final var updateFeature = new UpdateProtectedResourceFeature();
         updateFeature.setKey("new_feature");
@@ -124,6 +125,7 @@ public class PatchProtectedResourceTest {
         final var resource = new ProtectedResource();
         resource.setName("Old Name");
         resource.setDescription("Old Description");
+        resource.setCertificate("Old Certificate");
         resource.setResourceIdentifiers(List.of("https://old.example.com"));
         resource.setFeatures(Collections.emptyList());
 
@@ -132,10 +134,12 @@ public class PatchProtectedResourceTest {
         patchResource.setDescription(Optional.of(newDescription2));
         patchResource.setResourceIdentifiers(Optional.of(newResourceIdentifiers));
         patchResource.setFeatures(Optional.of(List.of(updateFeature)));
+        patchResource.setCertificate(Optional.of(newCertificate));
 
         final var updatedResource = patchResource.patch(resource);
         assertEquals(newName, updatedResource.getName());
         assertEquals(newDescription2, updatedResource.getDescription());
+        assertEquals(newCertificate, updatedResource.getCertificate());
         assertEquals(newResourceIdentifiers, updatedResource.getResourceIdentifiers());
         assertNotNull(updatedResource.getFeatures());
         assertEquals(1, updatedResource.getFeatures().size());

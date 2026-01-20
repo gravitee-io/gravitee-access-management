@@ -30,6 +30,7 @@ public class ProtectedResourceMongo extends Auditable {
     public final static String DOMAIN_ID_FIELD = "domainId";
     public final static String TYPE_FIELD = "type";
     public final static String UPDATED_AT_FIELD = "updatedAt";
+    public final static String CERTIFICATE_FIELD = "certificate";
 
     public final static String RESOURCE_IDENTIFIERS_FIELD = "resourceIdentifiers";
 
@@ -45,6 +46,8 @@ public class ProtectedResourceMongo extends Auditable {
     private String description;
 
     private String type;
+
+    private String certificate;
 
     private List<String> resourceIdentifiers;
 

@@ -226,8 +226,8 @@ export const PatchApplicationSettingsRequiredPermissionsEnum = {
   ApplicationResource: 'APPLICATION_RESOURCE',
   ApplicationAnalytics: 'APPLICATION_ANALYTICS',
   ApplicationFlow: 'APPLICATION_FLOW',
-  ProtectedResource: 'PROTECTED_RESOURCE',
   LicenseNotification: 'LICENSE_NOTIFICATION',
+  ProtectedResource: 'PROTECTED_RESOURCE',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchApplicationSettingsRequiredPermissionsEnum =

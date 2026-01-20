@@ -20,11 +20,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { McpServersService } from '../../mcp-servers.service';
-import { AuthService } from '../../../../services/auth.service';
-import { DomainStoreService } from '../../../../stores/domain.store';
-import { McpServerClientSecretService } from '../../../../services/client-secret.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { McpServersService } from '../../../mcp-servers.service';
+import { AuthService } from '../../../../../services/auth.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
+import { McpServerClientSecretService } from '../../../../../services/client-secret.service';
 
 import { DomainMcpServerClientSecretsComponent } from './domain-mcp-server-client-secrets.component';
 

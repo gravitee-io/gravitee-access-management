@@ -29,6 +29,7 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
@@ -112,6 +113,9 @@ public class ProtectedResourceServiceImplTest {
 
     @Mock
     private ScopeService scopeService;
+
+    @Mock
+    private CertificateService certificateService;
 
     @InjectMocks
     private ProtectedResourceServiceImpl service;
@@ -509,6 +513,33 @@ public class ProtectedResourceServiceImplTest {
 
         verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(scopeService, times(1)).validateScope(any(), any());
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
+    }
+
+    @Test
+    public void shouldNotPatchProtectedResourceWhenInvalidCertificate() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setName(Optional.of("Name"));
+        patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
+        patchRequest.setFeatures(Optional.of(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("scope1")))));
+        patchRequest.setCertificate(Optional.of("invalid_cert"));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+        when(certificateService.findById(eq("invalid_cert"))).thenReturn(Maybe.empty());
+
+
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
+                .test()
+                .assertError(InvalidProtectedResourceException.class::isInstance);
+
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
+        verify(scopeService, times(1)).validateScope(any(), any());
+        verify(certificateService, times(1)).findById(any());
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
         verify(eventService, never()).create(any(), any());

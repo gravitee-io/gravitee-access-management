@@ -422,16 +422,28 @@ export interface UserEntity {
   zoneInfo?: string;
   /**
    *
-   * @type {string}
-   * @memberof UserEntity
-   */
-  middleName?: string;
-  /**
-   *
    * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
   identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {boolean}
+   * @memberof UserEntity
+   */
+  indefinitelyLocked?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UserEntity
+   */
+  temporarilyLocked?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof UserEntity
+   */
+  middleName?: string;
   /**
    *
    * @type {boolean}
@@ -572,8 +584,10 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     address: json['address'] == null ? undefined : json['address'],
     locale: json['locale'] == null ? undefined : json['locale'],
     zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    middleName: json['middleName'] == null ? undefined : json['middleName'],
     identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
+    temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
+    middleName: json['middleName'] == null ? undefined : json['middleName'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
@@ -658,8 +672,10 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     address: value['address'],
     locale: value['locale'],
     zoneInfo: value['zoneInfo'],
-    middleName: value['middleName'],
     identitiesAsMap: value['identitiesAsMap'],
+    indefinitelyLocked: value['indefinitelyLocked'],
+    temporarilyLocked: value['temporarilyLocked'],
+    middleName: value['middleName'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],

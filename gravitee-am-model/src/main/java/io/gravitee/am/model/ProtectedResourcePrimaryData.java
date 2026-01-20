@@ -31,7 +31,8 @@ public record ProtectedResourcePrimaryData (
         ApplicationSettings settings,
         List<ApplicationSecretSettings> secretSettings,
         List<? extends ProtectedResourceFeature> features,
-        Date updatedAt){
+        Date updatedAt,
+        String certificate){
 
     public static ProtectedResourcePrimaryData of(ProtectedResource protectedResource) {
         return new ProtectedResourcePrimaryData(
@@ -44,7 +45,8 @@ public record ProtectedResourcePrimaryData (
                 protectedResource.getSettings(),
                 protectedResource.getSecretSettings(),
                 protectedResource.getFeatures(),
-                protectedResource.getUpdatedAt()
+                protectedResource.getUpdatedAt(),
+                protectedResource.getCertificate()
         );
     }
 }
