@@ -22,25 +22,27 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.ciba.CibaTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.client.ClientCredentialsTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.code.AuthorizationCodeTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.refresh.RefreshTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.tokenexchange.TokenExchangeGranter;
-import io.gravitee.am.gateway.handler.oauth2.service.granter.uma.UMATokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.AuthorizationCodeStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.CibaStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.ClientCredentialsStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.PasswordStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.RefreshTokenStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.TokenExchangeStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.UmaStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
-import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
@@ -50,6 +52,8 @@ import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -59,10 +63,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * Composite TokenGranter that uses the Strategy pattern for standard grant types.
+ * Extension grants are still supported via the addTokenGranter/removeTokenGranter methods.
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CompositeTokenGranter.class);
 
     private final ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
@@ -92,9 +101,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private RulesEngine rulesEngine;
 
     @Autowired
-    private ExecutionContextFactory executionContextFactory;
-
-    @Autowired
     private AuthenticationFlowContextService authenticationFlowContextService;
 
     @Autowired
@@ -121,6 +127,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private TokenExchangeService tokenExchangeService;
 
+    @Autowired
+    private ExecutionContextFactory executionContextFactory;
+
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return findGranter(tokenRequest, client)
@@ -143,15 +152,16 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())));
     }
 
-
     public void addTokenGranter(String tokenGranterId, TokenGranter tokenGranter) {
         Objects.requireNonNull(tokenGranterId);
         Objects.requireNonNull(tokenGranter);
         tokenGranters.put(tokenGranterId, tokenGranter);
+        LOGGER.debug("Added token granter: {}", tokenGranterId);
     }
 
     public void removeTokenGranter(String tokenGranterId) {
         tokenGranters.remove(tokenGranterId);
+        LOGGER.debug("Removed token granter: {}", tokenGranterId);
     }
 
     @Override
@@ -161,13 +171,57 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        this.tokenRequestResolver.setManagers(this.scopeManager, this.protectedResourceManager);
-        addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService, rulesEngine));
-        addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));
-        addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, resourceConsistencyValidationService, environment, rulesEngine));
-        addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, resourceConsistencyValidationService, rulesEngine));
-        addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain, executionContextFactory, rulesEngine, subjectManager));
-        addTokenGranter(GrantType.CIBA_GRANT_TYPE, new CibaTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, authenticationRequestService, domain, rulesEngine));
-        addTokenGranter(GrantType.TOKEN_EXCHANGE, new TokenExchangeGranter(tokenRequestResolver, tokenService, tokenExchangeService, domain, rulesEngine));
+        LOGGER.info("Initializing grant strategies for domain: {}", domain.getName());
+        tokenRequestResolver.setManagers(scopeManager, protectedResourceManager);
+
+        // Register Client Credentials strategy
+        registerStrategy(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsStrategy());
+
+        // Register Password strategy
+        registerStrategy(GrantType.PASSWORD, new PasswordStrategy(userAuthenticationManager));
+
+        // Register Authorization Code strategy
+        boolean exitOnError = environment.getProperty("authenticationFlow.exitOnError", Boolean.class, Boolean.FALSE);
+        registerStrategy(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeStrategy(
+                authorizationCodeService,
+                userAuthenticationManager,
+                authenticationFlowContextService,
+                resourceConsistencyValidationService,
+                exitOnError
+        ));
+
+        // Register Refresh Token strategy
+        registerStrategy(GrantType.REFRESH_TOKEN, new RefreshTokenStrategy(
+                tokenService,
+                userAuthenticationManager,
+                resourceConsistencyValidationService
+        ));
+
+        // Register Token Exchange strategy
+        registerStrategy(GrantType.TOKEN_EXCHANGE, new TokenExchangeStrategy(tokenExchangeService));
+
+        // Register CIBA strategy
+        registerStrategy(GrantType.CIBA_GRANT_TYPE, new CibaStrategy(
+                authenticationRequestService,
+                userAuthenticationManager
+        ));
+
+        // Register UMA strategy
+        registerStrategy(GrantType.UMA, new UmaStrategy(
+                userAuthenticationManager,
+                permissionTicketService,
+                resourceService,
+                jwtService,
+                subjectManager,
+                rulesEngine,
+                executionContextFactory
+        ));
+
+        LOGGER.info("Grant strategies initialized for domain: {}", domain.getName());
+    }
+
+    private void registerStrategy(String grantType, GrantStrategy strategy) {
+        TokenGranter adapter = new StrategyGranterAdapter(strategy, domain, tokenService, rulesEngine, tokenRequestResolver);
+        addTokenGranter(grantType, adapter);
     }
 }
