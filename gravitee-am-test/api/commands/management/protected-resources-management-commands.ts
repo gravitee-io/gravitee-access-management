@@ -118,3 +118,38 @@ export const waitForProtectedResourceRemovedFromList = async (
   );
 };
 
+
+export const listMcpClientSecrets = (domainId: string, accessToken: string, resourceId: string) =>
+  getProtectedResourcesApi(accessToken).getSecrets({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+  });
+
+export const createMcpClientSecret = (domainId: string, accessToken: string, resourceId: string, newClientSecret: any) =>
+  getProtectedResourcesApi(accessToken).create({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+    newClientSecret: newClientSecret,
+  });
+
+export const renewMcpClientSecret = (domainId: string, accessToken: string, resourceId: string, secretId: string) =>
+  getProtectedResourcesApi(accessToken).renew({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+    secretId: secretId,
+  });
+
+export const deleteMcpClientSecret = (domainId: string, accessToken: string, resourceId: string, secretId: string) =>
+  getProtectedResourcesApi(accessToken)._delete({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+    secretId: secretId,
+  });
