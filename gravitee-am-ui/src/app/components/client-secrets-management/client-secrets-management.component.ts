@@ -49,9 +49,6 @@ export class ClientSecretsManagementComponent implements OnInit {
     this.snackbarService.open(message);
   }
 
-  // TODO: Handle Settings input if needed (e.g. initial settings)
-  // For now, fetching on openSettings
-
   clientSecrets: ClientSecret[] = [];
 
   constructor(

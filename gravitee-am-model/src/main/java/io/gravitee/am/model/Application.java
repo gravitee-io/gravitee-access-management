@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Application implements Resource, PasswordSettingsAware {
+public class Application implements Resource, PasswordSettingsAware, Notifiable {
 
     /**
      * Application technical id

@@ -162,8 +162,8 @@ public class PlatformNotifierConfiguration extends NotifierConfiguration {
             return new LoggerNotificationDefinitionFactory<>(notifierSettings,
                     obj -> "Client Secret %s of %s %s in domain %s expires on %s".formatted(
                             obj.getClientSecret().getName(),
-                            obj.getApplication() != null ? "application" : "protected resource",
-                            obj.getApplication() != null ? obj.getApplication().getName() : obj.getProtectedResource().getName(),
+                            obj.getTarget() != null ? obj.getTarget().getClass() : "Unknown",
+                            obj.getTarget() != null ? obj.getTarget().getName() : "Unknown",
                             obj.getDomain().getName(),
                             obj.getClientSecret().getExpiresAt()));
         } else {
