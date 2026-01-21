@@ -34,6 +34,8 @@ public class JdbcProtectedResource {
     public static final String COLUMN_TYPE = "type";
     public static final String COLUMN_UPDATED_AT = "updated_at";
     public static final String COLUMN_NAME = "name";
+    public static final String COLUMN_SETTINGS = "settings";
+    public static final String COLUMN_SECRET_SETTINGS = "secret_settings";
 
 
     @Id
@@ -54,7 +56,10 @@ public class JdbcProtectedResource {
     @Column(COLUMN_TYPE)
     private String type;
 
-    @Column("secret_settings")
+    @Column(COLUMN_SETTINGS)
+    private String settings;
+
+    @Column(COLUMN_SECRET_SETTINGS)
     private String secretSettings;
 
     @Column("created_at")

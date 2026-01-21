@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.0-protected-resources-add-settings
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: protected_resources
+              columnName: settings
+      changes:
+        - addColumn:
+            columns:
+              - column: { name: settings, type: clob, constraints: { nullable: true } }
+            tableName: protected_resources

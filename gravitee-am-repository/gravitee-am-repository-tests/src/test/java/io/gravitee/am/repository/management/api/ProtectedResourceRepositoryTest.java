@@ -20,6 +20,9 @@ import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.management.AbstractManagementTest;
@@ -76,6 +79,10 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getId().equals(secretSettings.getId()));
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getAlgorithm().equals(secretSettings.getAlgorithm()));
 
+        testObserver.assertValue(a -> a.getSettings().getOauth().getClientId().equals("oauthClientId"));
+        testObserver.assertValue(a -> a.getSettings().getSecretExpirationSettings().getEnabled().equals(true));
+        testObserver.assertValue(a -> a.getSettings().getSecretExpirationSettings().getExpiryTimeSeconds().equals(3600L));
+
         testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getKey().equals(tool1.getKey())));
         testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getDescription().equals(tool1.getDescription())));
         testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getType().equals(tool1.getType())));
@@ -89,8 +96,6 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getCreatedAt().equals(tool2.getCreatedAt())));
         testObserver.assertValue(a -> a.getFeatures().stream().map(McpTool.class::cast).toList().stream()
                 .anyMatch(f -> f.getScopes().equals(tool2.getScopes())));
-
-
     }
 
     @Test
@@ -128,6 +133,10 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getId().equals(secretSettings.getId()));
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getAlgorithm().equals(secretSettings.getAlgorithm()));
+
+        testObserver.assertValue(a -> a.getSettings().getOauth().getClientId().equals("oauthClientId"));
+        testObserver.assertValue(a -> a.getSettings().getSecretExpirationSettings().getEnabled().equals(true));
+        testObserver.assertValue(a -> a.getSettings().getSecretExpirationSettings().getExpiryTimeSeconds().equals(3600L));
 
     }
 
@@ -714,6 +723,18 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 uniqueBase + "/identifier2"
         ));
         toSave.setSecretSettings(List.of(secretSettings));
+        
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setClientId("oauthClientId");
+        settings.setOauth(oauth);
+
+        SecretExpirationSettings secretExpirationSettings = new SecretExpirationSettings();
+        secretExpirationSettings.setEnabled(true);
+        secretExpirationSettings.setExpiryTimeSeconds(3600L);
+        settings.setSecretExpirationSettings(secretExpirationSettings);
+        toSave.setSettings(settings);
+
         toSave.setSecrets(List.of(clientSecret));
         toSave.setFeatures(features);
         return toSave;
