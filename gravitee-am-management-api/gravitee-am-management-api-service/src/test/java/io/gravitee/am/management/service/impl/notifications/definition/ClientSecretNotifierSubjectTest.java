@@ -16,11 +16,11 @@
 package io.gravitee.am.management.service.impl.notifications.definition;
 
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ClientSecret;
-import io.gravitee.am.model.safe.CertificateProperties;
+import io.gravitee.am.model.safe.ApplicationProperties;
 import io.gravitee.am.model.safe.ClientSecretProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -83,6 +83,43 @@ public class ClientSecretNotifierSubjectTest {
         assertEquals(clientSecret.getName(),clientSecretProperties.getSecretName());
         assertEquals(userProperties.getId(), user.getId());
         assertEquals(domainProperties.getId(), domain.getId());
+        assertEquals("application", metadata.get("resourceType"));
+
+
+
+    }
+
+    @Test
+    public void data_protected_resource_as_app_test(){
+        // when
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setId("clientSecret");
+        clientSecret.setName("clientSecret");
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId("protectedResource");
+        protectedResource.setName("PR Name");
+
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user");
+
+        ClientSecretNotifierSubject sub = new ClientSecretNotifierSubject(clientSecret, protectedResource, domain, user);
+
+        // expect
+        Map<String, Object> metadata = sub.getData();
+        var clientSecretProperties = (ClientSecretProperties) metadata.get("clientSecret");
+        var domainProperties = (DomainProperties) metadata.get("domain");
+        var userProperties = (UserProperties) metadata.get("user");
+        var applicationProperties = (ApplicationProperties) metadata.get("application");
+
+        assertEquals(clientSecret.getName(),clientSecretProperties.getSecretName());
+        assertEquals(userProperties.getId(), user.getId());
+        assertEquals(domainProperties.getId(), domain.getId());
+        assertEquals(applicationProperties.getName(), protectedResource.getName());
+        assertEquals("protected resource", metadata.get("resourceType"));
 
     }
 
