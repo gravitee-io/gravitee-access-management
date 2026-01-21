@@ -67,7 +67,7 @@ public class ProtectedResourceSecretManagerTest {
         clientSecret2.setId("id2");
 
         ProtectedResource resource = new ProtectedResource();
-        resource.setSecrets(List.of(clientSecret1, clientSecret2));
+        resource.setClientSecrets(List.of(clientSecret1, clientSecret2));
 
         Mockito.when(protectedResourceService.findAll()).thenReturn(Flowable.just(resource));
         Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
@@ -84,7 +84,7 @@ public class ProtectedResourceSecretManagerTest {
 
         ProtectedResource resource = new ProtectedResource();
         resource.setId("resourceId");
-        resource.setSecrets(List.of(clientSecret1));
+        resource.setClientSecrets(List.of(clientSecret1));
 
         Mockito.when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
 
@@ -102,7 +102,7 @@ public class ProtectedResourceSecretManagerTest {
 
         ProtectedResource resource = new ProtectedResource();
         resource.setId("resourceId");
-        resource.setSecrets(List.of(clientSecret1));
+        resource.setClientSecrets(List.of(clientSecret1));
 
         Mockito.when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
 
@@ -122,7 +122,7 @@ public class ProtectedResourceSecretManagerTest {
 
         ProtectedResource resource = new ProtectedResource();
         resource.setId("resourceId");
-        resource.setSecrets(List.of(clientSecret1));
+        resource.setClientSecrets(List.of(clientSecret1));
 
         Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
         Mockito.when(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement("id1")).thenReturn(complete());

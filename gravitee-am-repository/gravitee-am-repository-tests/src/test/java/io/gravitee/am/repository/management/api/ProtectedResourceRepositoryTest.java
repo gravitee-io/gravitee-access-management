@@ -69,12 +69,12 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getName().equals(toSave.getName()));
         testObserver.assertValue(a -> a.getClientId().equals(toSave.getClientId()));
 
-        testObserver.assertValue(a -> a.getSecrets().get(0).getId().equals(clientSecret.getId()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getName().equals(clientSecret.getName()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getSettingsId().equals(clientSecret.getSettingsId()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getSecret().equals(clientSecret.getSecret()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getExpiresAt().equals(clientSecret.getExpiresAt()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getCreatedAt().equals(clientSecret.getCreatedAt()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getId().equals(clientSecret.getId()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getName().equals(clientSecret.getName()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSettingsId().equals(clientSecret.getSettingsId()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSecret().equals(clientSecret.getSecret()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getExpiresAt().equals(clientSecret.getExpiresAt()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getCreatedAt().equals(clientSecret.getCreatedAt()));
 
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getId().equals(secretSettings.getId()));
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getAlgorithm().equals(secretSettings.getAlgorithm()));
@@ -124,12 +124,12 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getName().equals(toSave.getName()));
         testObserver.assertValue(a -> a.getClientId().equals(toSave.getClientId()));
 
-        testObserver.assertValue(a -> a.getSecrets().get(0).getId().equals(clientSecret.getId()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getName().equals(clientSecret.getName()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getSettingsId().equals(clientSecret.getSettingsId()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getSecret().equals(clientSecret.getSecret()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getExpiresAt().equals(clientSecret.getExpiresAt()));
-        testObserver.assertValue(a -> a.getSecrets().get(0).getCreatedAt().equals(clientSecret.getCreatedAt()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getId().equals(clientSecret.getId()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getName().equals(clientSecret.getName()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSettingsId().equals(clientSecret.getSettingsId()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSecret().equals(clientSecret.getSecret()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getExpiresAt().equals(clientSecret.getExpiresAt()));
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getCreatedAt().equals(clientSecret.getCreatedAt()));
 
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getId().equals(secretSettings.getId()));
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getAlgorithm().equals(secretSettings.getAlgorithm()));
@@ -149,7 +149,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertComplete()
                 .assertNoErrors()
                 .assertValue(res -> res.size() >= resources.size())
-                .assertValue(res -> res.getFirst().getSecrets() != null && res.getFirst().getSecrets().size() == resources.getFirst().getSecrets().size())
+                .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
                 .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
     }
 
@@ -163,7 +163,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertComplete()
                 .assertNoErrors()
                 .assertValue(res -> res.size() == resources.size())
-                .assertValue(res -> res.getFirst().getSecrets() != null && res.getFirst().getSecrets().size() == resources.getFirst().getSecrets().size())
+                .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
                 .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
     }
 
@@ -209,7 +209,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
         
         ProtectedResource toSave = generateResource(clientSecret1, secretSettings);
-        toSave.setSecrets(List.of(clientSecret1, clientSecret2, clientSecret3));
+        toSave.setClientSecrets(List.of(clientSecret1, clientSecret2, clientSecret3));
 
         TestObserver<ProtectedResource> testObserver = repository.create(toSave)
                 .flatMapMaybe(created -> repository.findById(created.getId()))
@@ -220,17 +220,17 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         
         // Verify exactly 3 secrets
-        testObserver.assertValue(a -> a.getSecrets() != null && a.getSecrets().size() == 3);
+        testObserver.assertValue(a -> a.getClientSecrets() != null && a.getClientSecrets().size() == 3);
         
         // Verify all 3 secrets are persisted correctly
-        testObserver.assertValue(a -> a.getSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret1.getId())));
-        testObserver.assertValue(a -> a.getSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret2.getId())));
-        testObserver.assertValue(a -> a.getSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret3.getId())));
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret1.getId())));
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret2.getId())));
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret3.getId())));
         
         // Verify first secret details
-        testObserver.assertValue(a -> a.getSecrets().get(0).getName() != null);
-        testObserver.assertValue(a -> a.getSecrets().get(0).getSecret() != null);
-        testObserver.assertValue(a -> a.getSecrets().get(0).getSettingsId() != null);
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getName() != null);
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSecret() != null);
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSettingsId() != null);
     }
 
     private List<ProtectedResource> generateResources(int count, String domainId) {
@@ -651,9 +651,9 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
         // Add a second secret
         ClientSecret clientSecret2 = generateClientSecret();
-        List<ClientSecret> updatedSecrets = new java.util.ArrayList<>(created.getSecrets());
+        List<ClientSecret> updatedSecrets = new java.util.ArrayList<>(created.getClientSecrets());
         updatedSecrets.add(clientSecret2);
-        created.setSecrets(updatedSecrets);
+        created.setClientSecrets(updatedSecrets);
 
         // Update the resource
         TestObserver<ProtectedResource> testObserver = repository.update(created)
@@ -665,9 +665,9 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
 
         // Verify that the resource now has 2 secrets
-        testObserver.assertValue(a -> a.getSecrets().size() == 2);
-        testObserver.assertValue(a -> a.getSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret1.getId())));
-        testObserver.assertValue(a -> a.getSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret2.getId())));
+        testObserver.assertValue(a -> a.getClientSecrets().size() == 2);
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret1.getId())));
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret2.getId())));
     }
 
     @Test
@@ -765,7 +765,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         settings.setSecretExpirationSettings(secretExpirationSettings);
         toSave.setSettings(settings);
 
-        toSave.setSecrets(List.of(clientSecret));
+        toSave.setClientSecrets(List.of(clientSecret));
         toSave.setFeatures(features);
         return toSave;
     }

@@ -180,7 +180,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         mongo.setDomainId(other.getDomainId());
         mongo.setResourceIdentifiers(other.getResourceIdentifiers());
         mongo.setDescription(other.getDescription());
-        mongo.setClientSecrets(convertToClientSecretMongo(other.getSecrets()));
+        mongo.setClientSecrets(convertToClientSecretMongo(other.getClientSecrets()));
         mongo.setSecretSettings(convertToSecretSettingsMongo(other.getSecretSettings()));
         mongo.setSettings(MongoApplicationRepository.convert(other.getSettings()));
         mongo.setType(other.getType().toString());
@@ -198,7 +198,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setDomainId(mongo.getDomainId());
         result.setResourceIdentifiers(mongo.getResourceIdentifiers());
         result.setDescription(mongo.getDescription());
-        result.setSecrets(convertToClientSecret(mongo.getClientSecrets()));
+        result.setClientSecrets(convertToClientSecret(mongo.getClientSecrets()));
         result.setSecretSettings(convertToSecretSettings(mongo.getSecretSettings()));
         result.setSettings(MongoApplicationRepository.convert(mongo.getSettings()));
         result.setType(Type.valueOf(mongo.getType()));

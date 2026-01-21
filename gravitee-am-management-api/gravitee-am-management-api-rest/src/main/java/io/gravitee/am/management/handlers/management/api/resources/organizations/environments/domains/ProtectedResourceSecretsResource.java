@@ -79,10 +79,10 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
                         .flatMap(__ -> protectedResourceService.findById(protectedResourceId))
                         .switchIfEmpty(Single.error(new ProtectedResourceNotFoundException(protectedResourceId)))
                         .map(resource -> {
-                            if (resource.getSecrets() == null) {
+                            if (resource.getClientSecrets() == null) {
                                 return java.util.Collections.emptyList();
                             }
-                            return resource.getSecrets().stream().map(ClientSecret::safeSecret).collect(Collectors.toList());
+                            return resource.getClientSecrets().stream().map(ClientSecret::safeSecret).collect(Collectors.toList());
                         })) 
                 .subscribe(response::resume, response::resume);
     }

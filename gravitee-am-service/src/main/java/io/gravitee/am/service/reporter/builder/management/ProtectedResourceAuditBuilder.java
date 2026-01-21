@@ -46,7 +46,7 @@ public class ProtectedResourceAuditBuilder extends ManagementAuditBuilder<Protec
         if (value != null && value instanceof ProtectedResource protectedResource) {
             ProtectedResource safeValue = new ProtectedResource(protectedResource);
             safeValue.setSecretSettings(List.of());
-            safeValue.setSecrets(List.of());
+            safeValue.setClientSecrets(List.of());
             return safeValue;
         }
         return value;

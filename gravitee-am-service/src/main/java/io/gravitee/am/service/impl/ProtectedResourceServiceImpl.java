@@ -169,7 +169,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
         toCreate.setSecretSettings(new ArrayList<>(List.of(secretSettings)));
-        toCreate.setSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
+        toCreate.setClientSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
         toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
             ProtectedResourceFeature feature = f.asFeature();
             feature.setCreatedAt(toCreate.getCreatedAt());
@@ -489,7 +489,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(protectedResource -> {
-                    List<ClientSecret> secrets = protectedResource.getSecrets() != null ? protectedResource.getSecrets() : new ArrayList<>();
+                    List<ClientSecret> secrets = protectedResource.getClientSecrets() != null ? protectedResource.getClientSecrets() : new ArrayList<>();
                     String newSecretName = name != null ? name.trim() : name;
                     if (newSecretName != null && secrets.stream().map(ClientSecret::getName).anyMatch(newSecretName::equals)) {
                         return Single.error(() -> new ClientSecretInvalidException(String.format("Secret with description %s already exists", newSecretName)));
@@ -510,7 +510,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
                     ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings, domain.getSecretExpirationSettings(), getExpirationSettings(protectedResource));
                     secrets.add(clientSecret);
-                    protectedResource.setSecrets(secrets);
+                    protectedResource.setClientSecrets(secrets);
 
                     return repository.update(protectedResource)
                         .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
@@ -550,7 +550,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(protectedResource -> {
-                    Optional<ClientSecret> clientSecretOptional = Optional.ofNullable(protectedResource.getSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(clientSecret -> clientSecret.getId().equals(secretId)).findFirst();
+                    Optional<ClientSecret> clientSecretOptional = Optional.ofNullable(protectedResource.getClientSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(clientSecret -> clientSecret.getId().equals(secretId)).findFirst();
                     if (clientSecretOptional.isEmpty()) {
                         return Single.error(new ClientSecretNotFoundException(secretId));
                     }
@@ -581,7 +581,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                                     .flatMap(e -> Single.just(resource));
                         })
                         .map(__ -> {
-                            var secret = Optional.ofNullable(protectedResource.getSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
+                            var secret = Optional.ofNullable(protectedResource.getClientSecrets()).orElse(java.util.Collections.emptyList()).stream().filter(s -> s.getId().equals(secretId)).findFirst().orElse(new ClientSecret());
                             secret.setSecret(rawSecret);
                             return secret;
                         });
@@ -601,10 +601,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMapCompletable(protectedResource -> {
-                    if (protectedResource.getSecrets().size() <= 1) {
+                    if (protectedResource.getClientSecrets().size() <= 1) {
                         return Completable.error(new ClientSecretDeleteException("Cannot remove last secret"));
                     }
-                    var secretToRemoveOptional = protectedResource.getSecrets().stream().filter(sc -> sc.getId().equals(secretId)).findFirst();
+                    var secretToRemoveOptional = protectedResource.getClientSecrets().stream().filter(sc -> sc.getId().equals(secretId)).findFirst();
                     if (secretToRemoveOptional.isEmpty()) {
                         return Completable.error(new ClientSecretNotFoundException(secretId));
                     }
@@ -612,9 +612,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     var secretToRemove = secretToRemoveOptional.get();
                     String secretSettingsId = secretToRemove.getSettingsId();
 
-                    protectedResource.getSecrets().removeIf(cs -> cs.getId().equals(secretId));
+                    protectedResource.getClientSecrets().removeIf(cs -> cs.getId().equals(secretId));
 
-                    boolean isSecretSettingsStillUsed = protectedResource.getSecrets().stream()
+                    boolean isSecretSettingsStillUsed = protectedResource.getClientSecrets().stream()
                             .anyMatch(cs -> cs.getSettingsId().equals(secretSettingsId));
                     
                     if (!isSecretSettingsStillUsed && protectedResource.getSecretSettings() != null) {
