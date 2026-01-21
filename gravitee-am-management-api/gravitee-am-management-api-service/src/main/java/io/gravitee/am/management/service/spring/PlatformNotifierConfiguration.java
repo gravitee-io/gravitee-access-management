@@ -160,9 +160,10 @@ public class PlatformNotifierConfiguration extends NotifierConfiguration {
             @Value("${notifiers.log.enabled:true}") boolean enabled) {
         if(enabled) {
             return new LoggerNotificationDefinitionFactory<>(notifierSettings,
-                    obj -> "Client Secret %s of application %s in domain %s expires on %s".formatted(
+                    obj -> "Client Secret %s of %s %s in domain %s expires on %s".formatted(
                             obj.getClientSecret().getName(),
-                            obj.getApplication().getName(),
+                            obj.getApplication() != null ? "application" : "protected resource",
+                            obj.getApplication() != null ? obj.getApplication().getName() : obj.getProtectedResource().getName(),
                             obj.getDomain().getName(),
                             obj.getClientSecret().getExpiresAt()));
         } else {

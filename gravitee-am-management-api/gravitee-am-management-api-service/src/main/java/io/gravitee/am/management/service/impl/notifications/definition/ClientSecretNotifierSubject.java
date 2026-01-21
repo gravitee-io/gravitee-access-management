@@ -79,10 +79,10 @@ public class ClientSecretNotifierSubject implements NotifierSubject {
 
         if (application != null) {
             result.put(NOTIFIER_DATA_APPLICATION, new ApplicationProperties(application.getName()));
-        }
-
-        if (protectedResource != null) {
-            result.put(NOTIFIER_DATA_PROTECTED_RESOURCE, new ProtectedResourceProperties(protectedResource.getName()));
+            result.put("resourceType", "application");
+        } else if (protectedResource != null) {
+            result.put(NOTIFIER_DATA_APPLICATION, new ApplicationProperties(protectedResource.getName()));
+            result.put("resourceType", "protected resource");
         }
 
         return result;
