@@ -1,0 +1,40 @@
+---
+description: "Testing & validation: TDD preference, audit-log tests, verification gates"
+alwaysApply: true
+---
+# Testing & Validation
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## Testing Approach
+
+- For backend changes, **prefer TDD**: tests first, then implementation.
+- Implement bottom-up by dependency: **Repository → Service → Resource**.
+- Cover success **and error paths** when behaviour changes.
+- CREATE/UPDATE/DELETE tests **must verify audit logging**.
+
+## Step-by-Step Validation (MANDATORY)
+
+After each logical step:
+- **Validate** (tests/build)
+- **Review** for tidiness
+- **Remove** temporary code
+- **Fix** linting issues
+- Keep repo **lint/test clean**
+
+## Test Quality
+
+- No ambiguous assertions; make assertions **specific and meaningful**.
+- Remove redundant checks once a value is already asserted.
+
+## Completion Checklist
+
+Before marking work complete:
+- [ ] Tests pass
+- [ ] Lint is clean
+- [ ] Patterns are consistent
+- [ ] Docs updated if needed
+- [ ] If API layer changed, follow OpenAPI/SDK regeneration rules (see 70-api-contracts-openapi-sdk.mdc)
+
+Reference commands:
+- `@docs/agent-standards/commands.md`
