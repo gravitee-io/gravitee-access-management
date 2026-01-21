@@ -1,0 +1,29 @@
+---
+description: "Project context: Gravitee Access Management (AM) structure and conventions"
+alwaysApply: true
+---
+# Project Context: Gravitee Access Management (AM)
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## Workspace Structure
+
+This workspace contains:
+- **Backend:** Java with RxJava + Vert.x patterns; layered architecture **Repository → Service → Resource**
+- **Frontend:** Angular/TypeScript (`gravitee-am-ui`)
+- **Tests:** unit + integration/contract tests; E2E when applicable
+
+## Conventions
+
+- Use **UK English** for comments, logs, and user-facing text.
+- Prefer existing patterns over inventing new ones; **search for similar implementations first**.
+- Keep changes small and reviewable; avoid unrelated refactors/reformatting.
+- Treat `@docs/agent-standards/commands.md` as the **canonical reference** for build/test/validation commands.
+- Templates under `@docs/agent-standards/templates/` are **guidance only**:
+  - use them to structure plans and self-checks
+  - do not create new documentation/guideline files (*.md, README, etc.) unless explicitly requested
+  - freely create/modify code files as needed for implementation
+
+## Cross-Agent Consistency
+
+When multiple agents or iterations work on the same area, converge on a single agreed approach and avoid introducing competing patterns or parallel abstractions.
