@@ -56,7 +56,7 @@ public class ProtectedResource {
 
     private List<String> resourceIdentifiers;
 
-    private List<ClientSecret> secrets;
+    private List<ClientSecret> clientSecrets;
 
     private List<ApplicationSecretSettings> secretSettings;
 
@@ -80,7 +80,7 @@ public class ProtectedResource {
         this.domainId = protectedResource.getDomainId();
         this.description = protectedResource.getDescription();
         this.resourceIdentifiers = protectedResource.getResourceIdentifiers();
-        this.secrets = protectedResource.getSecrets();
+        this.clientSecrets = protectedResource.getClientSecrets();
         this.settings = protectedResource.getSettings();
         this.secretSettings = protectedResource.getSecretSettings();
         this.createdAt = protectedResource.getCreatedAt();
@@ -96,7 +96,7 @@ public class ProtectedResource {
         client.setDomain(this.domainId);
         client.setEnabled(true);
         client.setSecretSettings(this.secretSettings);
-        client.setClientSecrets(this.secrets);
+        client.setClientSecrets(this.clientSecrets);
         client.setCreatedAt(this.createdAt);
         client.setUpdatedAt(this.updatedAt);
         return client;
