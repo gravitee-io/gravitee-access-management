@@ -1,0 +1,376 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: Company Organization Simulation
+
+model: |
+  model
+    schema 1.1
+
+  type user
+    relations
+      define manager: [user]
+
+  type team
+    relations
+      define member: [user]
+      define child: [team]
+      define all_members: member or all_members from child
+
+  type role
+    relations
+      define can_access_resource_group: [user:*, user:* with in_company_network, user:* with working_hours_access]
+
+  type role_assignment
+    relations
+      define assignee: [user]
+      define role: [role]
+      define can_access_resource_group: assignee and can_access_resource_group from role
+
+  type resource_group
+    relations
+      define owner: [user, team#all_members]
+      define role_assignment: [role_assignment]
+      define reader: can_access_resource_group from role_assignment
+      define emergency_access: [user]
+      define blocked: [user]
+
+  type resource
+    relations
+      # Direct ownership
+      define owner: [user]
+
+      # Resource grouping
+      define group: [resource_group]
+
+      # Resource access
+      define reader: [user, team#all_members]
+
+      # Inherited ownership from resource_group
+      define group_owner: owner from group
+
+      # Role-based access via resource_group
+      define group_reader: reader from group
+
+      # Manager access (manager can see reports' resources)
+      define manager_access: manager from owner
+
+      # Emergency override
+      define emergency_access: emergency_access from group
+
+      # Deny override
+      define blocked: blocked from group
+
+      # Final access rule
+      define can_access: (owner or reader or group_owner or group_reader or manager_access or emergency_access) but not blocked
+
+  condition working_hours_access(start_hour: uint, end_hour: uint, current_time: timestamp) {
+    uint(current_time.getHours()) >= start_hour && uint(current_time.getHours()) <= end_hour
+  }
+
+  condition in_company_network(cidr: string, user_ip: ipaddress) {
+    user_ip.in_cidr(cidr)
+  }
+
+tuples:
+    # Assign resources to a shareable resource_group
+    - user: resource_group:resource_collection_1
+      relation: group
+      object: resource:core_resource_1
+
+    - user: resource_group:resource_collection_1
+      relation: group
+      object: resource:core_resource_2
+
+    # Assign ownership to a personal resource
+    - user: user:bob
+      relation: owner
+      object: resource:personal_resource_bob_1
+
+    - user: resource_group:personal_resources
+      relation: group
+      object: resource:personal_resource_bob_1
+
+    # Assign ownership to a team resource group
+    - user: resource_group:team_resource_collection_1
+      relation: group
+      object: resource:team_resource_1
+
+    - user: resource_group:team_resource_collection_1
+      relation: group
+      object: resource:team_resource_2
+
+    - user: team:team_alpha#all_members
+      relation: owner
+      object: resource_group:team_resource_collection_1
+
+    # Define team structure and assign users to teams
+    - user: user:alice
+      relation: member
+      object: team:team_alpha
+
+    - user: user:bob
+      relation: member
+      object: team:team_alpha
+
+    - user: user:charlie
+      relation: member
+      object: team:team_alpha
+
+    - user: user:dan
+      relation: member
+      object: team:team_alpha
+
+    - user: user:alice
+      relation: manager
+      object: user:bob
+
+    - user: team:team_alpha
+      relation: child
+      object: team:team_root
+
+    - user: user:anne
+      relation: member
+      object: team:team_root
+
+    - user: user:emily
+      relation: member
+      object: team:team_root
+
+    # Define role availability
+    - user: user:*
+      relation: can_access_resource_group
+      object: role:unrestricted_resources_reader
+
+    - user: user:*
+      relation: can_access_resource_group
+      object: role:local_resources_reader
+      condition:
+        name: in_company_network
+        context:
+          cidr: "192.168.0.0/24"
+
+    - user: user:*
+      relation: can_access_resource_group
+      object: role:hr_working_hours_personal_resources_reader
+      condition:
+        name: working_hours_access
+        context:
+          start_hour: 8
+          end_hour: 17
+
+    # Define role assignments, pairing users and roles against resource groups
+    - user: role:unrestricted_resources_reader
+      relation: role
+      object: role_assignment:resource_collection_1_unrestricted_reader
+
+    - user: user:charlie
+      relation: assignee
+      object: role_assignment:resource_collection_1_unrestricted_reader
+
+    - user: role_assignment:resource_collection_1_unrestricted_reader
+      relation: role_assignment
+      object: resource_group:resource_collection_1
+
+    - user: role:local_resources_reader
+      relation: role
+      object: role_assignment:resource_collection_1_local_reader
+
+    - user: user:alice
+      relation: assignee
+      object: role_assignment:resource_collection_1_local_reader
+
+    - user: role_assignment:resource_collection_1_local_reader
+      relation: role_assignment
+      object: resource_group:resource_collection_1
+
+    - user: role:hr_working_hours_personal_resources_reader
+      relation: role
+      object: role_assignment:hr_working_hours_personal_resources_reader
+
+    - user: user:anne
+      relation: assignee
+      object: role_assignment:hr_working_hours_personal_resources_reader
+
+    - user: role_assignment:hr_working_hours_personal_resources_reader
+      relation: role_assignment
+      object: resource_group:personal_resources
+
+    # Define users blocked from accessing a resource group
+    - user: user:dan
+      relation: blocked
+      object: resource_group:team_resource_collection_1
+
+    # Define users with emergency access to a resource group
+    - user: user:emily
+      relation: emergency_access
+      object: resource_group:team_resource_collection_1
+
+tests:
+  - name: Test direct resource ownership
+    check:
+    # Bob should be able to access his personal resource
+    - user: user:bob
+      object: resource:personal_resource_bob_1
+      assertions:
+        owner: true
+        can_access: true
+    # Alice should not be able to access Bob's personal resource
+    - user: user:alice
+      object: resource:personal_resource_bob_1
+      assertions:
+        owner: false
+
+  - name: Test team resource group ownership
+    check:
+    # Team members should be able to access team resources
+    - user: team:team_alpha#all_members
+      object: resource:team_resource_1
+      assertions:
+        group_owner: true
+        can_access: true
+    # Bob should be able to access team resources
+    - user: user:bob
+      object: resource:team_resource_1
+      assertions:
+        group_owner: true
+        can_access: true
+    # Anne should not be able to access another team's resources
+    - user: user:anne
+      object: resource:team_resource_1
+      assertions:
+        group_owner: false
+        group_reader: false
+        can_access: false
+    # Dan should not be able to access team resources because he is blocked
+    - user: user:dan
+      object: resource:team_resource_1
+      assertions:
+        group_owner: true
+        blocked: true
+        can_access: false
+    # Emily should be able to access team resources because she has emergency access
+    - user: user:emily
+      object: resource:team_resource_1
+      assertions:
+        group_owner: false
+        emergency_access: true
+        can_access: true
+
+  - name: Test manager access to user's resource
+    check:
+    - user: user:alice
+      object: resource:personal_resource_bob_1
+      assertions:
+        manager_access: true
+        can_access: true
+    - user: user:bob
+      object: resource:personal_resource_bob_1
+      assertions:
+        manager_access: false
+        owner: true
+        can_access: true
+    - user: user:anne
+      object: resource:personal_resource_bob_1
+      assertions:
+        manager_access: false
+        owner: false
+
+  - name: Test role-based access to shared resources with network constraint
+    check:
+    # Alice should be able to access shared resources when on company network
+    - user: user:alice
+      object: resource:core_resource_1
+      context:
+        user_ip: "192.168.0.10"
+      assertions:
+        group_reader: true
+        can_access: true
+    # Alice should NOT be able to access when outside company network
+    - user: user:alice
+      object: resource:core_resource_1
+      context:
+        user_ip: "10.0.0.10"
+      assertions:
+        group_reader: false
+        can_access: false
+    # Charlie should be able to access shared resources when not on company network
+    - user: user:charlie
+      object: resource:core_resource_1
+      context:
+        user_ip: "10.0.0.20"
+      assertions:
+        group_reader: true
+        can_access: true
+    # Anne is not in a reader role, so should not have access even on company network
+    - user: user:anne
+      object: resource:core_resource_1
+      context:
+        user_ip: "192.168.0.30"
+      assertions:
+        group_reader: false
+        can_access: false
+
+  - name: Test HR access to other users' personal resources with temporal constraint
+    check:
+    # Anne (HR) should be able to access personal resources during working hours
+    - user: user:anne
+      object: resource:personal_resource_bob_1
+      context:
+        current_time: "2026-01-01T10:00:00Z"
+      assertions:
+        group_reader: true
+        can_access: true
+    # Anne should be able to access at start of working hours (8 AM)
+    - user: user:anne
+      object: resource:personal_resource_bob_1
+      context:
+        current_time: "2026-01-01T08:00:00Z"
+      assertions:
+        group_reader: true
+        can_access: true
+    # Anne should be able to access at end of working hours (5 PM)
+    - user: user:anne
+      object: resource:personal_resource_bob_1
+      context:
+        current_time: "2026-01-01T17:00:00Z"
+      assertions:
+        group_reader: true
+        can_access: true
+    # Anne should NOT be able to access before working hours
+    - user: user:anne
+      object: resource:personal_resource_bob_1
+      context:
+        current_time: "2026-01-01T07:00:00Z"
+      assertions:
+        group_reader: false
+        can_access: false
+    # Anne should NOT be able to access after working hours
+    - user: user:anne
+      object: resource:personal_resource_bob_1
+      context:
+        current_time: "2026-01-01T18:00:00Z"
+      assertions:
+        group_reader: false
+        can_access: false
+    # Charlie is not in HR role, so should not have access even during working hours
+    - user: user:charlie
+      object: resource:personal_resource_bob_1
+      context:
+        current_time: "2026-01-01T10:00:00Z"
+      assertions:
+        group_reader: false
+        can_access: false

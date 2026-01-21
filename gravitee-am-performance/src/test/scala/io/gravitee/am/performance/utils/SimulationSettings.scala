@@ -28,6 +28,10 @@ object SimulationSettings {
   val MANAGEMENT_USER = System.getProperty("mng_user", "admin")
   val MANAGEMENT_PWD = System.getProperty("mng_password", "adminadmin")
 
+  val FGA_API_URL = System.getProperty("fga_api_url", "http://localhost:8080")
+  val FGA_STORE_ID = System.getProperty("fga_store_id", "")
+  val FGA_AUTHORIZATION_MODEL_ID = System.getProperty("fga_authorization_model_id", "")
+
   val DOMAIN_NAME = System.getProperty("domain", "gatling-domain")
   val IDENTITY_PROVIDER_NAME = System.getProperty("idp", "Default Identity Provider")
   val MULTI_DOMAIN_NAMES = System.getProperty("multiDomains", "gatling-domain").split(",")
@@ -43,6 +47,12 @@ object SimulationSettings {
   // it will be possible to generate username with IDP relationship
   val USER_PREFIX = System.getProperty("user_prefix", "user")
   val MAX_USER_INDEX = MIN_USER_INDEX + NUMBER_OF_USERS
+
+  val NUMBER_OF_TEAMS = Integer.getInteger("number_of_teams", 40)
+  val DEPTH_OF_TEAMS = Integer.getInteger("depth_of_teams", 4)
+  val NUMBER_OF_RESOURCES_PER_USER = Integer.getInteger("number_of_resources_per_user", 200)
+  val NUMBER_OF_RESOURCES_PER_TEAM = Integer.getInteger("number_of_resources_per_team", 200)
+  val NUMBER_OF_SHARED_RESOURCES = Integer.getInteger("number_of_shared_resources", 1000)
 
   val APP_NAME = System.getProperty("app", "appweb")
 
