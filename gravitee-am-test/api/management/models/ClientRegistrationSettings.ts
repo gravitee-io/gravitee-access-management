@@ -73,13 +73,7 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  openDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ClientRegistrationSettings
-   */
-  dynamicClientRegistrationEnabled?: boolean;
+  allowedScopesEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -91,7 +85,13 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  allowedScopesEnabled?: boolean;
+  dynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ClientRegistrationSettings
+   */
+  openDynamicClientRegistrationEnabled?: boolean;
 }
 
 /**
@@ -117,12 +117,12 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
-    openDynamicClientRegistrationEnabled:
-      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
+    allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
-    allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -145,9 +145,9 @@ export function ClientRegistrationSettingsToJSONTyped(
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: value['defaultScopes'],
     allowedScopes: value['allowedScopes'],
-    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
-    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: value['clientTemplateEnabled'],
     allowedScopesEnabled: value['allowedScopesEnabled'],
+    clientTemplateEnabled: value['clientTemplateEnabled'],
+    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
   };
 }
