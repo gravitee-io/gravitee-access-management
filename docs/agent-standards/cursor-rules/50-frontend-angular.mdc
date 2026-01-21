@@ -1,0 +1,19 @@
+---
+description: "Frontend (Angular/TypeScript): structure, lint, quality, stable selectors"
+alwaysApply: false
+globs: "gravitee-am-ui/**,**/*.component.ts,**/*.service.ts,**/*.module.ts,**/*.html,**/*.scss"
+---
+# Frontend (Angular/TypeScript)
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## Structure
+
+- Place new files by matching existing feature/module structure; check similar features first.
+- Follow existing project structure and patterns; do not introduce new conventions lightly.
+- Prefer explicit inputs/outputs and clear component boundaries.
+
+## Quality
+
+- **Fix linting issues promptly**; do not leave the repo in a lint-broken state.
+- Avoid brittle selectors in UI tests; prefer stable test identifiers where needed.

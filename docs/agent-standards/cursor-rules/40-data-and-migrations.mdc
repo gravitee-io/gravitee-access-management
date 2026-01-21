@@ -1,0 +1,33 @@
+---
+description: "Data & migrations: repositories, Liquibase changesets, Mongo indexes"
+alwaysApply: false
+globs: "**/*Repository*.java,**/repository/**,**/liquibase/**,**/*changelog*.xml,**/*migration*.*"
+---
+# Data & Migrations
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## Repository Patterns
+
+- Repository interfaces extend `CrudRepository<T, String>` unless established patterns differ.
+- Prefer domain-scoped queries (e.g., `findByDomainAndId`) over `findById` + manual checks.
+- Do not fetch wide data and filter in memory when a scoped query is appropriate.
+- Follow existing repository patterns and naming conventions.
+
+## Repository Implementation Naming (MANDATORY)
+
+- **Mongo:** `Mongo{RepositoryName}Repository`
+- **JDBC:** `Jdbc{RepositoryName}Repository`
+- **Verify naming matches existing repos** before finalizing.
+
+## DB Migrations (Liquibase)
+
+- Related schema changes **MUST be grouped** into a single changeset (e.g., table + indexes + constraints).
+- Check existing migrations for patterns before creating new ones.
+
+## MongoDB Index Naming (MANDATORY)
+
+- Index names **must follow** the established initials+sort-order convention for fields.
+
+References:
+- Checklist template (guidance): `@docs/agent-standards/templates/migration_checklist.template.md`
