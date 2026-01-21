@@ -46,10 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.model.Acl.CREATE;
-import static io.gravitee.am.model.Acl.LIST;
-import static io.gravitee.am.model.Acl.DELETE;
-import static io.gravitee.am.model.Acl.UPDATE;
+import static io.gravitee.am.model.Acl.*;
 
 public class ProtectedResourceSecretsResource extends AbstractResource {
 
