@@ -508,7 +508,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         protectedResource.getSecretSettings().add(secretSettings);
                     }
 
-                    ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings, domain.getSecretExpirationSettings(), protectedResource.getSettings().getSecretExpirationSettings());
+                    ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings, domain.getSecretExpirationSettings(), getExpirationSettings(protectedResource));
                     secrets.add(clientSecret);
                     protectedResource.setSecrets(secrets);
 
@@ -536,6 +536,14 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 });
     }
 
+    private SecretExpirationSettings getExpirationSettings(ProtectedResource protectedResource){
+        if(protectedResource.getSettings() != null && protectedResource.getSettings().getSecretExpirationSettings() != null){
+            return protectedResource.getSettings().getSecretExpirationSettings();
+        }
+
+        return null;
+    }
+
     @Override
     public Single<ClientSecret> renewSecret(Domain domain, String id, String secretId, User principal) {
         return repository.findByDomainAndId(domain.getId(), id)
@@ -560,7 +568,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     clientSecret.setSecret(secretService.getOrCreatePasswordEncoder(secretSettings).encode(rawSecret));
                     clientSecret.setSettingsId(secretSettings.getId());
                     // Protected resources don't have separate secret expiration settings currently, relying on domain settings or defaults inside service
-                    clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretExpirationSettings(), protectedResource.getSettings().getSecretExpirationSettings()));
+                    clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretExpirationSettings(), getExpirationSettings(protectedResource)));
 
                     return repository.update(protectedResource)
                         .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))

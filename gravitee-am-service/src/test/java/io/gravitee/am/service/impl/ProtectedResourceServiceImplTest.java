@@ -902,8 +902,36 @@ public class ProtectedResourceServiceImplTest {
                 .test()
                 .assertError(ClientSecretDeleteException.class);
     }
+
     @Test
     public void shouldPatchSecretSettings() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        existingResource.setSecretSettings(new ArrayList<>());
+
+        ApplicationSecretSettings newSettings = new ApplicationSecretSettings();
+        newSettings.setAlgorithm("test");
+
+        PatchProtectedResource patch = new PatchProtectedResource();
+        patch.setSecretSettings(Optional.of(List.of(newSettings)));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        service.patch(createDomain(), RESOURCE_ID, patch, createUser())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(repository).update(argThat(res -> {
+            return res.getSecretSettings() != null
+                && res.getSecretSettings().get(0).getAlgorithm().equals("test");
+        }));
+    }
+
+
+    @Test
+    public void shouldPatchSecretExpirationSettings() {
         ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
         existingResource.setSecretSettings(new ArrayList<>());
 
@@ -913,7 +941,6 @@ public class ProtectedResourceServiceImplTest {
         secretSettings.setExpiryTimeSeconds(3600L);
 
         newSettings.setSecretExpirationSettings(secretSettings);
-
 
         PatchProtectedResource patch = new PatchProtectedResource();
         patch.setSettings(Optional.of(newSettings));
@@ -928,10 +955,9 @@ public class ProtectedResourceServiceImplTest {
                 .assertComplete();
 
         verify(repository).update(argThat(res -> {
-            return res.getSecretSettings() != null 
-                && res.getSecretSettings().size() == 1
-                && res.getSecretSettings().get(0).getProperties().get("expiryTimeSeconds").equals(3600)
-                && res.getSecretSettings().get(0).getProperties().get("enabled").equals(true);
+            return res.getSettings().getSecretExpirationSettings() != null
+                    && res.getSettings().getSecretExpirationSettings().getExpiryTimeSeconds().equals(3600L)
+                    && res.getSettings().getSecretExpirationSettings().getEnabled().equals(true);
         }));
     }
 }

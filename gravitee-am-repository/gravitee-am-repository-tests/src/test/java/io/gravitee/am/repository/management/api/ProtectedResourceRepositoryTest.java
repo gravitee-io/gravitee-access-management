@@ -641,6 +641,36 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testUpdateSecrets() {
+        // Create resource with one secret
+        ClientSecret clientSecret1 = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource toSave = generateResource(clientSecret1, secretSettings);
+
+        ProtectedResource created = repository.create(toSave).blockingGet();
+
+        // Add a second secret
+        ClientSecret clientSecret2 = generateClientSecret();
+        List<ClientSecret> updatedSecrets = new java.util.ArrayList<>(created.getSecrets());
+        updatedSecrets.add(clientSecret2);
+        created.setSecrets(updatedSecrets);
+
+        // Update the resource
+        TestObserver<ProtectedResource> testObserver = repository.update(created)
+                .flatMapMaybe(updated -> repository.findById(updated.getId()))
+                .test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Verify that the resource now has 2 secrets
+        testObserver.assertValue(a -> a.getSecrets().size() == 2);
+        testObserver.assertValue(a -> a.getSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret1.getId())));
+        testObserver.assertValue(a -> a.getSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret2.getId())));
+    }
+
+    @Test
     public void shouldLoadMultipleResourceIdentifiers() {
         // Create resource with multiple identifiers
         ProtectedResource toSave = generateResource("multi-identifier", "load-test-domain", "client-load", 
