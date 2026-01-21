@@ -562,7 +562,6 @@ public class User implements IUser {
         return Boolean.FALSE.equals(enabled);
     }
 
-<<<<<<< HEAD
     @ELFunction
     public Map<String, EnrolledFactor> enrolledFactorsByType() {
         return EnrolledFactor.asTypeMap(getFactors());
@@ -573,7 +572,6 @@ public class User implements IUser {
         return EnrolledFactor.asIdMap(getFactors());
     }
 
-=======
     public boolean isIndefinitelyLocked() {
         return Boolean.FALSE.equals(accountNonLocked) && accountLockedUntil == null;
     }
@@ -581,5 +579,4 @@ public class User implements IUser {
     public boolean isTemporarilyLocked() {
         return accountLockedUntil != null && accountLockedUntil.after(new Date());
     }
->>>>>>> aeeeb29a5 (refactor: move locked methods to user class)
 }
