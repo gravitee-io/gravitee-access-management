@@ -38,9 +38,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -55,9 +53,6 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
-    
-    @Context
-    private ResourceContext resourceContext;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -74,15 +69,15 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     public void getSecrets(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("protected-resource") String protectedResource,
+            @PathParam("domain") String domainId,
+            @PathParam("protectedResourceId") String protectedResourceId,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResource, Permission.PROTECTED_RESOURCE, LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> protectedResourceService.findById(protectedResource))
-                        .switchIfEmpty(Single.error(new ProtectedResourceNotFoundException(protectedResource)))
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, LIST)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMap(__ -> protectedResourceService.findById(protectedResourceId))
+                        .switchIfEmpty(Single.error(new ProtectedResourceNotFoundException(protectedResourceId)))
                         .map(resource -> {
                             if (resource.getSecrets() == null) {
                                 return java.util.Collections.emptyList();
@@ -108,17 +103,17 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("protected-resource") String protectedResource,
+            @PathParam("domain") String domainId,
+            @PathParam("protected-resource") String protectedResourceId,
             @Valid @NotNull final NewClientSecret clientSecret,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResource, Permission.PROTECTED_RESOURCE, CREATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(existingDomain -> protectedResourceService.createSecret(existingDomain, protectedResource, clientSecret.getName(), authenticatedUser))
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, CREATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(existingDomain -> protectedResourceService.createSecret(existingDomain, protectedResourceId, clientSecret.getName(), authenticatedUser))
                         .map(secret -> Response.status(Response.Status.CREATED).entity(secret).build()))
                 .subscribe(response::resume, response::resume);
     }
@@ -139,17 +134,17 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     public void renew(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("protected-resource") String protectedResource,
+            @PathParam("domain") String domainId,
+            @PathParam("protected-resource") String protectedResourceId,
             @PathParam("secretId") String secretId,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResource, Permission.PROTECTED_RESOURCE, UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(existingDomain -> protectedResourceService.renewSecret(existingDomain, protectedResource, secretId, authenticatedUser))
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(existingDomain -> protectedResourceService.renewSecret(existingDomain, protectedResourceId, secretId, authenticatedUser))
                         .map(secret -> Response.status(Response.Status.OK).entity(secret).build()))
                 .subscribe(response::resume, response::resume);
     }
@@ -168,17 +163,17 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("protected-resource") String protectedResource,
+            @PathParam("domain") String domainId,
+            @PathParam("protected-resource") String protectedResourceId,
             @PathParam("secretId") String secretId,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResource, Permission.PROTECTED_RESOURCE, DELETE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(existingDomain -> protectedResourceService.deleteSecret(existingDomain, protectedResource, secretId, authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, DELETE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(existingDomain -> protectedResourceService.deleteSecret(existingDomain, protectedResourceId, secretId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
