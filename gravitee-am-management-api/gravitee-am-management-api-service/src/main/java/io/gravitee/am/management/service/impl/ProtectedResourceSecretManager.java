@@ -58,7 +58,10 @@ public class ProtectedResourceSecretManager extends AbstractService<ProtectedRes
         eventManager.subscribeForEvents(this, ProtectedResourceSecretEvent.class);
 
         protectedResourceService.findAll()
-                .doOnNext(resource -> logger.info("Initializing client secrets notifications for protected resource={} in domain={}", resource.getId(), resource.getDomainId()))
+                .doOnNext(resource ->
+                        logger.info("Initializing client secrets notifications for protected resource={}, domain={}", resource.getId(), resource.getDomainId()))
+                .flatMapCompletable(this::initClientSecretNotifications)
+                .subscribe();
     }
 
     @Override
