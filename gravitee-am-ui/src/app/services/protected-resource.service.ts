@@ -16,6 +16,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 
@@ -59,7 +60,14 @@ export class ProtectedResourceService {
   }
 
   getSecrets(domainId: string, id: string): Observable<ClientSecret[]> {
-    return this.http.get<ClientSecret[]>(this.baseURL + `${domainId}/protected-resources/${id}/secrets`);
+    return this.http.get<any>(this.baseURL + `${domainId}/protected-resources/${id}/secrets`).pipe(
+      map((response) => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return response.clientSecrets || [];
+      }),
+    );
   }
 
   createSecret(domainId: string, id: string, name: string): Observable<ClientSecret> {
