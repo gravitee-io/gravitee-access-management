@@ -1,0 +1,20 @@
+---
+description: "API contracts: OpenAPI updates, SDK/client regeneration, contract/API tests"
+alwaysApply: false
+globs: "docs/mapi/openapi.yaml,**/*Dto*.java,**/*DTO*.java,**/*Resource*.java,**/*Controller*.java,**/*OpenApi*.*"
+---
+# API Contracts, OpenAPI, SDK Regeneration
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## When API Changes
+
+If API behaviour, endpoints, DTOs, or annotations change:
+
+- Update the OpenAPI spec (`docs/mapi/openapi.yaml`)
+- Regenerate the SDK/clients as required
+- Add or update contract/API tests covering the change (success + error paths)
+
+## References
+
+- Checklist template (guidance): `@docs/agent-standards/templates/openapi_change_checklist.template.md`

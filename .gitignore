@@ -47,3 +47,9 @@ helm/charts/
 # docker compose local volume
 docker/compose/data/
 docker/compose/mongo/data/
+<<<<<<< HEAD
+=======
+
+# AI/Development documentation - plan files (temporary work files)
+docs/ai-guidelines
+>>>>>>> 9ebe33fb3 (chore: add agent rules, skills and templates for Cursor and Antigravity)

@@ -1,0 +1,24 @@
+---
+description: "Safety & Security: guardrails for IAM/OAuth/OIDC work, logging, and compatibility"
+alwaysApply: true
+---
+# Safety & Security
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## Must Not
+
+- Invent endpoints, config keys, behaviours, or workflows not present in the codebase.
+- Log secrets, tokens, PII, or full request/response bodies; prefer structured logs (key=value).
+- Run destructive commands (e.g., `docker system prune -a`, `git reset --hard`) unless explicitly requested and confirmed.
+
+## Compatibility & Correctness
+
+- Keep public contracts backwards compatible unless a breaking change is explicitly authorized.
+- Do not change exception types or HTTP status/exception semantics for the same condition without approval.
+- Do not widen method/class visibility without a documented reason.
+
+## Standards Compliance
+
+- For IAM/OAuth/OIDC work: prefer RFC/standard compliance and established implementations over custom logic.
+- On validation, authorization, or security uncertainty: fail closed rather than allowing access.
