@@ -404,16 +404,34 @@ export interface UserEntity {
   sourceId?: string;
   /**
    *
-   * @type {UserId}
+   * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
-  fullId?: UserId;
+  address?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof UserEntity
+   */
+  locale?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserEntity
+   */
+  zoneInfo?: string;
   /**
    *
    * @type {string}
    * @memberof UserEntity
    */
   middleName?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -443,19 +461,7 @@ export interface UserEntity {
    * @type {string}
    * @memberof UserEntity
    */
-  zoneInfo?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserEntity
-   */
   phoneNumber?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  address?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -464,22 +470,16 @@ export interface UserEntity {
   disabled?: boolean;
   /**
    *
+   * @type {UserId}
+   * @memberof UserEntity
+   */
+  fullId?: UserId;
+  /**
+   *
    * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
   lastIdentityInformation?: { [key: string]: any };
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
-   * @type {string}
-   * @memberof UserEntity
-   */
-  locale?: string;
 }
 
 /**
@@ -569,19 +569,19 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
     applicationEntity: json['applicationEntity'] == null ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
     sourceId: json['sourceId'] == null ? undefined : json['sourceId'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    address: json['address'] == null ? undefined : json['address'],
+    locale: json['locale'] == null ? undefined : json['locale'],
+    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
     middleName: json['middleName'] == null ? undefined : json['middleName'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
-    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
-    address: json['address'] == null ? undefined : json['address'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
-    locale: json['locale'] == null ? undefined : json['locale'],
   };
 }
 
@@ -655,18 +655,18 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     serviceAccount: value['serviceAccount'],
     applicationEntity: ApplicationEntityToJSON(value['applicationEntity']),
     sourceId: value['sourceId'],
-    fullId: UserIdToJSON(value['fullId']),
+    address: value['address'],
+    locale: value['locale'],
+    zoneInfo: value['zoneInfo'],
     middleName: value['middleName'],
+    identitiesAsMap: value['identitiesAsMap'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],
     birthdate: value['birthdate'],
-    zoneInfo: value['zoneInfo'],
     phoneNumber: value['phoneNumber'],
-    address: value['address'],
     disabled: value['disabled'],
+    fullId: UserIdToJSON(value['fullId']),
     lastIdentityInformation: value['lastIdentityInformation'],
-    identitiesAsMap: value['identitiesAsMap'],
-    locale: value['locale'],
   };
 }

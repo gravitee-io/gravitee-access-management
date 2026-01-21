@@ -64,9 +64,6 @@ export function McpToolFromJSONTyped(json: any, ignoreDiscriminator: boolean): M
     return json;
   }
   if (!ignoreDiscriminator) {
-    if (json['type'] === 'MCP_TOOL') {
-      return McpToolFromJSONTyped(json, true);
-    }
   }
   return {
     ...ProtectedResourceFeatureFromJSONTyped(json, true),

@@ -123,8 +123,8 @@ export const PatchSAMLSettingsRequiredPermissionsEnum = {
   ApplicationResource: 'APPLICATION_RESOURCE',
   ApplicationAnalytics: 'APPLICATION_ANALYTICS',
   ApplicationFlow: 'APPLICATION_FLOW',
-  LicenseNotification: 'LICENSE_NOTIFICATION',
   ProtectedResource: 'PROTECTED_RESOURCE',
+  LicenseNotification: 'LICENSE_NOTIFICATION',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchSAMLSettingsRequiredPermissionsEnum =

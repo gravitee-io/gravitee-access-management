@@ -385,16 +385,34 @@ export interface User {
   serviceAccount?: boolean;
   /**
    *
-   * @type {UserId}
+   * @type {{ [key: string]: any; }}
    * @memberof User
    */
-  fullId?: UserId;
+  address?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  locale?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  zoneInfo?: string;
   /**
    *
    * @type {string}
    * @memberof User
    */
   middleName?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -424,19 +442,7 @@ export interface User {
    * @type {string}
    * @memberof User
    */
-  zoneInfo?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
   phoneNumber?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  address?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -445,22 +451,16 @@ export interface User {
   disabled?: boolean;
   /**
    *
+   * @type {UserId}
+   * @memberof User
+   */
+  fullId?: UserId;
+  /**
+   *
    * @type {{ [key: string]: any; }}
    * @memberof User
    */
   lastIdentityInformation?: { [key: string]: any };
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  locale?: string;
 }
 
 /**
@@ -548,19 +548,19 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
     forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    address: json['address'] == null ? undefined : json['address'],
+    locale: json['locale'] == null ? undefined : json['locale'],
+    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
     middleName: json['middleName'] == null ? undefined : json['middleName'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
-    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
-    address: json['address'] == null ? undefined : json['address'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
-    locale: json['locale'] == null ? undefined : json['locale'],
   };
 }
 
@@ -632,18 +632,18 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
     forceResetPassword: value['forceResetPassword'],
     serviceAccount: value['serviceAccount'],
-    fullId: UserIdToJSON(value['fullId']),
+    address: value['address'],
+    locale: value['locale'],
+    zoneInfo: value['zoneInfo'],
     middleName: value['middleName'],
+    identitiesAsMap: value['identitiesAsMap'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],
     birthdate: value['birthdate'],
-    zoneInfo: value['zoneInfo'],
     phoneNumber: value['phoneNumber'],
-    address: value['address'],
     disabled: value['disabled'],
+    fullId: UserIdToJSON(value['fullId']),
     lastIdentityInformation: value['lastIdentityInformation'],
-    identitiesAsMap: value['identitiesAsMap'],
-    locale: value['locale'],
   };
 }
