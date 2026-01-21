@@ -1,0 +1,26 @@
+---
+description: "Backend architecture (Java/RxJava/Vert.x): layering, reactive usage, audit logging"
+alwaysApply: true
+---
+# Backend Architecture (Java/RxJava/Vert.x)
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## Layering
+
+- Respect layer order: **Repository → Service → Resource**.
+- **Resources** handle HTTP + permissions; **Services** handle business logic.
+- Avoid blocking operations on request paths; **do not use blockingGet()** on reactive chains.
+
+## RxJava Usage
+
+- Use `Single`/`Maybe` for I/O operations and `Completable` for side-effect operations.
+- Preserve error intent: expected 4xx must not become generic 5xx.
+
+## Audit Logging (Mandatory for C/U/D)
+
+Audit logging is mandatory for **CREATE/UPDATE/DELETE**:
+- Implement in core services/service proxies, not in Resources.
+- Resources should **pass the authenticated User principal** into service methods that require audit logging.
+- Use a dedicated `AuditBuilder` per entity type.
+- READ operations do not require audit logging unless explicitly specified.
