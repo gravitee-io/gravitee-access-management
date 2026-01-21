@@ -70,7 +70,7 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @PathParam("protectedResourceId") String protectedResourceId,
+            @PathParam("protected-resource") String protectedResourceId,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, LIST)
