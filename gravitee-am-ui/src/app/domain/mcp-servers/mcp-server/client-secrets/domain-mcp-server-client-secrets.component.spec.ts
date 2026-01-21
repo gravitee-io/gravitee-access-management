@@ -93,19 +93,21 @@ describe('DomainMcpServerClientSecretsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should patch protected resource with secretSettings wrapped in an array', () => {
+  it('should patch protected resource with secret settings', () => {
     const dialogRefSpyObj = {
       afterClosed: jest.fn().mockReturnValue(of({ some: 'settings' })),
     };
     mockMatDialog.open.mockReturnValue(dialogRefSpyObj as any);
-    mockMcpServersService.patch.mockReturnValue(of({ secretSettings: [{ some: 'settings' }] }));
+    mockMcpServersService.patch.mockReturnValue(of({ settings: { secretExpirationSettings: { some: 'settings' } } }));
 
     const event = new MouseEvent('click');
     jest.spyOn(event, 'preventDefault');
 
     component.openSettings(event);
 
-    expect(mockMcpServersService.patch).toHaveBeenCalledWith('domain-id', 'resource-id', { secretSettings: [{ some: 'settings' }] });
+    expect(mockMcpServersService.patch).toHaveBeenCalledWith('domain-id', 'resource-id', {
+      settings: { secretExpirationSettings: { some: 'settings' } },
+    });
     expect(mockSnackBarService.open).toHaveBeenCalledWith('Secret settings updated');
   });
 });

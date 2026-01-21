@@ -84,9 +84,6 @@ public class ClientSecretNotifierSubjectTest {
         assertEquals(userProperties.getId(), user.getId());
         assertEquals(domainProperties.getId(), domain.getId());
         assertEquals("application", metadata.get("resourceType"));
-
-
-
     }
 
     @Test
@@ -120,8 +117,6 @@ public class ClientSecretNotifierSubjectTest {
         assertEquals(domainProperties.getId(), domain.getId());
         assertEquals(applicationProperties.getName(), protectedResource.getName());
         assertEquals("protected resource", metadata.get("resourceType"));
-
     }
-
 
 }

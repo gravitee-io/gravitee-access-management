@@ -15,15 +15,13 @@
  */
 package io.gravitee.am.management.service.impl.notifications.definition;
 
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.Notifiable;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.safe.ApplicationProperties;
 import io.gravitee.am.model.safe.ClientSecretProperties;
 import io.gravitee.am.model.safe.DomainProperties;
-import io.gravitee.am.model.safe.ProtectedResourceProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import lombok.Getter;
 
@@ -36,23 +34,13 @@ public class ClientSecretNotifierSubject implements NotifierSubject {
     public final static String RESOURCE_TYPE = "application/secret";
 
     private final ClientSecret clientSecret;
-    private final Application application;
-    private final ProtectedResource protectedResource;
+    private final Notifiable target;
     private final Domain domain;
     private final User user;
 
-    public ClientSecretNotifierSubject(ClientSecret clientSecret, Application application, Domain domain, User user) {
+    public ClientSecretNotifierSubject(ClientSecret clientSecret, Notifiable target, Domain domain, User user) {
         this.clientSecret = clientSecret;
-        this.application = application;
-        this.protectedResource = null;
-        this.domain = domain;
-        this.user = user;
-    }
-
-    public ClientSecretNotifierSubject(ClientSecret clientSecret, ProtectedResource protectedResource, Domain domain, User user) {
-        this.clientSecret = clientSecret;
-        this.application = null;
-        this.protectedResource = protectedResource;
+        this.target = target;
         this.domain = domain;
         this.user = user;
     }
@@ -77,12 +65,9 @@ public class ClientSecretNotifierSubject implements NotifierSubject {
             result.put(NOTIFIER_DATA_CLIENT_SECRET, new ClientSecretProperties(clientSecret.getName(), clientSecret.getExpiresAt()));
         }
 
-        if (application != null) {
-            result.put(NOTIFIER_DATA_APPLICATION, new ApplicationProperties(application.getName()));
-            result.put("resourceType", "application");
-        } else if (protectedResource != null) {
-            result.put(NOTIFIER_DATA_APPLICATION, new ApplicationProperties(protectedResource.getName()));
-            result.put("resourceType", "protected resource");
+        if (target != null) {
+            result.put(NOTIFIER_DATA_APPLICATION, new ApplicationProperties(target.getName()));
+            result.put("resourceType", formatClassName(target));
         }
 
         return result;
@@ -93,8 +78,7 @@ public class ClientSecretNotifierSubject implements NotifierSubject {
         HashMap<String, Object> result = new HashMap<>();
         Optional.ofNullable(domain).ifPresent(o -> result.put("domainId", o.getId()));
         Optional.ofNullable(user).ifPresent(o -> result.put("domainOwner", o.getId()));
-        Optional.ofNullable(application).ifPresent(o -> result.put("applicationId", o.getId()));
-        Optional.ofNullable(protectedResource).ifPresent(o -> result.put("protectedResourceId", o.getId()));
+        Optional.ofNullable(target).ifPresent(o -> result.put(formatClassName(o) + "Id", o.getId()));
         Optional.ofNullable(clientSecret).ifPresent(o -> result.put("clientSecretId", o.getId()));
         return Map.copyOf(result);
     }
@@ -104,5 +88,10 @@ public class ClientSecretNotifierSubject implements NotifierSubject {
         return RESOURCE_TYPE;
     }
 
-
+    private String formatClassName(Notifiable target) {
+        return target.getClass()
+                .getSimpleName()
+                .replaceAll("(?<!^)(?=[A-Z])", " ")
+                .toLowerCase();
+    }
 }

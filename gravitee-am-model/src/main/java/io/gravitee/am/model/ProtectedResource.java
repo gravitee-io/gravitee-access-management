@@ -28,7 +28,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class ProtectedResource {
+public class ProtectedResource implements Notifiable {
 
     public enum Type {
         MCP_SERVER;
