@@ -152,6 +152,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         updateAction = persistIdentifiers(updateAction, item);
         updateAction = deleteFeatures(item.getId()).then(updateAction);
         updateAction = persistFeatures(updateAction, item);
+        updateAction = deleteClientSecrets(item.getId()).then(updateAction);
+        updateAction = persistClientSecrets(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional))
                 .flatMap(i -> this.findById(item.getId()).toSingle());
@@ -430,6 +432,21 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
         return Flux.fromIterable(resourceIdentifiers)
                 .concatMap(jdbc -> getTemplate().insert(jdbc));
+    }
+
+    private Mono<Long> deleteClientSecrets(String protectedResourceId) {
+        final Query criteria = Query.query(where(JdbcProtectedResourceClientSecret.FIELD_PROTECTED_RESOURCE_ID).is(protectedResourceId));
+        return getTemplate().delete(criteria, JdbcProtectedResourceClientSecret.class);
+    }
+
+    private Mono<Long> persistClientSecrets(Mono<Long> actionFlow, ProtectedResource item) {
+        if (item.getSecrets() != null && !item.getSecrets().isEmpty()) {
+            return actionFlow.then(
+                    persistClientSecrets(item)
+                            .count()  // Count the secrets persisted
+            );
+        }
+        return actionFlow;
     }
 
     private Flux<ProtectedResourceFeature> persistFeatures(ProtectedResource protectedResource) {
