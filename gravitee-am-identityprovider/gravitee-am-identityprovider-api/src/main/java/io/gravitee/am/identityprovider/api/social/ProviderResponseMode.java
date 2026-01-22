@@ -22,6 +22,7 @@ import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
+import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -50,6 +51,13 @@ public enum ProviderResponseMode {
             return map;
         }
     },
+    FORM_POST("form_post") {
+        @Override
+        public MultiValueMap<String, String> extractParameters(Request request) {
+            return new LinkedMultiValueMap<>(request.parameters());
+
+        }
+    },
     DEFAULT("default") {
         @Override
         public MultiValueMap<String, String> extractParameters(Request request) {
@@ -76,4 +84,5 @@ public enum ProviderResponseMode {
     }
 
     public abstract MultiValueMap<String, String> extractParameters(Request request);
+
 }
