@@ -24,6 +24,7 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
@@ -260,6 +261,41 @@ public class ProtectedResourceServiceImplTest {
                 .assertValue(v -> v.name().equals("New Name") &&
                         v.description().equals("New Description") &&
                         v.resourceIdentifiers().contains("https://new.example.com"));
+
+        verify(auditService, times(1)).report(any());
+        verify(eventService, times(1)).create(
+                argThat(event -> event.getType() == Type.PROTECTED_RESOURCE &&
+                        event.getPayload().getAction() == Action.UPDATE),
+                argThat(d -> d.equals(domain))
+        );
+    }
+
+    @Test
+    public void shouldUpdateProtectedResourceWithSettings() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("New Name");
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(new ArrayList<>());
+        
+        ApplicationSettings settings = new ApplicationSettings();
+        io.gravitee.am.model.application.ApplicationOAuthSettings oauth = new io.gravitee.am.model.application.ApplicationOAuthSettings();
+        oauth.setScopes(List.of("scope1", "scope2"));
+        settings.setOauth(oauth);
+        updateRequest.setSettings(settings);
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        Domain domain = createDomain();
+        service.update(domain, RESOURCE_ID, updateRequest, createUser())
+                .test()
+                .assertComplete()
+                .assertValue(v -> v.settings() != null && 
+                                  v.settings().getOauth() != null && 
+                                  v.settings().getOauth().getScopes().contains("scope1"));
 
         verify(auditService, times(1)).report(any());
         verify(eventService, times(1)).create(
