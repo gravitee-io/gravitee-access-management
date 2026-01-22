@@ -214,6 +214,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     toUpdate.setName(StringUtils.trimToNull(updateProtectedResource.getName()));
                     toUpdate.setDescription(StringUtils.trimToNull(updateProtectedResource.getDescription()));
                     toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers());
+                    toUpdate.setSettings(updateProtectedResource.getSettings());
 
                     // Map features (update has special handling for UpdateMcpTool)
                     // Note: Feature timestamps will be preserved by innerUpdate()
