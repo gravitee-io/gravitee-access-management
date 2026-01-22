@@ -287,15 +287,8 @@ import { ApplicationAdvancedComponent } from './domain/applications/application/
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
 import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/oauth2.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
-import {
-  AddScopeComponent,
-  ApplicationScopesComponent,
-} from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
-import {
-  ApplicationTokensComponent,
-  ClaimsInfoDialogComponent,
-  CreateClaimComponent,
-} from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
+import { ApplicationScopesComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
+import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
@@ -491,6 +484,8 @@ import { ScopesComponent } from './domain/components/oauth2-settings/scopes.comp
 import { TokensComponent } from './domain/components/oauth2-settings/tokens.component';
 import { DomainMcpServerOAuth2Component } from './domain/mcp-servers/mcp-server/oauth/domain-mcp-server-oauth2.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
+import { AddScopeComponent } from './domain/components/oauth2-settings/scopes.component';
+import { ClaimsInfoDialogComponent, CreateClaimComponent } from './domain/components/oauth2-settings/tokens.component';
 
 @NgModule({
   declarations: [
