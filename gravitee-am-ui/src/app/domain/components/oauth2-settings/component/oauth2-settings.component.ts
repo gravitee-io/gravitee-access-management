@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { ApplicationService } from '../../../../../services/application.service';
-import { ScopeService } from '../../../../../services/scope.service';
-import { SnackbarService } from '../../../../../services/snackbar.service';
-import { AuthService } from '../../../../../services/auth.service';
+import { ScopeService } from '../../../../services/scope.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { AuthService } from '../../../../services/auth.service';
+import { OAUTH2_SETTINGS_SERVICE, OAuth2SettingsService } from '../oauth2-settings.service';
 
 @Component({
-  selector: 'application-oauth2',
-  templateUrl: './application-oauth2.component.html',
-  styleUrls: ['./application-oauth2.component.scss'],
+  selector: 'app-oauth2-settings',
+  templateUrl: './oauth2-settings.component.html',
+  styleUrls: ['./oauth2-settings.component.scss'],
   standalone: false,
 })
-export class ApplicationOAuth2Component implements OnInit {
+export class OAuth2SettingsComponent implements OnInit {
   protected domainId: string;
-  private applicationId: string;
-  application: any;
+  private resourceId: string;
+  resource: any;
   oauthSettings: any = {};
   readonly = false;
   formChanged = false;
+  context: string;
 
   // Data for shared components
   customGrantTypes: any[] = [];
@@ -42,19 +43,19 @@ export class ApplicationOAuth2Component implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private applicationService: ApplicationService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private scopeService: ScopeService,
+    @Inject(OAUTH2_SETTINGS_SERVICE) private oauth2Service: OAuth2SettingsService
   ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain']?.id;
-    this.application = structuredClone(this.route.snapshot.data['application']);
-    this.applicationId = this.application.id;
-
-    // Extract oauth settings
-    this.oauthSettings = this.application.settings?.oauth || {};
+    const settings = this.oauth2Service.getSettings(this.route);
+    this.domainId = settings.domainId;
+    this.resourceId = settings.resourceId;
+    this.resource = settings.resource;
+    this.oauthSettings = settings.settings;
+    this.context = this.oauth2Service.getContext();
 
     // Load resolvers data
     this.route.data.subscribe(data => {
@@ -68,7 +69,7 @@ export class ApplicationOAuth2Component implements OnInit {
       }
     });
 
-    this.readonly = !this.authService.hasPermissions(['application_openid_update']);
+    this.readonly = !this.authService.hasPermissions([this.oauth2Service.getPermission()]);
   }
 
   updateSettings(newSettings: any) {    
@@ -168,8 +169,8 @@ export class ApplicationOAuth2Component implements OnInit {
       });
     }
 
-    this.applicationService.patch(this.domainId, this.applicationId, { settings: { oauth: oauthSettings } }).subscribe(() => {
-      this.snackbarService.open('Application updated');
+    this.oauth2Service.update(this.domainId, this.resourceId, this.resource, oauthSettings).subscribe(() => {
+      this.snackbarService.open('OAuth2 settings updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
     });

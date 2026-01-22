@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="mcp-server-oauth2-content">
+<div class="application-oauth2-content">
   <div fxLayout="column" fxLayoutGap="20px">
     <div fxLayout="row">
       <div fxFex class="gv-page-header">
-        <h3>OAuth 2.0 Settings</h3>
-        <p>Configure OAuth 2.0 settings for this MCP Server to act as a Resource Server.</p>
+        <h3>OAuth 2.0 / OpenID Connect Settings</h3>
+        <p>Configure OAuth 2.0 and OpenID Connect settings for this application.</p>
       </div>
     </div>
 
@@ -30,9 +30,10 @@
           <app-grant-flows-settings
             [oauthSettings]="oauthSettings"
             [domainId]="domainId"
-            [context]="'McpServer'"
+            [context]="context"
             [customGrantTypes]="customGrantTypes"
             [secretSettings]="resource.secretSettings"
+            [applicationType]="resource.type"
             [readonly]="readonly"
             (settingsChange)="updateSettings($event)"
             (formChanged)="onFormChanged($event)"
@@ -45,7 +46,7 @@
           <app-scopes-settings
             [oauthSettings]="oauthSettings"
             [scopes]="scopes"
-            [context]="'McpServer'"
+            [context]="context"
             [readonly]="readonly"
             (settingsChange)="updateSettings($event)"
             (formChanged)="onFormChanged($event)"
@@ -57,7 +58,7 @@
         <div class="tab-content">
           <app-tokens-settings
             [oauthSettings]="oauthSettings"
-            [context]="'McpServer'"
+            [context]="context"
             [readonly]="readonly"
             (settingsChange)="updateSettings($event)"
             (formChanged)="onFormChanged($event)"
