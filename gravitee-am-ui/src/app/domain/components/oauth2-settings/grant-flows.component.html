@@ -259,11 +259,15 @@
     <h3>OAuth 2.0 / OpenID Connect</h3>
     <div class="gv-page-description-content">
       <h4>Grant types</h4>
-      <p>
+      <p *ngIf="context === 'Application'">
         To authenticate an user, the application must first decide which oauth2 flow must be used. Oauth2 flows are enabled on the client
         through the grant_type. You should select the grant_type according to your application type.
       </p>
-      <small>
+      <p *ngIf="context === 'McpServer'">
+        For MCP Resource Servers, only the <b>client_credentials</b> grant type and token exchange flows are supported. These grant types enable
+        server-to-server authentication where the client authenticates using its credentials to obtain an access token.
+      </p>
+      <small *ngIf="context === 'Application'">
         <b><i>authorization_code</i></b> for server side applications (web) or browser and native applications (then combined with PKCE).<br />
         <b><i>implicit</i></b> originally used for browser apps, deprecated in favor of authorization_code + PKCE.<br />
         <b><i>password</i></b> should only be used for trusted applications
@@ -271,6 +275,11 @@
         <b><i>client_credentials</i></b> should be used for server to server communications.<br /><br />
         <b>It is not recommended to mix client and user authentication within the same application.</b>
         <i>(Aka client_credentials and authorization_code, implicit or password)</i><br />
+      </small>
+      <small *ngIf="context === 'McpServer'">
+        <b><i>client_credentials</i></b> is used for server-to-server communications where the client authenticates using its credentials to obtain an access token.<br />
+        <b><i>Token exchange</i></b> (via custom grant types) allows exchanging an existing token for a new token, enabling delegation and impersonation scenarios.<br /><br />
+        These grant types are appropriate for Resource Servers that need to authenticate and authorize client applications accessing protected resources.
       </small>
     </div>
   </div>
