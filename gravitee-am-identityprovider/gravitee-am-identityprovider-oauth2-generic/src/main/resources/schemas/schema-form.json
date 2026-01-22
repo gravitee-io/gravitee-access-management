@@ -76,7 +76,8 @@
       "enum": [
         "default",
         "query",
-        "fragment"
+        "fragment",
+        "form_post"
       ],
       "default": "default"
     },
