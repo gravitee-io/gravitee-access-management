@@ -51,6 +51,7 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProces
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcessor;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -220,7 +221,6 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             authorizationParameters.add(ConstantKeys.IDP_CODE_VERIFIER,(String) authentication.getContext().get(ConstantKeys.IDP_CODE_VERIFIER));
             return authenticateAuthorizationCodeFlow(authorizationParameters, authentication.getContext()::set);
         }
-
     }
 
     private Maybe<Token> authenticateAuthorizationCodeFlow(MultiValueMap<String, String> authorizationParameters,
