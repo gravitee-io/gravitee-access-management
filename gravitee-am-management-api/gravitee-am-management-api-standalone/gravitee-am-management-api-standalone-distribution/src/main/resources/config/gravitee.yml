@@ -151,7 +151,7 @@ services:
 #    events:                                     # event retention period in days (default: 90 days). Can be set only once on initial boot
 #      retention:
 #        days: 90
-#    audits:                                     # audits retention period in days (default: 90 days, 0 means disabled)
+#    audits:                                     # audits retention period in days (0 means disabled)
 #      retention:
 #        days: 90
 

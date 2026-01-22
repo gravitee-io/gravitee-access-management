@@ -109,6 +109,7 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_TIMESTAMP_ID_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.MIN_READ_PREFERENCE_STALENESS;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.OLD_INDICES;
 import static java.util.stream.Collectors.toMap;
@@ -143,8 +144,11 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     @Value("${reporters.mongodb.readPreferenceMaxStaleness:90000}")
     private Long readPreferenceMaxStalenessMs = MIN_READ_PREFERENCE_STALENESS;
 
-    @Value("${services.purge.audits.retention.days:90}")
+    @Value("${services.purge.audits.retention.days:0}")
     private int retentionDays;
+
+    @Value("${services.purge.enabled:false}")
+    private boolean purgeEnabled;
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -169,7 +173,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     }
 
     protected final <TResult> AggregatePublisher<TResult> withBatchSize(AggregatePublisher<TResult> query) {
-        return query.batchSize(this.batchSize);    }
+        return query.batchSize(this.batchSize);
+    }
 
     @Override
     public boolean canSearch() {
@@ -270,7 +275,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     }
 
     public Completable purgeExpiredData() {
-        if (retentionDays <= 0) {
+        if (!purgeEnabled || retentionDays <= 0) {
             logger.debug("MongoDB audit purge disabled (retention days: {})", retentionDays);
             return Completable.complete();
         }
@@ -336,6 +341,9 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
             // create new indexes
             List<IndexModel> indexes = new ArrayList<>();
+            if (purgeEnabled && retentionDays > 0) {
+                indexes.add(new IndexModel(new Document(FIELD_TIMESTAMP, 1).append(FIELD_ID, 1), new IndexOptions().name(INDEX_TIMESTAMP_ID_NAME).background(true)));
+            }
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TIMESTAMP_NAME).background(true)));
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_TIMESTAMP_NAME).background(true)));
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME).partialFilterExpression(new Document(FIELD_STATUS, new Document("$eq", "SUCCESS"))).background(true)));

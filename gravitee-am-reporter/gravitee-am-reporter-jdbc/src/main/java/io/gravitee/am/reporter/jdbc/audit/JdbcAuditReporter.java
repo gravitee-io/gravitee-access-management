@@ -201,7 +201,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     @Value("${services.purge.enabled:false}")
     private boolean purgeEnabled;
 
-    @Value("${services.purge.audits.retention.days:90}")
+    @Value("${services.purge.audits.retention.days:0}")
     private int retentionDays;
 
     private String INSERT_AUDIT_STATEMENT;

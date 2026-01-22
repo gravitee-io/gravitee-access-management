@@ -62,7 +62,8 @@ import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {DatabaseUrlProvider.class, JdbcReporterJUnitConfiguration.class}, loader = AnnotationConfigContextLoader.class)
 @TestPropertySource(properties = {
-    "services.purge.enabled=true"
+    "services.purge.enabled=true",
+    "services.purge.audits.retention.days=90"
 })
 public class JdbcAuditReporterTest {
 
