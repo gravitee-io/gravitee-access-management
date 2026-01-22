@@ -263,6 +263,8 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
+import { DomainMcpServerOAuth2Component } from './domain/mcp-servers/mcp-server/oauth/domain-mcp-server-oauth2.component';
+import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1581,6 +1583,21 @@ export const routes: Routes = [
                                 resolve: {
                                   certificates: CertificatesResolver,
                                   entrypoint: DomainEntrypointResolver,
+                                },
+                              },
+                              {
+                                path: 'oauth2',
+                                component: DomainMcpServerOAuth2Component,
+                                data: {
+                                  menu: {
+                                    label: 'OAuth 2.0',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                },
+                                resolve: {
+                                  domainGrantTypes: DomainGrantTypesResolver,
+                                  scopes: ScopesAllResolver,
                                 },
                               },
                             ],
