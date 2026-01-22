@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
@@ -66,6 +67,7 @@ public class PatchDomain {
     private Optional<Boolean> master;
     private Optional<PatchSAMLSettings> saml;
     private Optional<CorsSettings> corsSettings;
+    private Optional<PostLoginAction> postLoginAction;
     private Optional<String> dataPlaneId;
     private Optional<SecretExpirationSettings> secretSettings;
 
@@ -89,6 +91,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
         SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
+        SetterUtils.safeSet(toPatch::setPostLoginAction, this.getPostLoginAction());
         SetterUtils.safeSet(toPatch::setDataPlaneId, this.getDataPlaneId());
         SetterUtils.safeSet(toPatch::setSecretExpirationSettings, this.getSecretSettings());
 
@@ -143,6 +146,7 @@ public class PatchDomain {
                 || selfServiceAccountManagementSettings != null && selfServiceAccountManagementSettings.isPresent()
                 || tags != null && tags.isPresent()
                 || master != null && master.isPresent()
+                || postLoginAction != null && postLoginAction.isPresent()
                 || secretSettings != null && secretSettings.isPresent()) {
 
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);

@@ -25,6 +25,7 @@ import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PostLoginAction;
 import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.SecretExpirationSettings;
@@ -225,6 +226,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private LoginSettings loginSettings;
 
+    private PostLoginAction postLoginAction;
+
     private PasswordSettings passwordSettings;
 
     private List<TokenClaim> tokenCustomClaims;
@@ -341,6 +344,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.scopeSettings = other.scopeSettings != null ? new ArrayList<>(other.scopeSettings) : null;
         this.accountSettings = other.accountSettings;
         this.loginSettings = other.loginSettings;
+        this.postLoginAction = other.postLoginAction;
         this.passwordSettings = other.passwordSettings;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.template = other.template;
@@ -831,6 +835,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setLoginSettings(LoginSettings loginSettings) {
         this.loginSettings = loginSettings;
+    }
+
+    public PostLoginAction getPostLoginAction() {
+        return postLoginAction;
+    }
+
+    public void setPostLoginAction(PostLoginAction postLoginAction) {
+        this.postLoginAction = postLoginAction;
     }
 
     public PasswordSettings getPasswordSettings() {

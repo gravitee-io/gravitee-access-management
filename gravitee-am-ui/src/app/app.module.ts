@@ -142,6 +142,8 @@ import { DomainSettingsFactorsComponent } from './domain/settings/factors/factor
 import { DomainSettingsResourcesComponent } from './domain/settings/resources/resources.component';
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
 import { DomainSettingsFlowsComponent } from './domain/settings/flows/flows.component';
+import { DomainSettingsFlowsRootComponent } from './domain/settings/flows/flows-root/flows-root.component';
+import { DomainSettingsPostLoginActionComponent } from './domain/settings/flows/post-login-action/post-login-action.component';
 import { ProvidersResolver } from './resolvers/providers.resolver';
 import { ProviderResolver } from './resolvers/provider.resolver';
 import { DataSourcesResolver } from './resolvers/datasources.resolver';
@@ -355,9 +357,11 @@ import { ApplicationResourceResolver } from './resolvers/application-resource.re
 import { ApplicationResourcePolicyComponent } from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 import { LoginSettingsComponent } from './domain/components/login/login-settings.component';
+import { PostLoginActionSettingsComponent } from './domain/components/post-login-action/post-login-action-settings.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
 import { ApplicationCookieSettingsComponent } from './domain/applications/application/advanced/cookie/cookie.component';
 import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
+import { ApplicationPostLoginActionComponent } from './domain/applications/application/design/post-login-action/post-login-action.component';
 import { IdentitiesResolver } from './resolvers/identities.resolver';
 import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
@@ -526,6 +530,8 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     DomainSettingsResourcesComponent,
     DomainSettingsWebAuthnComponent,
     DomainSettingsFlowsComponent,
+    DomainSettingsFlowsRootComponent,
+    DomainSettingsPostLoginActionComponent,
     DomainSettingsDeviceIdentifiersComponent,
     DomainSettingsThemeComponent,
     DomainMcpServersComponent,
@@ -687,6 +693,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     ApplicationLoginSettingsComponent,
     ApplicationCookieSettingsComponent,
     ApplicationFlowsComponent,
+    ApplicationPostLoginActionComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
@@ -719,6 +726,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     DeviceNotifierCreationStep2Component,
     CookieSettingsComponent,
     LoginSettingsComponent,
+    PostLoginActionSettingsComponent,
     UsersSearchInfoDialogComponent,
     NewsletterComponent,
     UserHistoryComponent,
