@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { duration } from 'moment';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { UntypedFormControl } from '@angular/forms';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import { difference, find, map, remove } from 'lodash';
+import { MatDialog } from '@angular/material/dialog';
 
 import { AuthService } from '../../../../../../services/auth.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
@@ -78,4 +73,3 @@ export class ApplicationScopesComponent implements OnInit {
     this.formChanged = changed;
   }
 }
-

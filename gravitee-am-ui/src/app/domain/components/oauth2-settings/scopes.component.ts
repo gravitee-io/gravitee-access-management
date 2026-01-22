@@ -23,7 +23,6 @@ import { duration } from 'moment';
 
 import { TimeConverterService } from '../../../services/time-converter.service';
 
-
 @Component({
   selector: 'app-scopes-settings',
   templateUrl: './scopes.component.html',

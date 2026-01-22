@@ -264,8 +264,8 @@
         through the grant_type. You should select the grant_type according to your application type.
       </p>
       <p *ngIf="context === 'McpServer'">
-        For MCP Resource Servers, only the <b>client_credentials</b> grant type and token exchange flows are supported. These grant types enable
-        server-to-server authentication where the client authenticates using its credentials to obtain an access token.
+        For MCP Resource Servers, only the <b>client_credentials</b> grant type and token exchange flows are supported. These grant types
+        enable server-to-server authentication where the client authenticates using its credentials to obtain an access token.
       </p>
       <small *ngIf="context === 'Application'">
         <b><i>authorization_code</i></b> for server side applications (web) or browser and native applications (then combined with PKCE).<br />
@@ -277,9 +277,12 @@
         <i>(Aka client_credentials and authorization_code, implicit or password)</i><br />
       </small>
       <small *ngIf="context === 'McpServer'">
-        <b><i>client_credentials</i></b> is used for server-to-server communications where the client authenticates using its credentials to obtain an access token.<br />
-        <b><i>Token exchange</i></b> (via custom grant types) allows exchanging an existing token for a new token, enabling delegation and impersonation scenarios.<br /><br />
-        These grant types are appropriate for Resource Servers that need to authenticate and authorize client applications accessing protected resources.
+        <b><i>client_credentials</i></b> is used for server-to-server communications where the client authenticates using its credentials to
+        obtain an access token.<br />
+        <b><i>Token exchange</i></b> (via custom grant types) allows exchanging an existing token for a new token, enabling delegation and
+        impersonation scenarios.<br /><br />
+        These grant types are appropriate for Resource Servers that need to authenticate and authorize client applications accessing
+        protected resources.
       </small>
     </div>
   </div>
