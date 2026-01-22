@@ -27,18 +27,22 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.observers.TestObserver;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static io.reactivex.rxjava3.core.Completable.complete;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.*;
 
 public class ProtectedResourceSecretManagerTest {
 
@@ -56,7 +60,7 @@ public class ProtectedResourceSecretManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
     }
 
     @Test
@@ -69,16 +73,21 @@ public class ProtectedResourceSecretManagerTest {
         ProtectedResource resource = new ProtectedResource();
         resource.setClientSecrets(List.of(clientSecret1, clientSecret2));
 
-        Mockito.when(protectedResourceService.findAll()).thenReturn(Flowable.just(resource));
-        Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
-        Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id2"))).thenReturn(complete());
-        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
+        when(protectedResourceService.findAll()).thenReturn(Flowable.just(resource));
+        when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
+        when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id2"))).thenReturn(complete());
+        when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
 
         manager.doStart();
+
+        verify(clientSecretNotifierService, timeout(1000).times(1)).unregisterClientSecretExpiration(eq("id1"));
+        verify(clientSecretNotifierService, timeout(1000).times(1)).unregisterClientSecretExpiration(eq("id2"));
+        verify(clientSecretNotifierService, timeout(1000).times(1)).registerClientSecretExpiration(any(ProtectedResource.class), eq(clientSecret1));
+        verify(clientSecretNotifierService, timeout(1000).times(1)).registerClientSecretExpiration(any(ProtectedResource.class), eq(clientSecret2));
     }
 
     @Test
-    public void shouldCreateClientSecretNotifications() {
+    public void shouldCreateClientSecretNotifications() throws Exception {
         ClientSecret clientSecret1 = new ClientSecret();
         clientSecret1.setId("id1");
 
@@ -86,17 +95,20 @@ public class ProtectedResourceSecretManagerTest {
         resource.setId("resourceId");
         resource.setClientSecrets(List.of(clientSecret1));
 
-        Mockito.when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
+        when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
 
-        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
+        when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
 
-        manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.CREATE, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.CREATE)))
-                .test()
-                .assertComplete();
+        TestObserver<Void> observer = manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.CREATE, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.CREATE))).test();
+        
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(clientSecretNotifierService, times(1)).registerClientSecretExpiration(any(ProtectedResource.class), eq(clientSecret1));
     }
 
     @Test
-    public void shouldUpdateClientSecretNotifications() {
+    public void shouldUpdateClientSecretNotifications() throws Exception {
         ClientSecret clientSecret1 = new ClientSecret();
         clientSecret1.setId("id1");
 
@@ -104,19 +116,24 @@ public class ProtectedResourceSecretManagerTest {
         resource.setId("resourceId");
         resource.setClientSecrets(List.of(clientSecret1));
 
-        Mockito.when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
+        when(protectedResourceService.findById("resourceId")).thenReturn(Maybe.just(resource));
 
-        Mockito.when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
-        Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration("id1")).thenReturn(complete());
-        Mockito.when(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement("id1")).thenReturn(complete());
+        when(clientSecretNotifierService.registerClientSecretExpiration(any(ProtectedResource.class), any())).thenReturn(complete());
+        when(clientSecretNotifierService.unregisterClientSecretExpiration("id1")).thenReturn(complete());
+        when(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement("id1")).thenReturn(complete());
 
-        manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.RENEW, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.UPDATE)))
-                .test()
-                .assertComplete();
+        TestObserver<Void> observer = manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.RENEW, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.UPDATE))).test();
+
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(clientSecretNotifierService, times(1)).unregisterClientSecretExpiration(eq("id1"));
+        verify(clientSecretNotifierService, times(1)).deleteClientSecretExpirationAcknowledgement(eq("id1"));
+        verify(clientSecretNotifierService, times(1)).registerClientSecretExpiration(any(ProtectedResource.class), eq(clientSecret1));
     }
 
     @Test
-    public void shouldDestroyClientSecretNotifications() {
+    public void shouldDestroyClientSecretNotifications() throws Exception {
         ClientSecret clientSecret1 = new ClientSecret();
         clientSecret1.setId("id1");
 
@@ -124,11 +141,15 @@ public class ProtectedResourceSecretManagerTest {
         resource.setId("resourceId");
         resource.setClientSecrets(List.of(clientSecret1));
 
-        Mockito.when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
-        Mockito.when(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement("id1")).thenReturn(complete());
+        when(clientSecretNotifierService.unregisterClientSecretExpiration(eq("id1"))).thenReturn(complete());
+        when(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement("id1")).thenReturn(complete());
 
-        manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.DELETE, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.DELETE)))
-                .test()
-                .assertComplete();
+        TestObserver<Void> observer = manager.handle(new SimpleEvent<>(ProtectedResourceSecretEvent.DELETE, new Payload(clientSecret1.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.DELETE))).test();
+                
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(clientSecretNotifierService, times(1)).unregisterClientSecretExpiration(eq("id1"));
+        verify(clientSecretNotifierService, times(1)).deleteClientSecretExpirationAcknowledgement(eq("id1"));
     }
 }
