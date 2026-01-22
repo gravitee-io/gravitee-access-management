@@ -85,6 +85,10 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 SELECT * FROM %s a WHERE
                 a.domain_id = :domainId
         """.formatted(TABLE_NAME);
+        String BY_CERTIFICATE = """
+                SELECT * FROM %s a WHERE
+                a.certificate = :certificateId
+        """.formatted(TABLE_NAME);
     }
 
 
@@ -215,6 +219,18 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         Flowable<ProtectedResource> resources = fluxToFlowable(getTemplate().getDatabaseClient()
                 .sql(Selects.BY_DOMAIN_ID)
                 .bind("domainId", domain)
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity);
+        return attachIdentifiers(attachSecrets(resources));
+    }
+
+    @Override
+    public Flowable<ProtectedResource> findByCertificate(String certificateId) {
+        LOGGER.debug("findByCertificate({})", certificateId);
+        Flowable<ProtectedResource> resources = fluxToFlowable(getTemplate().getDatabaseClient()
+                .sql(Selects.BY_CERTIFICATE)
+                .bind("certificateId", certificateId)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity);

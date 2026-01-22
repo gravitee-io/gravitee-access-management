@@ -503,6 +503,17 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
+    public Flowable<ProtectedResource> findByCertificate(String certificateId) {
+        LOGGER.debug("Find protected resources by certificateId={}", certificateId);
+        return repository.findByCertificate(certificateId)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find protected resources by certificate {}", certificateId, ex);
+                    return Flowable.error(new TechnicalManagementException(
+                            format("An error occurs while trying to find protected resources by certificate %s", certificateId), ex));
+                });
+    }
+
+    @Override
     public Single<ClientSecret> createSecret(Domain domain, String id, String name, User principal) {
         return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))

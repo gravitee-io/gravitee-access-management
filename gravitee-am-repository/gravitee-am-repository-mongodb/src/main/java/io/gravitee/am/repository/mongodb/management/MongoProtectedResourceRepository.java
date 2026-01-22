@@ -124,6 +124,12 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     }
 
     @Override
+    public Flowable<ProtectedResource> findByCertificate(String certificateId) {
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq(CERTIFICATE_FIELD, certificateId)))).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest) {
         Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type));
         return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
