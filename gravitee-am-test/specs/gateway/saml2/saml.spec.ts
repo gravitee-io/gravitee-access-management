@@ -97,7 +97,9 @@ describe('SAML Authentication Flow', () => {
   });
 
   it('should fail login with invalid SAML credentials', async () => {
-    await expect(samlFixture.login('invaliduser', 'wrongpassword')).rejects.toThrow(/Invalid or unknown user/i);
+    const response = await samlFixture.login('invaliduser', 'wrongpassword');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('<span class="error">login_failed</span>');
   });
 });
 
