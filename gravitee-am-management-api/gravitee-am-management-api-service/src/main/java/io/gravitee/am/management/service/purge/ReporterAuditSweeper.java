@@ -36,7 +36,7 @@ public class ReporterAuditSweeper implements ExpiredDataSweeper {
     @Lazy
     private final ReporterService reporterService;
 
-    @Value("${services.purge.audits.retention.days:90}")
+    @Value("${services.purge.audits.retention.days:0}")
     private int retentionDays;
 
     @Override
