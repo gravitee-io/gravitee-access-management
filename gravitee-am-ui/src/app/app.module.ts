@@ -286,11 +286,8 @@ import { ApplicationEmailsComponent } from './domain/applications/application/de
 import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
 import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
-import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/oauth2.component';
+import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/application-oauth2.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
-import { ApplicationScopesComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
-import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
-import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import {
@@ -674,10 +671,7 @@ import { ClaimsInfoDialogComponent, CreateClaimComponent } from './domain/compon
     ApplicationAccountSettingsComponent,
     ApplicationOAuth2Component,
     ApplicationSaml2Component,
-    ApplicationScopesComponent,
     AddScopeComponent,
-    ApplicationTokensComponent,
-    ApplicationGrantFlowsComponent,
     ApplicationSecretsCertificatesComponent,
 
     ApplicationMetadataComponent,
