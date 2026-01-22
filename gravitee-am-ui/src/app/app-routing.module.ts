@@ -1590,7 +1590,7 @@ export const routes: Routes = [
                                 component: DomainMcpServerOAuth2Component,
                                 data: {
                                   menu: {
-                                    label: 'OAuth 2.0',
+                                    label: 'OAuth 2.0 / OIDC',
                                     section: 'Security',
                                     level: 'level3',
                                   },
