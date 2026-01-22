@@ -24,7 +24,7 @@
           <mat-divider></mat-divider>
         </div>
         <div fxLayout="row wrap">
-          <div *ngFor="let grantType of grantTypes" class="oauth2-grant-type">
+          <div *ngFor="let grantType of filteredGrantTypes" class="oauth2-grant-type">
             <mat-checkbox
               name="grantTypes"
               value="{{ grantType.value }}"
@@ -53,7 +53,7 @@
         </div>
       </div>
 
-      <div class="gv-form-section">
+      <div class="gv-form-section" *ngIf="context !== 'McpServer'">
         <div class="gv-form-section-title">
           <h5>Refresh Token</h5>
           <small>Configure how your application will use refresh tokens.</small>
@@ -74,7 +74,7 @@
         </div>
       </div>
 
-      <div class="gv-form-section">
+      <div class="gv-form-section" *ngIf="context !== 'McpServer'">
         <div class="gv-form-section-title">
           <h5>Proof Key for Code Exchange (PKCE)</h5>
           <small>PKCE is an extension to the Authorization Code flow to prevent interception attack for public clients.</small>

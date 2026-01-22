@@ -86,6 +86,14 @@ export class GrantFlowsComponent implements OnInit {
     return this.customGrantTypes.filter((grantType) => grantType.checked).map((grantType) => grantType.value);
   }
 
+  get filteredGrantTypes() {
+    // For MCP Server context, only show client_credentials and custom grant types (for token exchange)
+    if (this.context === 'McpServer') {
+      return this.grantTypes.filter((grantType) => grantType.value === 'client_credentials');
+    }
+    return this.grantTypes;
+  }
+
   customGrantTypeIsDisabled(extensionGrant): boolean {
     return !extensionGrant.checked && this.selectedCustomGrantTypes.length > 0;
   }
@@ -147,9 +155,14 @@ export class GrantFlowsComponent implements OnInit {
   modelChanged() {
     this.formChanged.emit(true);
     // Prepare updated settings object to emit
+    // For MCP Server context, only include client_credentials and custom grant types
+    let selectedGrantTypes = this.selectedGrantTypes;
+    if (this.context === 'McpServer') {
+      selectedGrantTypes = selectedGrantTypes.filter((gt) => gt === 'client_credentials');
+    }
     const updatedSettings = {
       ...this.oauthSettings,
-      grantTypes: this.selectedGrantTypes.concat(this.selectedCustomGrantTypes),
+      grantTypes: selectedGrantTypes.concat(this.selectedCustomGrantTypes),
       // jwks parsing handled by parent on save usually, but we keep the string version in local state
     };
     this.settingsChange.emit(updatedSettings);
@@ -173,9 +186,16 @@ export class GrantFlowsComponent implements OnInit {
 
   private initGrantTypes() {
     const grantTypesList = this.oauthSettings.grantTypes || [];
+    // For MCP Server context, filter grant types list to only include client_credentials and custom grant types
+    let filteredGrantTypesList = grantTypesList;
+    if (this.context === 'McpServer') {
+      filteredGrantTypesList = grantTypesList.filter(
+        (gt) => gt.toLowerCase() === 'client_credentials' || this.isCustomGrantType(gt),
+      );
+    }
     this.grantTypes.forEach((grantType) => {
       grantType.checked = some(
-        grantTypesList,
+        filteredGrantTypesList,
         (authorizedGrantType) => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase(),
       );
       if (
@@ -190,6 +210,14 @@ export class GrantFlowsComponent implements OnInit {
         grantType.disabled = domain.oidc.cibaSettings && !domain.oidc.cibaSettings.enabled;
       }
     });
+  }
+
+  private isCustomGrantType(grantType: string): boolean {
+    return this.customGrantTypes.some(
+      (customGrantType) =>
+        grantType.toLowerCase() === (customGrantType.grantType + '~' + customGrantType.id).toLowerCase() ||
+        grantType.toLowerCase() === customGrantType.grantType.toLowerCase(),
+    );
   }
 
   private initCustomGrantTypes() {
