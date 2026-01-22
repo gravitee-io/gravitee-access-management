@@ -1214,6 +1214,11 @@ export const routes: Routes = [
                               {
                                 path: 'oauth2',
                                 component: ApplicationOAuth2Component,
+                                canActivate: [AuthGuard],
+                                resolve: {
+                                  domainGrantTypes: ExtensionGrantsResolver,
+                                  scopes: ScopesAllResolver,
+                                },
                                 data: {
                                   menu: {
                                     label: 'OAuth 2.0 / OIDC',
@@ -1224,22 +1229,6 @@ export const routes: Routes = [
                                     only: ['application_openid_read'],
                                   },
                                 },
-                                children: [
-                                  {
-                                    path: '',
-                                    component: ApplicationOAuth2Component,
-                                    canActivate: [AuthGuard],
-                                    resolve: {
-                                      domainGrantTypes: ExtensionGrantsResolver,
-                                      scopes: ScopesAllResolver,
-                                    },
-                                    data: {
-                                      perms: {
-                                        only: ['application_openid_read'],
-                                      },
-                                    },
-                                  },
-                                ],
                               },
                               {
                                 path: 'saml2',

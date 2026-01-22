@@ -15,7 +15,7 @@
  */
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { ScopeService } from '../services/scope.service';
 
@@ -24,7 +24,22 @@ export class ScopesAllResolver {
   constructor(private scopeService: ScopeService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
-    const domainId = route.parent.data['domain'].id;
-    return this.scopeService.findAllByDomain(domainId);
+    // Traverse up the route tree to find the domain data
+    let currentRoute = route;
+    let domainId = null;
+    
+    while (currentRoute && !domainId) {
+      if (currentRoute.data && currentRoute.data['domain']) {
+        domainId = currentRoute.data['domain'].id;
+      } else {
+        currentRoute = currentRoute.parent;
+      }
+    }
+    
+    if (domainId) {
+        return this.scopeService.findAllByDomain(domainId);
+    }
+    
+    return of([]);
   }
 }

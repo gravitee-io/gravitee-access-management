@@ -15,7 +15,7 @@
  */
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { ExtensionGrantService } from '../services/extension-grant.service';
 
@@ -24,7 +24,20 @@ export class ExtensionGrantsResolver {
   constructor(private extensionGrantService: ExtensionGrantService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
-    const domainId = route.parent.data['domain'].id;
-    return this.extensionGrantService.findByDomain(domainId);
+    let currentRoute = route;
+    let domainId = null;
+
+    while (currentRoute && !domainId) {
+      if (currentRoute.data && currentRoute.data['domain']) {
+        domainId = currentRoute.data['domain'].id;
+      } else {
+        currentRoute = currentRoute.parent;
+      }
+    }
+
+    if (domainId) {
+      return this.extensionGrantService.findByDomain(domainId);
+    }
+    return of([]);
   }
 }
