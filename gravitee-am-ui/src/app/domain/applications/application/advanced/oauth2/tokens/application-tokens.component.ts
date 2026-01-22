@@ -57,7 +57,6 @@ export class ApplicationTokensComponent implements OnInit {
   }
 
   patch() {
-    this.cleanCustomClaims();
     const oauthSettings: any = {};
     oauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims;
     oauthSettings.accessTokenValiditySeconds = this.applicationOauthSettings.accessTokenValiditySeconds;
@@ -71,103 +70,21 @@ export class ApplicationTokensComponent implements OnInit {
     });
   }
 
-  addClaim(claim) {
-    if (claim) {
-      if (!this.claimExits(claim)) {
-        claim.id = Math.random().toString(36).substring(7);
-        this.applicationOauthSettings.tokenCustomClaims.push(claim);
-        this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
-        this.table.groupHeader.collapseAllGroups();
-        this.formChanged = true;
-      } else {
-        this.snackbarService.open('Claim already exists');
-      }
-    }
-  }
-
-  claimExits(claim): boolean {
-    return find(this.applicationOauthSettings.tokenCustomClaims, function (el) {
-      return el.tokenType === claim.tokenType && el.claimName === claim.claimName;
-    });
-  }
-
-  updateClaim(tokenType, event, cell, rowIndex) {
-    const claim = event.target.value;
-    if (claim) {
-      this.editing[rowIndex + '-' + cell] = false;
-      const index = findIndex(this.applicationOauthSettings.tokenCustomClaims, { id: rowIndex });
-      this.applicationOauthSettings.tokenCustomClaims[index][cell] = claim;
-      this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
-      this.formChanged = true;
-    }
-  }
-
-  deleteClaim(tokenType, key, event) {
-    event.preventDefault();
-    remove(this.applicationOauthSettings.tokenCustomClaims, function (el: any) {
-      return el.tokenType === tokenType && el.claimName === key;
-    });
-    this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
-    this.formChanged = true;
-  }
-
-  claimsIsEmpty() {
-    return this.applicationOauthSettings.tokenCustomClaims.length === 0;
-  }
-
-  toggleExpandGroup(group) {
-    this.table.groupHeader.toggleExpandGroup(group);
-  }
-
-  openDialog(event) {
-    event.preventDefault();
-    this.dialog.open(ClaimsInfoDialogComponent, {});
-  }
-
-  modelChanged() {
-    this.formChanged = true;
-  }
-
-  private cleanCustomClaims() {
-    if (this.applicationOauthSettings.tokenCustomClaims.length > 0) {
-      this.applicationOauthSettings.tokenCustomClaims.forEach((claim) => {
-        delete claim.id;
-      });
-    }
-  }
-
   private initCustomClaims() {
-    if (this.applicationOauthSettings.tokenCustomClaims.length > 0) {
+    if (this.applicationOauthSettings.tokenCustomClaims && this.applicationOauthSettings.tokenCustomClaims.length > 0) {
       this.applicationOauthSettings.tokenCustomClaims.forEach((claim) => {
         claim.id = Math.random().toString(36).substring(7);
       });
     }
   }
-}
 
-@Component({
-  selector: 'app-create-claim',
-  templateUrl: './claims/add-claim.component.html',
-  standalone: false,
-})
-export class CreateClaimComponent {
-  claim: any = {};
-  tokenTypes: any[] = ['id_token', 'access_token'];
-  @Output() addClaimChange = new EventEmitter();
-  @ViewChild('claimForm', { static: true }) form: NgForm;
+  updateSettings(settings: any) {
+    this.applicationOauthSettings = settings;
+    this.formChanged = true;
+  }
 
-  addClaim() {
-    this.addClaimChange.emit(this.claim);
-    this.claim = {};
-    this.form.reset(this.claim);
+  onFormChanged(changed: boolean) {
+    this.formChanged = changed;
   }
 }
 
-@Component({
-  selector: 'claims-info-dialog',
-  templateUrl: './dialog/claims-info.component.html',
-  standalone: false,
-})
-export class ClaimsInfoDialogComponent {
-  constructor(public dialogRef: MatDialogRef<ClaimsInfoDialogComponent>) {}
-}
