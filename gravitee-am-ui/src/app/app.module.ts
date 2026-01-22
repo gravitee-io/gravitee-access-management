@@ -286,7 +286,7 @@ import { ApplicationEmailsComponent } from './domain/applications/application/de
 import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
 import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
-import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/application-oauth2.component';
+import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/component/oauth2-settings.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
@@ -480,7 +480,6 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
 import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-flows.component';
 import { ScopesComponent } from './domain/components/oauth2-settings/scopes.component';
 import { TokensComponent } from './domain/components/oauth2-settings/tokens.component';
-import { DomainMcpServerOAuth2Component } from './domain/mcp-servers/mcp-server/oauth/domain-mcp-server-oauth2.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { AddScopeComponent } from './domain/components/oauth2-settings/scopes.component';
 import { ClaimsInfoDialogComponent, CreateClaimComponent } from './domain/components/oauth2-settings/tokens.component';
@@ -669,7 +668,7 @@ import { ClaimsInfoDialogComponent, CreateClaimComponent } from './domain/compon
     ApplicationEmailComponent,
     ApplicationAdvancedComponent,
     ApplicationAccountSettingsComponent,
-    ApplicationOAuth2Component,
+    OAuth2SettingsComponent,
     ApplicationSaml2Component,
     AddScopeComponent,
     ApplicationSecretsCertificatesComponent,
@@ -760,7 +759,6 @@ import { ClaimsInfoDialogComponent, CreateClaimComponent } from './domain/compon
     GrantFlowsComponent,
     ScopesComponent,
     TokensComponent,
-    DomainMcpServerOAuth2Component,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],

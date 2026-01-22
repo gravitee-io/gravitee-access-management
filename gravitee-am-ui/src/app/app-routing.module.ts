@@ -138,7 +138,7 @@ import { ApplicationAdvancedComponent } from './domain/applications/application/
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
 import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
-import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/application-oauth2.component';
+import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/component/oauth2-settings.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/advanced/client-secrets/domain-mcp-server-client-secrets.component';
@@ -260,8 +260,12 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
-import { DomainMcpServerOAuth2Component } from './domain/mcp-servers/mcp-server/oauth/domain-mcp-server-oauth2.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
+import {
+  ApplicationOAuth2Service,
+  McpServerOAuth2Service,
+  OAUTH2_SETTINGS_SERVICE,
+} from './domain/components/oauth2-settings/oauth2-settings.service';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1213,7 +1217,13 @@ export const routes: Routes = [
                               },
                               {
                                 path: 'oauth2',
-                                component: ApplicationOAuth2Component,
+                                component: OAuth2SettingsComponent,
+                                providers: [
+                                  {
+                                    provide: OAUTH2_SETTINGS_SERVICE,
+                                    useClass: ApplicationOAuth2Service,
+                                  },
+                                ],
                                 canActivate: [AuthGuard],
                                 resolve: {
                                   domainGrantTypes: ExtensionGrantsResolver,
@@ -1551,7 +1561,13 @@ export const routes: Routes = [
                               },
                               {
                                 path: 'oauth2',
-                                component: DomainMcpServerOAuth2Component,
+                                component: OAuth2SettingsComponent,
+                                providers: [
+                                  {
+                                    provide: OAUTH2_SETTINGS_SERVICE,
+                                    useClass: McpServerOAuth2Service,
+                                  },
+                                ],
                                 data: {
                                   menu: {
                                     label: 'OAuth 2.0 / OIDC',
