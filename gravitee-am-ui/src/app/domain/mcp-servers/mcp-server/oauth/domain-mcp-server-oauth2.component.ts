@@ -58,7 +58,7 @@ export class DomainMcpServerOAuth2Component implements OnInit {
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
     this.scopes = this.route.snapshot.data['scopes'] || [];
 
-    this.readonly = !this.authService.hasPermissions(['domain_protected_resource_update']);
+    this.readonly = !this.authService.hasPermissions(['protected_resource_update']);
   }
 
   updateSettings(newSettings: any) {
