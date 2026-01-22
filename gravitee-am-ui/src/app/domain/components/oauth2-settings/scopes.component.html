@@ -128,10 +128,6 @@
         </div>
       </div>
 
-      <div fxLayout="row" *ngIf="context === 'Application'">
-        <!-- Hide Save button in shared component usage if parent handles it differently, or keep if consistent. Here we might want to hide it if we want the parent to control the save action completely, but component emits changes. -->
-        <button mat-raised-button color="primary" type="submit" [disabled]="!formChanged">SAVE</button>
-      </div>
     </form>
   </div>
   <div class="gv-page-description" fxFlex>

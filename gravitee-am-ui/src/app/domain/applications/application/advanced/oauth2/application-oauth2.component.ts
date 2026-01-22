@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { ApplicationService } from '../../../../../services/application.service';
+import { ScopeService } from '../../../../../services/scope.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { AuthService } from '../../../../../services/auth.service';
 
@@ -44,6 +45,7 @@ export class ApplicationOAuth2Component implements OnInit {
     private applicationService: ApplicationService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
+    private scopeService: ScopeService,
   ) {}
 
   ngOnInit() {
@@ -55,14 +57,47 @@ export class ApplicationOAuth2Component implements OnInit {
     this.oauthSettings = this.application.settings?.oauth || {};
 
     // Load resolvers data
-    this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
-    this.scopes = this.route.snapshot.data['scopes'] || [];
+    this.route.data.subscribe(data => {
+      this.customGrantTypes = data['domainGrantTypes'] || [];
+      this.scopes = data['scopes'] || [];
+      if (this.scopes.length === 0 && this.domainId) {
+        // Fallback: manually fetch scopes if resolver failed
+        this.scopeService.findAllByDomain(this.domainId).subscribe(scopes => {
+          this.scopes = scopes || [];
+        });
+      }
+    });
 
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
   }
 
-  updateSettings(newSettings: any) {
-    this.oauthSettings = newSettings;
+  updateSettings(newSettings: any) {    
+    // Grant flows
+    this.oauthSettings.grantTypes = newSettings.grantTypes;
+    this.oauthSettings.responseTypes = newSettings.responseTypes;
+    this.oauthSettings.redirectUris = newSettings.redirectUris;
+    this.oauthSettings.forcePKCE = newSettings.forcePKCE;
+    this.oauthSettings.forceS256CodeChallengeMethod = newSettings.forceS256CodeChallengeMethod;
+    this.oauthSettings.tokenEndpointAuthMethod = newSettings.tokenEndpointAuthMethod;
+    this.oauthSettings.tlsClientAuthSubjectDn = newSettings.tlsClientAuthSubjectDn;
+    this.oauthSettings.tlsClientAuthSanDns = newSettings.tlsClientAuthSanDns;
+    this.oauthSettings.tlsClientAuthSanUri = newSettings.tlsClientAuthSanUri;
+    this.oauthSettings.tlsClientAuthSanIp = newSettings.tlsClientAuthSanIp;
+    this.oauthSettings.tlsClientAuthSanEmail = newSettings.tlsClientAuthSanEmail;
+    this.oauthSettings.jwksUri = newSettings.jwksUri;
+    this.oauthSettings.jwks = newSettings.jwks;
+    this.oauthSettings.disableRefreshTokenRotation = newSettings.disableRefreshTokenRotation;
+    
+    // Scopes
+    this.oauthSettings.scopeSettings = newSettings.scopeSettings;
+    this.oauthSettings.enhanceScopesWithUserPermissions = newSettings.enhanceScopesWithUserPermissions;
+    
+    // Tokens
+    this.oauthSettings.accessTokenValiditySeconds = newSettings.accessTokenValiditySeconds;
+    this.oauthSettings.refreshTokenValiditySeconds = newSettings.refreshTokenValiditySeconds;
+    this.oauthSettings.idTokenValiditySeconds = newSettings.idTokenValiditySeconds;
+    this.oauthSettings.tokenCustomClaims = newSettings.tokenCustomClaims;
+    
     this.formChanged = true;
   }
 
@@ -93,9 +128,44 @@ export class ApplicationOAuth2Component implements OnInit {
       }
     }
 
-    const oauthSettings: any = { ...this.oauthSettings };
-    if (oauthSettings.jwks && typeof oauthSettings.jwks === 'string') {
-      oauthSettings.jwks = JSON.parse(oauthSettings.jwks);
+    // Manually assign only valid properties to avoid sending read-only fields
+    const oauthSettings: any = {};
+    
+    // Grant flows settings
+    oauthSettings.grantTypes = this.oauthSettings.grantTypes;
+    oauthSettings.responseTypes = this.oauthSettings.responseTypes;
+    oauthSettings.redirectUris = this.oauthSettings.redirectUris;
+    oauthSettings.forcePKCE = this.oauthSettings.forcePKCE;
+    oauthSettings.forceS256CodeChallengeMethod = this.oauthSettings.forceS256CodeChallengeMethod;
+    oauthSettings.tokenEndpointAuthMethod = this.oauthSettings.tokenEndpointAuthMethod;
+    oauthSettings.tlsClientAuthSubjectDn = this.oauthSettings.tlsClientAuthSubjectDn;
+    oauthSettings.tlsClientAuthSanDns = this.oauthSettings.tlsClientAuthSanDns;
+    oauthSettings.tlsClientAuthSanUri = this.oauthSettings.tlsClientAuthSanUri;
+    oauthSettings.tlsClientAuthSanIp = this.oauthSettings.tlsClientAuthSanIp;
+    oauthSettings.tlsClientAuthSanEmail = this.oauthSettings.tlsClientAuthSanEmail;
+    oauthSettings.jwksUri = this.oauthSettings.jwksUri;
+    oauthSettings.disableRefreshTokenRotation = this.oauthSettings.disableRefreshTokenRotation;
+    
+    // Parse jwks if it's a string
+    if (this.oauthSettings.jwks !== undefined) {
+      oauthSettings.jwks = typeof this.oauthSettings.jwks === 'string' ? JSON.parse(this.oauthSettings.jwks) : this.oauthSettings.jwks;
+    }
+    
+    // Scopes
+    oauthSettings.scopeSettings = this.oauthSettings.scopeSettings;
+    oauthSettings.enhanceScopesWithUserPermissions = this.oauthSettings.enhanceScopesWithUserPermissions;
+
+    // Token settings
+    oauthSettings.accessTokenValiditySeconds = this.oauthSettings.accessTokenValiditySeconds;
+    oauthSettings.refreshTokenValiditySeconds = this.oauthSettings.refreshTokenValiditySeconds;
+    oauthSettings.idTokenValiditySeconds = this.oauthSettings.idTokenValiditySeconds;
+    
+    // Filter out 'id' property from tokenCustomClaims (used only for UI tracking)
+    if (this.oauthSettings.tokenCustomClaims !== undefined) {
+      oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims.map((claim: any) => {
+        const { id, ...rest } = claim;
+        return rest;
+      });
     }
 
     this.applicationService.patch(this.domainId, this.applicationId, { settings: { oauth: oauthSettings } }).subscribe(() => {

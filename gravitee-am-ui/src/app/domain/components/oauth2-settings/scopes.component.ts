@@ -186,6 +186,7 @@ export class ScopesComponent implements OnInit {
 
       updatedSettings.scopeSettings.push(setting);
     });
+    console.log('Scopes component emitting:', updatedSettings);
     this.settingsChange.emit(updatedSettings);
   }
 }

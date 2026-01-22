@@ -15,7 +15,7 @@
  */
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { ExtensionGrantService } from '../services/extension-grant.service';
@@ -25,16 +25,29 @@ export class DomainGrantTypesResolver {
   constructor(private extensionGrantService: ExtensionGrantService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
-    const domainId = route.parent.data['domain'].id;
-    return this.extensionGrantService.findByDomain(domainId).pipe(
-      map((grantTypes) => {
-        return grantTypes.map((grantType) => {
-          return {
-            name: grantType.name || grantType.grantType,
-            value: grantType.grantType,
-          };
-        });
-      }),
-    );
+    let currentRoute = route;
+    let domainId = null;
+
+    while (currentRoute && !domainId) {
+      if (currentRoute.data && currentRoute.data['domain']) {
+        domainId = currentRoute.data['domain'].id;
+      } else {
+        currentRoute = currentRoute.parent;
+      }
+    }
+
+    if (domainId) {
+      return this.extensionGrantService.findByDomain(domainId).pipe(
+        map((grantTypes) => {
+          return grantTypes.map((grantType) => {
+            return {
+              name: grantType.name || grantType.grantType,
+              value: grantType.grantType,
+            };
+          });
+        }),
+      );
+    }
+    return of([]);
   }
 }

@@ -57,12 +57,38 @@ export class DomainMcpServerOAuth2Component implements OnInit {
     // Load resolvers data
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
     this.scopes = this.route.snapshot.data['scopes'] || [];
+    console.log('this.scopes:', this.scopes);
 
     this.readonly = !this.authService.hasPermissions(['protected_resource_update']);
   }
 
   updateSettings(newSettings: any) {
-    this.oauthSettings = newSettings;
+    // Grant flows
+    this.oauthSettings.grantTypes = newSettings.grantTypes;
+    this.oauthSettings.responseTypes = newSettings.responseTypes;
+    this.oauthSettings.redirectUris = newSettings.redirectUris;
+    this.oauthSettings.forcePKCE = newSettings.forcePKCE;
+    this.oauthSettings.forceS256CodeChallengeMethod = newSettings.forceS256CodeChallengeMethod;
+    this.oauthSettings.tokenEndpointAuthMethod = newSettings.tokenEndpointAuthMethod;
+    this.oauthSettings.tlsClientAuthSubjectDn = newSettings.tlsClientAuthSubjectDn;
+    this.oauthSettings.tlsClientAuthSanDns = newSettings.tlsClientAuthSanDns;
+    this.oauthSettings.tlsClientAuthSanUri = newSettings.tlsClientAuthSanUri;
+    this.oauthSettings.tlsClientAuthSanIp = newSettings.tlsClientAuthSanIp;
+    this.oauthSettings.tlsClientAuthSanEmail = newSettings.tlsClientAuthSanEmail;
+    this.oauthSettings.jwksUri = newSettings.jwksUri;
+    this.oauthSettings.jwks = newSettings.jwks;
+    this.oauthSettings.disableRefreshTokenRotation = newSettings.disableRefreshTokenRotation;
+    
+    // Scopes
+    this.oauthSettings.scopeSettings = newSettings.scopeSettings;
+    this.oauthSettings.enhanceScopesWithUserPermissions = newSettings.enhanceScopesWithUserPermissions;
+    
+    // Tokens
+    this.oauthSettings.accessTokenValiditySeconds = newSettings.accessTokenValiditySeconds;
+    this.oauthSettings.refreshTokenValiditySeconds = newSettings.refreshTokenValiditySeconds;
+    this.oauthSettings.idTokenValiditySeconds = newSettings.idTokenValiditySeconds;
+    this.oauthSettings.tokenCustomClaims = newSettings.tokenCustomClaims;
+    
     this.formChanged = true;
   }
 
@@ -71,14 +97,75 @@ export class DomainMcpServerOAuth2Component implements OnInit {
   }
 
   save() {
-    // Current backend logic maps 'settings' directly.
+        // Validation for private_key_jwt
+    if (this.oauthSettings.tokenEndpointAuthMethod === 'private_key_jwt') {
+      if (!this.oauthSettings.jwksUri && !this.oauthSettings.jwks) {
+        this.snackbarService.open("The jwks_uri or jwks are required when using 'private_key_jwt' client authentication method");
+        return;
+      }
+      if (this.oauthSettings.jwksUri && this.oauthSettings.jwks) {
+        this.snackbarService.open('The jwks_uri and jwks parameters MUST NOT be used together.');
+        return;
+      }
+      if (this.oauthSettings.jwks) {
+        try {
+          if (typeof this.oauthSettings.jwks === 'string') {
+            JSON.parse(this.oauthSettings.jwks);
+          }
+        } catch {
+          this.snackbarService.open('The jwks parameter is malformed.');
+          return;
+        }
+      }
+    }
+
+    // Manually assign only valid properties to avoid sending read-only fields
+    const oauthSettings: any = {};
+    
+    // Grant flows settings
+    oauthSettings.grantTypes = this.oauthSettings.grantTypes;
+    oauthSettings.responseTypes = this.oauthSettings.responseTypes;
+    oauthSettings.redirectUris = this.oauthSettings.redirectUris;
+    oauthSettings.forcePKCE = this.oauthSettings.forcePKCE;
+    oauthSettings.forceS256CodeChallengeMethod = this.oauthSettings.forceS256CodeChallengeMethod;
+    oauthSettings.tokenEndpointAuthMethod = this.oauthSettings.tokenEndpointAuthMethod;
+    oauthSettings.tlsClientAuthSubjectDn = this.oauthSettings.tlsClientAuthSubjectDn;
+    oauthSettings.tlsClientAuthSanDns = this.oauthSettings.tlsClientAuthSanDns;
+    oauthSettings.tlsClientAuthSanUri = this.oauthSettings.tlsClientAuthSanUri;
+    oauthSettings.tlsClientAuthSanIp = this.oauthSettings.tlsClientAuthSanIp;
+    oauthSettings.tlsClientAuthSanEmail = this.oauthSettings.tlsClientAuthSanEmail;
+    oauthSettings.jwksUri = this.oauthSettings.jwksUri;
+    oauthSettings.disableRefreshTokenRotation = this.oauthSettings.disableRefreshTokenRotation;
+    
+    // Parse jwks if it's a string
+    if (this.oauthSettings.jwks !== undefined) {
+      oauthSettings.jwks = typeof this.oauthSettings.jwks === 'string' ? JSON.parse(this.oauthSettings.jwks) : this.oauthSettings.jwks;
+    }
+    
+    // Scopes settings
+    oauthSettings.scopeSettings = this.oauthSettings.scopeSettings;
+    oauthSettings.enhanceScopesWithUserPermissions = this.oauthSettings.enhanceScopesWithUserPermissions;
+
+    // Token settings
+    oauthSettings.accessTokenValiditySeconds = this.oauthSettings.accessTokenValiditySeconds;
+    oauthSettings.refreshTokenValiditySeconds = this.oauthSettings.refreshTokenValiditySeconds;
+    oauthSettings.idTokenValiditySeconds = this.oauthSettings.idTokenValiditySeconds;
+    
+    // Filter out 'id' property from tokenCustomClaims (used only for UI tracking)
+    if (this.oauthSettings.tokenCustomClaims !== undefined) {
+      oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims.map((claim: any) => {
+        const { id, ...rest } = claim;
+        return rest;
+      });
+    }
+
     const updatePayload = {
       name: this.resource.name,
       resourceIdentifiers: this.resource.resourceIdentifiers,
       description: this.resource.description,
       features: this.resource.features,
       settings: {
-        oauth: this.oauthSettings,
+        oauth: oauthSettings,
       },
     };
 
