@@ -138,11 +138,8 @@ import { ApplicationAdvancedComponent } from './domain/applications/application/
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
 import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
-import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/oauth2.component';
+import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/application-oauth2.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
-import { ApplicationScopesComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
-import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
-import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/client-secrets/domain-mcp-server-client-secrets.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
@@ -1229,35 +1226,13 @@ export const routes: Routes = [
                                 },
                                 children: [
                                   {
-                                    path: 'grantFlows',
-                                    component: ApplicationGrantFlowsComponent,
+                                    path: '',
+                                    component: ApplicationOAuth2Component,
                                     canActivate: [AuthGuard],
                                     resolve: {
                                       domainGrantTypes: ExtensionGrantsResolver,
-                                    },
-                                    data: {
-                                      perms: {
-                                        only: ['application_openid_read'],
-                                      },
-                                    },
-                                  },
-                                  {
-                                    path: 'scopes',
-                                    component: ApplicationScopesComponent,
-                                    canActivate: [AuthGuard],
-                                    resolve: {
                                       scopes: ScopesAllResolver,
                                     },
-                                    data: {
-                                      perms: {
-                                        only: ['application_openid_read'],
-                                      },
-                                    },
-                                  },
-                                  {
-                                    path: 'tokens',
-                                    component: ApplicationTokensComponent,
-                                    canActivate: [AuthGuard],
                                     data: {
                                       perms: {
                                         only: ['application_openid_read'],

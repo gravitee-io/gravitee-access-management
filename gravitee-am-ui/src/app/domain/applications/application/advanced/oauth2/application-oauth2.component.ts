@@ -16,24 +16,27 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { ApplicationService } from '../../../../../../services/application.service';
-import { SnackbarService } from '../../../../../../services/snackbar.service';
-import { AuthService } from '../../../../../../services/auth.service';
-import { DomainStoreService } from '../../../../../../stores/domain.store';
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
-  selector: 'application-grant-types',
-  templateUrl: './application-grant-flows.component.html',
-  styleUrls: ['./application-grant-flows.component.scss'],
+  selector: 'application-oauth2',
+  templateUrl: './application-oauth2.component.html',
+  styleUrls: ['./application-oauth2.component.scss'],
   standalone: false,
 })
-export class ApplicationGrantFlowsComponent implements OnInit {
-  private domainId: string;
-  formChanged: boolean;
+export class ApplicationOAuth2Component implements OnInit {
+  protected domainId: string;
+  private applicationId: string;
   application: any;
-  customGrantTypes: any[];
-  applicationOauthSettings: any = {};
+  oauthSettings: any = {};
   readonly = false;
+  formChanged = false;
+
+  // Data for shared components
+  customGrantTypes: any[] = [];
+  scopes: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -41,32 +44,47 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     private applicationService: ApplicationService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
-    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = structuredClone(this.route.snapshot.data['application']);
+    this.applicationId = this.application.id;
+
+    // Extract oauth settings
+    this.oauthSettings = this.application.settings?.oauth || {};
+
+    // Load resolvers data
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
-    this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
+    this.scopes = this.route.snapshot.data['scopes'] || [];
+
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
   }
 
-  patch() {
-    // check configuration
-    if (this.applicationOauthSettings.tokenEndpointAuthMethod === 'private_key_jwt') {
-      if (!this.applicationOauthSettings.jwksUri && !this.applicationOauthSettings.jwks) {
+  updateSettings(newSettings: any) {
+    this.oauthSettings = newSettings;
+    this.formChanged = true;
+  }
+
+  onFormChanged(changed: boolean) {
+    this.formChanged = changed;
+  }
+
+  save() {
+    // Validation for private_key_jwt
+    if (this.oauthSettings.tokenEndpointAuthMethod === 'private_key_jwt') {
+      if (!this.oauthSettings.jwksUri && !this.oauthSettings.jwks) {
         this.snackbarService.open("The jwks_uri or jwks are required when using 'private_key_jwt' client authentication method");
         return;
       }
-      if (this.applicationOauthSettings.jwksUri && this.applicationOauthSettings.jwks) {
+      if (this.oauthSettings.jwksUri && this.oauthSettings.jwks) {
         this.snackbarService.open('The jwks_uri and jwks parameters MUST NOT be used together.');
         return;
       }
-      if (this.applicationOauthSettings.jwks) {
+      if (this.oauthSettings.jwks) {
         try {
-          if (typeof this.applicationOauthSettings.jwks === 'string') {
-            JSON.parse(this.applicationOauthSettings.jwks);
+          if (typeof this.oauthSettings.jwks === 'string') {
+            JSON.parse(this.oauthSettings.jwks);
           }
         } catch {
           this.snackbarService.open('The jwks parameter is malformed.');
@@ -75,24 +93,15 @@ export class ApplicationGrantFlowsComponent implements OnInit {
       }
     }
 
-    const oauthSettings: any = { ...this.applicationOauthSettings };
+    const oauthSettings: any = { ...this.oauthSettings };
     if (oauthSettings.jwks && typeof oauthSettings.jwks === 'string') {
       oauthSettings.jwks = JSON.parse(oauthSettings.jwks);
     }
 
-    this.applicationService.patch(this.domainId, this.application.id, { settings: { oauth: oauthSettings } }).subscribe(() => {
+    this.applicationService.patch(this.domainId, this.applicationId, { settings: { oauth: oauthSettings } }).subscribe(() => {
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
     });
-  }
-
-  updateSettings(settings: any) {
-    this.applicationOauthSettings = settings;
-    this.formChanged = true;
-  }
-
-  onFormChanged(changed: boolean) {
-    this.formChanged = changed;
   }
 }
