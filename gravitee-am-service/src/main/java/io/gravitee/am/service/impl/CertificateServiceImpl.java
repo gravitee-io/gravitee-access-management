@@ -42,6 +42,7 @@ import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -49,6 +50,7 @@ import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithIdpException;
+import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
@@ -136,6 +138,9 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private ProtectedResourceService protectedResourceService;
 
     @Autowired
     private EventService eventService;
@@ -365,6 +370,17 @@ public class CertificateServiceImpl implements CertificateService {
                 });
     }
 
+    private Single<Certificate> checkProtectedResourceUsage(Certificate certificate) {
+        return protectedResourceService.findByCertificate(certificate.getId())
+                .count()
+                .flatMap(count -> {
+                    if (count > 0) {
+                        return Single.error(new CertificateWithProtectedResourceException());
+                    }
+                    return Single.just(certificate);
+                });
+    }
+
     @Override
     public Completable delete(String certificateId, User principal) {
         log.debug("Delete certificate {}", certificateId);
@@ -379,6 +395,7 @@ public class CertificateServiceImpl implements CertificateService {
                         })
                 )
                 .flatMapSingle(this::checkIdentityProviderUsage)
+                .flatMapSingle(this::checkProtectedResourceUsage)
                 .flatMapCompletable(certificate -> {
                     // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));

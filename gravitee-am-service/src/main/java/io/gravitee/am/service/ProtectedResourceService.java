@@ -62,6 +62,8 @@ public interface ProtectedResourceService {
 
     Flowable<ProtectedResource> findByDomain(String domain);
 
+    Flowable<ProtectedResource> findByCertificate(String certificateId);
+
     Single<ClientSecret> createSecret(Domain domain, String id, String name, User principal);
 
     Single<ClientSecret> renewSecret(Domain domain, String id, String secretId, User principal);

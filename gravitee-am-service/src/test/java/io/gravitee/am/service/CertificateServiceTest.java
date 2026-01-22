@@ -25,12 +25,14 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
+import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
@@ -102,6 +104,9 @@ public class CertificateServiceTest {
 
     @Mock
     private IdentityProviderService identityProviderService;
+
+    @Mock
+    private ProtectedResourceService protectedResourceService;
 
     @Mock
     private ApplicationService applicationService;
@@ -206,8 +211,10 @@ public class CertificateServiceTest {
         // prepare certificate
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getDomain()).thenReturn(DOMAIN.getId());
+        when(certificate.getId()).thenReturn("my-certificate");
 
         when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
+        when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
         when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
         when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
@@ -221,6 +228,7 @@ public class CertificateServiceTest {
 
         verify(certificateRepository, times(1)).findById("my-certificate");
         verify(applicationService, times(1)).findByCertificate("my-certificate");
+        verify(protectedResourceService, times(1)).findByCertificate("my-certificate");
         verify(certificateRepository, times(1)).delete("my-certificate");
         verify(eventService, times(1)).create(any());
     }
@@ -265,6 +273,29 @@ public class CertificateServiceTest {
 
         verify(certificateRepository, times(1)).findById("my-certificate");
         verify(applicationService, times(1)).findByCertificate("my-certificate");
+        verify(certificateRepository, never()).delete("my-certificate");
+    }
+
+    @Test
+    public void shouldDelete_certificateWithProtectedResources() {
+        Certificate certificate = Mockito.mock(Certificate.class);
+        when(certificate.getDomain()).thenReturn(DOMAIN.getId());
+        when(certificate.getId()).thenReturn("my-certificate");
+
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
+        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
+        when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
+        when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.just(new ProtectedResource()));
+
+        TestObserver<Void> testObserver = certificateService.delete("my-certificate").test();
+
+        testObserver.assertError(CertificateWithProtectedResourceException.class);
+        testObserver.assertNotComplete();
+
+        verify(certificateRepository, times(1)).findById("my-certificate");
+        verify(applicationService, times(1)).findByCertificate("my-certificate");
+        verify(identityProviderService, times(1)).findByDomain(DOMAIN.getId());
+        verify(protectedResourceService, times(1)).findByCertificate("my-certificate");
         verify(certificateRepository, never()).delete("my-certificate");
     }
 

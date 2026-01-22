@@ -235,6 +235,66 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void shouldFindByCertificate() {
+        String certificateId = UUID.randomUUID().toString();
+        String otherCertificateId = UUID.randomUUID().toString();
+
+        // Create resources with specific certificate
+        ClientSecret clientSecret1 = generateClientSecret();
+        ApplicationSecretSettings secretSettings1 = generateApplicationSecretSettings();
+        ProtectedResource resource1 = generateResource("resource1", "cert-test-domain", "client1", clientSecret1, secretSettings1, List.of());
+        resource1.setCertificate(certificateId);
+
+        ClientSecret clientSecret2 = generateClientSecret();
+        ApplicationSecretSettings secretSettings2 = generateApplicationSecretSettings();
+        ProtectedResource resource2 = generateResource("resource2", "cert-test-domain", "client2", clientSecret2, secretSettings2, List.of());
+        resource2.setCertificate(certificateId);
+
+        // Create resource with different certificate
+        ClientSecret clientSecret3 = generateClientSecret();
+        ApplicationSecretSettings secretSettings3 = generateApplicationSecretSettings();
+        ProtectedResource resource3 = generateResource("resource3", "cert-test-domain", "client3", clientSecret3, secretSettings3, List.of());
+        resource3.setCertificate(otherCertificateId);
+
+        // Create resource without certificate
+        ClientSecret clientSecret4 = generateClientSecret();
+        ApplicationSecretSettings secretSettings4 = generateApplicationSecretSettings();
+        ProtectedResource resource4 = generateResource("resource4", "cert-test-domain", "client4", clientSecret4, secretSettings4, List.of());
+        resource4.setCertificate(null);
+
+        repository.create(resource1).blockingGet();
+        repository.create(resource2).blockingGet();
+        repository.create(resource3).blockingGet();
+        repository.create(resource4).blockingGet();
+
+        // Test: Find by the first certificate ID
+        TestObserver<List<ProtectedResource>> testObserver = repository.findByCertificate(certificateId).toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.size() == 2)
+                .assertValue(res -> res.stream().anyMatch(r -> r.getId().equals(resource1.getId())))
+                .assertValue(res -> res.stream().anyMatch(r -> r.getId().equals(resource2.getId())))
+                .assertValue(res -> res.stream().noneMatch(r -> r.getId().equals(resource3.getId())))
+                .assertValue(res -> res.stream().noneMatch(r -> r.getId().equals(resource4.getId())));
+
+        // Test: Find by the second certificate ID
+        TestObserver<List<ProtectedResource>> testObserver2 = repository.findByCertificate(otherCertificateId).toList().test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.size() == 1)
+                .assertValue(res -> res.stream().anyMatch(r -> r.getId().equals(resource3.getId())));
+
+        // Test: Find by non-existent certificate ID
+        TestObserver<List<ProtectedResource>> testObserver3 = repository.findByCertificate(UUID.randomUUID().toString()).toList().test();
+        testObserver3.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(List::isEmpty);
+    }
+
+    @Test
     public void testFindByDomainAndId() {
         ClientSecret clientSecret = generateClientSecret();
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();

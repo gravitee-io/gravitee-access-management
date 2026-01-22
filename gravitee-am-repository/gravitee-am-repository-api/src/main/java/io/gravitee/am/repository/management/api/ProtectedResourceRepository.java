@@ -37,6 +37,8 @@ public interface ProtectedResourceRepository extends CrudRepository<ProtectedRes
 
     Flowable<ProtectedResource> findByDomain(String domain);
 
+    Flowable<ProtectedResource> findByCertificate(String certificateId);
+
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest);
 
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest);
