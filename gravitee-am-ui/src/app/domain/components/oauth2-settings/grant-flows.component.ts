@@ -189,9 +189,7 @@ export class GrantFlowsComponent implements OnInit {
     // For MCP Server context, filter grant types list to only include client_credentials and custom grant types
     let filteredGrantTypesList = grantTypesList;
     if (this.context === 'McpServer') {
-      filteredGrantTypesList = grantTypesList.filter(
-        (gt) => gt.toLowerCase() === 'client_credentials' || this.isCustomGrantType(gt),
-      );
+      filteredGrantTypesList = grantTypesList.filter((gt) => gt.toLowerCase() === 'client_credentials' || this.isCustomGrantType(gt));
     }
     this.grantTypes.forEach((grantType) => {
       grantType.checked = some(

@@ -16,11 +16,9 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { find, findIndex, remove } from 'lodash';
+import { NgForm } from '@angular/forms';
 
 import { SnackbarService } from '../../../services/snackbar.service';
-
-import { TimeConverterService } from '../../../services/time-converter.service';
-import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-tokens-settings',

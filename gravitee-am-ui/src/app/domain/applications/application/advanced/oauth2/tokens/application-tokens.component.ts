@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { NgForm } from '@angular/forms';
-import { find, findIndex, remove } from 'lodash';
+import { MatDialog } from '@angular/material/dialog';
 
 import { ApplicationService } from '../../../../../../services/application.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
@@ -87,4 +85,3 @@ export class ApplicationTokensComponent implements OnInit {
     this.formChanged = changed;
   }
 }
-
