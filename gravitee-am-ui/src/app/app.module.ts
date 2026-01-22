@@ -486,6 +486,11 @@ import {
 import { DomainMcpServerToolEditDialogComponent } from './domain/mcp-servers/mcp-server/tools/tool-edit-dialog/tool-edit-dialog.component';
 import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-tools-table.component';
 import { MaterialMultiselectComponent } from './components/json-schema-form/material-multiselect.component';
+import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-flows.component';
+import { ScopesComponent } from './domain/components/oauth2-settings/scopes.component';
+import { TokensComponent } from './domain/components/oauth2-settings/tokens.component';
+import { DomainMcpServerOAuth2Component } from './domain/mcp-servers/mcp-server/oauth/domain-mcp-server-oauth2.component';
+import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 
 @NgModule({
   declarations: [
@@ -761,6 +766,10 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     AuthorizationEngineCreationStep2Component,
     OpenFGAComponent,
     McpToolsTableComponent,
+    GrantFlowsComponent,
+    ScopesComponent,
+    TokensComponent,
+    DomainMcpServerOAuth2Component,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],
@@ -825,6 +834,7 @@ import { MaterialMultiselectComponent } from './components/json-schema-form/mate
     ClientSecretsManagementModule,
   ],
   providers: [
+    DomainGrantTypesResolver,
     DomainService,
     ProviderService,
     SidenavService,

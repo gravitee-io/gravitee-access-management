@@ -1,0 +1,277 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="row">
+  <div fxFlex="70">
+    <form (keydown.enter)="(false)">
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Grant flows</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="row wrap">
+          <div *ngFor="let grantType of grantTypes" class="oauth2-grant-type">
+            <mat-checkbox
+              name="grantTypes"
+              value="{{ grantType.value }}"
+              [checked]="grantType.checked"
+              (change)="selectGrantType($event)"
+              [disabled]="readonly || grantType.disabled"
+            >
+              <span style="font-size: 14px">{{ grantType.name | titlecase }}</span>
+            </mat-checkbox>
+          </div>
+          <div
+            *ngFor="let extensionGrant of customGrantTypes"
+            class="oauth2-grant-type"
+            [matTooltip]="customGrantTypeIsDisabled(extensionGrant) ? 'Only one ' + extensionGrant.grantType + ' is allowed' : null"
+          >
+            <mat-checkbox
+              name="customGrantTypes"
+              value="{{ extensionGrant.value }}"
+              [checked]="extensionGrant.checked"
+              (change)="selectCustomGrantType($event)"
+              [disabled]="customGrantTypeIsDisabled(extensionGrant)"
+            >
+              <span style="font-size: 14px">{{ extensionGrant.name | titlecase }}</span>
+            </mat-checkbox>
+          </div>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Refresh Token</h5>
+          <small>Configure how your application will use refresh tokens.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="disableRefreshTokenRotation($event)"
+            [checked]="isRefreshTokenRotationDisabled()"
+            [disabled]="readonly || !isRefreshTokenFlowSelected()"
+          >
+            Disable Refresh Token Rotation
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%"
+            >Reuse refresh tokens until expiration to issue new access tokens. Disabled by default to follow OAuth 2.0 best
+            practices.</mat-hint
+          >
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Proof Key for Code Exchange (PKCE)</h5>
+          <small>PKCE is an extension to the Authorization Code flow to prevent interception attack for public clients.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle (change)="forcePKCE($event)" [checked]="isPKCEForced()" [disabled]="readonly"> Force PKCE </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Force PKCE for public clients who cannot securely store their Client Secret</mat-hint>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="forceS256CodeChallengeMethod($event)"
+            [checked]="isS256CodeChallengeMethodForced()"
+            [disabled]="readonly"
+          >
+            Force S256 challenge method
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%"
+            >Force S256 challenge method to protect against disclosure of the "code_verifier" value to an attacker.</mat-hint
+          >
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Public / Confidential</h5>
+          <small>Clients capability of maintaining the confidentiality of their credentials.</small>
+          <small>Native or SPA applications are incapable of secure their credentials and should set this value to "none".</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Type</mat-label>
+            <mat-select
+              placeholder="Change the token auth method"
+              name="tokenAuthMethod"
+              [(ngModel)]="oauthSettings.tokenEndpointAuthMethod"
+              (ngModelChange)="tokenEndpointAuthMethodChanged($event)"
+              [disabled]="readonly"
+            >
+              <mat-option [value]="null"><em>Based on incoming request</em></mat-option>
+              <mat-option
+                *ngFor="let tokenEndpointAuthMethod of tokenEndpointAuthMethods"
+                [value]="tokenEndpointAuthMethod.value"
+                [disabled]="tokenEndpointAuthMethod.disabled"
+                >{{ tokenEndpointAuthMethod.name }}</mat-option
+              >
+            </mat-select>
+            <mat-hint>Requested Client Authentication method for the Token, Introspection and Revoke endpoints.</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="gv-form-section" *ngIf="oauthSettings.tokenEndpointAuthMethod === 'tls_client_auth'">
+        <div class="gv-form-section-title">
+          <h5>Advanced MTLS Client authentication</h5>
+          <small
+            >Mutual TLS for OAuth Client Authentication requires a single subject distinguished name (DN) or a single subject alternative
+            name (SAN) to authenticate the client. Only one subject name value of any type is used for each client.</small
+          >
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <div fxLayout="column" fxLayoutGap="10px">
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+              <input
+                matInput
+                type="text"
+                placeholder="subject distinguished name"
+                name="tlsClientAuthSubjectDn"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.tlsClientAuthSubjectDn"
+                [disabled]="readonly"
+              />
+              <mat-hint>The expected subject distinguished name of the certificate (as defined in RFC4514)</mat-hint>
+            </mat-form-field>
+          </div>
+          <div fxLayout="column" fxLayoutGap="10px">
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+              <input
+                matInput
+                type="text"
+                placeholder="dNSName SAN entry"
+                name="tlsClientAuthSanDns"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.tlsClientAuthSanDns"
+                [disabled]="readonly"
+              />
+              <mat-hint>The expected dNSName SAN entry in the certificate</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+              <input
+                matInput
+                type="text"
+                placeholder="uniformResourceIdentifier SAN entry"
+                name="tlsClientAuthSanUri"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.tlsClientAuthSanUri"
+                [disabled]="readonly"
+              />
+              <mat-hint>The expected uniformResourceIdentifier SAN entry in the certificate</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+              <input
+                matInput
+                type="text"
+                placeholder="iPAddress SAN entry"
+                name="tlsClientAuthSanIp"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.tlsClientAuthSanIp"
+                [disabled]="readonly"
+              />
+              <mat-hint>The expected iPAddress SAN entry in the certificate</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+              <input
+                matInput
+                type="text"
+                placeholder="rfc822Name SAN entry"
+                name="tlsClientAuthSanEmail"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.tlsClientAuthSanEmail"
+                [disabled]="readonly"
+              />
+              <mat-hint>The expected rfc822Name SAN entry in the certificate</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <div class="gv-form-section" *ngIf="oauthSettings.tokenEndpointAuthMethod === 'private_key_jwt'">
+        <div class="gv-form-section-title">
+          <h5>Advanced Assertion Client authentication</h5>
+          <small
+            >When using assertions for client authentication, clients have to register a public key (JWKS format) to interact with the token
+            endpoint.</small
+          >
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column" fxLayoutGap="10px">
+          <div fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>jwks_uri</mat-label>
+              <input
+                matInput
+                type="text"
+                placeholder="Enter the jwks_uri value"
+                name="jwksUri"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.jwksUri"
+                [disabled]="readonly"
+              />
+              <mat-hint>URL for the Client's JSON Web Key Set (JWK) document</mat-hint>
+            </mat-form-field>
+          </div>
+          <div fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>jwks</mat-label>
+              <textarea
+                rows="10"
+                matInput
+                type="text"
+                placeholder="Enter the jwks value"
+                name="jwks"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.jwks"
+                [disabled]="readonly"
+              ></textarea>
+              <mat-hint
+                >Client's JSON Web Key Set (JWK) document, passed by value. This parameter is intended only to be used by Clients that, for
+                some reason, are unable to use the jwks_uri parameter.</mat-hint
+              >
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent component handles saving -->
+    </form>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>OAuth 2.0 / OpenID Connect</h3>
+    <div class="gv-page-description-content">
+      <h4>Grant types</h4>
+      <p>
+        To authenticate an user, the application must first decide which oauth2 flow must be used. Oauth2 flows are enabled on the client
+        through the grant_type. You should select the grant_type according to your application type.
+      </p>
+      <small>
+        <b><i>authorization_code</i></b> for server side applications (web) or browser and native applications (then combined with PKCE).<br />
+        <b><i>implicit</i></b> originally used for browser apps, deprecated in favor of authorization_code + PKCE.<br />
+        <b><i>password</i></b> should only be used for trusted applications
+        <i>(means application and authorization server are managed within the same organization).</i><br />
+        <b><i>client_credentials</i></b> should be used for server to server communications.<br /><br />
+        <b>It is not recommended to mix client and user authentication within the same application.</b>
+        <i>(Aka client_credentials and authorization_code, implicit or password)</i><br />
+      </small>
+    </div>
+  </div>
+</div>

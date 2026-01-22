@@ -1,0 +1,144 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="row">
+  <div fxFlex="70">
+    <form (keydown.enter)="(false)" (ngSubmit)="modelChanged()">
+      <!-- Note: Submit is not used directly, handled by parent -->
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Adaptive scopes</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <div fxLayout="row" style="align-items: baseline">
+            <div fxLayout="column">
+              <mat-slide-toggle
+                (change)="enhanceScopesWithUserPermissions($event)"
+                [checked]="isScopesEnhanceWithUserPermissions()"
+                [disabled]="readonly"
+              >
+                Enhance scopes
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%">Enhance client scopes with user permissions</mat-hint>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <div>
+            <div fxFlex>
+              <h5>Scopes</h5>
+              <small>List of scope values that the client can use when requesting access tokens.</small>
+            </div>
+            <div>
+              <button mat-stroked-button (click)="add($event)"><mat-icon svgIcon="gio:plus"></mat-icon>ADD SCOPES</button>
+            </div>
+          </div>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <ngx-datatable
+            class="material"
+            [columnMode]="'flex'"
+            [headerHeight]="40"
+            [rowHeight]="68"
+            [messages]="{ emptyMessage: 'There is no scopes' }"
+            [rows]="selectedScopes"
+          >
+            <ngx-datatable-column name="Scopes" [flexGrow]="3">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <mat-icon style="vertical-align: middle">donut_large</mat-icon>
+                <span>{{ row.key }}</span> | <small>{{ row.name }}</small>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Default" [flexGrow]="1">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <mat-checkbox (change)="toggleDefaultScope($event, row.key)" [checked]="isDefaultScope(row.key)"></mat-checkbox>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="User consent" [flexGrow]="4">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <div fxLayout="row" style="align-items: center; margin-top: -10px">
+                  <mat-form-field appearance="outline" floatLabel="always" fxFlex="35">
+                    <input
+                      #expiresInInput
+                      matInput
+                      type="number"
+                      placeholder="Duration"
+                      name="expiresIn"
+                      min="0"
+                      [min]="0"
+                      [value]="displayExpiresIn(row.key)"
+                      (change)="onExpiresInEvent($event, row.key)"
+                    />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px">
+                    <mat-select
+                      #unitTimeInput
+                      placeholder="Unit"
+                      name="unitTime"
+                      [value]="displayUnitTime(row.key)"
+                      (selectionChange)="onUnitTimeEvent($event, row.key)"
+                    >
+                      <mat-option value="seconds">SECONDS</mat-option>
+                      <mat-option value="minutes">MINUTES</mat-option>
+                      <mat-option value="hours">HOURS</mat-option>
+                      <mat-option value="days">DAYS</mat-option>
+                      <mat-option value="weeks">WEEKS</mat-option>
+                      <mat-option value="months">MONTHS</mat-option>
+                      <mat-option value="years">YEARS</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <button
+                    *ngIf="scopeApprovalExists(row.key)"
+                    mat-icon-button
+                    (click)="removeScopeApproval($event, row.key, expiresInInput, unitTimeInput)"
+                    style="top: -9px"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Actions" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="gv-table-cell-actions" *ngIf="!readonly">
+                  <button mat-icon-button (click)="removeScope(row.key, $event)"><mat-icon>highlight_off</mat-icon></button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+      </div>
+
+      <div fxLayout="row" *ngIf="context === 'Application'">
+        <!-- Hide Save button in shared component usage if parent handles it differently, or keep if consistent. Here we might want to hide it if we want the parent to control the save action completely, but component emits changes. -->
+        <button mat-raised-button color="primary" type="submit" [disabled]="!formChanged">SAVE</button>
+      </div>
+    </form>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>OAuth 2.0 / OpenID Connect</h3>
+    <div class="gv-page-description-content">
+      <h4>Scopes</h4>
+      <p>You can add default scopes to the tokens to control application's access to protected resources/APIs.</p>
+    </div>
+  </div>
+</div>
