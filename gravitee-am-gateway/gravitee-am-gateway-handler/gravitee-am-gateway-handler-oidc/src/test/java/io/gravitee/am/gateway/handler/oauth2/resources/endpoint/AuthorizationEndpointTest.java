@@ -1610,4 +1610,48 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
+    @Test
+    public void shouldCleanSessionIncludingAuthFlowVersion() throws Exception {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationCodeResponse authorizationResponse = new AuthorizationCodeResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        authorizationResponse.setCode("test-code");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            // Set transaction ID and auth flow version in the session
+            routingContext.session().put(ConstantKeys.TRANSACTION_ID_KEY, "test-transaction-id");
+            routingContext.session().put(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY, 2);
+            routingContext.next();
+        });
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?code=test-code", location);
+                    // Verify that both TRANSACTION_ID_KEY and AUTH_FLOW_CONTEXT_VERSION_KEY are removed
+                    assertNull(finalRoutingContext.session().get(ConstantKeys.TRANSACTION_ID_KEY));
+                    assertNull(finalRoutingContext.session().get(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
 }
