@@ -71,6 +71,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     }
 
 
+    @Override
     public ProviderResponseMode getResponseMode() {
         if (responseMode == null || responseMode == ProviderResponseMode.DEFAULT) {
             return getProviderResponseType().defaultResponseMode();
