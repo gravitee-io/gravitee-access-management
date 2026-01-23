@@ -3689,9 +3689,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gravitee/ui-particles-angular@npm:^16.2.5":
-  version: 16.2.5
-  resolution: "@gravitee/ui-particles-angular@npm:16.2.5"
+"@gravitee/ui-particles-angular@npm:16.4.0":
+  version: 16.4.0
+  resolution: "@gravitee/ui-particles-angular@npm:16.4.0"
   dependencies:
     "@fontsource/fira-mono": "npm:5.0.14"
     "@fontsource/kanit": "npm:^5.2.6"
@@ -3720,7 +3720,7 @@ __metadata:
       optional: true
     prismjs:
       optional: true
-  checksum: 10c0/bfbbff4a5e2b77c9111a5099376bc298482db9722c1b7d9e20a464706ff4cf5bd1ad663b0e4c24a4ce178b4414cc6c70d8a4894dab45b6a9232708fcb00a98ff
+  checksum: 10c0/41f3952cf9c4903ef59389a0586f9abd68c8376e0e86c0c4e21a046eeea653cfb1f2e6a1ad3a8b74fcdef2d68a93fec52731251a89ad951184e9e2ad15c6800f
   languageName: node
   linkType: hard
 
@@ -6279,7 +6279,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/regex-escape@npm:^3":
+"@types/regex-escape@npm:3.4.1":
   version: 3.4.1
   resolution: "@types/regex-escape@npm:3.4.1"
   checksum: 10c0/6f6d1a01a37df6c368dd6df9720b4e013cf40c76dc4c24688c2982260608821e0d1d8ddfe7335386a3393599dfbf343e0f3b9a08beac818c3ee7e8ab16f24f7a
@@ -10989,7 +10989,7 @@ __metadata:
     "@asciidoctor/core": "npm:3.0.4"
     "@ctrl/ngx-codemirror": "npm:7.0.0"
     "@gravitee/ui-components": "npm:4.3.3"
-    "@gravitee/ui-particles-angular": "npm:^16.2.5"
+    "@gravitee/ui-particles-angular": "npm:16.4.0"
     "@ngx-formly/core": "npm:6.3.12"
     "@ngx-formly/material": "npm:6.3.12"
     "@openfga/frontend-utils": "npm:0.2.0-beta.11"
@@ -11000,7 +11000,7 @@ __metadata:
     "@types/json-schema": "npm:7.0.15"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:20.11.23"
-    "@types/regex-escape": "npm:^3"
+    "@types/regex-escape": "npm:3.4.1"
     "@typescript-eslint/eslint-plugin": "npm:8.35.1"
     "@typescript-eslint/parser": "npm:8.35.1"
     "@typescript-eslint/types": "npm:8.35.1"
