@@ -479,9 +479,12 @@ import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-
 import { MaterialMultiselectComponent } from './components/json-schema-form/material-multiselect.component';
 import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-flows/grant-flows.component';
 import { ScopesComponent } from './domain/components/oauth2-settings/scopes/scopes.component';
+import { AddScopeComponent } from './domain/components/oauth2-settings/add/add-scope.component';
 import { TokensComponent } from './domain/components/oauth2-settings/tokens/tokens.component';
-import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
+import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
+
+import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 
 @NgModule({
   declarations: [
@@ -644,6 +647,7 @@ import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/d
     McpServerSettingsComponent,
     ScopeSelectionComponent,
     ClaimsInfoDialogComponent,
+    CreateClaimComponent,
     RoleSelectionComponent,
     CertificateSelectionComponent,
     ApplicationsComponent,
@@ -756,6 +760,7 @@ import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/d
     McpToolsTableComponent,
     GrantFlowsComponent,
     ScopesComponent,
+    AddScopeComponent,
     TokensComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
