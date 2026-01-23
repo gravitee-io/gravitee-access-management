@@ -483,7 +483,6 @@ import { AddScopeComponent } from './domain/components/oauth2-settings/add/add-s
 import { TokensComponent } from './domain/components/oauth2-settings/tokens/tokens.component';
 import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
-
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 
 @NgModule({
