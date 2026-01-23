@@ -276,7 +276,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setFeatures(new ArrayList<>());
         
         ApplicationSettings settings = new ApplicationSettings();
-        io.gravitee.am.model.application.ApplicationOAuthSettings oauth = new io.gravitee.am.model.application.ApplicationOAuthSettings();
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         oauth.setScopes(List.of("scope1", "scope2"));
         settings.setOauth(oauth);
         updateRequest.setSettings(settings);
