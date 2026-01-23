@@ -97,6 +97,7 @@ export class McpServerOAuth2Service implements OAuth2SettingsService {
       description: resource.description,
       features: resource.features,
       settings: {
+        ...resource.settings,
         oauth: oauthSettings,
       },
     };
