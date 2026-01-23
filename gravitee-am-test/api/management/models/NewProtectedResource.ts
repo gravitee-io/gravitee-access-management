@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ApplicationSettings } from './ApplicationSettings';
+import {
+  ApplicationSettingsFromJSON,
+  ApplicationSettingsFromJSONTyped,
+  ApplicationSettingsToJSON,
+  ApplicationSettingsToJSONTyped,
+} from './ApplicationSettings';
 import type { NewProtectedResourceFeature } from './NewProtectedResourceFeature';
 import {
   NewProtectedResourceFeatureFromJSON,
@@ -82,6 +89,12 @@ export interface NewProtectedResource {
    * @memberof NewProtectedResource
    */
   features?: Array<NewProtectedResourceFeature>;
+  /**
+   *
+   * @type {ApplicationSettings}
+   * @memberof NewProtectedResource
+   */
+  settings?: ApplicationSettings;
 }
 
 /**
@@ -110,6 +123,7 @@ export function NewProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
     type: json['type'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(NewProtectedResourceFeatureFromJSON),
+    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
   };
 }
 
@@ -130,5 +144,6 @@ export function NewProtectedResourceToJSONTyped(value?: NewProtectedResource | n
     clientSecret: value['clientSecret'],
     type: value['type'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(NewProtectedResourceFeatureToJSON),
+    settings: ApplicationSettingsToJSON(value['settings']),
   };
 }

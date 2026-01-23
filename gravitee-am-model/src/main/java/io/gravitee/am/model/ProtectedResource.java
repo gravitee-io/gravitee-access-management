@@ -25,6 +25,7 @@ import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -90,6 +91,7 @@ public class ProtectedResource implements Notifiable {
 
     public Client toClient() {
         Client client = new Client();
+        Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
         client.setId(this.id);
         client.setClientId(this.clientId);
         client.setClientName(this.name);

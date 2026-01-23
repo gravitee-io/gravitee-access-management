@@ -18,13 +18,15 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.ResponseType;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.model.common.event.Event;
@@ -170,6 +172,17 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         toCreate.setSecretSettings(new ArrayList<>(List.of(secretSettings)));
         toCreate.setClientSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
+
+        ApplicationSettings applicationSettings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setClientId(toCreate.getClientId());
+        oAuthSettings.setClientSecret(rawSecret);
+        oAuthSettings.setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+        oAuthSettings.setResponseTypes(List.of(ResponseType.CODE));
+        oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        applicationSettings.setOauth(oAuthSettings);
+        toCreate.setSettings(applicationSettings);
+
         toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
             ProtectedResourceFeature feature = f.asFeature();
             feature.setCreatedAt(toCreate.getCreatedAt());
@@ -283,6 +296,28 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         // Normalize resource identifiers
         normalizeResourceIdentifiers(resourceToUpdate);
+
+        // Ensure OAuth 2.0 settings are robust
+        if (resourceToUpdate.getSettings() == null) {
+            resourceToUpdate.setSettings(new ApplicationSettings());
+        }
+        if (resourceToUpdate.getSettings().getOauth() == null) {
+            resourceToUpdate.getSettings().setOauth(new ApplicationOAuthSettings());
+        }
+        ApplicationOAuthSettings oauth = resourceToUpdate.getSettings().getOauth();
+        if (oauth.getGrantTypes() == null || oauth.getGrantTypes().isEmpty()) {
+            oauth.setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+        }
+        if (oauth.getResponseTypes() == null || oauth.getResponseTypes().isEmpty()) {
+            oauth.setResponseTypes(List.of(ResponseType.CODE));
+        }
+        if (oauth.getClientId() == null) {
+            oauth.setClientId(resourceToUpdate.getClientId());
+        }
+        if (oauth.getClientSecret() == null && oldResource != null && oldResource.getSettings() != null 
+                && oldResource.getSettings().getOauth() != null) {
+            oauth.setClientSecret(oldResource.getSettings().getOauth().getClientSecret());
+        }
 
         // Preserve feature timestamps
         preserveFeatureTimestamps(resourceToUpdate, oldResource);

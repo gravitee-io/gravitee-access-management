@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ApplicationSettings } from './ApplicationSettings';
+import {
+  ApplicationSettingsFromJSON,
+  ApplicationSettingsFromJSONTyped,
+  ApplicationSettingsToJSON,
+  ApplicationSettingsToJSONTyped,
+} from './ApplicationSettings';
 import type { ProtectedResourceFeature } from './ProtectedResourceFeature';
 import {
   ProtectedResourceFeatureFromJSON,
@@ -33,6 +40,13 @@ import {
   ProtectedResourceFeatureToJSON,
   ProtectedResourceFeatureToJSONTyped,
 } from './ProtectedResourceFeature';
+import type { ApplicationSecretSettings } from './ApplicationSecretSettings';
+import {
+  ApplicationSecretSettingsFromJSON,
+  ApplicationSecretSettingsFromJSONTyped,
+  ApplicationSecretSettingsToJSON,
+  ApplicationSecretSettingsToJSONTyped,
+} from './ApplicationSecretSettings';
 
 /**
  *
@@ -78,6 +92,18 @@ export interface ProtectedResourcePrimaryData {
   resourceIdentifiers?: Array<string>;
   /**
    *
+   * @type {ApplicationSettings}
+   * @memberof ProtectedResourcePrimaryData
+   */
+  settings?: ApplicationSettings;
+  /**
+   *
+   * @type {Array<ApplicationSecretSettings>}
+   * @memberof ProtectedResourcePrimaryData
+   */
+  secretSettings?: Array<ApplicationSecretSettings>;
+  /**
+   *
    * @type {Array<ProtectedResourceFeature>}
    * @memberof ProtectedResourcePrimaryData
    */
@@ -121,6 +147,9 @@ export function ProtectedResourcePrimaryDataFromJSONTyped(json: any, ignoreDiscr
     description: json['description'] == null ? undefined : json['description'],
     type: json['type'] == null ? undefined : json['type'],
     resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
+    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    secretSettings:
+      json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
@@ -145,6 +174,9 @@ export function ProtectedResourcePrimaryDataToJSONTyped(
     description: value['description'],
     type: value['type'],
     resourceIdentifiers: value['resourceIdentifiers'],
+    settings: ApplicationSettingsToJSON(value['settings']),
+    secretSettings:
+      value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(ProtectedResourceFeatureToJSON),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
