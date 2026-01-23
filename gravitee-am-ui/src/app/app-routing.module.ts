@@ -261,11 +261,7 @@ import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/t
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
-import {
-  ApplicationOAuth2Service,
-  McpServerOAuth2Service,
-  OAUTH2_SETTINGS_SERVICE,
-} from './domain/components/oauth2-settings/oauth2-settings.service';
+import { ApplicationOAuth2Service, McpServerOAuth2Service, OAUTH2_SETTINGS_SERVICE } from './services/oauth2-settings.service';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 

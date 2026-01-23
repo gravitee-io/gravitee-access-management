@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
 
-import { ScopeService } from '../services/scope.service';
+import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 
-@Injectable()
-export class ScopesAllResolver {
-  constructor(private scopeService: ScopeService) {}
-
-  resolve(route: ActivatedRouteSnapshot): Observable<any> {
-    const domainId = route.parent.data['domain'].id;
-    return this.scopeService.findAllByDomain(domainId);
-  }
+@Component({
+  selector: 'claims-info-dialog',
+  templateUrl: './claims-info.component.html',
+  standalone: false,
+})
+export class ClaimsInfoDialogComponent {
+  constructor(public dialogRef: MatDialogRef<ClaimsInfoDialogComponent>) {}
 }

@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
 
-import { ScopeService } from '../services/scope.service';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 
-@Injectable()
-export class ScopesAllResolver {
-  constructor(private scopeService: ScopeService) {}
+@Component({
+  selector: 'app-create-claim',
+  templateUrl: './add-claim.component.html',
+  standalone: false,
+})
+export class CreateClaimComponent {
+  claim: any = {};
+  tokenTypes: any[] = ['id_token', 'access_token'];
+  @Output() addClaimChange = new EventEmitter();
+  @ViewChild('claimForm', { static: true }) form: NgForm;
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> {
-    const domainId = route.parent.data['domain'].id;
-    return this.scopeService.findAllByDomain(domainId);
+  addClaim() {
+    this.addClaimChange.emit(this.claim);
+    this.claim = {};
+    this.form.reset(this.claim);
   }
 }

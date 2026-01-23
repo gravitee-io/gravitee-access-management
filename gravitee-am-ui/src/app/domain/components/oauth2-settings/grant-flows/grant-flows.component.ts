@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { some, minBy } from 'lodash';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
-import { DomainStoreService } from '../../../stores/domain.store';
+import { DomainStoreService } from '../../../../stores/domain.store';
 
 @Component({
   selector: 'app-grant-flows-settings',
@@ -63,7 +63,7 @@ export class GrantFlowsComponent implements OnInit {
     { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false },
   ];
 
-  constructor(private domainStore: DomainStoreService) {}
+  constructor(@Inject(DomainStoreService) private domainStore: DomainStoreService) {}
 
   ngOnInit() {
     this.oauthSettings = this.oauthSettings || {};

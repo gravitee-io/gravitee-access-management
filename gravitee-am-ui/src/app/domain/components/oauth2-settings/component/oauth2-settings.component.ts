@@ -19,7 +19,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ScopeService } from '../../../../services/scope.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { AuthService } from '../../../../services/auth.service';
-import { OAUTH2_SETTINGS_SERVICE, OAuth2SettingsService } from '../oauth2-settings.service';
+import { OAUTH2_SETTINGS_SERVICE, OAuth2SettingsService, OAuth2Context } from '../../../../services/oauth2-settings.service';
 
 @Component({
   selector: 'app-oauth2-settings',
@@ -34,7 +34,7 @@ export class OAuth2SettingsComponent implements OnInit {
   oauthSettings: any = {};
   readonly = false;
   formChanged = false;
-  context: string;
+  context: OAuth2Context;
 
   // Data for shared components
   customGrantTypes: any[] = [];
@@ -46,7 +46,7 @@ export class OAuth2SettingsComponent implements OnInit {
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private scopeService: ScopeService,
-    @Inject(OAUTH2_SETTINGS_SERVICE) private oauth2Service: OAuth2SettingsService
+    @Inject(OAUTH2_SETTINGS_SERVICE) private oauth2Service: OAuth2SettingsService,
   ) {}
 
   ngOnInit() {
@@ -58,21 +58,13 @@ export class OAuth2SettingsComponent implements OnInit {
     this.context = this.oauth2Service.getContext();
 
     // Load resolvers data
-    this.route.data.subscribe(data => {
-      this.customGrantTypes = data['domainGrantTypes'] || [];
-      this.scopes = data['scopes'] || [];
-      if (this.scopes.length === 0 && this.domainId) {
-        // Fallback: manually fetch scopes if resolver failed
-        this.scopeService.findAllByDomain(this.domainId).subscribe(scopes => {
-          this.scopes = scopes || [];
-        });
-      }
-    });
+    this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
+    this.scopes = this.route.snapshot.data['scopes'] || [];
 
     this.readonly = !this.authService.hasPermissions([this.oauth2Service.getPermission()]);
   }
 
-  updateSettings(newSettings: any) {    
+  updateSettings(newSettings: any) {
     // Grant flows
     this.oauthSettings.grantTypes = newSettings.grantTypes;
     this.oauthSettings.responseTypes = newSettings.responseTypes;
@@ -88,17 +80,17 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.jwksUri = newSettings.jwksUri;
     this.oauthSettings.jwks = newSettings.jwks;
     this.oauthSettings.disableRefreshTokenRotation = newSettings.disableRefreshTokenRotation;
-    
+
     // Scopes
     this.oauthSettings.scopeSettings = newSettings.scopeSettings;
     this.oauthSettings.enhanceScopesWithUserPermissions = newSettings.enhanceScopesWithUserPermissions;
-    
+
     // Tokens
     this.oauthSettings.accessTokenValiditySeconds = newSettings.accessTokenValiditySeconds;
     this.oauthSettings.refreshTokenValiditySeconds = newSettings.refreshTokenValiditySeconds;
     this.oauthSettings.idTokenValiditySeconds = newSettings.idTokenValiditySeconds;
     this.oauthSettings.tokenCustomClaims = newSettings.tokenCustomClaims;
-    
+
     this.formChanged = true;
   }
 
@@ -131,7 +123,7 @@ export class OAuth2SettingsComponent implements OnInit {
 
     // Manually assign only valid properties to avoid sending read-only fields
     const oauthSettings: any = {};
-    
+
     // Grant flows settings
     oauthSettings.grantTypes = this.oauthSettings.grantTypes;
     oauthSettings.responseTypes = this.oauthSettings.responseTypes;
@@ -146,12 +138,12 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.tlsClientAuthSanEmail = this.oauthSettings.tlsClientAuthSanEmail;
     oauthSettings.jwksUri = this.oauthSettings.jwksUri;
     oauthSettings.disableRefreshTokenRotation = this.oauthSettings.disableRefreshTokenRotation;
-    
+
     // Parse jwks if it's a string
     if (this.oauthSettings.jwks !== undefined) {
       oauthSettings.jwks = typeof this.oauthSettings.jwks === 'string' ? JSON.parse(this.oauthSettings.jwks) : this.oauthSettings.jwks;
     }
-    
+
     // Scopes
     oauthSettings.scopeSettings = this.oauthSettings.scopeSettings;
     oauthSettings.enhanceScopesWithUserPermissions = this.oauthSettings.enhanceScopesWithUserPermissions;
@@ -160,7 +152,7 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.accessTokenValiditySeconds = this.oauthSettings.accessTokenValiditySeconds;
     oauthSettings.refreshTokenValiditySeconds = this.oauthSettings.refreshTokenValiditySeconds;
     oauthSettings.idTokenValiditySeconds = this.oauthSettings.idTokenValiditySeconds;
-    
+
     // Filter out 'id' property from tokenCustomClaims (used only for UI tracking)
     if (this.oauthSettings.tokenCustomClaims !== undefined) {
       oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims.map((claim: any) => {

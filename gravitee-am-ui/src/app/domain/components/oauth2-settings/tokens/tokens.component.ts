@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { find, findIndex, remove } from 'lodash';
-import { NgForm } from '@angular/forms';
 
-import { SnackbarService } from '../../../services/snackbar.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { ClaimsInfoDialogComponent } from '../dialog/claims-info.component';
 
 @Component({
   selector: 'app-tokens-settings',
@@ -126,31 +126,4 @@ export class TokensComponent implements OnInit {
       });
     }
   }
-}
-
-@Component({
-  selector: 'app-create-claim',
-  templateUrl: './claims/add-claim.component.html',
-  standalone: false,
-})
-export class CreateClaimComponent {
-  claim: any = {};
-  tokenTypes: any[] = ['id_token', 'access_token'];
-  @Output() addClaimChange = new EventEmitter();
-  @ViewChild('claimForm', { static: true }) form: NgForm;
-
-  addClaim() {
-    this.addClaimChange.emit(this.claim);
-    this.claim = {};
-    this.form.reset(this.claim);
-  }
-}
-
-@Component({
-  selector: 'claims-info-dialog',
-  templateUrl: './dialog/claims-info.component.html',
-  standalone: false,
-})
-export class ClaimsInfoDialogComponent {
-  constructor(public dialogRef: MatDialogRef<ClaimsInfoDialogComponent>) {}
 }

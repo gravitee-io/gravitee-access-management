@@ -476,12 +476,11 @@ import {
 import { DomainMcpServerToolEditDialogComponent } from './domain/mcp-servers/mcp-server/tools/tool-edit-dialog/tool-edit-dialog.component';
 import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-tools-table.component';
 import { MaterialMultiselectComponent } from './components/json-schema-form/material-multiselect.component';
-import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-flows.component';
-import { ScopesComponent } from './domain/components/oauth2-settings/scopes.component';
-import { TokensComponent } from './domain/components/oauth2-settings/tokens.component';
+import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-flows/grant-flows.component';
+import { ScopesComponent } from './domain/components/oauth2-settings/scopes/scopes.component';
+import { TokensComponent } from './domain/components/oauth2-settings/tokens/tokens.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
-import { AddScopeComponent } from './domain/components/oauth2-settings/scopes.component';
-import { ClaimsInfoDialogComponent, CreateClaimComponent } from './domain/components/oauth2-settings/tokens.component';
+import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 
 @NgModule({
   declarations: [
@@ -552,7 +551,6 @@ import { ClaimsInfoDialogComponent, CreateClaimComponent } from './domain/compon
     LogoutComponent,
     LogoutCallbackComponent,
     BreadcrumbComponent,
-    CreateClaimComponent,
     CertificateCreationComponent,
     CertificateComponent,
     CertificateCreationStep1Component,
