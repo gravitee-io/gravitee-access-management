@@ -48,10 +48,14 @@ afterAll(async () => {
 });
 
 describe('MCP OAuth2 Resource', () => {
-
     describe('Client Credentials Flow', () => {
-
         it('should obtain access token using client_secret_basic (default)', async () => {
+            await fixture.updateMcpResourceSettings({
+                oauth: {
+                    tokenEndpointAuthMethod: 'client_secret_basic'
+                }
+            });
+
             const response = await performPost(
                 fixture.openIdConfiguration.token_endpoint,
                 '',
@@ -67,6 +71,12 @@ describe('MCP OAuth2 Resource', () => {
         });
 
         it('should fail using client_secret_post when BASIC is configured', async () => {
+             await fixture.updateMcpResourceSettings({
+                oauth: {
+                    tokenEndpointAuthMethod: 'client_secret_basic'
+                }
+            });
+
             await performPost(
                 fixture.openIdConfiguration.token_endpoint,
                 '',
@@ -78,7 +88,6 @@ describe('MCP OAuth2 Resource', () => {
         });
 
         it('should change auth method to client_secret_post and succeed', async () => {
-            // Update MCP Resource settings
             await fixture.updateMcpResourceSettings({
                 oauth: {
                     tokenEndpointAuthMethod: 'client_secret_post'
@@ -100,6 +109,12 @@ describe('MCP OAuth2 Resource', () => {
         });
 
         it('should fail using client_secret_basic when POST is configured', async () => {
+            await fixture.updateMcpResourceSettings({
+                oauth: {
+                    tokenEndpointAuthMethod: 'client_secret_post'
+                }
+            });
+
             await performPost(
                 fixture.openIdConfiguration.token_endpoint,
                 '',
@@ -114,7 +129,6 @@ describe('MCP OAuth2 Resource', () => {
 
     describe('Scope Restrictions', () => {
         beforeAll(async () => {
-            // Reset to BASIC auth for easier testing and set allowed scopes
             await fixture.updateMcpResourceSettings({
                 oauth: {
                     tokenEndpointAuthMethod: 'client_secret_basic',
@@ -182,9 +196,7 @@ describe('MCP OAuth2 Resource', () => {
                 }
             ).expect(200);
 
-            const accessToken = response.body.access_token;
-            // Decode token without library if possible, or assume success implies presence if we could check payload
-            // For checking payload in test, we need a simple JWT decoder
+            const accessToken = response.body.access_token
             const parts = accessToken.split('.');
             const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
 
