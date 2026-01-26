@@ -32,7 +32,7 @@
     <name>Gravitee IO - Access Management - OIDC CIBA - Fake Delegate Service</name>
 
     <properties>
-        <jib-maven-plugin.version>3.5.0</jib-maven-plugin.version>
+        <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
     </properties>
 
     <dependencies>
