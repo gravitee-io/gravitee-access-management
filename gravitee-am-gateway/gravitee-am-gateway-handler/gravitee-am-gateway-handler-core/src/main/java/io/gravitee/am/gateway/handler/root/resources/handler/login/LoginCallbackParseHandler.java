@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.crypto.CryptoUtils;
+import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
 import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
@@ -78,6 +79,11 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         // First, restore the initial query parameters (those provided when accessing /oauth/authorize on AM side).
+        String error = context.get(ConstantKeys.ERROR_PARAM_KEY);
+        if (error != null) {
+            context.fail(new LoginCallbackFailedException(error));
+            return;
+        }
         restoreInitialQueryParams(context, next -> {
 
             if (next.failed()) {
