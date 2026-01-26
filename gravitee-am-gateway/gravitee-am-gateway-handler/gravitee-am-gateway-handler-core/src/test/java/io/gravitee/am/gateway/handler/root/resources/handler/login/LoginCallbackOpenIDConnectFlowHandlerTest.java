@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
@@ -23,6 +27,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -90,6 +96,31 @@ public class LoginCallbackOpenIDConnectFlowHandlerTest extends RxWebTestBase {
 
         testRequest(
                 HttpMethod.POST, "/login/callback?ticket=12345",
+                null,
+                null,
+                200, "OK", null);
+
+        verify(engine, never()).render(any(Map.class), any());
+    }
+
+    @Test
+    public void shouldRestoreClientIdFromStateHash() throws Exception {
+        router
+                .post("/login/callback")
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(checkContextAssertions())
+                .handler(rc -> rc.end());
+
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .claim(ConstantKeys.CLAIM_QUERY_PARAM, "client_id=client-id")
+                .build();
+        String state = new PlainJWT(claimsSet).serialize();
+        String urlHash = URLEncoder.encode("#state=" + state, StandardCharsets.UTF_8);
+
+        assertAfterRequest(rc -> assertEquals("client-id", rc.get(Parameters.CLIENT_ID)));
+
+        testRequest(
+                HttpMethod.POST, "/login/callback?urlHash=" + urlHash,
                 null,
                 null,
                 200, "OK", null);
