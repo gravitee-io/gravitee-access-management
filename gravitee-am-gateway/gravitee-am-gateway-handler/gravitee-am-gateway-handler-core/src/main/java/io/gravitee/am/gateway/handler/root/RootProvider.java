@@ -87,19 +87,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriV
 import io.gravitee.am.gateway.handler.root.resources.handler.consent.DataConsentHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackDeviceIdHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFormHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideFormHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginPostWebAuthnHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginPageHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.RememberedLoginRedirectToAuthorizeHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.mfa.MFAChallengeUserHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
@@ -368,6 +356,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
+        Handler<RoutingContext> clientRequestParseHandlerContinueOnError = new ClientRequestParseHandler(clientSyncService).setRequired(false).setContinueOnError(true);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
@@ -460,6 +449,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(clientRequestParseHandlerContinueOnError)
                 .handler(loginCallbackParseHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(loginCallbackDeviceIdHandler)
@@ -471,6 +461,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.post(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(clientRequestParseHandlerContinueOnError)
                 .handler(loginCallbackParseHandler)
                 .handler(userRememberMeHandler)
                 .handler(socialAuthHandler)
