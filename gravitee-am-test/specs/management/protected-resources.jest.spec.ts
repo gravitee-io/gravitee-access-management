@@ -50,6 +50,10 @@ function generateValidProtectedResourceName(): string {
     return `test-${faker.datatype.number({min: 1000, max: 9999})}-${faker.commerce.productName()}`;
 }
 
+function generateValidProtectedResource(index: number): string {
+    return `test_${index}_server`;
+}
+
 function isMcpToolFeature(feature: ProtectedResourceFeature): feature is McpTool {
     return feature.type === 'MCP_TOOL' || feature.type === 'mcp_tool';
 }
@@ -519,7 +523,7 @@ describe('When admin created bunch of Protected Resources', () => {
     beforeAll(async () => {
         for (let i = 0; i < 100; i++) {
             const request = {
-                name: generateValidProtectedResourceName(),
+                name: generateValidProtectedResource(i),
                 type: "MCP_SERVER",
                 resourceIdentifiers: [`https://abc${i}.com`],
                 features: [
@@ -589,11 +593,19 @@ describe('When admin created bunch of Protected Resources', () => {
     });
 
   it('Protected Resource can be found by its id', async () => {
-    const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
-    const protectedResourcePrimaryData = page.data[55];
+        const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
+        const protectedResourcePrimaryData = page.data[55];
 
         const fetched = await getMcpServer(domainTestSearch.id, accessToken, protectedResourcePrimaryData.id);
         expect(fetched).toEqual(protectedResourcePrimaryData);
+    });
+
+    it('Protected Resource can be searched by name', async () => {
+        const nameToSearch = "test-5"
+        
+        const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch);
+        expect(pageByName.data.length).toBe(10);
+        expect(pageByName.data[0].name).toEqual(nameToSearch);
     });
 
 });
