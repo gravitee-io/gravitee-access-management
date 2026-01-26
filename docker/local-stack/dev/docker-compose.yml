@@ -83,7 +83,7 @@ services:
       - 5025:5025
 
   wiremock:
-    image: wiremock/wiremock:3.13.1
+    image: wiremock/wiremock:3.13.2
     command: ["--verbose", "--global-response-templating"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/mappings"]
