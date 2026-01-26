@@ -288,7 +288,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         // Normalize resource identifiers
         normalizeResourceIdentifiers(resourceToUpdate);
 
-        // Ensure OAuth 2.0 settings are robust
+        // Apply default OAuth 2.0 settings for missing fields
         String defaultClientSecret = null;
         if (oldResource != null && oldResource.getSettings() != null
                 && oldResource.getSettings().getOauth() != null) {
@@ -374,19 +374,19 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         return Completable.complete();
     }
 
-    private Completable validateResourceIdentifiersUniqueness(String domainId, String resourceId, 
-                                                               List<String> oldIdentifiers, 
+    private Completable validateResourceIdentifiersUniqueness(String domainId, String resourceId,
+                                                               List<String> oldIdentifiers,
                                                                List<String> newIdentifiers) {
         // A protected resource must have at least one identifier (enforced on create/update)
         if (newIdentifiers == null || newIdentifiers.isEmpty()) {
             return Completable.error(new InvalidProtectedResourceException("Field [resourceIdentifiers] must not be empty"));
         }
-        
+
         // Check if identifiers changed (order-insensitive comparison)
         if (new HashSet<>(oldIdentifiers).equals(new HashSet<>(newIdentifiers))) {
             return Completable.complete();
         }
-        
+
         // Check all new identifiers for uniqueness against other resources (excluding current resource)
         // This ensures we catch cases where an identifier that was previously owned by this resource
         // has been taken by another resource in the meantime
@@ -512,7 +512,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     }
                     final var rawSecret = SecureRandomString.generate();
                     final var secretSettings = this.applicationSecretConfig.toSecretSettings();
-                    
+
                     // Add secret settings if not present
                     if (protectedResource.getSecretSettings() == null) {
                         protectedResource.setSecretSettings(new ArrayList<>());
@@ -621,7 +621,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     if (secretToRemoveOptional.isEmpty()) {
                         return Completable.error(new ClientSecretNotFoundException(secretId));
                     }
-                    
+
                     var secretToRemove = secretToRemoveOptional.get();
                     String secretSettingsId = secretToRemove.getSettingsId();
 
@@ -629,7 +629,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
                     boolean isSecretSettingsStillUsed = protectedResource.getClientSecrets().stream()
                             .anyMatch(cs -> cs.getSettingsId().equals(secretSettingsId));
-                    
+
                     if (!isSecretSettingsStillUsed && protectedResource.getSecretSettings() != null) {
                          protectedResource.getSecretSettings().removeIf(ss -> ss.getId().equals(secretSettingsId));
                     }
