@@ -1041,11 +1041,10 @@ public class ProtectedResourceServiceImplTest {
         when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
-        var result = service.create(createDomain(), createUser(), createNewProtectedResource())
+        service.create(createDomain(), createUser(), createNewProtectedResource())
                 .test()
                 .assertComplete();
 
-        String resourceId = result.values().getFirst().getId();
         verify(repository).create(argThat(res -> 
             res.getSettings() != null &&
             res.getSettings().getOauth() != null &&
