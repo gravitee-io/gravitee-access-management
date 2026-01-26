@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 
 @Component({
@@ -24,7 +24,7 @@ import { NgForm } from '@angular/forms';
 })
 export class CreateClaimComponent {
   claim: any = {};
-  tokenTypes: any[] = ['id_token', 'access_token'];
+  @Input() tokenTypes: any[] = ['id_token', 'access_token'];
   @Output() addClaimChange = new EventEmitter();
   @ViewChild('claimForm', { static: true }) form: NgForm;
 

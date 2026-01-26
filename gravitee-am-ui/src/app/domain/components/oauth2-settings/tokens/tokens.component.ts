@@ -37,6 +37,8 @@ export class TokensComponent implements OnInit {
   @ViewChild('claimsTable') table: any;
   editing: any = {};
 
+  claimTokenTypes: string[] = [];
+
   constructor(
     public dialog: MatDialog,
     private snackbarService: SnackbarService,
@@ -45,6 +47,13 @@ export class TokensComponent implements OnInit {
   ngOnInit() {
     this.oauthSettings = this.oauthSettings || {};
     this.oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims || [];
+
+    if (this.context === 'McpServer') {
+      this.claimTokenTypes = ['access_token'];
+    } else {
+      this.claimTokenTypes = ['id_token', 'access_token'];
+    }
+
     this.initCustomClaims();
   }
 
