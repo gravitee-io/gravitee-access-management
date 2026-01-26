@@ -507,9 +507,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         String searchTerm = wildcardMatch ? wildcardQuery.toUpperCase() : "%" + query.toUpperCase() + "%";
 
         String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
-        String orderByClause = Selects.ORDER_BY.formatted(transformSortValue(sortBy), pageSortRequest.isAsc() ? "ASC" : "DESC");
-
-        String selectQuery = Selects.SEARCH_SELECT + orderByClause + " LIMIT " + pageSortRequest.getSize() + " OFFSET " + (pageSortRequest.getPage() * pageSortRequest.getSize());
+        String selectQuery = Selects.SEARCH_SELECT + databaseDialectHelper.buildPagingClause("pr." + transformSortValue(sortBy), pageSortRequest.isAsc(), pageSortRequest.getPage(), pageSortRequest.getSize());
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(selectQuery)
                 .bind(BindParams.DOMAIN_ID, domainId)
