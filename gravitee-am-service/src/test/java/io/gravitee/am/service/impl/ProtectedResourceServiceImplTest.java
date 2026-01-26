@@ -17,6 +17,9 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.ResponseType;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
@@ -995,5 +998,93 @@ public class ProtectedResourceServiceImplTest {
                     && res.getSettings().getSecretExpirationSettings().getExpiryTimeSeconds().equals(3600L)
                     && res.getSettings().getSecretExpirationSettings().getEnabled().equals(true);
         }));
+    }
+
+    @Test
+    public void shouldApplyDefaultSettingsOnCreate() {
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(repository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
+                .thenReturn(Completable.complete());
+        when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        var result = service.create(createDomain(), createUser(), createNewProtectedResource())
+                .test()
+                .assertComplete();
+
+        String resourceId = result.values().getFirst().getId();
+        verify(repository).create(argThat(res -> 
+            res.getSettings() != null &&
+            res.getSettings().getOauth() != null &&
+            res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
+            res.getSettings().getOauth().getResponseTypes().contains(ResponseType.CODE) &&
+            res.getSettings().getOauth().getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC) &&
+            res.getSettings().getOauth().getClientId().equals(CLIENT_ID)
+        ));
+    }
+
+    @Test
+    public void shouldApplyDefaultSettingsOnUpdate() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        // Ensure existing resource has NO settings
+        existingResource.setSettings(null);
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("New Name");
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(new ArrayList<>());
+        
+        // request has NO settings provided
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
+                .test()
+                .assertComplete();
+
+        verify(repository).update(argThat(res -> 
+            res.getSettings() != null &&
+            res.getSettings().getOauth() != null &&
+            res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
+            res.getSettings().getOauth().getResponseTypes().contains(ResponseType.CODE) &&
+            res.getSettings().getOauth().getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+        ));
+    }
+
+    @Test
+    public void shouldPreserveExistingSettingsOnUpdate() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        ApplicationOAuthSettings oldOauth = new ApplicationOAuthSettings();
+        oldOauth.setClientSecret("old-secret");
+        ApplicationSettings oldSettings = new ApplicationSettings();
+        oldSettings.setOauth(oldOauth);
+        existingResource.setSettings(oldSettings);
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("New Name");
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(new ArrayList<>());
+        // Provide settings but with MISSING OAuth config to force defaults logic to run
+        updateRequest.setSettings(new ApplicationSettings()); 
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
+                .test()
+                .assertComplete();
+
+        verify(repository).update(argThat(res -> 
+            res.getSettings() != null &&
+            res.getSettings().getOauth() != null &&
+            // Check that existing secret was preserved
+            res.getSettings().getOauth().getClientSecret().equals("old-secret") &&
+            // Check that defaults were applied for missing fields
+            res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)
+        ));
     }
 }

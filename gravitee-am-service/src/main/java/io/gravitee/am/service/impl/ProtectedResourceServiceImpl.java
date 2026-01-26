@@ -172,16 +172,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         toCreate.setSecretSettings(new ArrayList<>(List.of(secretSettings)));
         toCreate.setClientSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
-
-        ApplicationSettings applicationSettings = new ApplicationSettings();
-        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
-        oAuthSettings.setClientId(toCreate.getClientId());
-        oAuthSettings.setClientSecret(rawSecret);
-        oAuthSettings.setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
-        oAuthSettings.setResponseTypes(List.of(ResponseType.CODE));
-        oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
-        applicationSettings.setOauth(oAuthSettings);
-        toCreate.setSettings(applicationSettings);
+        applyDefaultOAuthSettings(toCreate, rawSecret);
 
         toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
             ProtectedResourceFeature feature = f.asFeature();
@@ -298,26 +289,12 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         normalizeResourceIdentifiers(resourceToUpdate);
 
         // Ensure OAuth 2.0 settings are robust
-        if (resourceToUpdate.getSettings() == null) {
-            resourceToUpdate.setSettings(new ApplicationSettings());
-        }
-        if (resourceToUpdate.getSettings().getOauth() == null) {
-            resourceToUpdate.getSettings().setOauth(new ApplicationOAuthSettings());
-        }
-        ApplicationOAuthSettings oauth = resourceToUpdate.getSettings().getOauth();
-        if (oauth.getGrantTypes() == null || oauth.getGrantTypes().isEmpty()) {
-            oauth.setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
-        }
-        if (oauth.getResponseTypes() == null || oauth.getResponseTypes().isEmpty()) {
-            oauth.setResponseTypes(List.of(ResponseType.CODE));
-        }
-        if (oauth.getClientId() == null) {
-            oauth.setClientId(resourceToUpdate.getClientId());
-        }
-        if (oauth.getClientSecret() == null && oldResource != null && oldResource.getSettings() != null 
+        String defaultClientSecret = null;
+        if (oldResource != null && oldResource.getSettings() != null
                 && oldResource.getSettings().getOauth() != null) {
-            oauth.setClientSecret(oldResource.getSettings().getOauth().getClientSecret());
+            defaultClientSecret = oldResource.getSettings().getOauth().getClientSecret();
         }
+        applyDefaultOAuthSettings(resourceToUpdate, defaultClientSecret);
 
         // Preserve feature timestamps
         preserveFeatureTimestamps(resourceToUpdate, oldResource);
@@ -718,5 +695,30 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     private ClientSecret buildClientSecret(Domain domain, ApplicationSecretSettings secretSettings, String rawSecret) {
         return this.secretService.generateClientSecret("Default", rawSecret, secretSettings, domain.getSecretExpirationSettings(), null);
+    }
+
+    private static void applyDefaultOAuthSettings(ProtectedResource resource, String defaultClientSecret) {
+        if (resource.getSettings() == null) {
+            resource.setSettings(new ApplicationSettings());
+        }
+        if (resource.getSettings().getOauth() == null) {
+            resource.getSettings().setOauth(new ApplicationOAuthSettings());
+        }
+        ApplicationOAuthSettings oauth = resource.getSettings().getOauth();
+        if (oauth.getGrantTypes() == null || oauth.getGrantTypes().isEmpty()) {
+            oauth.setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+        }
+        if (oauth.getResponseTypes() == null || oauth.getResponseTypes().isEmpty()) {
+            oauth.setResponseTypes(List.of(ResponseType.CODE));
+        }
+        if (oauth.getTokenEndpointAuthMethod() == null) {
+            oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        }
+        if (oauth.getClientId() == null) {
+            oauth.setClientId(resource.getClientId());
+        }
+        if (oauth.getClientSecret() == null && defaultClientSecret != null) {
+            oauth.setClientSecret(defaultClientSecret);
+        }
     }
 }
