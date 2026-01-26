@@ -323,6 +323,12 @@ data:
 {{ toYaml .Values.api.services.sync | indent 8 }}
     {{- end }}
 
+    {{- if .Values.api.services.purge }}
+      # Data purge service (JDBC only).
+      purge:
+{{ toYaml .Values.api.services.purge | indent 8 }}
+    {{- end }}
+
     {{- if .Values.api.services.notifier }}
       notifier:
 {{ toYaml .Values.api.services.notifier | indent 8 }}
