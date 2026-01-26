@@ -18,7 +18,6 @@
 <div fxLayout="row">
   <div fxFlex="70">
     <form (keydown.enter)="(false)" (ngSubmit)="modelChanged()">
-      <!-- Note: Submit is not used directly, handled by parent, or use a separate save button via parent -->
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>Tokens</h5>
@@ -35,7 +34,7 @@
                 placeholder="Access token validity"
                 name="accessTokenValidity"
                 min="0"
-                (blur)="modelChanged()"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="oauthSettings.accessTokenValiditySeconds"
                 [disabled]="readonly"
               />
@@ -49,7 +48,7 @@
                 placeholder="Refresh token validity"
                 name="refreshTokenValidity"
                 min="0"
-                (blur)="modelChanged()"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="oauthSettings.refreshTokenValiditySeconds"
                 [disabled]="readonly"
               />
@@ -63,7 +62,7 @@
                 placeholder="ID token validity"
                 name="idTokenValidity"
                 min="0"
-                (blur)="modelChanged()"
+                (ngModelChange)="modelChanged()"
                 [(ngModel)]="oauthSettings.idTokenValiditySeconds"
                 [disabled]="readonly"
               />
