@@ -42,7 +42,7 @@ export interface McpOAuth2ResourceFixture {
     refreshMcpResource: () => Promise<void>;
 }
 
-export const setupMcpOAuth2ResourceFixture = async (): Promise<McpOAuth2ResourceFixture> => {
+export const setupMcpOAuth2ResourceFixture = async (settings: any = {}): Promise<McpOAuth2ResourceFixture> => {
     const accessToken = await requestAdminAccessToken();
     expect(accessToken).toBeDefined();
 
@@ -71,6 +71,16 @@ export const setupMcpOAuth2ResourceFixture = async (): Promise<McpOAuth2Resource
     const clientSecret = await createMcpClientSecret(domain.id, accessToken, mcpResource.id, {name: 'default-secret'});
     expect(clientSecret).toBeDefined();
 
+    // If settings are provided, apply them before starting the domain
+    if (Object.keys(settings).length > 0) {
+        await patchProtectedResource(domain.id, accessToken, mcpResource.id, {
+            settings: settings
+        });
+        // No need to wait for sync here as domain is not started yet.
+        // Refresh mcpResource
+        mcpResource = await getMcpServer(domain.id, accessToken, mcpResource.id);
+    }
+
     // 4. Start Domain
     const domainStarted = await startDomain(domain.id, accessToken).then(() => waitForDomainStart(domain));
     domain = domainStarted.domain;
@@ -94,7 +104,6 @@ export const setupMcpOAuth2ResourceFixture = async (): Promise<McpOAuth2Resource
 
         // Refresh local mcpResource to ensure it's up to date if needed, though often we just need the resource ID
         mcpResource = await getMcpServer(domain.id, accessToken, mcpResource.id);
-
     };
 
     const refreshMcpResource = async () => {
