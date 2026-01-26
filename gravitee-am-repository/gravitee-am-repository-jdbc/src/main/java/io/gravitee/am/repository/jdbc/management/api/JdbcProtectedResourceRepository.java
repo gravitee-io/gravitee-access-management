@@ -481,4 +481,49 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .concatMap(jdbc -> getTemplate().insert(jdbc))
                 .map(jdbc -> mapper.map(jdbc, ProtectedResourceFeature.class));
     }
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("search({}, {}, {}, {})", domainId, type, query, pageSortRequest.getPage());
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+        String searchTerm = wildcardMatch ? wildcardQuery.toUpperCase() : "%" + query.toUpperCase() + "%";
+
+        String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
+
+        // Manual sorting in SQL if possible, or post-process. 
+        // Since we modify the query manually, we should append ORDER BY.
+        // However, R2DBC client binding with manual SQL and Sort might be tricky.
+        // Let's use string concatenation in the worst case for order by provided it's safe (sort columns are Enum-like usually safe).
+        String orderByClause = " ORDER BY pr." + transformSortValue(sortBy) + (pageSortRequest.isAsc() ? " ASC" : " DESC");
+
+        String baseQuery = """
+                FROM protected_resources pr
+                LEFT JOIN protected_resource_identifiers pri ON pr.id = pri.protected_resource_id
+                WHERE pr.domain_id = :domainId 
+                AND pr.type = :type
+                AND (UPPER(pr.name) LIKE :query OR UPPER(pri.identifier) LIKE :query)
+                """;
+
+        String selectQuery = "SELECT DISTINCT pr.* " + baseQuery + orderByClause + " LIMIT " + pageSortRequest.getSize() + " OFFSET " + (pageSortRequest.getPage() * pageSortRequest.getSize());
+        String countQuery = "SELECT COUNT(DISTINCT pr.id) " + baseQuery;
+
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(selectQuery)
+                .bind(COLUMN_DOMAIN_ID, domainId)
+                .bind(COLUMN_TYPE, type.name())
+                .bind("query", searchTerm)
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> complete(app).toFlowable())
+                .map(ProtectedResourcePrimaryData::of)
+                .toList()
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(countQuery)
+                        .bind(COLUMN_DOMAIN_ID, domainId)
+                        .bind(COLUMN_TYPE, type.name())
+                        .bind("query", searchTerm)
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .doOnError(error -> LOGGER.error("Unable to search protected resources with domainId={}, type={} (page={}/size={})", domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+    }
 }

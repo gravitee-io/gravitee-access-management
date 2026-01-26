@@ -142,6 +142,19 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     }
 
     @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, Type type, String query, PageSortRequest pageSortRequest) {
+        Bson mongoQuery = and(
+                eq(DOMAIN_ID_FIELD, domain),
+                eq(TYPE_FIELD, type),
+                or(
+                        regex("name", query, "i"),
+                        regex(RESOURCE_IDENTIFIERS_FIELD, query, "i")
+                )
+        );
+        return queryProtectedResource(mongoQuery, pageSortRequest).observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<Boolean> existsByResourceIdentifiers(String domainId, List<String> resourceIdentifiers) {
         if(resourceIdentifiers.isEmpty()){
             return Single.just(false);
