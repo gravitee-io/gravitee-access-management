@@ -84,7 +84,7 @@
           <mat-divider></mat-divider>
         </div>
         <div class="token-custom-claims">
-          <app-create-claim *ngIf="!readonly" (addClaimChange)="addClaim($event)"></app-create-claim>
+          <app-create-claim *ngIf="!readonly" [tokenTypes]="claimTokenTypes" (addClaimChange)="addClaim($event)"></app-create-claim>
           <p *ngIf="!claimsIsEmpty() && !readonly">
             <small><i>Double click to edit and press enter to save changes</i></small>
           </p>
