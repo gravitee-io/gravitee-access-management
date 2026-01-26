@@ -601,11 +601,12 @@ describe('When admin created bunch of Protected Resources', () => {
     });
 
     it('Protected Resource can be searched by name', async () => {
-        const nameToSearch = "test-5"
+        const nameToSearch = "test_5"
         
         const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch);
-        expect(pageByName.data.length).toBe(10);
-        expect(pageByName.data[0].name).toEqual(nameToSearch);
+        // test_5 and test_50,51... so 11
+        expect(pageByName.data.length).toBe(11);
+        expect(pageByName.data.every(data => data.name.includes(nameToSearch))).toBeTruthy();
     });
 
 });
