@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTParser;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -94,6 +96,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
             // decode hash value and put data in the execution context
             Map<String, String> hashValues = getParams(hashValue.substring(1)); // remove # symbol
             hashValues.forEach(context::put);
+            restoreClientIdFromState(context, hashValues);
             context.next();
             return;
         }
@@ -114,5 +117,29 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
 
     private Map<String, String> getParams(String query) {
         return URLParametersUtils.parse(query);
+    }
+
+    private void restoreClientIdFromState(RoutingContext ctx, Map<String, String> stateClaims){
+        try{
+            if(ctx.get(Parameters.CLIENT_ID) == null){
+                String stateJwt = stateClaims.get(Parameters.STATE);
+                if(stateJwt != null){
+                    JWT jwt = JWTParser.parse(stateJwt);
+                    String query = jwt.getJWTClaimsSet().getStringClaim(ConstantKeys.CLAIM_QUERY_PARAM);
+                    if(query != null){
+                        Map<String, String> queryParams = URLParametersUtils.parse(query);
+                        String clientId = queryParams.get(Parameters.CLIENT_ID);
+                        ctx.put(Parameters.CLIENT_ID, clientId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            if(logger.isDebugEnabled()){
+                logger.warn("Unable to read client_id from state token - turn DEBUG on to get more details");
+            } else {
+                logger.warn("Unable to read client_id from state token", e);
+            }
+        }
+
     }
 }
