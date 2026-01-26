@@ -160,22 +160,22 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     }
 
     private String createRegex(String query) {
-        if (query.contains("*")) {
-           String[] parts = query.split("\\*", -1); 
-            StringBuilder sb = new StringBuilder("^");
-            for (int i = 0; i < parts.length; i++) {
-                if (!parts[i].isEmpty()) {
-                    sb.append(Pattern.quote(parts[i]));
-                }
-                if (i < parts.length - 1) {
-                    sb.append(".*");
-                }
-            }
-            sb.append("$");
-            return sb.toString();
-        } else {
-             return Pattern.quote(query);
+        if (!query.contains("*")) {
+            return ".*" + Pattern.quote(query) + ".*";
         }
+        
+        String[] parts = query.split("\\*", -1); 
+        StringBuilder sb = new StringBuilder("^");
+        for (int i = 0; i < parts.length; i++) {
+            if (!parts[i].isEmpty()) {
+                sb.append(Pattern.quote(parts[i]));
+            }
+            if (i < parts.length - 1) {
+                sb.append(".*");
+            }
+        }
+        sb.append("$");
+        return sb.toString();
     }
 
     @Override

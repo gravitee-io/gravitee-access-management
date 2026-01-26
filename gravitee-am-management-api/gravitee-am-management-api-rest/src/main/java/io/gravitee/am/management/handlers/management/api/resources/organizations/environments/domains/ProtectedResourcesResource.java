@@ -163,10 +163,7 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.PROTECTED_RESOURCE, Permission.PROTECTED_RESOURCE, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> {
-                                            // TODO: implement search with ids
-                                            return service.findByDomainAndTypeAndIds(domainId, resourceType, ids, pageSortRequest);
-                                        })))
+                                        .flatMap(ids -> service.findByDomainAndTypeAndIds(domainId, resourceType, ids, pageSortRequest))))
                 .subscribe(response::resume, response::resume);
     }
 

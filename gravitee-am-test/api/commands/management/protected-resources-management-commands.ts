@@ -71,7 +71,6 @@ export const getMcpServers = (domainId: string, accessToken: string, size = 10, 
     page: page,
     type: 'MCP_SERVER',
     sort: sort,
-    // @ts-ignore
     q: query,
   });
 
