@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SortType } from '@swimlane/ngx-datatable';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 
 import { Page, Sort } from '../../services/api.model';
 import { DialogService } from '../../services/dialog.service';
@@ -30,7 +31,7 @@ import { McpServer, McpServersService } from './mcp-servers.service';
   styleUrl: './mcp-servers.component.scss',
   standalone: false,
 })
-export class DomainMcpServersComponent implements OnInit {
+export class DomainMcpServersComponent implements OnInit, OnDestroy {
   PAGE_SIZE = 10;
   domainId: string;
   page: Page<McpServer>;
@@ -38,6 +39,8 @@ export class DomainMcpServersComponent implements OnInit {
   sort: Sort = { dir: 'desc', prop: 'updatedAt' };
 
   searchValue: string;
+  private searchSubject = new Subject<string>();
+  private searchSubscription: Subscription;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -56,6 +59,18 @@ export class DomainMcpServersComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.fetchData();
+
+    this.searchSubscription = this.searchSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
+      this.searchValue = value;
+      this.currentPage = 0;
+      this.fetchData();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
   }
 
   fetchData() {
@@ -65,9 +80,7 @@ export class DomainMcpServersComponent implements OnInit {
   }
 
   update(event: any) {
-    this.searchValue = event.target.value;
-    this.currentPage = 0;
-    this.fetchData();
+    this.searchSubject.next(event.target.value);
   }
 
   changePage(e: any) {

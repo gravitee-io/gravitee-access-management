@@ -898,4 +898,73 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         return toSave;
     }
 
+    @Test
+    public void shouldFindBySearchWithWildcards() {
+        ProtectedResource resource1 = generateResource("wildcard-test-resource", "wildcard-domain", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        ProtectedResource resource2 = generateResource("other-resource", "wildcard-domain", "client2", generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        
+        repository.create(resource1).ignoreElement()
+                .andThen(repository.create(resource2).ignoreElement())
+                .andThen(repository.search("wildcard-domain", MCP_SERVER, "wildcard*", PageSortRequest.builder().page(0).size(10).build()))
+                .doOnSuccess(page -> {
+                    if (page.getData().size() != 1) {
+                        throw new AssertionError("Expected 1 result but got " + page.getData().size());
+                    }
+                    if (page.getData().stream().noneMatch(r -> r.name().equals("wildcard-test-resource"))) {
+                        throw new AssertionError("Result not found");
+                    }
+                })
+                .flatMap(prev -> repository.search("wildcard-domain", MCP_SERVER, "*resource", PageSortRequest.builder().page(0).size(10).build()))
+                .doOnSuccess(page -> {
+                    if (page.getData().size() != 2) {
+                        throw new AssertionError("Expected 2 results but got " + page.getData().size());
+                    }
+                    boolean found1 = page.getData().stream().anyMatch(r -> r.name().equals("wildcard-test-resource"));
+                    boolean found2 = page.getData().stream().anyMatch(r -> r.name().equals("other-resource"));
+                    if (!found1 || !found2) {
+                        throw new AssertionError("Missing results");
+                    }
+                })
+                .flatMap(prev -> repository.search("wildcard-domain", MCP_SERVER, "wild*resource", PageSortRequest.builder().page(0).size(10).build()))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("wildcard-test-resource")));
+    }
+
+    @Test
+    public void shouldFindBySearchWithSpecialCharacters() {
+        ProtectedResource resource = generateResource("special[char]-test", "special-char-domain", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        
+        repository.create(resource).ignoreElement()
+                .andThen(repository.search("special-char-domain", MCP_SERVER, "special[char]", PageSortRequest.builder().page(0).size(10).build()))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(r -> r.name().equals("special[char]-test")));
+    }
+
+    @Test
+    public void shouldFindBySearchCaseInsensitive() {
+        ProtectedResource resource = generateResource("CaseSensitiveTest", "case-domain", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        
+        repository.create(resource).ignoreElement()
+                .andThen(repository.search("case-domain", MCP_SERVER, "casesensitivetest", PageSortRequest.builder().page(0).size(10).build()))
+                .doOnSuccess(page -> {
+                    if (page.getData().size() != 1) {
+                        throw new AssertionError("Expected 1 result for lowercase search");
+                    }
+                })
+                .flatMap(prev -> repository.search("case-domain", MCP_SERVER, "CASESENSITIVETEST", PageSortRequest.builder().page(0).size(10).build()))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(page -> page.getData().size() == 1);
+    }
 }
+

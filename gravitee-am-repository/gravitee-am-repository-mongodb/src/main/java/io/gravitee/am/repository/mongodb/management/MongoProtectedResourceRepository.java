@@ -37,6 +37,8 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.regex.Pattern;
+
 
 import static com.mongodb.client.model.Filters.*;
 import static io.gravitee.am.repository.mongodb.management.MongoApplicationRepository.*;
@@ -141,17 +143,39 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
     }
 
+
+
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> search(String domain, Type type, String query, PageSortRequest pageSortRequest) {
+        String regex = createRegex(query);
         Bson mongoQuery = and(
                 eq(DOMAIN_ID_FIELD, domain),
                 eq(TYPE_FIELD, type),
                 or(
-                        regex("name", query, "i"),
-                        regex(RESOURCE_IDENTIFIERS_FIELD, query, "i")
+                        regex("name", regex, "i"),
+                        regex(RESOURCE_IDENTIFIERS_FIELD, regex, "i")
                 )
         );
         return queryProtectedResource(mongoQuery, pageSortRequest).observeOn(Schedulers.computation());
+    }
+
+    private String createRegex(String query) {
+        if (query.contains("*")) {
+           String[] parts = query.split("\\*", -1); 
+            StringBuilder sb = new StringBuilder("^");
+            for (int i = 0; i < parts.length; i++) {
+                if (!parts[i].isEmpty()) {
+                    sb.append(Pattern.quote(parts[i]));
+                }
+                if (i < parts.length - 1) {
+                    sb.append(".*");
+                }
+            }
+            sb.append("$");
+            return sb.toString();
+        } else {
+             return Pattern.quote(query);
+        }
     }
 
     @Override
