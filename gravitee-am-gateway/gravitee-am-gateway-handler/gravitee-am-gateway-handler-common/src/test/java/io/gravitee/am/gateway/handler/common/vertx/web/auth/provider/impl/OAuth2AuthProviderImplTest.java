@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
@@ -53,13 +54,19 @@ public class OAuth2AuthProviderImplTest {
     @Mock
     private ClientSyncService clientSyncService;
 
+    @Mock
+    private ProtectedResourceSyncService protectedResourceSyncService;
+
     @InjectMocks
     private OAuth2AuthProviderImpl oAuth2AuthProvider;
 
     @Before
     public void setUp() {
         // Reset mocks before each test
-        reset(introspectionTokenService, clientSyncService);
+        reset(introspectionTokenService, clientSyncService, protectedResourceSyncService);
+        // Default: protectedResourceSyncService returns empty (for existing tests)
+        when(protectedResourceSyncService.findByDomainAndClientId(anyString(), anyString()))
+                .thenReturn(Maybe.empty());
     }
 
     @Test
@@ -135,10 +142,11 @@ public class OAuth2AuthProviderImplTest {
         
         InvalidTokenException exception = (InvalidTokenException) result[0].cause();
         assertEquals("Error message should match", "The token is invalid", exception.getMessage());
-        assertEquals("Error details should match", "Client not found", exception.getDetails());
+        assertEquals("Error details should match", "Client or resource not found: " + CLIENT_ID, exception.getDetails());
 
         verify(introspectionTokenService).introspect(TOKEN, false);
         verify(clientSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
     }
 
     @Test
@@ -167,6 +175,46 @@ public class OAuth2AuthProviderImplTest {
 
         verify(introspectionTokenService).introspect(TOKEN, true);
         verify(clientSyncService, never()).findByDomainAndClientId(anyString(), anyString());
+    }
+
+    @Test
+    public void shouldFindProtectedResource_whenAudIsProtectedResourceClientId() throws InterruptedException {
+        // Given: Token with aud = Protected Resource clientId (actual MCP server use case)
+        String protectedResourceClientId = "mcp-server-client-id";
+        JWT jwt = new JWT(Map.of(
+                Claims.SUB, "test-sub",
+                Claims.AUD, protectedResourceClientId,
+                Claims.DOMAIN, DOMAIN
+        ));
+        Client protectedResourceClient = new Client();
+        protectedResourceClient.setClientId(protectedResourceClientId);
+        protectedResourceClient.setDomain(DOMAIN);
+
+        when(introspectionTokenService.introspect(TOKEN, false))
+                .thenReturn(Maybe.just(jwt));
+        when(clientSyncService.findByDomainAndClientId(DOMAIN, protectedResourceClientId))
+                .thenReturn(Maybe.empty()); // Not found in ClientManager (Applications only)
+        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, protectedResourceClientId))
+                .thenReturn(Maybe.just(protectedResourceClient)); // Found in ProtectedResourceManager
+
+        CountDownLatch latch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
+
+        // When
+        oAuth2AuthProvider.decodeToken(TOKEN, false, handler -> {
+            result[0] = handler;
+            latch.countDown();
+        });
+
+        // Then
+        assertTrue("Handler should be called", latch.await(1, TimeUnit.SECONDS));
+        assertNotNull("Result should not be null", result[0]);
+        assertTrue("Result should be successful", result[0].succeeded());
+        assertEquals("Client should match", protectedResourceClient, result[0].result().getClient());
+
+        verify(clientSyncService).findByDomainAndClientId(DOMAIN, protectedResourceClientId);
+        verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, protectedResourceClientId);
     }
 }
 

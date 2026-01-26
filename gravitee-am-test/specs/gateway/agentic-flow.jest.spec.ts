@@ -21,21 +21,18 @@ import {
     safeDeleteDomain,
     setupDomainForTest,
     waitForOidcReady,
-    waitForDomainSync, waitFor
+    waitFor,
 } from '@management-commands/domain-management-commands';
-import {delay, uniqueName} from '@utils-commands/misc';
+import {uniqueName} from '@utils-commands/misc';
 import {buildTestUser, createUser} from '@management-commands/user-management-commands';
-import {
-    createAuthorizationEngine,
-    deleteAuthorizationEngine
-} from '@management-commands/authorization-engine-management-commands';
+import {createAuthorizationEngine, deleteAuthorizationEngine} from '@management-commands/authorization-engine-management-commands';
 import {addTuple} from '@management-commands/openfga-settings-commands';
 import {createScope} from '@management-commands/scope-management-commands';
 import {mcpAuthorizationModel, tupleFactory, authzenFactory} from '@api-fixtures/openfga-fixtures';
 import {AuthorizationEngine} from '@management-models/AuthorizationEngine';
 import {createApplication, updateApplication} from '@management-commands/application-management-commands';
 import {getAllIdps} from '@management-commands/idp-management-commands';
-import {signInUser, performPost, performGet} from '@gateway-commands/oauth-oidc-commands';
+import {performPost, performGet, requestClientCredentialsToken} from '@gateway-commands/oauth-oidc-commands';
 import {evaluateAccess} from '@gateway-commands/authzen-commands';
 import {
     createProtectedResource,
@@ -164,7 +161,7 @@ beforeAll(async () => {
 
     await updateProtectedResource(testDomain.id, accessToken, mcpServer.id, updateToolsRequest);
 
-    // 8. Create Web Application for authorization code flow
+    // 10. Create Web Application for authorization code flow
     const idpSet = await getAllIdps(testDomain.id, accessToken);
     const defaultIdp = idpSet.values().next().value;
 
@@ -203,7 +200,7 @@ beforeAll(async () => {
         }),
     );
 
-    // 10. Create test users
+    // 11. Create test users
     const user1Data = buildTestUser(0);
     testUser1 = await createUser(testDomain.id, accessToken, user1Data);
     testUser1.password = user1Data.password;
@@ -320,7 +317,20 @@ describe('Agentic Flow - User → Application → Token → MCP Server → AuthZ
         expect(introspectionResponse.body.scope).toContain('calendar:write');
         expect(introspectionResponse.body.scope).toContain('weather:read');
 
-        // Step 5: MCP Server calls AuthZEN to check if user can access the tool
+        // Step 5: MCP Server calls AuthZEN to check fine-grained access to specific tool
+        // MCP Server obtains an access token using client_credentials grant
+        const mcpServerAccessToken = await requestClientCredentialsToken(
+            {
+                settings: {
+                    oauth: {
+                        clientId: mcpServer.clientId,
+                        clientSecret: mcpServer.clientSecret,
+                    },
+                },
+            },
+            openIdConfig,
+        );
+
         const authzenRequest = authzenFactory.canAccess(
             introspectionResponse.body.username,
             'weather_tool',
@@ -329,11 +339,11 @@ describe('Agentic Flow - User → Application → Token → MCP Server → AuthZ
 
         const authzenResponse = await evaluateAccess(
             testDomain.hrid,
-            mcpServer.clientId,
-            mcpServer.clientSecret,
+            mcpServerAccessToken,
             authzenRequest,
         );
 
+        // Step 6: AuthZEN evaluates against OpenFGA tuples (owner/viewer relations)
         expect(authzenResponse.decision).toBe(true);
     });
 });

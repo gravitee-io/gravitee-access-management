@@ -184,3 +184,36 @@ export async function requestToken(application: any, openIdConfiguration: any, p
     },
   ).expect(200);
 }
+
+/**
+ * Request access token using client_credentials grant
+ * @param application - Application with clientId and clientSecret
+ * @param openIdConfiguration - OpenID configuration containing token_endpoint
+ * @param scope - Optional scope parameter
+ * @returns Promise resolving to access token string
+ */
+export async function requestClientCredentialsToken(
+  application: any,
+  openIdConfiguration: any,
+  scope?: string,
+): Promise<string> {
+  const tokenParams = new URLSearchParams({
+    grant_type: 'client_credentials',
+  });
+  if (scope) {
+    tokenParams.append('scope', scope);
+  }
+
+  const response = await performPost(
+    openIdConfiguration.token_endpoint,
+    '',
+    tokenParams.toString(),
+    {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + applicationBase64Token(application),
+    },
+  ).expect(200);
+
+  expect(response.body.access_token).toBeDefined();
+  return response.body.access_token;
+}
