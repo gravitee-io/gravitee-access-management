@@ -35,8 +35,8 @@ import {
 export class McpServersService {
   constructor(private readonly service: ProtectedResourceService) {}
 
-  findByDomain(domainId: string, page: number, size: number, sort: Sort): Observable<Page<McpServer>> {
-    return this.service.findByDomain(domainId, ProtectedResourceType.MCP_SERVER, page, size, sort).pipe(
+  findByDomain(domainId: string, page: number, size: number, sort: Sort, searchTerm?: string): Observable<Page<McpServer>> {
+    return this.service.findByDomain(domainId, ProtectedResourceType.MCP_SERVER, page, size, sort, searchTerm).pipe(
       map(
         (page) =>
           ({

@@ -37,6 +37,8 @@ export class DomainMcpServersComponent implements OnInit {
   currentPage: number;
   sort: Sort = { dir: 'desc', prop: 'updatedAt' };
 
+  searchValue: string;
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly service: McpServersService,
@@ -57,7 +59,15 @@ export class DomainMcpServersComponent implements OnInit {
   }
 
   fetchData() {
-    this.service.findByDomain(this.domainId, this.currentPage, this.PAGE_SIZE, this.sort).subscribe((page) => (this.page = page));
+    this.service
+      .findByDomain(this.domainId, this.currentPage, this.PAGE_SIZE, this.sort, this.searchValue)
+      .subscribe((page) => (this.page = page));
+  }
+
+  update(event: any) {
+    this.searchValue = event.target.value;
+    this.currentPage = 0;
+    this.fetchData();
   }
 
   changePage(e: any) {
@@ -86,7 +96,7 @@ export class DomainMcpServersComponent implements OnInit {
   }
 
   get isEmpty(): boolean {
-    return this.page.data?.length == 0;
+    return (!this.page.data || this.page.data.length === 0) && !this.searchValue;
   }
 
   protected readonly SortType = SortType;
