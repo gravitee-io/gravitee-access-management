@@ -25,6 +25,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import java.util.Optional;
+
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
@@ -43,7 +45,8 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        final String clientId = context.request().getParam(Parameters.CLIENT_ID);
+        final String clientId = Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID))
+                .orElseGet(() -> context.get(Parameters.CLIENT_ID));
         if (clientId == null || clientId.isEmpty()) {
             if (required) {
                 context.fail(new InvalidRequestException("Missing parameter: client_id is required"));
