@@ -572,6 +572,12 @@ api:
         # Subject of the email send by the email notifier
         expiryEmailSubject: "Client secret will expire soon"
 
+    # Data purge service (JDBC only).
+    # purge:
+      # enabled: true                               # enable the JDBC purge task (default: true)
+      # cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
+      # exclude: login_attempts, refresh_token      # comma separated list of table to exclude from the purge process
+
     certificate:
       enabled: true
       # frequency on which the notifier mechanism will test
@@ -831,6 +837,11 @@ gateway:
       enabled: false
       prometheus:
         enabled: true
+    # Data purge service (JDBC only).
+    # purge:
+      # enabled: true                               # enable the JDBC purge task (default: true)
+      # cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
+      # exclude: login_attempts, refresh_token      # comma separated list of table to exclude from the purge process
   jwt:
     secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
     kid: default-gravitee-AM-key
