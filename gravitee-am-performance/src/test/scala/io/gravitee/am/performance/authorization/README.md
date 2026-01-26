@@ -112,3 +112,35 @@ Expected response:
     "resolution": ""
 }
 ```
+
+### OpenFGAEvaluation
+
+This simulation benchmarks authorization evaluation against OpenFGA. It must be run after `OpenFGAProvision` has seeded data and with the same parameter values.
+
+#### Usage:
+
+In the `gravitee-am-performance/` folder, run:
+
+```
+mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorization.OpenFGAEvaluation -Dfga_store_id=01KFDJWH9H1CV45WPXB6P7Y0VB -Dfga_authorization_model_id=01KFDJWH9RWT20QN56N52YVDRC -Dfga_api_url=http://localhost:8090 -Dagents=50 -Dinject-during=600 -Devaluation_tags=comparable
+```
+
+#### Parameters
+* `fga_api_url`: base URL of the OpenFGA REST API (default: http://localhost:8080)
+* `fga_store_id`: OpenFGA Store identifier
+* `fga_authorization_model_id`: OpenFGA authorization model identifier
+* `number_of_users`: how many users the provisioning data created
+* `number_of_teams`: how many teams the provisioning data created
+* `depth_of_teams`: maximum depth of teams in tree hierarchy
+* `agents`: number of concurrent agents (default: 10)
+* `inject-during`: duration (in sec) of the steady-state load (default: 300)
+* `repeat`: number of evaluation checks each virtual agent performs per iteration (default: 10)
+* `evaluation_tags`: optional comma-separated tags to filter evaluation cases
+
+#### Tag filtering
+Evaluation cases are tagged to support comparisons with future AuthZen/PDP runs:
+* `comparable`: cases that should be supported by both OpenFGA API directly and the AM PDP/AuthZen flow
+* `openfga_only`: cases that use context or contextual tuples (not currently supported by the AM PDP/AuthZen or OpenFGA plugins)
+
+#### Repeat behavior
+Each virtual user loops over the evaluation feeder and issues `repeat` checks per iteration. Increasing `repeat` increases the total number of OpenFGA `/check` requests per virtual user and amplifies load without changing concurrency.

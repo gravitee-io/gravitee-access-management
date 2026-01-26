@@ -26,6 +26,8 @@ object OpenFGACalls {
 
   case class Tuple(user: String, relation: String, objectKey: String, condition: Option[Condition] = None)
 
+  case class TupleKey(user: String, relation: String, objectKey: String)
+
   /**
    * Convert a context map to a uJSON object
    */
@@ -71,6 +73,17 @@ object OpenFGACalls {
   }
 
   /**
+   * Convert a TupleKey to a uJSON object
+   */
+  private def tupleKeyToJson(tuple: TupleKey): Obj = {
+    Obj(
+      "user" -> tuple.user,
+      "relation" -> tuple.relation,
+      "object" -> tuple.objectKey
+    )
+  }
+
+  /**
    * Convert a list of tuples to a JSON request body string for OpenFGA write API
    */
   def tuplesToJsonRequestBody(tuples: List[Tuple]): String = {
@@ -82,6 +95,32 @@ object OpenFGACalls {
       "authorization_model_id" -> FGA_AUTHORIZATION_MODEL_ID
     )
     
+    ujson.write(requestBody)
+  }
+
+  /**
+   * Convert check inputs to a JSON request body string for OpenFGA check API
+   */
+  def checkToJsonRequestBody(
+    user: String,
+    relation: String,
+    objectKey: String,
+    context: Option[Map[String, Any]] = None,
+    contextualTuples: Option[List[TupleKey]] = None
+  ): String = {
+    val requestBody = Obj(
+      "tuple_key" -> tupleKeyToJson(TupleKey(user, relation, objectKey)),
+      "authorization_model_id" -> FGA_AUTHORIZATION_MODEL_ID,
+      "consistency" -> "HIGHER_CONSISTENCY"
+    )
+
+    context.foreach(ctx => requestBody("context") = contextToJson(ctx))
+    contextualTuples.foreach { tuples =>
+      requestBody("contextual_tuples") = Obj(
+        "tuple_keys" -> Arr.from(tuples.map(tupleKeyToJson))
+      )
+    }
+
     ujson.write(requestBody)
   }
 
@@ -115,5 +154,13 @@ object OpenFGACalls {
       .post(FGA_API_URL + s"/stores/${FGA_STORE_ID}/write")
       .body(StringBody("#{tupleRequestBody}")).asJson
       .check(status.is(200))
+  }
+
+  def checkAuthorization(description: String) = {
+    http("Check Authorization: " + description)
+      .post(FGA_API_URL + s"/stores/${FGA_STORE_ID}/check")
+      .body(StringBody("#{checkRequestBody}")).asJson
+      .check(status.is(200))
+      .check(jsonPath("$.allowed").ofType[Boolean].saveAs("allowed"))
   }
 }

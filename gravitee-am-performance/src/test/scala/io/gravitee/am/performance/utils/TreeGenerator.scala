@@ -23,25 +23,25 @@ object TreeGenerator {
    * @param totalNodes   N - maximum number of nodes to generate
    * @param maxDepth     M - maximum tree depth (root is depth = 0)
    * @param maxChildren  P - max number of children per node
-   * @return Seq of edges (parentId, childId)
+   * @return Seq of edges (childId, parentId)
    */
-  def generateTreeEdges(totalNodes: Int, maxDepth: Int, maxChildren: Int): Seq[(String, String)] = {
+  def generateTreeEdges(totalNodes: Int, maxDepth: Int, maxChildren: Int): Seq[(Int, Int)] = {
 
     require(totalNodes >= 1, "Must request at least 1 node")
     require(maxDepth >= 1, "Max depth must be >= 1")
     require(maxChildren >= 1, "Max children must be >= 1")
 
     // Result set of edges
-    val edges = scala.collection.mutable.ArrayBuffer.empty[(String, String)]
+    val edges = scala.collection.mutable.ArrayBuffer.empty[(Int, Int)]
 
     // Queue for BFS: (nodeId, depth)
-    val queue = scala.collection.mutable.Queue[(String, Int)]()
+    val queue = scala.collection.mutable.Queue[(Int, Int)]()
 
     // We'll assign node IDs sequentially for reproducibility
     var nextId = 1
 
     // Root node
-    val rootId = "0"
+    val rootId = 0
     queue.enqueue((rootId, 0))
 
     while (queue.nonEmpty && nextId < totalNodes) {
@@ -54,10 +54,10 @@ object TreeGenerator {
 
         // Create children
         (1 to children).foreach { _ =>
-          val child = s"$nextId"
+          val child = nextId
           nextId += 1
 
-          edges += ((parent, child))
+          edges += ((child, parent))
           queue.enqueue((child, depth + 1))
         }
       }
@@ -66,7 +66,7 @@ object TreeGenerator {
     edges.toSeq
   }
 
-  def generateTreeEdges(totalNodes: Int, depth: Int): Seq[(String, String)] = {
+  def generateTreeEdges(totalNodes: Int, depth: Int): Seq[(Int, Int)] = {
     val maxChildren = calculateBranchingFactor(totalNodes, depth)
     generateTreeEdges(totalNodes, depth, maxChildren)
   }

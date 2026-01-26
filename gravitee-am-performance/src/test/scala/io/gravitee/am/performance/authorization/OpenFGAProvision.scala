@@ -61,13 +61,11 @@ class OpenFGAProvision extends Simulation {
     // Build a map of childId -> parentId from tree edges
     val parentMap = TreeGenerator
       .generateTreeEdges(numTeams, teamDepth)
-      .map { case (parentId, childId) => (childId, parentId) }
       .toMap
     
     // Create feeder for teams (excluding root team)
-    (1 until numTeams).map { teamIndex =>
-      val teamId = teamIndex.toString
-      val parentId = parentMap.getOrElse(teamId, "0")
+    (1 until numTeams).map { teamId =>
+      val parentId = parentMap.getOrElse(teamId, 0)
       Map(
         "teamId" -> teamId,
         "parentId" -> parentId
@@ -83,8 +81,7 @@ class OpenFGAProvision extends Simulation {
     val numResources = NUMBER_OF_RESOURCES_PER_TEAM.intValue()
     
     // Generate team-resource combinations (excluding root team)
-    (1 until numTeams).flatMap { teamIndex =>
-      val teamId = teamIndex.toString
+    (1 until numTeams).flatMap { teamId =>
       (1 to numResources).map { resourceId =>
         Map(
           "teamId" -> teamId,
@@ -98,15 +95,11 @@ class OpenFGAProvision extends Simulation {
    * Create a feeder for user team membership
    */
   private def userMembershipFeeder() = {
-    val iterator = Iterator.from(MIN_USER_INDEX.intValue(), 1)
-      .takeWhile(_ < MAX_USER_INDEX.intValue())
-    
-    iterator.map { userId =>
-      val teamIndex = userId % NUMBER_OF_TEAMS.intValue()
-      val teamId = teamIndex.toString
+    AuthorizationTopology.userIdsIterator().map { userId =>
       Map(
         "userId" -> userId,
-        "teamId" -> teamId
+        "teamId" -> AuthorizationTopology.getTeamIdForUser(userId),
+        "roleAssignment" -> AuthorizationTopology.getUserRoleAssignment(userId)
       )
     }
   }
@@ -116,10 +109,7 @@ class OpenFGAProvision extends Simulation {
    */
   private def userResourceFeeder() = {
     val numResources = NUMBER_OF_RESOURCES_PER_USER.intValue()
-    val iterator = Iterator.from(MIN_USER_INDEX.intValue(), 1)
-      .takeWhile(_ < MAX_USER_INDEX.intValue())
-    
-    iterator.flatMap { userId =>
+    AuthorizationTopology.userIdsIterator().flatMap { userId =>
       (1 to numResources).map { resourceId =>
         Map(
           "userId" -> userId,
@@ -144,15 +134,6 @@ class OpenFGAProvision extends Simulation {
   private val numUserResources = numUsers * NUMBER_OF_RESOURCES_PER_USER.intValue()
 
   // Role assignments
-  private val ROLE_ASSIGNMENT_SHARED_RESOURCES_UNRESTRICTED_READER = "role_assignment:shared_resources_unrestricted_reader"
-  private val ROLE_ASSIGNMENT_SHARED_RESOURCES_LOCAL_READER = "role_assignment:shared_resources_local_reader"
-  private val ROLE_ASSIGNMENT_PERSONAL_RESOURCES_WORKING_HOURS_READER = "role_assignment:personal_resources_working_hours_reader"
-  private val roleAssignments = List(
-    ROLE_ASSIGNMENT_SHARED_RESOURCES_UNRESTRICTED_READER,
-    ROLE_ASSIGNMENT_SHARED_RESOURCES_LOCAL_READER,
-    ROLE_ASSIGNMENT_PERSONAL_RESOURCES_WORKING_HOURS_READER
-  )
-
   /**
    * Build role tuples - these are statically defined
    */
@@ -167,13 +148,13 @@ class OpenFGAProvision extends Simulation {
         Some(Condition("working_hours_access", Map("start_hour" -> 8, "end_hour" -> 17)))
       ),
       // Role assignments
-      Tuple("role:unrestricted_reader", "role", ROLE_ASSIGNMENT_SHARED_RESOURCES_UNRESTRICTED_READER),
-      Tuple("role:local_reader", "role", ROLE_ASSIGNMENT_SHARED_RESOURCES_LOCAL_READER),
-      Tuple("role:working_hours_reader", "role", ROLE_ASSIGNMENT_PERSONAL_RESOURCES_WORKING_HOURS_READER),
+      Tuple("role:unrestricted_reader", "role", AuthorizationTopology.RoleAssignmentSharedResourcesUnrestrictedReader),
+      Tuple("role:local_reader", "role", AuthorizationTopology.RoleAssignmentSharedResourcesLocalReader),
+      Tuple("role:working_hours_reader", "role", AuthorizationTopology.RoleAssignmentPersonalResourcesWorkingHoursReader),
       // Apply role assignments to resource groups
-      Tuple(ROLE_ASSIGNMENT_SHARED_RESOURCES_UNRESTRICTED_READER, "role_assignment", "resource_group:shared_resources"),
-      Tuple(ROLE_ASSIGNMENT_SHARED_RESOURCES_LOCAL_READER, "role_assignment", "resource_group:shared_resources"),
-      Tuple(ROLE_ASSIGNMENT_PERSONAL_RESOURCES_WORKING_HOURS_READER, "role_assignment", "resource_group:personal_resources")
+      Tuple(AuthorizationTopology.RoleAssignmentSharedResourcesUnrestrictedReader, "role_assignment", "resource_group:shared_resources"),
+      Tuple(AuthorizationTopology.RoleAssignmentSharedResourcesLocalReader, "role_assignment", "resource_group:shared_resources"),
+      Tuple(AuthorizationTopology.RoleAssignmentPersonalResourcesWorkingHoursReader, "role_assignment", "resource_group:personal_resources")
     )
 
     session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
@@ -183,7 +164,7 @@ class OpenFGAProvision extends Simulation {
    * Build shared resource tuple based on session data
    */
   private def buildSharedResourceTuple(): Session => Session = { session =>
-    val resourceId = session("resourceId").as[String]
+    val resourceId = session("resourceId").as[Int]
 
     val tuple = Tuple(s"resource_group:shared_resources", "group", s"resource:shared_resource_${resourceId}")
 
@@ -194,8 +175,8 @@ class OpenFGAProvision extends Simulation {
    * Build team tuples (hierarchy + resource group ownership) based on session data
    */
   private def buildTeamTuples(): Session => Session = { session =>
-    val teamId = session("teamId").as[String]
-    val parentId = session("parentId").as[String]
+    val teamId = session("teamId").as[Int]
+    val parentId = session("parentId").as[Int]
     
     val tuples = List(
       Tuple(s"team:team_${teamId}", "child", s"team:team_${parentId}"),
@@ -209,7 +190,7 @@ class OpenFGAProvision extends Simulation {
    * Build team resource tuple based on session data
    */
   private def buildTeamResourceTuple(): Session => Session = { session =>
-    val teamId = session("teamId").as[String]
+    val teamId = session("teamId").as[Int]
     val resourceId = session("resourceId").as[Int]
 
     val tuple = Tuple(s"resource_group:team_${teamId}_resources", "group", s"resource:team_${teamId}_resource_${resourceId}")
@@ -222,11 +203,12 @@ class OpenFGAProvision extends Simulation {
    */
   private def buildUserMembershipTuples(): Session => Session = { session =>
     val userId = session("userId").as[Int]
-    val teamId = session("teamId").as[String]
+    val teamId = session("teamId").as[Int]
+    val roleAssignment = session("roleAssignment").as[String]
     
     val tuples = List(
       Tuple(s"user:user_${userId}", "member", s"team:team_${teamId}"),
-      Tuple(s"user:user_${userId}", "assignee", roleAssignments(userId % roleAssignments.length))
+      Tuple(s"user:user_${userId}", "assignee", roleAssignment)
     )
     
     session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
