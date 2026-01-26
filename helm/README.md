@@ -559,7 +559,7 @@ By setting the value to `null` for `runAsUser` and `runAsGroup` it forces OpenSh
 Install `unittest` helm plugin
 
 ```shell
-helm plugin install https://github.com/quintush/helm-unittest
+helm plugin install https://github.com/quintush/helm-unittest --version 0.2.11 --verify=false
 ```
 
 Inside `am` directory, run:

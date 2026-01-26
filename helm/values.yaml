@@ -562,6 +562,12 @@ api:
       enabled: true
       tryAvoidDuplicateNotification: true
 
+    # Data purge service (JDBC only).
+    # purge:
+      # enabled: true                               # enable the JDBC purge task (default: true)
+      # cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
+      # exclude: login_attempts, refresh_token      # comma separated list of table to exclude from the purge process
+
     certificate:
       enabled: true
       # frequency on which the notifier mechanism will test
