@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
@@ -208,6 +209,11 @@ public class OAuth2Request extends BaseRequest {
     }
 
     public boolean shouldGenerateIDToken(boolean acceptOpenidForServiceApp) {
+        // Token Exchange (RFC 8693) - only generate id_token when explicitly requested via requested_token_type
+        // Standard token exchange response does not include a separate id_token field
+        if (issuedTokenType != null && !TokenType.ID_TOKEN.equals(issuedTokenType)) {
+            return false;
+        }
         if (getResponseType() != null && ResponseType.CODE_TOKEN.equals(getResponseType())) {
             return false;
         }
