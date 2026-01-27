@@ -503,8 +503,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         LOGGER.debug("search({}, {}, {}, {})", domainId, type, query, pageSortRequest.getPage());
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        String searchTerm = wildcardMatch ? wildcardQuery.toUpperCase() : "%" + query.toUpperCase() + "%";
+        String wildcardQuery = databaseDialectHelper.prepareSearchTerm(query).replaceAll("\\*+", "%");
+        String searchTerm = wildcardMatch ? wildcardQuery.toUpperCase() : "%" + databaseDialectHelper.prepareSearchTerm(query).toUpperCase() + "%";
 
         String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
         String selectQuery = Selects.SEARCH_SELECT + databaseDialectHelper.buildPagingClause("pr." + transformSortValue(sortBy), pageSortRequest.isAsc(), pageSortRequest.getPage(), pageSortRequest.getSize());

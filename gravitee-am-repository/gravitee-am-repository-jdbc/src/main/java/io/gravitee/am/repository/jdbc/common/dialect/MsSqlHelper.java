@@ -37,6 +37,11 @@ public class MsSqlHelper extends AbstractDialectHelper {
         return sql.toSql(sqlServerIdentifierProcessing);
     }
 
+    @Override
+    public String prepareSearchTerm(String searchTerm) {
+        return searchTerm.replaceAll("\\[", "[[]");
+    }
+
     public MsSqlHelper(R2dbcDialect dialect, String collation) {
         super(dialect, collation == null ? "Latin1_General_BIN2" : collation);
     }
