@@ -1,0 +1,7 @@
+description: "Clean test environment"
+steps:
+  - run:
+      name: "Clean Environment"
+      command: |
+        echo "Cleaning environment... (Skipped for POC)"
+        # This would call clean-mongodb.sh in a real implementation
