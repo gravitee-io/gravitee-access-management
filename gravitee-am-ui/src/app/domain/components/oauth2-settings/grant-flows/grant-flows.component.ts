@@ -220,7 +220,7 @@ export class GrantFlowsComponent implements OnInit {
       }
       if (this.TOKEN_EXCHANGE_GRANT_TYPE === grantType.value && this.domainStore.current) {
         const domain = deepClone(this.domainStore.current);
-        grantType.disabled = domain.tokenExchangeSettings && !domain.tokenExchangeSettings.enabled;
+        grantType.disabled = !domain.tokenExchangeSettings || !domain.tokenExchangeSettings.enabled;
       }
     });
   }
