@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenVa
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
@@ -47,6 +48,9 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
     @Autowired
     private List<TokenValidator> validators;
+
+    @Autowired
+    private SubjectManager subjectManager;
 
     @Override
     public Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain) {
@@ -170,8 +174,11 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
         // Preserve GIO_INTERNAL_SUB if present
         Object gioInternalSub = subjectToken.getClaim(Claims.GIO_INTERNAL_SUB);
-        if (gioInternalSub != null) {
-            additionalInformation.put(Claims.GIO_INTERNAL_SUB, gioInternalSub);
+        if (gioInternalSub instanceof String gioInternalSubValue) {
+            if (subjectManager.hasValidInternalSub(gioInternalSubValue)) {
+                user.setSource(subjectManager.extractSourceId(gioInternalSubValue));
+                user.setExternalId(subjectManager.extractUserId(gioInternalSubValue));
+            }
         }
 
         // Handle scopes
