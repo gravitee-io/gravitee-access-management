@@ -19,6 +19,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { SnackbarService } from '../../services/snackbar.service';
 import { ClientSecretService, ClientSecret } from '../../services/client-secret.service';
@@ -93,8 +94,10 @@ export class ClientSecretsManagementComponent implements OnInit {
               secret: secretResponse.secret,
               renew: false,
             })),
-            catchError((_e: unknown): Observable<never> => {
-              this.snackbarService.open('Failed to create client secret');
+            catchError((err: unknown): Observable<never> => {
+              this.snackbarService.open(
+                'Failed to create client secret: ' + (err as HttpErrorResponse).error?.message || (err as HttpErrorResponse).message,
+              );
               return EMPTY;
             }),
           ),
