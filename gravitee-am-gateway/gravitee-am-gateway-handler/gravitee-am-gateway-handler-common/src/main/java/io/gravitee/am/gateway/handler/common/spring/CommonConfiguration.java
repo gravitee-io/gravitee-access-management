@@ -271,8 +271,9 @@ public class CommonConfiguration {
     public IntrospectionTokenService introspectionAccessTokenService(JWTService jwtService,
                                                                      ClientSyncService clientSyncService,
                                                                      ProtectedResourceManager protectedResourceManager,
+                                                                     ProtectedResourceSyncService protectedResourceSyncService,
                                                                      AccessTokenRepository accessTokenRepository) {
-        return new IntrospectionAccessTokenService(jwtService, clientSyncService, protectedResourceManager, environment, accessTokenRepository);
+        return new IntrospectionAccessTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, accessTokenRepository);
     }
 
     @Bean
@@ -280,8 +281,9 @@ public class CommonConfiguration {
     public IntrospectionTokenService introspectionRefreshTokenService(JWTService jwtService,
                                                                       ClientSyncService clientSyncService,
                                                                       ProtectedResourceManager protectedResourceManager,
+                                                                      ProtectedResourceSyncService protectedResourceSyncService,
                                                                       RefreshTokenRepository refreshTokenRepository) {
-        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, protectedResourceManager, environment, refreshTokenRepository);
+        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, refreshTokenRepository);
     }
 
     @Bean

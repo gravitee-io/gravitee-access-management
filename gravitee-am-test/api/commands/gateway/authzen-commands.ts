@@ -48,45 +48,44 @@ export interface AuthZenAccessEvaluationResponse {
 /**
  * Call AuthZen Access Evaluation API
  * @param domainHrid - Domain HRID (path), not the UUID
- * @param clientId - MCP server client ID
- * @param clientSecret - MCP server client secret
+ * @param accessToken - OAuth 2.0 access token (Bearer token)
  * @param evaluationRequest
  */
 export async function evaluateAccess(
   domainHrid: string,
-  clientId: string,
-  clientSecret: string,
+  accessToken: string,
   evaluationRequest: AuthZenAccessEvaluationRequest,
 ): Promise<AuthZenAccessEvaluationResponse> {
-  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   const response = await request(process.env.AM_GATEWAY_URL)
     .post(`/${domainHrid}/access/v1/evaluation`)
-    .set('Authorization', `Basic ${basicAuth}`)
+    .set('Authorization', `Bearer ${accessToken}`)
     .set('Content-Type', 'application/json')
-    .send(evaluationRequest)
-    .expect(200);
+    .send(evaluationRequest);
+  
+  if (response.status !== 200) {
+    const errorBody = response.body ? JSON.stringify(response.body) : response.text || 'No error body';
+    throw new Error(`AuthZen request failed with status ${response.status}: ${errorBody}`);
+  }
+  
   return response.body;
 }
 
 /**
  * Call AuthZen API expecting an error
  * @param domainHrid - Domain HRID (path), not the UUID
- * @param clientId - MCP server client ID
- * @param clientSecret - MCP server client secret
+ * @param accessToken - OAuth 2.0 access token (Bearer token)
  * @param evaluationRequest
  * @param expectedStatus
  */
 export async function evaluateAccessExpectError(
   domainHrid: string,
-  clientId: string,
-  clientSecret: string,
+  accessToken: string,
   evaluationRequest: any,
   expectedStatus: number,
 ): Promise<any> {
-  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   return await request(process.env.AM_GATEWAY_URL)
     .post(`/${domainHrid}/access/v1/evaluation`)
-    .set('Authorization', `Basic ${basicAuth}`)
+    .set('Authorization', `Bearer ${accessToken}`)
     .set('Content-Type', 'application/json')
     .send(evaluationRequest)
     .expect(expectedStatus);

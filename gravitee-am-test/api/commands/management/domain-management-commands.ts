@@ -172,7 +172,7 @@ export const waitForDomainStart: (domain: Domain) => Promise<DomainWithOidcConfi
     () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
     (res) => res.status == 200,
     {
-      timeoutMillis: 10000,
+      timeoutMillis: 5000,
       onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
       onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
     },

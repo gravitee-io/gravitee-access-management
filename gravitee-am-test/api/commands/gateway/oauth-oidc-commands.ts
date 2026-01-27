@@ -15,8 +15,7 @@
  */
 
 import { expect } from '@jest/globals';
-import { applicationBase64Token, assertGeneratedTokenAndGet } from '@gateway-commands/utils';
-import { awaitExpression } from '@babel/types';
+import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 
 const supertest = require('supertest');
 const cheerio = require('cheerio');
@@ -183,4 +182,44 @@ export async function requestToken(application: any, openIdConfiguration: any, p
       Authorization: 'Basic ' + applicationBase64Token(application),
     },
   ).expect(200);
+}
+
+/**
+ * Request access token using client_credentials grant
+ * @param clientId - OAuth client ID
+ * @param clientSecret - OAuth client secret
+ * @param openIdConfiguration - OpenID configuration containing token_endpoint
+ * @param scope - Optional scope parameter
+ * @param resource - Optional resource identifier parameter (RFC 8707)
+ * @returns Promise resolving to access token string
+ */
+export async function requestClientCredentialsToken(
+  clientId: string,
+  clientSecret: string,
+  openIdConfiguration: any,
+  scope?: string,
+  resource?: string,
+): Promise<string> {
+  const tokenParams = new URLSearchParams({
+    grant_type: 'client_credentials',
+  });
+  if (scope) {
+    tokenParams.append('scope', scope);
+  }
+  if (resource) {
+    tokenParams.append('resource', resource);
+  }
+
+  const response = await performPost(
+    openIdConfiguration.token_endpoint,
+    '',
+    tokenParams.toString(),
+    {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + getBase64BasicAuth(clientId, clientSecret),
+    },
+  ).expect(200);
+
+  expect(response.body.access_token).toBeDefined();
+  return response.body.access_token;
 }
