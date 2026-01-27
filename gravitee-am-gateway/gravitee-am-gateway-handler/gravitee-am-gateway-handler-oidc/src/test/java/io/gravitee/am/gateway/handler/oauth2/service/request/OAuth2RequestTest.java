@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import org.junit.jupiter.api.Assertions;
@@ -59,5 +60,25 @@ public class OAuth2RequestTest {
         request.setSubject(null);
 
         Assertions.assertFalse(request.shouldGenerateIDToken(true));
+    }
+
+    @Test
+    public void tokenExchange_should_not_generate_idtoken_when_requested_type_is_access_token() {
+        final var request = new OAuth2Request();
+        request.setScopes(Set.of(Scope.OPENID.getKey()));
+        request.setSubject(UUID.randomUUID().toString());
+        request.setIssuedTokenType(TokenType.ACCESS_TOKEN);
+
+        Assertions.assertFalse(request.shouldGenerateIDToken(false));
+    }
+
+    @Test
+    public void tokenExchange_should_generate_idtoken_when_requested_type_is_id_token() {
+        final var request = new OAuth2Request();
+        request.setScopes(Set.of(Scope.OPENID.getKey()));
+        request.setSubject(UUID.randomUUID().toString());
+        request.setIssuedTokenType(TokenType.ID_TOKEN);
+
+        Assertions.assertTrue(request.shouldGenerateIDToken(false));
     }
 }

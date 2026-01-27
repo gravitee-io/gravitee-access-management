@@ -189,6 +189,29 @@ describe('Token Exchange grant', () => {
     expect(response.body.error_description).toContain('requested_token_type');
   });
 
+  it('should NOT include id_token in response when exchanging access token with openid scope', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    // Obtain a subject token with openid scope
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    // Exchange the token without specifying requested_token_type (defaults to access_token)
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // Per RFC 8693, token exchange response should NOT include id_token unless explicitly requested
+    expect(exchangeResponse.body.access_token).toBeDefined();
+    expect(exchangeResponse.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
+    expect(exchangeResponse.body.id_token).toBeUndefined();
+  });
+
   it('should exchange jwt subject token when allowed', async () => {
     const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
     const { accessToken: subjectAccessToken } = await obtainSubjectToken();
