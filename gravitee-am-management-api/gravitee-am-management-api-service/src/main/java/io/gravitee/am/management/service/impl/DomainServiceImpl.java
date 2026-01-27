@@ -563,6 +563,10 @@ public class DomainServiceImpl implements DomainService {
                                             identityProviderService.delete(domainId, identityProvider.getId())
                                     )
                             )
+                            // delete protected resources
+                            .andThen(protectedResourceService.findByDomain(domainId)
+                                    .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
+                            )
                             // delete certificates
                             .andThen(certificateService.findByDomain(domainId)
                                     .flatMapCompletable(certificate -> certificateService.delete(certificate.getId()))
@@ -661,9 +665,6 @@ public class DomainServiceImpl implements DomainService {
                             // delete certificate credentials
                             .andThen(certificateCredentialService.deleteByDomain(domain))
                             .andThen(authorizationEngineService.deleteByDomain(domainId))
-                            .andThen(protectedResourceService.findByDomain(domainId)
-                                    .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
-                            )
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
