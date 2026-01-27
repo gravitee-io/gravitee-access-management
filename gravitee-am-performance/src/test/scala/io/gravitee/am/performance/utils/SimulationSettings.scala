@@ -31,6 +31,8 @@ object SimulationSettings {
   val FGA_API_URL = System.getProperty("fga_api_url", "http://localhost:8080")
   val FGA_STORE_ID = System.getProperty("fga_store_id", "")
   val FGA_AUTHORIZATION_MODEL_ID = System.getProperty("fga_authorization_model_id", "")
+  val CLIENT_ID = System.getProperty("client_id", "")
+  val CLIENT_SECRET = System.getProperty("client_secret", "")
 
   val DOMAIN_NAME = System.getProperty("domain", "gatling-domain")
   val IDENTITY_PROVIDER_NAME = System.getProperty("idp", "Default Identity Provider")

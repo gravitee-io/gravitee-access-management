@@ -23,6 +23,7 @@ model: |
   type user
     relations
       define manager: [user]
+      define manager_chain: manager or manager_chain from manager
 
   type team
     relations
@@ -66,7 +67,7 @@ model: |
       define group_reader: reader from group
 
       # Manager access (manager can see reports' resources)
-      define manager_access: manager from owner
+      define manager_access: manager_chain from owner
 
       # Emergency override
       define emergency_access: emergency_access from group
@@ -137,6 +138,10 @@ tuples:
     - user: user:alice
       relation: manager
       object: user:bob
+
+    - user: user:amanda
+      relation: manager
+      object: user:alice
 
     - user: team:team_alpha
       relation: child
@@ -272,10 +277,18 @@ tests:
 
   - name: Test manager access to user's resource
     check:
+    # Alice should be able to access Bob's personal resource because she is Bob's direct manager
     - user: user:alice
       object: resource:personal_resource_bob_1
       assertions:
         manager_access: true
+        can_access: true
+    # Amanda should be able to access Bob's personal resource because she is Alice's manager
+    - user: user:amanda
+      object: resource:personal_resource_bob_1
+      assertions:
+        manager_access: true
+        owner: false
         can_access: true
     - user: user:bob
       object: resource:personal_resource_bob_1
@@ -288,6 +301,7 @@ tests:
       assertions:
         manager_access: false
         owner: false
+        can_access: false
 
   - name: Test role-based access to shared resources with network constraint
     check:

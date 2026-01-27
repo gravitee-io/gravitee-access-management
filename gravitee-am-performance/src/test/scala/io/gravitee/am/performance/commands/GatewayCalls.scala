@@ -27,6 +27,7 @@ object GatewayCalls {
 
   val NEXT_ACTION_KEY = "nextAction"
   val ACCESS_TOKEN_KEY = "accessToken"
+  val AUTHZEN_ACCESS_TOKEN_KEY = "authzenAccessToken"
   val XSRF_TOKEN_KEY = "XSRF-Token"
   val FACTOR_ID = "factorId"
   val CODE_KEY = "authorizationCode"
@@ -213,5 +214,23 @@ object GatewayCalls {
       .get(s"${GATEWAY_BASE_URL}/#{domainName}/oidc/userinfo")
       .header("Authorization", "Bearer #{"+ACCESS_TOKEN_KEY+"}")
       .check(status.is(200))
+  }
+
+  def authzenEvaluateAccess(description: String): HttpRequestBuilder = {
+    http("AuthZen Evaluate Access: " + description)
+      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/access/v1/evaluation")
+      .header("Authorization", "Bearer #{"+AUTHZEN_ACCESS_TOKEN_KEY+"}")
+      .body(StringBody("#{checkRequestBody}")).asJson
+      .check(status.is(200))
+      .check(jsonPath("$.decision").ofType[Boolean].saveAs("allowed"))
+  }
+
+  def requestAuthzenAccessToken(): HttpRequestBuilder = {
+    http("AuthZen Token")
+      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/token")
+      .basicAuth(CLIENT_ID, CLIENT_SECRET)
+      .formParam("grant_type", "client_credentials")
+      .check(status.is(200))
+      .check(jsonPath("$.access_token").saveAs(AUTHZEN_ACCESS_TOKEN_KEY))
   }
 }

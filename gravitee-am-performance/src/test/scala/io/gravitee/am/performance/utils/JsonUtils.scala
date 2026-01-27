@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance.authorization
+package io.gravitee.am.performance.utils
 
-import io.gatling.core.Predef._
-import io.gatling.core.structure.ChainBuilder
-import io.gatling.http.request.builder.HttpRequestBuilder
+import ujson._
 
-trait AuthorizationBackend {
-  def name: String
-  def buildRequestBody(testCase: EvaluationCase): String
-  def checkAuthorization(description: String): HttpRequestBuilder
-  def authenticate: ChainBuilder = exec(session => session)
+object JsonUtils {
+  /**
+   * Convert a map to a uJSON object.
+   */
+  def mapToJson(value: Map[String, Any]): Obj = {
+    Obj.from(value.map { case (key, value) =>
+      key -> (value match {
+        case s: String => Str(s)
+        case i: Int => Num(i)
+        case l: Long => Num(l.toDouble)
+        case d: Double => Num(d)
+        case f: Float => Num(f)
+        case b: Boolean => Bool(b)
+        case null => Null
+        case other => Str(other.toString)
+      })
+    })
+  }
 }

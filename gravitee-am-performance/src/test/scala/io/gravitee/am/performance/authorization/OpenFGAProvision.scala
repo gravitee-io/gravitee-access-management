@@ -39,6 +39,11 @@ class OpenFGAProvision extends Simulation {
 
   require(FGA_STORE_ID.nonEmpty, "fga_store_id system property must be set")
   require(FGA_AUTHORIZATION_MODEL_ID.nonEmpty, "fga_authorization_model_id system property must be set")
+  require(NUMBER_OF_TEAMS.intValue() >= 3, "number_of_teams must be >= 3")
+  require(NUMBER_OF_USERS.intValue() >= NUMBER_OF_TEAMS.intValue(), "number_of_users must be >= number_of_teams")
+  require(DEPTH_OF_TEAMS.intValue() >= 2, "depth_of_teams must be >= 2")
+
+  private val teamParentMap = AuthorizationTopology.teamParentMap()
 
   /**
    * Create a feeder for shared resources
@@ -56,16 +61,10 @@ class OpenFGAProvision extends Simulation {
    */
   private def teamFeeder() = {
     val numTeams = NUMBER_OF_TEAMS.intValue()
-    val teamDepth = DEPTH_OF_TEAMS.intValue()
-    
-    // Build a map of childId -> parentId from tree edges
-    val parentMap = TreeGenerator
-      .generateTreeEdges(numTeams, teamDepth)
-      .toMap
-    
+
     // Create feeder for teams (excluding root team)
     (1 until numTeams).map { teamId =>
-      val parentId = parentMap.getOrElse(teamId, 0)
+      val parentId = teamParentMap(teamId)
       Map(
         "teamId" -> teamId,
         "parentId" -> parentId
@@ -105,6 +104,28 @@ class OpenFGAProvision extends Simulation {
   }
 
   /**
+   * Create a feeder for manager relationships using team-parent scheme
+   */
+  private def managerRelationFeeder() = {
+    val numTeams = NUMBER_OF_TEAMS.intValue()
+
+    (1 until numTeams).map { teamId =>
+      val parentId = teamParentMap(teamId)
+      val reportId = AuthorizationTopology
+        .getUserIdInTeam(teamId)
+        .getOrElse(throw new IllegalStateException(s"No user found in team $teamId"))
+      val managerId = AuthorizationTopology
+        .getUserIdInTeam(parentId)
+        .getOrElse(throw new IllegalStateException(s"No user found in team $parentId"))
+
+      Map(
+        "managerId" -> managerId,
+        "reportId" -> reportId
+      )
+    }
+  }
+
+  /**
    * Create a feeder for user resources
    */
   private def userResourceFeeder() = {
@@ -124,6 +145,8 @@ class OpenFGAProvision extends Simulation {
   private val teamFeederIterator = teamFeeder().iterator
   private val teamResourceFeederIterator = teamResourceFeeder().iterator
   private val userMembershipFeederIterator = userMembershipFeeder()
+  private val managerRelationFeederData = managerRelationFeeder()
+  private val managerRelationFeederIterator = managerRelationFeederData.iterator
   private val userResourceFeederIterator = userResourceFeeder()
   
   // Calculate counts for repeat loops
@@ -131,6 +154,7 @@ class OpenFGAProvision extends Simulation {
   private val numNonRootTeams = NUMBER_OF_TEAMS.intValue() - 1
   private val numTeamResources = numNonRootTeams * NUMBER_OF_RESOURCES_PER_TEAM.intValue()
   private val numUsers = NUMBER_OF_USERS.intValue()
+  private val numManagerRelations = managerRelationFeederData.size
   private val numUserResources = numUsers * NUMBER_OF_RESOURCES_PER_USER.intValue()
 
   // Role assignments
@@ -215,6 +239,36 @@ class OpenFGAProvision extends Simulation {
   }
 
   /**
+   * Build manager relationship tuples based on session data
+   */
+  private def buildManagerRelationTuples(): Session => Session = { session =>
+    val managerId = session("managerId").as[Int]
+    val reportId = session("reportId").as[Int]
+
+    val tuple = Tuple(s"user:user_${managerId}", "manager", s"user:user_${reportId}")
+
+    session.set("tupleRequestBody", tuplesToJsonRequestBody(List(tuple)))
+  }
+
+  /**
+   * Build emergency and blocked tuples for a deterministic team
+   */
+  private def buildEmergencyBlockedTuples(): Session => Session = { session =>
+    val teamId = 1
+    val blockedUserId = AuthorizationTopology
+      .getUserIdInTeam(teamId)
+      .getOrElse(throw new IllegalStateException(s"No user found in team $teamId"))
+    val emergencyUserId = AuthorizationTopology.getUserIdNotInTeam(teamId)
+
+    val tuples = List(
+      Tuple(s"user:user_${blockedUserId}", "blocked", s"resource_group:team_${teamId}_resources"),
+      Tuple(s"user:user_${emergencyUserId}", "emergency_access", s"resource_group:team_${teamId}_resources")
+    )
+
+    session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
+  }
+
+  /**
    * Build user resource tuples (ownership + resource grouping) based on session data
    */
   private def buildUserResourceTuples(): Session => Session = { session =>
@@ -268,6 +322,13 @@ class OpenFGAProvision extends Simulation {
         .exec(buildUserMembershipTuples())
         .exec(writeTuples("Add User Membership"))
     }
+    .repeat(numManagerRelations) {
+      feed(managerRelationFeederIterator)
+        .exec(buildManagerRelationTuples())
+        .exec(writeTuples("Add Manager Relation"))
+    }
+    .exec(buildEmergencyBlockedTuples())
+    .exec(writeTuples("Add Emergency/Blocked"))
     .repeat(numUserResources) {
       feed(userResourceFeederIterator)
         .exec(buildUserResourceTuples())
