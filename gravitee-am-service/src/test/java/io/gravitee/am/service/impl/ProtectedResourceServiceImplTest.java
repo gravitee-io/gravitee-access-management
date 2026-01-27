@@ -17,7 +17,6 @@ package io.gravitee.am.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -25,6 +24,7 @@ import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
@@ -34,7 +34,6 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificateService;
@@ -95,6 +94,8 @@ public class ProtectedResourceServiceImplTest {
     private static final String CLIENT_ID = "clientId";
     private static final String RESOURCE_URI = "https://example.com";
 
+    private static final Certificate DEFAULT_CERTIFICATE = new Certificate();
+
     @Mock
     private ProtectedResourceRepository repository;
 
@@ -131,6 +132,9 @@ public class ProtectedResourceServiceImplTest {
     @BeforeEach
     public void setup() {
         ReflectionTestUtils.setField(service, "secretsMax", 10);
+        DEFAULT_CERTIFICATE.setName("Default");
+        DEFAULT_CERTIFICATE.setDomain(DOMAIN_ID);
+        DEFAULT_CERTIFICATE.setId("abcd");
     }
 
     // Helper methods
@@ -183,11 +187,11 @@ public class ProtectedResourceServiceImplTest {
     @Test
     public void shouldNotCreateProtectedResourceWhenClientIdAlreadyExists() {
         when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
-        when(repository.create(any())).thenReturn(Single.never());
         when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
                 .thenReturn(Completable.error(new ClientAlreadyExistsException("", "")));
         when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
         when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.just(DEFAULT_CERTIFICATE));
 
         service.create(createDomain(), createUser(), createNewProtectedResource())
                 .test()
@@ -197,11 +201,11 @@ public class ProtectedResourceServiceImplTest {
     @Test
     public void shouldNotCreateProtectedResourceWhenResourceIdAlreadyExists() {
         when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
-        when(repository.create(any())).thenReturn(Single.never());
         when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
                 .thenReturn(Completable.complete());
         when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(true));
         when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.just(DEFAULT_CERTIFICATE));
 
         service.create(createDomain(), createUser(), createNewProtectedResource())
                 .test()
@@ -217,6 +221,7 @@ public class ProtectedResourceServiceImplTest {
         when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
                 .thenReturn(Completable.complete());
         when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.empty());
         when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
@@ -1053,6 +1058,7 @@ public class ProtectedResourceServiceImplTest {
         when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
                 .thenReturn(Completable.complete());
         when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.just(DEFAULT_CERTIFICATE));
         when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
@@ -1066,7 +1072,8 @@ public class ProtectedResourceServiceImplTest {
             res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
             res.getSettings().getOauth().getResponseTypes().contains(ResponseType.CODE) &&
             res.getSettings().getOauth().getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC) &&
-            res.getSettings().getOauth().getClientId().equals(CLIENT_ID)
+            res.getSettings().getOauth().getClientId().equals(CLIENT_ID) &&
+            res.getCertificate().equals(DEFAULT_CERTIFICATE.getId())
         ));
     }
 
