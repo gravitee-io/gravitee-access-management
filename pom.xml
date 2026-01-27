@@ -183,7 +183,7 @@
         <gravitee-am-certificate-aws.version>3.0.0</gravitee-am-certificate-aws.version>
         <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.6</gravitee-am-authorizationengine-openfga.version>
         <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.7</gravitee-am-gateway-handler-authzen.version>
-        <gravitee-am-authenticator-cba.version>1.0.0-alpha.5</gravitee-am-authenticator-cba.version>
+        <gravitee-am-authenticator-cba.version>1.0.0</gravitee-am-authenticator-cba.version>
 
         <!-- Plugins included to full-bundle -->
         <gravitee-service-geoip.version>3.0.0</gravitee-service-geoip.version>
