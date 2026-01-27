@@ -31,8 +31,13 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Before;
-import org.junit.Test;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -44,19 +49,25 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class TokenExchangeServiceImplTest {
 
+    @Mock
+    private SubjectManager subjectManager;
+
+    @InjectMocks
     private TokenExchangeServiceImpl service;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        service = new TokenExchangeServiceImpl();
         TokenValidator validator = new FixedSubjectTokenValidator();
         var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
         validatorsField.setAccessible(true);
         validatorsField.set(service, List.of(validator));
-    }
+}
 
     @Test
     public void shouldFailWhenTokenExchangeNotEnabled() {
@@ -332,12 +343,16 @@ public class TokenExchangeServiceImplTest {
 
     @Test
     public void shouldPreserveGioInternalSub() throws Exception {
+        when(subjectManager.hasValidInternalSub(anyString())).thenReturn(true);
+        when(subjectManager.extractSourceId("source-id:external-id")).thenReturn("source-id");
+        when(subjectManager.extractUserId("source-id:external-id")).thenReturn("external-id");
+
         // Create validator that returns gis claim
         TokenValidator validatorWithGis = new TokenValidator() {
             @Override
             public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
                 Map<String, Object> claims = new HashMap<>();
-                claims.put(Claims.GIO_INTERNAL_SUB, "internal-user-id");
+                claims.put(Claims.GIO_INTERNAL_SUB, "source-id:external-id");
 
                 return Single.just(ValidatedToken.builder()
                         .subject("subject")
@@ -369,7 +384,8 @@ public class TokenExchangeServiceImplTest {
         var result = service.exchange(tokenRequest, client, domain).blockingGet();
         User user = result.user();
 
-        assertThat(user.getAdditionalInformation().get(Claims.GIO_INTERNAL_SUB)).isEqualTo("internal-user-id");
+        assertThat(user.getSource()).isEqualTo("source-id");
+        assertThat(user.getExternalId()).isEqualTo("external-id");
     }
 
     @Test

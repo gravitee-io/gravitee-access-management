@@ -98,6 +98,28 @@ describe('Token Exchange grant', () => {
     expect(introspectResponse.body.token_type).toBe('bearer');
   });
 
+  it('should keep gis claim from subject token', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+    const subjectDecoded = parseJwt(subjectAccessToken);
+    const subjectGis = subjectDecoded.payload['gis'];
+    expect(subjectGis).toBeDefined();
+
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
+    expect(exchangedDecoded.payload['gis']).toBe(subjectGis);
+  });
+
   it('should exchange refresh token when allowed', async () => {
     const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
 

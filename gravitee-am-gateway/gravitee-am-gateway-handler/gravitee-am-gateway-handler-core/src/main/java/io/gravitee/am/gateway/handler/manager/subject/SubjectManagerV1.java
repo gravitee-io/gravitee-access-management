@@ -72,6 +72,11 @@ public class SubjectManagerV1 implements SubjectManager {
     }
 
     @Override
+    public boolean hasValidInternalSub(String internalSub) {
+        return false;
+    }
+
+    @Override
     public String extractUserId(String gis) {
         return gis;
     }

@@ -71,6 +71,9 @@ public interface SubjectManager {
                 .map(DefaultUser::new);
     }
 
+
+    boolean hasValidInternalSub(String internalSub);
+
     String extractUserId(String gis);
 
     String extractSourceId(String gis);
