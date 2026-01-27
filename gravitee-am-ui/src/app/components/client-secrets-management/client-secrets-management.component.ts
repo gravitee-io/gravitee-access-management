@@ -17,9 +17,7 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { EMPTY, Observable } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 
 import { SnackbarService } from '../../services/snackbar.service';
 import { ClientSecretService, ClientSecret } from '../../services/client-secret.service';
@@ -67,7 +65,6 @@ export class ClientSecretsManagementComponent implements OnInit {
         next: (secrets) => {
           this.clientSecrets = secrets.map((s) => this.mapClientSecret(s));
         },
-        error: () => this.snackbarService.open('Error fetching client secrets'),
       });
     }
   }
@@ -94,12 +91,6 @@ export class ClientSecretsManagementComponent implements OnInit {
               secret: secretResponse.secret,
               renew: false,
             })),
-            catchError((err: unknown): Observable<never> => {
-              this.snackbarService.open(
-                'Failed to create client secret: ' + (err as HttpErrorResponse).error?.message || (err as HttpErrorResponse).message,
-              );
-              return EMPTY;
-            }),
           ),
         ),
         switchMap((dialogData) =>
@@ -118,9 +109,6 @@ export class ClientSecretsManagementComponent implements OnInit {
       .subscribe({
         next: (clientSecrets) => {
           this.clientSecrets = clientSecrets.map((s) => this.mapClientSecret(s));
-        },
-        error: () => {
-          this.snackbarService.open('Error fetching client secrets');
         },
       });
   }
@@ -162,7 +150,6 @@ export class ClientSecretsManagementComponent implements OnInit {
           this.clientSecrets = secrets.map((s) => this.mapClientSecret(s));
           this.snackbarService.open(`Secret ${row.name} deleted`);
         },
-        error: () => this.snackbarService.open(`Cannot delete ${row.name}.`),
       });
   }
 
@@ -187,10 +174,6 @@ export class ClientSecretsManagementComponent implements OnInit {
               secret: secretResponse.secret,
               renew: true,
             })),
-            catchError(() => {
-              this.snackbarService.open('Failed to renew client secret');
-              return EMPTY;
-            }),
           ),
         ),
         switchMap((dialogData) =>
@@ -210,7 +193,6 @@ export class ClientSecretsManagementComponent implements OnInit {
         next: (secrets) => {
           this.clientSecrets = secrets.map((s) => this.mapClientSecret(s));
         },
-        error: () => this.snackbarService.open(`Cannot renew ${row.name}.`),
       });
   }
 

@@ -91,7 +91,7 @@ describe('ClientSecretsManagementComponent', () => {
   it('should handle error when loading secrets', () => {
     clientSecretServiceSpy.list.mockReturnValue(throwError(() => new Error('Error')));
     component.loadSecrets();
-    expect(snackbarServiceSpy.open).toHaveBeenCalledWith('Error fetching client secrets');
+    expect(snackbarServiceSpy.open).not.toHaveBeenCalled();
   });
 
   describe('openNewSecret', () => {
