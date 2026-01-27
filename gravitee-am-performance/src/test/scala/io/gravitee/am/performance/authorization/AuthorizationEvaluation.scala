@@ -29,49 +29,85 @@ case class EvaluationCase(
   tags: Set[String] = Set.empty
 )
 
-abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Simulation {
-  private val ComparableTag = "comparable"
-  private val OpenFgaOnlyTag = "openfga_only"
+object AuthorizationEvaluation {
+  val ComparableTag = "comparable"
+  val OpenFgaOnlyTag = "openfga_only"
+}
+
+abstract class AuthorizationEvaluation(backend: AuthorizationBackend, tagFilter: Set[String] = Set.empty) extends Simulation {
+
+  private val numberOfTeams = NUMBER_OF_TEAMS.intValue()
+  private val numberOfUsers = NUMBER_OF_USERS.intValue()
+  private val depthOfTeams = DEPTH_OF_TEAMS.intValue()
+
+  require(numberOfTeams >= 3, "number_of_teams must be >= 3")
+  require(numberOfUsers >= numberOfTeams, "number_of_users must be >= number_of_teams")
+  require(depthOfTeams >= 2, "depth_of_teams must be >= 2")
 
   private val httpProtocol = http
     .userAgentHeader(s"Gatling - ${backend.name} Evaluation")
     .disableFollowRedirect
 
-  private val tagFilter = System
-    .getProperty("evaluation_tags", "")
-    .split(",")
-    .map(_.trim)
-    .filter(_.nonEmpty)
-    .toSet
+  private val normalizedTagFilter = tagFilter.map(_.trim).filter(_.nonEmpty)
 
   private def buildEvaluationCases(): List[EvaluationCase] = {
-    val numberOfTeams = NUMBER_OF_TEAMS.intValue()
     val parentMap = AuthorizationTopology.teamParentMap()
     val teamIds = parentMap.keys.toSeq
     val teamIdsWithUsers = teamIds.filter(id => AuthorizationTopology.getUserIdInTeam(id).isDefined)
-    val deepestTeamId = if (teamIdsWithUsers.nonEmpty) {
-      teamIdsWithUsers.maxBy(id => AuthorizationTopology.teamAncestry(id, parentMap).size)
-    } else {
-      1
-    }
+    val deepestTeamId = teamIdsWithUsers.maxBy(id => AuthorizationTopology.teamAncestry(id, parentMap).size)
     val deepAncestors = AuthorizationTopology.teamAncestry(deepestTeamId, parentMap)
     val ancestorTeamId = deepAncestors.lastOption.getOrElse(deepestTeamId)
-    val deepTeamUserId = AuthorizationTopology.getUserIdInTeam(deepestTeamId).getOrElse(1)
+    val deepTeamUserId = AuthorizationTopology
+      .getUserIdInTeam(deepestTeamId)
+      .getOrElse(throw new IllegalStateException(s"No user found in team $deepestTeamId"))
     val nonMemberTeamId = teamIdsWithUsers
       .find(teamId => teamId != ancestorTeamId && !AuthorizationTopology.teamAncestry(teamId, parentMap).contains(ancestorTeamId))
       .orElse(teamIdsWithUsers.find(_ != ancestorTeamId))
       .getOrElse(deepestTeamId)
-    val nonMemberUserId = AuthorizationTopology.getUserIdInTeam(nonMemberTeamId).getOrElse(1)
+    val nonMemberUserId = AuthorizationTopology
+      .getUserIdInTeam(nonMemberTeamId)
+      .getOrElse(throw new IllegalStateException(s"No user found in team $nonMemberTeamId"))
     val unrestrictedReaderUserId = AuthorizationTopology.getUserIdWithRole(AuthorizationTopology.RoleAssignmentSharedResourcesUnrestrictedReader)
     val localReaderUserId = AuthorizationTopology.getUserIdWithRole(AuthorizationTopology.RoleAssignmentSharedResourcesLocalReader)
     val workingHoursReaderUserId = AuthorizationTopology.getUserIdWithRole(AuthorizationTopology.RoleAssignmentPersonalResourcesWorkingHoursReader)
-    val managerUserId = unrestrictedReaderUserId
-    val ownerUserId = workingHoursReaderUserId
-    val blockedTeamId = Math.floorMod(deepTeamUserId, numberOfTeams)
-    val blockedUserId = deepTeamUserId
+    val managerTeamId = parentMap(deepestTeamId)
+    val managerChainTeamId = ancestorTeamId
+    val ownerUserId = deepTeamUserId
+    val managerUserId = AuthorizationTopology
+      .getUserIdInTeam(managerTeamId)
+      .getOrElse(throw new IllegalStateException(s"No user found in team $managerTeamId"))
+    val managerChainUserId = AuthorizationTopology
+      .getUserIdInTeam(managerChainTeamId)
+      .getOrElse(throw new IllegalStateException(s"No user found in team $managerChainTeamId"))
+    val blockedTeamId = 1
+    val blockedUserId = AuthorizationTopology
+      .getUserIdInTeam(blockedTeamId)
+      .getOrElse(throw new IllegalStateException(s"No user found in team $blockedTeamId"))
     val emergencyUserId = AuthorizationTopology.getUserIdNotInTeam(blockedTeamId)
     val sharedResourceId = 1
     val resourceId = 1
+    
+    // Output important values for manual verification
+    println("IDs selected for simulation:")
+    println(s"deepestTeamId: $deepestTeamId")
+    println(s"deepAncestors: ${deepAncestors.mkString(", ")}")
+    println(s"ancestorTeamId: $ancestorTeamId")
+    println(s"deepTeamUserId: $deepTeamUserId")
+    println(s"nonMemberTeamId: $nonMemberTeamId")
+    println(s"nonMemberUserId: $nonMemberUserId")
+    println(s"unrestrictedReaderUserId: $unrestrictedReaderUserId")
+    println(s"localReaderUserId: $localReaderUserId")
+    println(s"workingHoursReaderUserId: $workingHoursReaderUserId")
+    println(s"managerTeamId: $managerTeamId")
+    println(s"managerChainTeamId: $managerChainTeamId")
+    println(s"ownerUserId: $ownerUserId")
+    println(s"managerUserId: $managerUserId")
+    println(s"managerChainUserId: $managerChainUserId")
+    println(s"blockedTeamId: $blockedTeamId")
+    println(s"blockedUserId: $blockedUserId")
+    println(s"emergencyUserId: $emergencyUserId")
+    println(s"sharedResourceId: $sharedResourceId")
+    println(s"resourceId: $resourceId")
 
     List(
       // 1. Inherited permissions via nested teams (deep traversal)
@@ -83,7 +119,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
           s"resource:team_${ancestorTeamId}_resource_${resourceId}"
         ),
         expectedAllowed = true,
-        tags = Set(ComparableTag)
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       ),
       EvaluationCase(
         name = "inherited-team-access-negative",
@@ -93,7 +129,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
           s"resource:team_${ancestorTeamId}_resource_${resourceId}"
         ),
         expectedAllowed = false,
-        tags = Set(ComparableTag)
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       ),
 
       // 2. Scoped role binding with context
@@ -106,7 +142,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
         ),
         expectedAllowed = true,
         context = Some(Map("user_ip" -> "192.168.0.10")),
-        tags = Set(OpenFgaOnlyTag) // AM plugins do not handle context
+        tags = Set(AuthorizationEvaluation.OpenFgaOnlyTag) // AM plugins do not handle context
       ),
       EvaluationCase(
         name = "shared-resource-local-reader-outside-network",
@@ -117,7 +153,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
         ),
         expectedAllowed = false,
         context = Some(Map("user_ip" -> "10.0.0.10")),
-        tags = Set(OpenFgaOnlyTag) // AM plugins do not handle context
+        tags = Set(AuthorizationEvaluation.OpenFgaOnlyTag) // AM plugins do not handle context
       ),
       EvaluationCase(
         name = "personal-resource-working-hours-allowed",
@@ -128,7 +164,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
         ),
         expectedAllowed = true,
         context = Some(Map("current_time" -> "2026-01-01T10:00:00Z")),
-        tags = Set(OpenFgaOnlyTag) // AM plugins do not handle context
+        tags = Set(AuthorizationEvaluation.OpenFgaOnlyTag) // AM plugins do not handle context
       ),
       EvaluationCase(
         name = "personal-resource-working-hours-denied",
@@ -139,7 +175,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
         ),
         expectedAllowed = false,
         context = Some(Map("current_time" -> "2026-01-01T07:00:00Z")),
-        tags = Set(OpenFgaOnlyTag) // AM plugins do not handle context
+        tags = Set(AuthorizationEvaluation.OpenFgaOnlyTag) // AM plugins do not handle context
       ),
 
       // 3. Access across resource groups and resources
@@ -151,7 +187,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
           s"resource:shared_resource_${sharedResourceId}"
         ),
         expectedAllowed = true,
-        tags = Set(ComparableTag)
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       ),
       EvaluationCase(
         name = "personal-resource-unrelated-user",
@@ -161,72 +197,61 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
           s"resource:user_${localReaderUserId}_resource_${resourceId}"
         ),
         expectedAllowed = false,
-        tags = Set(ComparableTag)
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       ),
 
-      // 4. Delegation via manager relationships (contextual tuples)
+      // 4. Delegation via manager relationships
       EvaluationCase(
-        name = "manager-access-with-contextual-tuple",
+        name = "manager-access-direct",
         tupleKey = TupleKey(
           s"user:user_${managerUserId}",
           "can_access",
           s"resource:user_${ownerUserId}_resource_${resourceId}"
         ),
         expectedAllowed = true,
-        contextualTuples = List(
-          TupleKey(
-            s"user:user_${managerUserId}",
-            "manager",
-            s"user:user_${ownerUserId}"
-          )
-        ),
-        tags = Set(OpenFgaOnlyTag) // AM plugins do not handle contextual tuples
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       ),
       EvaluationCase(
-        name = "manager-access-without-contextual-tuple",
+        name = "manager-access-deep",
         tupleKey = TupleKey(
-          s"user:user_${managerUserId}",
+          s"user:user_${managerChainUserId}",
+          "can_access",
+          s"resource:user_${ownerUserId}_resource_${resourceId}"
+        ),
+        expectedAllowed = true,
+        tags = Set(AuthorizationEvaluation.ComparableTag)
+      ),
+      EvaluationCase(
+        name = "manager-access-non-manager",
+        tupleKey = TupleKey(
+          s"user:user_${nonMemberUserId}",
           "can_access",
           s"resource:user_${ownerUserId}_resource_${resourceId}"
         ),
         expectedAllowed = false,
-        tags = Set(ComparableTag)
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       ),
 
-      // 5. Emergency/blocked short-circuiting (contextual tuples)
+      // 5. Emergency/blocked short-circuiting
       EvaluationCase(
-        name = "emergency-access-contextual-tuple",
+        name = "emergency-access",
         tupleKey = TupleKey(
           s"user:user_${emergencyUserId}",
           "can_access",
           s"resource:team_${blockedTeamId}_resource_${resourceId}"
         ),
         expectedAllowed = true,
-        contextualTuples = List(
-          TupleKey(
-            s"user:user_${emergencyUserId}",
-            "emergency_access",
-            s"resource_group:team_${blockedTeamId}_resources"
-          )
-        ),
-        tags = Set(OpenFgaOnlyTag) // AM plugins do not handle contextual tuples
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       ),
       EvaluationCase(
-        name = "blocked-access-contextual-tuple",
+        name = "blocked-access",
         tupleKey = TupleKey(
           s"user:user_${blockedUserId}",
           "can_access",
           s"resource:team_${blockedTeamId}_resource_${resourceId}"
         ),
         expectedAllowed = false,
-        contextualTuples = List(
-          TupleKey(
-            s"user:user_${blockedUserId}",
-            "blocked",
-            s"resource_group:team_${blockedTeamId}_resources"
-          )
-        ),
-        tags = Set(OpenFgaOnlyTag) // AM plugins do not handle contextual tuples
+        tags = Set(AuthorizationEvaluation.ComparableTag)
       )
     )
   }
@@ -234,7 +259,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
   private val evaluationCases = buildEvaluationCases()
 
   private val filteredCases = evaluationCases.filter { testCase =>
-    tagFilter.isEmpty || testCase.tags.intersect(tagFilter).nonEmpty
+    normalizedTagFilter.isEmpty || testCase.tags.intersect(normalizedTagFilter).nonEmpty
   }
 
   require(filteredCases.nonEmpty, "No evaluation cases match evaluation_tags filter")
@@ -248,6 +273,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend) extends Si
   }
 
   private val scn = scenario(s"${backend.name} Authorization Evaluation")
+    .exec(backend.authenticate)
     .repeat(REPEAT.intValue()) {
       feed(evaluationFeeder)
         .exec(backend.checkAuthorization("#{caseName}"))

@@ -240,7 +240,12 @@ Once authenticated, a token is generated, and UserInfo endpoint is requested bef
 ### OpenFGAProvision
 
 See [Authorization Simulations](./src/test/scala/io/gravitee/am/performance/authorization/README.md).
+
 ### OpenFGAEvaluation
+
+See [Authorization Simulations](./src/test/scala/io/gravitee/am/performance/authorization/README.md).
+
+### AuthZenEvaluation
 
 See [Authorization Simulations](./src/test/scala/io/gravitee/am/performance/authorization/README.md).
 

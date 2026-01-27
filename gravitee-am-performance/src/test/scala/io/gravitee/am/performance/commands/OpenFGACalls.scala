@@ -17,6 +17,7 @@ package io.gravitee.am.performance.commands
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
+import io.gravitee.am.performance.utils.JsonUtils.mapToJson
 import io.gravitee.am.performance.utils.SimulationSettings._
 import ujson._
 
@@ -29,30 +30,12 @@ object OpenFGACalls {
   case class TupleKey(user: String, relation: String, objectKey: String)
 
   /**
-   * Convert a context map to a uJSON object
-   */
-  private def contextToJson(context: Map[String, Any]): Obj = {
-    Obj.from(context.map { case (key, value) =>
-      key -> (value match {
-        case s: String => Str(s)
-        case i: Int => Num(i)
-        case l: Long => Num(l.toDouble)
-        case d: Double => Num(d)
-        case f: Float => Num(f)
-        case b: Boolean => Bool(b)
-        case null => Null
-        case other => Str(other.toString)
-      })
-    })
-  }
-
-  /**
    * Convert a Condition to a uJSON object
    */
   private def conditionToJson(condition: Condition): Obj = {
     Obj(
       "name" -> condition.name,
-      "context" -> contextToJson(condition.context)
+      "context" -> mapToJson(condition.context)
     )
   }
 
@@ -114,7 +97,7 @@ object OpenFGACalls {
       "consistency" -> "HIGHER_CONSISTENCY"
     )
 
-    context.foreach(ctx => requestBody("context") = contextToJson(ctx))
+    context.foreach(ctx => requestBody("context") = mapToJson(ctx))
     contextualTuples.foreach { tuples =>
       requestBody("contextual_tuples") = Obj(
         "tuple_keys" -> Arr.from(tuples.map(tupleKeyToJson))

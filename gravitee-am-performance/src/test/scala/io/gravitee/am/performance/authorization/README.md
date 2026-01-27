@@ -2,9 +2,11 @@
 
 ## Prerequisites
 
-Provisioning simulations have no dependency on AM but do require
+Provisioning and OpenFGA simulations have no dependency on AM but do require
 - an instance of **OpenFGA**
-- an existing OpenFGA Store configured with an Authorization Model compatible with the tuples being generated
+- an OpenFGA Store configured with an Authorization Model compatible with the tuples being generated
+
+The [AuthZen evaluation simulation](#authzenevaluation) additionally has a dependency on AM and requires an OpenFGA authorization engine instance.
 
 ### Docker Compose Setup (recommended)
 
@@ -13,9 +15,9 @@ Using this approach, the instance is backed by a postgres database and has a com
 
 The database is persisted between runs by default. To clear it, you can remove the volume with `npm --prefix docker/local-stack run stack:perf:clear-volumes`.
 
-After an OpenFGA store is successfully imported, its ID and the Authorization Model ID are output to the console. These can then be used in the OpenFGAProvision simulation.
+After an OpenFGA store is successfully imported, its **Store ID** and the **Authorization Model ID**are output to the console. These can then be used in the OpenFGAProvision simulation or for configuring an OpenFGA authorization engine in AM.
 
-(Note that the playground isn't available by these means but it is possible to access it using the hosted sandbox https://play.fga.dev/sandbox/?fga_api_host=127.0.0.1%3A8090&fga_api_scheme=http.)
+(Note that the local playground isn't available by these means but it is possible to access it using the hosted sandbox https://play.fga.dev/sandbox/?fga_api_host=127.0.0.1%3A8090&fga_api_scheme=http.)
 
 ### OpenFGAProvision
 
@@ -138,9 +140,39 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 * `evaluation_tags`: optional comma-separated tags to filter evaluation cases
 
 #### Tag filtering
-Evaluation cases are tagged to support comparisons with future AuthZen/PDP runs:
+Evaluation cases are tagged to support comparisons with AuthZen/PDP runs:
 * `comparable`: cases that should be supported by both OpenFGA API directly and the AM PDP/AuthZen flow
 * `openfga_only`: cases that use context or contextual tuples (not currently supported by the AM PDP/AuthZen or OpenFGA plugins)
 
 #### Repeat behavior
 Each virtual user loops over the evaluation feeder and issues `repeat` checks per iteration. Increasing `repeat` increases the total number of OpenFGA `/check` requests per virtual user and amplifies load without changing concurrency.
+
+### AuthZenEvaluation
+
+This simulation benchmarks authorization evaluation against the AM Gateway AuthZen endpoint. It must be run after `OpenFGAProvision` has seeded data and with the same parameter values. AuthZen evaluation requests are authenticated using OAuth2 bearer tokens obtained via the client credentials flow.
+
+#### Usage:
+
+In the `gravitee-am-performance/` folder, run:
+
+```
+mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorization.AuthZenEvaluation -Dgw_url=http://localhost:8092 -Ddomain=gatling-domain -Dclient_id=authzen-app -Dclient_secret=authzen-app -Dagents=50 -Dinject-during=600
+```
+
+#### Parameters
+* `gw_url`: base URL of the Gateway REST API (default: http://localhost:8092)
+* `domain`: domain name targeted by the simulation (default: gatling-domain)
+* `client_id`: client id used to request OAuth2 access token
+* `client_secret`: client secret used to request OAuth2 access token
+* `number_of_users`: how many users the provisioning data created
+* `number_of_teams`: how many teams the provisioning data created
+* `depth_of_teams`: maximum depth of teams in tree hierarchy
+* `agents`: number of concurrent agents (default: 10)
+* `inject-during`: duration (in sec) of the steady-state load (default: 300)
+* `repeat`: number of evaluation checks each virtual agent performs per iteration (default: 10)
+
+#### Tag filtering
+AuthZen evaluation uses only the `comparable` test cases to align with OpenFGA results.
+
+#### Repeat behavior
+Each virtual user loops over the evaluation feeder and issues `repeat` checks per iteration. Increasing `repeat` increases the total number of AuthZen `/access/v1/evaluation` requests per virtual user and amplifies load without changing concurrency.

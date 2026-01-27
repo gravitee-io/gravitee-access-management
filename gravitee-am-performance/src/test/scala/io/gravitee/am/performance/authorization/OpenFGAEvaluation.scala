@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.performance.authorization
 
+import io.gatling.http.request.builder.HttpRequestBuilder
+import io.gravitee.am.performance.commands.OpenFGACalls
+import io.gravitee.am.performance.commands.OpenFGACalls._
 import io.gravitee.am.performance.utils.SimulationSettings._
 
 /**
@@ -33,7 +36,35 @@ import io.gravitee.am.performance.utils.SimulationSettings._
  * - inject-during: duration (in sec) of the steady-state load (default: 300)
  * - repeat: number of evaluation checks each virtual agent performs per iteration (default: 10)
   */
-class OpenFGAEvaluation extends AuthorizationEvaluation(OpenFGAAuthorizationBackend) {
+class OpenFGAEvaluation
+    extends AuthorizationEvaluation(OpenFGAAuthorizationBackend, OpenFGAEvaluation.tagFilter) {
   require(FGA_STORE_ID.nonEmpty, "fga_store_id system property must be set")
   require(FGA_AUTHORIZATION_MODEL_ID.nonEmpty, "fga_authorization_model_id system property must be set")
+}
+
+object OpenFGAEvaluation {
+  val tagFilter: Set[String] = System
+    .getProperty("evaluation_tags", "")
+    .split(",")
+    .map(_.trim)
+    .filter(_.nonEmpty)
+    .toSet
+}
+
+object OpenFGAAuthorizationBackend extends AuthorizationBackend {
+  override val name: String = "openfga"
+
+  override def buildRequestBody(testCase: EvaluationCase): String = {
+    val tuples = if (testCase.contextualTuples.nonEmpty) Some(testCase.contextualTuples) else None
+    checkToJsonRequestBody(
+      user = testCase.tupleKey.user,
+      relation = testCase.tupleKey.relation,
+      objectKey = testCase.tupleKey.objectKey,
+      context = testCase.context,
+      contextualTuples = tuples
+    )
+  }
+
+  override def checkAuthorization(description: String): HttpRequestBuilder =
+    OpenFGACalls.checkAuthorization(description)
 }
