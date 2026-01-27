@@ -60,8 +60,13 @@ export async function evaluateAccess(
     .post(`/${domainHrid}/access/v1/evaluation`)
     .set('Authorization', `Bearer ${accessToken}`)
     .set('Content-Type', 'application/json')
-    .send(evaluationRequest)
-    .expect(200);
+    .send(evaluationRequest);
+  
+  if (response.status !== 200) {
+    const errorBody = response.body ? JSON.stringify(response.body) : response.text || 'No error body';
+    throw new Error(`AuthZen request failed with status ${response.status}: ${errorBody}`);
+  }
+  
   return response.body;
 }
 

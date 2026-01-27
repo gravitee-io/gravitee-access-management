@@ -140,7 +140,11 @@ beforeAll(async () => {
   expect(openIdConfiguration?.token_endpoint).toBeDefined();
 
   // 11. Obtain access token for AuthZEN API using client_credentials grant
-  authzenAppAccessToken = await requestClientCredentialsToken(authzenApp, openIdConfiguration);
+  authzenAppAccessToken = await requestClientCredentialsToken(
+    authzenApp.settings.oauth.clientId,
+    authzenApp.settings.oauth.clientSecret,
+    openIdConfiguration,
+  );
   expect(authzenAppAccessToken).toBeDefined();
 });
 
@@ -412,17 +416,10 @@ describe('AuthZen API - Basic Authorization Checks', () => {
       await waitForDomainSync(testDomain.id, accessToken);
 
       // Obtain access token using client_credentials WITHOUT resource parameter
-      // This makes aud = Protected Resource clientId (correct for AuthZen flow)
-      // Note: This will fail until AM-6268 enables OAuth grant type configuration for Protected Resources
+      // Token aud = Protected Resource clientId (for AuthZen PDP authentication, not resource access)
       protectedResourceAccessToken = await requestClientCredentialsToken(
-        {
-          settings: {
-            oauth: {
-              clientId: protectedResource.clientId,
-              clientSecret: protectedResource.clientSecret,
-            },
-          },
-        },
+        protectedResource.clientId,
+        protectedResource.clientSecret,
         openIdConfiguration,
       );
     });

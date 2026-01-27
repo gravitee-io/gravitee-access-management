@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Maybe;
@@ -33,9 +34,10 @@ public class IntrospectionRefreshTokenService extends BaseIntrospectionTokenServ
     public IntrospectionRefreshTokenService(JWTService jwtService,
                                             ClientSyncService clientService,
                                             ProtectedResourceManager protectedResourceManager,
+                                            ProtectedResourceSyncService protectedResourceSyncService,
                                             Environment environment,
                                             RefreshTokenRepository refreshTokenRepository) {
-        super(REFRESH_TOKEN, jwtService, clientService, protectedResourceManager, environment);
+        super(REFRESH_TOKEN, jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment);
         this.refreshTokenRepository = refreshTokenRepository;
     }
 

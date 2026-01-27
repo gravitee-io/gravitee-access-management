@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Completable;
@@ -54,6 +55,7 @@ abstract class BaseIntrospectionTokenService {
     private final JWTService jwtService;
     private final ClientSyncService clientService;
     private final ProtectedResourceManager protectedResourceManager;
+    private final ProtectedResourceSyncService protectedResourceSyncService;
     private final TokenType tokenType;
     private final boolean isLegacyRfc8707Enabled;
     
@@ -61,11 +63,13 @@ abstract class BaseIntrospectionTokenService {
                                   JWTService jwtService,
                                   ClientSyncService clientService,
                                   ProtectedResourceManager protectedResourceManager,
+                                  ProtectedResourceSyncService protectedResourceSyncService,
                                   Environment environment) {
         this.tokenType = tokenType;
         this.jwtService = jwtService;
         this.clientService = clientService;
         this.protectedResourceManager = protectedResourceManager;
+        this.protectedResourceSyncService = protectedResourceSyncService;
         this.isLegacyRfc8707Enabled = environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true);
     }
 
@@ -116,18 +120,23 @@ abstract class BaseIntrospectionTokenService {
             return Single.error(new InvalidTokenException("The token is invalid", "Token has no audience claim", jwt));
         }
 
-        // Single-audience: check if the audience is a client ID
+        // Single-audience: check if the audience is a client ID (Application or Protected Resource)
+        // If not found as a clientId, fall back to resource identifier validation (RFC 8707)
         if (audiences.size() == 1) {
-            return clientService.findByDomainAndClientId(jwt.getDomain(), audiences.getFirst())
-                    .flatMapSingle(client -> {
-                        String certificateId = client.getCertificate();
-                        // If the client's certificate is null, assume the token is signed with an HMAC key
-                        return Single.just(Objects.requireNonNullElse(certificateId, ""));
-                    })
+            String audience = audiences.getFirst();
+            return clientService.findByDomainAndClientId(jwt.getDomain(), audience)
+                    .switchIfEmpty(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), audience))
+                    .flatMapSingle(client -> Single.just(getCertificateIdFromClient(client)))
                     .switchIfEmpty(Single.defer(() -> validateProtectedResourcesAndGetCertificateId(jwt, callerClientId)));
         }
 
+        // Multiple-audience: validate all audiences by resource identifier (RFC 8707)
         return validateProtectedResourcesAndGetCertificateId(jwt, callerClientId);
+    }
+
+    private String getCertificateIdFromClient(io.gravitee.am.model.oidc.Client client) {
+        // If the client's certificate is null, assume the token is signed with an HMAC key
+        return Objects.requireNonNullElse(client.getCertificate(), "");
     }
 
     private Single<String> validateProtectedResourcesAndGetCertificateId(JWT jwt, String callerClientId) {
@@ -138,10 +147,7 @@ abstract class BaseIntrospectionTokenService {
                     }
                     return Completable.complete();
                 })
-                .toSingle(() -> {
-                    // Protected resources currently do not have a configurable certificate ID
-                    return "";
-                });
+                .toSingle(() -> "");
     }
 
     private Single<Set<ProtectedResource>> validateResourcesBelongToDomain(JWT jwt) {

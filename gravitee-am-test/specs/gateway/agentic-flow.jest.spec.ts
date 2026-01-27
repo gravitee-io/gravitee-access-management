@@ -320,14 +320,8 @@ describe('Agentic Flow - User → Application → Token → MCP Server → AuthZ
         // Step 5: MCP Server calls AuthZEN to check fine-grained access to specific tool
         // MCP Server obtains an access token using client_credentials grant
         const mcpServerAccessToken = await requestClientCredentialsToken(
-            {
-                settings: {
-                    oauth: {
-                        clientId: mcpServer.clientId,
-                        clientSecret: mcpServer.clientSecret,
-                    },
-                },
-            },
+            mcpServer.clientId,
+            mcpServer.clientSecret,
             openIdConfig,
         );
 

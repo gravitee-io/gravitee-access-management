@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
@@ -62,6 +63,9 @@ public class IntrospectionAccessTokenServiceTest {
     private ProtectedResourceManager protectedResourceManager;
 
     @Mock
+    private ProtectedResourceSyncService protectedResourceSyncService;
+
+    @Mock
     private Environment environment;
 
     @Mock
@@ -72,7 +76,7 @@ public class IntrospectionAccessTokenServiceTest {
     @Before
     public void setUp() throws Exception {
         when(environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(false);
-        introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, protectedResourceManager, environment, accessTokenRepository);
+        introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment, accessTokenRepository);
     }
 
     @Test
@@ -88,6 +92,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
@@ -113,6 +118,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
         when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.just(accessToken));
 
@@ -136,6 +142,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
@@ -159,6 +166,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.error(new JWTException("invalid token")));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
@@ -179,6 +187,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
         when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.empty());
 
@@ -202,6 +211,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
         when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.just(accessToken));
 
@@ -222,6 +232,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
@@ -240,6 +251,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
         testObserver.assertError(throwable -> throwable instanceof InvalidTokenException e
