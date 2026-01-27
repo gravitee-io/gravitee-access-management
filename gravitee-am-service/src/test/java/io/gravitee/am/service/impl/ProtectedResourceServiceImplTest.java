@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -31,6 +34,7 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificateService;
@@ -867,7 +871,11 @@ public class ProtectedResourceServiceImplTest {
                 .assertComplete();
 
         verify(repository, times(1)).update(argThat(res -> res.getClientSecrets().size() == 1));
-        verify(auditService, times(1)).report(any());
+
+        verify(auditService, times(1)).report(argThat(builder ->
+                builder.build(new ObjectMapper())
+                        .getType()
+                        .equals(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_CREATED)));
     }
 
     @Test
@@ -923,7 +931,10 @@ public class ProtectedResourceServiceImplTest {
                 .assertComplete();
 
         verify(repository, times(1)).update(any());
-        verify(auditService, times(1)).report(any());
+        verify(auditService, times(1)).report(argThat(builder ->
+                builder.build(new ObjectMapper())
+                        .getType()
+                        .equals(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_RENEWED)));
     }
 
     @Test
@@ -957,7 +968,11 @@ public class ProtectedResourceServiceImplTest {
                 .assertComplete();
 
         verify(repository, times(1)).update(argThat(res -> res.getClientSecrets().size() == 1));
-        verify(auditService, times(1)).report(any());
+
+        verify(auditService, times(1)).report(argThat(builder ->
+                builder.build(new ObjectMapper())
+                        .getType()
+                        .equals(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_DELETED)));
     }
 
     @Test

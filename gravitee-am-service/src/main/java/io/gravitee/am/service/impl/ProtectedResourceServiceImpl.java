@@ -556,8 +556,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     protectedResource.setClientSecrets(secrets);
 
                     return repository.update(protectedResource)
-                        .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
+                        .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_CREATED).protectedResource(updatedResource)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_CREATED).throwable(throwable)))
                         .flatMap(resource -> {
                             Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
                             Event secretEvent = new Event(Type.PROTECTED_RESOURCE_SECRET, new Payload(clientSecret.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.CREATE));
@@ -614,8 +614,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretExpirationSettings(), getExpirationSettings(protectedResource)));
 
                     return repository.update(protectedResource)
-                        .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
+                        .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_RENEWED).protectedResource(updatedResource)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_RENEWED).throwable(throwable)))
                         .flatMap(resource -> {
                             Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
                             Event secretEvent = new Event(Type.PROTECTED_RESOURCE_SECRET, new Payload(clientSecret.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.UPDATE));
@@ -665,8 +665,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     }
 
                     return repository.update(protectedResource)
-                         .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_UPDATED).protectedResource(updatedResource)))
-                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_UPDATED).throwable(throwable)))
+                         .doOnSuccess(updatedResource -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_DELETED).protectedResource(updatedResource)))
+                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.PROTECTED_RESOURCE_CLIENT_SECRET_DELETED).throwable(throwable)))
                          .flatMap(resource -> {
                             Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.UPDATE));
                             Event secretEvent = new Event(Type.PROTECTED_RESOURCE_SECRET, new Payload(secretToRemove.getId(), ReferenceType.PROTECTED_RESOURCE, resource.getId(), Action.DELETE));
