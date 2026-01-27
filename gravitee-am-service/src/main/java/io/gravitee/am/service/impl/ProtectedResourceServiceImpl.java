@@ -53,6 +53,7 @@ import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
+import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import org.apache.commons.lang3.StringUtils;
@@ -188,7 +189,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), toCreate.getClientId())
                 .andThen(checkResourceIdentifierUniqueness(domain.getId(), toCreate.getResourceIdentifiers()))
-                .andThen(doCreate(toCreate, principal, domain))
+                .andThen(setDefaultCertificate(toCreate))
+                .flatMap(resource -> doCreate(resource, principal, domain))
                 .map(res -> ProtectedResourceSecret.from(res, rawSecret));
     }
 
@@ -750,5 +752,43 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         if (oauth.getClientSecret() == null && defaultClientSecret != null) {
             oauth.setClientSecret(defaultClientSecret);
         }
+    }
+
+    /**
+     * Set default domain certificate for the protected resource
+     *
+     * @param resource the protected resource to create
+     * @return the protected resource with the certificate
+     */
+    private Single<ProtectedResource> setDefaultCertificate(ProtectedResource resource) {
+        if (resource.getCertificate() != null) {
+            return Single.just(resource);
+        }
+
+        return certificateService
+                .findByDomain(resource.getDomainId())
+                .toList()
+                .map(certificates -> {
+                    if (certificates == null || certificates.isEmpty()) {
+                        return resource;
+                    }
+                    Certificate defaultCertificate = certificates
+                            .stream()
+                            .filter(Certificate::isSystem)
+                            .sorted(new CertificateTimeComparator())
+                            .findFirst()
+                            .or(() ->
+                                    // legacy way to retrieve default certificate before we introduce the system flag
+                                    // keep it for backward compatibility in case of issue with the SystemCertificateUpgrader
+                                    certificates
+                                            .stream()
+                                            .filter(certificate -> "Default".equals(certificate.getName()))
+                                            .findFirst()
+                            )
+                            .orElse(certificates.get(0));
+
+                    resource.setCertificate(defaultCertificate.getId());
+                    return resource;
+                });
     }
 }
