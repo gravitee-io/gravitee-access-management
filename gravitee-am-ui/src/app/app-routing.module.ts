@@ -1181,7 +1181,7 @@ export const routes: Routes = [
                                 },
                               },
                               {
-                                path: 'certificates',
+                                path: 'secrets-certificates',
                                 component: ApplicationSecretsCertificatesComponent,
                                 canActivate: [AuthGuard],
                                 resolve: { certificates: SignCertificatesResolver },
@@ -1538,7 +1538,7 @@ export const routes: Routes = [
                                 },
                               },
                               {
-                                path: 'secrets',
+                                path: 'secrets-certificates',
                                 component: DomainMcpServerClientSecretsComponent,
                                 canActivate: [AuthGuard],
                                 data: {
