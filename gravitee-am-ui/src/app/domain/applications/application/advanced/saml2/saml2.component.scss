@@ -1,0 +1,30 @@
+.assertion-attributes-table {
+  width: 100%;
+  margin-bottom: 16px;
+  border-collapse: collapse;
+
+  th {
+    padding: 8px 4px;
+    border-bottom: 1px solid rgb(0 0 0 / 12%);
+    text-align: left;
+  }
+
+  td {
+    padding: 4px;
+    vertical-align: middle;
+
+    &:last-child {
+      width: 48px;
+      text-align: center;
+    }
+  }
+
+  .attribute-field {
+    width: 100%;
+  }
+}
+
+.no-attributes-hint {
+  padding: 16px 0;
+  color: rgb(0 0 0 / 54%);
+}

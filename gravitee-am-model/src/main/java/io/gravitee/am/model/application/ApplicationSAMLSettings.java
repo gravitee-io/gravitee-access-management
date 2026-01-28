@@ -16,7 +16,11 @@
 package io.gravitee.am.model.application;
 
 import io.gravitee.am.common.saml2.Binding;
+import io.gravitee.am.model.SAMLAssertionAttribute;
 import io.gravitee.am.model.oidc.Client;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * See <a href="https://www.oasis-open.org/committees/download.php/56786/sstc-saml-metadata-errata-2.0-wd-05-diff.pdf">2.4.4 Element <SPSSODescriptor></a>
@@ -56,6 +60,12 @@ public class ApplicationSAMLSettings {
      */
     private String responseBinding = Binding.INITIAL_REQUEST;
 
+    /**
+     * Custom assertion attribute mappings.
+     * These override default attributes if the same name is used.
+     */
+    private List<SAMLAssertionAttribute> assertionAttributes;
+
     public ApplicationSAMLSettings() {
     }
 
@@ -67,6 +77,9 @@ public class ApplicationSAMLSettings {
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
         this.responseBinding = other.responseBinding;
+        this.assertionAttributes = other.assertionAttributes != null
+                ? new ArrayList<>(other.assertionAttributes.stream().map(SAMLAssertionAttribute::new).toList())
+                : null;
     }
 
     public String getEntityId() {
@@ -125,6 +138,14 @@ public class ApplicationSAMLSettings {
         this.responseBinding = responseBinding;
     }
 
+    public List<SAMLAssertionAttribute> getAssertionAttributes() {
+        return assertionAttributes;
+    }
+
+    public void setAssertionAttributes(List<SAMLAssertionAttribute> assertionAttributes) {
+        this.assertionAttributes = assertionAttributes;
+    }
+
     public void copyTo(Client client) {
         client.setEntityId(this.entityId);
         client.setAttributeConsumeServiceUrl(this.attributeConsumeServiceUrl);
@@ -133,5 +154,6 @@ public class ApplicationSAMLSettings {
         client.setWantResponseSigned(this.wantResponseSigned);
         client.setWantAssertionsSigned(this.wantAssertionsSigned);
         client.setResponseBinding(this.responseBinding);
+        client.setSamlAssertionAttributes(this.assertionAttributes);
     }
 }

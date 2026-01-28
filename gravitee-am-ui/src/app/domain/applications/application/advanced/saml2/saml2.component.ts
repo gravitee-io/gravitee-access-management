@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { AuthService } from '../../../../../services/auth.service';
+
+interface AssertionAttribute {
+  attributeName: string;
+  attributeValue: string;
+}
 
 interface ApplicationSaml2SettingsPayload {
   entityId?: string;
@@ -28,6 +33,7 @@ interface ApplicationSaml2SettingsPayload {
   wantAssertionsSigned?: boolean;
   certificate?: string;
   responseBinding?: string;
+  assertionAttributes?: AssertionAttribute[];
 }
 
 @Component({
@@ -41,8 +47,10 @@ export class ApplicationSaml2Component implements OnInit {
   private domainId: string;
   application: any;
   applicationSamlSettings: ApplicationSaml2SettingsPayload;
-  formChanged: boolean;
+  assertionAttributes: AssertionAttribute[] = [];
+  formChanged = false;
   editMode: boolean;
+  private updating = false;
   certificates: any[] = [];
   bindings: any[] = [
     { name: 'Initial-Request', value: 'urn:oasis:names:tc:SAML:2.0:bindings:custom:Initial-Request' },
@@ -51,7 +59,6 @@ export class ApplicationSaml2Component implements OnInit {
   ];
 
   constructor(
-    private router: Router,
     private route: ActivatedRoute,
     private applicationService: ApplicationService,
     private authService: AuthService,
@@ -63,21 +70,33 @@ export class ApplicationSaml2Component implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.certificates = this.route.snapshot.data['certificates'];
     this.applicationSamlSettings = this.application.settings == null ? {} : this.application.settings.saml || {};
+    this.assertionAttributes = this.applicationSamlSettings.assertionAttributes
+      ? [...this.applicationSamlSettings.assertionAttributes]
+      : [];
     this.editMode = this.authService.hasPermissions(['application_saml_update']);
   }
 
   patch() {
     this.applicationSamlSettings.certificate = this.applicationSamlSettings.certificate ? this.applicationSamlSettings.certificate : null;
+    // Filter out empty assertion attributes and sync with settings
+    const validAttributes = this.assertionAttributes.filter((attr) => attr.attributeName && attr.attributeValue);
+    this.applicationSamlSettings.assertionAttributes = validAttributes.length > 0 ? validAttributes : null;
+
     const settings = {
       settings: {
         saml: this.applicationSamlSettings,
       },
     };
     this.applicationService.patch(this.domainId, this.application.id, settings).subscribe((data) => {
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
-      this.formChanged = false;
+      this.updating = true;
       this.application = data;
-      this.form.reset(this.application.settings.saml);
+      this.applicationSamlSettings = this.application.settings?.saml || {};
+      this.assertionAttributes = this.applicationSamlSettings.assertionAttributes
+        ? [...this.applicationSamlSettings.assertionAttributes]
+        : [];
+      this.form.reset(this.applicationSamlSettings);
+      this.formChanged = false;
+      this.updating = false;
       this.snackbarService.open('Application updated');
     });
   }
@@ -85,5 +104,21 @@ export class ApplicationSaml2Component implements OnInit {
   responseBindingChanged(value: string) {
     this.applicationSamlSettings.responseBinding = value;
     this.formChanged = true;
+  }
+
+  addAssertionAttribute() {
+    this.assertionAttributes.push({ attributeName: '', attributeValue: '' });
+    this.formChanged = true;
+  }
+
+  removeAssertionAttribute(index: number) {
+    this.assertionAttributes.splice(index, 1);
+    this.formChanged = true;
+  }
+
+  onAssertionAttributeChange() {
+    if (!this.updating) {
+      this.formChanged = true;
+    }
   }
 }

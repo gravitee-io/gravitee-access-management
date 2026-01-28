@@ -87,6 +87,66 @@
       </div>
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h5>Assertion Mapping</h5>
+          <small>Customise the SAML assertion content sent to the Service Provider</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <small>Map user attributes to SAML assertion attributes. Custom mappings override default attributes.</small>
+          <table class="assertion-attributes-table" *ngIf="assertionAttributes.length > 0">
+            <thead>
+              <tr>
+                <th>Attribute Name</th>
+                <th>Attribute Value</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let attr of assertionAttributes; let i = index">
+                <td>
+                  <mat-form-field appearance="outline" floatLabel="always" class="attribute-field">
+                    <input
+                      matInput
+                      type="text"
+                      placeholder="e.g. http://schemas.xmlsoap.org/.../emailaddress"
+                      [name]="'attrName' + i"
+                      [(ngModel)]="attr.attributeName"
+                      (ngModelChange)="onAssertionAttributeChange()"
+                      [disabled]="!editMode"
+                    />
+                  </mat-form-field>
+                </td>
+                <td>
+                  <mat-form-field appearance="outline" floatLabel="always" class="attribute-field">
+                    <input
+                      matInput
+                      type="text"
+                      placeholder="e.g. {#context.attributes['user'].email}"
+                      [name]="'attrValue' + i"
+                      [(ngModel)]="attr.attributeValue"
+                      (ngModelChange)="onAssertionAttributeChange()"
+                      [disabled]="!editMode"
+                    />
+                  </mat-form-field>
+                </td>
+                <td>
+                  <button mat-icon-button type="button" (click)="removeAssertionAttribute(i)" [disabled]="!editMode">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="assertionAttributes.length === 0" class="no-attributes-hint">
+            <small>No custom assertion attributes defined. Click the button below to add one.</small>
+          </div>
+          <button mat-stroked-button type="button" (click)="addAssertionAttribute()" [disabled]="!editMode">
+            <mat-icon>add</mat-icon> Add Attribute
+          </button>
+        </div>
+      </div>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Certificate</h5>
           <small>The SP's base-64 encoded public key certificate, which is used by the IdP to verify SAML authorization requests</small>
           <mat-divider></mat-divider>
