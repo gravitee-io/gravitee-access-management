@@ -29,8 +29,9 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
+import static io.gravitee.am.service.spring.email.EmailPropertiesLoader.AUTH_METHOD_BASIC;
+import static io.gravitee.am.service.spring.email.EmailPropertiesLoader.AUTH_METHOD_OAUTH2;
 import static java.util.Objects.isNull;
 
 /**
@@ -42,8 +43,6 @@ import static java.util.Objects.isNull;
 public class EmailConfiguration {
 
     private static final String EMAIL_ALLOW_LIST = "email.allowedfrom[%d]";
-    private static final String EMAIL_PROPERTIES_PREFIX = "email.properties";
-    private static final String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
     private static final String DEFAULT_ALLOWED_FORM = "*@*.*";
     private static final String EMAIL_ENABLED = "email.enabled";
     private static final String EMAIL_HOST = "email.host";
@@ -59,18 +58,18 @@ public class EmailConfiguration {
     private static final String EMAIL_OAUTH2_REFRESH_TOKEN = "email.oauth2.refreshToken";
     private static final String EMAIL_OAUTH2_SCOPE = "email.oauth2.scope";
 
-    private static final String AUTH_METHOD_BASIC = "basic";
-    private static final String AUTH_METHOD_OAUTH2 = "oauth2";
 
     @Autowired
     private OAuth2TokenService oauth2TokenService;
 
     private final ConfigurableEnvironment environment;
     private final List<String> allowedFrom;
+    private final EmailPropertiesLoader propertiesLoader;
     private io.gravitee.node.api.configuration.Configuration configuration;
 
     public EmailConfiguration(ConfigurableEnvironment environment) {
         this.environment = environment;
+        this.propertiesLoader = new EmailPropertiesLoader();
         this.allowedFrom = initializeAllowList();
     }
 
@@ -86,10 +85,11 @@ public class EmailConfiguration {
             log.warn("Cannot configure JavaMail Sender", e);
         }
 
-        javaMailSender.setProtocol(getProtocol());
-        javaMailSender.setJavaMailProperties(loadProperties());
-
         String authMethod = getAuthMethod();
+
+        javaMailSender.setProtocol(getProtocol());
+        javaMailSender.setJavaMailProperties(propertiesLoader.load(environment, authMethod));
+
         if (AUTH_METHOD_OAUTH2.equalsIgnoreCase(authMethod)) {
             configureOAuth2Authentication(javaMailSender);
             return new OAuth2JavaMailSenderWrapper(javaMailSender, oauth2TokenService);
@@ -123,24 +123,6 @@ public class EmailConfiguration {
 
         javaMailSender.setUsername(username);
         javaMailSender.setPassword(accessToken);
-    }
-
-    private Properties loadProperties() {
-        Map<String, Object> envProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
-
-        Properties properties = new Properties();
-        envProperties.forEach((key, value) -> properties.setProperty(
-                MAILAPI_PROPERTIES_PREFIX + key.substring(EMAIL_PROPERTIES_PREFIX.length() + 1),
-                value.toString()));
-
-        if (AUTH_METHOD_OAUTH2.equalsIgnoreCase(getAuthMethod())) {
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.mechanisms", "XOAUTH2");
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.plain.disable", "true");
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth.login.disable", "true");
-            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + "auth", "true");
-        }
-
-        return properties;
     }
 
     public String getHost() {
@@ -208,9 +190,9 @@ public class EmailConfiguration {
     }
 
     private <T> T getProperty(String propName, T defaultValue) {
-        final Map<String, Object> emailProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
-        if (emailProperties.containsKey(EMAIL_PROPERTIES_PREFIX + "." + propName)) {
-            return (T) emailProperties.get(EMAIL_PROPERTIES_PREFIX + "." + propName);
+        final Map<String, Object> emailProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX);
+        if (emailProperties.containsKey(EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX + "." + propName)) {
+            return (T) emailProperties.get(EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX + "." + propName);
         } else {
             return defaultValue;
         }
