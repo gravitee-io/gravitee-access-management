@@ -79,7 +79,7 @@
     "@angular/language-service": "19.2.14",
     "@types/jest": "29.5.14",
     "@types/json-schema": "7.0.15",
-    "@types/lodash": "4.17.20",
+    "@types/lodash": "4.17.23",
     "@types/node": "20.11.23",
     "@types/regex-escape": "3.4.1",
     "@typescript-eslint/eslint-plugin": "8.35.1",
