@@ -845,7 +845,7 @@ jobs:
   run_testcontainer_tests_mongo:
     executor:
       name: ubuntu
-      class: "xlarge"
+      class: "large"
     steps:
       - attach_workspace:
           at: /tmp
@@ -861,7 +861,7 @@ jobs:
   run_testcontainer_tests_jdbc:
     executor:
       name: ubuntu
-      class: "xlarge"
+      class: "large"
     parameters:
       jdbcType:
         type: enum
@@ -1910,7 +1910,7 @@ workflows:
     when:
       and:
         - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
-    max_auto_reruns: 3
+    max_auto_reruns: 2
     jobs:
       - setup:
           context: cicd-orchestrator
@@ -1986,6 +1986,7 @@ workflows:
 
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>
+    max_auto_reruns: 1
     jobs:
       - setup:
           context:
