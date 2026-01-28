@@ -48,6 +48,7 @@ import static io.gravitee.am.repository.mongodb.management.internal.model.Protec
 public class MongoProtectedResourceRepository extends AbstractManagementMongoRepository implements ProtectedResourceRepository {
     public static final String COLLECTION_NAME = "protected_resources";
 
+
     private MongoCollection<ProtectedResourceMongo> collection;
 
     @PostConstruct
@@ -143,39 +144,11 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
     }
 
-
-
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> search(String domain, Type type, String query, PageSortRequest pageSortRequest) {
-        String regex = createRegex(query);
-        Bson mongoQuery = and(
-                eq(DOMAIN_ID_FIELD, domain),
-                eq(TYPE_FIELD, type),
-                or(
-                        regex("name", regex, "i"),
-                        regex(RESOURCE_IDENTIFIERS_FIELD, regex, "i")
-                )
-        );
-        return queryProtectedResource(mongoQuery, pageSortRequest).observeOn(Schedulers.computation());
-    }
-
-    private String createRegex(String query) {
-        if (!query.contains("*")) {
-            return ".*" + Pattern.quote(query) + ".*";
-        }
-        
-        String[] parts = query.split("\\*", -1); 
-        StringBuilder sb = new StringBuilder("^");
-        for (int i = 0; i < parts.length; i++) {
-            if (!parts[i].isEmpty()) {
-                sb.append(Pattern.quote(parts[i]));
-            }
-            if (i < parts.length - 1) {
-                sb.append(".*");
-            }
-        }
-        sb.append("$");
-        return sb.toString();
+        Bson mongoQuery = buildSearchQuery(query, domain, DOMAIN_ID_FIELD, CLIENT_ID_FIELD);
+        return findPage(collection, mongoQuery, pageSortRequest.getPage(), pageSortRequest.getSize(),
+                doc -> ProtectedResourcePrimaryData.of(convert(doc)));
     }
 
     @Override

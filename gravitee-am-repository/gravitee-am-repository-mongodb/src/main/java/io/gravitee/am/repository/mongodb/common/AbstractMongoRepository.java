@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -33,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -121,5 +125,28 @@ public abstract class AbstractMongoRepository {
                 .flatMapCompletable(indexName -> Completable
                         .fromPublisher(collection.dropIndex(indexName))
                         .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e)));
+    }
+
+    protected Bson buildSearchQuery(String query, String domain, String domainFieldName, String fieldClientId) {
+        return and(
+                eq(domainFieldName, domain),
+                buildTextQuery(query, fieldClientId));
+    }
+
+    protected Bson buildTextQuery(String query, String fieldClientId) {
+        // currently search on client_id field
+        Bson searchQuery = or(eq(fieldClientId, query), eq(FIELD_NAME, query));
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject(FIELD_NAME, pattern));
+        }
+        return searchQuery;
+    }
+
+    protected Single<Long> countItems(MongoCollection collection, Bson query, CountOptions options) {
+        return Observable.fromPublisher(collection.countDocuments(query, options)).first(0l);
     }
 }

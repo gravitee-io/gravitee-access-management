@@ -15,17 +15,25 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+
+import java.util.HashSet;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -73,5 +81,17 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
 
     protected Maybe<Bson> toBsonFilter(boolean logicalOr, Bson... filter) {
         return MongoUtils.toBsonFilter(logicalOr, filter);
+    }
+
+    protected <T, R> Single<Page<R>> findPage(MongoCollection<T> collection, Bson query, int page, int size, io.reactivex.rxjava3.functions.Function<T, R> mapper) {
+        Single<Long> countOperation = countItems(collection, query, countOptions());
+        Single<Set<R>> contentOperation = Observable.fromPublisher(withMaxTime(collection.find(query))
+                        .sort(new BasicDBObject(MongoUtils.FIELD_UPDATED_AT, -1))
+                        .skip(size * page)
+                        .limit(size))
+                .map(mapper)
+                .collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, contentOperation, (count, content) -> new Page<>(content, page, count))
+                .observeOn(Schedulers.computation());
     }
 }
