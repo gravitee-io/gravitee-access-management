@@ -1552,7 +1552,7 @@ export const routes: Routes = [
                                   },
                                 },
                                 resolve: {
-                                  certificates: CertificatesResolver,
+                                  certificates: SignCertificatesResolver,
                                   entrypoint: DomainEntrypointResolver,
                                 },
                               },
