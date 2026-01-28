@@ -65,7 +65,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
 
             // add error messages
-            StringBuilder error = new StringBuilder(errorDescription);
+            StringBuilder error = new StringBuilder();
             error.append(USER_CONSENT_FAILED);
             queryParams.set(ConstantKeys.ERROR_PARAM_KEY, USER_CONSENT_FAILED);
             if (errorCode != null) {
