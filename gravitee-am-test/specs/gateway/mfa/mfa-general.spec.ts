@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect, it } from '@jest/globals';
 import { Domain, enableDomain, initClient, initDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { withRetry } from '@utils-commands/retry';
 import { extractXsrfTokenAndActionResponse, getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
-import fetch from 'cross-fetch';
 import { extractDomValue } from './fixture/mfa-extract-fixture';
 import {
   followUpGet,
@@ -28,9 +27,9 @@ import {
   processMfaEnrollment,
 } from './fixture/mfa-flow-fixture';
 import { waitFor } from '@management-commands/domain-management-commands';
+import { setup } from '../../test-fixture';
 
-global.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 const mfaChallengeAttemptsResetTime = 1;
 
 const domain: Domain = {

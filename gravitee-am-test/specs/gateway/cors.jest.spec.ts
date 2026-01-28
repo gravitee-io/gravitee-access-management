@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { CorsFixture, setupCorsFixture } from './fixtures/cors-fixture';
 import { performOptions, performGet } from '@gateway-commands/oauth-oidc-commands';
-
-global.fetch = fetch;
+import { setup } from '../test-fixture';
 
 let fixture: CorsFixture;
 
-jest.setTimeout(200000);
+setup(200000);
 
 beforeAll(async () => {
   fixture = await setupCorsFixture();
@@ -43,15 +41,15 @@ describe('CORS - Default configuration', () => {
     const allowHeaders = response.headers['access-control-allow-headers'];
     expect(allowHeaders).toBeDefined();
     expect(allowHeaders.toLowerCase().split(',').sort()).toEqual([
-        'authorization',
-        'cache-control',
-        'content-type',
-        'if-match',
-        'origin',
-        'pragma',
-        'x-requested-with',
-        'x-xsrf-token',
-      ]);
+      'authorization',
+      'cache-control',
+      'content-type',
+      'if-match',
+      'origin',
+      'pragma',
+      'x-requested-with',
+      'x-xsrf-token',
+    ]);
 
     // Check default methods
     const allowMethods = response.headers['access-control-allow-methods'];
@@ -80,14 +78,10 @@ describe('CORS - Successful requests', () => {
     expect(optionsResponse.status).toBe(204);
 
     const accessToken = await fixture.getAccessToken();
-    const getResponse = await performGet(
-      process.env.AM_GATEWAY_URL,
-      fixture.userinfoPath,
-      {
-        Authorization: `Bearer ${accessToken}`,
-        Origin: 'https://any-origin.com',
-      },
-    );
+    const getResponse = await performGet(process.env.AM_GATEWAY_URL, fixture.userinfoPath, {
+      Authorization: `Bearer ${accessToken}`,
+      Origin: 'https://any-origin.com',
+    });
 
     expect(getResponse.status).toBe(200);
   });
@@ -109,14 +103,10 @@ describe('CORS - Successful requests', () => {
     expect(optionsResponse.headers['access-control-allow-headers']).toBeDefined();
 
     const accessToken = await fixture.getAccessToken();
-    const getResponse = await performGet(
-      process.env.AM_GATEWAY_URL,
-      fixture.userinfoPath,
-      {
-        Authorization: `Bearer ${accessToken}`,
-        Origin: 'https://any-origin.com',
-      },
-    );
+    const getResponse = await performGet(process.env.AM_GATEWAY_URL, fixture.userinfoPath, {
+      Authorization: `Bearer ${accessToken}`,
+      Origin: 'https://any-origin.com',
+    });
 
     expect(getResponse.status).toBe(200);
     expect(getResponse.headers['access-control-allow-origin']).toBe('*');
@@ -151,14 +141,10 @@ describe('CORS - Successful requests', () => {
     expect(optionsResponse.headers['access-control-max-age']).toBe('3600');
 
     const accessToken = await fixture.getAccessToken();
-    const getResponse = await performGet(
-      process.env.AM_GATEWAY_URL,
-      fixture.userinfoPath,
-      {
-        Authorization: `Bearer ${accessToken}`,
-        Origin: 'https://example.com',
-      },
-    );
+    const getResponse = await performGet(process.env.AM_GATEWAY_URL, fixture.userinfoPath, {
+      Authorization: `Bearer ${accessToken}`,
+      Origin: 'https://example.com',
+    });
 
     expect(getResponse.status).toBe(200);
     expect(getResponse.headers['access-control-allow-origin']).toBe('https://example.com');
@@ -183,17 +169,13 @@ describe('CORS - Rejected requests (403)', () => {
     expect(optionsResponse.res.statusMessage).toBe('CORS Rejected - Invalid origin');
 
     const accessToken = await fixture.getAccessToken();
-    await performGet(
-      process.env.AM_GATEWAY_URL,
-      fixture.userinfoPath,
-      {
-        Authorization: `Bearer ${accessToken}`,
-        Origin: 'https://malicious.com',
-      },
-    ).expect(403);
+    await performGet(process.env.AM_GATEWAY_URL, fixture.userinfoPath, {
+      Authorization: `Bearer ${accessToken}`,
+      Origin: 'https://malicious.com',
+    }).expect(403);
   });
 });
 
 afterAll(async () => {
-  await fixture.cleanup();
+  await fixture.cleanUp();
 });

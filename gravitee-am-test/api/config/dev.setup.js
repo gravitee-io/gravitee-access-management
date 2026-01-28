@@ -17,6 +17,9 @@ process.env.AM_MANAGEMENT_URL = 'http://localhost:8093';
 process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_URL + '/management';
 process.env.AM_GATEWAY_URL = 'http://localhost:8092';
 process.env.AM_INTERNAL_GATEWAY_URL = 'http://gateway:8092';
+process.env.AM_MONGODB_URI = 'mongodb://localhost:27017';
+process.env.AM_POSTGRES_HOST = 'localhost';
+process.env.AM_GATEWAY_NODE_MONITORING_URL = 'http://localhost:18092/_node';
 process.env.AM_CIBA_NOTIFIER_URL = 'http://localhost:8080/ciba';
 process.env.AM_INTERNAL_CIBA_NOTIFIER_URL = 'http://localhost:8080/ciba';
 process.env.AM_OPENFGA_URL = 'http://localhost:8090';
@@ -29,4 +32,3 @@ process.env.FAKE_SMTP = 'http://localhost:5080';
 process.env.INTERNAL_FAKE_SMTP_HOST = 'smtp';
 process.env.INTERNAL_FAKE_SMTP_PORT = '5025';
 process.env.AM_GATEWAY_SYNC_GRACE_PERIOD = '5000';
-

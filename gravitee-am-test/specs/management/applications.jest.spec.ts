@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
@@ -31,8 +30,9 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { uniqueName } from '@utils-commands/misc';
 import { ClientSecret } from '@management-models/ClientSecret';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
+setup(200000);
 
 const SMALL_BATCH_SIZE = 5;
 const LARGE_BATCH_SIZE = 55;
@@ -47,8 +47,6 @@ const SEEDED_APPLICATION_COUNT = SMALL_BATCH_SIZE + LARGE_BATCH_SIZE;
 const UNIQUE_APP_NAME = `${RUN_PREFIX}-unique123`;
 const UNIQUE_CLIENT_ID = `${RUN_PREFIX}-client-unique123`;
 const CLIENT_ID_WILDCARD_PREFIX = `${RUN_PREFIX}-client-shared`;
-
-jest.setTimeout(200000);
 
 let accessToken: string;
 let primaryDomain: Domain;
@@ -114,22 +112,17 @@ beforeAll(async () => {
     buildName: (index) => `${SMALL_PREFIX}-${index}-${uniqueName('app', true)}`,
   });
 
-  await seedBatch(
-    primaryDomain.id!,
-    LARGE_BATCH_SIZE,
-    largeBatch,
-    {
-      buildName: (index) =>
-        index < WILDCARD_BATCH_SIZE
-          ? `${WILDCARD_PREFIX}-${index}-${uniqueName('app', true)}`
-          : `${LARGE_PREFIX}-${index}-${uniqueName('app', true)}`,
-      onAppCreated: (app, index) => {
-        if (index < WILDCARD_BATCH_SIZE) {
-          wildcardBatch.push(app);
-        }
-      },
+  await seedBatch(primaryDomain.id!, LARGE_BATCH_SIZE, largeBatch, {
+    buildName: (index) =>
+      index < WILDCARD_BATCH_SIZE
+        ? `${WILDCARD_PREFIX}-${index}-${uniqueName('app', true)}`
+        : `${LARGE_PREFIX}-${index}-${uniqueName('app', true)}`,
+    onAppCreated: (app, index) => {
+      if (index < WILDCARD_BATCH_SIZE) {
+        wildcardBatch.push(app);
+      }
     },
-  );
+  });
 
   // Create unique app in primary domain
   await createApp(primaryDomain.id!, UNIQUE_APP_NAME);
@@ -316,9 +309,9 @@ describe('Redirect URI', () => {
             allowRedirectUriParamsExpressionLanguage: true,
           },
         },
-      })
+      }),
     ).rejects.toMatchObject({
-      response: { status: 400 }
+      response: { status: 400 },
     });
 
     expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
@@ -481,8 +474,7 @@ afterAll(async () => {
     for (const appId of createdApplicationIds[domainId]) {
       try {
         await deleteApplication(domainId, accessToken, appId);
-      } catch (err) {
-      }
+      } catch (err) {}
     }
   }
   if (primaryDomain?.id) {

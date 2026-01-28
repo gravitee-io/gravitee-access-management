@@ -17,7 +17,8 @@
 import { expect } from '@jest/globals';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 
-const supertest = require('supertest');
+import supertest from 'supertest';
+
 const cheerio = require('cheerio');
 
 const URLS = {

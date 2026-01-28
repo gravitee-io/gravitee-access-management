@@ -21,8 +21,7 @@
  * and ensures that when autoLogin is disabled, session cleanup works correctly to allow
  * subsequent user registrations to proceed without interference from previous registration sessions.
  */
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
@@ -32,21 +31,33 @@ import {
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
-import { createApplication, updateApplication, updateApplicationFlows, getApplicationFlows } from '@management-commands/application-management-commands';
+import {
+  createApplication,
+  updateApplication,
+  updateApplicationFlows,
+  getApplicationFlows,
+} from '@management-commands/application-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
-import { extractXsrfToken, getWellKnownOpenIdConfiguration, performGet, performPost, performFormPost } from '@gateway-commands/oauth-oidc-commands';
+import {
+  extractXsrfToken,
+  getWellKnownOpenIdConfiguration,
+  performGet,
+  performPost,
+  performFormPost,
+} from '@gateway-commands/oauth-oidc-commands';
 import { extractDomValue } from './fixture/mfa-extract-fixture';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { withRetry } from '@utils-commands/retry';
+import { setup } from '../../test-fixture';
 
 const cheerio = require('cheerio');
 
-globalThis.fetch = fetch;
+setup(200000);
 
 let domain;
 let application;
@@ -58,8 +69,6 @@ let clientId;
 let scimClient;
 let scimAccessToken;
 let scimEndpoint;
-
-jest.setTimeout(200000);
 
 const TEST_PASSWORD = 'TestP@ssw0rd123';
 
@@ -96,12 +105,9 @@ const createEmailFactor = async (smtpResource, domain, accessToken) => {
 const createPreRegisteredUser = async (scimAccessToken, scimEndpoint) => {
   const username = uniqueName('test-user', true);
   const email = `test-${Date.now()}@example.com`;
-  
+
   const scimUserRequest = {
-    schemas: [
-      'urn:ietf:params:scim:schemas:extension:custom:2.0:User',
-      'urn:ietf:params:scim:schemas:core:2.0:User'
-    ],
+    schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
     userName: username,
     name: {
       familyName: 'User',
@@ -111,32 +117,36 @@ const createPreRegisteredUser = async (scimAccessToken, scimEndpoint) => {
       {
         value: email,
         type: 'work',
-        primary: true
-      }
+        primary: true,
+      },
     ],
     active: true,
     'urn:ietf:params:scim:schemas:extension:custom:2.0:User': {
-      preRegistration: true
-    }
+      preRegistration: true,
+    },
   };
 
   const scimResponse = await performPost(scimEndpoint, '/Users', JSON.stringify(scimUserRequest), {
     'Content-type': 'application/json',
     Authorization: `Bearer ${scimAccessToken}`,
   });
-  
+
   expect(scimResponse.status).toBe(201);
   const createdUser = scimResponse.body;
   expect(createdUser).toBeDefined();
   expect(createdUser.active).toBeFalsy();
 
-  await withRetry(async () => {
-    const emailExists = await hasEmail();
-    if (!emailExists) {
-      throw new Error('Email not received yet');
-    }
-    return emailExists;
-  }, 30, 500);
+  await withRetry(
+    async () => {
+      const emailExists = await hasEmail();
+      if (!emailExists) {
+        throw new Error('Email not received yet');
+      }
+      return emailExists;
+    },
+    30,
+    500,
+  );
 
   const confirmationLink = (await getLastEmail()).extractLink();
   await clearEmails();
@@ -169,11 +179,7 @@ const setupPreRegisteredUser = async (scimAccessToken, scimEndpoint, clientId) =
  * triggers session destruction to ensure subsequent user registrations are not affected.
  */
 const setupAndCompleteRegistration = async (domain, scimAccessToken, scimEndpoint, clientId) => {
-  const { registrationLinkWithClientId, resetPwdToken, headers } = await setupPreRegisteredUser(
-    scimAccessToken,
-    scimEndpoint,
-    clientId,
-  );
+  const { registrationLinkWithClientId, resetPwdToken, headers } = await setupPreRegisteredUser(scimAccessToken, scimEndpoint, clientId);
 
   // Load registration confirmation page (enrolls MFA via flow policy)
   const registrationPage = await performGet(registrationLinkWithClientId, '', {
@@ -193,18 +199,22 @@ const setupAndCompleteRegistration = async (domain, scimAccessToken, scimEndpoin
   const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
   const action = dom('form').attr('action');
   const factorId = extractDomValue(challengePage, '[name=factorId]');
-  
+
   expect(xsrfToken).toBeDefined();
   expect(action).toBeDefined();
-  
+
   // Get OTP from email
-  await withRetry(async () => {
-    const emailExists = await hasEmail();
-    if (!emailExists) {
-      throw new Error('OTP email not received yet');
-    }
-    return emailExists;
-  }, 30, 500);
+  await withRetry(
+    async () => {
+      const emailExists = await hasEmail();
+      if (!emailExists) {
+        throw new Error('OTP email not received yet');
+      }
+      return emailExists;
+    },
+    30,
+    500,
+  );
 
   const otpEmail = await getLastEmail();
   const otpRegex = /\b\d{6}\b/;
@@ -229,21 +239,21 @@ const setupAndCompleteRegistration = async (domain, scimAccessToken, scimEndpoin
   );
 
   expect(challengeSubmitResponse.status).toBe(302);
-  
+
   const passwordPageResponse = await performGet(registrationLinkWithClientId, '', {
     Cookie: challengeSubmitResponse.headers['set-cookie'],
   });
-  
+
   expect(passwordPageResponse.status).toBe(200);
   expect(passwordPageResponse.text).toContain('password');
 
   const passwordDom = cheerio.load(passwordPageResponse.text);
   const passwordXsrfToken = passwordDom('[name=X-XSRF-TOKEN]').val();
   const passwordAction = passwordDom('form').attr('action');
-  
+
   expect(passwordXsrfToken).toBeDefined();
   expect(passwordAction).toBeDefined();
-  
+
   const passwordSubmitResponse = await performFormPost(
     passwordAction,
     '',
@@ -402,11 +412,11 @@ describe('User registration with MFA enrollment and session management', () => {
   it('should complete registration flow with MFA and ensure session cleanup allows subsequent registrations', async () => {
     await setupAndCompleteRegistration(domain, scimAccessToken, scimEndpoint, clientId);
 
-    const { registrationLinkWithClientId: newUserRegistrationLink, resetPwdToken: newUserResetPwdToken, headers: newUserHeaders } = await setupPreRegisteredUser(
-      scimAccessToken,
-      scimEndpoint,
-      clientId,
-    );
+    const {
+      registrationLinkWithClientId: newUserRegistrationLink,
+      resetPwdToken: newUserResetPwdToken,
+      headers: newUserHeaders,
+    } = await setupPreRegisteredUser(scimAccessToken, scimEndpoint, clientId);
 
     const newUserRegistrationPage = await performGet(newUserRegistrationLink, '', {
       Cookie: newUserHeaders['set-cookie'],
@@ -419,7 +429,7 @@ describe('User registration with MFA enrollment and session management', () => {
     });
 
     expect(newUserChallengePage.status).toBe(200);
-    
+
     const pageContent = newUserChallengePage.text || '';
     expect(pageContent).toContain('Authenticate your account');
     expect(pageContent).toContain('X-XSRF-TOKEN');
@@ -431,4 +441,3 @@ describe('User registration with MFA enrollment and session management', () => {
 afterAll(async () => {
   await safeDeleteDomain(domain?.id, accessToken);
 });
-

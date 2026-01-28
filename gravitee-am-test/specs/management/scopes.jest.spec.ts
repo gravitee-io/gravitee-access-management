@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
@@ -30,10 +29,9 @@ import {
   updateScope,
 } from '@management-commands/scope-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { setup } from '../test-fixture';
 
-global.fetch = fetch;
-
-jest.setTimeout(200000);
+setup(200000);
 
 let accessToken;
 let domain;

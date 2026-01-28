@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
@@ -30,15 +29,14 @@ import {
   RateLimitConfig,
 } from './fixtures/rate-limit-fixture';
 import { uniqueName } from '@utils-commands/misc';
-
-global.fetch = fetch;
+import { setup } from '../test-fixture';
 
 let accessToken;
 let domain;
 let application;
 let openIdConfiguration;
 
-jest.setTimeout(200000);
+setup(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();

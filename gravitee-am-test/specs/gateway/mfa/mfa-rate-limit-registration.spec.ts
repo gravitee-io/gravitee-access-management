@@ -19,8 +19,7 @@
  * It is disabled by default (`mfa_rate.enabled=false`); enable it via `gravitee.yml` or the corresponding
  * `GRAVITEE_MFA_RATE_*` environment variables before starting the AM Gateway.
  */
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
@@ -30,10 +29,16 @@ import {
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
-import { createApplication, updateApplication, updateApplicationFlows, getApplicationFlows } from '@management-commands/application-management-commands';
+import {
+  createApplication,
+  updateApplication,
+  updateApplicationFlows,
+  getApplicationFlows,
+} from '@management-commands/application-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
+import { setup } from '../../test-fixture';
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
@@ -41,7 +46,7 @@ import { uniqueName } from '@utils-commands/misc';
 import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { withRetry } from '@utils-commands/retry';
 
-globalThis.fetch = fetch;
+setup(200000);
 
 let domain;
 let application;
@@ -54,10 +59,7 @@ let scimClient;
 let scimAccessToken;
 let scimEndpoint;
 
-jest.setTimeout(200000);
-
 const createSMTPResource = async (domain, accessToken) => {
-
   const smtp = await createResource(domain.id, accessToken, {
     type: 'smtp-am-resource',
     configuration: `{"host":"${process.env.INTERNAL_FAKE_SMTP_HOST}","port":${process.env.INTERNAL_FAKE_SMTP_PORT},"from":"admin@test.com","protocol":"smtp","authentication":false,"startTls":false}`,
@@ -87,12 +89,9 @@ const createEmailFactor = async (smtpResource, domain, accessToken) => {
 const setupPreRegisteredUserAndGetConfirmationLink = async (domain, scimAccessToken, scimEndpoint, clientId) => {
   const username = uniqueName('test-user', true);
   const email = `test-${Date.now()}@example.com`;
-  
+
   const scimUserRequest = {
-    schemas: [
-      'urn:ietf:params:scim:schemas:extension:custom:2.0:User',
-      'urn:ietf:params:scim:schemas:core:2.0:User'
-    ],
+    schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
     userName: username,
     name: {
       familyName: 'User',
@@ -102,40 +101,44 @@ const setupPreRegisteredUserAndGetConfirmationLink = async (domain, scimAccessTo
       {
         value: email,
         type: 'work',
-        primary: true
-      }
+        primary: true,
+      },
     ],
     active: true,
     'urn:ietf:params:scim:schemas:extension:custom:2.0:User': {
-      preRegistration: true
-    }
+      preRegistration: true,
+    },
   };
 
   const scimResponse = await performPost(scimEndpoint, '/Users', JSON.stringify(scimUserRequest), {
     'Content-type': 'application/json',
     Authorization: `Bearer ${scimAccessToken}`,
   });
-  
+
   expect(scimResponse.status).toBe(201);
   const createdUser = scimResponse.body;
   expect(createdUser).toBeDefined();
   expect(createdUser.active).toBeFalsy(); // Pre-registered users are not active
 
   // Wait for registration email
-  await withRetry(async () => {
-    const emailExists = await hasEmail();
-    if (!emailExists) {
-      throw new Error('Email not received yet');
-    }
-    return emailExists;
-  }, 30, 500);
+  await withRetry(
+    async () => {
+      const emailExists = await hasEmail();
+      if (!emailExists) {
+        throw new Error('Email not received yet');
+      }
+      return emailExists;
+    },
+    30,
+    500,
+  );
 
   const confirmationLink = (await getLastEmail()).extractLink();
   await clearEmails();
 
   const resetPwdToken = new URL(confirmationLink).searchParams.get('token');
   const baseUrlConfirmRegister = confirmationLink.substring(0, confirmationLink.indexOf('?'));
-  
+
   // Add client_id to registration link and extract XSRF token
   const url = new URL(confirmationLink);
   url.searchParams.set('client_id', clientId);
@@ -321,13 +324,12 @@ describe('MFA Rate Limit during Registration Confirmation', () => {
 
       expect(response.status).toBe(200);
       expect(response.text).toBeDefined();
-      
+
       // Verify the response is the MFA challenge page (not an error page)
       const pageContent = response.text || '';
       expect(pageContent).toContain('Authenticate your account');
       expect(pageContent).toContain('X-XSRF-TOKEN');
       expect(pageContent).toContain('name="code"');
-      
     }
 
     // Third request should be rate limited and return HTTP 302 redirect
@@ -348,6 +350,5 @@ describe('MFA Rate Limit during Registration Confirmation', () => {
 });
 
 afterAll(async () => {
-    await safeDeleteDomain(domain?.id, accessToken);
+  await safeDeleteDomain(domain?.id, accessToken);
 });
-

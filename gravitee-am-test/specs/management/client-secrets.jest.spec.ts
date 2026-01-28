@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { delay, uniqueName } from '@utils-commands/misc';
@@ -26,8 +26,9 @@ import {
   renewClientSecret,
 } from '@management-commands/client-secrets-management-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
+import { setup } from '../test-fixture';
 
-jest.setTimeout(200000);
+setup(200000);
 
 let accessToken: any;
 let domain: any;

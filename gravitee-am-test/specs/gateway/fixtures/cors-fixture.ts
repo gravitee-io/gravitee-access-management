@@ -35,12 +35,12 @@ import { User } from '@management-models/User';
 import { delay, uniqueName } from '@utils-commands/misc';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { Fixture } from '../../test-fixture';
 
-export interface CorsFixture {
+export interface CorsFixture extends Fixture {
   domain: Domain;
   application: Application;
   user: User;
-  cleanup: () => Promise<void>;
   getAccessToken: () => Promise<string>;
   updateCorsSettings: (corsSettings: Partial<CorsSettings>) => Promise<void>;
   userinfoPath: string;
@@ -170,7 +170,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
   };
 
   // Cleanup function
-  const cleanup = async () => {
+  const cleanUp = async () => {
     await safeDeleteDomain(domain.id, accessToken);
   };
 
@@ -178,7 +178,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
     domain,
     application,
     user,
-    cleanup,
+    cleanUp,
     getAccessToken,
     updateCorsSettings,
     userinfoPath,

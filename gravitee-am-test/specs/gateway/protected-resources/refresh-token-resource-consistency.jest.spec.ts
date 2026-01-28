@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, describe, expect, jest, it } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { decodeJwt } from '@utils-commands/jwt';
 import { validateAudienceClaim } from './fixtures/test-utils';
 import { ProtectedResourcesFixture, setupProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
+import { setup } from '../../test-fixture';
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let fixture: ProtectedResourcesFixture;
 
@@ -30,7 +29,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) await fixture.cleanup();
+  if (fixture) await fixture.cleanUp();
 });
 
 describe('Refresh Token Flow - Resource Parameter Consistency (RFC 8707)', () => {

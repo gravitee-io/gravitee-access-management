@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { OIDCFixture, setupOidcProviderTest, TEST_USER } from './common';
 import { uniqueName } from '@utils-commands/misc';
-jest.setTimeout(200000);
+import { setup } from '../../test-fixture';
+
+setup(200000);
 
 let fixture: OIDCFixture;
 
 beforeAll(async function () {
   fixture = await setupOidcProviderTest(uniqueName('response-mode'));
 });
-
-function extractHashParams(hash: string) {
-  const params = hash
-    .substring(1)
-    .split('&')
-    .map((it) => {
-      return it.split('=') as [string, string];
-    });
-  return new Map(params);
-}
 
 function expectRedirectToClientWithAuthCode(res) {
   return (res) => fixture.expectRedirectToClient(res, (uri: string) => expect(uri).toMatch(/\?code=[^&]*/));
@@ -62,6 +54,13 @@ describe('The OIDC provider 2', () => {
           oidcSignInUrlAssertions: expectResponseModeParam('fragment'),
           oidcIdpFlow: 'implicit',
         })
+        .then(expectRedirectToClientWithAuthCode)
+        .then((code) => expect(code).not.toBeNull());
+    });
+    it('should use response_mode=form_post when explicitly configured', async () => {
+      await fixture.idpPluginInClient.setResponseType({ type: RESPONSE_TYPE, mode: 'form_post' });
+      await fixture
+        .login(TEST_USER.username, TEST_USER.password, { oidcSignInUrlAssertions: expectResponseModeParam('form_post') })
         .then(expectRedirectToClientWithAuthCode)
         .then((code) => expect(code).not.toBeNull());
     });

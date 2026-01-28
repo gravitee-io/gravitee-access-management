@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {
-  createDomain,
-  safeDeleteDomain,
-  patchDomain,
-  startDomain,
-} from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
-
-global.fetch = fetch;
+import { setup } from '../test-fixture';
 
 let accessToken;
 let domain;
 
-jest.setTimeout(200000);
+setup(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
@@ -111,4 +104,3 @@ afterAll(async () => {
     await safeDeleteDomain(domain.id, accessToken);
   }
 });
-

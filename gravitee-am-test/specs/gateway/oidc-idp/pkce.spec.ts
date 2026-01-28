@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { beforeAll, expect, jest } from '@jest/globals';
+import { beforeAll, expect } from '@jest/globals';
 import { BasicResponse, uniqueName } from '@utils-commands/misc';
 import { OIDCFixture, setupOidcProviderTest, TEST_USER } from './common';
+import { setup } from '../../test-fixture';
 
-jest.setTimeout(200000);
+setup(200000);
 
 let fixture: OIDCFixture;
 
@@ -56,10 +57,8 @@ describe('The OIDC provider', () => {
         .then((code) => expect(code).not.toBeNull());
     });
     it('should fail with challenge unsupported by provider', async () => {
-      await expect(
-        fixture.idpPluginInClient.setPkceMethod('non-existing-method')
-      ).rejects.toMatchObject({
-        response: { status: 400 }
+      await expect(fixture.idpPluginInClient.setPkceMethod('non-existing-method')).rejects.toMatchObject({
+        response: { status: 400 },
       });
     });
   });

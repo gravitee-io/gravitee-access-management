@@ -35,7 +35,7 @@ import path from 'path';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getDomainApi, getDomainManagerUrl } from '@management-commands/service/utils';
 import 'cross-fetch/polyfill';
-const request = require('supertest');
+import request from 'supertest';
 import { banner, section, info, success, warn, bullet, ICON, ansi } from './provisioning/logger';
 import { createAndStartDomains, waitForDomainsReady } from './provisioning/provisioners/domain-provisioner';
 import { ensureIdp } from './provisioning/provisioners/idp-provisioner';
@@ -311,5 +311,3 @@ if (require.main === module) {
     }
   })();
 }
-
-

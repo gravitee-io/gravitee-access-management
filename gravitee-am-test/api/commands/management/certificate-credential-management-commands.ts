@@ -36,11 +36,7 @@ export const enrollCertificate = (
 /**
  * List certificate credentials for a user.
  */
-export const listCertificateCredentials = (
-  domainId: string,
-  userId: string,
-  accessToken: string,
-): Promise<CertificateCredential[]> =>
+export const listCertificateCredentials = (domainId: string, userId: string, accessToken: string): Promise<CertificateCredential[]> =>
   getUserApi(accessToken).listUserCertificateCredentials({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -68,12 +64,7 @@ export const getCertificateCredential = (
 /**
  * Delete (revoke) a certificate credential.
  */
-export const deleteCertificateCredential = (
-  domainId: string,
-  userId: string,
-  credentialId: string,
-  accessToken: string,
-): Promise<void> =>
+export const deleteCertificateCredential = (domainId: string, userId: string, credentialId: string, accessToken: string): Promise<void> =>
   getUserApi(accessToken).revokeUserCertificateCredential({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -85,4 +76,3 @@ export const deleteCertificateCredential = (
 // Re-export types for convenience
 export type { CertificateCredential } from '../../management/models';
 export type { NewCertificateCredential } from '../../management/models';
-

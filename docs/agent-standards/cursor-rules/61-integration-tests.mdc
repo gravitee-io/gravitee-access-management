@@ -1,0 +1,16 @@
+---
+description: "Integration tests (Jest): follow Gravitee AM test guidelines"
+alwaysApply: false
+globs: "gravitee-am-test/specs/**/*.jest.spec.ts,gravitee-am-test/specs/**/fixtures/**/*.ts"
+---
+# Integration Tests (Jest)
+
+> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
+
+## Required Guidelines
+
+- Follow `@gravitee-am-test/GUIDELINES.md` for all integration test work.
+
+## References
+
+- `@gravitee-am-test/GUIDELINES.md`

@@ -14,39 +14,36 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import {beforeAll, expect, jest} from '@jest/globals';
-import {requestAdminAccessToken} from '@management-commands/token-management-commands';
+import { beforeAll, expect } from '@jest/globals';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
   DomainOidcConfig,
   patchDomain,
   startDomain,
   waitFor,
-  waitForDomainStart
+  waitForDomainStart,
 } from '@management-commands/domain-management-commands';
-import {createUser} from '@management-commands/user-management-commands';
-import {
-  extractXsrfTokenAndHref, performGet,
-  performPost
-} from '@gateway-commands/oauth-oidc-commands';
-import {initiateLoginFlow} from '@gateway-commands/login-commands';
-import {uniqueName} from '@utils-commands/misc';
-import {createApplication, updateApplication} from "@management-commands/application-management-commands";
-import {getAllIdps} from "@management-commands/idp-management-commands";
-import {enrollCertificate} from "@management-commands/certificate-credential-management-commands";
-import {Domain} from "@management-models/Domain";
-import {Agent} from "https";
-import fs from "fs";
-import path from "path";
-import process from "node:process";
+import { createUser } from '@management-commands/user-management-commands';
+import { extractXsrfTokenAndHref, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { initiateLoginFlow } from '@gateway-commands/login-commands';
+import { uniqueName } from '@utils-commands/misc';
+import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
+import { enrollCertificate } from '@management-commands/certificate-credential-management-commands';
+import { Domain } from '@management-models/Domain';
+import { Agent } from 'https';
+import fs from 'fs';
+import path from 'path';
+import process from 'node:process';
+import { setup } from '../test-fixture';
 
-globalThis.fetch = fetch;
+setup(20000);
 
 interface UserPem {
   user: any;
-  pem: string
-  key: string
+  pem: string;
+  key: string;
 }
 
 let accessToken;
@@ -57,24 +54,26 @@ let userWithCred: UserPem;
 let userWithoutCred: UserPem;
 let userDifferentCa: UserPem;
 
-
-jest.setTimeout(20000);
-
-
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
 
   await createDomain(accessToken, uniqueName('cba-domain', true), 'CBA')
-    .then(d => patchDomain(d.id, accessToken, {
-      loginSettings: {
-        certificateBasedAuthEnabled: true,
-        certificateBasedAuthUrl: `${process.env.MTLS_URL}`
-      }}))
-    .then(d=> startDomain(d.id, accessToken).then(waitForDomainStart).then(result => {
-      domain = result.domain;
-      oidc = result.oidcConfig;
-    }));
-
+    .then((d) =>
+      patchDomain(d.id, accessToken, {
+        loginSettings: {
+          certificateBasedAuthEnabled: true,
+          certificateBasedAuthUrl: `${process.env.MTLS_URL}`,
+        },
+      }),
+    )
+    .then((d) =>
+      startDomain(d.id, accessToken)
+        .then(waitForDomainStart)
+        .then((result) => {
+          domain = result.domain;
+          oidc = result.oidcConfig;
+        }),
+    );
 
   const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
@@ -86,7 +85,9 @@ beforeAll(async () => {
     clientSecret: 'test',
     redirectUris: ['https://callback'],
   }).then((app) =>
-    updateApplication(domain.id, accessToken,
+    updateApplication(
+      domain.id,
+      accessToken,
       {
         settings: {
           oauth: {
@@ -104,8 +105,8 @@ beforeAll(async () => {
     }),
   );
 
-  const pem1 = readFile("/certs/client-a/client.crt")
-  const key1 = readFile("/certs/client-a/client.key")
+  const pem1 = readFile('/certs/client-a/client.crt');
+  const key1 = readFile('/certs/client-a/client.key');
   userWithCred = await createUser(domain.id, accessToken, {
     firstName: 'john',
     lastName: 'doe',
@@ -113,18 +114,19 @@ beforeAll(async () => {
     username: 'with',
     password: 'Password123!',
     client: app.id,
-    source: defaultIdp.id})
-    .then(user => enrollCertificate(domain.id, user.id, accessToken, {certificatePem: pem1})
-    .then((cert) => {
+    source: defaultIdp.id,
+  }).then((user) =>
+    enrollCertificate(domain.id, user.id, accessToken, { certificatePem: pem1 }).then((cert) => {
       return {
         user: user,
         pem: cert.certificatePem,
-        key: key1
-      }
-    }));
+        key: key1,
+      };
+    }),
+  );
 
-  const pem2 = readFile("/certs/client-b/client.crt");
-  const key2 = readFile("/certs/client-b/client.key")
+  const pem2 = readFile('/certs/client-b/client.crt');
+  const key2 = readFile('/certs/client-b/client.key');
   userWithoutCred = await createUser(domain.id, accessToken, {
     firstName: 'with',
     lastName: 'out',
@@ -132,17 +134,17 @@ beforeAll(async () => {
     username: 'without',
     password: 'Password123!',
     client: app.id,
-    source: defaultIdp.id})
-    .then(user => {
-      return {
-        user: user,
-        pem: pem2,
-        key: key2
-      }
-    });
+    source: defaultIdp.id,
+  }).then((user) => {
+    return {
+      user: user,
+      pem: pem2,
+      key: key2,
+    };
+  });
 
-  const pem3 = readFile("/certs/client-c-diff-ca/client.crt")
-  const key3 = readFile("/certs/client-c-diff-ca/client.key")
+  const pem3 = readFile('/certs/client-c-diff-ca/client.crt');
+  const key3 = readFile('/certs/client-c-diff-ca/client.key');
   userDifferentCa = await createUser(domain.id, accessToken, {
     firstName: 'with',
     lastName: 'out',
@@ -150,18 +152,18 @@ beforeAll(async () => {
     username: 'invalid',
     password: 'Password123!',
     client: app.id,
-    source: defaultIdp.id})
-      .then(user => enrollCertificate(domain.id, user.id, accessToken, {certificatePem: pem3})
-        .then((cert) => {
-          return {
-            user: user,
-            pem: cert.certificatePem,
-            key: key3
-          }
-        }));
+    source: defaultIdp.id,
+  }).then((user) =>
+    enrollCertificate(domain.id, user.id, accessToken, { certificatePem: pem3 }).then((cert) => {
+      return {
+        user: user,
+        pem: cert.certificatePem,
+        key: key3,
+      };
+    }),
+  );
 
-
-  await waitFor(5000)
+  await waitFor(5000);
 });
 
 describe('Should authenticate user', () => {
@@ -169,23 +171,25 @@ describe('Should authenticate user', () => {
     const clientId = app.settings.oauth.clientId;
 
     const authResponse = await initiateLoginFlow(clientId, oidc, domain, 'code', 'https://callback');
-    const loginPage = await extractXsrfTokenAndHref(authResponse, 'cbaLinkButton')
-    const cbaResponse = await performPost(loginPage.action, '', {'Cookie': loginPage.headers['set-cookie']});
+    const loginPage = await extractXsrfTokenAndHref(authResponse, 'cbaLinkButton');
+    const cbaResponse = await performPost(loginPage.action, '', { Cookie: loginPage.headers['set-cookie'] });
 
     const agent = new Agent({
       rejectUnauthorized: false,
       cert: userWithCred.pem,
       key: userWithCred.key,
-    })
+    });
 
     const authPage = await fetch(cbaResponse.headers['location'], {
       method: 'GET',
       redirect: 'manual',
-      agent
-    } as any)
+      agent,
+    } as any);
 
-    const callbackResponse = await performGet(authPage.headers.get('location'), '', {'Cookie': loginPage.headers['set-cookie']})
-    const authorizeResponse = await performGet(callbackResponse.headers['location'], '', {'Cookie': callbackResponse.headers['set-cookie']})
+    const callbackResponse = await performGet(authPage.headers.get('location'), '', { Cookie: loginPage.headers['set-cookie'] });
+    const authorizeResponse = await performGet(callbackResponse.headers['location'], '', {
+      Cookie: callbackResponse.headers['set-cookie'],
+    });
     expect(authorizeResponse.headers['location']).toContain('code=');
     expect(authorizeResponse.headers['location']).toContain('https://callback');
   });
@@ -196,20 +200,20 @@ describe('Should not authenticate user', () => {
     const clientId = app.settings.oauth.clientId;
 
     const authResponse = await initiateLoginFlow(clientId, oidc, domain, 'code', 'https://callback');
-    const loginPage = await extractXsrfTokenAndHref(authResponse, 'cbaLinkButton')
-    const cbaResponse = await performPost(loginPage.action, '', {'Cookie': loginPage.headers['set-cookie']});
+    const loginPage = await extractXsrfTokenAndHref(authResponse, 'cbaLinkButton');
+    const cbaResponse = await performPost(loginPage.action, '', { Cookie: loginPage.headers['set-cookie'] });
 
     const agent = new Agent({
       rejectUnauthorized: false,
       cert: userDifferentCa.pem,
       key: userDifferentCa.key,
-    })
+    });
 
     const authPage = await fetch(cbaResponse.headers['location'], {
       method: 'GET',
       redirect: 'manual',
-      agent
-    } as any)
+      agent,
+    } as any);
 
     expect(authPage.status).toBe(400);
   });
@@ -218,32 +222,27 @@ describe('Should not authenticate user', () => {
     const clientId = app.settings.oauth.clientId;
 
     const authResponse = await initiateLoginFlow(clientId, oidc, domain, 'code', 'https://callback');
-    const loginPage = await extractXsrfTokenAndHref(authResponse, 'cbaLinkButton')
-    const cbaResponse = await performPost(loginPage.action, '', {'Cookie': loginPage.headers['set-cookie']});
+    const loginPage = await extractXsrfTokenAndHref(authResponse, 'cbaLinkButton');
+    const cbaResponse = await performPost(loginPage.action, '', { Cookie: loginPage.headers['set-cookie'] });
 
     const agent = new Agent({
       rejectUnauthorized: false,
       cert: userWithoutCred.pem,
       key: userWithoutCred.key,
-    })
+    });
 
     const authPage = await fetch(cbaResponse.headers['location'], {
       method: 'GET',
       redirect: 'manual',
-      agent
-    } as any)
+      agent,
+    } as any);
 
     expect(authPage.headers.get('location')).toContain('error=Unauthorized');
     expect(authPage.headers.get('location')).toContain('Bad+credentials');
     expect(authPage.status).toBe(302);
   });
-})
+});
 
 export function readFile(filePath: string) {
   return fs.readFileSync(path.join(process.cwd(), filePath), 'utf8');
 }
-
-
-
-
-

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import {
   createDomain,
   safeDeleteDomain,
@@ -39,16 +38,15 @@ import {
 import { initiateLoginFlow, login } from '@gateway-commands/login-commands';
 import { TEST_USER } from './oidc-idp/common';
 import { enableDomain } from './mfa/fixture/mfa-setup-fixture';
+import { setup } from '../test-fixture';
 import { withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
 
-global.fetch = fetch;
+setup(200000);
 
 let accessToken;
 let withReset;
 let withoutReset;
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();

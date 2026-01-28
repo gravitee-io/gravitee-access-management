@@ -39,7 +39,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (fixture) {
-    await fixture.cleanup();
+    await fixture.cleanUp();
   }
 });
 
@@ -219,7 +219,7 @@ describe('Protected Resource Introspection with ClientId (AuthZen Flow)', () => 
     // Ensure Protected Resource has no certificate
     const currentResource = await getMcpServer(fixture.domain.id, fixture.accessToken, protectedResource.id);
     expect(currentResource).toBeDefined();
-    
+
     const patchedResource = await patchProtectedResource(
       fixture.domain.id,
       fixture.accessToken,

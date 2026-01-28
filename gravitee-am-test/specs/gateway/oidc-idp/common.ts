@@ -165,10 +165,8 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
   };
 
   // Wait for both domains to sync before starting login flow
-  await Promise.all([
-    waitForDomainSync(providerDomain.id, accessToken),
-    waitForDomainSync(clientDomain.id, accessToken),
-  ]).then(() => initiateLoginFlow(clientApp.settings.oauth.clientId, clientOpenIdConfiguration, clientDomain))
+  await Promise.all([waitForDomainSync(providerDomain.id, accessToken), waitForDomainSync(clientDomain.id, accessToken)])
+    .then(() => initiateLoginFlow(clientApp.settings.oauth.clientId, clientOpenIdConfiguration, clientDomain))
     .then((response) => navigateToOidcProviderLogin(response))
     .then((response) => login(response, TEST_USER.username, providerIdpApplication.settings.oauth.clientId, TEST_USER.password))
     .then(followRedirectTag('1'))

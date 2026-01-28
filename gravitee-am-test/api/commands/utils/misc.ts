@@ -15,11 +15,13 @@
  */
 
 import { waitFor } from '@management-commands/domain-management-commands';
-import { expect, jest } from '@jest/globals';
-import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { expect } from '@jest/globals';
+import { performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import faker from 'faker';
 import { BulkResponse } from '@management-models/BulkResponse';
 import { BulkOperationResultObject } from '@management-models/BulkOperationResultObject';
+
+const cheerio = require('cheerio');
 
 /**
  * Optionally randomize the name to make it unique, making it easier to re-run a test with the same DB, e.g. while developing tests.
@@ -62,19 +64,56 @@ export type BasicResponse = {
   [x: string]: any;
 };
 
-export function followRedirectTag(tag?: string) {
+export function followRedirectTag(tag?: string){
   return (redirectResponse: BasicResponse) => {
-    if (redirectResponse.status != 302) {
-      throw new Error(`expected 302 response, but got ${redirectResponse.status}. Full response: ${JSON.stringify(redirectResponse)}`);
-    }
     const headers = redirectResponse.header['set-cookie'] ? { Cookie: redirectResponse.header['set-cookie'] } : {};
-    if (tag) {
-      console.log(`[${tag}] redirecting to ${redirectResponse.header['location']}`);
-    } else {
-      console.log(`redirecting to ${redirectResponse.header['location']}`);
+    if(redirectResponse.status === 302){
+      return followLocationHeaderRedirectTag(redirectResponse, headers, tag);
     }
-    return performGet(redirectResponse.header['location'], '', headers);
+    else if(redirectResponse.status === 200 && redirectResponse.headers['content-type'] === 'text/html') {
+      return followAutoSubmitRedirectTag(redirectResponse, headers, tag);
+    }
+    else {
+      throw new Error(`expected 302 redirect response or auto-submit html form, but got ${redirectResponse.status}. Full response: ${JSON.stringify(redirectResponse)}`);
+    }
   };
+}
+
+export function followLocationHeaderRedirectTag(redirectResponse: BasicResponse, headers: any, tag?: string) {
+  if (tag) {
+    console.log(`[${tag}] redirecting to ${redirectResponse.header['location']}`);
+  } else {
+    console.log(`redirecting to ${redirectResponse.header['location']}`);
+  }
+  return performGet(redirectResponse.header['location'], '', headers);
+}
+
+export function followAutoSubmitRedirectTag(redirectResponse: BasicResponse, headers: any, tag?: string) {
+  headers = {
+    ...headers,
+    'Content-type': 'application/x-www-form-urlencoded'
+  }
+  const dom = cheerio.load(redirectResponse.text);
+  const form = dom('form').first();
+  const action = form.attr('action');
+  if (!action) {
+    throw new Error(`expected form action, but got ${action}`);
+  }
+  const body: { [key: string]: string } = {};
+  form.find('input').each((_, element) => {
+    const name = dom(element).attr('name');
+    if (!name) {
+      return;
+    }
+    const value = dom(element).attr('value');
+    body[name] = value ?? '';
+  });
+  if (tag) {
+    console.log(`[${tag}] submitting form POST to ${action}`);
+  } else {
+    console.log(`submitting form POST to ${action}`);
+  }
+  return performFormPost(action, '', body, headers);
 }
 
 export async function followRedirect(redirectResponse: BasicResponse) {
