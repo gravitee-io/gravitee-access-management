@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -28,6 +30,7 @@ public class ApplicationSAMLSettingsMongo {
     private boolean wantResponseSigned = true;
     private boolean wantAssertionsSigned;
     private String responseBinding;
+    private List<SAMLAssertionAttributeMongo> assertionAttributes;
 
     public String getEntityId() {
         return entityId;
@@ -83,5 +86,13 @@ public class ApplicationSAMLSettingsMongo {
 
     public void setResponseBinding(String responseBinding) {
         this.responseBinding = responseBinding;
+    }
+
+    public List<SAMLAssertionAttributeMongo> getAssertionAttributes() {
+        return assertionAttributes;
+    }
+
+    public void setAssertionAttributes(List<SAMLAssertionAttributeMongo> assertionAttributes) {
+        this.assertionAttributes = assertionAttributes;
     }
 }

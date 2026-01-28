@@ -24,7 +24,9 @@ import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.SAMLAssertionAttribute;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -536,6 +538,66 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(updatedApp, testObserver);
+    }
+
+    @Test
+    public void testSamlAssertionAttributes() {
+        // create application with SAML assertion attributes
+        Application app = buildApplication();
+
+        ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
+        samlSettings.setEntityId("https://sp.example.com/entity");
+        samlSettings.setAttributeConsumeServiceUrl("https://sp.example.com/acs");
+
+        SAMLAssertionAttribute emailAttr = new SAMLAssertionAttribute();
+        emailAttr.setAttributeName("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+        emailAttr.setAttributeValue("{#context.attributes['user'].email}");
+
+        SAMLAssertionAttribute givenNameAttr = new SAMLAssertionAttribute();
+        givenNameAttr.setAttributeName("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname");
+        givenNameAttr.setAttributeValue("{#context.attributes['user'].firstName}");
+
+        SAMLAssertionAttribute customAttr = new SAMLAssertionAttribute();
+        customAttr.setAttributeName("custom-attribute");
+        customAttr.setAttributeValue("literal-value");
+
+        samlSettings.setAssertionAttributes(Arrays.asList(emailAttr, givenNameAttr, customAttr));
+
+        ApplicationSettings settings = app.getSettings();
+        if (settings == null) {
+            settings = new ApplicationSettings();
+            app.setSettings(settings);
+        }
+        settings.setSaml(samlSettings);
+
+        Application createdApp = applicationRepository.create(app).blockingGet();
+
+        // fetch and verify
+        TestObserver<Application> testObserver = applicationRepository.findById(createdApp.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(foundApp -> {
+            ApplicationSAMLSettings foundSaml = foundApp.getSettings().getSaml();
+            if (foundSaml == null) return false;
+            if (foundSaml.getAssertionAttributes() == null) return false;
+            if (foundSaml.getAssertionAttributes().size() != 3) return false;
+
+            // Verify attributes are correctly persisted
+            List<SAMLAssertionAttribute> attrs = foundSaml.getAssertionAttributes();
+            boolean hasEmail = attrs.stream().anyMatch(a ->
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress".equals(a.getAttributeName()) &&
+                "{#context.attributes['user'].email}".equals(a.getAttributeValue()));
+            boolean hasGivenName = attrs.stream().anyMatch(a ->
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname".equals(a.getAttributeName()) &&
+                "{#context.attributes['user'].firstName}".equals(a.getAttributeValue()));
+            boolean hasCustom = attrs.stream().anyMatch(a ->
+                "custom-attribute".equals(a.getAttributeName()) &&
+                "literal-value".equals(a.getAttributeValue()));
+
+            return hasEmail && hasGivenName && hasCustom;
+        });
     }
 
 }

@@ -27,6 +27,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.Resource;
+import io.gravitee.am.model.SAMLAssertionAttribute;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
@@ -276,6 +277,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private String responseBinding;
 
+    private List<SAMLAssertionAttribute> samlAssertionAttributes;
+
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
@@ -369,6 +372,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
         this.responseBinding = other.responseBinding;
+        this.samlAssertionAttributes = other.samlAssertionAttributes != null
+                ? new ArrayList<>(other.samlAssertionAttributes.stream().map(SAMLAssertionAttribute::new).toList())
+                : null;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.secretExpirationSettings = other.secretExpirationSettings;
     }
@@ -1111,6 +1117,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setResponseBinding(String responseBinding) {
         this.responseBinding = responseBinding;
+    }
+
+    public List<SAMLAssertionAttribute> getSamlAssertionAttributes() {
+        return samlAssertionAttributes;
+    }
+
+    public void setSamlAssertionAttributes(List<SAMLAssertionAttribute> samlAssertionAttributes) {
+        this.samlAssertionAttributes = samlAssertionAttributes;
     }
 
     public boolean isBackchannelUserCodeParameter() {
