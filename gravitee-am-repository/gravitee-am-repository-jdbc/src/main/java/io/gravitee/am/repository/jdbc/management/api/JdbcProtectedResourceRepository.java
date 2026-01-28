@@ -24,6 +24,7 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceFeature;
@@ -500,31 +501,28 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     }
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
-        LOGGER.debug("search({}, {}, {}, {})", domainId, type, query, pageSortRequest.getPage());
+        LOGGER.debug("search({}, {}, {}, {})", domainId, query, pageSortRequest.getPage(),pageSortRequest.getSize());
 
         boolean wildcardMatch = query.contains("*");
         String wildcardQuery = databaseDialectHelper.prepareSearchTerm(query).replaceAll("\\*+", "%");
-        String searchTerm = wildcardMatch ? wildcardQuery.toUpperCase() : "%" + databaseDialectHelper.prepareSearchTerm(query).toUpperCase() + "%";
 
-        String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
-        String selectQuery = Selects.SEARCH_SELECT + databaseDialectHelper.buildPagingClause("pr." + transformSortValue(sortBy), pageSortRequest.isAsc(), pageSortRequest.getPage(), pageSortRequest.getSize());
+        String search = databaseDialectHelper.buildSearchProtectedResourceQuery(wildcardMatch, pageSortRequest.getPage(), pageSortRequest.getSize(), COLUMN_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountProtectedResourceQuery(wildcardMatch);
 
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql(selectQuery)
-                .bind(BindParams.DOMAIN_ID, domainId)
-                .bind(BindParams.TYPE, type.name())
-                .bind(BindParams.QUERY, searchTerm)
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+                .bind(COLUMN_DOMAIN_ID, domainId)
+                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : databaseDialectHelper.prepareSearchTerm(query).toUpperCase())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> complete(app).toFlowable())
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
-                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(Selects.SEARCH_COUNT)
-                        .bind(BindParams.DOMAIN_ID, domainId)
-                        .bind(BindParams.TYPE, type.name())
-                        .bind(BindParams.QUERY, searchTerm)
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
+                        .bind(COLUMN_DOMAIN_ID, domainId)
+                        .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
-                .doOnError(error -> LOGGER.error("Unable to search protected resources with domainId={}, type={} (page={}/size={})", domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+                .doOnError(error -> LOGGER.error("Unable to search protected resources with domain {} (page={}/size={})", domainId, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
     }
 }

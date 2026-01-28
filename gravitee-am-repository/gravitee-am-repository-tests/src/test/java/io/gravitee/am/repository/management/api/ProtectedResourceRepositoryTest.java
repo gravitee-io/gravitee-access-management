@@ -803,14 +803,13 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     public void testSearch_strict() {
         final String domain = "domain";
         // create resource
-        ClientSecret clientSecret = generateClientSecret();
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
-        ProtectedResource resource = generateResource(clientSecret, secretSettings);
+        ProtectedResource resource = generateResource(generateClientSecret(), secretSettings);
         resource.setDomainId(domain);
         resource.setClientId("clientId");
         repository.create(resource).blockingGet();
 
-        ProtectedResource resource2 = generateResource(clientSecret, secretSettings);
+        ProtectedResource resource2 = generateResource(generateClientSecret(), secretSettings);
         resource2.setDomainId(domain);
         resource2.setClientId("clientId2");
         repository.create(resource2).blockingGet();
@@ -830,25 +829,24 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     public void testSearch_wildcard() {
         final String domain = "domain";
         // create resources
-        ClientSecret clientSecret = generateClientSecret();
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
 
-        ProtectedResource resource = generateResource(clientSecret, secretSettings);
+        ProtectedResource resource = generateResource(generateClientSecret(), secretSettings);
         resource.setDomainId(domain);
         resource.setClientId("clientId");
         repository.create(resource).blockingGet();
 
-        ProtectedResource resource2 = generateResource(clientSecret, secretSettings);
+        ProtectedResource resource2 = generateResource(generateClientSecret(), secretSettings);
         resource2.setDomainId(domain);
         resource2.setClientId("clientId2");
         repository.create(resource2).blockingGet();
 
-        ProtectedResource resource3 = generateResource(clientSecret, secretSettings);
+        ProtectedResource resource3 = generateResource(generateClientSecret(), secretSettings);
         resource3.setDomainId(domain);
         resource3.setClientId("test");
         repository.create(resource3).blockingGet();
 
-        ProtectedResource resource4 = generateResource(clientSecret, secretSettings);
+        ProtectedResource resource4 = generateResource(generateClientSecret(), secretSettings);
         resource4.setDomainId(domain);
         resource4.setClientId("clientId4");
         repository.create(resource4).blockingGet();
@@ -974,7 +972,8 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         resource.setDomainId(domain);
         resource.setClientId("clientId-name-test");
         resource.setName("Resource Name");
-        var savedResource = repository.create(resource).blockingGet();
+        resource.setDomainId(domain);
+        repository.create(resource).blockingGet();
 
         // fetch resource by name
         TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, MCP_SERVER, "Resource Name", PageSortRequest.builder().page(0).size(10).build()).test();
@@ -995,6 +994,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         ProtectedResource resource = generateResource(clientSecret, secretSettings);
         resource.setDomainId(domain);
         resource.setClientId("clientId-CaseSensitive");
+        resource.setDomainId(domain);
         repository.create(resource).blockingGet();
 
         // fetch resource with wildcard and different case
@@ -1010,14 +1010,14 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     @Test
     public void testSearch_pagination() {
         final String domain = "domain-pagination";
-        ClientSecret clientSecret = generateClientSecret();
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
 
         // create 10 resources
         for (int i = 0; i < 10; i++) {
-            ProtectedResource resource = generateResource(clientSecret, secretSettings);
+            ProtectedResource resource = generateResource(generateClientSecret(), secretSettings);
             resource.setDomainId(domain);
             resource.setClientId("pagination-test-" + i);
+            resource.setDomainId(domain);
             repository.create(resource).blockingGet();
         }
 
