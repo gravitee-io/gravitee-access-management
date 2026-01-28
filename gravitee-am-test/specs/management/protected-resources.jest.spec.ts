@@ -534,62 +534,62 @@ describe('When admin created bunch of Protected Resources', () => {
         }
     });
 
-  it('Protected Resource page must not contain secret', async () => {
-    const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0);
-    const secretNotPresent = page.data.every((data) => data['secret'] === undefined);
-    expect(secretNotPresent).toBeTruthy();
-  });
+    it('Protected Resource page must not contain secret', async () => {
+        const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0);
+        const secretNotPresent = page.data.every((data) => data['secret'] === undefined);
+        expect(secretNotPresent).toBeTruthy();
+    });
 
-  it('Protected Resource page should be returned', async () => {
-    const page = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
-    expect(page.currentPage).toEqual(0);
-    expect(page.totalCount).toEqual(100);
-    expect(page.data).toHaveLength(10);
-  });
+    it('Protected Resource page should be returned', async () => {
+        const page = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
+        expect(page.currentPage).toEqual(0);
+        expect(page.totalCount).toEqual(100);
+        expect(page.data).toHaveLength(10);
+    });
 
-  it('Protected Resource page 1 should be different than 2', async () => {
-    const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
-    expect(page1.currentPage).toEqual(0);
-    expect(page1.totalCount).toEqual(100);
-    expect(page1.data).toHaveLength(10);
+    it('Protected Resource page 1 should be different than 2', async () => {
+        const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
+        expect(page1.currentPage).toEqual(0);
+        expect(page1.totalCount).toEqual(100);
+        expect(page1.data).toHaveLength(10);
 
-    const page2 = await getMcpServers(domainTestSearch.id, accessToken, 10, 1);
-    expect(page2.currentPage).toEqual(1);
-    expect(page2.totalCount).toEqual(100);
-    expect(page2.data).toHaveLength(10);
+        const page2 = await getMcpServers(domainTestSearch.id, accessToken, 10, 1);
+        expect(page2.currentPage).toEqual(1);
+        expect(page2.totalCount).toEqual(100);
+        expect(page2.data).toHaveLength(10);
 
-    expect(page1.data[0].id).not.toEqual(page2.data[0].id);
-  });
+        expect(page1.data[0].id).not.toEqual(page2.data[0].id);
+    });
 
-  it('No data returned if page exceeds elements count', async () => {
-    const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 200);
-    expect(page1.currentPage).toEqual(200);
-    expect(page1.totalCount).toEqual(100);
-    expect(page1.data).toHaveLength(0);
-  });
+    it('No data returned if page exceeds elements count', async () => {
+        const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 200);
+        expect(page1.currentPage).toEqual(200);
+        expect(page1.totalCount).toEqual(100);
+        expect(page1.data).toHaveLength(0);
+    });
 
-  it('All data should be returned if size exceeds elements count', async () => {
-    const page1 = await getMcpServers(domainTestSearch.id, accessToken, 200, 0);
-    expect(page1.currentPage).toEqual(0);
-    expect(page1.totalCount).toEqual(100);
-    expect(page1.data).toHaveLength(100);
-  });
+    it('All data should be returned if size exceeds elements count', async () => {
+        const page1 = await getMcpServers(domainTestSearch.id, accessToken, 200, 0);
+        expect(page1.currentPage).toEqual(0);
+        expect(page1.totalCount).toEqual(100);
+        expect(page1.data).toHaveLength(100);
+    });
 
-  it('Protected Resource page should be returned sorted by name', async () => {
-    const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.asc');
-    const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.desc');
-    expect(pageAsc.data[0].name).toEqual(pageDesc.data[99].name);
-    expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
-  });
+    it('Protected Resource page should be returned sorted by name', async () => {
+        const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.asc');
+        const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.desc');
+        expect(pageAsc.data[0].name).toEqual(pageDesc.data[99].name);
+        expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
+    });
 
-  it('Protected Resource page should be returned sorted by updatedAt', async () => {
-    const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
-    const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.desc');
-    expect(pageAsc.data[0].updatedAt).toEqual(pageDesc.data[99].updatedAt);
-    expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
-  });
+    it('Protected Resource page should be returned sorted by updatedAt', async () => {
+        const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
+        const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.desc');
+        expect(pageAsc.data[0].updatedAt).toEqual(pageDesc.data[99].updatedAt);
+        expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
+    });
 
-  it('Protected Resource can be found by its id', async () => {
+    it('Protected Resource can be found by its id', async () => {
         const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
         const protectedResourcePrimaryData = page.data[55];
 
@@ -599,16 +599,12 @@ describe('When admin created bunch of Protected Resources', () => {
 
     it('Protected Resource can be searched by name', async () => {
         const nameToSearch = "test_5"
-        
+
         const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch);
         // test_5 and test_50,51... so 11
         expect(pageByName.data.length).toBe(11);
         expect(pageByName.data.every(data => data.name.includes(nameToSearch))).toBeTruthy();
     });
-
-    const fetched = await getMcpServer(domainTestSearch.id, accessToken, protectedResourcePrimaryData.id);
-    expect(fetched).toEqual(protectedResourcePrimaryData);
-  });
 });
 
 describe('When updating protected resource', () => {
