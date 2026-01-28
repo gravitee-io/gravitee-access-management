@@ -145,7 +145,7 @@ public class UserConsentFailureHandlerTest extends RxWebTestBase {
                 null,
                 HttpStatusCode.FOUND_302, "Found", null);
 
-        String expectedHash = HashUtil.generateSHA256("policy_error" + USER_CONSENT_FAILED + "$policy_error");
+        String expectedHash = HashUtil.generateSHA256(USER_CONSENT_FAILED + "$policy_error");
         RoutingContext capturedContext = contextRef.get();
         assertNotNull(capturedContext);
         assertNotNull(capturedContext.session());
