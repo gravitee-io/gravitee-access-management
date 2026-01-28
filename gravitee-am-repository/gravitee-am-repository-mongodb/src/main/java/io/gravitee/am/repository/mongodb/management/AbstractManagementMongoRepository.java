@@ -31,6 +31,11 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import java.util.regex.Pattern;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.or;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -93,5 +98,27 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
                 .collect(HashSet::new, Set::add);
         return Single.zip(countOperation, contentOperation, (count, content) -> new Page<>(content, page, count))
                 .observeOn(Schedulers.computation());
+    }
+    protected Bson buildSearchQuery(String query, String domain, String domainFieldName, String fieldClientId) {
+        return and(
+                eq(domainFieldName, domain),
+                buildTextQuery(query, fieldClientId));
+    }
+
+    protected Bson buildTextQuery(String query, String fieldClientId) {
+        // currently search on client_id field
+        Bson searchQuery = or(eq(fieldClientId, query), eq("name", query));
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject("name", pattern));
+        }
+        return searchQuery;
+    }
+
+    protected Single<Long> countItems(MongoCollection collection, Bson query, CountOptions options) {
+        return Observable.fromPublisher(collection.countDocuments(query, options)).first(0L);
     }
 }

@@ -600,7 +600,7 @@ describe('When admin created bunch of Protected Resources', () => {
     it('Protected Resource can be searched by name', async () => {
         const nameToSearch = "test_5"
 
-        const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch);
+        const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch + "*");
         // test_5 and test_50,51... so 11
         expect(pageByName.data.length).toBe(11);
         expect(pageByName.data.every(data => data.name.includes(nameToSearch))).toBeTruthy();

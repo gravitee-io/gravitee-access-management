@@ -126,27 +126,4 @@ public abstract class AbstractMongoRepository {
                         .fromPublisher(collection.dropIndex(indexName))
                         .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e)));
     }
-
-    protected Bson buildSearchQuery(String query, String domain, String domainFieldName, String fieldClientId) {
-        return and(
-                eq(domainFieldName, domain),
-                buildTextQuery(query, fieldClientId));
-    }
-
-    protected Bson buildTextQuery(String query, String fieldClientId) {
-        // currently search on client_id field
-        Bson searchQuery = or(eq(fieldClientId, query), eq(FIELD_NAME, query));
-        // if query contains wildcard, use the regex query
-        if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            searchQuery = or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject(FIELD_NAME, pattern));
-        }
-        return searchQuery;
-    }
-
-    protected Single<Long> countItems(MongoCollection collection, Bson query, CountOptions options) {
-        return Observable.fromPublisher(collection.countDocuments(query, options)).first(0l);
-    }
 }
