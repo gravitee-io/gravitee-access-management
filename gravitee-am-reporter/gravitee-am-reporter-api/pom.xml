@@ -43,6 +43,11 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.secret</groupId>
+            <artifactId>gravitee-secret-api</artifactId>
+        </dependency>
+
         <!-- RxJava -->
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>

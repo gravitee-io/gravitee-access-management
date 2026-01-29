@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.resource.smtp.configuration;
 
+import io.gravitee.secrets.api.annotation.Secret;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,7 +26,9 @@ public class OAuthSmtpResourceConfiguration {
     private String oauth2Username;
     private String tokenEndpoint;
     private String oauth2ClientId;
+    @Secret
     private String oauth2ClientSecret;
+    @Secret
     private String oauth2RefreshToken;
     private String oauth2Scope;
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.reporter.kafka;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 
 import java.util.Set;
 
@@ -42,6 +43,7 @@ public class KafkaReporterConfiguration implements ReporterConfiguration {
   private String topic;
   private String acks;
   private String username;
+  @Secret
   private String password;
   private String schemaRegistryUrl;
   private Set<String> auditTypes = Set.of();

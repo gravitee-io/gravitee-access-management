@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.mongodb;
 
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -23,12 +24,14 @@ import io.gravitee.am.reporter.api.ReporterConfiguration;
  */
 public class MongoReporterConfiguration implements ReporterConfiguration {
 
+    @Secret
     private String uri;
     private String host;
     private int port;
     private boolean enableCredentials;
     private String databaseCredentials;
     private String usernameCredentials;
+    @Secret
     private String passwordCredentials;
     private String database;
     private String reportableCollection;

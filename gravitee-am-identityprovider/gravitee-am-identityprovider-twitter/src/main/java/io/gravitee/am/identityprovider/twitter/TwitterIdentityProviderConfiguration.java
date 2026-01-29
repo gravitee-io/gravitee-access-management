@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.twitter;
 
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 
 import java.util.Collections;
 import java.util.Set;
@@ -34,6 +35,7 @@ public class TwitterIdentityProviderConfiguration implements SocialIdentityProvi
     private static final String TOKEN_PARAMETER = "oauth_token";
     private static final String VERIFIER_PARAMETER = "oauth_verifier";
     private String clientId;
+    @Secret
     private String clientSecret;
 
     private boolean encodeRedirectUri;

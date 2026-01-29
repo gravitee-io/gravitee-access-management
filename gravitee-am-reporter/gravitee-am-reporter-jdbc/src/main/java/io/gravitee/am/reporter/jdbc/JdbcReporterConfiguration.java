@@ -17,6 +17,7 @@ package io.gravitee.am.reporter.jdbc;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class JdbcReporterConfiguration implements ReporterConfiguration {
     private Integer port;
     private String database;
     private String username;
+    @Secret
     private String password;
     private Integer acquireRetry;
     private Integer initialSize = 0;

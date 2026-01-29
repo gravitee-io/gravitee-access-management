@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
+import io.gravitee.secrets.api.annotation.Secret;
 
 import java.util.Set;
 
@@ -38,6 +39,7 @@ public class GoogleIdentityProviderConfiguration implements OpenIDConnectIdentit
     public static final String USER_INFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
 
     private String clientId;
+    @Secret
     private String clientSecret;
     private Set<String> scopes;
 
