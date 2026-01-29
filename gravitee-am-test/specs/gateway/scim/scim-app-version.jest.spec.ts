@@ -15,30 +15,12 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { patchDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
-import { performDelete, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performDelete, performGet, performPatch, performPost, performPut } from '@gateway-commands/oauth-oidc-commands';
 import supertest from 'supertest';
 
-function setHeaders(request, headers: object) {
-  if (headers) {
-    for (const [k, v] of Object.entries(headers)) {
-      request.set(k, v);
-    }
-  }
-}
 
-const performPut = (baseUrl, uri = '', body = null, headers = null) => {
-  const request = supertest(baseUrl).put(uri);
-  setHeaders(request, headers);
-  return body ? request.send(body) : request.send();
-};
 
-const performPatch = (baseUrl, uri = '', body = null, headers = null) => {
-  const request = supertest(baseUrl).patch(uri);
-  setHeaders(request, headers);
-  return body ? request.send(body) : request.send();
-};
-
-import { setupFixture, ScimFixture } from './fixture/scim-fixture';
+import { setupFixture, ScimFixture, createScimUserBody, createScimGroupBody } from './fixture/scim-fixture';
 import { setup } from '../../test-fixture';
 
 setup(200000);
@@ -268,34 +250,7 @@ describe('SCIM - App Version', () => {
         let userId: string;
 
         it('should create a user', async () => {
-            const body = {
-                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                "externalId": "701984",
-                "userName": "bjensen@example.com",
-                "name": {
-                    "formatted": "Ms. Barbara J Jensen, III",
-                    "familyName": "Jensen",
-                    "givenName": "Barbara",
-                    "middleName": "Jane",
-                    "honorificPrefix": "Ms.",
-                    "honorificSuffix": "III"
-                },
-                "displayName": "Babs Jensen",
-                "nickName": "Babs",
-                "emails": [
-                    {
-                        "value": "bjensen@example.com",
-                        "type": "work",
-                        "primary": true
-                    },
-                    {
-                        "value": "babs@jensen.org",
-                        "type": "home"
-                    }
-                ],
-                "userType": "Employee",
-                "active": true
-            };
+            const body = createScimUserBody("bjensen@example.com", "Barbara", "Jensen", "701984");
 
             const response = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
@@ -310,16 +265,7 @@ describe('SCIM - App Version', () => {
         });
 
         it('should return 409 if userName already exists', async () => {
-            const body = {
-                "schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],
-                "userName":"bjensen@example.com",
-                "externalId":"bjensen",
-                "name":{
-                  "formatted":"Ms. Barbara J Jensen III",
-                  "familyName":"Jensen",
-                  "givenName":"Barbara"
-                }
-            };
+            const body = createScimUserBody("bjensen@example.com", "Barbara", "Jensen", "bjensen");
 
             const response = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
@@ -348,15 +294,15 @@ describe('SCIM - App Version', () => {
         });
 
         it('should update user', async () => {
-             const body = {
-                 "schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],
-                 "userName":"bjensen",
-                 "externalId":"bjensen",
-                 "name":{
-                   "formatted":"Ms. Barbara J Jensen III",
-                   "familyName":"Jensen2",
-                   "givenName":"Barbara"
-                 }
+            const body = {
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                "userName": "bjensen",
+                "externalId": "bjensen",
+                "name": {
+                    "formatted": "Ms. Barbara J Jensen III",
+                    "familyName": "Jensen2",
+                    "givenName": "Barbara"
+                }
             };
 
             const response = await performPut(fixture.scimEndpoint, `/Users/${userId}`, JSON.stringify(body), {
@@ -603,24 +549,14 @@ describe('SCIM - App Version', () => {
         // Helper to create users for group membership tests
         beforeAll(async () => {
              // Create User 1
-             const body1 = {
-                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                "userName": "babs_group@example.com",
-                "name": { "familyName": "Jensen", "givenName": "Babs" },
-                "emails": [{ "value": "babs_group@example.com", "type": "work", "primary": true }]
-            };
+             const body1 = createScimUserBody("babs_group@example.com", "Babs", "Jensen");
             const res1 = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body1), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`, 'Content-Type': 'application/json'
             });
             user1Id = res1.body.id;
 
              // Create User 2
-             const body2 = {
-                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                "userName": "mandy_group@example.com",
-                "name": { "familyName": "Pepperidge", "givenName": "Mandy" },
-                "emails": [{ "value": "mandy_group@example.com", "type": "work", "primary": true }]
-            };
+             const body2 = createScimUserBody("mandy_group@example.com", "Mandy", "Pepperidge");
             const res2 = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body2), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`, 'Content-Type': 'application/json'
             });
@@ -628,10 +564,7 @@ describe('SCIM - App Version', () => {
         });
 
         it('should create a group', async () => {
-             const body = {
-               "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-               "displayName": "Tour Guides"
-            };
+             const body = createScimGroupBody("Tour Guides");
 
             const response = await performPost(fixture.scimEndpoint, '/Groups', JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
@@ -646,10 +579,7 @@ describe('SCIM - App Version', () => {
         });
 
         it('should return 409 if displayName already exists', async () => {
-             const body = {
-               "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-               "displayName": "Tour Guides"
-            };
+             const body = createScimGroupBody("Tour Guides");
 
             const response = await performPost(fixture.scimEndpoint, '/Groups', JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
