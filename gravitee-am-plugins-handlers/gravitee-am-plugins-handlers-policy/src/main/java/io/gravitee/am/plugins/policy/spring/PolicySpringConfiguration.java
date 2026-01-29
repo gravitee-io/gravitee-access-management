@@ -16,7 +16,9 @@
 package io.gravitee.am.plugins.policy.spring;
 
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
 import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.plugins.policy.core.impl.PolicyPluginManagerImpl;
 import io.gravitee.policy.api.PolicyConfiguration;
@@ -36,8 +38,10 @@ public class PolicySpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<PolicyConfiguration> policyConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<PolicyConfiguration> policyConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
 }

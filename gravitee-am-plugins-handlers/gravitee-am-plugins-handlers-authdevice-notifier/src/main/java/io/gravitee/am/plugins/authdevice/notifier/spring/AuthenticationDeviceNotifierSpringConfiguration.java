@@ -18,7 +18,8 @@ package io.gravitee.am.plugins.authdevice.notifier.spring;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.plugins.authdevice.notifier.core.AuthenticationDeviceNotifierPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,8 +40,10 @@ public class AuthenticationDeviceNotifierSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> authDeviceNotifierConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> authDeviceNotifierConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
 }

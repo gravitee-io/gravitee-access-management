@@ -18,7 +18,8 @@ package io.gravitee.am.plugins.factor.spring;
 import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,8 +40,10 @@ public class FactorSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<FactorConfiguration> factorConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<FactorConfiguration> factorConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
 }

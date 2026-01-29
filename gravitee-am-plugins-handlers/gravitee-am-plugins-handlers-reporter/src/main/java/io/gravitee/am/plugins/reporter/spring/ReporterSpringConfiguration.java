@@ -15,10 +15,11 @@
  */
 package io.gravitee.am.plugins.reporter.spring;
 
-import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
-import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.common.utils.WriteStreamRegistry;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
+import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.context.annotation.Bean;
@@ -41,8 +42,10 @@ public class ReporterSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
     @Bean

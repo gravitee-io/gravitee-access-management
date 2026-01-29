@@ -16,7 +16,9 @@
 package io.gravitee.am.plugins.resource.spring;
 
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
 import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
@@ -39,8 +41,10 @@ public class ResourceSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
 }

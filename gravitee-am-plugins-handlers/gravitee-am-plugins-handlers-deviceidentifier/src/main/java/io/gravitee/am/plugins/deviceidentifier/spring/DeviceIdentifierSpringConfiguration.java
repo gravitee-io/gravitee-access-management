@@ -18,7 +18,8 @@ package io.gravitee.am.plugins.deviceidentifier.spring;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,8 +40,10 @@ public class DeviceIdentifierSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<DeviceIdentifierConfiguration> deviceIdentifierConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<DeviceIdentifierConfiguration> deviceIdentifierConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
 }

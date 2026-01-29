@@ -17,7 +17,8 @@ package io.gravitee.am.plugins.idp.spring;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.am.plugins.idp.core.IdentityProviderGroupMapperFactory;
 import io.gravitee.am.plugins.idp.core.IdentityProviderMapperFactory;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
@@ -63,8 +64,10 @@ public class IdentityProviderSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<IdentityProviderConfiguration> identityProviderConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<IdentityProviderConfiguration> identityProviderConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
     @Bean
