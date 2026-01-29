@@ -18,7 +18,8 @@ package io.gravitee.am.plugins.authorizationengine.spring;
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineConfiguration;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +39,9 @@ public class AuthorizationEngineSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<AuthorizationEngineConfiguration> authorizationEngineConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<AuthorizationEngineConfiguration> authorizationEngineConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 }

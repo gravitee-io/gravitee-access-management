@@ -18,7 +18,8 @@ package io.gravitee.am.plugins.extensiongrant.spring;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
+import io.gravitee.am.plugins.handlers.api.core.impl.EvaluatedConfigurationFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,8 +40,10 @@ public class ExtensionGrantSpringConfiguration {
     }
 
     @Bean
-    public ConfigurationFactory<ExtensionGrantConfiguration> extensionGrantConfigurationFactory() {
-        return new ConfigurationFactoryImpl<>();
+    public ConfigurationFactory<ExtensionGrantConfiguration> extensionGrantConfigurationFactory(
+            PluginConfigurationEvaluatorsRegistry evaluatorsRegistry
+    ) {
+        return new EvaluatedConfigurationFactoryImpl<>(evaluatorsRegistry.getEvaluators());
     }
 
 }

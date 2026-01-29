@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
+import io.gravitee.secrets.api.annotation.Secret;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -29,13 +30,14 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOpti
 public class MongoIdentityProviderConfiguration implements IdentityProviderConfiguration, MongoConnectionConfiguration {
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_PASSWORD = "password";
-    private String uri;
+
+    @Secret private String uri;
     private String host;
     private int port;
     private boolean enableCredentials;
     private String databaseCredentials;
     private String usernameCredentials;
-    private String passwordCredentials;
+    @Secret private String passwordCredentials;
     private String database;
     private String usersCollection;
     private String findUserByUsernameQuery;
