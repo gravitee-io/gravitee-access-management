@@ -39,6 +39,18 @@ export const performPost = (baseUrl, uri = '', body = null, headers = null) => {
   return body ? request.send(body) : request.send();
 };
 
+export const performPut = (baseUrl, uri = '', body = null, headers = null) => {
+  const request = supertest(baseUrl).put(uri);
+  setHeaders(request, headers);
+  return body ? request.send(body) : request.send();
+};
+
+export const performPatch = (baseUrl, uri = '', body = null, headers = null) => {
+  const request = supertest(baseUrl).patch(uri);
+  setHeaders(request, headers);
+  return body ? request.send(body) : request.send();
+};
+
 export const performFormPost = (baseUrl, uri = '', body, headers) => {
   const request = supertest(baseUrl).post(uri);
   setHeaders(request, headers);

@@ -139,3 +139,37 @@ const confirmRegistration = async (confirmationLink: string): Promise<any> => {
     },
   ).expect(302);
 };
+
+export const createScimUserBody = (userName: string, givenName = 'Barbara', familyName = 'Jensen', externalId?: string) => ({
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+  "externalId": externalId || Math.floor(Math.random() * 1000000).toString(),
+  "userName": userName,
+  "name": {
+    "formatted": `Ms. ${givenName} J ${familyName}, III`,
+    "familyName": familyName,
+    "givenName": givenName,
+    "middleName": "Jane",
+    "honorificPrefix": "Ms.",
+    "honorificSuffix": "III"
+  },
+  "displayName": `${givenName} ${familyName}`,
+  "nickName": givenName,
+  "emails": [
+    {
+      "value": userName,
+      "type": "work",
+      "primary": true
+    },
+    {
+      "value": "babs@jensen.org",
+      "type": "home"
+    }
+  ],
+  "userType": "Employee",
+  "active": true
+});
+
+export const createScimGroupBody = (displayName: string) => ({
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+  "displayName": displayName
+});
