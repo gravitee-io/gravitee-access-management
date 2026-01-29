@@ -161,7 +161,7 @@
         <!-- EE plugin included in default bundle -->
         <gravitee-am-idp-saml2.version>4.0.3</gravitee-am-idp-saml2.version>
         <gravitee-am-idp-ldap.version>2.1.6</gravitee-am-idp-ldap.version>
-        <gravitee-am-idp-azure-ad.version>2.0.0</gravitee-am-idp-azure-ad.version>
+        <gravitee-am-idp-azure-ad.version>3.0.0</gravitee-am-idp-azure-ad.version>
         <gravitee-am-idp-franceconnect.version>3.1.1</gravitee-am-idp-franceconnect.version>
         <gravitee-am-idp-salesforce.version>2.0.0</gravitee-am-idp-salesforce.version>
         <gravitee-am-factor-call.version>1.0.2</gravitee-am-factor-call.version>
