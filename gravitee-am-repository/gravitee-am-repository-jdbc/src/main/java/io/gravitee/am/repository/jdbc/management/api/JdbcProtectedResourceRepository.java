@@ -90,24 +90,12 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 SELECT * FROM %s a WHERE
                 a.certificate = :certificateId
         """.formatted(TABLE_NAME);
-        String ORDER_BY = "ORDER BY pr.%s %s";
-        String SEARCH = """
-                FROM %s pr
-                LEFT JOIN protected_resource_identifiers pri ON pr.id = pri.protected_resource_id
-                WHERE pr.domain_id = :domainId
-                AND pr.type = :type
-                AND (UPPER(pr.name) LIKE :query OR UPPER(pri.identifier) LIKE :query)
-                """.formatted(TABLE_NAME);
-        String SEARCH_SELECT = "SELECT DISTINCT pr.* " + SEARCH;
-        String SEARCH_COUNT = "SELECT COUNT(DISTINCT pr.id) " + SEARCH;
     }
 
     private interface BindParams {
         String DOMAIN_ID = "domainId";
         String CERTIFICATE_ID = "certificateId";
         String CLIENT_ID = "clientId";
-        String TYPE = "type";
-        String QUERY = "query";
     }
 
     protected ProtectedResource toEntity(JdbcProtectedResource entity) {
