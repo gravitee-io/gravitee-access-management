@@ -27,7 +27,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static java.util.Objects.isNull;
 
@@ -40,16 +39,16 @@ import static java.util.Objects.isNull;
 public class EmailConfiguration {
 
     private static final String EMAIL_ALLOW_LIST = "email.allowedfrom[%d]";
-    private static final String EMAIL_PROPERTIES_PREFIX = "email.properties";
-    private static final String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
     private static final String DEFAULT_ALLOWED_FORM = "*@*.*";
 
     private final ConfigurableEnvironment environment;
     private final List<String> allowedFrom;
+    private final EmailPropertiesLoader propertiesLoader;
     private io.gravitee.node.api.configuration.Configuration configuration;
 
     public EmailConfiguration(ConfigurableEnvironment environment) {
         this.environment = environment;
+        this.propertiesLoader = new EmailPropertiesLoader();
         this.allowedFrom = initializeAllowList();
     }
 
@@ -67,19 +66,8 @@ public class EmailConfiguration {
         javaMailSender.setUsername(getUsername());
         javaMailSender.setPassword(getPassword());
         javaMailSender.setProtocol(getProtocol());
-        javaMailSender.setJavaMailProperties(loadProperties());
+        javaMailSender.setJavaMailProperties(propertiesLoader.load(environment));
         return javaMailSender;
-    }
-
-    private Properties loadProperties() {
-        Map<String, Object> envProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
-
-        Properties properties = new Properties();
-        envProperties.forEach((key, value) -> properties.setProperty(
-                MAILAPI_PROPERTIES_PREFIX + key.substring(EMAIL_PROPERTIES_PREFIX.length() + 1),
-                value.toString()));
-
-        return properties;
     }
 
     public String getHost() {
@@ -123,9 +111,9 @@ public class EmailConfiguration {
     }
 
     private <T> T getProperty(String propName, T defaultValue) {
-        final Map<String, Object> emailProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
-        if (emailProperties.containsKey(EMAIL_PROPERTIES_PREFIX + "." + propName)) {
-            return (T) emailProperties.get(EMAIL_PROPERTIES_PREFIX + "." + propName);
+        final Map<String, Object> emailProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX);
+        if (emailProperties.containsKey(EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX + "." + propName)) {
+            return (T) emailProperties.get(EmailPropertiesLoader.EMAIL_PROPERTIES_PREFIX + "." + propName);
         } else {
             return defaultValue;
         }
