@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.linkedin;
 
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 import lombok.Data;
 
 import java.util.Set;
@@ -35,6 +36,7 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
     private String codeParameter = "code";
 
     private String clientId;
+    @Secret
     private String clientSecret;
     private Set<String> scopes;
     private Integer connectTimeout = 10000;

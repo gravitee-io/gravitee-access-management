@@ -16,6 +16,7 @@
 package io.gravitee.am.resource.smtp.configuration;
 
 import io.gravitee.am.resource.api.ResourceConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,6 +40,7 @@ public class SmtpResourceConfiguration implements ResourceConfiguration {
     private boolean authentication;
     private String authenticationType = AUTH_TYPE_BASIC;
     private String username;
+    @Secret
     private String password;
     private boolean startTls;
     private String sslTrust;

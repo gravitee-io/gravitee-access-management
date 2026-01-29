@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseMode;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
+import io.gravitee.secrets.api.annotation.Secret;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,6 +39,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
 
     private static final String CODE_PARAMETER = "code";
     private String clientId;
+    @Secret
     private String clientSecret;
     private String wellKnownUri;
     private String userAuthorizationUri;

@@ -16,6 +16,7 @@
 package io.gravitee.am.resource.infobip;
 
 import io.gravitee.am.resource.api.ResourceConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 
 /**
  * @author Ruan Ferreira (ruan@incentive.me)
@@ -25,6 +26,7 @@ public class InfobipResourceConfiguration implements ResourceConfiguration  {
     private String applicationId;
     private String messageId;
     private String baseUrl;
+    @Secret
     private String apiKey;
     private String apiKeyPrefix;
 

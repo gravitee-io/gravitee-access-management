@@ -82,8 +82,11 @@ public class SecretsResolvingPluginConfigurationEvaluator implements PluginConfi
     private void evaluateAnnotatedField(Field field, Object obj, TemplateEngine templateEngine) {
         try {
             String actualValue = (String) field.get(obj);
+            if (actualValue == null) {
+                log.debug("Field {} is null, skipping evaluation", field.getName());
+                return;
+            }
             String newValue = templateEngine.eval(actualValue, String.class).blockingGet();
-
             ReflectionUtils.setField(field, obj, newValue);
         } catch (Exception e) {
             log.error("Unable to evaluate secrets for field: {}", field.getName(), e);

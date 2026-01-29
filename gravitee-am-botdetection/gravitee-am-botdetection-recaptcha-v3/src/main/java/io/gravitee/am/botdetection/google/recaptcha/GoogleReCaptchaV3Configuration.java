@@ -16,6 +16,7 @@
 package io.gravitee.am.botdetection.google.recaptcha;
 
 import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
+import io.gravitee.secrets.api.annotation.Secret;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,6 +29,7 @@ import lombok.Setter;
 public class GoogleReCaptchaV3Configuration implements BotDetectionConfiguration {
     private String detectionType;
     private String siteKey;
+    @Secret
     private String secretKey;
     private String serviceUrl;
     private float minScore;

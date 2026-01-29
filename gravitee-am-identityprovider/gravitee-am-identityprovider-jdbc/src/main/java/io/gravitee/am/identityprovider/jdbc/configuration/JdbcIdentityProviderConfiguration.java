@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
+import io.gravitee.secrets.api.annotation.Secret;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private String database;
     private String usersTable = "users";
     private String user;
+    @Secret
     private String password;
     private String selectUserByUsernameQuery;
     private String selectUserByMultipleFieldsQuery;
