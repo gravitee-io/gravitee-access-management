@@ -70,10 +70,6 @@ public interface DatabaseDialectHelper {
 
     String buildCountRoleQuery(boolean wildcard);
 
-    default String prepareSearchTerm(String searchTerm) {
-        return searchTerm;
-    }
-
     default String buildPagingClause(String field, boolean asc, int page, int size) {
         return buildPagingClauseUsingOffset(field, asc, page * size, size);
     }

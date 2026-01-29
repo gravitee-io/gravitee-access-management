@@ -33,10 +33,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import java.util.regex.Pattern;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.or;
-
 import java.util.HashSet;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +42,10 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

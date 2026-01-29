@@ -504,14 +504,14 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         LOGGER.debug("search({}, {}, {}, {})", domainId, query, pageSortRequest.getPage(),pageSortRequest.getSize());
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = databaseDialectHelper.prepareSearchTerm(query).replaceAll("\\*+", "%");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
 
         String search = databaseDialectHelper.buildSearchProtectedResourceQuery(wildcardMatch, pageSortRequest.getPage(), pageSortRequest.getSize(), COLUMN_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountProtectedResourceQuery(wildcardMatch);
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(COLUMN_DOMAIN_ID, domainId)
-                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : databaseDialectHelper.prepareSearchTerm(query).toUpperCase())
+                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity)
