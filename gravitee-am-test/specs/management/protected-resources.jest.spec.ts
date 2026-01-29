@@ -601,7 +601,6 @@ describe('When admin created bunch of Protected Resources', () => {
     const nameToSearch = 'test_5_server';
 
     const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch);
-    // test_5 and test_50,51... so 11
     expect(pageByName.data.length).toBe(1);
     expect(pageByName.data[0].name).toEqual(nameToSearch);
   });
