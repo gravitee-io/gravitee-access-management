@@ -497,9 +497,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
-    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, io.gravitee.am.model.ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
-        LOGGER.debug("Search protected resources by domainId={}, type={}, query={}", domain, type, query);
-        return repository.search(domain, type, query, pageSortRequest)
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("Search protected resources by domainId={}, query={}", domain, query);
+        return repository.search(domain, query, pageSortRequest)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search protected resources by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(

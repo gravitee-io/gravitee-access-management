@@ -145,7 +145,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     }
 
     @Override
-    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, Type type, String query, PageSortRequest pageSortRequest) {
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest) {
         Bson mongoQuery = buildSearchQuery(query, domain, DOMAIN_ID_FIELD, CLIENT_ID_FIELD);
         return findPage(collection, mongoQuery, pageSortRequest.getPage(), pageSortRequest.getSize(),
                 doc -> ProtectedResourcePrimaryData.of(convert(doc)));

@@ -488,7 +488,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .map(jdbc -> mapper.map(jdbc, ProtectedResourceFeature.class));
     }
     @Override
-    public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, String query, PageSortRequest pageSortRequest) {
         LOGGER.debug("search({}, {}, {}, {})", domainId, query, pageSortRequest.getPage(),pageSortRequest.getSize());
 
         boolean wildcardMatch = query.contains("*");

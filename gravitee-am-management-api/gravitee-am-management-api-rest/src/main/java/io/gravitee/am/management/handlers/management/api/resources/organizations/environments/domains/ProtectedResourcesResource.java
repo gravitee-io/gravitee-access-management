@@ -156,7 +156,7 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                         .filter(hasPermission -> hasPermission)
                         .flatMapSingle(__ ->  {
                             if (query != null && !query.isEmpty()) {
-                                return service.search(domainId, resourceType, query, pageSortRequest);
+                                return service.search(domainId, query, pageSortRequest);
                             }
                             return service.findByDomainAndType(domainId, resourceType, pageSortRequest);
                         })

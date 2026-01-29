@@ -815,7 +815,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         repository.create(resource2).blockingGet();
 
         // fetch resource
-        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, MCP_SERVER, "clientId", PageSortRequest.builder().page(0).size(Integer.MAX_VALUE).build()).test();
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "clientId", PageSortRequest.builder().page(0).size(Integer.MAX_VALUE).build()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -852,7 +852,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         repository.create(resource4).blockingGet();
 
         // fetch resources
-        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, MCP_SERVER, "clientId*", PageSortRequest.builder().page(0).size(Integer.MAX_VALUE).build()).test();
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "clientId*", PageSortRequest.builder().page(0).size(Integer.MAX_VALUE).build()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -976,7 +976,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         repository.create(resource).blockingGet();
 
         // fetch resource by name
-        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, MCP_SERVER, "Resource Name", PageSortRequest.builder().page(0).size(10).build()).test();
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "Resource Name", PageSortRequest.builder().page(0).size(10).build()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -998,7 +998,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         repository.create(resource).blockingGet();
 
         // fetch resource with wildcard and different case
-        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, MCP_SERVER, "clIeNtId-caSe*", PageSortRequest.builder().page(0).size(10).build()).test();
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "clIeNtId-caSe*", PageSortRequest.builder().page(0).size(10).build()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1022,7 +1022,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         }
 
         // fetch page 1 size 3
-        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, MCP_SERVER, "pagination-test*", PageSortRequest.builder().page(0).size(3).build()).test();
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "pagination-test*", PageSortRequest.builder().page(0).size(3).build()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1031,7 +1031,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(page -> page.getTotalCount() == 10);
 
         // fetch page 2 size 3
-        testObserver = repository.search(domain, MCP_SERVER, "pagination-test*", PageSortRequest.builder().page(1).size(3).build()).test();
+        testObserver = repository.search(domain, "pagination-test*", PageSortRequest.builder().page(1).size(3).build()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();

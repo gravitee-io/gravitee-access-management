@@ -43,7 +43,7 @@ public interface ProtectedResourceRepository extends CrudRepository<ProtectedRes
 
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest);
 
-    Single<Page<ProtectedResourcePrimaryData>> search(String domain, Type type, String query, PageSortRequest pageSortRequest);
+    Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest);
 
     Single<Boolean> existsByResourceIdentifiers(String domainId, List<String> resourceIdentifiers);
 
