@@ -24,7 +24,9 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
+import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -798,6 +800,68 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testSearch_strict() {
+        final String domain = "domain";
+        // create resource
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(generateClientSecret(), secretSettings);
+        resource.setDomainId(domain);
+        resource.setClientId("clientId");
+        repository.create(resource).blockingGet();
+
+        ProtectedResource resource2 = generateResource(generateClientSecret(), secretSettings);
+        resource2.setDomainId(domain);
+        resource2.setClientId("clientId2");
+        repository.create(resource2).blockingGet();
+
+        // fetch resource
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "clientId", PageSortRequest.builder().page(0).size(Integer.MAX_VALUE).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(apps -> apps.getData().size() == 1);
+        testObserver.assertValue(apps -> apps.getTotalCount() == 1);
+        testObserver.assertValue(apps -> apps.getData().iterator().next().clientId().equals(resource.getClientId()));
+    }
+
+    @Test
+    public void testSearch_wildcard() {
+        final String domain = "domain";
+        // create resources
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+
+        ProtectedResource resource = generateResource(generateClientSecret(), secretSettings);
+        resource.setDomainId(domain);
+        resource.setClientId("clientId");
+        repository.create(resource).blockingGet();
+
+        ProtectedResource resource2 = generateResource(generateClientSecret(), secretSettings);
+        resource2.setDomainId(domain);
+        resource2.setClientId("clientId2");
+        repository.create(resource2).blockingGet();
+
+        ProtectedResource resource3 = generateResource(generateClientSecret(), secretSettings);
+        resource3.setDomainId(domain);
+        resource3.setClientId("test");
+        repository.create(resource3).blockingGet();
+
+        ProtectedResource resource4 = generateResource(generateClientSecret(), secretSettings);
+        resource4.setDomainId(domain);
+        resource4.setClientId("clientId4");
+        repository.create(resource4).blockingGet();
+
+        // fetch resources
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "clientId*", PageSortRequest.builder().page(0).size(Integer.MAX_VALUE).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(apps -> apps.getData().size() == 3);
+        testObserver.assertValue(apps -> apps.getTotalCount() == 3);
+    }
+
+
     public void shouldLoadMultipleResourceIdentifiers() {
         // Create resource with multiple identifiers
         ProtectedResource toSave = generateResource("multi-identifier", "load-test-domain", "client-load", 
@@ -898,4 +962,82 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         return toSave;
     }
 
+    @Test
+    public void testSearch_byName() {
+        final String domain = "domain";
+        // create resource
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings);
+        resource.setDomainId(domain);
+        resource.setClientId("clientId-name-test");
+        resource.setName("Resource Name");
+        resource.setDomainId(domain);
+        repository.create(resource).blockingGet();
+
+        // fetch resource by name
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "Resource Name", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().id().equals(resource.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive() {
+        final String domain = "domain";
+        // create resource
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings);
+        resource.setDomainId(domain);
+        resource.setClientId("clientId-CaseSensitive");
+        resource.setDomainId(domain);
+        repository.create(resource).blockingGet();
+
+        // fetch resource with wildcard and different case
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "clIeNtId-caSe*", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().id().equals(resource.getId()));
+    }
+
+    @Test
+    public void testSearch_pagination() {
+        final String domain = "domain-pagination";
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+
+        // create 10 resources
+        for (int i = 0; i < 10; i++) {
+            ProtectedResource resource = generateResource(generateClientSecret(), secretSettings);
+            resource.setDomainId(domain);
+            resource.setClientId("pagination-test-" + i);
+            resource.setDomainId(domain);
+            repository.create(resource).blockingGet();
+        }
+
+        // fetch page 1 size 3
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "pagination-test*", PageSortRequest.builder().page(0).size(3).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 3);
+        testObserver.assertValue(page -> page.getTotalCount() == 10);
+
+        // fetch page 2 size 3
+        testObserver = repository.search(domain, "pagination-test*", PageSortRequest.builder().page(1).size(3).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 3);
+        testObserver.assertValue(page -> page.getTotalCount() == 10);
+    }
 }
+

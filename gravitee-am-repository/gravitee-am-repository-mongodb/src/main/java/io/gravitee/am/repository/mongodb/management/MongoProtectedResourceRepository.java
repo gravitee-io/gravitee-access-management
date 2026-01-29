@@ -37,6 +37,8 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.regex.Pattern;
+
 
 import static com.mongodb.client.model.Filters.*;
 import static io.gravitee.am.repository.mongodb.management.MongoApplicationRepository.*;
@@ -45,6 +47,7 @@ import static io.gravitee.am.repository.mongodb.management.internal.model.Protec
 @Component
 public class MongoProtectedResourceRepository extends AbstractManagementMongoRepository implements ProtectedResourceRepository {
     public static final String COLLECTION_NAME = "protected_resources";
+
 
     private MongoCollection<ProtectedResourceMongo> collection;
 
@@ -139,6 +142,13 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest) {
         Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type), in(FIELD_ID, ids));
         return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest) {
+        Bson mongoQuery = buildSearchQuery(query, domain, DOMAIN_ID_FIELD, CLIENT_ID_FIELD);
+        return findPage(collection, mongoQuery, pageSortRequest.getPage(), pageSortRequest.getSize(),
+                doc -> ProtectedResourcePrimaryData.of(convert(doc)));
     }
 
     @Override

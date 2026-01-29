@@ -19,6 +19,13 @@
   <div class="gv-page-content" *ngIf="!isEmpty">
     <h1>MCP Servers</h1>
     <p>Manage your Model Context Protocol servers and their available tools.</p>
+    <div class="mcp-servers-search">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Search for MCP Servers</mat-label>
+        <input matInput placeholder="Search" (input)="update($event)" />
+      </mat-form-field>
+    </div>
     <ngx-datatable
       class="material"
       [columnMode]="'flex'"

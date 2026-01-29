@@ -497,6 +497,17 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("Search protected resources by domainId={}, query={}", domain, query);
+        return repository.search(domain, query, pageSortRequest)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search protected resources by domain {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            format("An error occurs while trying to search protected resources by domain %s", domain), ex));
+                });
+    }
+
+    @Override
     public Flowable<ProtectedResource> findAll() {
         LOGGER.debug("Find all protected resources");
         return repository.findAll()

@@ -55,8 +55,9 @@ public interface ProtectedResourceService {
 
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest);
 
-    Completable delete(Domain domain, String id, Type expectedType, User principal);
+    Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest);
 
+    Completable delete(Domain domain, String id, Type expectedType, User principal);
 
     Flowable<ProtectedResource> findAll();
 

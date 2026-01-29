@@ -133,6 +133,7 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
+            @QueryParam("q") String query,
             @QueryParam("type") String type,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("50") int size,
@@ -153,7 +154,12 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                 .andThen(checkDomainExists(domainId).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE, Acl.READ)
                         .filter(hasPermission -> hasPermission)
-                        .flatMapSingle(__ ->  service.findByDomainAndType(domainId, resourceType, pageSortRequest))
+                        .flatMapSingle(__ ->  {
+                            if (query != null && !query.isEmpty()) {
+                                return service.search(domainId, query, pageSortRequest);
+                            }
+                            return service.findByDomainAndType(domainId, resourceType, pageSortRequest);
+                        })
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.PROTECTED_RESOURCE, Permission.PROTECTED_RESOURCE, Acl.READ)
                                         .toList()

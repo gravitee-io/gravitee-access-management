@@ -62,7 +62,7 @@ export const patchProtectedResource = (
     patchProtectedResource: body,
   });
 
-export const getMcpServers = (domainId: string, accessToken: string, size = 10, page = 0, sort?: string): Promise<ProtectedResourcePage> =>
+export const getMcpServers = (domainId: string, accessToken: string, size = 10, page = 0, sort?: string, query?: string): Promise<ProtectedResourcePage> =>
   getProtectedResourcesApi(accessToken).listProtectedResources({
     organizationId: 'DEFAULT',
     environmentId: 'DEFAULT',
@@ -71,6 +71,7 @@ export const getMcpServers = (domainId: string, accessToken: string, size = 10, 
     page: page,
     type: 'MCP_SERVER',
     sort: sort,
+    q: query,
   });
 
 export const getMcpServer = (domainId: string, accessToken: string, id: string): Promise<ProtectedResourcePrimaryData> =>

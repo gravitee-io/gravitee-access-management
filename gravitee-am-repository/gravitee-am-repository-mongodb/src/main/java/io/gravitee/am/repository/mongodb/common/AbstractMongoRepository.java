@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -33,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;

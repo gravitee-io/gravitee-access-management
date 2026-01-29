@@ -361,6 +361,31 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
+    public String buildSearchProtectedResourceQuery(boolean wildcard, int page, int size, String sort, boolean asc) {
+        StringBuilder builder = new StringBuilder("SELECT * FROM protected_resources pr WHERE ");
+        return buildSearchProtectedResource(wildcard, builder)
+                .append(buildPagingClause(sort, asc, page, size))
+                .toString();
+    }
+
+    @Override
+    public String buildCountProtectedResourceQuery(boolean wildcard) {
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT pr.id) FROM protected_resources pr WHERE ");
+        return buildSearchProtectedResource(wildcard, builder)
+                .toString();
+    }
+
+    protected StringBuilder buildSearchProtectedResource(boolean wildcard, StringBuilder builder) {
+        return builder.append("pr.domain_id = :domain_id")
+                .append(" AND (")
+                .append(" upper(pr.name) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR upper(pr.client_id) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" ) ");
+    }
+
+    @Override
     public String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc) {
         StringBuilder builder = new StringBuilder("SELECT * FROM applications a WHERE ");
         return buildSearchApplications(wildcard, withIds, builder)
