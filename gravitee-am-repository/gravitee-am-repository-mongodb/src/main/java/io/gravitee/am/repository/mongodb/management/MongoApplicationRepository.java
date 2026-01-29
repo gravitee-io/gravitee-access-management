@@ -191,24 +191,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Single<Page<Application>> search(String domain, String query, int page, int size) {
-        // currently search on client_id field
-        Bson searchQuery = or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query));
-        // if query contains wildcard, use the regex query
-        if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            searchQuery = or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern));
-        }
-
-        Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
-                searchQuery);
-
-        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
-        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
-                .observeOn(Schedulers.computation());
+        // search
+        Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert);
     }
 
     @Override

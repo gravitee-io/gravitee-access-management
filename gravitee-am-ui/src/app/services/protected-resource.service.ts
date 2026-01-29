@@ -33,10 +33,13 @@ export class ProtectedResourceService {
     page: number,
     size: number,
     sort: Sort,
+    searchTerm?: string,
   ): Observable<Page<ProtectedResourcePrimaryData>> {
-    return this.http.get<Page<ProtectedResourcePrimaryData>>(
-      this.baseURL + `${domainId}/protected-resources?type=${type}&page=${page}&size=${size}&sort=${transformToQueryParam(sort)}`,
-    );
+    let url = this.baseURL + `${domainId}/protected-resources?type=${type}&page=${page}&size=${size}&sort=${transformToQueryParam(sort)}`;
+    if (searchTerm) {
+      url += `&q=${searchTerm}`;
+    }
+    return this.http.get<Page<ProtectedResourcePrimaryData>>(url);
   }
 
   create(domainId: string, protectedResource: NewProtectedResourceRequest): Observable<NewProtectedResourceResponse> {

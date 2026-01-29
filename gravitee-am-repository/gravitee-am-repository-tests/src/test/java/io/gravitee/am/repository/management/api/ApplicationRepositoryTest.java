@@ -538,4 +538,71 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         assertEqualsTo(updatedApp, testObserver);
     }
 
+    @Test
+    public void testSearch_byName() {
+        final String domain = "domain";
+        // create app
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("Application Name");
+        applicationRepository.create(app).blockingGet();
+
+        // fetch app by name
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "Application Name", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive() {
+        final String domain = "domain";
+        // create app
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("ClientId-CaseSensitive");
+        applicationRepository.create(app).blockingGet();
+
+        // fetch app with wildcard and different case
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "clIeNtId-caSe*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_pagination() {
+        final String domain = "domain-pagination-search";
+        // create 10 apps
+        for (int i = 0; i < 10; i++) {
+            Application app = new Application();
+            app.setDomain(domain);
+            app.setName("pagination-test-" + i);
+            applicationRepository.create(app).blockingGet();
+        }
+
+        // fetch page 1 size 3
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "pagination-test*", 0, 3).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 3);
+        testObserver.assertValue(page -> page.getTotalCount() == 10);
+
+        // fetch page 2 size 3
+        testObserver = applicationRepository.search(domain, "pagination-test*", 1, 3).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 3);
+        testObserver.assertValue(page -> page.getTotalCount() == 10);
+    }
 }

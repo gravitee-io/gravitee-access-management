@@ -1374,6 +1374,7 @@ export interface ListProtectedResourcesRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+  q?: string;
   type?: string;
   page?: number;
   size?: number;
@@ -12549,6 +12550,10 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     const queryParameters: any = {};
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
 
     if (requestParameters.type !== undefined) {
       queryParameters['type'] = requestParameters.type;

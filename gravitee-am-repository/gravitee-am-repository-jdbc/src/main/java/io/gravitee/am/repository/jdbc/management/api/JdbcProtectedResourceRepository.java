@@ -24,6 +24,7 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceFeature;
@@ -89,8 +90,25 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 SELECT * FROM %s a WHERE
                 a.certificate = :certificateId
         """.formatted(TABLE_NAME);
+        String ORDER_BY = "ORDER BY pr.%s %s";
+        String SEARCH = """
+                FROM %s pr
+                LEFT JOIN protected_resource_identifiers pri ON pr.id = pri.protected_resource_id
+                WHERE pr.domain_id = :domainId
+                AND pr.type = :type
+                AND (UPPER(pr.name) LIKE :query OR UPPER(pri.identifier) LIKE :query)
+                """.formatted(TABLE_NAME);
+        String SEARCH_SELECT = "SELECT DISTINCT pr.* " + SEARCH;
+        String SEARCH_COUNT = "SELECT COUNT(DISTINCT pr.id) " + SEARCH;
     }
 
+    private interface BindParams {
+        String DOMAIN_ID = "domainId";
+        String CERTIFICATE_ID = "certificateId";
+        String CLIENT_ID = "clientId";
+        String TYPE = "type";
+        String QUERY = "query";
+    }
 
     protected ProtectedResource toEntity(JdbcProtectedResource entity) {
         return mapper.map(entity, ProtectedResource.class);
@@ -199,8 +217,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         LOGGER.debug("findByDomainAndClientId({}, {})", domainId, clientId);
         return fluxToFlowable(getTemplate().getDatabaseClient()
                 .sql(Selects.BY_DOMAIN_ID_AND_CLIENT_ID)
-                .bind("domainId", domainId)
-                .bind("clientId", clientId)
+                .bind(BindParams.DOMAIN_ID, domainId)
+                .bind(BindParams.CLIENT_ID, clientId)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity)
@@ -218,7 +236,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     public Flowable<ProtectedResource> findByDomain(String domain) {
         Flowable<ProtectedResource> resources = fluxToFlowable(getTemplate().getDatabaseClient()
                 .sql(Selects.BY_DOMAIN_ID)
-                .bind("domainId", domain)
+                .bind(BindParams.DOMAIN_ID, domain)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity);
@@ -230,7 +248,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         LOGGER.debug("findByCertificate({})", certificateId);
         Flowable<ProtectedResource> resources = fluxToFlowable(getTemplate().getDatabaseClient()
                 .sql(Selects.BY_CERTIFICATE)
-                .bind("certificateId", certificateId)
+                .bind(BindParams.CERTIFICATE_ID, certificateId)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity);
@@ -480,5 +498,31 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         return Flux.fromIterable(jdbcFeatures)
                 .concatMap(jdbc -> getTemplate().insert(jdbc))
                 .map(jdbc -> mapper.map(jdbc, ProtectedResourceFeature.class));
+    }
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, ProtectedResource.Type type, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("search({}, {}, {}, {})", domainId, query, pageSortRequest.getPage(),pageSortRequest.getSize());
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+
+        String search = databaseDialectHelper.buildSearchProtectedResourceQuery(wildcardMatch, pageSortRequest.getPage(), pageSortRequest.getSize(), COLUMN_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountProtectedResourceQuery(wildcardMatch);
+
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+                .bind(COLUMN_DOMAIN_ID, domainId)
+                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> complete(app).toFlowable())
+                .map(ProtectedResourcePrimaryData::of)
+                .toList()
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
+                        .bind(COLUMN_DOMAIN_ID, domainId)
+                        .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .doOnError(error -> LOGGER.error("Unable to search protected resources with domain {} (page={}/size={})", domainId, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
     }
 }

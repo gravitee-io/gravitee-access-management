@@ -33,3 +33,17 @@
     text-decoration: none;
   }
 }
+
+.mcp-servers-search {
+  margin-bottom: 20px;
+  text-align: center;
+
+  mat-form-field {
+    width: 70%;
+  }
+
+  mat-icon {
+    padding-bottom: 4px;
+    vertical-align: middle;
+  }
+}
