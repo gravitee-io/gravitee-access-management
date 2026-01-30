@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'lodash';
+import { Subject, takeUntil } from 'rxjs';
 
 import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { Scope } from '../../../../components/scope-selection/scope-selection.component';
 import { AuthService } from '../../../../../services/auth.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 @Component({
   selector: 'app-openid-client-registration-default-scope',
   templateUrl: './default-scope.component.html',
   styleUrls: ['./default-scope.component.scss'],
 })
-export class ClientRegistrationDefaultScopeComponent implements OnInit {
+export class ClientRegistrationDefaultScopeComponent implements OnInit, OnDestroy {
   domain: any = {};
   formChanged: boolean;
   dcrIsEnabled: boolean;
@@ -35,18 +37,28 @@ export class ClientRegistrationDefaultScopeComponent implements OnInit {
   selectedScopes: Scope[];
   readonly: boolean;
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private domainService: DomainService,
     private route: ActivatedRoute,
     private snackbarService: SnackbarService,
     private authService: AuthService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
-    this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.defaultScopes;
+    this.domainStore.domain$.pipe(takeUntil(this.destroy$)).subscribe((domain) => {
+      this.domain = domain;
+      this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
+      this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.defaultScopes;
+    });
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onChange(currentSelectedScopes) {
