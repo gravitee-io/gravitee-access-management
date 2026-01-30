@@ -37,4 +37,10 @@ public class BulkResponse {
     public final List<String> getSchemas() {
         return SCHEMAS;
     }
+
+    public static BulkResponse of(List<BulkOperation> operations) {
+        final var bulkResponse = new BulkResponse();
+        bulkResponse.setOperations(operations);
+        return bulkResponse;
+    }
 }
