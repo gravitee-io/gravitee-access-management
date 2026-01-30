@@ -15,20 +15,8 @@
  */
 
 import { afterAll, beforeAll, describe, expect } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { Domain } from '@management-models/Domain';
-import { Application } from '@management-models/Application';
-import {
-  createDomain,
-  safeDeleteDomain,
-  patchDomain,
-  startDomain,
-  waitForDomainSync,
-} from '@management-commands/domain-management-commands';
-import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { BulkRequest } from '../../../api/gateway/models/scim/BulkRequest/BulkRequest';
-import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
-import { applicationBase64Token } from '@gateway-commands/utils';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { BulkOperation } from '../../../api/gateway/models/scim/BulkRequest/BulkOperation';
 import { BulkResponse } from '../../../api/gateway/models/scim/BulkRequest/BulkResponse';
 import { Error } from '../../../api/gateway/models/scim/BulkRequest/Error';

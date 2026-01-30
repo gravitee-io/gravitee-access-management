@@ -90,22 +90,22 @@ export const setupFixture = async (): Promise<ScimFixture> => {
     },
 
     createUser: async (body: any) => {
-        const response = await performPost(scimEndpoint, '/Users', JSON.stringify(body), {
-            'Authorization': `Bearer ${scimAccessToken}`,
-            'Content-Type': 'application/json'
-        });
-        expect(response.status).toEqual(201);
-        return response.body;
+      const response = await performPost(scimEndpoint, '/Users', JSON.stringify(body), {
+        Authorization: `Bearer ${scimAccessToken}`,
+        'Content-Type': 'application/json',
+      });
+      expect(response.status).toEqual(201);
+      return response.body;
     },
 
     createGroup: async (body: any) => {
-        const response = await performPost(scimEndpoint, '/Groups', JSON.stringify(body), {
-            'Authorization': `Bearer ${scimAccessToken}`,
-            'Content-Type': 'application/json'
-        });
-        expect(response.status).toEqual(201);
-        return response.body;
-    }
+      const response = await performPost(scimEndpoint, '/Groups', JSON.stringify(body), {
+        Authorization: `Bearer ${scimAccessToken}`,
+        'Content-Type': 'application/json',
+      });
+      expect(response.status).toEqual(201);
+      return response.body;
+    },
   };
 };
 
@@ -162,35 +162,35 @@ const confirmRegistration = async (confirmationLink: string): Promise<any> => {
 };
 
 export const createScimUserBody = (userName: string, givenName = 'Barbara', familyName = 'Jensen', externalId?: string) => ({
-  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-  "externalId": externalId || Math.floor(Math.random() * 1000000).toString(),
-  "userName": userName,
-  "name": {
-    "formatted": `Ms. ${givenName} J ${familyName}, III`,
-    "familyName": familyName,
-    "givenName": givenName,
-    "middleName": "Jane",
-    "honorificPrefix": "Ms.",
-    "honorificSuffix": "III"
+  schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+  externalId: externalId || Math.floor(Math.random() * 1000000).toString(),
+  userName: userName,
+  name: {
+    formatted: `Ms. ${givenName} J ${familyName}, III`,
+    familyName: familyName,
+    givenName: givenName,
+    middleName: 'Jane',
+    honorificPrefix: 'Ms.',
+    honorificSuffix: 'III',
   },
-  "displayName": `${givenName} ${familyName}`,
-  "nickName": givenName,
-  "emails": [
+  displayName: `${givenName} ${familyName}`,
+  nickName: givenName,
+  emails: [
     {
-      "value": userName,
-      "type": "work",
-      "primary": true
+      value: userName,
+      type: 'work',
+      primary: true,
     },
     {
-      "value": "babs@jensen.org",
-      "type": "home"
-    }
+      value: 'babs@jensen.org',
+      type: 'home',
+    },
   ],
-  "userType": "Employee",
-  "active": true
+  userType: 'Employee',
+  active: true,
 });
 
 export const createScimGroupBody = (displayName: string) => ({
-  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-  "displayName": displayName
+  schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+  displayName: displayName,
 });
