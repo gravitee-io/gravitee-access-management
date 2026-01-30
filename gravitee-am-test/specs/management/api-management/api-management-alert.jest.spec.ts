@@ -75,32 +75,12 @@ describe('API Management - Alert', () => {
     });
 
     it('should create domain webhook alert notifier', async () => {
-      const api = getAlertsApi(fixture.accessToken!);
-      const webhookConfig = JSON.stringify({
-        method: 'POST',
-        url: 'https://example.com/webhook',
-        headers: [{ name: 'Content-Type', value: 'text/plain' }],
-        body: "An alert '${alert.name}' has been fired.",
-        useSystemProxy: false,
-      });
-      const response = await api.createAlertNotifierRaw({
-        organizationId: orgId,
-        environmentId: envId,
-        domain: fixture.domain.id,
-        newAlertNotifier: {
-          type: 'webhook-notifier',
-          configuration: webhookConfig,
-          name: 'Webhook',
-          enabled: true,
-        },
-      });
-      expect(response.raw.status).toBe(200);
-      const notifier = await response.value();
-      expect(notifier.id).toBeDefined();
-      (fixture as ApiManagementAlertFixture & { alertNotifierId?: string }).alertNotifierId = notifier.id;
+      const notifierId = await fixture.ensureWebhookNotifierExists();
+      expect(notifierId).toBeDefined();
     });
 
     it('should list domain alert notifiers (not empty)', async () => {
+      await fixture.ensureWebhookNotifierExists();
       const api = getAlertsApi(fixture.accessToken!);
       const response = await api.listAlertNotifiersRaw({
         organizationId: orgId,
@@ -113,8 +93,7 @@ describe('API Management - Alert', () => {
     });
 
     it('should enable too many login failures alert', async () => {
-      const alertNotifierId = (fixture as ApiManagementAlertFixture & { alertNotifierId?: string }).alertNotifierId;
-      expect(alertNotifierId).toBeDefined();
+      const alertNotifierId = await fixture.ensureWebhookNotifierExists();
 
       const api = getAlertsApi(fixture.accessToken!);
       const response = await api.updateAlertTriggersRaw({
@@ -125,7 +104,7 @@ describe('API Management - Alert', () => {
           {
             type: PatchAlertTriggerTypeEnum.TooManyLoginFailures,
             enabled: true,
-            alertNotifiers: [alertNotifierId!],
+            alertNotifiers: [alertNotifierId],
           },
         ],
       });
