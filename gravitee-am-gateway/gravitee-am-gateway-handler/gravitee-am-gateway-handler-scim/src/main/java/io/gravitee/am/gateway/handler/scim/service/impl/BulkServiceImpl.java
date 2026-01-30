@@ -35,11 +35,12 @@ import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.processors.PublishProcessor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import static io.gravitee.common.http.HttpMethod.DELETE;
@@ -64,37 +65,56 @@ public class BulkServiceImpl implements BulkService {
     private final static String BULK_PATH_PATTERN = "/Bulk(/)?";
     private final static Pattern USER_PATH_PATTERN = Pattern.compile("/Users/(.*)");
 
-    private ProvisioningUserService userService;
-    private Domain domain;
+    private final ProvisioningUserService userService;
+    private final Domain domain;
+    private final int bulkMaxConcurrency;
 
     @Override
     public Single<BulkResponse> processBulkRequest(BulkRequest bulkRequest, AuthenticationContext authenticationContext, String baseUrl, Client client, User principal) {
-        final AtomicInteger failuresCounter = new AtomicInteger(0);
+        final PublishProcessor<Throwable> errorCounter = PublishProcessor.create();
         return Flowable.fromIterable(bulkRequest.getOperations())
-                .concatMapSingle(operation -> checkOperation(operation)
-                            .flatMap(validOperation -> perform(validOperation, authenticationContext, baseUrl, client, principal))
-                            .doOnError(error -> failuresCounter.incrementAndGet())
-                            .onErrorResumeNext(ex -> {
-                                final var knownError = Error.fromThrowable(ex);
-                                if (knownError.isPresent()) {
-                                    operation.setResponse(knownError.get());
-                                    operation.setStatus(knownError.get().getStatus());
-                                } else {
-                                    Error error = new Error();
-                                    error.setStatus(valueOf(HttpStatusCode.INTERNAL_SERVER_ERROR_500));
-                                    error.setDetail(ex.getMessage());
-                                    operation.setResponse(error);
-                                    operation.setStatus(error.getStatus());
-                                }
-                                return Single.just(operation.asResponse());
-                            }))
-                .takeUntil(result -> failuresCounter.get() >= bulkRequest.getFailOnErrors())
+                .takeUntil(stopSignal(errorCounter, bulkRequest.getFailOnErrors()))
+                .concatMapEager(operation -> processOperation(operation, authenticationContext, baseUrl, client, principal, errorCounter),
+                        bulkMaxConcurrency,
+                        Flowable.bufferSize())
                 .toList()
-                .map(responses -> {
-                    final var bulkResponse = new BulkResponse();
-                    bulkResponse.setOperations(responses);
-                    return bulkResponse;
-                });
+                .map(BulkResponse::of);
+    }
+
+    private Publisher<Boolean> stopSignal(PublishProcessor<Throwable> errorPublisher, int limit){
+        return errorPublisher
+                .scan(0, (count, error) -> count + 1)
+                .filter(count -> count >= limit)
+                .take(1)
+                .map(count -> Boolean.TRUE);
+    }
+
+    private Flowable<BulkOperation> processOperation(BulkOperation operation,
+                                                     AuthenticationContext authenticationContext,
+                                                     String baseUrl,
+                                                     Client client,
+                                                     User principal,
+                                                     PublishProcessor<Throwable> errorCounter) {
+        return checkOperation(operation)
+                .flatMap(validOperation -> perform(validOperation, authenticationContext, baseUrl, client, principal))
+                .doOnError(errorCounter::onNext)
+                .onErrorResumeNext(ex -> recoverOperation(operation, ex))
+                .toFlowable();
+    }
+
+    private Single<BulkOperation> recoverOperation(BulkOperation operation, Throwable ex) {
+        final var knownError = Error.fromThrowable(ex);
+        if (knownError.isPresent()) {
+            operation.setResponse(knownError.get());
+            operation.setStatus(knownError.get().getStatus());
+        } else {
+            Error error = new Error();
+            error.setStatus(valueOf(HttpStatusCode.INTERNAL_SERVER_ERROR_500));
+            error.setDetail(ex.getMessage());
+            operation.setResponse(error);
+            operation.setStatus(error.getStatus());
+        }
+        return Single.just(operation.asResponse());
     }
 
     private Single<BulkOperation> perform(BulkOperation operation, AuthenticationContext authenticationContext, String baseUrl, Client client, User principal){
