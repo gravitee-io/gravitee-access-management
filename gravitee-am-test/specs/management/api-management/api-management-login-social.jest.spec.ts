@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performGet, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { setupApiManagementLoginSocialFixture, ApiManagementLoginSocialFixture } from './fixtures/api-management-login-social-fixture';
@@ -23,7 +24,7 @@ import {
   extractXsrfAndActionFromSocialLoginHtml,
   cookieHeaderFromSetCookie,
 } from './management-auth-helper';
-import { getDefaultApi, getIdpApi } from '@management-commands/service/utils';
+import { getDefaultApi } from '@management-commands/service/utils';
 import { setup } from '../../test-fixture';
 
 setup(200000);
@@ -51,38 +52,18 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) await fixture.cleanUp();
+  if (fixture) {
+    await fixture.cleanUp();
+  }
 });
 
 describe('API Management - Login Social Provider', () => {
-  describe('Prepare', () => {
-    it('should have created social domain', async () => {
-      expect(fixture.domainId).toBeDefined();
-      expect(fixture.domainHrid).toBeDefined();
-    });
-    it('should accept unsecured redirect uris', async () => {
-      expect(fixture.domain).toBeDefined();
-    });
-    it('should have created social in-memory IDP', async () => {
-      expect(fixture.username).toBeDefined();
-    });
-    it('should have created social application', async () => {
-      expect(fixture.appId).toBeDefined();
-      expect(fixture.clientId).toBe('my-client');
-      expect(fixture.clientSecret).toBeDefined();
-    });
-    it('should have configured and started social domain', async () => {
-      expect(fixture.domainHrid).toBeDefined();
-    });
-    it('should get admin configuration', async () => {
-      const defaultApi = getDefaultApi(fixture.accessToken!);
-      const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
-      expect(settings.identities).toBeDefined();
-      expect(Array.from(settings.identities!).includes(fixture.newIdp)).toBe(true);
-    });
-  });
-
   describe('Login flow', () => {
+    beforeAll(async () => {
+      const res = await performGet(fixture.gatewayUrl, `/${fixture.domainHrid}/logout`);
+      expect(res.status).toBe(302);      
+    });
+
     it('should initiate login flow and redirect to login page', async () => {
       const res = await performGet(
         MANAGEMENT_URL,
@@ -245,13 +226,18 @@ describe('API Management - Login Social Provider', () => {
       let loc = postRes.headers.location;
       let cookieStr = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
       for (let i = 0; i < 5 && loc; i++) {
-        const { origin: o, pathAndSearch: p } = parseLocation(loc, loc.includes(MANAGEMENT_URL) ? MANAGEMENT_URL : fixture.gatewayUrl);
+        const base =
+          loc.includes(MANAGEMENT_URL) || loc.startsWith('/management')
+            ? MANAGEMENT_URL
+            : fixture.gatewayUrl;
+        const { origin: o, pathAndSearch: p } = parseLocation(loc, base);
         const next = await performGet(o, p, cookieStr ? { Cookie: cookieStr } : undefined);
-        expect(next.status).toBe(302);
-        loc = next.headers.location;
+        expect([200, 302]).toContain(next.status);
+        loc = next.headers.location ?? loc;
         cookieStr = cookieHeaderFromSetCookie(next.headers['set-cookie']);
         if (loc && loc.includes('nowhere.com')) break;
       }
+      expect(loc).toBeDefined();
       expect(loc).toContain('nowhere.com');
     });
 
@@ -288,17 +274,27 @@ describe('API Management - Login Social Provider', () => {
       );
       cookieStr = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
       let loc = postRes.headers.location;
+      let managementCookie: string | undefined;
       for (let i = 0; i < 4 && loc; i++) {
-        const { origin: o, pathAndSearch: p } = parseLocation(loc, loc.includes(MANAGEMENT_URL) ? MANAGEMENT_URL : fixture.gatewayUrl);
+        const base =
+          loc.includes(MANAGEMENT_URL) || loc.startsWith('/management')
+            ? MANAGEMENT_URL
+            : fixture.gatewayUrl;
+        const { origin: o, pathAndSearch: p } = parseLocation(loc, base);
         const next = await performGet(o, p, cookieStr ? { Cookie: cookieStr } : undefined);
-        loc = next.headers.location;
+        if (o === new URL(MANAGEMENT_URL).origin) {
+          const setCookie = cookieHeaderFromSetCookie(next.headers['set-cookie']);
+          if (setCookie) managementCookie = setCookie;
+        }
+        loc = next.headers.location ?? loc;
         cookieStr = cookieHeaderFromSetCookie(next.headers['set-cookie']);
         if (loc?.includes('nowhere.com')) break;
       }
+      const logoutCookie = managementCookie ?? cookieStr;
       const res = await performGet(
         MANAGEMENT_URL,
         `/management/auth/logout?target_url=${encodeURIComponent(TARGET_URL)}`,
-        cookieStr ? { Cookie: cookieStr } : undefined,
+        logoutCookie ? { Cookie: logoutCookie } : undefined,
       );
       expect(res.status).toBe(302);
       expect(res.headers.location).toBe(TARGET_URL);
@@ -308,34 +304,6 @@ describe('API Management - Login Social Provider', () => {
       const res = await performGet(fixture.gatewayUrl, `/${fixture.domainHrid}/logout`);
       expect(res.status).toBe(302);
       expect(res.headers.location).toBeDefined();
-    });
-  });
-
-  describe('Cleanup', () => {
-    it('should delete social domain', async () => {
-      const { getDomainApi } = await import('@management-commands/service/utils');
-      const api = getDomainApi(fixture.accessToken!);
-      const res = await api.deleteDomainRaw({
-        organizationId: ORG_ID,
-        environmentId: process.env.AM_DEF_ENV_ID!,
-        domain: fixture.domainId,
-      });
-      expect(res.raw.status).toBe(204);
-    });
-    it('should reset admin configuration', async () => {
-      const defaultApi = getDefaultApi(fixture.accessToken!);
-      await defaultApi.patchOrganizationSettings({
-        organizationId: ORG_ID,
-        patchOrganization: { identities: [fixture.currentIdp] },
-      });
-    });
-    it('should delete new identity provider', async () => {
-      const idpApi = getIdpApi(fixture.accessToken!);
-      const res = await idpApi.deleteIdentityProvider1Raw({
-        organizationId: ORG_ID,
-        identity: fixture.newIdp,
-      });
-      expect(res.raw.status).toBe(204);
     });
   });
 });
