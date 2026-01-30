@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.DummyAuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.gateway.handler.scim.spring.SCIMConfiguration;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -35,7 +36,7 @@ import static java.util.List.of;
 
 public class BulkServiceImplTest {
 
-    BulkServiceImpl service = new BulkServiceImpl(Mockito.mock(), Mockito.mock());
+    BulkServiceImpl service = new BulkServiceImpl(Mockito.mock(), Mockito.mock(), 1);
 
     @Test
     public void should_omit_further_operations_if_fail_on_error_counter_is_reached(){
