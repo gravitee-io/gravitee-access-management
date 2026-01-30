@@ -1,0 +1,27 @@
+# Standalone MongoDB configuration for AM Migration Tool (Bitnami Chart)
+# Version Aligned with Cloud-AM Standards (Chart 18.1.20)
+
+architecture: standalone
+fullnameOverride: mongo-mongodb
+
+auth:
+  enabled: true
+  rootPassword: "secret-password"
+  usernames: ["gravitee"]
+  passwords: ["gravitee-password"]
+  databases: ["gravitee-am"]
+
+persistence:
+  enabled: false
+
+# Local testing optimization
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Ensure it uses the same namespace
+namespaceOverride: "gravitee-am"

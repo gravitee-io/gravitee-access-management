@@ -1,0 +1,55 @@
+# Gravitee AM configuration for migration test tool environment
+# Wired to use the standalone MongoDB service (Aligned with cloud-am)
+
+# Disable internal mongodb-replicaset
+mongodb-replicaset:
+  enabled: false
+
+# Shared environment variables for AM components
+commonEnv: &commonEnv
+  - name: GRAVITEE_REPOSITORY_TYPE
+    value: mongodb
+  - name: gravitee_repositories_0_type
+    value: mongodb
+  - name: gravitee_repositories_management_type
+    value: mongodb
+  - name: gravitee_repositories_oauth2_type
+    value: mongodb
+  # Point to the 'am-mongo-mongodb' service
+  - name: gravitee_repositories_management_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@am-mongo-mongodb:27017/gio-am-migration-tool?retryWrites=true&w=majority&connectTimeoutMS=10000"
+  - name: gravitee_repositories_oauth2_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@am-mongo-mongodb:27017/gio-am-migration-tool?retryWrites=true&w=majority&connectTimeoutMS=10000"
+  - name: gravitee_dataPlanes_0_type
+    value: mongodb
+  - name: gravitee_dataPlanes_0_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@am-mongo-mongodb:27017/gio-am-migration-tool?retryWrites=true&w=majority&connectTimeoutMS=10000"
+
+api:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-api
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  env: *commonEnv
+
+gateway:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-gateway
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  env: *commonEnv
+
+ui:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-ui
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false

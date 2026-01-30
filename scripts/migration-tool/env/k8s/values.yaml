@@ -1,0 +1,65 @@
+# Migration Tool - K8s Values
+# Optimized for local Kind testing with standalone MongoDB
+
+# Common Labels
+labels:
+  environment: migration-test
+  part-of: am-migration-tool
+
+# MongoDB Configuration (Disabled internal sub-chart in favor of standalone release)
+mongodb-replicaset:
+  enabled: false
+
+# Shared environment variables for AM components
+# Based on cloud-am standards for explicit DB wiring
+commonEnv: &commonEnv
+  - name: GRAVITEE_REPOSITORY_TYPE
+    value: mongodb
+  - name: gravitee_repositories_0_type
+    value: mongodb
+  - name: gravitee_repositories_management_type
+    value: mongodb
+  - name: gravitee_repositories_oauth2_type
+    value: mongodb
+  # Note: Pointing to the standalone 'mongo-mongodb' service
+  - name: gravitee_repositories_management_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-am?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_oauth2_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-am?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_0_type
+    value: mongodb
+  - name: gravitee_dataPlanes_0_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-am?serverSelectionTimeoutMS=30000"
+
+api:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-api
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  env: *commonEnv
+
+gateway:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-gateway
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  env: *commonEnv
+
+ui:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-ui
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+
+# License Configuration
+license:
+  accept: true

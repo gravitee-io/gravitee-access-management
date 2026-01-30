@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: am-migration-mongo
+    ports:
+      - "27017:27017"
+
+  mapi:
+    image: graviteeio/am-management-api:${AM_VERSION:-latest}
+    container_name: am-migration-mapi
+    ports:
+      - "18093:8093"
+    environment:
+      - management_type=mongodb
+      - management_mongodb_uri=mongodb://mongodb:27017/gravitee-am
+      - oauth2_type=mongodb
+      - oauth2_mongodb_uri=mongodb://mongodb:27017/gravitee-am
+    depends_on:
+      - mongodb
+
+  gateway:
+    image: graviteeio/am-gateway:${AM_VERSION:-latest}
+    container_name: am-migration-gateway
+    ports:
+      - "18092:8092"
+    environment:
+      - management_type=mongodb
+      - management_mongodb_uri=mongodb://mongodb:27017/gravitee-am
+      - oauth2_type=mongodb
+      - oauth2_mongodb_uri=mongodb://mongodb:27017/gravitee-am
+    depends_on:
+      - mongodb
