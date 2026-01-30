@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.scim.model.Error;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.impl.BulkServiceImpl;
+import io.gravitee.am.gateway.handler.scim.spring.SCIMConfiguration;
 import io.gravitee.am.identityprovider.api.DummyAuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.model.Domain;
@@ -80,7 +81,7 @@ public class BulkServiceTest {
 
     @BeforeEach
     public void init() {
-        this.bulkService = new BulkServiceImpl(userService, domain);
+        this.bulkService = new BulkServiceImpl(userService, domain, 1);
         this.client = new Client();
         this.request = new DummyRequest();
         this.authenticationContext = new DummyAuthenticationContext(new HashMap<>(), request);
