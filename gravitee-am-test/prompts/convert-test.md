@@ -15,6 +15,7 @@
 * Map Postman **Folders** to `describe()` blocks.
 * Map Postman **Requests** to `it()` blocks.
 * Ensure `beforeAll`/`afterAll` hooks match Collection-level scripts.
+* ENFORCE test isolation, each test **MUST** be able to run independently of any other test
 
 **2. Variable Handling & Chaining**
 * **Environment Variables:** Convert `{{variable}}` to `process.env.VARIABLE`.
