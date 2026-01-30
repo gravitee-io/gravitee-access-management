@@ -5,6 +5,7 @@ export class PortForwarder {
     constructor(options) {
         this.namespace = options.namespace;
         this.shell = options.shell || $;
+        this.spawn = options.spawn; // Allowed to be injected for tests
     }
 
     /**
@@ -14,17 +15,36 @@ export class PortForwarder {
     async start(resource, localPort, remotePort) {
         console.log(`🔌 Starting port-forward: ${resource} ${localPort}:${remotePort}...`);
 
-        // Start as background process using zx $ (it runs immediately)
-        const proc = this.shell`kubectl port-forward -n ${this.namespace} ${resource} ${localPort}:${remotePort}`.quiet();
+        let spawnFn = this.spawn;
+        if (!spawnFn) {
+            const cp = await import('node:child_process');
+            spawnFn = cp.spawn;
+        }
 
-        if (!proc.child || !proc.child.pid) {
+        // Use native spawn with detached: true and stdio: 'ignore' 
+        // to ensure the process survives when the parent exits.
+        const child = spawnFn('kubectl', [
+            'port-forward',
+            '-n', this.namespace,
+            resource,
+            '--address', '127.0.0.1,::1',
+            `${localPort}:${remotePort}`
+        ], {
+            detached: true,
+            stdio: 'ignore'
+        });
+
+        if (!child.pid) {
             throw new Error(`Failed to start port-forward for ${resource}`);
         }
 
-        // Detach background process to allow Node to exit while keeping tunnel alive
-        proc.child.unref();
+        // Allow the parent to exit independently of this child
+        child.unref();
 
-        return proc.child.pid;
+        // Give it a moment to initialize and bind
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        return child.pid;
     }
 
     async stop(pid) {

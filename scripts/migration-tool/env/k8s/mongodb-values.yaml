@@ -9,7 +9,7 @@ auth:
   rootPassword: "secret-password"
   usernames: ["gravitee"]
   passwords: ["gravitee-password"]
-  databases: ["gravitee-am"]
+  databases: ["gravitee"]
 
 persistence:
   enabled: false
@@ -17,11 +17,11 @@ persistence:
 # Local testing optimization
 resources:
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 1000m
+    memory: 1Gi
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 200m
+    memory: 512Mi
 
 # Ensure it uses the same namespace
 namespaceOverride: "gravitee-am"

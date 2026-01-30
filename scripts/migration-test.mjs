@@ -14,9 +14,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const toolEntry = join(__dirname, 'migration-tool', 'index.mjs');
 
-// Forward all arguments to the actual tool via npx -y zx
-// -y ensures it doesn't prompt for installation
-const child = spawn('npx', ['-y', 'zx', toolEntry, ...process.argv.slice(2)], {
+// Prefer local zx if available to avoid npm cache permission issues
+const zxBinary = join(__dirname, 'migration-tool', 'node_modules', '.bin', 'zx');
+const useLocal = await import('fs').then(fs => fs.promises.access(zxBinary).then(() => true).catch(() => false));
+
+const cmd = useLocal ? zxBinary : 'npx';
+const args = useLocal ? [toolEntry, ...process.argv.slice(2)] : ['-y', 'zx', toolEntry, ...process.argv.slice(2)];
+
+const child = spawn(cmd, args, {
     stdio: 'inherit',
     shell: true
 });

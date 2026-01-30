@@ -32,7 +32,7 @@ export class K8sProvider extends BaseProvider {
         this.valuesPath = options.valuesPath || Config.k8s.valuesPath;
         // this.mongoValuesPath removed (managed by strategy)
 
-        this.pids = { mapi: null, gateway: null };
+        this.pids = { mapi: null, gateway: null, ui: null };
     }
 
     async setup() {
@@ -78,6 +78,10 @@ export class K8sProvider extends BaseProvider {
             await this.portForwarder.stop(this.pids.gateway);
             this.pids.gateway = null;
         }
+        if (this.pids.ui) {
+            await this.portForwarder.stop(this.pids.ui);
+            this.pids.ui = null;
+        }
     }
 
     async deploy(version) {
@@ -104,6 +108,7 @@ export class K8sProvider extends BaseProvider {
     async startTunnels() {
         this.pids.mapi = await this.portForwarder.start('svc/am-management-api', 8093, 83);
         this.pids.gateway = await this.portForwarder.start('svc/am-gateway', 8092, 82);
+        this.pids.ui = await this.portForwarder.start('svc/am-management-ui', 8002, 8002);
     }
 
     // Remaining methods will be refactored as needed

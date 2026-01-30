@@ -16,28 +16,23 @@ describe('PortForwarder', () => {
         };
 
         mockShell = jest.fn().mockImplementation(() => createMockSession());
+        const mockSpawn = jest.fn();
 
         forwarder = new PortForwarder({
             namespace: 'gravitee-am',
-            shell: mockShell
+            shell: mockShell,
+            spawn: mockSpawn
         });
     });
 
     test('should start a port forward and return pid', async () => {
-        // Mock the background process execution
-        // zx shell in background returns a ProcessPromise which has a .child property with pid
-        const mockChild = { pid: 1234, kill: jest.fn(), unref: jest.fn() };
-        mockShell.mockImplementation(() => {
-            const p = Promise.resolve({});
-            p.child = mockChild;
-            p.quiet = () => p;
-            return p;
-        });
+        const mockChild = { pid: 1234, unref: jest.fn() };
+        forwarder.spawn.mockReturnValue(mockChild);
 
         const pid = await forwarder.start('svc/am-management-api', 8093, 83);
 
         expect(pid).toBe(1234);
-        expect(mockShell).toHaveBeenCalled();
+        expect(forwarder.spawn).toHaveBeenCalled();
     });
 
     test('should stop a port forward by pid', async () => {

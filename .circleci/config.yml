@@ -4,7 +4,20 @@ setup: true
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am, publish_maven_central, release_helm, publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version ]
+    enum:
+      [
+        release,
+        publish_rpms,
+        publish_docker_images,
+        pull_requests,
+        release_notes_am,
+        publish_maven_central,
+        release_helm,
+        publish-images-azure-registry,
+        release-version,
+        release-alpha-version,
+        release-hotfix-version,
+      ]
     default: pull_requests
   gio_product:
     type: enum
@@ -61,6 +74,15 @@ parameters:
     type: boolean
     default: true
     description: "Runs UI jest tests + Lint"
+  migration_test_from_tag:
+    type: string
+    default: ""
+  migration_test_to_tag:
+    type: string
+    default: ""
+  migration_test_db_type:
+    type: string
+    default: ""
 
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
@@ -68,8 +90,11 @@ workflows:
   containter-test-check:
     jobs:
       - path-filtering/filter:
+          name: "Standard CI or Migration Test"
           base-revision: << pipeline.git.branch >>
-          config-path: ".circleci/workflows.yml"
+          config-path: |
+            <<# pipeline.parameters.migration_test_from_tag >>.circleci/workflows/migration-test.yml<</ pipeline.parameters.migration_test_from_tag >>
+            <<^ pipeline.parameters.migration_test_from_tag >>.circleci/workflows.yml<</ pipeline.parameters.migration_test_from_tag >>
           mapping: |
             gravitee-am-reporter/.* run-container-test true
             gravitee-am-repository/.* run-container-test true

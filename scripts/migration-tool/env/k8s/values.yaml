@@ -23,13 +23,19 @@ commonEnv: &commonEnv
     value: mongodb
   # Note: Pointing to the standalone 'mongo-mongodb' service
   - name: gravitee_repositories_management_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-am?serverSelectionTimeoutMS=30000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_management_mongodb_dbname
+    value: "gravitee"
   - name: gravitee_repositories_oauth2_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-am?serverSelectionTimeoutMS=30000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_oauth2_mongodb_dbname
+    value: "gravitee"
   - name: gravitee_dataPlanes_0_type
     value: mongodb
   - name: gravitee_dataPlanes_0_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-am?serverSelectionTimeoutMS=30000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_0_mongodb_dbname
+    value: "gravitee"
 
 api:
   replicaCount: 1
@@ -59,6 +65,7 @@ ui:
     pullPolicy: IfNotPresent
   ingress:
     enabled: false
+  baseURL: "http://localhost:8093/management"
 
 # License Configuration
 license:
