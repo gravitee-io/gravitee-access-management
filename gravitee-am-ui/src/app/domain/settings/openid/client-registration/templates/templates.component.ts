@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'lodash';
+import { Subject, takeUntil } from 'rxjs';
 
-import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { AuthService } from '../../../../../services/auth.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 export interface Client {
   id: string;
@@ -39,7 +40,7 @@ export interface Client {
   styleUrls: ['./templates.component.scss'],
   standalone: false,
 })
-export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewInit {
+export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewInit, OnDestroy {
   domain: any = {};
   dcrIsEnabled: boolean;
   templateIsEnabled: boolean;
@@ -48,23 +49,27 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
   displayedColumns: string[] = ['name', 'clientId', 'template'];
   readonly: boolean;
 
+  private destroy$ = new Subject<void>();
+
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
   constructor(
-    private domainService: DomainService,
     private applicationService: ApplicationService,
     private route: ActivatedRoute,
     private snackbarService: SnackbarService,
     private authService: AuthService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
-    this.templateIsEnabled = this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
+    this.domainStore.domain$.pipe(takeUntil(this.destroy$)).subscribe((domain) => {
+      this.domain = domain;
+      this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
+      this.templateIsEnabled = this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
+      this.initEmptyStateMessage();
+    });
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
-    this.initEmptyStateMessage();
 
     const datasource = map(
       this.route.snapshot.data['apps'].data,
@@ -77,6 +82,11 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
         },
     );
     this.apps = new MatTableDataSource(datasource);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngAfterViewInit() {
