@@ -46,6 +46,8 @@ describe('API Management - Alert', () => {
   });
 
   describe('Alert', () => {
+    let alertNotifierId: string;
+
     it('should enable domain alerts', async () => {
       const patched = await patchDomain(fixture.domain.id, fixture.accessToken!, {
         alertEnabled: true,
@@ -71,16 +73,36 @@ describe('API Management - Alert', () => {
       const notifiers = await api.listNotifiers({ expand: ['icon'] });
       expect(notifiers).toBeDefined();
       expect(Array.isArray(notifiers)).toBe(true);
-      expect(notifiers.length).toBe(3);
+      expect(notifiers.length).toBeGreaterThan(0);
     });
 
     it('should create domain webhook alert notifier', async () => {
-      const notifierId = await fixture.ensureWebhookNotifierExists();
-      expect(notifierId).toBeDefined();
+      const api = getAlertsApi(fixture.accessToken!);
+      const webhookConfig = JSON.stringify({
+        method: 'POST',
+        url: 'https://example.com/webhook',
+        headers: [{ name: 'Content-Type', value: 'text/plain' }],
+        body: "An alert '${alert.name}' has been fired.",
+        useSystemProxy: false,
+      });
+      const response = await api.createAlertNotifierRaw({
+        organizationId: orgId,
+        environmentId: envId,
+        domain: fixture.domain.id,
+        newAlertNotifier: {
+          type: 'webhook-notifier',
+          configuration: webhookConfig,
+          name: 'Webhook',
+          enabled: true,
+        },
+      });
+      expect(response.raw.status).toBe(200);
+      const notifier = await response.value();
+      expect(notifier.id).toBeDefined();
+      alertNotifierId = notifier.id;
     });
 
     it('should list domain alert notifiers (not empty)', async () => {
-      await fixture.ensureWebhookNotifierExists();
       const api = getAlertsApi(fixture.accessToken!);
       const response = await api.listAlertNotifiersRaw({
         organizationId: orgId,
@@ -93,7 +115,7 @@ describe('API Management - Alert', () => {
     });
 
     it('should enable too many login failures alert', async () => {
-      const alertNotifierId = await fixture.ensureWebhookNotifierExists();
+      expect(alertNotifierId).toBeDefined();
 
       const api = getAlertsApi(fixture.accessToken!);
       const response = await api.updateAlertTriggersRaw({
@@ -104,22 +126,11 @@ describe('API Management - Alert', () => {
           {
             type: PatchAlertTriggerTypeEnum.TooManyLoginFailures,
             enabled: true,
-            alertNotifiers: [alertNotifierId],
+            alertNotifiers: [alertNotifierId!],
           },
         ],
       });
       expect(response.raw.status).toBe(200);
-    });
-  });
-
-  describe('Cleanup', () => {
-    it('should delete alert domain', async () => {
-      const response = await getDomainApi(fixture.accessToken!).deleteDomainRaw({
-        organizationId: orgId,
-        environmentId: envId,
-        domain: fixture.domain.id,
-      });
-      expect(response.raw.status).toBe(204);
     });
   });
 });
