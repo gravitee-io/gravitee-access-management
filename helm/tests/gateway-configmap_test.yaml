@@ -86,6 +86,27 @@ tests:
           path: data["gravitee.yml"]
           pattern: "[ ]{2}somevalue: block-duplicate-mfa-rate"
 
+  - it: should set scim bulk handlers settings
+    set:
+      gateway.handlers.scim.bulk.maxConcurrency: 8
+      gateway.handlers.scim.bulk.maxRequestLength: 2048
+      gateway.handlers.scim.bulk.maxRequestOperations: 12
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            handlers:
+              scim:
+                bulk:
+                  maxConcurrency: 8
+                  maxRequestLength: 2048
+                  maxRequestOperations: 12
+
   - it: should set default alert engine values disabled
     asserts:
       - hasDocuments:
