@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -62,18 +63,18 @@ public class SecretsResolvingPluginConfigurationEvaluator implements PluginConfi
         visited.add(obj);
 
         ReflectionUtils.doWithFields(obj.getClass(), field -> {
-            field.setAccessible(true);
-            Object fieldValue = ReflectionUtils.getField(field, obj);
-
-            if (isAnnotatedAsSecret(field)) {
-                evaluateAnnotatedField(field, obj, templateEngine);
-            } else {
-                if (isComplexType(fieldValue)) {
-                    evaluateConfigObject(fieldValue, templateEngine, visited);
-                } else if (fieldValue instanceof Collection<?> collection) {
-                    collection.forEach(item -> evaluateConfigObject(item, templateEngine, visited));
-                } else if (fieldValue instanceof Map<?, ?> map) {
-                    map.values().forEach(item -> evaluateConfigObject(item, templateEngine, visited));
+            if (field.trySetAccessible()) {
+                Object fieldValue = ReflectionUtils.getField(field, obj);
+                if (isAnnotatedAsSecret(field)) {
+                    evaluateAnnotatedField(field, obj, templateEngine);
+                } else {
+                    if (isComplexType(fieldValue)) {
+                        evaluateConfigObject(fieldValue, templateEngine, visited);
+                    } else if (fieldValue instanceof Collection<?> collection) {
+                        collection.forEach(item -> evaluateConfigObject(item, templateEngine, visited));
+                    } else if (fieldValue instanceof Map<?, ?> map) {
+                        map.values().forEach(item -> evaluateConfigObject(item, templateEngine, visited));
+                    }
                 }
             }
         });
