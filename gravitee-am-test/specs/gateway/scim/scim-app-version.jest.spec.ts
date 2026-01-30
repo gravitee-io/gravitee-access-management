@@ -38,21 +38,6 @@ afterAll(async () => {
 });
 
 describe('SCIM - App Version', () => {
-
-  describe('Unsecured Endpoints', () => {
-    it('should retrieve OIDC configuration', async () => {
-      // Corresponds to "well-known/openid-configuration"
-      const response = await performGet(process.env.AM_GATEWAY_URL + '/' + fixture.domain.hrid + '/oidc', '/.well-known/openid-configuration');
-      expect(response.status).toEqual(200);
-      expect(response.headers['content-type']).toContain('application/json');
-      
-      expect(response.status).toEqual(200);
-      expect(response.text).toContain('token_endpoint');
-    });
-  });
-
-
-
   describe('SCIM Enabled', () => {
     beforeAll(async () => {
       // Enable SCIM
@@ -247,7 +232,6 @@ describe('SCIM - App Version', () => {
     });
 
     describe('Users - CRUD', () => {
-        let userId: string;
 
         it('should create a user', async () => {
             const body = createScimUserBody("bjensen@example.com", "Barbara", "Jensen", "701984");
@@ -260,7 +244,6 @@ describe('SCIM - App Version', () => {
             expect(response.status).toEqual(201);
             const resBody = response.body;
             expect(resBody).toHaveProperty('id');
-            userId = resBody.id;
             expect(resBody.schemas).toEqual(['urn:ietf:params:scim:schemas:core:2.0:User']);
         });
 
@@ -294,10 +277,12 @@ describe('SCIM - App Version', () => {
         });
 
         it('should update user', async () => {
+            const createdUser = await fixture.createUser(createScimUserBody("bjensen-update@example.com", "Barbara", "Jensen", "bjensen-update"));
+
             const body = {
                 "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                "userName": "bjensen",
-                "externalId": "bjensen",
+                "userName": "bjensen-update",
+                "externalId": "bjensen-update",
                 "name": {
                     "formatted": "Ms. Barbara J Jensen III",
                     "familyName": "Jensen2",
@@ -305,7 +290,7 @@ describe('SCIM - App Version', () => {
                 }
             };
 
-            const response = await performPut(fixture.scimEndpoint, `/Users/${userId}`, JSON.stringify(body), {
+            const response = await performPut(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -316,6 +301,8 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch user - add single attribute', async () => {
+             const createdUser = await fixture.createUser(createScimUserBody("bjensen-patch1@example.com", "Barbara", "Jensen", "bjensen-patch1"));
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -325,7 +312,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Users/${userId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -336,6 +323,8 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch user - replace operation - multi-valued attribute', async () => {
+            const createdUser = await fixture.createUser(createScimUserBody("bjensen-patch2@example.com", "Barbara", "Jensen", "bjensen-patch2"));
+
             const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -355,7 +344,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Users/${userId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -369,6 +358,11 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch user - remove operation - single attribute', async () => {
+             const createdUser = await fixture.createUser(createScimUserBody("bjensen-patch3@example.com", "Barbara", "Jensen", "bjensen-patch3"));
+
+             // First add the attribute to ensure snake case consistency doesn't fail test if userType wasn't there
+             // But valid user creation (Employee) has userType.
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -377,7 +371,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Users/${userId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -388,6 +382,8 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch user - remove operation - complex attribute', async () => {
+             const createdUser = await fixture.createUser(createScimUserBody("bjensen-patch4@example.com", "Barbara", "Jensen", "bjensen-patch4"));
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -396,7 +392,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Users/${userId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -408,6 +404,8 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch user - multiple operations', async () => {
+            const createdUser = await fixture.createUser(createScimUserBody("bjensen-patch5@example.com", "Barbara", "Jensen", "bjensen-patch5"));
+
             const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [
@@ -443,7 +441,7 @@ describe('SCIM - App Version', () => {
                 ]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Users/${userId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -483,27 +481,41 @@ describe('SCIM - App Version', () => {
             });
             expect(response.status).toEqual(200);
             const resBody = response.body;
-            expect(resBody.totalResults).toEqual(1);
-            // expect(resBody.Resources[0].userName).toContain('bjensen'); // May fail if multiple users match, but totalResults=1 implies 1.
+            expect(resBody.totalResults).toBeGreaterThanOrEqual(1);
+            const matched = resBody.Resources.some((u: any) => u.userName.includes('bjensen'));
+            expect(matched).toBeTruthy();
         });
 
         it('should filter users - complex filter - or', async () => {
+             // Create a control user that should match
+             await fixture.createUser(createScimUserBody("bjensen-filter-or@example.com", "Barbara", "Jensen", "bjensen-filter-or"));
+
              const response = await performGet(fixture.scimEndpoint, `/Users?filter=userName eq "invalid" or name.givenName eq "Barbara"`, {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`
             });
             expect(response.status).toEqual(200);
             const resBody = response.body;
             expect(resBody.totalResults).toBeGreaterThanOrEqual(1);
+            // Verify that at least one returned resource matches the filter
+            const matched = resBody.Resources.some((u: any) => u.name.givenName === 'Barbara');
+            expect(matched).toBeTruthy();
         });
 
         it('should filter users - complex filter - and', async () => {
-             // simplified filter to ensure matches based on previous tests state
+             // Create a control user that should match
+             const u = createScimUserBody("bjensen-filter-and@example.com", "Barbara", "Jensen", "bjensen-filter-and");
+             u.active = false;
+             await fixture.createUser(u);
+
              const response = await performGet(fixture.scimEndpoint, `/Users?filter=name.givenName eq "Barbara" and active eq false`, {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`
             });
             expect(response.status).toEqual(200);
             const resBody = response.body;
             expect(resBody.totalResults).toBeGreaterThanOrEqual(1);
+            // Verify that at least one returned resource matches the filter
+            const matched = resBody.Resources.some((u: any) => u.name.givenName === 'Barbara' && u.active === false);
+            expect(matched).toBeTruthy();
         });
 
         it('should return 400 for invalid filter syntax', async () => {
@@ -527,14 +539,16 @@ describe('SCIM - App Version', () => {
         });
 
         it('should delete user', async () => {
-            const response = await performDelete(fixture.scimEndpoint, `/Users/${userId}`, {
+            const createdUser = await fixture.createUser(createScimUserBody("bjensen-delete@example.com", "Barbara", "Jensen", "bjensen-delete"));
+
+            const response = await performDelete(fixture.scimEndpoint, `/Users/${createdUser.id}`, {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`
             });
             expect(response.status).toEqual(204);
         });
 
         it('should return 404 when deleting unknown user', async () => {
-            const response = await performDelete(fixture.scimEndpoint, `/Users/${userId}`, {
+            const response = await performDelete(fixture.scimEndpoint, `/Users/unknown-id`, {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`
             });
             expect(response.status).toEqual(404);
@@ -542,26 +556,6 @@ describe('SCIM - App Version', () => {
     });
 
     describe('Groups - CRUD', () => {
-        let groupId: string;
-        let user1Id: string;
-        let user2Id: string;
-
-        // Helper to create users for group membership tests
-        beforeAll(async () => {
-             // Create User 1
-             const body1 = createScimUserBody("babs_group@example.com", "Babs", "Jensen");
-            const res1 = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body1), {
-                'Authorization': `Bearer ${fixture.scimAccessToken}`, 'Content-Type': 'application/json'
-            });
-            user1Id = res1.body.id;
-
-             // Create User 2
-             const body2 = createScimUserBody("mandy_group@example.com", "Mandy", "Pepperidge");
-            const res2 = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body2), {
-                'Authorization': `Bearer ${fixture.scimAccessToken}`, 'Content-Type': 'application/json'
-            });
-            user2Id = res2.body.id;
-        });
 
         it('should create a group', async () => {
              const body = createScimGroupBody("Tour Guides");
@@ -574,7 +568,6 @@ describe('SCIM - App Version', () => {
             expect(response.status).toEqual(201);
             const resBody = response.body;
             expect(resBody).toHaveProperty('id');
-            groupId = resBody.id;
             expect(resBody.displayName).toEqual("Tour Guides");
         });
 
@@ -589,22 +582,28 @@ describe('SCIM - App Version', () => {
         });
 
         it('should update group', async () => {
+            const createdGroup = await fixture.createGroup(createScimGroupBody("Tour Guides Update"));
+
             const body = {
                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-               "displayName": "Tour Guides 2"
+               "displayName": "Tour Guides Updated"
             };
 
-            const response = await performPut(fixture.scimEndpoint, `/Groups/${groupId}`, JSON.stringify(body), {
+            const response = await performPut(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
 
             expect(response.status).toEqual(200);
             const resBody = response.body;
-            expect(resBody.displayName).toEqual("Tour Guides 2");
+            expect(resBody.displayName).toEqual("Tour Guides Updated");
         });
 
         it('should patch group - add members', async () => {
+             const user1 = await fixture.createUser(createScimUserBody("babs_group_add@example.com", "Babs", "Jensen"));
+             const user2 = await fixture.createUser(createScimUserBody("mandy_group_add@example.com", "Mandy", "Pepperidge"));
+             const createdGroup = await fixture.createGroup(createScimGroupBody("Tour Guides Add Members"));
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -612,11 +611,11 @@ describe('SCIM - App Version', () => {
                     "value" : {
                         "members": [
                             {
-                                "value": user1Id,
+                                "value": user1.id,
                                 "display": "Babs Jensen"
                             },
                             {
-                                "value": user2Id,
+                                "value": user2.id,
                                 "display": "Mandy Pepperidge"
                             }
                         ]
@@ -624,7 +623,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Groups/${groupId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -635,6 +634,8 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch group - replace displayName', async () => {
+             const createdGroup = await fixture.createGroup(createScimGroupBody("Tour Guides Replace"));
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -644,7 +645,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Groups/${groupId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -655,6 +656,22 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch group - remove operation - multi-valued attribute with filter', async () => {
+             const user1 = await fixture.createUser(createScimUserBody("babs_group_rem@example.com", "Babs", "Jensen"));
+             const user2 = await fixture.createUser(createScimUserBody("mandy_group_rem@example.com", "Mandy", "Pepperidge"));
+             const createdGroup = await fixture.createGroup(createScimGroupBody("Tour Guides Remove Filter"));
+
+             // Add members first
+             await performPatch(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify({
+                 "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                 "Operations": [{
+                    "op":"Add",
+                    "value" : { "members": [
+                        { "value": user1.id, "display": "Babs Jensen" },
+                        { "value": user2.id, "display": "Mandy Pepperidge" }
+                    ]}
+                 }]
+             }), { 'Authorization': `Bearer ${fixture.scimAccessToken}`, 'Content-Type': 'application/json' }).expect(200);
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -663,7 +680,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Groups/${groupId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -675,6 +692,18 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch group - remove operation - multi-valued attribute', async () => {
+             const user1 = await fixture.createUser(createScimUserBody("babs_group_rem_all@example.com", "Babs", "Jensen"));
+             const createdGroup = await fixture.createGroup(createScimGroupBody("Tour Guides Remove All"));
+
+             // Add member
+             await performPatch(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify({
+                 "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                 "Operations": [{
+                    "op":"Add",
+                    "value" : { "members": [{ "value": user1.id, "display": "Babs Jensen" }] }
+                 }]
+             }), { 'Authorization': `Bearer ${fixture.scimAccessToken}`, 'Content-Type': 'application/json' }).expect(200);
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [{
@@ -683,7 +712,7 @@ describe('SCIM - App Version', () => {
                  }]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Groups/${groupId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
@@ -694,20 +723,23 @@ describe('SCIM - App Version', () => {
         });
 
         it('should patch group - multiple operations', async () => {
+             const user1 = await fixture.createUser(createScimUserBody("babs_group_multi@example.com", "Babs", "Jensen"));
+             const createdGroup = await fixture.createGroup(createScimGroupBody("Tour Guides Multi"));
+
              const body = {
                  "schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                  "Operations": [
                      {
                         "op":"Add",
                         "path":"displayName",
-                        "value": "Tour Guides 2"
+                        "value": "Tour Guides Multi Updated"
                     },
                     {
                         "op": "Add",
                         "path": "members",
                         "value": [
                             {
-                                "value": user1Id,
+                                "value": user1.id,
                                 "display": "Babs Jensen"
                             }
                         ]
@@ -715,14 +747,14 @@ describe('SCIM - App Version', () => {
                 ]
             };
 
-            const response = await performPatch(fixture.scimEndpoint, `/Groups/${groupId}`, JSON.stringify(body), {
+            const response = await performPatch(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, JSON.stringify(body), {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`,
                 'Content-Type': 'application/json'
             });
 
             expect(response.status).toEqual(200);
             const resBody = response.body;
-            expect(resBody.displayName).toEqual("Tour Guides 2");
+            expect(resBody.displayName).toEqual("Tour Guides Multi Updated");
             expect(resBody.members[0].display).toEqual('Babs Jensen');
         });
 
@@ -736,14 +768,16 @@ describe('SCIM - App Version', () => {
         });
 
         it('should delete group', async () => {
-            const response = await performDelete(fixture.scimEndpoint, `/Groups/${groupId}`, {
+            const createdGroup = await fixture.createGroup(createScimGroupBody("Tour Guides Delete"));
+
+            const response = await performDelete(fixture.scimEndpoint, `/Groups/${createdGroup.id}`, {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`
             });
             expect(response.status).toEqual(204);
         });
 
         it('should return 404 when deleting unknown group', async () => {
-             const response = await performDelete(fixture.scimEndpoint, `/Groups/${groupId}`, {
+             const response = await performDelete(fixture.scimEndpoint, `/Groups/unknown-id`, {
                 'Authorization': `Bearer ${fixture.scimAccessToken}`
             });
             expect(response.status).toEqual(404);

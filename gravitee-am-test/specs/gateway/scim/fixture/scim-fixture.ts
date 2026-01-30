@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { expect } from '@jest/globals';
 import {
   createDomain,
   DomainOidcConfig,
@@ -42,6 +43,8 @@ export interface ScimFixture {
   clearMailbox: (email: string) => Promise<void>;
   extractConfirmRegistrationLink: (email: string) => Promise<string>;
   confirmRegistrationLink: (link: string) => Promise<any>;
+  createUser: (body: any) => Promise<any>;
+  createGroup: (body: any) => Promise<any>;
 }
 
 export const setupFixture = async (): Promise<ScimFixture> => {
@@ -85,6 +88,24 @@ export const setupFixture = async (): Promise<ScimFixture> => {
         await safeDeleteDomain(domain.id, accessToken);
       }
     },
+
+    createUser: async (body: any) => {
+        const response = await performPost(scimEndpoint, '/Users', JSON.stringify(body), {
+            'Authorization': `Bearer ${scimAccessToken}`,
+            'Content-Type': 'application/json'
+        });
+        expect(response.status).toEqual(201);
+        return response.body;
+    },
+
+    createGroup: async (body: any) => {
+        const response = await performPost(scimEndpoint, '/Groups', JSON.stringify(body), {
+            'Authorization': `Bearer ${scimAccessToken}`,
+            'Content-Type': 'application/json'
+        });
+        expect(response.status).toEqual(201);
+        return response.body;
+    }
   };
 };
 
