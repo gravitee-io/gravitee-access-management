@@ -50,8 +50,9 @@ public class SCIMConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public BulkService bulkService(ProvisioningUserService userService, Domain domain) {
-        return new BulkServiceImpl(userService, domain);
+    public BulkService bulkService(ProvisioningUserService userService, Domain domain,
+                                   @Value("${handlers.scim.bulk.maxConcurrency:1}") int bulkMaxConcurrency) {
+        return new BulkServiceImpl(userService, domain, bulkMaxConcurrency);
     }
 
     @Bean

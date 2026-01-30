@@ -335,6 +335,7 @@ handlers:
     bulk:
       maxRequestLength: 1048576
       maxRequestOperations: 1000
+      maxConcurrency: 1
 
 repositories:
   # specify which scope is used as reference
@@ -600,4 +601,3 @@ liquibase:
 #    algorithm: None
 #    properties:
 #      rounds: 10
-
