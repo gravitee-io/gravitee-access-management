@@ -24,14 +24,14 @@ export class DockerComposeProvider extends BaseProvider {
     }
 
     async upgradeMapi(version) {
-        console.log(`🚀 Upgrading Management API to ${version}...`);
+        console.log(`🚀 Updating Management API to ${version}...`);
         process.env.AM_VERSION = version;
         await $`docker-compose -p ${this.project} -f ${this.composeFile} up -d --no-deps mapi`.quiet();
         await this.verifyHealth();
     }
 
     async upgradeGw(version) {
-        console.log(`🚀 Upgrading Gateway to ${version}...`);
+        console.log(`🚀 Updating Gateway to ${version}...`);
         process.env.AM_VERSION = version;
         await $`docker-compose -p ${this.project} -f ${this.composeFile} up -d --no-deps gateway`.quiet();
         await this.verifyHealth();

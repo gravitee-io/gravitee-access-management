@@ -173,7 +173,7 @@ export class K8sProvider extends BaseProvider {
     }
 
     async upgradeMapi(toTag) {
-        console.log(`🆙 Upgrading Management API to ${toTag}...`);
+        console.log(`🆙 Updating Management API to ${toTag}...`);
         await validateAmImageTag(toTag);
         if (this.releases.length > 0) {
             const mapiRelease = this.releases.find(r => r.component === 'mapi');
@@ -224,7 +224,7 @@ export class K8sProvider extends BaseProvider {
     }
 
     async upgradeGw(toTag) {
-        console.log(`🆙 Upgrading Gateway to ${toTag}...`);
+        console.log(`🆙 Updating Gateway to ${toTag}...`);
         await validateAmImageTag(toTag);
         if (this.releases.length > 0) {
             const gatewayReleases = this.releases.filter(r => r.component === 'gateway');
