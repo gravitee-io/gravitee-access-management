@@ -16,12 +16,13 @@ export class Helm {
     }
 
     async installOrUpgrade(releaseName, chartName, options = {}) {
-        const { valuesFile, wait = false, createNamespace = false, version, set = {} } = options;
+        const { valuesFile, wait = false, createNamespace = false, version, set = {}, reuseValues = false } = options;
         const flags = ['--install', releaseName, chartName, '-n', this.namespace];
 
         if (valuesFile) flags.push('-f', valuesFile);
         if (wait) flags.push('--wait');
         if (createNamespace) flags.push('--create-namespace');
+        if (reuseValues) flags.push('--reuse-values');
         if (version) flags.push('--version', version);
 
         for (const [key, value] of Object.entries(set)) {

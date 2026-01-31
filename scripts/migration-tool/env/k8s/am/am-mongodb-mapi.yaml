@@ -1,0 +1,81 @@
+# Migration Tool - AM Management API only (MongoDB). Multi-dataplane: default, dp1, dp2.
+# Chart: graviteeio/am. Release: am-mapi. API + UI only; gateway disabled.
+
+labels:
+  environment: migration-test
+  part-of: am-migration-tool
+
+mongodb-replicaset:
+  enabled: false
+
+commonEnv: &commonEnv
+  - name: GRAVITEE_REPOSITORY_TYPE
+    value: mongodb
+  - name: gravitee_repositories_0_type
+    value: mongodb
+  - name: gravitee_repositories_management_type
+    value: mongodb
+  - name: gravitee_repositories_oauth2_type
+    value: mongodb
+  - name: gravitee_repositories_management_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_management_mongodb_dbname
+    value: "gravitee"
+  - name: gravitee_repositories_oauth2_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_oauth2_mongodb_dbname
+    value: "gravitee"
+  # Dataplane 0: default → gravitee (CP)
+  - name: gravitee_dataPlanes_0_id
+    value: default
+  - name: gravitee_dataPlanes_0_type
+    value: mongodb
+  - name: gravitee_dataPlanes_0_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_0_mongodb_dbname
+    value: "gravitee"
+  # Dataplane 1: dp1 → gravitee-dp1
+  - name: gravitee_dataPlanes_1_id
+    value: dp1
+  - name: gravitee_dataPlanes_1_type
+    value: mongodb
+  - name: gravitee_dataPlanes_1_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_1_mongodb_dbname
+    value: "gravitee-dp1"
+  # Dataplane 2: dp2 → gravitee-dp2
+  - name: gravitee_dataPlanes_2_id
+    value: dp2
+  - name: gravitee_dataPlanes_2_type
+    value: mongodb
+  - name: gravitee_dataPlanes_2_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp2?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_2_mongodb_dbname
+    value: "gravitee-dp2"
+
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-api
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  env: *commonEnv
+
+gateway:
+  enabled: false
+
+ui:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-ui
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  baseURL: "http://localhost:8093/management"
+
+license:
+  accept: true

@@ -1,0 +1,184 @@
+# Migration Tool - AM Helm values (PostgreSQL / JDBC)
+# Chart: graviteeio/am (official Gravitee AM Helm chart).
+# Two dataplanes: default → gravitee-am (MAPI); gateway → gravitee-am-gateway (Gateway runtime).
+# Aligned with docker-compose (repos: uppercase GRAVITEE_*; dataPlanes: lowercase gravitee_* per working example).
+
+labels:
+  environment: migration-test
+  part-of: am-migration-tool
+
+# --- Chart-native repository and JDBC (ConfigMap gravitee.yml) ---
+management:
+  type: jdbc
+oauth2:
+  type: jdbc
+gateway:
+  type: jdbc
+
+# JDBC: same Postgres instance for all repos. Host = K8s Service name (same ns).
+# Cross-namespace: postgres-postgresql.<namespace>.svc.cluster.local
+jdbc:
+  driver: postgresql
+  host: postgres-postgresql
+  port: 5432
+  database: gravitee-am
+  username: gravitee
+  password: gravitee-password  # migration test only; use Secret for shared repo
+  drivers:
+    - https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar
+    - https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.7.RELEASE/r2dbc-postgresql-1.0.7.RELEASE.jar
+
+# --- Environment (uppercase GRAVITEE_* as in docker-compose.postgres.yml) ---
+# AM reads these when set; chart also injects same config via gravitee.yml.
+commonEnv: &commonEnv
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE
+    value: jdbc
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE
+    value: gravitee-am
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD
+    value: gravitee-password
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_TYPE
+    value: jdbc
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
+    value: gravitee-am
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
+    value: gravitee-password
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_TYPE
+    value: jdbc
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE
+    value: gravitee-am
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD
+    value: gravitee-password
+  - name: GRAVITEE_DATAPLANES_0_ID
+    value: default
+  - name: GRAVITEE_DATAPLANES_0_TYPE
+    value: jdbc
+  - name: GRAVITEE_DATAPLANES_0_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_DATAPLANES_0_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_DATAPLANES_0_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_DATAPLANES_0_JDBC_DATABASE
+    value: gravitee-am
+  - name: GRAVITEE_DATAPLANES_0_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_DATAPLANES_0_JDBC_PASSWORD
+    value: gravitee-password
+  # Dataplane 1: gateway → gravitee-am-gateway (separate DB for Gateway runtime)
+  - name: GRAVITEE_DATAPLANES_1_ID
+    value: gateway
+  - name: GRAVITEE_DATAPLANES_1_TYPE
+    value: jdbc
+  - name: GRAVITEE_DATAPLANES_1_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_DATAPLANES_1_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_DATAPLANES_1_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_DATAPLANES_1_JDBC_DATABASE
+    value: gravitee-am-gateway
+  - name: GRAVITEE_DATAPLANES_1_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_DATAPLANES_1_JDBC_PASSWORD
+    value: gravitee-password
+  # DataPlanes: working docker-compose uses lowercase gravitee_* (AM may bind these)
+  - name: gravitee_dataPlanes_0_id
+    value: default
+  - name: gravitee_dataPlanes_0_type
+    value: jdbc
+  - name: gravitee_dataPlanes_0_jdbc_driver
+    value: postgresql
+  - name: gravitee_dataPlanes_0_jdbc_host
+    value: postgres-postgresql
+  - name: gravitee_dataPlanes_0_jdbc_port
+    value: "5432"
+  - name: gravitee_dataPlanes_0_jdbc_database
+    value: gravitee-am
+  - name: gravitee_dataPlanes_0_jdbc_username
+    value: gravitee
+  - name: gravitee_dataPlanes_0_jdbc_password
+    value: gravitee-password
+  - name: gravitee_dataPlanes_1_id
+    value: gateway
+  - name: gravitee_dataPlanes_1_type
+    value: jdbc
+  - name: gravitee_dataPlanes_1_jdbc_driver
+    value: postgresql
+  - name: gravitee_dataPlanes_1_jdbc_host
+    value: postgres-postgresql
+  - name: gravitee_dataPlanes_1_jdbc_port
+    value: "5432"
+  - name: gravitee_dataPlanes_1_jdbc_database
+    value: gravitee-am-gateway
+  - name: gravitee_dataPlanes_1_jdbc_username
+    value: gravitee
+  - name: gravitee_dataPlanes_1_jdbc_password
+    value: gravitee-password
+  # Gateway uses dataplane "gateway" (gravitee-am-gateway DB)
+  - name: gravitee_repositories_gateway_dataPlane_id
+    value: gateway
+  # Disable Liquibase analytics (avoids NPE when config.liquibase.com is unreachable)
+  - name: LIQUIBASE_ANALYTICS_ENABLED
+    value: "false"
+
+# --- API ---
+api:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-api
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  env: *commonEnv
+  baseURL: "http://localhost:8093/management"  # port-forward to am-management-api:8093
+
+# --- Gateway ---
+gateway:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-gateway
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  env: *commonEnv
+
+# --- UI ---
+ui:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-ui
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  baseURL: "http://localhost:8093/management"  # browser -> port-forward to API
+
+license:
+  accept: true

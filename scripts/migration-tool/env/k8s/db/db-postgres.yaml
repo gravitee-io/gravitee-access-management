@@ -1,0 +1,39 @@
+# Migration Tool - DB values for minimal Postgres chart (postgres:16.6)
+# Chart: scripts/migration-tool/env/k8s/db/postgres (local, not Bitnami)
+#
+# Uses official postgres:16.6 so md5() works (Liquibase). Service name postgres-postgresql for AM.
+# Run from repo root so -f path and chart path resolve.
+#
+# Verify: kubectl get statefulset,pods,svc -n <namespace> | grep postgres
+# Test md5 (use -h 127.0.0.1 for TCP; socket can be unavailable in container): kubectl -n gravitee-am exec -it postgres-postgresql-0 -- psql -h 127.0.0.1 -U gravitee -d gravitee-am -c "select md5('test');"
+
+fullnameOverride: postgres-postgresql
+
+image:
+  repository: postgres
+  tag: "16.6"
+  pullPolicy: IfNotPresent
+
+postgres:
+  user: gravitee
+  password: gravitee-password
+  database: gravitee-am
+  gatewayDatabase: gravitee-am-gateway  # second DB for gateway dataplane (init script)
+  dataplaneDatabases:
+    - gravitee-am-dp1
+    - gravitee-am-dp2
+
+service:
+  port: 5432
+
+persistence:
+  enabled: false
+  size: 5Gi
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi

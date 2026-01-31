@@ -51,4 +51,11 @@ describe('Orchestrator', () => {
         expect(mockProvider.clean).toHaveBeenCalled();
         expect(mockProvider.cleanup).not.toHaveBeenCalled();
     });
+
+    test('downgrade stages should call upgradeMapi/upgradeGw with fromTag', async () => {
+        await orchestrator.run(['downgrade-mapi', 'downgrade-gw']);
+
+        expect(mockProvider.upgradeMapi).toHaveBeenCalledWith('4.10.0');
+        expect(mockProvider.upgradeGw).toHaveBeenCalledWith('4.10.0');
+    });
 });

@@ -1,5 +1,5 @@
-# Standalone MongoDB configuration for AM Migration Tool (Bitnami Chart)
-# Version Aligned with Cloud-AM Standards (Chart 18.1.20)
+# Migration Tool - DB Helm values (MongoDB / Bitnami)
+# Single source: db/db-mongodb.yaml (replaces root mongodb-values.yaml)
 
 architecture: standalone
 fullnameOverride: mongo-mongodb
@@ -14,7 +14,6 @@ auth:
 persistence:
   enabled: false
 
-# Local testing optimization
 resources:
   limits:
     cpu: 1000m
@@ -23,5 +22,4 @@ resources:
     cpu: 200m
     memory: 512Mi
 
-# Ensure it uses the same namespace
 namespaceOverride: "gravitee-am"

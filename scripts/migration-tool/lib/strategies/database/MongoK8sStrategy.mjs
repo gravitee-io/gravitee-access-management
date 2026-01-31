@@ -31,6 +31,7 @@ export class MongoK8sStrategy extends DatabaseStrategy {
     }
 
     async waitForReady() {
-        // Helm wait handles readiness during install
+        if (!this.kubectl) return;
+        await this.kubectl.waitForPodReady('app.kubernetes.io/name=mongodb', 120);
     }
 }

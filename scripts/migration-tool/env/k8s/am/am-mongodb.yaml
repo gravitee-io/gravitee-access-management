@@ -1,11 +1,13 @@
-# Gravitee AM configuration for migration test tool environment
-# Wired to use the standalone MongoDB service (Aligned with cloud-am)
+# Migration Tool - AM Helm values (MongoDB)
+# Single source: am/am-mongodb.yaml (replaces root values.yaml)
 
-# Disable internal mongodb-replicaset
+labels:
+  environment: migration-test
+  part-of: am-migration-tool
+
 mongodb-replicaset:
   enabled: false
 
-# Shared environment variables for AM components
 commonEnv: &commonEnv
   - name: GRAVITEE_REPOSITORY_TYPE
     value: mongodb
@@ -15,15 +17,20 @@ commonEnv: &commonEnv
     value: mongodb
   - name: gravitee_repositories_oauth2_type
     value: mongodb
-  # Point to the 'am-mongo-mongodb' service
   - name: gravitee_repositories_management_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@am-mongo-mongodb:27017/gio-am-migration-tool?retryWrites=true&w=majority&connectTimeoutMS=10000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_management_mongodb_dbname
+    value: "gravitee"
   - name: gravitee_repositories_oauth2_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@am-mongo-mongodb:27017/gio-am-migration-tool?retryWrites=true&w=majority&connectTimeoutMS=10000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_oauth2_mongodb_dbname
+    value: "gravitee"
   - name: gravitee_dataPlanes_0_type
     value: mongodb
   - name: gravitee_dataPlanes_0_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@am-mongo-mongodb:27017/gio-am-migration-tool?retryWrites=true&w=majority&connectTimeoutMS=10000"
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_0_mongodb_dbname
+    value: "gravitee"
 
 api:
   replicaCount: 1
@@ -53,3 +60,7 @@ ui:
     pullPolicy: IfNotPresent
   ingress:
     enabled: false
+  baseURL: "http://localhost:8093/management"
+
+license:
+  accept: true

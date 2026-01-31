@@ -17,7 +17,7 @@ describe('MongoK8sStrategy', () => {
         };
         mockConfig = {
             k8s: {
-                mongoValuesPath: 'mongo-values.yaml'
+                mongoValuesPath: 'scripts/migration-tool/env/k8s/db/db-mongodb.yaml'
             }
         };
         strategy = new MongoK8sStrategy({
@@ -34,7 +34,7 @@ describe('MongoK8sStrategy', () => {
             'mongo',
             'bitnami/mongodb',
             expect.objectContaining({
-                valuesFile: 'mongo-values.yaml',
+                valuesFile: 'scripts/migration-tool/env/k8s/db/db-mongodb.yaml',
                 createNamespace: true,
                 wait: true
             })

@@ -21,9 +21,10 @@ const useLocal = await import('fs').then(fs => fs.promises.access(zxBinary).then
 const cmd = useLocal ? zxBinary : 'npx';
 const args = useLocal ? [toolEntry, ...process.argv.slice(2)] : ['-y', 'zx', toolEntry, ...process.argv.slice(2)];
 
+// Use shell: false so args are passed as an array; script then receives them in process.argv
 const child = spawn(cmd, args, {
     stdio: 'inherit',
-    shell: true
+    shell: false
 });
 
 child.on('exit', (code) => {
