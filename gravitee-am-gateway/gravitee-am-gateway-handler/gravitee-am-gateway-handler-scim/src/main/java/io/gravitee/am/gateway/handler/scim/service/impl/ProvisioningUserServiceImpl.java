@@ -78,7 +78,9 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -319,7 +321,13 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                         if (user1.isPreRegistration()) {
                                             // Send email with client information if available
                                             var resolvedClient = optApp.map(Application::toClient).orElse(null);
-                                            emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient);
+                                            Completable.fromAction(
+                                                    () -> emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient))
+                                                    .subscribeOn(Schedulers.io())
+                                                    .subscribe(
+                                                            () -> LOGGER.debug("An email has been sent to {} to confirm his registration", user1.getUsername()),
+                                                            (error) -> LOGGER.warn("An exception occurs while trying to send an email to {} to confirm his registration: {}", user1.getUsername(), error.getMessage())
+                                                    );
                                         }
                                     });
                         }))
