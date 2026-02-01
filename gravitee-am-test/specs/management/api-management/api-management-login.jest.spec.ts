@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import request from 'supertest';
-import { performGet, performFormPost } from '@gateway-commands/oauth-oidc-commands';
-import { setupApiManagementLoginFixture, ApiManagementLoginFixture } from './fixtures/api-management-login-fixture';
-import { extractCsrfFromManagementLoginHtml, cookieHeaderFromSetCookie } from './management-auth-helper';
+import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import {
+  setupApiManagementLoginFixture,
+  ApiManagementLoginFixture,
+  getLoginForm,
+  runSimpleLoginFlow,
+} from './fixtures/api-management-login-fixture';
+import { parseLocation } from './api-management-utils';
+import { extractCsrfFromManagementLoginHtml } from './management-auth-helper';
 import { getDefaultApi, getIdpApi } from '@management-commands/service/utils';
 import { setup } from '../../test-fixture';
 
@@ -35,21 +42,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) {
-    await fixture.cleanUp();
-  }
+  expect(fixture).toBeDefined();
+  await fixture!.cleanUp();
 });
-
-function parseLocation(location: string, baseOrigin?: string): { origin: string; pathAndSearch: string } {
-  if (!location) throw new Error('Empty location');
-  if (location.startsWith('http://') || location.startsWith('https://')) {
-    const u = new URL(location);
-    return { origin: u.origin, pathAndSearch: u.pathname + u.search };
-  }
-  const base = baseOrigin ?? MANAGEMENT_URL;
-  const u = new URL(location, base.endsWith('/') ? base : base + '/');
-  return { origin: u.origin, pathAndSearch: u.pathname + u.search };
-}
 
 describe('API Management - Login', () => {
   describe('Prepare', () => {
@@ -88,25 +83,15 @@ describe('API Management - Login', () => {
       expect(res.status).toBe(302);
       expect(res.headers.location).toBeDefined();
       expect(res.headers.location).toContain('/management/auth/login');
-      if (res.headers['set-cookie']) {
-        const setCookie = res.headers['set-cookie'];
-        const arr = Array.isArray(setCookie) ? setCookie : [setCookie];
-        const redirectCookie = arr.find((c: string) => c.startsWith('Redirect-Graviteeio-AM='));
-        expect(redirectCookie).toBeDefined();
-      }
+      const setCookie = res.headers['set-cookie'];
+      expect(setCookie).toBeDefined();
+      const arr = Array.isArray(setCookie) ? setCookie : [setCookie];
+      const redirectCookie = arr.find((c: string) => c.startsWith('Redirect-Graviteeio-AM='));
+      expect(redirectCookie).toBeDefined();
     });
 
     it('should return login form with XSRF token', async () => {
-      const initiateRes = await performGet(
-        MANAGEMENT_URL,
-        `/management/auth/authorize?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`,
-      );
-      expect(initiateRes.status).toBe(302);
-      const location = initiateRes.headers.location ?? '';
-      const { origin, pathAndSearch } = parseLocation(location, MANAGEMENT_URL);
-      const cookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
-      const headers = cookie ? { Cookie: cookie } : undefined;
-      const loginFormRes = await performGet(origin, pathAndSearch, headers);
+      const { loginFormRes } = await getLoginForm(MANAGEMENT_URL, REDIRECT_URI);
       expect(loginFormRes.status).toBe(200);
       const csrf = extractCsrfFromManagementLoginHtml(loginFormRes.text);
       expect(csrf).toBeDefined();
@@ -114,94 +99,56 @@ describe('API Management - Login', () => {
     });
 
     it('should post login form and redirect to authorize', async () => {
-      const initiateRes = await performGet(
+      const { postRes } = await runSimpleLoginFlow(
         MANAGEMENT_URL,
-        `/management/auth/authorize?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`,
-      );
-      const { origin, pathAndSearch } = parseLocation(initiateRes.headers.location ?? '', MANAGEMENT_URL);
-      const cookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
-      const headers = cookie ? { Cookie: cookie } : undefined;
-      const loginFormRes = await performGet(origin, pathAndSearch, headers);
-      const csrf = extractCsrfFromManagementLoginHtml(loginFormRes.text);
-      const loginCookie = cookieHeaderFromSetCookie(loginFormRes.headers['set-cookie']);
-      const postHeaders: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
-      if (loginCookie) postHeaders.Cookie = loginCookie;
-
-      const postRes = await performFormPost(
-        MANAGEMENT_URL,
-        '/management/auth/login',
-        { _csrf: csrf, username: fixture.username, password: 'test' },
-        postHeaders,
+        REDIRECT_URI,
+        fixture.username,
+        'test',
       );
       expect(postRes.status).toBe(302);
-      expect(postRes.headers.location).toBeDefined();
-      const loc = postRes.headers.location ?? '';
+      const loc = postRes.headers.location;
+      expect(loc).toBeDefined();
       expect(loc).toMatch(/\/management\/auth\/(authorize|login)/);
-      if (loc.includes('/management/auth/authorize')) {
-        expect(decodeURIComponent(loc)).toContain(REDIRECT_URI);
+      if (loc!.includes('/management/auth/authorize')) {
+        expect(decodeURIComponent(loc!)).toContain(REDIRECT_URI);
       }
     });
 
     it('should redirect to authorize and land on nowhere.com', async () => {
-      const initiateRes = await performGet(
+      const { postRes, cookie } = await runSimpleLoginFlow(
         MANAGEMENT_URL,
-        `/management/auth/authorize?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`,
-      );
-      const { origin, pathAndSearch } = parseLocation(initiateRes.headers.location ?? '', MANAGEMENT_URL);
-      const cookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
-      const headers = cookie ? { Cookie: cookie } : undefined;
-      const loginFormRes = await performGet(origin, pathAndSearch, headers);
-      const csrf = extractCsrfFromManagementLoginHtml(loginFormRes.text);
-      const loginCookie = cookieHeaderFromSetCookie(loginFormRes.headers['set-cookie']);
-      const postHeaders: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
-      if (loginCookie) postHeaders.Cookie = loginCookie;
-      const postRes = await performFormPost(
-        MANAGEMENT_URL,
-        '/management/auth/login',
-        { _csrf: csrf, username: fixture.username, password: 'test' },
-        postHeaders,
+        REDIRECT_URI,
+        fixture.username,
+        'test',
       );
       expect(postRes.status).toBe(302);
-      const redirectToAuthorize = postRes.headers.location ?? '';
-      const { origin: o2, pathAndSearch: p2 } = parseLocation(redirectToAuthorize, MANAGEMENT_URL);
-      const postCookie = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
-      const followHeaders = postCookie ? { Cookie: postCookie } : undefined;
-      const followRes = await performGet(o2, p2, followHeaders);
+      const redirectToAuthorize = postRes.headers.location;
+      expect(redirectToAuthorize).toBeDefined();
+      const { origin: o2, pathAndSearch: p2 } = parseLocation(redirectToAuthorize!, MANAGEMENT_URL);
+      const followRes = await performGet(o2, p2, { Cookie: cookie });
       expect([200, 302]).toContain(followRes.status);
       if (followRes.status === 302) {
+        expect(followRes.headers.location).toBeDefined();
         expect(followRes.headers.location).toContain('nowhere.com');
       }
     });
 
     it('should logout and redirect to target url', async () => {
-      const initiateRes = await performGet(
+      const { postRes, cookie } = await runSimpleLoginFlow(
         MANAGEMENT_URL,
-        `/management/auth/authorize?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`,
+        REDIRECT_URI,
+        fixture.username,
+        'test',
       );
-      const { origin, pathAndSearch } = parseLocation(initiateRes.headers.location ?? '', MANAGEMENT_URL);
-      const cookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
-      const loginFormRes = await performGet(origin, pathAndSearch, cookie ? { Cookie: cookie } : undefined);
-      const csrf = extractCsrfFromManagementLoginHtml(loginFormRes.text);
-      const loginCookie = cookieHeaderFromSetCookie(loginFormRes.headers['set-cookie']);
-      const postHeaders: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
-      if (loginCookie) postHeaders.Cookie = loginCookie;
-      const postRes = await performFormPost(
-        MANAGEMENT_URL,
-        '/management/auth/login',
-        { _csrf: csrf, username: fixture.username, password: 'test' },
-        postHeaders,
-      );
-      const postCookie = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
-      const followHeaders = postCookie ? { Cookie: postCookie } : undefined;
-      const { origin: o2, pathAndSearch: p2 } = parseLocation(postRes.headers.location ?? '', MANAGEMENT_URL);
-      await performGet(o2, p2, followHeaders);
+      expect(postRes.headers.location).toBeDefined();
+      const { origin: o2, pathAndSearch: p2 } = parseLocation(postRes.headers.location!, MANAGEMENT_URL);
+      await performGet(o2, p2, { Cookie: cookie });
       const res = await performGet(
         MANAGEMENT_URL,
         `/management/auth/logout?target_url=${encodeURIComponent(TARGET_URL)}`,
-        followHeaders,
+        { Cookie: cookie },
       );
       expect(res.status).toBe(302);
-      expect(res.headers.location).toBeDefined();
       expect(res.headers.location).toBe(TARGET_URL);
     });
   });
