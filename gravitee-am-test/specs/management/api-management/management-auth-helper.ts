@@ -27,6 +27,26 @@ export function cookieHeaderFromSetCookie(setCookie: string | string[] | undefin
 }
 
 /**
+ * Merge two Cookie header values (new overwrites same-name cookies in existing).
+ * Used to maintain a per-origin cookie jar when following redirects across origins.
+ */
+export function mergeCookieStrings(existing: string | undefined, newStr: string | undefined): string {
+  const map: Record<string, string> = {};
+  const parse = (s: string) => {
+    s.split(';').forEach((part) => {
+      const trimmed = part.trim();
+      const eq = trimmed.indexOf('=');
+      if (eq > 0) map[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
+    });
+  };
+  if (existing) parse(existing);
+  if (newStr) parse(newStr);
+  return Object.entries(map)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('; ');
+}
+
+/**
  * Extract CSRF token from management login form HTML.
  * Management console may use _csrf (hidden input) or X-XSRF-TOKEN.
  */

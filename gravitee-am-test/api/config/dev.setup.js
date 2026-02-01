@@ -16,7 +16,7 @@
 process.env.AM_MANAGEMENT_URL = 'http://localhost:8093';
 process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_URL + '/management';
 process.env.AM_GATEWAY_URL = 'http://localhost:8092';
-process.env.AM_INTERNAL_GATEWAY_URL = 'http://gateway:8092';
+process.env.AM_INTERNAL_GATEWAY_URL = 'http://localhost:8092';
 process.env.AM_MONGODB_URI = 'mongodb://localhost:27017';
 process.env.AM_POSTGRES_HOST = 'localhost';
 process.env.AM_GATEWAY_NODE_MONITORING_URL = 'http://localhost:18092/_node';
