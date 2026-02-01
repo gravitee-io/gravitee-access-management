@@ -23,8 +23,10 @@ import {
   getLoginForm,
   runSimpleLoginFlow,
 } from './fixtures/api-management-login-fixture';
-import { parseLocation } from './api-management-utils';
-import { extractCsrfFromManagementLoginHtml } from './management-auth-helper';
+import {
+  parseLocation,
+  extractCsrfFromManagementLoginHtml,
+} from './management-auth-helper';
 import { getDefaultApi, getIdpApi } from '@management-commands/service/utils';
 import { setup } from '../../test-fixture';
 

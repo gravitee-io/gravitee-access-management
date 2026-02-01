@@ -21,13 +21,13 @@ import { getDefaultApi, getIdpApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 import { waitFor } from '@management-commands/domain-management-commands';
-import { getLoginForm } from '../api-management-utils';
 import {
+  getLoginForm,
   cookieHeaderFromSetCookie,
   extractCsrfFromManagementLoginHtml,
 } from '../management-auth-helper';
 
-export { getLoginForm } from '../api-management-utils';
+export { getLoginForm } from '../management-auth-helper';
 
 export interface ApiManagementLoginFixture extends Fixture {
   accessToken: string;
