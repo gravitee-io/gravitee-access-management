@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performGet, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { setupApiManagementLoginSocialFixture, ApiManagementLoginSocialFixture } from './fixtures/api-management-login-social-fixture';
@@ -23,12 +22,14 @@ import {
   extractSocialUrlFromManagementLoginHtml,
   extractXsrfAndActionFromSocialLoginHtml,
   cookieHeaderFromSetCookie,
+  mergeCookieStrings,
 } from './management-auth-helper';
-import { getDefaultApi } from '@management-commands/service/utils';
 import { setup } from '../../test-fixture';
 
+// Global Jest timeout for slow CI/containers.
 setup(200000);
 
+// Management API base URL; redirect/target URLs used to assert end-to-end flow (no real callback server).
 const MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL!;
 const ORG_ID = process.env.AM_DEF_ORG_ID!;
 const REDIRECT_URI = 'https://nowhere.com';
@@ -36,8 +37,15 @@ const TARGET_URL = 'http://nowhere.com';
 
 let fixture: ApiManagementLoginSocialFixture;
 
+/**
+ * Parses a Location header (absolute URL or path) into origin and path+query for follow-up requests.
+ * Relative locations are resolved against the given base (default: MANAGEMENT_URL).
+ */
 function parseLocation(location: string, baseOrigin?: string): { origin: string; pathAndSearch: string } {
-  if (!location) throw new Error('Empty location');
+  if (!location) {
+    console.error('Empty location');
+    throw new Error('Empty location');
+  }
   if (location.startsWith('http://') || location.startsWith('https://')) {
     const u = new URL(location);
     return { origin: u.origin, pathAndSearch: u.pathname + u.search };
@@ -48,6 +56,7 @@ function parseLocation(location: string, baseOrigin?: string): { origin: string;
 }
 
 beforeAll(async () => {
+  // Creates org, environment, gateway domain with social IDP, test user, and OAuth client for the flow.
   fixture = await setupApiManagementLoginSocialFixture();
 });
 
@@ -60,10 +69,12 @@ afterAll(async () => {
 describe('API Management - Login Social Provider', () => {
   describe('Login flow', () => {
     beforeAll(async () => {
+      // Clear any existing session on the social (gateway) domain before the flow tests.
       const res = await performGet(fixture.gatewayUrl, `/${fixture.domainHrid}/logout`);
-      expect(res.status).toBe(302);      
+      expect(res.status).toBe(302);
     });
 
+    // Step 1: /management/auth/authorize should redirect to the login page (no session yet).
     it('should initiate login flow and redirect to login page', async () => {
       const res = await performGet(
         MANAGEMENT_URL,
@@ -73,6 +84,7 @@ describe('API Management - Login Social Provider', () => {
       expect(res.headers.location).toContain('/management/auth/login');
     });
 
+    // Step 2: Follow redirect to login page; confirm we get HTML with CSRF token and a link to the social (gateway) login.
     it('should return login form with XSRF and social URL', async () => {
       const initiateRes = await performGet(
         MANAGEMENT_URL,
@@ -91,6 +103,7 @@ describe('API Management - Login Social Provider', () => {
       );
     });
 
+    // Step 3: From management login form, "click" the social provider link; gateway (social domain) should redirect (e.g. to its login form).
     it('should choose social provider and redirect to social domain login', async () => {
       const initiateRes = await performGet(
         MANAGEMENT_URL,
@@ -114,6 +127,7 @@ describe('API Management - Login Social Provider', () => {
       expect(socialRes.headers.location).toBeDefined();
     });
 
+    // Step 4: Follow redirect to social domain; we should get the gateway's login form with XSRF and form action for POST.
     it('should return social domain login form with XSRF and action', async () => {
       const initiateRes = await performGet(
         MANAGEMENT_URL,
@@ -142,6 +156,7 @@ describe('API Management - Login Social Provider', () => {
       expect(action).toBeDefined();
     });
 
+    // Step 5: POST credentials to the social domain login form; server should redirect (e.g. to callback or profile/authorize).
     it('should post login form and redirect to complete profile / authorize', async () => {
       const initiateRes = await performGet(
         MANAGEMENT_URL,
@@ -184,15 +199,25 @@ describe('API Management - Login Social Provider', () => {
       expect(postRes.headers.location).toBeDefined();
     });
 
+    // Step 6: Full flow again; after POST we follow redirects (callback → management authorize → …) until we land on nowhere.com.
+    // Use a per-origin cookie jar so the management redirect cookie is sent when following the callback (cross-origin).
     it('should redirect to login callback then to authorize', async () => {
+      const managementOrigin = new URL(MANAGEMENT_URL).origin;
+      const gatewayOrigin = new URL(fixture.gatewayUrl).origin;
+      const jar: Record<string, string> = {};
+
       const initiateRes = await performGet(
         MANAGEMENT_URL,
         `/management/auth/authorize?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`,
       );
+      const initCookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
+      if (initCookie) jar[managementOrigin] = mergeCookieStrings(jar[managementOrigin], initCookie);
+
       const { origin, pathAndSearch } = parseLocation(initiateRes.headers.location ?? '', MANAGEMENT_URL);
-      let cookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
-      let headers: Record<string, string> | undefined = cookie ? { Cookie: cookie } : undefined;
-      const loginFormRes = await performGet(origin, pathAndSearch, headers);
+      const loginFormRes = await performGet(origin, pathAndSearch, jar[origin] ? { Cookie: jar[origin] } : undefined);
+      const loginCookie = cookieHeaderFromSetCookie(loginFormRes.headers['set-cookie']);
+      if (loginCookie) jar[origin] = mergeCookieStrings(jar[origin], loginCookie);
+
       const socialUrl = extractSocialUrlFromManagementLoginHtml(
         loginFormRes.text,
         fixture.internalGatewayUrl,
@@ -201,17 +226,20 @@ describe('API Management - Login Social Provider', () => {
       const socialRes = await performGet(
         new URL(socialUrl).origin,
         new URL(socialUrl).pathname + new URL(socialUrl).search,
-        headers,
+        jar[new URL(socialUrl).origin] ? { Cookie: jar[new URL(socialUrl).origin] } : undefined,
       );
+      const socialResCookie = cookieHeaderFromSetCookie(socialRes.headers['set-cookie']);
+      if (socialResCookie) jar[gatewayOrigin] = mergeCookieStrings(jar[gatewayOrigin], socialResCookie);
+
       const { origin: o2, pathAndSearch: p2 } = parseLocation(socialRes.headers.location ?? '', fixture.gatewayUrl);
-      cookie = cookieHeaderFromSetCookie(socialRes.headers['set-cookie']);
-      headers = cookie ? { Cookie: cookie } : undefined;
-      const socialFormRes = await performGet(o2, p2, headers);
-      cookie = cookieHeaderFromSetCookie(socialFormRes.headers['set-cookie']);
-      const postHeaders: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
-      if (cookie) postHeaders.Cookie = cookie;
+      const socialFormRes = await performGet(o2, p2, jar[o2] ? { Cookie: jar[o2] } : undefined);
+      const formCookie = cookieHeaderFromSetCookie(socialFormRes.headers['set-cookie']);
+      if (formCookie) jar[o2] = mergeCookieStrings(jar[o2], formCookie);
+
       const { xsrf, action } = extractXsrfAndActionFromSocialLoginHtml(socialFormRes.text);
       const actionUrl = new URL(action);
+      const postHeaders: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
+      if (jar[actionUrl.origin]) postHeaders.Cookie = jar[actionUrl.origin];
       const postRes = await performFormPost(
         actionUrl.origin,
         actionUrl.pathname + actionUrl.search,
@@ -223,32 +251,49 @@ describe('API Management - Login Social Provider', () => {
         },
         postHeaders,
       );
+      const postResCookie = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
+      if (postResCookie) jar[actionUrl.origin] = mergeCookieStrings(jar[actionUrl.origin], postResCookie);
+
       let loc = postRes.headers.location;
-      let cookieStr = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
+      // Follow up to 5 redirects (callback, authorize, etc.) until we reach the configured redirect_uri (nowhere.com).
       for (let i = 0; i < 5 && loc; i++) {
         const base =
           loc.includes(MANAGEMENT_URL) || loc.startsWith('/management')
             ? MANAGEMENT_URL
             : fixture.gatewayUrl;
         const { origin: o, pathAndSearch: p } = parseLocation(loc, base);
-        const next = await performGet(o, p, cookieStr ? { Cookie: cookieStr } : undefined);
+        const next = await performGet(o, p, jar[o] ? { Cookie: jar[o] } : undefined);
+        const nextCookie = cookieHeaderFromSetCookie(next.headers['set-cookie']);
+        if (nextCookie) jar[o] = mergeCookieStrings(jar[o], nextCookie);
         expect([200, 302]).toContain(next.status);
         loc = next.headers.location ?? loc;
-        cookieStr = cookieHeaderFromSetCookie(next.headers['set-cookie']);
         if (loc && loc.includes('nowhere.com')) break;
       }
       expect(loc).toBeDefined();
       expect(loc).toContain('nowhere.com');
+      // Ensure we got the requested redirect_uri, not the server default (localhost:4200); confirms redirect cookie was sent.
+      expect(loc).not.toContain('4200');
     });
 
+    // Step 7: Full login flow, then call management /logout with target_url; should redirect to TARGET_URL (nowhere.com).
+    // Use a per-origin cookie jar so the management redirect cookie is sent when following the callback (cross-origin).
     it('should logout and redirect to target url', async () => {
+      const managementOrigin = new URL(MANAGEMENT_URL).origin;
+      const gatewayOrigin = new URL(fixture.gatewayUrl).origin;
+      const jar: Record<string, string> = {};
+
       const initiateRes = await performGet(
         MANAGEMENT_URL,
         `/management/auth/authorize?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`,
       );
+      const initCookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
+      if (initCookie) jar[managementOrigin] = mergeCookieStrings(jar[managementOrigin], initCookie);
+
       const { origin, pathAndSearch } = parseLocation(initiateRes.headers.location ?? '', MANAGEMENT_URL);
-      const cookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
-      const loginFormRes = await performGet(origin, pathAndSearch, cookie ? { Cookie: cookie } : undefined);
+      const loginFormRes = await performGet(origin, pathAndSearch, jar[origin] ? { Cookie: jar[origin] } : undefined);
+      const loginCookie = cookieHeaderFromSetCookie(loginFormRes.headers['set-cookie']);
+      if (loginCookie) jar[origin] = mergeCookieStrings(jar[origin], loginCookie);
+
       const socialUrl = extractSocialUrlFromManagementLoginHtml(
         loginFormRes.text,
         fixture.internalGatewayUrl,
@@ -257,49 +302,59 @@ describe('API Management - Login Social Provider', () => {
       const socialRes = await performGet(
         new URL(socialUrl).origin,
         new URL(socialUrl).pathname + new URL(socialUrl).search,
-        cookie ? { Cookie: cookie } : undefined,
+        jar[new URL(socialUrl).origin] ? { Cookie: jar[new URL(socialUrl).origin] } : undefined,
       );
+      const socialResCookie = cookieHeaderFromSetCookie(socialRes.headers['set-cookie']);
+      if (socialResCookie) jar[gatewayOrigin] = mergeCookieStrings(jar[gatewayOrigin], socialResCookie);
+
       const { origin: o2, pathAndSearch: p2 } = parseLocation(socialRes.headers.location ?? '', fixture.gatewayUrl);
-      let cookieStr = cookieHeaderFromSetCookie(socialRes.headers['set-cookie']);
-      const socialFormRes = await performGet(o2, p2, cookieStr ? { Cookie: cookieStr } : undefined);
+      const socialFormRes = await performGet(o2, p2, jar[o2] ? { Cookie: jar[o2] } : undefined);
+      const formCookie = cookieHeaderFromSetCookie(socialFormRes.headers['set-cookie']);
+      if (formCookie) jar[o2] = mergeCookieStrings(jar[o2], formCookie);
+
       const { xsrf, action } = extractXsrfAndActionFromSocialLoginHtml(socialFormRes.text);
-      cookieStr = cookieHeaderFromSetCookie(socialFormRes.headers['set-cookie']);
+      const actionUrl = new URL(action);
       const postHeaders: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
-      if (cookieStr) postHeaders.Cookie = cookieStr;
+      if (jar[actionUrl.origin]) postHeaders.Cookie = jar[actionUrl.origin];
       const postRes = await performFormPost(
         new URL(action).origin,
         new URL(action).pathname + new URL(action).search,
         { 'X-XSRF-TOKEN': xsrf, username: fixture.username, password: 'test', client_id: fixture.clientId },
         postHeaders,
       );
-      cookieStr = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
+      const postResCookie = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
+      if (postResCookie) jar[actionUrl.origin] = mergeCookieStrings(jar[actionUrl.origin], postResCookie);
+
       let loc = postRes.headers.location;
-      let managementCookie: string | undefined;
+      // Follow redirects until we hit redirect_uri; management cookies (including session) are in jar[managementOrigin].
       for (let i = 0; i < 4 && loc; i++) {
         const base =
           loc.includes(MANAGEMENT_URL) || loc.startsWith('/management')
             ? MANAGEMENT_URL
             : fixture.gatewayUrl;
         const { origin: o, pathAndSearch: p } = parseLocation(loc, base);
-        const next = await performGet(o, p, cookieStr ? { Cookie: cookieStr } : undefined);
-        if (o === new URL(MANAGEMENT_URL).origin) {
-          const setCookie = cookieHeaderFromSetCookie(next.headers['set-cookie']);
-          if (setCookie) managementCookie = setCookie;
-        }
+        const next = await performGet(o, p, jar[o] ? { Cookie: jar[o] } : undefined);
+        const nextCookie = cookieHeaderFromSetCookie(next.headers['set-cookie']);
+        if (nextCookie) jar[o] = mergeCookieStrings(jar[o], nextCookie);
         loc = next.headers.location ?? loc;
-        cookieStr = cookieHeaderFromSetCookie(next.headers['set-cookie']);
         if (loc?.includes('nowhere.com')) break;
       }
-      const logoutCookie = managementCookie ?? cookieStr;
+
+      // We must have reached redirect_uri (nowhere.com) before testing logout; confirms full login flow and cookie jar.
+      expect(loc).toBeDefined();
+      expect(loc).toContain('nowhere.com');
+      expect(loc).not.toContain('4200');
+
       const res = await performGet(
         MANAGEMENT_URL,
         `/management/auth/logout?target_url=${encodeURIComponent(TARGET_URL)}`,
-        logoutCookie ? { Cookie: logoutCookie } : undefined,
+        jar[managementOrigin] ? { Cookie: jar[managementOrigin] } : undefined,
       );
       expect(res.status).toBe(302);
       expect(res.headers.location).toBe(TARGET_URL);
     });
 
+    // Step 8: Logout on the gateway (social) domain; should get a redirect (e.g. back to login or configured URL).
     it('should logout social domain', async () => {
       const res = await performGet(fixture.gatewayUrl, `/${fixture.domainHrid}/logout`);
       expect(res.status).toBe(302);
