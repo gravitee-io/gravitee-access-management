@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import { expect } from '@jest/globals';
+import { performGet } from '@gateway-commands/oauth-oidc-commands';
 const cheerio = require('cheerio');
 
 /**
@@ -20,9 +23,14 @@ const cheerio = require('cheerio');
  * Supertest expects Cookie to be a string; never pass undefined.
  */
 export function cookieHeaderFromSetCookie(setCookie: string | string[] | undefined): string | undefined {
-  if (setCookie == null) return undefined;
+  if (setCookie == null) {
+    return undefined;
+  }
+
   const arr = Array.isArray(setCookie) ? setCookie : [setCookie];
-  if (arr.length === 0) return undefined;
+  if (arr.length === 0) {
+    return undefined;
+  }
   return arr.map((c) => c.split(';')[0].trim()).join('; ');
 }
 
@@ -52,11 +60,9 @@ export function mergeCookieStrings(existing: string | undefined, newStr: string 
  */
 export function extractCsrfFromManagementLoginHtml(html: string): string {
   const $ = cheerio.load(html);
-  const csrf =
-    ($('[name="_csrf"]').val() as string) || ($('[name="X-XSRF-TOKEN"]').val() as string);
-  if (!csrf) {
-    throw new Error('Could not find _csrf or X-XSRF-TOKEN in login form HTML');
-  }
+  const csrf = ($('[name="_csrf"]').val() as string) || ($('[name="X-XSRF-TOKEN"]').val() as string);
+  expect(csrf).toBeDefined();
+  
   return csrf;
 }
 
@@ -76,7 +82,9 @@ export function extractSocialUrlFromManagementLoginHtml(
     $('a[href*="oauth2"], a[href*="social"]').first().attr('href') ||
     $('a[href*="/oauth/authorize"], a[href*="client_id"]').first().attr('href') ||
     $('a.btn[href]').filter((_, el) => $(el).attr('href')?.includes('authorize') || $(el).attr('href')?.includes('login')).first().attr('href');
-  if (!href) throw new Error('Could not find social provider link in login form');
+  if (!href) {
+    throw new Error('Could not find social provider link in login form');
+  }
   return href.replace(internalGatewayUrl, gatewayUrl);
 }
 
@@ -87,6 +95,47 @@ export function extractXsrfAndActionFromSocialLoginHtml(html: string): { xsrf: s
   const $ = cheerio.load(html);
   const xsrf = ($('[name="X-XSRF-TOKEN"]').val() as string) || ($('[name="_csrf"]').val() as string);
   const action = $('form').attr('action');
-  if (!xsrf || !action) throw new Error('Could not find XSRF token or form action in social login form');
+
+  if (!xsrf || !action) {
+    throw new Error('Could not find XSRF token or form action in social login form');
+  }
   return { xsrf, action };
+}
+
+/**
+ * Parse a Location header (absolute URL or path) into origin and path+query.
+ * Relative locations are resolved against baseOrigin.
+ */
+export function parseLocation(
+  location: string,
+  baseOrigin: string,
+): { origin: string; pathAndSearch: string } {
+  if (!location) {
+    throw new Error('Empty location');
+  }
+  if (location.startsWith('http://') || location.startsWith('https://')) {
+    const u = new URL(location);
+    return { origin: u.origin, pathAndSearch: u.pathname + u.search };
+  }
+  const base = baseOrigin.endsWith('/') ? baseOrigin : baseOrigin + '/';
+  const u = new URL(location, base);
+  return { origin: u.origin, pathAndSearch: u.pathname + u.search };
+}
+
+/**
+ * Start management auth flow: GET authorize, follow redirect to login page, return login form response and cookie.
+ * Fails if location or Set-Cookie is missing (deterministic true path).
+ */
+export async function getLoginForm(managementUrl: string, redirectUri: string) {
+  const authorizePath = `/management/auth/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`;
+  const initiateRes = await performGet(managementUrl, authorizePath);
+  const location = initiateRes.headers.location;
+  expect(location).toBeDefined();
+
+  const { origin, pathAndSearch } = parseLocation(location!, managementUrl);
+  const cookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
+  expect(cookie).toBeDefined();
+  
+  const loginFormRes = await performGet(origin, pathAndSearch, { Cookie: cookie! });
+  return { loginFormRes, cookie: cookie! };
 }

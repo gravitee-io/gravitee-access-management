@@ -39,9 +39,9 @@ import {
   extractSocialUrlFromManagementLoginHtml,
   extractXsrfAndActionFromSocialLoginHtml,
 } from '../management-auth-helper';
-import { getLoginForm as getLoginFormFromUtils, parseLocation } from '../api-management-utils';
+import { getLoginForm as getLoginFormFromUtils, parseLocation } from '../management-auth-helper';
 
-export { getLoginForm } from '../api-management-utils';
+export { getLoginForm } from '../management-auth-helper';
 
 export interface ApiManagementLoginSocialFixture extends Fixture {
   accessToken: string;
