@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { expect } from '@jest/globals';
 import { Domain } from '@management-models/Domain';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain } from '@management-commands/domain-management-commands';
@@ -21,6 +22,7 @@ import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
 export interface ApiManagementAlertFixture extends Fixture {
+  accessToken: string;
   domain: Domain;
   /** Ensures a webhook notifier exists (creates one if needed). Returns its id so tests can run in isolation. */
   ensureWebhookNotifierExists: () => Promise<string>;
@@ -51,7 +53,7 @@ export const setupApiManagementAlertFixture = async (): Promise<ApiManagementAle
 
   const ensureWebhookNotifierExists = async (): Promise<string> => {
     if (alertNotifierId) return alertNotifierId;
-    const api = getAlertsApi(accessToken!);
+    const api = getAlertsApi(accessToken);
     const notifier = await api.createAlertNotifier({
       organizationId: process.env.AM_DEF_ORG_ID!,
       environmentId: process.env.AM_DEF_ENV_ID!,
@@ -63,9 +65,8 @@ export const setupApiManagementAlertFixture = async (): Promise<ApiManagementAle
   };
 
   const cleanup = async () => {
-    if (domain?.id && accessToken) {
-      await safeDeleteDomain(domain.id, accessToken);
-    }
+    expect(domain.id).toBeDefined();
+    await safeDeleteDomain(domain.id!, accessToken);
   };
 
   return {

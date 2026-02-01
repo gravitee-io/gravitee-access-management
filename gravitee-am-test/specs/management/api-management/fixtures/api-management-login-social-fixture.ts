@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import { expect } from '@jest/globals';
 import request from 'supertest';
+import { performGet, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { Domain } from '@management-models/Domain';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
@@ -21,6 +24,7 @@ import {
   patchDomain,
   safeDeleteDomain,
   startDomain,
+  waitFor,
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
@@ -29,6 +33,15 @@ import { createIdp } from '@management-commands/idp-management-commands';
 import { getDefaultApi, getIdpApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
+import {
+  cookieHeaderFromSetCookie,
+  mergeCookieStrings,
+  extractSocialUrlFromManagementLoginHtml,
+  extractXsrfAndActionFromSocialLoginHtml,
+} from '../management-auth-helper';
+import { getLoginForm as getLoginFormFromUtils, parseLocation } from '../api-management-utils';
+
+export { getLoginForm } from '../api-management-utils';
 
 export interface ApiManagementLoginSocialFixture extends Fixture {
   accessToken: string;
@@ -48,8 +61,145 @@ export interface ApiManagementLoginSocialFixture extends Fixture {
 const ORG_ID = process.env.AM_DEF_ORG_ID!;
 const SYNC_DELAY_MS = 5000;
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export async function getSocialForm(
+  managementUrl: string,
+  redirectUri: string,
+  f: ApiManagementLoginSocialFixture,
+) {
+  const { loginFormRes, cookie } = await getLoginFormFromUtils(managementUrl, redirectUri);
+  const socialUrl = extractSocialUrlFromManagementLoginHtml(
+    loginFormRes.text,
+    f.internalGatewayUrl,
+    f.gatewayUrl,
+  );
+  const socialRes = await performGet(
+    new URL(socialUrl).origin,
+    new URL(socialUrl).pathname + new URL(socialUrl).search,
+    { Cookie: cookie },
+  );
+  const socialLocation = socialRes.headers.location;
+  expect(socialLocation).toBeDefined();
+
+  const { origin: o2, pathAndSearch: p2 } = parseLocation(socialLocation!, f.gatewayUrl);
+  const socialCookie = cookieHeaderFromSetCookie(socialRes.headers['set-cookie']);
+  expect(socialCookie).toBeDefined();
+  
+  const socialFormRes = await performGet(o2, p2, { Cookie: socialCookie });
+  return { socialFormRes, socialCookie };
+}
+
+export async function runLoginFlowWithCookieJar(
+  managementUrl: string,
+  gatewayUrl: string,
+  redirectUri: string,
+  f: ApiManagementLoginSocialFixture,
+): Promise<{
+  jar: Record<string, string>;
+  postRes: Awaited<ReturnType<typeof performFormPost>>;
+}> {
+  const managementOrigin = new URL(managementUrl).origin;
+  const gatewayOrigin = new URL(gatewayUrl).origin;
+  const jar: Record<string, string> = {};
+
+  const authorizePath = `/management/auth/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`;
+  const initiateRes = await performGet(managementUrl, authorizePath);
+  const initCookie = cookieHeaderFromSetCookie(initiateRes.headers['set-cookie']);
+  expect(initCookie).toBeDefined();
+
+  jar[managementOrigin] = mergeCookieStrings(jar[managementOrigin], initCookie);
+
+  const initLocation = initiateRes.headers.location;
+  expect(initLocation).toBeDefined();
+
+  const { origin, pathAndSearch } = parseLocation(initLocation!, managementUrl);
+  const loginFormRes = await performGet(origin, pathAndSearch, { Cookie: jar[origin]! });
+  const loginCookie = cookieHeaderFromSetCookie(loginFormRes.headers['set-cookie']);
+  if (loginCookie) {
+    jar[origin] = mergeCookieStrings(jar[origin], loginCookie);
+  }
+
+  const socialUrl = extractSocialUrlFromManagementLoginHtml(
+    loginFormRes.text,
+    f.internalGatewayUrl,
+    f.gatewayUrl,
+  );
+  const socialOrigin = new URL(socialUrl).origin;
+  const socialRes = await performGet(
+    socialOrigin,
+    new URL(socialUrl).pathname + new URL(socialUrl).search,
+    jar[socialOrigin] ? { Cookie: jar[socialOrigin]! } : undefined,
+  );
+  const socialResCookie = cookieHeaderFromSetCookie(socialRes.headers['set-cookie']);
+  expect(socialResCookie).toBeDefined();
+
+  jar[gatewayOrigin] = mergeCookieStrings(jar[gatewayOrigin], socialResCookie);
+
+  const socialResLocation = socialRes.headers.location;
+  expect(socialResLocation).toBeDefined();
+
+  const { origin: o2, pathAndSearch: p2 } = parseLocation(socialResLocation!, gatewayUrl);
+  const socialFormRes = await performGet(o2, p2, { Cookie: jar[o2]! });
+  const formCookie = cookieHeaderFromSetCookie(socialFormRes.headers['set-cookie']);
+  expect(formCookie).toBeDefined();
+
+  jar[o2] = mergeCookieStrings(jar[o2], formCookie);
+
+  const { xsrf, action } = extractXsrfAndActionFromSocialLoginHtml(socialFormRes.text);
+  const actionUrl = new URL(action);
+  expect(jar[actionUrl.origin]).toBeDefined();
+
+  const postHeaders: Record<string, string> = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    Cookie: jar[actionUrl.origin]!,
+  };
+  const postRes = await performFormPost(
+    actionUrl.origin,
+    actionUrl.pathname + actionUrl.search,
+    {
+      'X-XSRF-TOKEN': xsrf,
+      username: f.username,
+      password: 'test',
+      client_id: f.clientId,
+    },
+    postHeaders,
+  );
+  const postResCookie = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
+  expect(postResCookie).toBeDefined();
+
+  jar[actionUrl.origin] = mergeCookieStrings(jar[actionUrl.origin], postResCookie);
+
+  return { jar, postRes };
+}
+
+export async function followRedirectsUntil(
+  jar: Record<string, string>,
+  initialLocation: string | undefined,
+  managementUrl: string,
+  gatewayUrl: string,
+  maxSteps: number,
+): Promise<string> {
+  expect(initialLocation).toBeDefined();
+  let loc = initialLocation!;
+  for (let i = 0; i < maxSteps; i++) {
+    const base = (loc.includes(managementUrl) || loc.startsWith('/management')) ? managementUrl : gatewayUrl;
+    const { origin: o, pathAndSearch: p } = parseLocation(loc, base);
+    expect(jar[o]).toBeDefined();
+
+    const next = await performGet(o, p, { Cookie: jar[o]! });
+    const c = cookieHeaderFromSetCookie(next.headers['set-cookie']);
+    expect(c).toBeDefined();
+
+    jar[o] = mergeCookieStrings(jar[o], c);
+    expect([200, 302]).toContain(next.status);
+    const nextLoc = next.headers.location;
+    expect(nextLoc).toBeDefined();
+
+    loc = nextLoc!;
+    if (loc.includes('nowhere.com')) {
+      return loc;
+    }
+  }
+  throw new Error(`Did not reach redirect_uri (nowhere.com) within ${maxSteps} redirects; last location: ${loc}`);
 }
 
 export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagementLoginSocialFixture> => {
@@ -130,7 +280,7 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
   await startDomain(domain.id, accessToken);
   const started = await waitForDomainStart(domain);
   await waitForDomainSync(started.domain.id, accessToken);
-  await delay(SYNC_DELAY_MS);
+  await waitFor(SYNC_DELAY_MS);
 
   const defaultApi = getDefaultApi(accessToken);
   const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
@@ -178,7 +328,7 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
     organizationId: ORG_ID,
     patchOrganization: { identities: [currentIdp, newIdp] },
   });
-  await delay(SYNC_DELAY_MS);
+  await waitFor(SYNC_DELAY_MS);
 
   const cleanUp = async () => {
     await safeDeleteDomain(domain.id, accessToken);
@@ -189,7 +339,10 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
     try {
       await getIdpApi(accessToken).deleteIdentityProvider1({ organizationId: ORG_ID, identity: newIdp });
     } catch (e: any) {
-      if (e?.response?.status !== 404) throw e;
+      if (e?.response?.status !== 404) 
+        {
+          throw e;
+        }
     }
   };
 

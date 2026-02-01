@@ -29,9 +29,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) {
-    await fixture.cleanUp();
-  }
+  expect(fixture).toBeDefined();
+  await fixture!.cleanUp();
 });
 
 describe('API Management - Alert', () => {
@@ -49,7 +48,9 @@ describe('API Management - Alert', () => {
     let alertNotifierId: string;
 
     it('should enable domain alerts', async () => {
-      const patched = await patchDomain(fixture.domain.id, fixture.accessToken!, {
+      expect(fixture.domain.id).toBeDefined();
+      expect(fixture.accessToken).toBeDefined();
+      const patched = await patchDomain(fixture.domain.id, fixture.accessToken, {
         alertEnabled: true,
       });
       expect(patched).toBeDefined();
@@ -57,7 +58,7 @@ describe('API Management - Alert', () => {
     });
 
     it('should list domain alert notifiers (empty)', async () => {
-      const api = getAlertsApi(fixture.accessToken!);
+      const api = getAlertsApi(fixture.accessToken);
       const response = await api.listAlertNotifiersRaw({
         organizationId: orgId,
         environmentId: envId,
@@ -69,7 +70,7 @@ describe('API Management - Alert', () => {
     });
 
     it('should list plugin notifiers', async () => {
-      const api = getNotifierApi(fixture.accessToken!);
+      const api = getNotifierApi(fixture.accessToken);
       const notifiers = await api.listNotifiers({ expand: ['icon'] });
       expect(notifiers).toBeDefined();
       expect(Array.isArray(notifiers)).toBe(true);
@@ -77,7 +78,7 @@ describe('API Management - Alert', () => {
     });
 
     it('should create domain webhook alert notifier', async () => {
-      const api = getAlertsApi(fixture.accessToken!);
+      const api = getAlertsApi(fixture.accessToken);
       const webhookConfig = JSON.stringify({
         method: 'POST',
         url: 'https://example.com/webhook',
@@ -103,7 +104,7 @@ describe('API Management - Alert', () => {
     });
 
     it('should list domain alert notifiers (not empty)', async () => {
-      const api = getAlertsApi(fixture.accessToken!);
+      const api = getAlertsApi(fixture.accessToken);
       const response = await api.listAlertNotifiersRaw({
         organizationId: orgId,
         environmentId: envId,
@@ -116,8 +117,7 @@ describe('API Management - Alert', () => {
 
     it('should enable too many login failures alert', async () => {
       expect(alertNotifierId).toBeDefined();
-
-      const api = getAlertsApi(fixture.accessToken!);
+      const api = getAlertsApi(fixture.accessToken);
       const response = await api.updateAlertTriggersRaw({
         organizationId: orgId,
         environmentId: envId,
@@ -126,7 +126,7 @@ describe('API Management - Alert', () => {
           {
             type: PatchAlertTriggerTypeEnum.TooManyLoginFailures,
             enabled: true,
-            alertNotifiers: [alertNotifierId!],
+            alertNotifiers: [alertNotifierId],
           },
         ],
       });

@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import request from 'supertest';
+import { performGet, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getDefaultApi, getIdpApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
+import { waitFor } from '@management-commands/domain-management-commands';
+import { getLoginForm } from '../api-management-utils';
+import {
+  cookieHeaderFromSetCookie,
+  extractCsrfFromManagementLoginHtml,
+} from '../management-auth-helper';
+
+export { getLoginForm } from '../api-management-utils';
 
 export interface ApiManagementLoginFixture extends Fixture {
   accessToken: string;
@@ -27,11 +37,6 @@ export interface ApiManagementLoginFixture extends Fixture {
 }
 
 const ORG_ID = process.env.AM_DEF_ORG_ID!;
-const SYNC_DELAY_MS = 5000;
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export const setupApiManagementLoginFixture = async (): Promise<ApiManagementLoginFixture> => {
   const accessToken = await requestAdminAccessToken();
@@ -79,7 +84,7 @@ export const setupApiManagementLoginFixture = async (): Promise<ApiManagementLog
     organizationId: ORG_ID,
     patchOrganization: { identities: [currentIdp, newIdp] },
   });
-  await delay(SYNC_DELAY_MS);
+  await waitFor(5000);
 
   const cleanUp = async () => {
     await defaultApi.patchOrganizationSettings({
@@ -101,3 +106,29 @@ export const setupApiManagementLoginFixture = async (): Promise<ApiManagementLog
     cleanUp,
   };
 };
+
+/**
+ * Run simple (non-social) login flow: authorize -> get login form -> POST credentials.
+ * Returns post response and session cookie for follow-up requests.
+ */
+export async function runSimpleLoginFlow(
+  managementUrl: string,
+  redirectUri: string,
+  username: string,
+  password: string,
+): Promise<{ postRes: Awaited<ReturnType<typeof performFormPost>>; cookie: string }> {
+  const { loginFormRes, cookie } = await getLoginForm(managementUrl, redirectUri);
+  const csrf = extractCsrfFromManagementLoginHtml(loginFormRes.text);
+  const loginCookie = cookieHeaderFromSetCookie(loginFormRes.headers['set-cookie']);
+  const postRes = await performFormPost(
+    managementUrl,
+    '/management/auth/login',
+    { _csrf: csrf, username, password },
+    {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Cookie: loginCookie ?? cookie,
+    },
+  );
+  const postCookie = cookieHeaderFromSetCookie(postRes.headers['set-cookie']);
+  return { postRes, cookie: postCookie ?? loginCookie ?? cookie };
+}
