@@ -67,6 +67,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.json.Json;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,6 +90,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -1241,7 +1243,7 @@ public class ProvisioningUserServiceTest {
     }
 
     @Test
-    public void shouldCreateUser_withPreRegistrationAndClient() {
+    public void shouldCreateUser_withPreRegistrationAndClient() throws Exception {
         GraviteeUser newUser = mock(GraviteeUser.class);
         when(newUser.getSource()).thenReturn("idp-source");
         when(newUser.getUserName()).thenReturn("username");
@@ -1273,6 +1275,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
+        testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
@@ -1284,7 +1287,8 @@ public class ProvisioningUserServiceTest {
         ArgumentCaptor<Template> templateCaptor = ArgumentCaptor.forClass(Template.class);
         ArgumentCaptor<io.gravitee.am.model.User> emailUserCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         ArgumentCaptor<Client> clientCaptor = ArgumentCaptor.forClass(Client.class);
-        verify(emailService, times(1)).send(templateCaptor.capture(), emailUserCaptor.capture(), clientCaptor.capture());
+
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailService, times(1)).send(templateCaptor.capture(), emailUserCaptor.capture(), clientCaptor.capture()));
 
         assertEquals(Template.REGISTRATION_CONFIRMATION, templateCaptor.getValue());
         assertEquals("app-id-123", emailUserCaptor.getValue().getClient());
