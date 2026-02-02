@@ -1,5 +1,31 @@
 // Rely on zx globals for $, cd, within, etc.
 import { parseArgs } from 'node:util';
+import { readFileSync, existsSync } from 'node:fs';
+import { join, isAbsolute } from 'node:path';
+
+// Load .env from repo root and scripts/ so CIRCLECI_TOKEN etc. are available (e.g. for trigger)
+const cwd = process.cwd();
+for (const rel of ['.env', 'scripts/.env']) {
+    const path = join(cwd, rel);
+    if (existsSync(path)) {
+        const content = readFileSync(path, 'utf8');
+        for (const line of content.split('\n')) {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#')) {
+                const eq = trimmed.indexOf('=');
+                if (eq > 0) {
+                    const key = trimmed.slice(0, eq).trim();
+                    let value = trimmed.slice(eq + 1).trim();
+                    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                        value = value.slice(1, -1);
+                    }
+                    if (!process.env[key]) process.env[key] = value;
+                }
+            }
+        }
+    }
+}
+
 import { Orchestrator } from './lib/Orchestrator.mjs';
 import { CircleCI } from './lib/CircleCI.mjs';
 import { K8sProvider } from './lib/providers/K8sProvider.mjs';
@@ -26,6 +52,7 @@ const parsed = parseArgs({
         provider: { type: 'string' },
         stage: { type: 'string' },
         'test-filter': { type: 'string' },
+        'test-dir': { type: 'string' },
         'with-downgrade': { type: 'boolean', default: false },
     },
     allowPositionals: true,
@@ -56,12 +83,16 @@ if (firstIsCommand) {
         provider: zxArgv.provider,
         stage: zxArgv.stage,
         'test-filter': zxArgv['test-filter'],
+        'test-dir': zxArgv['test-dir'],
         'with-downgrade': zxArgv['with-downgrade'],
     };
 } else {
     command = positionals.length > 0 ? positionals[0] : undefined;
     raw = parsed.values;
 }
+
+const testDirRaw = raw['test-dir'] ?? Config.test.dir;
+const testDir = testDirRaw ? (isAbsolute(testDirRaw) ? testDirRaw : join(cwd, testDirRaw)) : join(cwd, Config.test.dir);
 
 const options = {
     fromTag: raw['from-tag'] ?? '4.10.0',
@@ -70,6 +101,7 @@ const options = {
     providerName: raw.provider ?? 'docker-compose',
     stage: raw.stage ?? undefined,
     testFilter: (raw['test-filter'] ?? '').trim() || undefined,
+    testDir,
     withDowngrade: raw['with-downgrade'] === true,
     token: process.env.CIRCLECI_TOKEN,
 };
@@ -102,18 +134,7 @@ switch (options.providerName) {
             process.exit(1);
         }
 
-        // Multi-dataplane: 1 API + 2 Gateways (am-mapi, am-gateway-dp1, am-gateway-dp2)
-        const releases = options.dbType === 'postgres'
-            ? [
-                { name: 'am-mapi', valuesPath: Config.k8s.valuesPathPostgresMapi, component: 'mapi' },
-                { name: 'am-gateway-dp1', valuesPath: Config.k8s.valuesPathPostgresGatewayDp1, component: 'gateway' },
-                { name: 'am-gateway-dp2', valuesPath: Config.k8s.valuesPathPostgresGatewayDp2, component: 'gateway' }
-            ]
-            : [
-                { name: 'am-mapi', valuesPath: Config.k8s.valuesPathMongoMapi, component: 'mapi' },
-                { name: 'am-gateway-dp1', valuesPath: Config.k8s.valuesPathMongoGatewayDp1, component: 'gateway' },
-                { name: 'am-gateway-dp2', valuesPath: Config.k8s.valuesPathMongoGatewayDp2, component: 'gateway' }
-            ];
+        const releases = Config.getK8sReleases(options.dbType);
         provider = new K8sProvider({
             namespace,
             clusterName: 'am-migration',
@@ -145,7 +166,9 @@ if (command === 'trigger') {
         fromTag: options.fromTag,
         toTag: options.toTag,
         dbType: options.dbType,
-        provider: options.providerName
+        provider: options.providerName,
+        testFilter: options.testFilter,
+        withDowngrade: options.withDowngrade
     });
 } else if (command === 'setup') {
     const orchestrator = new Orchestrator(provider, options);
@@ -196,6 +219,7 @@ function printHelp() {
     console.log('  --provider <name> Infrastructure: docker-compose or k8s (default: docker-compose)');
     console.log('  --stage <name>    Run only this stage');
     console.log('  --test-filter <path>  Run only Jest tests matching path (e.g. specs/gateway/refresh-token.jest.spec.ts)');
+    console.log('  --test-dir <path>   Test suite directory (default from config; use full path to override)');
     console.log('  --with-downgrade  After verify-all, downgrade back to from-tag and verify');
     console.log('\nStages:');
     console.log('  clean, k8s:setup, deploy-from, verify-baseline, upgrade-mapi, verify-mapi, upgrade-gw, verify-all');

@@ -39,17 +39,6 @@ export class DockerComposeProvider extends BaseProvider {
 
     async verifyHealth() {
         console.log('⌛ Waiting for services to be healthy...');
-        // docker-compose up -d --wait handles this in modern versions, 
-        // but we can add secondary checks if needed.
         await sleep(5000);
-    }
-
-    async prepareTests() {
-        // No specific preparation needed for Docker Compose as it uses host ports directly
-        console.log('✅ Environment ready for tests.');
-    }
-
-    async cleanup() {
-        // No-op for Docker Compose if we want to keep it running for tests
     }
 }

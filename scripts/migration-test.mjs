@@ -28,7 +28,8 @@ const child = spawn(cmd, args, {
 });
 
 child.on('exit', (code) => {
-    process.exit(code || 0);
+    // code is null when child is killed by signal (SIGTERM, SIGKILL, OOM); propagate as failure
+    process.exit(code ?? 1);
 });
 
 child.on('error', (err) => {

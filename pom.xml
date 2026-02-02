@@ -711,6 +711,7 @@
                         <exclude>gravitee-am-test/api/management/**</exclude>
                         <exclude>helm/**</exclude>
                         <exclude>node/**</exclude>
+                        <exclude>scripts/**</exclude>
                         <exclude>gravitee-am-test/scripts/templates/**</exclude>
                     </excludes>
                     <mapping>

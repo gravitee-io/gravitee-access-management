@@ -13,6 +13,7 @@ export class K8sProvider extends BaseProvider {
     constructor(options) {
         super(options);
         this.namespace = options.namespace || Config.k8s.namespace;
+        this.shell = options.shell ?? (typeof $ !== 'undefined' ? $ : undefined);
 
         // Dependency Injection: Database Strategy
         this.databaseStrategy = options.databaseStrategy;
@@ -35,6 +36,20 @@ export class K8sProvider extends BaseProvider {
         this.valuesPath = options.valuesPath || Config.k8s.valuesPath;
 
         this.pids = { mapi: null, gatewayDp1: null, gatewayDp2: null, ui: null };
+    }
+
+    /**
+     * Environment overrides for the test process when running in this provider (e.g. multi-dataplane ports).
+     * Orchestrator merges this into process.env before running tests; test setup files use these or defaults.
+     */
+    getTestEnv() {
+        if (this.releases?.length > 0) {
+            return {
+                AM_GATEWAY_URL: 'http://localhost:8091',
+                AM_DOMAIN_DATA_PLANE_ID: 'dp1',
+            };
+        }
+        return {};
     }
 
     async setup() {
@@ -223,6 +238,33 @@ export class K8sProvider extends BaseProvider {
         }
     }
 
+    /**
+     * Restart gateway port-forwards (e.g. after upgrade-gw so tunnels point at the new pods).
+     */
+    async restartGatewayTunnels() {
+        if (this.pids.gatewayDp1) {
+            await this.portForwarder.stop(this.pids.gatewayDp1);
+            this.pids.gatewayDp1 = null;
+        }
+        if (this.pids.gatewayDp2) {
+            await this.portForwarder.stop(this.pids.gatewayDp2);
+            this.pids.gatewayDp2 = null;
+        }
+        if (this.releases.length > 0) {
+            const dp1Release = this.releases.find(r => r.name === 'am-gateway-dp1');
+            const dp2Release = this.releases.find(r => r.name === 'am-gateway-dp2');
+            if (dp1Release) {
+                this.pids.gatewayDp1 = await this.portForwarder.start(`svc/${dp1Release.name}-gateway`, 8091, 82);
+            }
+            if (dp2Release) {
+                this.pids.gatewayDp2 = await this.portForwarder.start(`svc/${dp2Release.name}-gateway`, 8092, 82);
+            }
+        } else {
+            this.pids.gatewayDp1 = await this.portForwarder.start('svc/am-gateway', 8092, 82);
+            this.pids.gatewayDp2 = null;
+        }
+    }
+
     async upgradeGw(toTag) {
         console.log(`🆙 Updating Gateway to ${toTag}...`);
         await validateAmImageTag(toTag);
@@ -246,22 +288,7 @@ export class K8sProvider extends BaseProvider {
                 wait: true
             });
         }
-    }
-
-    async prepareTests() {
-        console.log('📦 Preparing test environment...');
-        // No-op for now as ci.setup.js has correct defaults for local tunnels.
-        // We could add npm install check here if needed.
-    }
-
-    async verifyBaseline() {
-        console.log('🔍 Verifying baseline health...');
-        // Simple health check to ensure API is up before Orchestrator runs full Jests
-        try {
-            await this.shell`curl -sSf http://localhost:8093/management/health`.quiet();
-            console.log('✅ API is healthy');
-        } catch (e) {
-            throw new Error('Baseline health check failed: Management API is not responding on 8093');
-        }
+        // Restart gateway port-forwards so they target the new pods; otherwise verify-all gets "socket hang up"
+        await this.restartGatewayTunnels();
     }
 }

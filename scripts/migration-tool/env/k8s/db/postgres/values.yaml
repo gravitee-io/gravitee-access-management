@@ -1,4 +1,5 @@
 # Minimal Postgres for migration test. Uses official postgres image (postgres:16.6) so md5() works.
+# postgres.password is for local/migration test only; override in production.
 fullnameOverride: postgres-postgresql
 
 image:

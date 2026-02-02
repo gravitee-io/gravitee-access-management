@@ -35,9 +35,4 @@ export class Helm {
     async uninstall(releaseName) {
         await this.shell`helm uninstall ${releaseName} -n ${this.namespace} --ignore-not-found`;
     }
-
-    async list() {
-        const result = await this.shell`helm list -n ${this.namespace} -o json`;
-        return JSON.parse(result.stdout);
-    }
 }

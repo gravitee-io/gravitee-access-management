@@ -45,4 +45,73 @@ describe('MongoK8sStrategy', () => {
         await strategy.clean();
         expect(mockHelm.uninstall).toHaveBeenCalledWith('mongo');
     });
+
+    test('when kubectl is provided, should ensure namespace and create auth secret before deploy', async () => {
+        const mockKubectl = {
+            ensureNamespace: jest.fn(),
+            createSecretGeneric: jest.fn(),
+            deleteSecret: jest.fn()
+        };
+        strategy = new MongoK8sStrategy({
+            helm: mockHelm,
+            namespace: 'gravitee-am',
+            config: mockConfig,
+            kubectl: mockKubectl
+        });
+        await strategy.deploy();
+        expect(mockKubectl.ensureNamespace).toHaveBeenCalled();
+        expect(mockKubectl.createSecretGeneric).toHaveBeenCalledWith(
+            'mongo-mongodb-auth',
+            expect.objectContaining({
+                'mongodb-root-password': expect.any(String),
+                'mongodb-passwords': 'gravitee-password,gravitee-password,gravitee-password'
+            })
+        );
+        expect(mockHelm.installOrUpgrade).toHaveBeenCalled();
+    });
+
+    test('when kubectl is provided, clean should delete auth secret', async () => {
+        const mockKubectl = {
+            ensureNamespace: jest.fn(),
+            createSecretGeneric: jest.fn(),
+            deleteSecret: jest.fn()
+        };
+        strategy = new MongoK8sStrategy({
+            helm: mockHelm,
+            namespace: 'gravitee-am',
+            config: mockConfig,
+            kubectl: mockKubectl
+        });
+        await strategy.clean();
+        expect(mockHelm.uninstall).toHaveBeenCalledWith('mongo');
+        expect(mockKubectl.deleteSecret).toHaveBeenCalledWith('mongo-mongodb-auth');
+    });
+
+    test('when MONGODB_GRAVITEE_PASSWORD is set, secret uses injected password', async () => {
+        const prev = process.env.MONGODB_GRAVITEE_PASSWORD;
+        process.env.MONGODB_GRAVITEE_PASSWORD = 'injected-secret';
+        const mockKubectl = {
+            ensureNamespace: jest.fn(),
+            createSecretGeneric: jest.fn(),
+            deleteSecret: jest.fn()
+        };
+        strategy = new MongoK8sStrategy({
+            helm: mockHelm,
+            namespace: 'gravitee-am',
+            config: mockConfig,
+            kubectl: mockKubectl
+        });
+        try {
+            await strategy.deploy();
+            expect(mockKubectl.createSecretGeneric).toHaveBeenCalledWith(
+                'mongo-mongodb-auth',
+                expect.objectContaining({
+                    'mongodb-passwords': 'injected-secret,injected-secret,injected-secret'
+                })
+            );
+        } finally {
+            if (prev !== undefined) process.env.MONGODB_GRAVITEE_PASSWORD = prev;
+            else delete process.env.MONGODB_GRAVITEE_PASSWORD;
+        }
+    });
 });

@@ -1,0 +1,91 @@
+# Migration-test-only config. Used when pipeline is triggered with migration_test_from_tag.
+# Setup (config.yml) continues with this file instead of workflows.yml when migration is requested.
+version: 2.1
+
+orbs:
+  keeper: gravitee-io/keeper@0.6.3
+
+parameters:
+  migration_test_from_tag:
+    type: string
+    default: ""
+  migration_test_to_tag:
+    type: string
+    default: ""
+  migration_test_db_type:
+    type: string
+    default: ""
+  migration_test_provider:
+    type: string
+    default: "k8s"
+  migration_test_filter:
+    type: string
+    default: ""
+  migration_test_with_downgrade:
+    type: string
+    default: "true"
+
+jobs:
+  migration-test:
+    description: Run full migration flow (from-tag → to-tag) on Kind cluster with K8s provider.
+    parameters:
+      db_type:
+        type: string
+        description: Database type (mongodb or postgres)
+    machine:
+      image: ubuntu-2204:current
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      # Provider hardcoded to k8s for CI (Kind cluster); pipeline param can be empty after continuation
+      MIGRATION_TEST_BASE: "./scripts/migration-test.mjs --from-tag << pipeline.parameters.migration_test_from_tag >> --to-tag << pipeline.parameters.migration_test_to_tag >> --db-type << parameters.db_type >> --provider k8s"
+    steps:
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - run:
+          name: "Set CIRCLECI_TOKEN from CCI_TOKEN"
+          command: echo 'export CIRCLECI_TOKEN="${CCI_TOKEN}"' >> $BASH_ENV
+      - run:
+          name: "Install Kubernetes Tools (Kind, Kubectl, Helm)"
+          command: |
+            curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+            chmod +x ./kind
+            sudo mv ./kind /usr/local/bin/kind
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x ./kubectl
+            sudo mv ./kubectl /usr/local/bin/kubectl
+            curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - run:
+          name: "Install dependencies"
+          command: |
+            npm install --prefix scripts/migration-tool
+            npm install --prefix gravitee-am-test
+      - run:
+          name: "Create Kind cluster"
+          command: |
+            kind create cluster --name am-migration --wait 2m
+      - run:
+          name: "Run full migration flow (<< pipeline.parameters.migration_test_from_tag >> → << pipeline.parameters.migration_test_to_tag >>) [<< parameters.db_type >>]"
+          command: |
+            export GRAVITEE_LICENSE="${GRAVITEE_LICENSE_KEY}"
+            export CIRCLECI_TOKEN="${CCI_TOKEN}"
+            CMD="${MIGRATION_TEST_BASE}"
+            if [ -n "<< pipeline.parameters.migration_test_filter >>" ]; then
+              CMD="$CMD --test-filter << pipeline.parameters.migration_test_filter >>"
+            fi
+            if [ "<< pipeline.parameters.migration_test_with_downgrade >>" = "true" ]; then
+              CMD="$CMD --with-downgrade"
+            fi
+            $CMD run
+
+workflows:
+  migration-pipeline:
+    jobs:
+      - migration-test:
+          name: migration-test-<< matrix.db_type >>
+          context: cicd-orchestrator
+          matrix:
+            parameters:
+              db_type: [mongodb, postgres]

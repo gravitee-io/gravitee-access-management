@@ -17,7 +17,7 @@ on:
         type: choice
         options:
           - mongodb
-          - jdbc
+          - postgres
         default: "mongodb"
 
 jobs:
@@ -35,6 +35,7 @@ jobs:
               \"parameters\": {
                 \"migration_test_from_tag\": \"${{ github.event.inputs.from_tag }}\",
                 \"migration_test_to_tag\": \"${{ github.event.inputs.to_tag }}\",
-                \"migration_test_db_type\": \"${{ github.event.inputs.db_type }}\"
+                \"migration_test_db_type\": \"${{ github.event.inputs.db_type }}\",
+                \"migration_test_provider\": \"k8s\"
               }
             }"

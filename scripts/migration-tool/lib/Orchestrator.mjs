@@ -1,9 +1,9 @@
-import path from 'path';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 
 /**
  * Orchestrator manages the migration test lifecycle and stages.
- * K8s multi-dataplane port usage: API 8093, UI 8002, gateway dp1 8091, gateway dp2 8092.
- * verify-all targets gateway dp1 (8091).
+ * testDir and test env come from options and provider; it has no knowledge of a specific test suite.
  */
 export class Orchestrator {
     constructor(provider, options) {
@@ -61,10 +61,6 @@ export class Orchestrator {
                 await this.provider.upgradeGw(this.options.toTag);
                 break;
             case 'verify-all':
-                // K8s multi-dataplane: gateway dp1 is on 8091, dp2 on 8092; tests target dp1 (8091)
-                if (this.provider.releases?.length > 0) {
-                    process.env.AM_GATEWAY_URL = 'http://localhost:8091';
-                }
                 await this.runTests('🔍 Final verification...', 'ci:gateway', 'specs/gateway');
                 break;
             case 'downgrade-mapi':
@@ -77,9 +73,6 @@ export class Orchestrator {
                 await this.provider.upgradeGw(this.options.fromTag);
                 break;
             case 'verify-after-downgrade':
-                if (this.provider.releases?.length > 0) {
-                    process.env.AM_GATEWAY_URL = 'http://localhost:8091';
-                }
                 await this.runTests('🔍 Verifying after downgrade...', 'ci:gateway', 'specs/gateway');
                 break;
             default:
@@ -89,24 +82,42 @@ export class Orchestrator {
 
     async runTests(message, npmScript, specPath) {
         console.log(message);
+        const testDir = this.options.testDir;
+        if (!testDir) {
+            throw new Error('options.testDir is required to run tests');
+        }
+        const filter = (this.options.testFilter || '').trim();
+
+        const jestEnv = { ...process.env, ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {}) };
+        Object.assign(process.env, jestEnv);
+
         if (typeof this.provider.prepareTests === 'function') {
             await this.provider.prepareTests();
         }
 
-        const filter = (this.options.testFilter || '').trim();
-
-        // Use zx globals for cd and within
         await within(async () => {
-            const testDir = path.join(this.projectRoot, 'gravitee-am-test');
             cd(testDir);
 
             if (filter) {
                 console.log(`🔍 Filtering tests by: ${filter}`);
-                // Use --testPathPattern so Jest runs only matching path(s); pass path as single arg
-                await $`npx jest --no-cache --config=api/config/ci.config.js --testPathPattern=${filter}`;
+                const args = ['jest', '--no-cache', '--config=api/config/ci.config.js', `--testPathPattern=${filter}`];
+                await this._runJestWithEnv(testDir, jestEnv, args);
             } else {
                 await $`npm run ${npmScript} -- ${specPath || ''}`;
             }
         });
+    }
+
+    async _runJestWithEnv(testDir, env, args) {
+        const child = spawn('npx', args, {
+            cwd: testDir,
+            env: { ...process.env, ...env },
+            stdio: 'inherit',
+            shell: false,
+        });
+        const [code] = await once(child, 'exit');
+        if (code !== 0) {
+            throw new Error(`Jest exited with code ${code}`);
+        }
     }
 }

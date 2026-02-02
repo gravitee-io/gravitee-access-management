@@ -22,10 +22,36 @@ export const Config = {
         valuesPathMongoGatewayDp2: process.env.AM_HELM_VALUES_PATH_MONGO_GW_DP2 || 'scripts/migration-tool/env/k8s/am/am-mongodb-gateway-dp2.yaml',
         amChartVersion: process.env.AM_CHART_VERSION || '4.7.0'
     },
+    /**
+     * Returns Helm release config for K8s multi-dataplane (1 API + 2 Gateways).
+     * @param {'mongodb'|'postgres'} dbType
+     * @returns {{ name: string, valuesPath: string, component: string }[]}
+     */
+    getK8sReleases(dbType) {
+        const k = Config.k8s;
+        if (dbType === 'postgres') {
+            return [
+                { name: 'am-mapi', valuesPath: k.valuesPathPostgresMapi, component: 'mapi' },
+                { name: 'am-gateway-dp1', valuesPath: k.valuesPathPostgresGatewayDp1, component: 'gateway' },
+                { name: 'am-gateway-dp2', valuesPath: k.valuesPathPostgresGatewayDp2, component: 'gateway' }
+            ];
+        }
+        return [
+            { name: 'am-mapi', valuesPath: k.valuesPathMongoMapi, component: 'mapi' },
+            { name: 'am-gateway-dp1', valuesPath: k.valuesPathMongoGatewayDp1, component: 'gateway' },
+            { name: 'am-gateway-dp2', valuesPath: k.valuesPathMongoGatewayDp2, component: 'gateway' }
+        ];
+    },
     license: {
         path: process.env.AM_LICENSE_PATH || 'scripts/management/gravitee-universe-v4.key.b64'
     },
     db: {
         type: process.env.AM_DB_TYPE || 'mongodb'
+    },
+    /**
+     * Test suite directory (relative to CWD or absolute). Override via AM_MIGRATION_TEST_DIR or --test-dir.
+     */
+    test: {
+        dir: process.env.AM_MIGRATION_TEST_DIR || 'gravitee-am-test'
     }
 };

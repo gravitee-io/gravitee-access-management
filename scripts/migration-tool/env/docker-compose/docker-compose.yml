@@ -11,7 +11,7 @@ services:
     image: graviteeio/am-management-api:${AM_VERSION:-latest}
     container_name: am-migration-mapi
     ports:
-      - "18093:8093"
+      - "8093:8093"
     environment:
       - management_type=mongodb
       - management_mongodb_uri=mongodb://mongodb:27017/gravitee-am
@@ -24,7 +24,7 @@ services:
     image: graviteeio/am-gateway:${AM_VERSION:-latest}
     container_name: am-migration-gateway
     ports:
-      - "18092:8092"
+      - "8092:8092"
     environment:
       - management_type=mongodb
       - management_mongodb_uri=mongodb://mongodb:27017/gravitee-am

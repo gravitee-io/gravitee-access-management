@@ -73,4 +73,30 @@ describe('Kubectl', () => {
         expect(pods).toHaveLength(1);
         expect(pods[0].metadata.name).toBe('pod-1');
     });
+
+    test('should ensure namespace exists (idempotent)', async () => {
+        await kubectl.ensureNamespace();
+        const call = mockShell.mock.calls[0];
+        const parts = call[0];
+        const values = call.slice(1);
+        const cmd = parts.reduce((acc, p, i) => acc + p + (values[i] !== undefined ? String(values[i]) : ''), '');
+        expect(cmd).toContain('kubectl create namespace');
+        expect(cmd).toContain('gravitee-am');
+        expect(cmd).toContain('apply -f -');
+    });
+
+    test('should create secret from literals (idempotent)', async () => {
+        await kubectl.createSecretGeneric('mongo-auth', {
+            'mongodb-root-password': 'root',
+            'mongodb-passwords': 'user'
+        });
+        const call = mockShell.mock.calls[0];
+        const parts = call[0];
+        const values = call.slice(1);
+        const cmd = parts.reduce((acc, p, i) => acc + p + (values[i] !== undefined ? String(values[i]) : ''), '');
+        expect(cmd).toContain('kubectl create secret generic');
+        expect(cmd).toContain('mongo-auth');
+        expect(cmd).toContain('--from-literal');
+        expect(cmd).toContain('apply -f -');
+    });
 });

@@ -24,17 +24,21 @@ export class Kubectl {
         await this.shell`kubectl delete secret ${name} -n ${this.namespace} --ignore-not-found`;
     }
 
-    async configMapExists(name) {
-        try {
-            await this.shell`kubectl get configmap ${name} -n ${this.namespace}`;
-            return true;
-        } catch (e) {
-            return false;
-        }
+    /**
+     * Ensure the namespace exists (idempotent).
+     */
+    async ensureNamespace() {
+        await this.shell`kubectl create namespace ${this.namespace} --dry-run=client -o yaml | kubectl apply -f -`;
     }
 
-    async createConfigMapFromFile(name, filePath) {
-        await this.shell`kubectl create configmap ${name} -n ${this.namespace} --from-file=${filePath}`;
+    /**
+     * Create a generic secret from literal key-value pairs (for Bitnami MongoDB auth.existingSecret).
+     * @param {string} name - Secret name
+     * @param {Record<string, string>} literals - Keys and string values (no sensitive data in logs)
+     */
+    async createSecretGeneric(name, literals) {
+        const args = Object.entries(literals).flatMap(([k, v]) => ['--from-literal', `${k}=${v}`]);
+        await this.shell`kubectl create secret generic ${name} -n ${this.namespace} ${args} --dry-run=client -o yaml | kubectl apply -f -`;
     }
 
     async deleteNamespace() {
@@ -44,10 +48,6 @@ export class Kubectl {
     async getPods(selector) {
         const result = await this.shell`kubectl get pods -n ${this.namespace} -l ${selector} -o json`;
         return JSON.parse(result.stdout).items;
-    }
-
-    async getEvents(limit = 10) {
-        return await this.shell`kubectl get events -n ${this.namespace} --sort-by='.lastTimestamp' | tail -n ${limit}`;
     }
 
     /**

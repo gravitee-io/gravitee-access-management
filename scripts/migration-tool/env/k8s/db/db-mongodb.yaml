@@ -1,15 +1,19 @@
 # Migration Tool - DB Helm values (MongoDB / Bitnami)
 # Single source: db/db-mongodb.yaml (replaces root mongodb-values.yaml)
+# Credentials are provided via auth.existingSecret (no plain-text passwords in repo).
+# The migration tool creates the secret at deploy time from MONGODB_ROOT_PASSWORD env (or safe default for local).
+# databases: gravitee (CP), gravitee-dp1 and gravitee-dp2 for multi-dataplane gateways; user 'gravitee' gets access to all.
 
 architecture: standalone
 fullnameOverride: mongo-mongodb
 
 auth:
   enabled: true
-  rootPassword: "secret-password"
-  usernames: ["gravitee"]
-  passwords: ["gravitee-password"]
-  databases: ["gravitee"]
+  # Bitnami chart key: K8s secret *name* only (no credentials in repo). Aqua false positive: not a password.
+  existingSecret: "mongo-mongodb-auth"
+  # One user 'gravitee' with access to each dataplane DB (parallel arrays: usernames[i], passwords[i], databases[i])
+  usernames: ["gravitee", "gravitee", "gravitee"]
+  databases: ["gravitee", "gravitee-dp1", "gravitee-dp2"]
 
 persistence:
   enabled: false

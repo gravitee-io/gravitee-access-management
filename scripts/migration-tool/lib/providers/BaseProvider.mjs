@@ -19,11 +19,7 @@ export class BaseProvider {
         throw new Error('upgradeGw() not implemented');
     }
 
-    async prepareTests() {
-        // Optional test preparation (e.g. login, token retrieval)
-    }
+    async prepareTests() {}
 
-    async cleanup() {
-        // Optional post-run cleanup
-    }
+    async cleanup() {}
 }

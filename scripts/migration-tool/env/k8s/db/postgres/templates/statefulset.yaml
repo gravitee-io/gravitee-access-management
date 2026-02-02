@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "pg.name" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "pg.labels" . | nindent 4 }}
 spec:
@@ -17,10 +18,26 @@ spec:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      # fsGroup makes the data volume writable by runAsUser 10001 without a root chown init (Aqua-friendly).
+      securityContext:
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: postgres
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: POSTGRES_USER
               value: {{ .Values.postgres.user | quote }}
@@ -34,6 +51,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+            - name: tmp
+              mountPath: /tmp
             {{- if or .Values.postgres.gatewayDatabase .Values.postgres.dataplaneDatabases }}
             - name: init-dbs
               mountPath: /docker-entrypoint-initdb.d
@@ -46,6 +65,8 @@ spec:
         - name: data
           emptyDir: {}
         {{- end }}
+        - name: tmp
+          emptyDir: {}
         {{- if or .Values.postgres.gatewayDatabase .Values.postgres.dataplaneDatabases }}
         - name: init-dbs
           configMap:

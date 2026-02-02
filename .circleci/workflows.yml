@@ -106,7 +106,6 @@ parameters:
     type: boolean
     default: true
     description: "Runs UI jest tests + Lint"
-
 commands:
   create_docker_context:
     steps:

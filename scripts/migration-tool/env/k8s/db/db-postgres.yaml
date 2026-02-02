@@ -3,6 +3,7 @@
 #
 # Uses official postgres:16.6 so md5() works (Liquibase). Service name postgres-postgresql for AM.
 # Run from repo root so -f path and chart path resolve.
+# postgres.password below is for local/migration test only; override in production.
 #
 # Verify: kubectl get statefulset,pods,svc -n <namespace> | grep postgres
 # Test md5 (use -h 127.0.0.1 for TCP; socket can be unavailable in container): kubectl -n gravitee-am exec -it postgres-postgresql-0 -- psql -h 127.0.0.1 -U gravitee -d gravitee-am -c "select md5('test');"

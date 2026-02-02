@@ -17,11 +17,12 @@ export class CircleCI {
         const body = {
             branch: branch,
             parameters: {
-                run_migration_test: true,
                 migration_test_from_tag: options.fromTag,
                 migration_test_to_tag: options.toTag,
                 migration_test_db_type: options.dbType,
-                migration_test_provider: options.provider
+                migration_test_provider: options.provider,
+                ...(options.testFilter != null && options.testFilter !== '' ? { migration_test_filter: options.testFilter } : {}),
+                ...(options.withDowngrade ? { migration_test_with_downgrade: 'true' } : {})
             }
         };
 
