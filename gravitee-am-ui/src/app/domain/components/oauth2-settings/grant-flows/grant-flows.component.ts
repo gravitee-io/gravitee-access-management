@@ -214,14 +214,12 @@ export class GrantFlowsComponent implements OnInit {
 
   private initGrantTypes() {
     const grantTypesList = this.oauthSettings.grantTypes || [];
-    // For MCP Server context, filter grant types list to client_credentials, token exchange, and custom grant types
+    // For MCP Server context, filter grant types list to include client_credentials and token exchange
     let filteredGrantTypesList = grantTypesList;
     if (this.context === this.MCP_SERVER_CONTEXT) {
       filteredGrantTypesList = grantTypesList.filter(
         (gt) =>
-          gt.toLowerCase() === this.CLIENT_CREDENTIALS_GRANT_TYPE ||
-          gt.toLowerCase() === this.TOKEN_EXCHANGE_GRANT_TYPE.toLowerCase() ||
-          this.isCustomGrantType(gt),
+          gt.toLowerCase() === this.CLIENT_CREDENTIALS_GRANT_TYPE || gt.toLowerCase() === this.TOKEN_EXCHANGE_GRANT_TYPE.toLowerCase(),
       );
     }
     this.grantTypes.forEach((grantType) => {

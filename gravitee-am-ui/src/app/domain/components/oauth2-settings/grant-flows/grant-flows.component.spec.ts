@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 jest.mock('@gravitee/ui-components/src/lib/utils', () => ({
-  deepClone: (x: unknown) => (x && typeof x === 'object' ? { ...x } : x),
+  deepClone: (x: unknown) => (x !== null && typeof x === 'object' ? JSON.parse(JSON.stringify(x)) : x),
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
