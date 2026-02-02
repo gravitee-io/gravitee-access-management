@@ -613,6 +613,26 @@ describe('When admin created bunch of Protected Resources', () => {
     expect(pageByName.data.length).toBe(11);
     expect(pageByName.data.every((data) => data.name.includes(nameToSearch))).toBeTruthy();
   });
+
+  it('Protected Resource can be searched by name - case insensitive exact match', async () => {
+    // Search for existing resource with different case
+    // Resources were created as 'test_5_server' (lowercase)
+    const nameToSearch = 'TEST_5_SERVER';
+
+    const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch);
+    expect(pageByName.data.length).toBe(1);
+    expect(pageByName.data[0].name.toLowerCase()).toEqual(nameToSearch.toLowerCase());
+  });
+
+  it('Protected Resource can be searched by name - case insensitive wildcard', async () => {
+    // Search with uppercase wildcard pattern
+    const nameToSearch = 'TEST_5';
+
+    const pageByName = await getMcpServers(domainTestSearch.id, accessToken, 20, 0, undefined, nameToSearch + '*');
+    // test_5 and test_50,51... so 11
+    expect(pageByName.data.length).toBe(11);
+    expect(pageByName.data.every((data) => data.name.toLowerCase().includes(nameToSearch.toLowerCase()))).toBeTruthy();
+  });
 });
 
 describe('When updating protected resource', () => {

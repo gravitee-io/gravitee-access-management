@@ -74,8 +74,10 @@ export class DomainMcpServersComponent implements OnInit, OnDestroy {
   }
 
   fetchData() {
+    // Add wildcards around search value for partial matching, consistent with application search behavior
+    const searchTerm = this.searchValue ? '*' + this.searchValue + '*' : undefined;
     this.service
-      .findByDomain(this.domainId, this.currentPage, this.PAGE_SIZE, this.sort, this.searchValue)
+      .findByDomain(this.domainId, this.currentPage, this.PAGE_SIZE, this.sort, searchTerm)
       .subscribe((page) => (this.page = page));
   }
 
