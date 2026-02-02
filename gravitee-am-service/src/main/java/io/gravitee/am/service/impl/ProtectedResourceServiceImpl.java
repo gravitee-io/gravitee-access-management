@@ -176,6 +176,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         toCreate.setSecretSettings(new ArrayList<>(List.of(secretSettings)));
         toCreate.setClientSecrets(new ArrayList<>(List.of(buildClientSecret(domain, secretSettings, rawSecret))));
+        if (newProtectedResource.getSettings() != null) {
+            toCreate.setSettings(newProtectedResource.getSettings());
+        }
         applyDefaultOAuthSettings(toCreate, rawSecret);
 
         toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
