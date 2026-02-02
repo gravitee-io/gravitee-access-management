@@ -239,6 +239,7 @@ public class EmailServiceImpl implements EmailService {
                     .reference(Reference.domain(domain.getId()))
                     .client(client)
                     .email(email)
+                    .user(user)
                     .throwable(ex));
         }
     }
