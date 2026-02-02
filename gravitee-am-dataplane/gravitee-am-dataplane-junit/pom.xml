@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee.am.dataplane</groupId>
         <artifactId>gravitee-am-dataplane</artifactId>
-        <version>4.8.21</version>
+        <version>4.8.22-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-dataplane-junit</artifactId>
