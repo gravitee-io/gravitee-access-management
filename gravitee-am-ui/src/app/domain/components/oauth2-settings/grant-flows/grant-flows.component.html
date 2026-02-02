@@ -53,7 +53,7 @@
         </div>
       </div>
 
-      <div class="gv-form-section" *ngIf="context !== 'McpServer'">
+      <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT">
         <div class="gv-form-section-title">
           <h5>Refresh Token</h5>
           <small>Configure how refresh tokens will be used.</small>
@@ -74,7 +74,7 @@
         </div>
       </div>
 
-      <div class="gv-form-section" *ngIf="context !== 'McpServer'">
+      <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT">
         <div class="gv-form-section-title">
           <h5>Proof Key for Code Exchange (PKCE)</h5>
           <small>PKCE is an extension to the Authorization Code flow to prevent interception attack for public clients.</small>
@@ -261,24 +261,30 @@
         To authenticate an user, the application must first decide which oauth2 flow must be used. Oauth2 flows are enabled on the client
         through the grant_type. You should select the grant_type according to your application type.
       </p>
-      <p *ngIf="context === 'McpServer'">
-        For MCP Resource Servers, only the <b>client_credentials</b> grant type and token exchange flows are supported. These grant types
-        enable server-to-server authentication where the client authenticates using its credentials to obtain an access token.
+      <p *ngIf="context === MCP_SERVER_CONTEXT">
+        For MCP Resource Servers, only the <b>{{ CLIENT_CREDENTIALS_GRANT_TYPE }}</b> grant type and token exchange flows are supported.
+        These grant types enable server-to-server authentication where the client authenticates using its credentials to obtain an access
+        token.
       </p>
       <small *ngIf="context === 'Application'">
         <b><i>authorization_code</i></b> for server side applications (web) or browser and native applications (then combined with PKCE).<br />
         <b><i>implicit</i></b> originally used for browser apps, deprecated in favor of authorization_code + PKCE.<br />
         <b><i>password</i></b> should only be used for trusted applications
         <i>(means application and authorization server are managed within the same organization).</i><br />
-        <b><i>client_credentials</i></b> should be used for server to server communications.<br /><br />
+        <b
+          ><i>{{ CLIENT_CREDENTIALS_GRANT_TYPE }}</i></b
+        >
+        should be used for server to server communications.<br /><br />
         <b>It is not recommended to mix client and user authentication within the same application.</b>
-        <i>(Aka client_credentials and authorization_code, implicit or password)</i><br />
+        <i>(Aka {{ CLIENT_CREDENTIALS_GRANT_TYPE }} and authorization_code, implicit or password)</i><br />
       </small>
-      <small *ngIf="context === 'McpServer'">
-        <b><i>client_credentials</i></b> is used for server-to-server communications where the client authenticates using its credentials to
-        obtain an access token.<br />
-        <b><i>Token exchange</i></b> (via custom grant types) allows exchanging an existing token for a new token, enabling delegation and
-        impersonation scenarios.<br /><br />
+      <small *ngIf="context === MCP_SERVER_CONTEXT">
+        <b
+          ><i>{{ CLIENT_CREDENTIALS_GRANT_TYPE }}</i></b
+        >
+        is used for server-to-server communications where the client authenticates using its credentials to obtain an access token.<br />
+        <b><i>Token exchange</i></b> allows exchanging an existing token for a new token, enabling delegation and impersonation scenarios.
+        Enable Token Exchange in domain settings if the option is disabled.<br /><br />
         These grant types are appropriate for Resource Servers that need to authenticate and authorize client applications accessing
         protected resources.
       </small>

@@ -28,7 +28,7 @@ import { DomainStoreService } from '../../../../stores/domain.store';
 export class GrantFlowsComponent implements OnInit {
   @Input() oauthSettings: any; // OAuth settings input
   @Input() domainId: string; // Domain ID from parent
-  @Input() context: 'Application' | 'McpServer' = 'Application'; // context to toggle features
+  @Input() context: 'Application' | 'McpServer' = 'Application'; // context to toggle features (use MCP_SERVER_CONTEXT for McpServer)
 
   // Optional: Full application object if needed for specific logic (like tokenEndpointAuthMethods filtering)
   // Or better, pass specifically what is needed.
@@ -40,6 +40,9 @@ export class GrantFlowsComponent implements OnInit {
 
   @Output() settingsChange = new EventEmitter<any>();
   @Output() formChanged = new EventEmitter<boolean>();
+
+  readonly MCP_SERVER_CONTEXT = 'McpServer' as const;
+  readonly CLIENT_CREDENTIALS_GRANT_TYPE = 'client_credentials';
 
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
@@ -59,7 +62,7 @@ export class GrantFlowsComponent implements OnInit {
     { name: 'IMPLICIT', value: 'implicit', checked: false, disabled: false },
     { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false, disabled: false },
     { name: 'PASSWORD', value: 'password', checked: false },
-    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false },
+    { name: 'CLIENT CREDENTIALS', value: this.CLIENT_CREDENTIALS_GRANT_TYPE, checked: false, disabled: false },
     { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false },
     { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false },
     { name: 'TOKEN EXCHANGE', value: this.TOKEN_EXCHANGE_GRANT_TYPE, checked: false, disabled: false },
@@ -89,9 +92,11 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   get filteredGrantTypes() {
-    // For MCP Server context, only show client_credentials and custom grant types (for token exchange)
-    if (this.context === 'McpServer') {
-      return this.grantTypes.filter((grantType) => grantType.value === 'client_credentials');
+    // For MCP Server context, show client_credentials and token exchange (custom grant types shown separately)
+    if (this.context === this.MCP_SERVER_CONTEXT) {
+      return this.grantTypes.filter(
+        (grantType) => grantType.value === this.CLIENT_CREDENTIALS_GRANT_TYPE || grantType.value === this.TOKEN_EXCHANGE_GRANT_TYPE,
+      );
     }
     return this.grantTypes;
   }
@@ -163,7 +168,7 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   tokenEndpointAuthMethodChanged(value) {
-    const clientCredentials = this.grantTypes.find((grantType) => grantType.value === 'client_credentials');
+    const clientCredentials = this.grantTypes.find((grantType) => grantType.value === this.CLIENT_CREDENTIALS_GRANT_TYPE);
     if ('none' === value) {
       clientCredentials.checked = false;
       clientCredentials.disabled = true;
@@ -176,10 +181,12 @@ export class GrantFlowsComponent implements OnInit {
   modelChanged() {
     this.formChanged.emit(true);
     // Prepare updated settings object to emit
-    // For MCP Server context, only include client_credentials and custom grant types
+    // For MCP Server context, include client_credentials, token exchange, and custom grant types
     let selectedGrantTypes = this.selectedGrantTypes;
-    if (this.context === 'McpServer') {
-      selectedGrantTypes = selectedGrantTypes.filter((gt) => gt === 'client_credentials');
+    if (this.context === this.MCP_SERVER_CONTEXT) {
+      selectedGrantTypes = selectedGrantTypes.filter(
+        (gt) => gt === this.CLIENT_CREDENTIALS_GRANT_TYPE || gt === this.TOKEN_EXCHANGE_GRANT_TYPE,
+      );
     }
     const updatedSettings = {
       ...this.oauthSettings,
@@ -207,10 +214,15 @@ export class GrantFlowsComponent implements OnInit {
 
   private initGrantTypes() {
     const grantTypesList = this.oauthSettings.grantTypes || [];
-    // For MCP Server context, filter grant types list to only include client_credentials and custom grant types
+    // For MCP Server context, filter grant types list to client_credentials, token exchange, and custom grant types
     let filteredGrantTypesList = grantTypesList;
-    if (this.context === 'McpServer') {
-      filteredGrantTypesList = grantTypesList.filter((gt) => gt.toLowerCase() === 'client_credentials' || this.isCustomGrantType(gt));
+    if (this.context === this.MCP_SERVER_CONTEXT) {
+      filteredGrantTypesList = grantTypesList.filter(
+        (gt) =>
+          gt.toLowerCase() === this.CLIENT_CREDENTIALS_GRANT_TYPE ||
+          gt.toLowerCase() === this.TOKEN_EXCHANGE_GRANT_TYPE.toLowerCase() ||
+          this.isCustomGrantType(gt),
+      );
     }
     this.grantTypes.forEach((grantType) => {
       grantType.checked = some(
@@ -220,7 +232,7 @@ export class GrantFlowsComponent implements OnInit {
       if (
         this.oauthSettings.tokenEndpointAuthMethod &&
         'none' === this.oauthSettings.tokenEndpointAuthMethod &&
-        'client_credentials' === grantType.value
+        this.CLIENT_CREDENTIALS_GRANT_TYPE === grantType.value
       ) {
         grantType.disabled = true;
       }
