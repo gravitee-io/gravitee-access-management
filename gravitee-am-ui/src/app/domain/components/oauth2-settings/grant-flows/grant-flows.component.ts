@@ -96,6 +96,16 @@ export class GrantFlowsComponent implements OnInit {
     return this.grantTypes;
   }
 
+  get filteredTokenEndpointAuthMethods() {
+    // For MCP Server context, only show client_secret_* methods
+    // The "Based on incoming request" (null) option is hardcoded in the template
+    if (this.context === 'McpServer') {
+      const allowedMethods = ['client_secret_basic', 'client_secret_post', 'client_secret_jwt'];
+      return this.tokenEndpointAuthMethods.filter((method) => allowedMethods.includes(method.value));
+    }
+    return this.tokenEndpointAuthMethods;
+  }
+
   customGrantTypeIsDisabled(extensionGrant): boolean {
     return !extensionGrant.checked && this.selectedCustomGrantTypes.length > 0;
   }
