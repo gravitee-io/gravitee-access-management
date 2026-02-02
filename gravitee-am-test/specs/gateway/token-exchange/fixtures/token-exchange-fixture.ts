@@ -77,6 +77,9 @@ export interface TokenExchangeFixture {
 
   // Helper method to obtain subject tokens
   obtainSubjectToken: (scope?: string) => Promise<SubjectTokens>;
+
+  // Helper method to obtain actor tokens (alias for obtainSubjectToken for readability)
+  obtainActorToken: (scope?: string) => Promise<SubjectTokens>;
 }
 
 /**
@@ -103,8 +106,27 @@ export const TOKEN_EXCHANGE_TEST = {
     'urn:ietf:params:oauth:token-type:access_token',
     'urn:ietf:params:oauth:token-type:id_token',
   ],
+  DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES: [
+    'urn:ietf:params:oauth:token-type:access_token',
+    'urn:ietf:params:oauth:token-type:id_token',
+    'urn:ietf:params:oauth:token-type:jwt',
+  ],
+  // 0 = unlimited (no depth check)
+  DEFAULT_MAX_DELEGATION_DEPTH: 0,
   REDIRECT_URI: 'https://gravitee.io/callback',
 };
+
+/**
+ * Token exchange settings for domain configuration
+ */
+interface TokenExchangeSettingsConfig {
+  allowedSubjectTokenTypes?: string[];
+  allowImpersonation?: boolean;
+  allowDelegation?: boolean;
+  allowedActorTokenTypes?: string[];
+  allowedRequestedTokenTypes?: string[];
+  maxDelegationDepth?: number;
+}
 
 /**
  * Enable token exchange for a domain
@@ -112,20 +134,36 @@ export const TOKEN_EXCHANGE_TEST = {
 async function enableTokenExchange(
   domainId: string,
   token: string,
-  allowedSubjectTokenTypes: string[] = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
-  allowedRequestedTokenTypes: string[] = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+  config: TokenExchangeSettingsConfig = {},
+
 ): Promise<void> {
+  const {
+    allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+    allowImpersonation = true,
+    allowDelegation = false,
+    allowedActorTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+    allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+    maxDelegationDepth = TOKEN_EXCHANGE_TEST.DEFAULT_MAX_DELEGATION_DEPTH,
+  } = config;
+
+  const tokenExchangeSettings: Record<string, unknown> = {
+    enabled: true,
+    allowedSubjectTokenTypes,
+    allowImpersonation,
+    allowedRequestedTokenTypes,
+    allowDelegation,
+  };
+
+  if (allowDelegation) {
+    tokenExchangeSettings.allowedActorTokenTypes = allowedActorTokenTypes;
+    tokenExchangeSettings.maxDelegationDepth = maxDelegationDepth;
+  }
+
   await request(getDomainManagerUrl(domainId))
     .patch('')
     .set('Authorization', `Bearer ${token}`)
     .set('Content-Type', 'application/json')
-    .send({
-      tokenExchangeSettings: {
-        enabled: true,
-        allowedSubjectTokenTypes,
-        allowedRequestedTokenTypes,
-      },
-    })
+    .send({ tokenExchangeSettings })
     .expect(200);
 }
 
@@ -139,6 +177,11 @@ export interface TokenExchangeFixtureConfig {
   grantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
   allowedSubjectTokenTypes?: string[];
+  // Delegation settings
+  allowImpersonation?: boolean;
+  allowDelegation?: boolean;
+  allowedActorTokenTypes?: string[];
+  maxDelegationDepth?: number;
   allowedRequestedTokenTypes?: string[];
 }
 
@@ -161,6 +204,10 @@ export const setupTokenExchangeFixture = async (
       scopes = TOKEN_EXCHANGE_TEST.DEFAULT_SCOPES,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
       allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+      allowImpersonation = true,
+      allowDelegation = false,
+      allowedActorTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+      maxDelegationDepth = TOKEN_EXCHANGE_TEST.DEFAULT_MAX_DELEGATION_DEPTH,
     } = config;
 
     // Get admin access token
@@ -179,7 +226,14 @@ export const setupTokenExchangeFixture = async (
     expect(defaultIdp).toBeDefined();
 
     // Enable token exchange
-    await enableTokenExchange(createdDomain.id, accessToken, allowedSubjectTokenTypes, allowedRequestedTokenTypes);
+    await enableTokenExchange(createdDomain.id, accessToken, {
+      allowedSubjectTokenTypes,
+      allowedRequestedTokenTypes,
+      allowImpersonation,
+      allowDelegation,
+      allowedActorTokenTypes,
+      maxDelegationDepth,
+    });
 
     // Create application
     const application = await createTestApp(uniqueName(clientName, true), createdDomain, accessToken, 'WEB', {
@@ -248,6 +302,7 @@ export const setupTokenExchangeFixture = async (
       basicAuth,
       accessToken,
       obtainSubjectToken,
+      obtainActorToken: obtainSubjectToken,
       cleanup,
     };
   } catch (error) {

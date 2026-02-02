@@ -30,7 +30,7 @@ import static io.gravitee.am.common.oauth2.TokenType.REFRESH_TOKEN;
  * RFC 8693 Token Exchange Settings
  *
  * Configuration settings for OAuth 2.0 Token Exchange functionality.
- * This implementation supports the impersonation use case only.
+ * Supports both impersonation and delegation use cases.
  * See <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693 - OAuth 2.0 Token Exchange</a>
  *
  * @author GraviteeSource Team
@@ -40,6 +40,11 @@ import static io.gravitee.am.common.oauth2.TokenType.REFRESH_TOKEN;
 public class TokenExchangeSettings {
 
     private static final List<String> DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES = List.of(ACCESS_TOKEN, ID_TOKEN);
+
+    /**
+     * Default value for maxDelegationDepth (0 = unlimited/disabled).
+     */
+    public static final int DEFAULT_MAX_DELEGATION_DEPTH = 0;
 
     /**
      * Enable or disable token exchange functionality.
@@ -59,13 +64,35 @@ public class TokenExchangeSettings {
     private List<String> allowedRequestedTokenTypes;
 
     /**
-     * Allow impersonation scenarios where the actor becomes the subject.
+     * Allow impersonation scenarios where the new token represents the subject directly.
+     * At least one of allowImpersonation or allowDelegation must be enabled.
      */
     private boolean allowImpersonation = true;
+
+    /**
+     * List of allowed actor token types that can be used for delegation.
+     * Supports ACCESS_TOKEN, ID_TOKEN, and JWT.
+     */
+    private List<String> allowedActorTokenTypes;
+
+    /**
+     * Allow delegation scenarios where the actor acts on behalf of the subject.
+     * When enabled, actor_token can be provided and "act" claim is added to issued token.
+     * At least one of allowImpersonation or allowDelegation must be enabled.
+     */
+    private boolean allowDelegation = false;
+
+    /**
+     * Maximum depth of delegation chain (nested "act" claims).
+     * Value of 0 means unlimited (depth check is disabled).
+     * Default is 0 (unlimited).
+     */
+    private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
     public TokenExchangeSettings() {
         this.allowedSubjectTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, JWT));
         this.allowedRequestedTokenTypes = new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
+        this.allowedActorTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, ID_TOKEN, JWT));
     }
 
     /**
@@ -77,5 +104,40 @@ public class TokenExchangeSettings {
             return new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
         }
         return allowedRequestedTokenTypes;
+    }
+
+    /**
+     * Set maximum delegation depth.
+     * Value of 0 means unlimited (depth check is disabled).
+     * Negative values are treated as 0 (unlimited).
+     *
+     * @param maxDelegationDepth the maximum delegation depth (0 = unlimited)
+     */
+    public void setMaxDelegationDepth(int maxDelegationDepth) {
+        this.maxDelegationDepth = Math.max(0, maxDelegationDepth);
+    }
+
+    /**
+     * Validate the settings consistency.
+     * When token exchange is enabled, at least one of impersonation or delegation must be enabled.
+     *
+     * @throws IllegalStateException if the settings are invalid
+     */
+    public void validate() {
+        if (enabled && !allowImpersonation && !allowDelegation) {
+            throw new IllegalStateException("Token exchange is enabled but neither impersonation nor delegation is allowed. At least one must be enabled.");
+        }
+    }
+
+    /**
+     * Check if the settings are valid without throwing an exception.
+     *
+     * @return true if settings are valid, false otherwise
+     */
+    public boolean isValid() {
+        if (enabled) {
+            return allowImpersonation || allowDelegation;
+        }
+        return true;
     }
 }

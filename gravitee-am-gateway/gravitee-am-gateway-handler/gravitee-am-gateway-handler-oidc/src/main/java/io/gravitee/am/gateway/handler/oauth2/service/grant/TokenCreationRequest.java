@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.common.util.MultiValueMap;
@@ -93,6 +94,14 @@ public record TokenCreationRequest(
 
     /**
      * Create request for Token Exchange (RFC 8693).
+     *
+     * @param original the original token request
+     * @param user the user representing the subject
+     * @param issuedTokenType the type of token being issued
+     * @param expiration the expiration constraint from subject token
+     * @param subjectTokenId the ID of the subject token
+     * @param subjectTokenType the type of the subject token
+     * @param actorInfo actor information for delegation (null for impersonation)
      */
     public static TokenCreationRequest forTokenExchange(
             TokenRequest original,
@@ -100,14 +109,15 @@ public record TokenCreationRequest(
             String issuedTokenType,
             Date expiration,
             String subjectTokenId,
-            String subjectTokenType) {
+            String subjectTokenType,
+            ActorTokenInfo actorInfo) {
 
         return new TokenCreationRequest(
                 original.getClientId(),
                 GrantType.TOKEN_EXCHANGE,
                 original.getScopes(),
                 user,
-                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType),
+                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorInfo),
                 false, // token exchange doesn't support refresh
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),

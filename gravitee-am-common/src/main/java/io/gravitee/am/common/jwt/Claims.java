@@ -136,6 +136,13 @@ public interface Claims {
 
     String CLIENT_ID = "client_id";
 
+    /**
+     * RFC 8693 Token Exchange - Actor claim for delegation scenarios.
+     * Contains a JSON object with claims identifying the actor (at minimum "sub").
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-4.1">RFC 8693 Section 4.1</a>
+     */
+    String ACT = "act";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF, CLIENT_ID);

@@ -86,18 +86,73 @@
             >
               Allow Impersonation
             </mat-slide-toggle>
-            <mat-hint style="font-size: 75%; margin-bottom: 16px"> Allow token exchange for impersonation scenarios </mat-hint>
+            <mat-hint style="font-size: 75%; margin-bottom: 16px">
+              Allow token exchange for impersonation scenarios (no actor_token)
+            </mat-hint>
+          </div>
+
+          <!-- Delegation Settings Section -->
+          <div class="gv-form-section" fxLayout="column">
+            <div class="gv-form-section-title">
+              <h5>Delegation Settings</h5>
+              <mat-divider></mat-divider>
+            </div>
+
+            <mat-slide-toggle
+              name="allowDelegation"
+              [(ngModel)]="domain.tokenExchangeSettings.allowDelegation"
+              (change)="modelChanged()"
+              [disabled]="!editMode"
+            >
+              Allow Delegation
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%; margin-bottom: 16px">
+              Allow token exchange for delegation scenarios (with actor_token). The issued token will contain an "act" claim.
+            </mat-hint>
+
+            <div *ngIf="domain.tokenExchangeSettings.allowDelegation" style="margin-top: 16px">
+              <mat-form-field appearance="outline">
+                <mat-label>Allowed Actor Token Types</mat-label>
+                <mat-select
+                  multiple
+                  name="allowedActorTokenTypes"
+                  [(ngModel)]="domain.tokenExchangeSettings.allowedActorTokenTypes"
+                  (selectionChange)="modelChanged()"
+                  [disabled]="!editMode"
+                >
+                  <mat-option *ngFor="let tokenType of ACTOR_TOKEN_TYPES" [value]="tokenType.value">{{ tokenType.label }}</mat-option>
+                </mat-select>
+                <mat-hint>Token types that can be submitted as actor_token for delegation</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="margin-top: 16px">
+                <mat-label>Maximum Delegation Depth</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  name="maxDelegationDepth"
+                  [(ngModel)]="domain.tokenExchangeSettings.maxDelegationDepth"
+                  (ngModelChange)="modelChanged()"
+                  [disabled]="!editMode"
+                  min="0"
+                  max="10"
+                />
+                <mat-hint>
+                  Maximum depth of delegation chain (nested "act" claims). Leave empty to keep the default unlimited limit. A value of 0
+                  disables depth checks (unlimited).
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Validation warning -->
+          <div *ngIf="!isFormValid()" class="gv-form-section" style="color: #f44336">
+            <mat-icon>warning</mat-icon>
+            <span style="margin-left: 8px">At least one of Impersonation or Delegation must be enabled when Token Exchange is active.</span>
           </div>
         </div>
         <div fxLayout="row" *ngIf="editMode">
-          <button
-            mat-raised-button
-            color="primary"
-            [disabled]="!formChanged || !domain.tokenExchangeSettings.allowImpersonation"
-            type="submit"
-          >
-            SAVE
-          </button>
+          <button mat-raised-button color="primary" [disabled]="!formChanged || !isFormValid()" type="submit">SAVE</button>
         </div>
       </form>
     </div>
@@ -108,9 +163,16 @@
           OAuth 2.0 Token Exchange (<a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>) is a protocol for requesting and
           obtaining security tokens from an authorization server.
         </p>
+        <h4>Impersonation</h4>
         <p>
-          This implementation supports the <strong>Impersonation</strong> use case, where a token can be exchanged for a new token. The
-          exchanged token inherits the subject's identity and permissions.
+          In <strong>Impersonation</strong> scenarios, a token is exchanged for a new token. The exchanged token inherits the subject's
+          identity and permissions.
+        </p>
+        <h4>Delegation</h4>
+        <p>
+          In <strong>Delegation</strong> scenarios, an actor acts on behalf of the subject. The request includes both a
+          <code>subject_token</code> (who the action is performed for) and an <code>actor_token</code> (who is performing the action). The
+          issued token contains an <code>act</code> claim identifying the actor.
         </p>
         <p>
           <strong>Key features:</strong>
