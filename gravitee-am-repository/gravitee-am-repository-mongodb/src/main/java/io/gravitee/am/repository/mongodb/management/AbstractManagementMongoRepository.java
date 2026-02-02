@@ -106,16 +106,18 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     }
 
     protected Bson buildTextQuery(String query, String fieldClientId) {
-        // currently search on client_id field
-        Bson searchQuery = or(eq(fieldClientId, query), eq("name", query));
-        // if query contains wildcard, use the regex query
         if (query.contains("*")) {
+            // Wildcard search: replace * with .* for regex matching
             String compactQuery = query.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            searchQuery = or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject("name", pattern));
+            return or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject("name", pattern));
+        } else {
+            // Exact match but case-insensitive: use regex with anchors
+            String regex = "^" + Pattern.quote(query) + "$";
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            return or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject("name", pattern));
         }
-        return searchQuery;
     }
 
     protected Single<Long> countItems(MongoCollection collection, Bson query, CountOptions options) {
