@@ -26,6 +26,9 @@ interface TokenExchangeSettings {
   allowedSubjectTokenTypes: string[];
   allowedRequestedTokenTypes: string[];
   allowImpersonation: boolean;
+  allowedActorTokenTypes: string[];
+  allowDelegation: boolean;
+  maxDelegationDepth?: number;
 }
 
 @Component({
@@ -42,6 +45,12 @@ export class TokenExchangeComponent implements OnInit {
   readonly SUBJECT_TOKEN_TYPES = [
     { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
     { value: 'urn:ietf:params:oauth:token-type:refresh_token', label: 'Refresh Token' },
+    { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
+    { value: 'urn:ietf:params:oauth:token-type:jwt', label: 'JWT' },
+  ];
+
+  readonly ACTOR_TOKEN_TYPES = [
+    { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
     { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
     { value: 'urn:ietf:params:oauth:token-type:jwt', label: 'JWT' },
   ];
@@ -71,16 +80,24 @@ export class TokenExchangeComponent implements OnInit {
   private initializeSettings() {
     if (!this.domain.tokenExchangeSettings) {
       this.domain.tokenExchangeSettings = this.getDefaultSettings();
-    } else {
-      this.domain.tokenExchangeSettings = {
-        enabled: this.domain.tokenExchangeSettings.enabled ?? false,
-        allowedSubjectTokenTypes:
-          this.domain.tokenExchangeSettings.allowedSubjectTokenTypes ?? this.SUBJECT_TOKEN_TYPES.map((t) => t.value),
-        allowedRequestedTokenTypes:
-          this.domain.tokenExchangeSettings.allowedRequestedTokenTypes ?? this.REQUESTED_TOKEN_TYPES.map((t) => t.value),
-        allowImpersonation: this.domain.tokenExchangeSettings.allowImpersonation ?? true,
-      };
+      return;
     }
+
+    const tokenExchangeSettings = this.domain.tokenExchangeSettings;
+    const normalizedSettings: TokenExchangeSettings = {
+      enabled: tokenExchangeSettings.enabled ?? false,
+      allowedSubjectTokenTypes: tokenExchangeSettings.allowedSubjectTokenTypes ?? this.SUBJECT_TOKEN_TYPES.map((t) => t.value),
+      allowedRequestedTokenTypes: tokenExchangeSettings.allowedRequestedTokenTypes ?? this.REQUESTED_TOKEN_TYPES.map((t) => t.value),
+      allowImpersonation: tokenExchangeSettings.allowImpersonation ?? true,
+      allowedActorTokenTypes: tokenExchangeSettings.allowedActorTokenTypes ?? this.ACTOR_TOKEN_TYPES.map((t) => t.value),
+      allowDelegation: tokenExchangeSettings.allowDelegation ?? false,
+    };
+
+    if (tokenExchangeSettings.maxDelegationDepth !== undefined && tokenExchangeSettings.maxDelegationDepth !== null) {
+      normalizedSettings.maxDelegationDepth = tokenExchangeSettings.maxDelegationDepth;
+    }
+
+    this.domain.tokenExchangeSettings = normalizedSettings;
   }
 
   private getDefaultSettings(): TokenExchangeSettings {
@@ -89,7 +106,16 @@ export class TokenExchangeComponent implements OnInit {
       allowedSubjectTokenTypes: this.SUBJECT_TOKEN_TYPES.map((t) => t.value),
       allowedRequestedTokenTypes: this.REQUESTED_TOKEN_TYPES.map((t) => t.value),
       allowImpersonation: true,
+      allowedActorTokenTypes: this.ACTOR_TOKEN_TYPES.map((t) => t.value),
+      allowDelegation: false,
     };
+  }
+
+  isFormValid(): boolean {
+    if (!this.domain.tokenExchangeSettings?.enabled) {
+      return true;
+    }
+    return this.domain.tokenExchangeSettings.allowImpersonation || this.domain.tokenExchangeSettings.allowDelegation;
   }
 
   save() {

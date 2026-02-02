@@ -156,6 +156,17 @@ public class OAuth2Request extends BaseRequest {
      */
     private Date exchangeExpiration;
 
+    /**
+     * Token Exchange (RFC 8693) - actor claim for delegation scenarios
+     * Contains `sub` claim of the actor
+     */
+    private Map<String, Object> actClaim;
+
+    /**
+     * Token Exchange (RFC 8693) - indicates if this is a delegation scenario
+     */
+    private boolean delegation;
+
     public OAuth2Request(OAuth2Request other){
         this.clientId = other.clientId;
         this.grantType = other.grantType;
@@ -174,6 +185,8 @@ public class OAuth2Request extends BaseRequest {
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
         this.issuedTokenType = other.issuedTokenType;
         this.exchangeExpiration = other.exchangeExpiration;
+        this.actClaim = other.actClaim;
+        this.delegation = other.delegation;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
         this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
 

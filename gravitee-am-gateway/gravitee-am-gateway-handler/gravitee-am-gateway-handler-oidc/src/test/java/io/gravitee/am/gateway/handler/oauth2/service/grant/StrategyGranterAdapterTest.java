@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -22,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolve
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -33,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -284,5 +287,269 @@ class StrategyGranterAdapterTest {
                 "PRE_TOKEN and token creation should use the same OAuth2Request instance");
         assertSame(createTokenRequest, postTokenRequest,
                 "Token creation and POST_TOKEN should use the same OAuth2Request instance");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldIncludeGisInActClaimWhenActorHasGis() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("subject-user");
+
+        // Create TokenExchangeData with actorInfo that has gis
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, null, 1);
+        GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
+                "urn:ietf:params:oauth:token-type:access_token",
+                new Date(),
+                "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                actorInfo
+        );
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.TOKEN_EXCHANGE,
+                Set.of("openid"),
+                user,
+                exchangeData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        Token expectedToken = new AccessToken("access-token-value");
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(expectedToken));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
+        assertTrue(capturedRequest.isDelegation(), "Should be delegation");
+        assertNotNull(capturedRequest.getActClaim(), "Should have act claim");
+
+        Map<String, Object> actClaim = capturedRequest.getActClaim();
+        assertEquals("actor-sub", actClaim.get(Claims.SUB), "Act claim should have actor sub");
+        assertEquals("source:actor-id", actClaim.get(Claims.GIO_INTERNAL_SUB), "Act claim should have actor gis");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldNotIncludeGisInActClaimWhenActorHasNoGis() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("subject-user");
+
+        // Create TokenExchangeData with actorInfo that has no gis
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", null, null, null, 1);
+        GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
+                "urn:ietf:params:oauth:token-type:access_token",
+                new Date(),
+                "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                actorInfo
+        );
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.TOKEN_EXCHANGE,
+                Set.of("openid"),
+                user,
+                exchangeData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        Token expectedToken = new AccessToken("access-token-value");
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(expectedToken));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
+        assertTrue(capturedRequest.isDelegation(), "Should be delegation");
+        assertNotNull(capturedRequest.getActClaim(), "Should have act claim");
+
+        Map<String, Object> actClaim = capturedRequest.getActClaim();
+        assertEquals("actor-sub", actClaim.get(Claims.SUB), "Act claim should have actor sub");
+        assertFalse(actClaim.containsKey(Claims.GIO_INTERNAL_SUB), "Act claim should NOT have gis when actor has no gis");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldIncludeActorActClaimWhenActorTokenIsDelegated() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("subject-user");
+
+        // Create a nested act claim representing the actor token's own delegation chain
+        Map<String, Object> actorTokenActClaim = Map.of(
+                Claims.SUB, "original-actor-sub",
+                Claims.GIO_INTERNAL_SUB, "source:original-actor-id"
+        );
+
+        // Create TokenExchangeData with actorInfo that has actor_act (actor token is delegated)
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, actorTokenActClaim, 1);
+        GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
+                "urn:ietf:params:oauth:token-type:access_token",
+                new Date(),
+                "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                actorInfo
+        );
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.TOKEN_EXCHANGE,
+                Set.of("openid"),
+                user,
+                exchangeData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        Token expectedToken = new AccessToken("access-token-value");
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(expectedToken));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
+        assertTrue(capturedRequest.isDelegation(), "Should be delegation");
+        assertNotNull(capturedRequest.getActClaim(), "Should have act claim");
+
+        Map<String, Object> actClaim = capturedRequest.getActClaim();
+        assertEquals("actor-sub", actClaim.get(Claims.SUB), "Act claim should have actor sub");
+        assertEquals("source:actor-id", actClaim.get(Claims.GIO_INTERNAL_SUB), "Act claim should have actor gis");
+
+        // Verify actor_act is included
+        assertTrue(actClaim.containsKey("actor_act"), "Act claim should have actor_act when actor token is delegated");
+        Map<String, Object> actorAct = (Map<String, Object>) actClaim.get("actor_act");
+        assertEquals("original-actor-sub", actorAct.get(Claims.SUB), "actor_act should have original actor sub");
+        assertEquals("source:original-actor-id", actorAct.get(Claims.GIO_INTERNAL_SUB), "actor_act should have original actor gis");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldNotIncludeActorActClaimWhenActorTokenIsNotDelegated() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("openid"));
+
+        User user = new User();
+        user.setId("subject-user");
+
+        // Create TokenExchangeData with actorInfo that has NO actor_act (actor token is not delegated)
+        ActorTokenInfo actorInfo = new ActorTokenInfo("actor-sub", "source:actor-id", null, null, 1);
+        GrantData.TokenExchangeData exchangeData = new GrantData.TokenExchangeData(
+                "urn:ietf:params:oauth:token-type:access_token",
+                new Date(),
+                "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                actorInfo
+        );
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                GrantType.TOKEN_EXCHANGE,
+                Set.of("openid"),
+                user,
+                exchangeData,
+                false,
+                Set.of(),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        Token expectedToken = new AccessToken("access-token-value");
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(expectedToken));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
+        assertTrue(capturedRequest.isDelegation(), "Should be delegation");
+        assertNotNull(capturedRequest.getActClaim(), "Should have act claim");
+
+        Map<String, Object> actClaim = capturedRequest.getActClaim();
+        assertEquals("actor-sub", actClaim.get(Claims.SUB), "Act claim should have actor sub");
+        assertFalse(actClaim.containsKey("actor_act"), "Act claim should NOT have actor_act when actor token is not delegated");
     }
 }

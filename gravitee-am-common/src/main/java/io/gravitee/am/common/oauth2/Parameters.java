@@ -150,7 +150,22 @@ public interface Parameters {
      */
     String REQUESTED_TOKEN_TYPE = "requested_token_type";
 
+    /**
+     * Token Exchange: A security token representing the identity of the acting party.
+     * Used for delegation scenarios where an actor acts on behalf of the subject.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+     */
+    String ACTOR_TOKEN = "actor_token";
+
+    /**
+     * Token Exchange: An identifier for the type of the security token in the "actor_token" parameter.
+     * Required when actor_token is provided.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+     */
+    String ACTOR_TOKEN_TYPE = "actor_token_type";
+
     Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, RESPONSE_MODE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
                 REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
-                CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR, RESOURCE, SUBJECT_TOKEN, SUBJECT_TOKEN_TYPE, REQUESTED_TOKEN_TYPE);
+                CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR, RESOURCE, SUBJECT_TOKEN, SUBJECT_TOKEN_TYPE, REQUESTED_TOKEN_TYPE,
+                ACTOR_TOKEN, ACTOR_TOKEN_TYPE);
 }

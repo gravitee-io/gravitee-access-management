@@ -781,6 +781,10 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("CORS settings are invalid"));
         }
 
+        if (domain.getTokenExchangeSettings() != null && !domain.getTokenExchangeSettings().isValid()) {
+            return Completable.error(new InvalidDomainException("Token Exchange settings are invalid: at least one of impersonation or delegation must be enabled when token exchange is enabled"));
+        }
+
         if (domain.getWebAuthnSettings() != null) {
             final String origin = domain.getWebAuthnSettings().getOrigin();
             if (origin == null || origin.isBlank()) {

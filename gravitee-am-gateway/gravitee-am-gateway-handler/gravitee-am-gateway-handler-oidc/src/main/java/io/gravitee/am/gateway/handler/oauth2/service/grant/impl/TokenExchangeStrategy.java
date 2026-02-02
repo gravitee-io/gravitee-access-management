@@ -74,7 +74,8 @@ public class TokenExchangeStrategy implements GrantStrategy {
                         result.issuedTokenType(),
                         result.exchangeExpiration(),
                         result.subjectTokenId(),
-                        result.subjectTokenType()
+                        result.subjectTokenType(),
+                        result.actorInfo()
                 ));
     }
 }

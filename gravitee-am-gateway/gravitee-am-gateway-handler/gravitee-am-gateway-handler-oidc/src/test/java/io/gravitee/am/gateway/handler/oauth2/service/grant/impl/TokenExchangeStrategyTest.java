@@ -103,7 +103,7 @@ class TokenExchangeStrategyTest {
         user.setId("user-id");
 
         Date expiration = new Date(System.currentTimeMillis() + 3600000);
-        TokenExchangeResult exchangeResult = new TokenExchangeResult(
+        TokenExchangeResult exchangeResult = TokenExchangeResult.forImpersonation(
                 user,
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 expiration,
@@ -128,6 +128,8 @@ class TokenExchangeStrategyTest {
         assertEquals(expiration, data.expiration());
         assertEquals("subject-token-id", data.subjectTokenId());
         assertEquals(TokenTypeHint.ACCESS_TOKEN.name(), data.subjectTokenType());
+        assertFalse(data.isDelegation());
+        assertNull(data.actorInfo());
     }
 
     @Test
@@ -160,7 +162,7 @@ class TokenExchangeStrategyTest {
         user.setId("user-id");
 
         Date expiration = new Date(System.currentTimeMillis() + 3600000);
-        TokenExchangeResult exchangeResult = new TokenExchangeResult(
+        TokenExchangeResult exchangeResult = TokenExchangeResult.forImpersonation(
                 user,
                 TokenTypeHint.ID_TOKEN.name(),
                 expiration,

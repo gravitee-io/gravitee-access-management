@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
@@ -354,9 +355,9 @@ public class TokenExchangeServiceImplTest {
         Map<String, Object> additionalInfo = user.getAdditionalInformation();
 
         assertThat(additionalInfo.get("token_exchange")).isEqualTo(true);
-        assertThat(additionalInfo.get("impersonation")).isEqualTo(true);
-        assertThat(additionalInfo.get("subject_token_type")).isEqualTo(TokenType.ACCESS_TOKEN);
-        assertThat(additionalInfo.get("requested_token_type")).isEqualTo(TokenType.ACCESS_TOKEN);
+        assertThat(additionalInfo.get("delegation")).isEqualTo(false); // impersonation scenario
+        assertThat(result.isDelegation()).isFalse();
+        assertThat(result.subjectTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
     }
 
     @Test
@@ -391,7 +392,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
 
         var result = service.exchange(tokenRequest, client, domain).blockingGet();
-        assertThat(result.user().getAdditionalInformation().get("subject_token_type")).isEqualTo(TokenType.JWT);
+        assertThat(result.subjectTokenType()).isEqualTo(TokenType.JWT);
     }
 
     @Test
@@ -654,6 +655,511 @@ public class TokenExchangeServiceImplTest {
                 .hasMessageContaining("Impersonation is not allowed");
     }
 
+    @Test
+    public void shouldFailWhenDelegationOnlyAndNoActorTokenProvided() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowedActorTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowDelegation(true);
+        settings.setAllowImpersonation(false);
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("Impersonation is not allowed");
+    }
+
+    // ==================== Delegation Tests ====================
+
+    @Test
+    public void shouldSucceedWithDelegation() throws Exception {
+        // Set up validators for both subject and actor tokens
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(new FixedSubjectTokenValidator()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result).isNotNull();
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.actorInfo()).isNotNull();
+        assertThat(result.actorInfo().subject()).isEqualTo("subject");
+        assertThat(result.user().getAdditionalInformation().get("delegation")).isEqualTo(true);
+    }
+
+    @Test
+    public void shouldFailWhenDelegationNotAllowed() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        // Domain with delegation disabled
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowedActorTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowDelegation(false);
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("Delegation is not allowed");
+    }
+
+    @Test
+    public void shouldFailWhenActorTokenTypeNotAllowed() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(Parameters.SUBJECT_TOKEN, "subject-token");
+        params.add(Parameters.SUBJECT_TOKEN_TYPE, TokenType.ACCESS_TOKEN);
+        params.add(Parameters.ACTOR_TOKEN, "actor-token");
+        params.add(Parameters.ACTOR_TOKEN_TYPE, TokenType.ID_TOKEN); // ID_TOKEN not in allowed types
+        tokenRequest.setParameters(params);
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowedActorTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN)); // Only ACCESS_TOKEN allowed
+        settings.setAllowDelegation(true);
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("Unsupported actor_token_type");
+    }
+
+    @Test
+    public void shouldFailWhenActorTokenTypeMissing() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(Parameters.SUBJECT_TOKEN, "subject-token");
+        params.add(Parameters.SUBJECT_TOKEN_TYPE, TokenType.ACCESS_TOKEN);
+        params.add(Parameters.ACTOR_TOKEN, "actor-token");
+        // Missing ACTOR_TOKEN_TYPE
+        tokenRequest.setParameters(params);
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("actor_token_type");
+    }
+
+    @Test
+    public void shouldFailWhenMaxDelegationDepthExceeded() throws Exception {
+        // Per RFC 8693 Section 4.1, delegation depth is based on the subject token's "act" claim chain.
+        // Create validators: subject token with existing "act" claim, actor token without.
+        TokenValidator subjectValidator = new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                if ("subject-token".equals(token)) {
+                    Map<String, Object> claims = new HashMap<>();
+                    // Subject token has existing act claim from previous delegation
+                    Map<String, Object> existingAct = new HashMap<>();
+                    existingAct.put(Claims.SUB, "original-actor");
+                    claims.put(Claims.ACT, existingAct);
+
+                    return Single.just(ValidatedToken.builder()
+                            .subject("subject")
+                            .claims(claims)
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                } else {
+                    // Actor token has no act claim
+                    return Single.just(ValidatedToken.builder()
+                            .subject("actor")
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                }
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(subjectValidator));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        // Domain with maxDelegationDepth=1 (no re-delegation)
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowedActorTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowDelegation(true);
+        settings.setMaxDelegationDepth(1); // Only allows direct delegation
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("Maximum delegation depth exceeded");
+    }
+
+    @Test
+    public void shouldSucceedWithUnlimitedDelegationDepth() throws Exception {
+        // Per RFC 8693 Section 4.1, delegation depth is based on the subject token's "act" claim chain.
+        // Create validators: subject token with deep "act" chain, actor token without.
+        TokenValidator validatorWithDeepActChain = new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                if ("subject-token".equals(token)) {
+                    Map<String, Object> claims = new HashMap<>();
+                    // Create a deep delegation chain (depth 5) on the subject token
+                    Map<String, Object> act1 = new HashMap<>();
+                    act1.put(Claims.SUB, "actor-1");
+                    Map<String, Object> act2 = new HashMap<>();
+                    act2.put(Claims.SUB, "actor-2");
+                    act2.put(Claims.ACT, act1);
+                    Map<String, Object> act3 = new HashMap<>();
+                    act3.put(Claims.SUB, "actor-3");
+                    act3.put(Claims.ACT, act2);
+                    Map<String, Object> act4 = new HashMap<>();
+                    act4.put(Claims.SUB, "actor-4");
+                    act4.put(Claims.ACT, act3);
+                    claims.put(Claims.ACT, act4);
+
+                    return Single.just(ValidatedToken.builder()
+                            .subject("subject")
+                            .claims(claims)
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                } else {
+                    // Actor token has no act claim
+                    return Single.just(ValidatedToken.builder()
+                            .subject("current-actor")
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                }
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(validatorWithDeepActChain));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowedActorTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowDelegation(true);
+        settings.setMaxDelegationDepth(0); // 0 = unlimited
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        // Should succeed even with deep delegation chain because maxDelegationDepth=0 means unlimited
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+        assertThat(result).isNotNull();
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.actorInfo()).isNotNull();
+        // The subject token's act claim should be passed through as subjectTokenActClaim
+        assertThat(result.actorInfo().hasSubjectTokenActClaim()).isTrue();
+    }
+
+    @Test
+    public void shouldIncludeGisInActorInfo() throws Exception {
+        // Actor token with gis claim should include it in actorInfo
+        TokenValidator validatorWithGis = new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                if ("subject-token".equals(token)) {
+                    return Single.just(ValidatedToken.builder()
+                            .subject("subject-user")
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                } else {
+                    // Actor token has gis claim
+                    Map<String, Object> claims = new HashMap<>();
+                    claims.put(Claims.GIO_INTERNAL_SUB, "source-id:actor-external-id");
+
+                    return Single.just(ValidatedToken.builder()
+                            .subject("actor-sub")
+                            .claims(claims)
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                }
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(validatorWithGis));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.actorInfo()).isNotNull();
+        assertThat(result.actorInfo().subject()).isEqualTo("actor-sub");
+        assertThat(result.actorInfo().gis()).isEqualTo("source-id:actor-external-id");
+        assertThat(result.actorInfo().hasGis()).isTrue();
+    }
+
+    @Test
+    public void shouldHandleActorTokenWithoutGis() throws Exception {
+        // Actor token without gis claim should have null gis in actorInfo
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(new FixedSubjectTokenValidator()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.actorInfo()).isNotNull();
+        assertThat(result.actorInfo().gis()).isNull();
+        assertThat(result.actorInfo().hasGis()).isFalse();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shouldNestSubjectTokenActClaimInDelegationChain() throws Exception {
+        // RFC 8693 Section 4.1: When the subject token has an "act" claim,
+        // it represents the prior delegation chain and should be nested under
+        // the current actor in the new token.
+        TokenValidator chainValidator = new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                if ("subject-token".equals(token)) {
+                    // Subject token has an existing act claim from first delegation
+                    Map<String, Object> claims = new HashMap<>();
+                    Map<String, Object> existingAct = new HashMap<>();
+                    existingAct.put(Claims.SUB, "token1");
+                    claims.put(Claims.ACT, existingAct);
+
+                    return Single.just(ValidatedToken.builder()
+                            .subject("original-user")
+                            .claims(claims)
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                } else {
+                    // Actor token (token2's client credentials)
+                    return Single.just(ValidatedToken.builder()
+                            .subject("token2")
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                }
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(chainValidator));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.actorInfo()).isNotNull();
+        // Current actor is "token2"
+        assertThat(result.actorInfo().subject()).isEqualTo("token2");
+        // The subject token's existing "act" claim should be captured
+        assertThat(result.actorInfo().hasSubjectTokenActClaim()).isTrue();
+        // The existing act claim from subject token should be: {sub: "token1"}
+        Map<String, Object> existingAct = (Map<String, Object>) result.actorInfo().subjectTokenActClaim();
+        assertThat(existingAct.get(Claims.SUB)).isEqualTo("token1");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shouldExtractActorTokenActClaimWhenActorIsDelegated() throws Exception {
+        // When the actor token itself is a delegated token (has an "act" claim),
+        // we should capture it as actorTokenActClaim for complete audit traceability.
+        TokenValidator delegatedActorValidator = new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                if ("subject-token".equals(token)) {
+                    // Subject token - normal token without delegation
+                    return Single.just(ValidatedToken.builder()
+                            .subject("original-user")
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                } else {
+                    // Actor token is itself a delegated token with its own act claim
+                    Map<String, Object> claims = new HashMap<>();
+                    Map<String, Object> actorActClaim = new HashMap<>();
+                    actorActClaim.put(Claims.SUB, "original-actor-delegatee");
+                    actorActClaim.put(Claims.GIO_INTERNAL_SUB, "source:original-actor-delegatee-id");
+                    claims.put(Claims.ACT, actorActClaim);
+                    claims.put(Claims.GIO_INTERNAL_SUB, "source:actor-id");
+
+                    return Single.just(ValidatedToken.builder()
+                            .subject("actor-sub")
+                            .claims(claims)
+                            .scopes(Set.of("openid"))
+                            .expiration(Date.from(Instant.now().plusSeconds(60)))
+                            .tokenType(TokenType.ACCESS_TOKEN)
+                            .build());
+                }
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(delegatedActorValidator));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.actorInfo()).isNotNull();
+        assertThat(result.actorInfo().subject()).isEqualTo("actor-sub");
+        assertThat(result.actorInfo().gis()).isEqualTo("source:actor-id");
+
+        // The actor token's own act claim should be captured
+        assertThat(result.actorInfo().hasActorTokenActClaim()).isTrue();
+        Map<String, Object> actorAct = (Map<String, Object>) result.actorInfo().actorTokenActClaim();
+        assertThat(actorAct.get(Claims.SUB)).isEqualTo("original-actor-delegatee");
+        assertThat(actorAct.get(Claims.GIO_INTERNAL_SUB)).isEqualTo("source:original-actor-delegatee-id");
+    }
+
+    @Test
+    public void shouldNotHaveActorTokenActClaimWhenActorIsNotDelegated() throws Exception {
+        // When the actor token is a normal token (not delegated),
+        // actorTokenActClaim should be null.
+        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
+        validatorsField.setAccessible(true);
+        validatorsField.set(service, List.of(new FixedSubjectTokenValidator()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.isDelegation()).isTrue();
+        assertThat(result.actorInfo()).isNotNull();
+        assertThat(result.actorInfo().hasActorTokenActClaim()).isFalse();
+        assertThat(result.actorInfo().actorTokenActClaim()).isNull();
+    }
+
     private Domain domainWithTokenExchange() {
         return domainWithTokenExchange(
                 Collections.singletonList(TokenType.ACCESS_TOKEN),
@@ -683,6 +1189,29 @@ public class TokenExchangeServiceImplTest {
         params.add(Parameters.SUBJECT_TOKEN_TYPE, subjectTokenType);
         params.add(Parameters.REQUESTED_TOKEN_TYPE, requestedTokenType);
         return params;
+    }
+
+    private MultiValueMap<String, String> buildDelegationParameters(String subjectTokenType, String actorTokenType) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(Parameters.SUBJECT_TOKEN, "subject-token");
+        params.add(Parameters.SUBJECT_TOKEN_TYPE, subjectTokenType);
+        params.add(Parameters.ACTOR_TOKEN, "actor-token");
+        params.add(Parameters.ACTOR_TOKEN_TYPE, actorTokenType);
+        return params;
+    }
+
+    private Domain domainWithDelegation() {
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowedActorTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        settings.setAllowDelegation(true);
+        settings.setMaxDelegationDepth(2);
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+        return domain;
     }
 
     private static class FixedSubjectTokenValidator implements TokenValidator {

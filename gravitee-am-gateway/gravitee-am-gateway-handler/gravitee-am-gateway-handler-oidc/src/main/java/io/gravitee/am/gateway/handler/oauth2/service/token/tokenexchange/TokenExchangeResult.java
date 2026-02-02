@@ -27,11 +27,45 @@ import java.util.Date;
  * @param exchangeExpiration the expiration time from the subject token
  * @param subjectTokenId the ID of the subject token (if available)
  * @param subjectTokenType the type of the subject token (e.g., access_token, id_token)
+ * @param actorInfo information about the actor for delegation scenarios (null for impersonation)
  */
 public record TokenExchangeResult(
         User user,
         String issuedTokenType,
         Date exchangeExpiration,
         String subjectTokenId,
-        String subjectTokenType
-) {}
+        String subjectTokenType,
+        ActorTokenInfo actorInfo
+) {
+
+    public boolean isDelegation() {
+        return actorInfo != null;
+    }
+
+    /**
+     * Create result for impersonation scenario (no actor).
+     */
+    public static TokenExchangeResult forImpersonation(
+            User user,
+            String issuedTokenType,
+            Date exchangeExpiration,
+            String subjectTokenId,
+            String subjectTokenType) {
+        return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
+                subjectTokenId, subjectTokenType, null);
+    }
+
+    /**
+     * Create result for delegation scenario (with actor).
+     */
+    public static TokenExchangeResult forDelegation(
+            User user,
+            String issuedTokenType,
+            Date exchangeExpiration,
+            String subjectTokenId,
+            String subjectTokenType,
+            ActorTokenInfo actorInfo) {
+        return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
+                subjectTokenId, subjectTokenType, actorInfo);
+    }
+}

@@ -30,6 +30,9 @@ public class TokenExchangeSettingsMongo {
     private List<String> allowedSubjectTokenTypes;
     private List<String> allowedRequestedTokenTypes;
     private boolean allowImpersonation;
+    private List<String> allowedActorTokenTypes;
+    private boolean allowDelegation;
+    private Integer maxDelegationDepth;
 
     public boolean isEnabled() {
         return enabled;
@@ -63,8 +66,33 @@ public class TokenExchangeSettingsMongo {
         this.allowImpersonation = allowImpersonation;
     }
 
+    public List<String> getAllowedActorTokenTypes() {
+        return allowedActorTokenTypes;
+    }
+
+    public void setAllowedActorTokenTypes(List<String> allowedActorTokenTypes) {
+        this.allowedActorTokenTypes = allowedActorTokenTypes;
+    }
+
+    public boolean isAllowDelegation() {
+        return allowDelegation;
+    }
+
+    public void setAllowDelegation(boolean allowDelegation) {
+        this.allowDelegation = allowDelegation;
+    }
+
+    public Integer getMaxDelegationDepth() {
+        return maxDelegationDepth;
+    }
+
+    public void setMaxDelegationDepth(Integer maxDelegationDepth) {
+        this.maxDelegationDepth = maxDelegationDepth;
+    }
+
     /**
      * Convert MongoDB representation to domain model.
+     * Note: maxDelegationDepth of 0 means unlimited (depth check disabled).
      */
     public TokenExchangeSettings convert() {
         TokenExchangeSettings settings = new TokenExchangeSettings();
@@ -72,6 +100,11 @@ public class TokenExchangeSettingsMongo {
         settings.setAllowedSubjectTokenTypes(getAllowedSubjectTokenTypes());
         settings.setAllowedRequestedTokenTypes(getAllowedRequestedTokenTypes());
         settings.setAllowImpersonation(isAllowImpersonation());
+        settings.setAllowedActorTokenTypes(getAllowedActorTokenTypes());
+        settings.setAllowDelegation(isAllowDelegation());
+        if (maxDelegationDepth != null) {
+            settings.setMaxDelegationDepth(maxDelegationDepth);
+        }
         return settings;
     }
 
@@ -87,6 +120,9 @@ public class TokenExchangeSettingsMongo {
         mongo.setAllowedSubjectTokenTypes(settings.getAllowedSubjectTokenTypes());
         mongo.setAllowedRequestedTokenTypes(settings.getAllowedRequestedTokenTypes());
         mongo.setAllowImpersonation(settings.isAllowImpersonation());
+        mongo.setAllowedActorTokenTypes(settings.getAllowedActorTokenTypes());
+        mongo.setAllowDelegation(settings.isAllowDelegation());
+        mongo.setMaxDelegationDepth(settings.getMaxDelegationDepth());
         return mongo;
     }
 }

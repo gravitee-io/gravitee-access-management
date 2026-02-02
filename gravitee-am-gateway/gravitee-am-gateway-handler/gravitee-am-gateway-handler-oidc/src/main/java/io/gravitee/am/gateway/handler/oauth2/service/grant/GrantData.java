@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.model.uma.PermissionRequest;
 
 import java.util.Date;
@@ -41,13 +42,24 @@ public sealed interface GrantData permits
 
     /**
      * Token Exchange (RFC 8693) specific data.
+     *
+     * @param issuedTokenType the type of token being issued
+     * @param expiration the expiration time constraint from subject token
+     * @param subjectTokenId the ID of the subject token
+     * @param subjectTokenType the type of the subject token
+     * @param actorInfo actor information for delegation scenarios (null for impersonation)
      */
     record TokenExchangeData(
             String issuedTokenType,
             Date expiration,
             String subjectTokenId,
-            String subjectTokenType
-    ) implements GrantData {}
+            String subjectTokenType,
+            ActorTokenInfo actorInfo
+    ) implements GrantData {
+        public boolean isDelegation() {
+            return actorInfo != null;
+        }
+    }
 
     /**
      * Authorization Code grant specific data.

@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
@@ -55,8 +56,49 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     @Override
     public Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain) {
         return Single.fromCallable(() -> parseRequest(tokenRequest, domain))
-                .flatMap(request -> validateSubjectToken(request, domain)
-                        .flatMap(subjectToken -> buildExchangeResult(tokenRequest, subjectToken, request, client)));
+                .flatMap(request -> {
+                    if (request.isDelegation()) {
+                        return processDelegation(tokenRequest, request, client, domain);
+                    } else {
+                        return processImpersonation(tokenRequest, request, client, domain);
+                    }
+                });
+    }
+
+    private Single<TokenExchangeResult> processImpersonation(TokenRequest tokenRequest,
+                                                              ParsedRequest request,
+                                                              Client client,
+                                                              Domain domain) {
+        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
+                .flatMap(subjectToken -> buildImpersonationResult(tokenRequest, subjectToken, request, client));
+    }
+
+    private Single<TokenExchangeResult> processDelegation(TokenRequest tokenRequest,
+                                                           ParsedRequest request,
+                                                           Client client,
+                                                           Domain domain) {
+        TokenExchangeSettings settings = domain.getTokenExchangeSettings();
+
+        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
+                .flatMap(subjectToken ->
+                        validateActorToken(request.actorToken(), request.actorTokenType(), domain)
+                                .flatMap(actorToken -> {
+                                    // Per RFC 8693 Section 4.1, delegation depth is based on
+                                    // the subject token's "act" claim chain
+                                    int currentDepth = calculateDelegationDepth(subjectToken);
+                                    int resultingDepth = currentDepth + 1;
+                                    int maxDepth = settings.getMaxDelegationDepth();
+
+                                    if (maxDepth > 0 && resultingDepth > maxDepth) {
+                                        return Single.error(new InvalidRequestException(
+                                                "Maximum delegation depth exceeded. Current: " + currentDepth +
+                                                        ", Max allowed: " + maxDepth));
+                                    }
+
+                                    ActorTokenInfo actorInfo = extractActorInfo(actorToken, subjectToken, resultingDepth);
+                                    return buildDelegationResult(tokenRequest, subjectToken, actorInfo, request, client);
+                                })
+                );
     }
 
     private ParsedRequest parseRequest(TokenRequest tokenRequest, Domain domain) {
@@ -69,6 +111,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
         String subjectToken = params.get(Parameters.SUBJECT_TOKEN);
         String subjectTokenType = params.get(Parameters.SUBJECT_TOKEN_TYPE);
+        String actorToken = params.get(Parameters.ACTOR_TOKEN);
+        String actorTokenType = params.get(Parameters.ACTOR_TOKEN_TYPE);
         String scope = params.get(Parameters.SCOPE);
         String requestedTokenType = params.get(Parameters.REQUESTED_TOKEN_TYPE);
 
@@ -81,35 +125,39 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                 throw new InvalidRequestException("requested_token_type is required when access_token is not allowed");
             }
         }
-        validateParameters(subjectToken, subjectTokenType, requestedTokenType, settings);
+        validateSubjectParameters(subjectToken, subjectTokenType, requestedTokenType, settings);
 
-        // Currently only impersonation is supported — reject if not allowed
-        boolean impersonationRequested = true;
-        if (!settings.isAllowImpersonation() && impersonationRequested) {
-            throw new InvalidRequestException("Impersonation is not allowed for this domain");
+        // Determine if this is delegation or impersonation
+        boolean isDelegation = StringUtils.isNotEmpty(actorToken);
+
+        if (isDelegation) {
+            validateDelegationAllowed(settings);
+            validateDelegationParameters(actorTokenType, settings);
+        } else {
+            validateImpersonationAllowed(settings);
         }
 
         return new ParsedRequest(
                 subjectToken,
                 subjectTokenType,
+                actorToken,
+                actorTokenType,
                 scope,
                 requestedTokenType,
                 tokenRequest.getClientId(),
-                impersonationRequested
+                isDelegation
         );
     }
 
-    private void validateParameters(String subjectToken, String subjectTokenType,
-                                     String requestedTokenType, TokenExchangeSettings settings) {
-        // Validate required parameters
-        if (subjectToken == null || subjectToken.isEmpty()) {
+    private void validateSubjectParameters(String subjectToken, String subjectTokenType,
+                                            String requestedTokenType, TokenExchangeSettings settings) {
+        if (StringUtils.isEmpty(subjectToken)) {
             throw new InvalidRequestException("Missing required parameter: subject_token");
         }
-        if (subjectTokenType == null || subjectTokenType.isEmpty()) {
+        if (StringUtils.isEmpty(subjectTokenType)) {
             throw new InvalidRequestException("Missing required parameter: subject_token_type");
         }
 
-        // Validate subject_token_type is allowed
         if (settings.getAllowedSubjectTokenTypes() == null ||
                 !settings.getAllowedSubjectTokenTypes().contains(subjectTokenType)) {
             throw new InvalidRequestException("Unsupported subject_token_type: " + subjectTokenType);
@@ -128,12 +176,50 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         }
     }
 
-    private Single<ValidatedToken> validateSubjectToken(ParsedRequest request, Domain domain) {
+    private void validateDelegationAllowed(TokenExchangeSettings settings) {
+        if (!settings.isAllowDelegation()) {
+            throw new InvalidRequestException("Delegation is not allowed for this domain");
+        }
+    }
+
+    private void validateDelegationParameters(String actorTokenType,
+                                               TokenExchangeSettings settings) {
+        if (StringUtils.isEmpty(actorTokenType)) {
+            throw new InvalidRequestException("Missing required parameter: actor_token_type (required when actor_token is provided)");
+        }
+
+        if (settings.getAllowedActorTokenTypes() == null ||
+                !settings.getAllowedActorTokenTypes().contains(actorTokenType)) {
+            throw new InvalidRequestException("Unsupported actor_token_type: " + actorTokenType);
+        }
+    }
+
+    private void validateImpersonationAllowed(TokenExchangeSettings settings) {
+        if (!settings.isAllowImpersonation()) {
+            throw new InvalidRequestException("Impersonation is not allowed for this domain");
+        }
+    }
+
+    private Single<ValidatedToken> validateSubjectToken(String token, String tokenType, Domain domain) {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
-        TokenValidator validator = findValidator(request.subjectTokenType());
-        return validator.validate(request.subjectToken(), settings, domain)
-                .doOnSuccess(token -> LOGGER.debug("Subject token validated for subject: {}", token.getSubject()))
+        TokenValidator validator = findValidator(tokenType);
+        return validator.validate(token, settings, domain)
+                .doOnSuccess(t -> LOGGER.debug("Subject token validated for subject: {}", t.getSubject()))
                 .doOnError(error -> LOGGER.debug("Subject token validation failed: {}", error.getMessage()));
+    }
+
+    private Single<ValidatedToken> validateActorToken(String token, String tokenType, Domain domain) {
+        TokenExchangeSettings settings = domain.getTokenExchangeSettings();
+        TokenValidator validator = findValidator(tokenType);
+        return validator.validate(token, settings, domain)
+                .doOnSuccess(t -> {
+                    // Actor token must have a "sub" claim
+                    if (StringUtils.isEmpty(t.getSubject())) {
+                        throw new InvalidRequestException("Actor token must contain a 'sub' claim");
+                    }
+                    LOGGER.debug("Actor token validated for subject: {}", t.getSubject());
+                })
+                .doOnError(error -> LOGGER.debug("Actor token validation failed: {}", error.getMessage()));
     }
 
     private TokenValidator findValidator(String tokenType) {
@@ -143,25 +229,71 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                 .orElseThrow(() -> new InvalidGrantException("No validator found for token type: " + tokenType));
     }
 
-    private Single<TokenExchangeResult> buildExchangeResult(TokenRequest tokenRequest,
-                                                              ValidatedToken subjectToken,
-                                                              ParsedRequest parsedRequest,
-                                                              Client client) {
+    /**
+     * Calculate the current delegation depth from the subject token.
+     * Per RFC 8693 Section 4.1, delegation depth is based on the subject token's "act" claim chain.
+     * Depth is the number of nested "act" claims.
+     */
+    private int calculateDelegationDepth(ValidatedToken subjectToken) {
+        Object actClaim = subjectToken.getClaim(Claims.ACT);
+        if (actClaim == null) {
+            return 0; // No existing delegation chain
+        }
+        return countActDepth(actClaim);
+    }
+
+    @SuppressWarnings("unchecked")
+    private int countActDepth(Object actClaim) {
+        if (actClaim == null) {
+            return 0;
+        }
+        int depth = 0;
+        Object currentAct = actClaim;
+        while (currentAct instanceof Map) {
+            depth++;
+            currentAct = ((Map<String, Object>) currentAct).get(Claims.ACT);
+        }
+        if (currentAct != null) {
+            depth++;
+        }
+        return depth;
+    }
+
+    /**
+     * Extract actor information from the validated actor token and subject token.
+     * Per RFC 8693 Section 4.1, the subject token's "act" claim represents the
+     * prior delegation chain that should be nested under the current actor.
+     * The "sub" claim is required per RFC 8693. The "gis" claim is included
+     * to support actor identification
+     * Additionally, if the actor token itself is a delegated token (has an "act" claim),
+     * we capture it as "actor_act" to provide complete audit traceability.
+     */
+    private ActorTokenInfo extractActorInfo(ValidatedToken actorToken, ValidatedToken subjectToken, int delegationDepth) {
+        String subject = actorToken.getSubject();
+        String gis = extractGis(actorToken);
+        Object subjectTokenActClaim = subjectToken.getClaim(Claims.ACT);
+        Object actorTokenActClaim = actorToken.getClaim(Claims.ACT);
+
+        return new ActorTokenInfo(subject, gis, subjectTokenActClaim, actorTokenActClaim, delegationDepth);
+    }
+
+    private String extractGis(ValidatedToken token) {
+        Object gis = token.getClaim(Claims.GIO_INTERNAL_SUB);
+        return gis instanceof String ? (String) gis : null;
+    }
+
+    private Single<TokenExchangeResult> buildImpersonationResult(TokenRequest tokenRequest,
+                                                                  ValidatedToken subjectToken,
+                                                                  ParsedRequest parsedRequest,
+                                                                  Client client) {
         return Single.fromCallable(() -> {
-            // Copy all scopes from the subject token
-            // TODO: Handle scopes based on settings in AM-6291
             Set<String> grantedScopes = subjectToken.getScopes();
-
-            // Build user
-            User user = createUser(subjectToken, parsedRequest, grantedScopes, client.getClientId());
-
-            // Set scopes on the token request
+            User user = createUser(subjectToken, grantedScopes, client.getClientId(), false);
             tokenRequest.setScopes(grantedScopes);
 
-            // Return result with token metadata
-            return new TokenExchangeResult(
+            return TokenExchangeResult.forImpersonation(
                     user,
-                    parsedRequest.requestedTokenType(), // issued_token_type = requested_token_type
+                    parsedRequest.requestedTokenType(),
                     subjectToken.getExpiration(),
                     subjectToken.getTokenId(),
                     parsedRequest.subjectTokenType()
@@ -169,13 +301,33 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         });
     }
 
+    private Single<TokenExchangeResult> buildDelegationResult(TokenRequest tokenRequest,
+                                                               ValidatedToken subjectToken,
+                                                               ActorTokenInfo actorInfo,
+                                                               ParsedRequest parsedRequest,
+                                                               Client client) {
+        return Single.fromCallable(() -> {
+            Set<String> grantedScopes = subjectToken.getScopes();
+            User user = createUser(subjectToken, grantedScopes, client.getClientId(), true);
+            tokenRequest.setScopes(grantedScopes);
+
+            return TokenExchangeResult.forDelegation(
+                    user,
+                    parsedRequest.requestedTokenType(),
+                    subjectToken.getExpiration(),
+                    subjectToken.getTokenId(),
+                    parsedRequest.subjectTokenType(),
+                    actorInfo
+            );
+        });
+    }
+
     private User createUser(ValidatedToken subjectToken,
-                            ParsedRequest request,
                             Set<String> grantedScopes,
-                            String clientId) {
+                            String clientId,
+                            boolean isDelegation) {
         String subject = subjectToken.getSubject();
 
-        // Get username from claims or use subject
         String username = subject;
         Object preferredUsername = subjectToken.getClaim(StandardClaims.PREFERRED_USERNAME);
         if (preferredUsername != null) {
@@ -186,13 +338,9 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         user.setId(subject);
         user.setUsername(username);
 
-        // Build additional information
         Map<String, Object> additionalInformation = new HashMap<>();
-
-        // Add subject claim
         additionalInformation.put(Claims.SUB, subject);
 
-        // Preserve GIO_INTERNAL_SUB if present
         Object gioInternalSub = subjectToken.getClaim(Claims.GIO_INTERNAL_SUB);
         if (gioInternalSub instanceof String gioInternalSubValue) {
             if (subjectManager.hasValidInternalSub(gioInternalSubValue)) {
@@ -201,19 +349,14 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             }
         }
 
-        // Handle scopes
         if (grantedScopes != null && !grantedScopes.isEmpty()) {
             additionalInformation.put(Claims.SCOPE, String.join(" ", grantedScopes));
         }
 
-        // Add client_id claim (the client performing the exchange)
         additionalInformation.put(Claims.CLIENT_ID, clientId);
-
-        // Store token exchange metadata
         additionalInformation.put("token_exchange", true);
-        additionalInformation.put("impersonation", request.impersonationRequested());
-        additionalInformation.put("subject_token_type", request.subjectTokenType());
-        additionalInformation.put("requested_token_type", request.requestedTokenType());
+        additionalInformation.put("delegation", isDelegation);
+
         if (subjectToken.getTokenId() != null) {
             additionalInformation.put("subject_token_id", subjectToken.getTokenId());
         }
@@ -222,16 +365,17 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return user;
     }
 
-
     /**
      * Internal record for parsed token exchange request parameters.
      */
     private record ParsedRequest(
             String subjectToken,
             String subjectTokenType,
+            String actorToken,
+            String actorTokenType,
             String scope,
             String requestedTokenType,
             String clientId,
-            boolean impersonationRequested
+            boolean isDelegation
     ) {}
 }

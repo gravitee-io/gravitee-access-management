@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -37,7 +39,9 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -240,6 +244,10 @@ public class StrategyGranterAdapter implements TokenGranter {
             case GrantData.TokenExchangeData data -> {
                 oAuth2Request.setIssuedTokenType(data.issuedTokenType());
                 oAuth2Request.setExchangeExpiration(data.expiration());
+                oAuth2Request.setDelegation(data.isDelegation());
+                if (data.isDelegation()) {
+                    oAuth2Request.setActClaim(buildActClaim(data.actorInfo()));
+                }
             }
             case GrantData.AuthorizationCodeData data -> oAuth2Request.setAuthorizationCode(data.authorizationCode());
             case GrantData.RefreshTokenData data -> {
@@ -262,4 +270,43 @@ public class StrategyGranterAdapter implements TokenGranter {
         }
     }
 
+    /**
+     * Build the "act" claim for delegation scenarios per RFC 8693 Section 4.1.
+     * The "act" claim contains the "sub" claim identifying the actor (required),
+     * and optionally the "gis" claim for actor identification.
+     * If the subject token already has an "act" claim, it represents the prior
+     * delegation chain and is nested under the current actor.
+     * If the actor token itself is a delegated token (has an "act" claim),
+     * it is included as "actor_act" for complete audit traceability.
+     *
+     * @param actorInfo the actor token information
+     * @return the "act" claim as a Map
+     */
+    private Map<String, Object> buildActClaim(ActorTokenInfo actorInfo) {
+        Map<String, Object> actClaim = new HashMap<>();
+
+        // Required per RFC 8693: subject of the actor
+        actClaim.put(Claims.SUB, actorInfo.subject());
+
+        // Include "gis" claim if present
+        if (actorInfo.hasGis()) {
+            actClaim.put(Claims.GIO_INTERNAL_SUB, actorInfo.gis());
+        }
+
+        // Per RFC 8693 Section 4.1: if the subject token has an "act" claim,
+        // nest it under the current actor to preserve the delegation chain
+        if (actorInfo.hasSubjectTokenActClaim()) {
+            actClaim.put(Claims.ACT, actorInfo.subjectTokenActClaim());
+        }
+
+        // If the actor token itself is a delegated token, include its "act" claim
+        // as "actor_act" for complete audit traceability of the actor's delegation chain
+        if (actorInfo.hasActorTokenActClaim()) {
+            actClaim.put("actor_act", actorInfo.actorTokenActClaim());
+        }
+
+        return actClaim;
+    }
+
 }
+
