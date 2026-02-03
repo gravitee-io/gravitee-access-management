@@ -84,7 +84,6 @@ export const setupApiManagementLoginFixture = async (): Promise<ApiManagementLog
     organizationId: ORG_ID,
     patchOrganization: { identities: [currentIdp, newIdp] },
   });
-  await waitFor(5000);
 
   const cleanUp = async () => {
     await defaultApi.patchOrganizationSettings({
