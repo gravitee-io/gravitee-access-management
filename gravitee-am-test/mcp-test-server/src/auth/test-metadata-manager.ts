@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Test metadata management for E2E tests
- * 
- * Manages test-specific metadata (testId, tokens, credentials, domainHrid) injected
- * by E2E tests via admin API. Provides thread-safe access to credentials and tokens
- * for authentication/authorization flows.
- */
-
 import { ConflictError } from '../utils/errors';
 
 const TOKEN_EXPIRY_SAFETY_MARGIN_SECONDS = 300; // 5 minutes
