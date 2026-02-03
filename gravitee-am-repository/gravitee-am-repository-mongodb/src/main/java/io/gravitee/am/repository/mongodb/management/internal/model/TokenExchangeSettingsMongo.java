@@ -28,6 +28,7 @@ public class TokenExchangeSettingsMongo {
 
     private boolean enabled;
     private List<String> allowedSubjectTokenTypes;
+    private List<String> allowedRequestedTokenTypes;
     private boolean allowImpersonation;
 
     public boolean isEnabled() {
@@ -46,6 +47,14 @@ public class TokenExchangeSettingsMongo {
         this.allowedSubjectTokenTypes = allowedSubjectTokenTypes;
     }
 
+    public List<String> getAllowedRequestedTokenTypes() {
+        return allowedRequestedTokenTypes;
+    }
+
+    public void setAllowedRequestedTokenTypes(List<String> allowedRequestedTokenTypes) {
+        this.allowedRequestedTokenTypes = allowedRequestedTokenTypes;
+    }
+
     public boolean isAllowImpersonation() {
         return allowImpersonation;
     }
@@ -61,6 +70,7 @@ public class TokenExchangeSettingsMongo {
         TokenExchangeSettings settings = new TokenExchangeSettings();
         settings.setEnabled(isEnabled());
         settings.setAllowedSubjectTokenTypes(getAllowedSubjectTokenTypes());
+        settings.setAllowedRequestedTokenTypes(getAllowedRequestedTokenTypes());
         settings.setAllowImpersonation(isAllowImpersonation());
         return settings;
     }
@@ -75,6 +85,7 @@ public class TokenExchangeSettingsMongo {
         TokenExchangeSettingsMongo mongo = new TokenExchangeSettingsMongo();
         mongo.setEnabled(settings.isEnabled());
         mongo.setAllowedSubjectTokenTypes(settings.getAllowedSubjectTokenTypes());
+        mongo.setAllowedRequestedTokenTypes(settings.getAllowedRequestedTokenTypes());
         mongo.setAllowImpersonation(settings.isAllowImpersonation());
         return mongo;
     }

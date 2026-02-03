@@ -22,6 +22,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
@@ -99,6 +100,9 @@ public class TokenServiceImplTest {
 
     @Mock
     private ExecutionContextFactory executionContextFactory;
+
+    @Mock
+    private IDTokenService idTokenService;
 
     @InjectMocks
     TokenServiceImpl tokenService;
@@ -645,6 +649,201 @@ public class TokenServiceImplTest {
 
     private EncodedJWT sampleEncodedJwt() {
         return new EncodedJWT("encoded-jwt", createTestCertificateInfo());
+    }
+
+    // ========== Token Exchange ID Token-Only Response Tests ==========
+
+    @Test
+    public void shouldCreateIdTokenOnlyResponseWhenIssuedTokenTypeIsIdToken() {
+        // Arrange: OAuth2Request for token exchange with ID_TOKEN as issued type
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ID_TOKEN);
+        request.setScopes(Set.of("openid", "profile"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("test-client");
+        client.setIdTokenValiditySeconds(3600);
+        User user = createUser("user-123");
+
+        // Setup mocks - only what's needed for ID token path
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
+        when(idTokenService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
+                .thenReturn(Single.just("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyJ9.signature"));
+
+        // Act
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        // Assert
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(token -> {
+            // Verify token_type is "N_A" per RFC 8693 for non-access tokens
+            assertThat(token.getTokenType()).isEqualTo("N_A");
+            // Verify issued_token_type is ID_TOKEN
+            assertThat(token.getIssuedTokenType()).isEqualTo(TokenType.ID_TOKEN);
+            // Verify the access_token field contains the ID token
+            assertThat(token.getValue()).startsWith("eyJ");
+            // Verify no refresh token
+            assertThat(token.getRefreshToken()).isNull();
+            // Verify scope is set
+            assertThat(token.getScope()).contains("openid");
+            return true;
+        });
+
+        // Verify IDTokenService was called
+        verify(idTokenService).create(any(OAuth2Request.class), any(Client.class), any(User.class), any());
+        // Verify JWTService.encodeJwt was NOT called (ID tokens created via IDTokenService)
+        verify(jwtService, Mockito.never()).encodeJwt(any(JWT.class), any(Client.class));
+    }
+
+    @Test
+    public void shouldRespectExchangeExpirationForIdTokenOnlyResponse() {
+        // Arrange: OAuth2Request with exchange expiration shorter than client default
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ID_TOKEN);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+
+        // Subject token expires in 30 seconds
+        Date shortExpiration = new Date(System.currentTimeMillis() + 30000);
+        request.setExchangeExpiration(shortExpiration);
+
+        Client client = createClient("test-client");
+        client.setIdTokenValiditySeconds(3600); // Client default is 1 hour
+        User user = createUser("user-123");
+
+        // Setup mocks - only what's needed for ID token path
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
+        when(idTokenService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
+                .thenReturn(Single.just("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyJ9.signature"));
+
+        // Act
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        // Assert
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(token -> {
+            // expires_in should be limited by the subject token expiration (30 seconds)
+            // not the client default (3600 seconds)
+            assertThat(token.getExpiresIn()).isLessThanOrEqualTo(30);
+            assertThat(token.getExpiresIn()).isGreaterThan(0);
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldUseClientIdTokenValidityWhenNoExchangeExpiration() {
+        // Arrange: OAuth2Request without exchange expiration
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ID_TOKEN);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+        // No exchange expiration set
+
+        Client client = createClient("test-client");
+        client.setIdTokenValiditySeconds(1800); // 30 minutes
+        User user = createUser("user-123");
+
+        // Setup mocks - only mock what's needed for ID token-only path
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
+        when(idTokenService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
+                .thenReturn(Single.just("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyJ9.signature"));
+
+        // Act
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        // Assert
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(token -> {
+            // expires_in should use client's ID token validity
+            assertThat(token.getExpiresIn()).isEqualTo(1800);
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldCreateAccessTokenWhenIssuedTokenTypeIsAccessToken() {
+        // Arrange: Verify normal token creation path is used when issued type is ACCESS_TOKEN
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ACCESS_TOKEN);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        // Act
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+
+        // Assert
+        observer.assertValue(token -> {
+            // Token type should be Bearer for access tokens
+            assertThat(token.getTokenType().toLowerCase()).isEqualTo("bearer");
+            assertThat(token.getIssuedTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
+            return true;
+        });
+
+        // Verify JWTService.encodeJwt WAS called (normal access token path)
+        verify(jwtService, Mockito.atLeastOnce()).encodeJwt(any(JWT.class), any(Client.class));
+        // Verify IDTokenService was NOT called
+        verify(idTokenService, Mockito.never()).create(any(OAuth2Request.class), any(Client.class), any(User.class), any());
+    }
+
+    @Test
+    public void shouldNotCreateIdTokenOnlyResponseWhenIssuedTokenTypeIsNull() {
+        // Arrange: Normal request without issued token type (non-token-exchange)
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.AUTHORIZATION_CODE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(null); // No issued token type
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        // Act
+        TestObserver<Token> observer = executeTokenCreation(request, client, user);
+
+        // Assert
+        observer.assertValue(token -> {
+            // Token type should be Bearer for access tokens
+            assertThat(token.getTokenType().toLowerCase()).isEqualTo("bearer");
+            return true;
+        });
+
+        // Verify normal token creation path was used
+        verify(jwtService, Mockito.atLeastOnce()).encodeJwt(any(JWT.class), any(Client.class));
+        verify(idTokenService, Mockito.never()).create(any(OAuth2Request.class), any(Client.class), any(User.class), any());
     }
 
 }

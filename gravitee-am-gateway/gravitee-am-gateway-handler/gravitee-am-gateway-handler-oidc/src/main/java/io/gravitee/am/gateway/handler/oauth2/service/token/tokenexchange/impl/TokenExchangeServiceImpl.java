@@ -72,11 +72,15 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         String scope = params.get(Parameters.SCOPE);
         String requestedTokenType = params.get(Parameters.REQUESTED_TOKEN_TYPE);
 
-        // Default requested token type to access_token
+        // Default requested token type to access_token if allowed, otherwise require explicit type
         if (StringUtils.isEmpty(requestedTokenType)) {
-            requestedTokenType = TokenType.ACCESS_TOKEN;
+            if (settings.getAllowedRequestedTokenTypes() != null &&
+                    settings.getAllowedRequestedTokenTypes().contains(TokenType.ACCESS_TOKEN)) {
+                requestedTokenType = TokenType.ACCESS_TOKEN;
+            } else {
+                throw new InvalidRequestException("requested_token_type is required when access_token is not allowed");
+            }
         }
-        // For now use only
         validateParameters(subjectToken, subjectTokenType, requestedTokenType, settings);
 
         // Currently only impersonation is supported — reject if not allowed
@@ -111,9 +115,16 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             throw new InvalidRequestException("Unsupported subject_token_type: " + subjectTokenType);
         }
 
-        // Ensure the requested_token_type is supported
-        if (!TokenType.ACCESS_TOKEN.equals(requestedTokenType)) {
+        // Validate requested_token_type is a supported type (ACCESS_TOKEN or ID_TOKEN)
+        Set<String> supportedTypes = Set.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN);
+        if (!supportedTypes.contains(requestedTokenType)) {
             throw new InvalidRequestException("Unsupported requested_token_type: " + requestedTokenType);
+        }
+
+        // Validate requested_token_type is allowed by domain settings
+        if (settings.getAllowedRequestedTokenTypes() == null ||
+                !settings.getAllowedRequestedTokenTypes().contains(requestedTokenType)) {
+            throw new InvalidRequestException("requested_token_type not allowed: " + requestedTokenType);
         }
     }
 
@@ -142,7 +153,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             Set<String> grantedScopes = subjectToken.getScopes();
 
             // Build user
-        User user = createUser(subjectToken, parsedRequest, grantedScopes, client.getClientId());
+            User user = createUser(subjectToken, parsedRequest, grantedScopes, client.getClientId());
 
             // Set scopes on the token request
             tokenRequest.setScopes(grantedScopes);
