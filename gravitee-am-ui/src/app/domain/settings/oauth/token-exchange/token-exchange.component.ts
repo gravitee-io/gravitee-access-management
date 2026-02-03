@@ -24,6 +24,7 @@ import { DomainStoreService } from '../../../../stores/domain.store';
 interface TokenExchangeSettings {
   enabled: boolean;
   allowedSubjectTokenTypes: string[];
+  allowedRequestedTokenTypes: string[];
   allowImpersonation: boolean;
 }
 
@@ -38,12 +39,20 @@ export class TokenExchangeComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
 
-  readonly TOKEN_TYPES = [
+  readonly SUBJECT_TOKEN_TYPES = [
     { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
     { value: 'urn:ietf:params:oauth:token-type:refresh_token', label: 'Refresh Token' },
     { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
     { value: 'urn:ietf:params:oauth:token-type:jwt', label: 'JWT' },
   ];
+
+  readonly REQUESTED_TOKEN_TYPES = [
+    { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
+    { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
+  ];
+
+  // Legacy alias for backward compatibility in template
+  readonly TOKEN_TYPES = this.SUBJECT_TOKEN_TYPES;
 
   constructor(
     private domainService: DomainService,
@@ -65,7 +74,10 @@ export class TokenExchangeComponent implements OnInit {
     } else {
       this.domain.tokenExchangeSettings = {
         enabled: this.domain.tokenExchangeSettings.enabled ?? false,
-        allowedSubjectTokenTypes: this.domain.tokenExchangeSettings.allowedSubjectTokenTypes ?? this.TOKEN_TYPES.map((t) => t.value),
+        allowedSubjectTokenTypes:
+          this.domain.tokenExchangeSettings.allowedSubjectTokenTypes ?? this.SUBJECT_TOKEN_TYPES.map((t) => t.value),
+        allowedRequestedTokenTypes:
+          this.domain.tokenExchangeSettings.allowedRequestedTokenTypes ?? this.REQUESTED_TOKEN_TYPES.map((t) => t.value),
         allowImpersonation: this.domain.tokenExchangeSettings.allowImpersonation ?? true,
       };
     }
@@ -74,7 +86,8 @@ export class TokenExchangeComponent implements OnInit {
   private getDefaultSettings(): TokenExchangeSettings {
     return {
       enabled: false,
-      allowedSubjectTokenTypes: this.TOKEN_TYPES.map((t) => t.value),
+      allowedSubjectTokenTypes: this.SUBJECT_TOKEN_TYPES.map((t) => t.value),
+      allowedRequestedTokenTypes: this.REQUESTED_TOKEN_TYPES.map((t) => t.value),
       allowImpersonation: true,
     };
   }
