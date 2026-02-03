@@ -38,6 +38,8 @@ import {
 } from '@management-commands/protected-resources-management-commands';
 import { Fixture } from '../../../test-fixture';
 
+const MCP_TEST_SERVER_URL = process.env.MCP_TEST_SERVER_URL || 'http://localhost:3001';
+
 export interface McpTestServerFixture extends Fixture {
   domain: any;
   authEngine: AuthorizationEngine;
@@ -49,6 +51,15 @@ export interface McpTestServerFixture extends Fixture {
   openIdConfiguration: any;
   storeId: string;
   authorizationModelId: string;
+  
+  /** Inject test metadata into MCP test server for a test run */
+  injectTestMetadata: (testId: string) => Promise<{ success: boolean; testId: string }>;
+  
+  /** Call an MCP tool with optional custom token */
+  callTool: (toolName: string, token?: string, body?: Record<string, unknown>) => Promise<Response>;
+  
+  /** Clear test metadata from MCP test server */
+  clearTestMetadata: () => Promise<void>;
 }
 
 const MCP_TEST_SERVER_RESOURCE_IDENTIFIER = 'https://example.com/mcp-test-server';
@@ -178,6 +189,52 @@ export async function setupMcpTestServerFixture(): Promise<McpTestServerFixture>
     const decodedToken = decodeJwt(mcpClientAppAccessToken);
     expect(decodedToken.aud).toBe(mcpServerResource.resourceIdentifiers[0]);
 
+    // Helper: Inject test metadata into MCP test server
+    const injectTestMetadata = async (testId: string): Promise<{ success: boolean; testId: string }> => {
+      const response = await fetch(`${MCP_TEST_SERVER_URL}/admin/test-metadata`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testId,
+          token: mcpServerAccessToken,
+          clientId: mcpServerResource.clientId,
+          clientSecret: mcpServerClientSecret.secret,
+          expiresIn: 3600,
+          domainHrid: domain.hrid,
+        }),
+      });
+      expect(response.status).toBe(200);
+      return response.json();
+    };
+
+    // Helper: Call an MCP tool (pass empty string for token to omit Authorization header)
+    const callTool = async (
+      toolName: string,
+      token: string = mcpClientAppAccessToken,
+      body: Record<string, unknown> = {}
+    ): Promise<Response> => {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return fetch(`${MCP_TEST_SERVER_URL}/tools/${toolName}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      });
+    };
+
+    // Helper: Clear test metadata
+    const clearTestMetadata = async (): Promise<void> => {
+      await fetch(`${MCP_TEST_SERVER_URL}/admin/test-metadata`, {
+        method: 'DELETE',
+      }).catch(() => {
+        // Ignore cleanup errors
+      });
+    };
+
     return {
       accessToken,
       domain,
@@ -190,6 +247,9 @@ export async function setupMcpTestServerFixture(): Promise<McpTestServerFixture>
       openIdConfiguration,
       storeId,
       authorizationModelId,
+      injectTestMetadata,
+      callTool,
+      clearTestMetadata,
       async cleanUp() {
         if (authEngine?.id) {
           await deleteAuthorizationEngine(domain.id, authEngine.id, accessToken);

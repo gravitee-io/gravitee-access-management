@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-# Script to run MCP Server E2E locally
+# Script to run MCP Test Server locally
 
 set -e
 
@@ -25,7 +25,7 @@ DOMAIN_HRID=${DOMAIN_HRID:-test}
 AUTHZEN_URL=${AUTHZEN_URL:-http://localhost:8092}
 LOG_LEVEL=${LOG_LEVEL:-debug}
 
-echo "🚀 Starting MCP Server E2E"
+echo "🚀 Starting MCP Test Server"
 echo "   PORT: $PORT"
 echo "   AM_GATEWAY_URL: $AM_GATEWAY_URL"
 echo "   DOMAIN_HRID: $DOMAIN_HRID"

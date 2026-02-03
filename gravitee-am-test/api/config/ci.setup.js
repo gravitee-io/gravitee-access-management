@@ -24,6 +24,7 @@ process.env.AM_CIBA_NOTIFIER_URL = 'http://localhost:8080/ciba';
 process.env.AM_INTERNAL_CIBA_NOTIFIER_URL = 'http://ciba:8080/ciba';
 process.env.AM_OPENFGA_URL = 'http://localhost:8090';
 process.env.AM_INTERNAL_OPENFGA_URL = 'http://openfga:8080';
+process.env.MCP_TEST_SERVER_URL = 'http://localhost:3001';
 process.env.AM_DEF_ORG_ID = 'DEFAULT';
 process.env.AM_DEF_ENV_ID = 'DEFAULT';
 process.env.AM_ADMIN_USERNAME = 'admin';

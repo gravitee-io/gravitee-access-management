@@ -27,6 +27,10 @@ import { ConflictError } from '../utils/errors';
 const TOKEN_EXPIRY_SAFETY_MARGIN_SECONDS = 300; // 5 minutes
 const DEFAULT_TOKEN_EXPIRY_MS = 3_600_000; // 1 hour
 
+/**
+ * Test metadata injected by E2E tests via admin API.
+ * Contains credentials and configuration for a single test run.
+ */
 export interface TestMetadata {
   testId: string;
   token: string;
