@@ -38,9 +38,31 @@ import {
   extractSocialUrlFromManagementLoginHtml,
   extractXsrfAndActionFromSocialLoginHtml,
 } from '../management-auth-helper';
-import { getLoginForm as getLoginFormFromUtils, parseLocation } from '../management-auth-helper';
+import { getLoginForm as getLoginFormFromUtils, parseLocation, hasSocialProviderLink } from '../management-auth-helper';
 
 export { getLoginForm } from '../management-auth-helper';
+
+const MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL!;
+
+/**
+ * Wait for the social provider link to appear on the management login page.
+ * Organization settings may take time to propagate.
+ */
+async function waitForSocialProviderOnLoginPage(maxWaitMs = 10000, intervalMs = 500): Promise<void> {
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    try {
+      const { loginFormRes } = await getLoginFormFromUtils(MANAGEMENT_URL, 'https://nowhere.com');
+      if (hasSocialProviderLink(loginFormRes.text)) {
+        return;
+      }
+    } catch {
+      // Ignore errors during polling
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error('Social provider link did not appear on login page within timeout');
+}
 
 export interface ApiManagementLoginSocialFixture extends Fixture {
   accessToken: string;
@@ -327,6 +349,10 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
   });
 
   await waitForDomainSync(started.domain.id, accessToken);
+
+  // Wait for the social provider to appear on the management login page
+  // Organization settings may take time to propagate to the management console
+  await waitForSocialProviderOnLoginPage();
 
   const cleanUp = async () => {
     await safeDeleteDomain(domain.id, accessToken);
