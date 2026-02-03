@@ -53,6 +53,7 @@ describe('API Management - Login', () => {
     it('should get admin configuration', async () => {
       const defaultApi = getDefaultApi(fixture.accessToken!);
       const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
+
       expect(settings).toBeDefined();
       expect(settings.identities).toBeDefined();
       expect(Array.from(settings.identities!).length).toBeGreaterThan(0);
@@ -64,6 +65,7 @@ describe('API Management - Login', () => {
         organizationId: ORG_ID,
         identity: fixture.newIdp,
       });
+
       expect(idp).toBeDefined();
       expect(idp.id).toBe(fixture.newIdp);
     });
@@ -124,11 +126,13 @@ describe('API Management - Login', () => {
         'test',
       );
       expect(postRes.status).toBe(302);
+
       const redirectToAuthorize = postRes.headers.location;
       expect(redirectToAuthorize).toBeDefined();
+
       const { origin: o2, pathAndSearch: p2 } = parseLocation(redirectToAuthorize!, MANAGEMENT_URL);
       const followRes = await performGet(o2, p2, { Cookie: cookie });
-      expect([200, 302]).toContain(followRes.status);
+      expect(followRes.status).not.toBe(302);
       if (followRes.status === 302) {
         expect(followRes.headers.location).toBeDefined();
         expect(followRes.headers.location).toContain('nowhere.com');
@@ -143,6 +147,7 @@ describe('API Management - Login', () => {
         'test',
       );
       expect(postRes.headers.location).toBeDefined();
+
       const { origin: o2, pathAndSearch: p2 } = parseLocation(postRes.headers.location!, MANAGEMENT_URL);
       await performGet(o2, p2, { Cookie: cookie });
       const res = await performGet(
@@ -178,6 +183,7 @@ describe('API Management - Login', () => {
         organizationId: ORG_ID,
         patchOrganization: { identities: [fixture.currentIdp] },
       });
+
       const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
       expect(Array.from(settings.identities!).includes(fixture.newIdp)).toBe(false);
     });
