@@ -17,7 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setupApiManagementAlertFixture, ApiManagementAlertFixture } from './fixtures/api-management-alert-fixture';
 import { setup } from '../../test-fixture';
 import { patchDomain } from '@management-commands/domain-management-commands';
-import { getAlertsApi, getDomainApi, getNotifierApi } from '@management-commands/service/utils';
+import { getAlertsApi, getNotifierApi } from '@management-commands/service/utils';
 import { PatchAlertTriggerTypeEnum } from '../../../api/management/models/PatchAlertTrigger';
 
 setup(200000);
@@ -131,6 +131,16 @@ describe('API Management - Alert', () => {
         ],
       });
       expect(response.raw.status).toBe(200);
+
+      const triggers = await response.value();
+      expect(triggers).toBeDefined();
+      expect(triggers.length).toBeGreaterThan(0);
+
+      // API returns lowercase type values (e.g., 'too_many_login_failures')
+      const tooManyLoginFailuresTrigger = triggers.find((t) => t.type?.toLowerCase() === 'too_many_login_failures');
+      expect(tooManyLoginFailuresTrigger).toBeDefined();
+      expect(tooManyLoginFailuresTrigger!.enabled).toBe(true);
+      expect(tooManyLoginFailuresTrigger!.alertNotifiers).toContain(alertNotifierId);
     });
   });
 });

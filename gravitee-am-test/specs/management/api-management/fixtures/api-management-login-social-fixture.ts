@@ -24,7 +24,6 @@ import {
   patchDomain,
   safeDeleteDomain,
   startDomain,
-  waitFor,
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
@@ -59,7 +58,6 @@ export interface ApiManagementLoginSocialFixture extends Fixture {
 }
 
 const ORG_ID = process.env.AM_DEF_ORG_ID!;
-const SYNC_DELAY_MS = 5000;
 
 export async function getSocialForm(
   managementUrl: string,
@@ -280,7 +278,6 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
   await startDomain(domain.id, accessToken);
   const started = await waitForDomainStart(domain);
   await waitForDomainSync(started.domain.id, accessToken);
-  await waitFor(SYNC_DELAY_MS);
 
   const defaultApi = getDefaultApi(accessToken);
   const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
@@ -328,7 +325,8 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
     organizationId: ORG_ID,
     patchOrganization: { identities: [currentIdp, newIdp] },
   });
-  await waitFor(SYNC_DELAY_MS);
+
+  await waitForDomainSync(started.domain.id, accessToken);
 
   const cleanUp = async () => {
     await safeDeleteDomain(domain.id, accessToken);
