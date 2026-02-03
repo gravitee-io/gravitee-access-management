@@ -40,7 +40,7 @@
               />
               <mat-hint>Expiration of the Access tokens (seconds).</mat-hint>
             </mat-form-field>
-            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+            <mat-form-field *ngIf="context !== 'McpServer'" appearance="outline" floatLabel="always" fxFlex="32">
               <mat-icon matPrefix>timer</mat-icon>
               <input
                 matInput
@@ -54,7 +54,7 @@
               />
               <mat-hint>Expiration of the Refresh tokens (seconds).</mat-hint>
             </mat-form-field>
-            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+            <mat-form-field *ngIf="context !== 'McpServer'" appearance="outline" floatLabel="always" fxFlex="32">
               <mat-icon matPrefix>timer</mat-icon>
               <input
                 matInput
