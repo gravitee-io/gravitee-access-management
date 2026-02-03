@@ -39,6 +39,8 @@ import static io.gravitee.am.common.oauth2.TokenType.REFRESH_TOKEN;
 @Setter
 public class TokenExchangeSettings {
 
+    private static final List<String> DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES = List.of(ACCESS_TOKEN, ID_TOKEN);
+
     /**
      * Enable or disable token exchange functionality.
      */
@@ -51,11 +53,29 @@ public class TokenExchangeSettings {
     private List<String> allowedSubjectTokenTypes;
 
     /**
+     * List of allowed requested token types that can be issued.
+     * Supports ACCESS_TOKEN and ID_TOKEN.
+     */
+    private List<String> allowedRequestedTokenTypes;
+
+    /**
      * Allow impersonation scenarios where the actor becomes the subject.
      */
     private boolean allowImpersonation = true;
 
     public TokenExchangeSettings() {
         this.allowedSubjectTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, JWT));
+        this.allowedRequestedTokenTypes = new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
+    }
+
+    /**
+     * Gets allowed requested token types, returning default values if null.
+     * This provides backward compatibility when loading old data that doesn't have this field.
+     */
+    public List<String> getAllowedRequestedTokenTypes() {
+        if (allowedRequestedTokenTypes == null) {
+            return new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
+        }
+        return allowedRequestedTokenTypes;
     }
 }

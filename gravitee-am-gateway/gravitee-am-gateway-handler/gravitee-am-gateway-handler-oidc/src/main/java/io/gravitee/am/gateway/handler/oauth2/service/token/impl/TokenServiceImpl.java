@@ -22,6 +22,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -39,6 +40,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -121,6 +123,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private SubjectManager subjectManager;
+
+    @Autowired
+    private IDTokenService idTokenService;
 
     @Setter
     @Value("${handlers.oauth2.response.strict:false}")
@@ -205,6 +210,12 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Single<Token> create(OAuth2Request oAuth2Request, Client client, User endUser) {
+        // Token Exchange (RFC 8693): ID token-only mode
+        // When requested_token_type is ID_TOKEN, return only the ID token in the access_token field
+        if (TokenType.ID_TOKEN.equals(oAuth2Request.getIssuedTokenType())) {
+            return createIdTokenOnlyResponse(oAuth2Request, client, endUser);
+        }
+
         // create execution context
         return Single.fromCallable(() -> createExecutionContext(oAuth2Request, client, endUser))
                 .flatMap(executionContext -> {
@@ -225,6 +236,54 @@ public class TokenServiceImpl implements TokenService {
                 })
                 .map(tokenWithCertificateInfo -> tokenWithCertificateInfo.token)
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
+    }
+
+    /**
+     * Creates an ID token-only response for Token Exchange (RFC 8693).
+     * Per RFC 8693 Section 2.2.1, when the requested_token_type is ID_TOKEN,
+     * the ID token is returned in the access_token field with token_type set to "N_A".
+     */
+    private Single<Token> createIdTokenOnlyResponse(OAuth2Request oAuth2Request, Client client, User endUser) {
+        return Single.fromCallable(() -> createExecutionContext(oAuth2Request, client, endUser))
+                .flatMap(executionContext ->
+                        idTokenService.create(oAuth2Request, client, endUser, executionContext)
+                                .map(idTokenString -> {
+                                    // Create AccessToken wrapper with the ID token string
+                                    AccessToken token = new AccessToken(idTokenString);
+                                    token.setIssuedTokenType(TokenType.ID_TOKEN);
+
+                                    // Calculate expires_in based on client's ID token validity
+                                    // Also respect exchange expiration if set
+                                    long defaultExpSeconds = client.getIdTokenValiditySeconds();
+                                    long expiresIn = defaultExpSeconds;
+                                    if (oAuth2Request.getExchangeExpiration() != null) {
+                                        long subjectExpSeconds = (oAuth2Request.getExchangeExpiration().getTime() - System.currentTimeMillis()) / 1000;
+                                        expiresIn = Math.min(defaultExpSeconds, Math.max(0, subjectExpSeconds));
+                                    }
+                                    token.setExpiresIn(expiresIn);
+
+                                    // Per RFC 8693, token_type is "N_A" for non-access tokens
+                                    token.setTokenType("N_A");
+
+                                    // Set scope if present
+                                    if (oAuth2Request.getScopes() != null && !oAuth2Request.getScopes().isEmpty()) {
+                                        token.setScope(String.join(" ", oAuth2Request.getScopes()));
+                                    }
+
+                                    // No refresh token for ID token-only response
+                                    return (Token) token;
+                                })
+                )
+                .doOnSuccess(token -> auditService.report(
+                        AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .idTokenFor(endUser)
+                                .tokenActor(client)
+                                .tokenTarget(endUser)))
+                .doOnError(error -> auditService.report(
+                        AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .tokenActor(client)
+                                .tokenTarget(endUser)
+                                .throwable(error)));
     }
 
     private Single<TokenWithCertificateInfo> enhanceToken(OAuth2Request oAuth2Request, Client client, User endUser, ExecutionContext executionContext, TokenWithCertificateInfo tokenWithCertificateInfo) {

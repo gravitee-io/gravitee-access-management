@@ -163,7 +163,7 @@ public class TokenExchangeServiceImplTest {
     public void shouldFailWhenRequestedTokenTypeUnsupported() {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
-        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.SAML_2));
 
         Domain domain = domainWithTokenExchange();
         Client client = new Client();
@@ -171,7 +171,60 @@ public class TokenExchangeServiceImplTest {
 
         assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
-                .hasMessageContaining("requested_token_type");
+                .hasMessageContaining("Unsupported requested_token_type");
+    }
+
+    @Test
+    public void shouldFailWhenRequestedTokenTypeNotAllowed() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+
+        // Domain only allows ACCESS_TOKEN as requested type
+        Domain domain = domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN), List.of(TokenType.ACCESS_TOKEN));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("requested_token_type not allowed");
+    }
+
+    @Test
+    public void shouldSucceedWhenRequestedTokenTypeIdToken() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+
+        // Domain allows ID_TOKEN as requested type
+        Domain domain = domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN), List.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        service.exchange(tokenRequest, client, domain)
+                .test()
+                .assertValue(result -> result.user() != null && result.issuedTokenType().equals(TokenType.ID_TOKEN));
+    }
+
+    @Test
+    public void shouldFailWhenAccessTokenNotAllowedAndNoRequestedTokenType() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(Parameters.SUBJECT_TOKEN, "subject-token");
+        params.add(Parameters.SUBJECT_TOKEN_TYPE, TokenType.ACCESS_TOKEN);
+        // No requested_token_type
+        tokenRequest.setParameters(params);
+
+        // Domain only allows ID_TOKEN as requested type (not ACCESS_TOKEN)
+        Domain domain = domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN), List.of(TokenType.ID_TOKEN));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("requested_token_type is required when access_token is not allowed");
     }
 
     @Test
@@ -602,13 +655,21 @@ public class TokenExchangeServiceImplTest {
     }
 
     private Domain domainWithTokenExchange() {
-        return domainWithTokenExchange(Collections.singletonList(TokenType.ACCESS_TOKEN));
+        return domainWithTokenExchange(
+                Collections.singletonList(TokenType.ACCESS_TOKEN),
+                List.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN)
+        );
     }
 
-    private Domain domainWithTokenExchange(List<String> allowedTypes) {
+    private Domain domainWithTokenExchange(List<String> allowedSubjectTypes) {
+        return domainWithTokenExchange(allowedSubjectTypes, List.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+    }
+
+    private Domain domainWithTokenExchange(List<String> allowedSubjectTypes, List<String> allowedRequestedTypes) {
         TokenExchangeSettings settings = new TokenExchangeSettings();
         settings.setEnabled(true);
-        settings.setAllowedSubjectTokenTypes(allowedTypes);
+        settings.setAllowedSubjectTokenTypes(allowedSubjectTypes);
+        settings.setAllowedRequestedTokenTypes(allowedRequestedTypes);
 
         Domain domain = new Domain();
         domain.setId("domain-id");
