@@ -99,6 +99,10 @@ export const TOKEN_EXCHANGE_TEST = {
     'urn:ietf:params:oauth:token-type:id_token',
     'urn:ietf:params:oauth:token-type:jwt',
   ],
+  DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES: [
+    'urn:ietf:params:oauth:token-type:access_token',
+    'urn:ietf:params:oauth:token-type:id_token',
+  ],
   REDIRECT_URI: 'https://gravitee.io/callback',
 };
 
@@ -109,6 +113,7 @@ async function enableTokenExchange(
   domainId: string,
   token: string,
   allowedSubjectTokenTypes: string[] = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+  allowedRequestedTokenTypes: string[] = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
 ): Promise<void> {
   await request(getDomainManagerUrl(domainId))
     .patch('')
@@ -118,6 +123,7 @@ async function enableTokenExchange(
       tokenExchangeSettings: {
         enabled: true,
         allowedSubjectTokenTypes,
+        allowedRequestedTokenTypes,
       },
     })
     .expect(200);
@@ -133,6 +139,7 @@ export interface TokenExchangeFixtureConfig {
   grantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
   allowedSubjectTokenTypes?: string[];
+  allowedRequestedTokenTypes?: string[];
 }
 
 /**
@@ -153,6 +160,7 @@ export const setupTokenExchangeFixture = async (
       grantTypes = TOKEN_EXCHANGE_TEST.DEFAULT_GRANT_TYPES,
       scopes = TOKEN_EXCHANGE_TEST.DEFAULT_SCOPES,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+      allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
     } = config;
 
     // Get admin access token
@@ -171,7 +179,7 @@ export const setupTokenExchangeFixture = async (
     expect(defaultIdp).toBeDefined();
 
     // Enable token exchange
-    await enableTokenExchange(createdDomain.id, accessToken, allowedSubjectTokenTypes);
+    await enableTokenExchange(createdDomain.id, accessToken, allowedSubjectTokenTypes, allowedRequestedTokenTypes);
 
     // Create application
     const application = await createTestApp(uniqueName(clientName, true), createdDomain, accessToken, 'WEB', {
