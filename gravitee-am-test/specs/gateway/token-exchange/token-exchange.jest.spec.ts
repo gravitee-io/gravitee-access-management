@@ -29,12 +29,13 @@ jest.setTimeout(200000);
 
 let defaultFixture: TokenExchangeFixture;
 let restrictedFixture: TokenExchangeFixture;
+let accessTokenOnlyFixture: TokenExchangeFixture;
 
 beforeAll(async () => {
   // Setup default fixture with all token types allowed
   defaultFixture = await setupTokenExchangeFixture();
 
-  // Setup restricted fixture with only ID tokens allowed
+  // Setup restricted fixture with only ID tokens allowed as subject
   restrictedFixture = await setupTokenExchangeFixture({
     domainNamePrefix: 'token-exchange-id-only',
     domainDescription: 'Token exchange ID only',
@@ -46,6 +47,19 @@ beforeAll(async () => {
     ],
     allowedSubjectTokenTypes: ['urn:ietf:params:oauth:token-type:id_token'],
   });
+
+  // Setup fixture with only access_token allowed as requested type (ID token not allowed)
+  accessTokenOnlyFixture = await setupTokenExchangeFixture({
+    domainNamePrefix: 'token-exchange-access-only',
+    domainDescription: 'Token exchange access token only',
+    clientName: 'token-exchange-access-only-client',
+    grantTypes: ['password', 'urn:ietf:params:oauth:grant-type:token-exchange'],
+    scopes: [
+      { scope: 'openid', defaultScope: true },
+      { scope: 'profile', defaultScope: true },
+    ],
+    allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+  });
 });
 
 afterAll(async () => {
@@ -54,6 +68,9 @@ afterAll(async () => {
   }
   if (restrictedFixture) {
     await restrictedFixture.cleanup();
+  }
+  if (accessTokenOnlyFixture) {
+    await accessTokenOnlyFixture.cleanup();
   }
 });
 
@@ -317,5 +334,103 @@ describe('Token Exchange with restricted subject token types', () => {
     // Verify the exchanged token
     const decoded = parseJwt(response.body.access_token);
     expect(decoded.payload['client_id']).toBe(application.settings.oauth.clientId);
+  });
+});
+
+describe('Token Exchange with requested_token_type=id_token', () => {
+  it('should return ID token when requested_token_type is id_token', async () => {
+    const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&requested_token_type=urn:ietf:params:oauth:token-type:id_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // Per RFC 8693, when ID token is requested:
+    // - issued_token_type should be urn:ietf:params:oauth:token-type:id_token
+    // - token_type should be "N_A" (not applicable)
+    // - access_token field contains the ID token
+    expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:id_token');
+    expect(response.body.token_type).toBe('N_A');
+    expect(response.body.access_token).toBeDefined();
+    expect(response.body.refresh_token).toBeUndefined();
+
+    // Verify it's a valid JWT and contains expected ID token claims
+    const decoded = parseJwt(response.body.access_token);
+    expect(decoded.payload['sub']).toBeDefined();
+    expect(decoded.payload['iss']).toBeDefined();
+    expect(decoded.payload['aud']).toBeDefined();
+    expect(decoded.payload['exp']).toBeDefined();
+    expect(decoded.payload['iat']).toBeDefined();
+
+    // client_id should be present for token exchange
+    expect(decoded.payload['client_id']).toBe(application.settings.oauth.clientId);
+  });
+
+  it('should return ID token with correct expires_in', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&requested_token_type=urn:ietf:params:oauth:token-type:id_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // expires_in should be present and reasonable
+    expect(response.body.expires_in).toBeDefined();
+    expect(response.body.expires_in).toBeGreaterThan(0);
+  });
+
+  it('should reject id_token request when not in allowedRequestedTokenTypes', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = accessTokenOnlyFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&requested_token_type=urn:ietf:params:oauth:token-type:id_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(400);
+
+    expect(response.body.error).toBe('invalid_request');
+    expect(response.body.error_description).toContain('requested_token_type');
+  });
+
+  it('should use access_token as default when not specified', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    // Request without requested_token_type should default to access_token
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // Should default to access_token
+    expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
+    expect(response.body.token_type.toLowerCase()).toBe('bearer');
   });
 });
