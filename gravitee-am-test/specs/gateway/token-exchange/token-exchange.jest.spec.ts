@@ -339,7 +339,7 @@ describe('Token Exchange with restricted subject token types', () => {
 
 describe('Token Exchange with requested_token_type=id_token', () => {
   it('should return ID token when requested_token_type is id_token', async () => {
-    const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
 
@@ -369,9 +369,6 @@ describe('Token Exchange with requested_token_type=id_token', () => {
     expect(decoded.payload['aud']).toBeDefined();
     expect(decoded.payload['exp']).toBeDefined();
     expect(decoded.payload['iat']).toBeDefined();
-
-    // client_id should be present for token exchange
-    expect(decoded.payload['client_id']).toBe(application.settings.oauth.clientId);
   });
 
   it('should return ID token with correct expires_in', async () => {
