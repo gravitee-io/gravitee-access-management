@@ -67,6 +67,20 @@ export function extractCsrfFromManagementLoginHtml(html: string): string {
 }
 
 /**
+ * Check if the login form HTML contains a social provider link.
+ */
+export function hasSocialProviderLink(html: string): boolean {
+  const $ = cheerio.load(html);
+  const href =
+    $('.button.social.btn-oauth2-generic-am-idp').attr('href') ||
+    $('[class*="social"][class*="oauth2-generic-am-idp"]').attr('href') ||
+    $('a[href*="oauth2"], a[href*="social"]').first().attr('href') ||
+    $('a[href*="/oauth/authorize"], a[href*="client_id"]').first().attr('href') ||
+    $('a.btn[href]').filter((_, el) => $(el).attr('href')?.includes('authorize') || $(el).attr('href')?.includes('login')).first().attr('href');
+  return !!href;
+}
+
+/**
  * Extract social provider button href from management login form (class contains social and oauth2-generic-am-idp).
  * Replaces internal_gateway_url with gateway_url in the href.
  */

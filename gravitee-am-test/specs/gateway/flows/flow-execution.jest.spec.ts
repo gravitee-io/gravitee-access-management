@@ -90,6 +90,7 @@ describe('Flows Execution - authorization_code flow', () => {
         },
       ]);
       await updateDomainFlows(fixture.domain.id, fixture.accessToken, flows);
+      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
     });
 
     it('Update App to define access_token custom claims', async () => {
