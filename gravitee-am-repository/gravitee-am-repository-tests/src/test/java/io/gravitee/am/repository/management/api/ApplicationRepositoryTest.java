@@ -558,8 +558,8 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testSearch_caseInsensitive() {
-        final String domain = "domain";
+    public void testSearch_caseInsensitive_wildcard() {
+        final String domain = "domain-ci-wildcard";
         // create app
         Application app = new Application();
         app.setDomain(domain);
@@ -574,6 +574,100 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(page -> page.getData().size() == 1);
         testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_exactMatch_byName() {
+        final String domain = "domain-ci-exact-name";
+        // create app with mixed case name
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("MyApplicationName");
+        applicationRepository.create(app).blockingGet();
+
+        // search with different case - should find the app (exact match, case-insensitive)
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "myapplicationname", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+
+        // search with uppercase - should also find the app
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "MYAPPLICATIONNAME", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_exactMatch_byClientId() {
+        final String domain = "domain-ci-exact-clientid";
+        // create app with mixed case clientId
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("some-app-name");
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauthSettings = new ApplicationOAuthSettings();
+        oauthSettings.setClientId("MyClientId");
+        settings.setOauth(oauthSettings);
+        app.setSettings(settings);
+        applicationRepository.create(app).blockingGet();
+
+        // search by clientId with different case - should find the app
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "myclientid", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+
+        // search with uppercase - should also find the app
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "MYCLIENTID", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_unicodeCharacters() {
+        final String domain = "domain-ci-unicode";
+        // create apps with Unicode characters that have case variants
+        Application app1 = new Application();
+        app1.setDomain(domain);
+        app1.setName("Café-Application");
+        applicationRepository.create(app1).blockingGet();
+
+        Application app2 = new Application();
+        app2.setDomain(domain);
+        app2.setName("Über-Application");
+        applicationRepository.create(app2).blockingGet();
+
+        // search with different case for accented characters
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "café-application", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app1.getId()));
+
+        // search for German umlaut with different case
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "über-application", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getId().equals(app2.getId()));
     }
 
     @Test

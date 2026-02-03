@@ -16,7 +16,9 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.RandomString;
@@ -136,6 +138,10 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         indexes.put(new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
 
+        // Case-insensitive indexes for search functionality
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), indexOptionsWithCollation("d1soc1_ci"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), indexOptionsWithCollation("d1n1_ci"));
+
         super.createIndex(applicationsCollection, indexes);
     }
 
@@ -191,30 +197,49 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Single<Page<Application>> search(String domain, String query, int page, int size) {
-        // search
+        // search - use collation for non-wildcard queries to leverage case-insensitive indexes
         Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
-        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert);
+        boolean useCollation = !isWildcardQuery(query);
+        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
     }
 
     @Override
     public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
-        // currently search on client_id field
+        // Search on client_id and name fields with case-insensitive matching
+        boolean useWildcard = isWildcardQuery(query);
 
-        Bson searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
-        // if query contains wildcard, use the regex query
-        if (query.contains("*")) {
+        Bson searchQuery;
+        if (useWildcard) {
+            // Wildcard search: use regex (cannot leverage indexes efficiently)
             String compactQuery = query.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             searchQuery = and(in(FIELD_ID, applicationIds), or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern)));
+        } else {
+            // Exact match: use equality filter with collation for case-insensitive matching
+            searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
         }
 
         Bson mongoQuery = and(
                 eq(FIELD_DOMAIN, domain),
                 searchQuery);
 
-        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+        CountOptions countOpts = useWildcard ? countOptions() : countOptions().collation(CASE_INSENSITIVE_COLLATION);
+        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOpts)).first(0L);
+
+        FindPublisher<ApplicationMongo> findPublisher = withMaxTime(applicationsCollection.find(mongoQuery))
+                .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
+                .skip(size * page)
+                .limit(size);
+
+        if (!useWildcard) {
+            findPublisher = findPublisher.collation(CASE_INSENSITIVE_COLLATION);
+        }
+
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(findPublisher)
+                .map(MongoApplicationRepository::convert)
+                .collect(HashSet::new, Set::add);
+
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
                 .observeOn(Schedulers.computation());
     }

@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
@@ -46,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.or;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_NAME;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -53,6 +56,24 @@ import static com.mongodb.client.model.Filters.or;
  * @author GraviteeSource Team
  */
 public abstract class AbstractManagementMongoRepository extends AbstractMongoRepository {
+
+    /**
+     * Case-insensitive collation for search queries.
+     * Uses strength SECONDARY (level 2) which ignores case but respects diacritics.
+     *
+     * Note on locale: MongoDB's "simple" locale does not support case-insensitivity,
+     * so a language locale is required. We use "en" as it provides standard Unicode
+     * case folding which works correctly for all languages. The locale primarily
+     * affects sort order (not case comparison), and since we use this collation
+     * for search matching rather than sorting, the choice of locale does not
+     * impact non-English characters.
+     *
+     * @see <a href="https://www.mongodb.com/docs/manual/reference/collation/">MongoDB Collation</a>
+     */
+    protected static final Collation CASE_INSENSITIVE_COLLATION = Collation.builder()
+            .locale("en")
+            .collationStrength(CollationStrength.SECONDARY)
+            .build();
 
     @Autowired
     @Qualifier("managementMongoTemplate")
@@ -80,6 +101,22 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
         return new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
     }
 
+    protected final CountOptions countOptionsWithCollation() {
+        return new CountOptions()
+                .maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS)
+                .collation(CASE_INSENSITIVE_COLLATION);
+    }
+
+    /**
+     * Creates index options with case-insensitive collation.
+     * Indexes created with this collation can be used for case-insensitive equality queries.
+     */
+    protected static IndexOptions indexOptionsWithCollation(String name) {
+        return new IndexOptions()
+                .name(name)
+                .collation(CASE_INSENSITIVE_COLLATION);
+    }
+
     protected Bson toBsonFilter(String name, Optional<?> optional) {
         return MongoUtils.toBsonFilter(name, optional);
     }
@@ -88,12 +125,25 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
         return MongoUtils.toBsonFilter(logicalOr, filter);
     }
 
-    protected <T, R> Single<Page<R>> findPage(MongoCollection<T> collection, Bson query, int page, int size, io.reactivex.rxjava3.functions.Function<T, R> mapper) {
-        Single<Long> countOperation = countItems(collection, query, countOptions());
-        Single<Set<R>> contentOperation = Observable.fromPublisher(withMaxTime(collection.find(query))
-                        .sort(new BasicDBObject(MongoUtils.FIELD_UPDATED_AT, -1))
-                        .skip(size * page)
-                        .limit(size))
+    /**
+     * Find paginated results with optional case-insensitive collation.
+     * When useCollation is true, queries will use case-insensitive matching and can leverage collation indexes.
+     */
+    protected <T, R> Single<Page<R>> findPage(MongoCollection<T> collection, Bson query, int page, int size,
+                                               io.reactivex.rxjava3.functions.Function<T, R> mapper, boolean useCollation) {
+        CountOptions countOpts = useCollation ? countOptionsWithCollation() : countOptions();
+        Single<Long> countOperation = countItems(collection, query, countOpts);
+
+        FindPublisher<T> findPublisher = withMaxTime(collection.find(query))
+                .sort(new BasicDBObject(MongoUtils.FIELD_UPDATED_AT, -1))
+                .skip(size * page)
+                .limit(size);
+
+        if (useCollation) {
+            findPublisher = findPublisher.collation(CASE_INSENSITIVE_COLLATION);
+        }
+
+        Single<Set<R>> contentOperation = Observable.fromPublisher(findPublisher)
                 .map(mapper)
                 .collect(HashSet::new, Set::add);
         return Single.zip(countOperation, contentOperation, (count, content) -> new Page<>(content, page, count))
@@ -108,16 +158,25 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     protected Bson buildTextQuery(String query, String fieldClientId) {
         if (query.contains("*")) {
             // Wildcard search: replace * with .* for regex matching
+            // Note: Regex queries cannot efficiently use indexes regardless of collation
             String compactQuery = query.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            return or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject("name", pattern));
+            return or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject(FIELD_NAME, pattern));
         } else {
-            // Exact match but case-insensitive: use regex with anchors
-            String regex = "^" + Pattern.quote(query) + "$";
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            return or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject("name", pattern));
+            // Exact match: use simple equality filter
+            // Case-insensitivity is handled by collation at query execution time,
+            // which allows MongoDB to use collation-enabled indexes
+            return or(eq(fieldClientId, query), eq(FIELD_NAME, query));
         }
+    }
+
+    /**
+     * Checks if a search query contains wildcards.
+     * Wildcard queries use regex and cannot leverage collation indexes.
+     */
+    protected boolean isWildcardQuery(String query) {
+        return query != null && query.contains("*");
     }
 
     protected Single<Long> countItems(MongoCollection collection, Bson query, CountOptions options) {
