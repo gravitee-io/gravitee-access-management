@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect } from '@jest/globals';
-import { getDomainFlows, updateDomainFlows, waitForDomainSync } from '@management-commands/domain-management-commands';
-import { getApplicationFlows, patchApplication, updateApplicationFlows } from '@management-commands/application-management-commands';
-import { logoutUser, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { afterAll, afterEach, beforeAll, expect } from '@jest/globals';
+import { logoutUser } from '@gateway-commands/oauth-oidc-commands';
 import { setup } from '../../test-fixture';
-
-import { FlowEntityTypeEnum } from '../../../api/management/models';
-import { assertGeneratedTokenAndGet } from '@gateway-commands/utils';
-import { decodeJwt } from '@utils-commands/jwt';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
-import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
-import { syncApplication } from '@gateway-commands/application-sync-commands';
 import { FlowExecutionFixture, setupFixture } from './fixture/flow-execution-fixture';
+import { TokenClaimTokenTypeEnum } from '../../../api/management/models';
 
 let fixture: FlowExecutionFixture;
 
@@ -42,389 +35,229 @@ afterAll(async () => {
   }
 });
 
-describe('Flows Execution - authorization_code flow', () => {
-  describe('Only Domain Flows', () => {
-    it('Define Domain flows', async () => {
-      const flows = await getDomainFlows(fixture.domain.id, fixture.accessToken);
-      // Define Groovy policy set attribute into the context on ALL flow
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Root, 'pre', [
-        {
-          name: 'Groovy',
-          policy: 'groovy',
-          description: '',
-          condition: '',
-          enabled: true,
-          configuration: JSON.stringify({ onRequestScript: 'context.setAttribute("groovy-domain-all","domainRootInfo");' }),
-        },
-      ]);
-      // Define PRE LOGIN flow - Enrich Authorization Context
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Login, 'pre', [
-        {
-          name: 'Enrich Authentication Flow',
-          policy: 'policy-am-enrich-auth-flow',
-          description: '',
-          configuration: JSON.stringify({
-            properties: [
-              {
-                key: 'groovy-domain-all',
-                value: "{#context.attributes['groovy-domain-all']}",
-              },
-            ],
-          }),
-          enabled: true,
-          condition: '',
-        },
-      ]);
-      // Define POST LOGIN flow - Enrich User Profile
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Login, 'post', [
-        {
-          name: 'Enrich User Profile',
-          policy: 'policy-am-enrich-profile',
-          description: '',
-          configuration: JSON.stringify({
-            exitOnError: false,
-            properties: [{ claim: 'claimFromGroovy', claimValue: "{#context.attributes['authFlow']['groovy-domain-all']}" }],
-          }),
-          enabled: true,
-          condition: '',
-        },
-      ]);
-      await updateDomainFlows(fixture.domain.id, fixture.accessToken, flows);
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+afterEach(async () => {
+  // Reset flows after each test to ensure isolation
+  await fixture.resetFlows();
+});
+
+describe('Flow Execution - Domain Flows', () => {
+  it('should populate JWT claims from domain Groovy and Enrich policies', async () => {
+    // Configure domain flows: Groovy sets attribute, Enrich Auth Flow passes it, Enrich Profile stores it
+    await fixture.configureDomainFlows({
+      rootPreScript: 'context.setAttribute("groovy-domain-all","domainRootInfo");',
+      loginPreEnrichProperties: [{ key: 'groovy-domain-all', value: "{#context.attributes['groovy-domain-all']}" }],
+      loginPostEnrichProperties: [{ claim: 'claimFromGroovy', claimValue: "{#context.attributes['authFlow']['groovy-domain-all']}" }],
     });
 
-    it('Update App to define access_token custom claims', async () => {
-      fixture.application.settings.oauth.tokenCustomClaims = [
-        {
-          tokenType: 'access_token',
-          claimName: 'domain-groovy-from-profile',
-          claimValue: "{#context.attributes['user']['additionalInformation']['claimFromGroovy']}",
-        },
-        {
-          tokenType: 'access_token',
-          claimName: 'domain-groovy-from-authflow',
-          claimValue: "{#context.attributes['authFlow']['groovy-domain-all']}",
-        },
-      ];
-      const patch = patchApplication(fixture.domain.id, fixture.accessToken, fixture.application, fixture.application.id);
-      await syncApplication(fixture.domain.id, fixture.application.id, patch);
-    });
+    // Configure token claims to expose the values
+    await fixture.setAppTokenClaims([
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'domain-groovy-from-profile',
+        claimValue: "{#context.attributes['user']['additionalInformation']['claimFromGroovy']}",
+      },
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'domain-groovy-from-authflow',
+        claimValue: "{#context.attributes['authFlow']['groovy-domain-all']}",
+      },
+    ]);
 
-    it('After LOGIN, flow has been executed', async () => {
-      const postLoginRedirect = await signInUser(fixture.domain, fixture.application, fixture.user, fixture.openIdConfiguration);
+    // Login and verify JWT claims
+    const { jwt, postLoginRedirect } = await fixture.loginAndGetJwt();
 
-      const tokenResponse = await requestToken(fixture.application, fixture.openIdConfiguration, postLoginRedirect);
-      const accessToken = assertGeneratedTokenAndGet(tokenResponse.body);
-      const JWT = decodeJwt(accessToken);
-      expect(JWT['domain-groovy-from-profile']).toBeDefined();
-      expect(JWT['domain-groovy-from-profile']).toEqual('domainRootInfo');
-      expect(JWT['domain-groovy-from-authflow']).toBeDefined();
-      expect(JWT['domain-groovy-from-authflow']).toEqual('domainRootInfo');
+    expect(jwt['domain-groovy-from-profile']).toBeDefined();
+    expect(jwt['domain-groovy-from-profile']).toEqual('domainRootInfo');
+    expect(jwt['domain-groovy-from-authflow']).toBeDefined();
+    expect(jwt['domain-groovy-from-authflow']).toEqual('domainRootInfo');
 
-      await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
-    });
-
-    it('Update domain policies', async () => {
-      const flows = await getDomainFlows(fixture.domain.id, fixture.accessToken);
-      // Update information set by Groovy
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Root, 'pre', [
-        {
-          name: 'Groovy',
-          policy: 'groovy',
-          description: '',
-          condition: '',
-          enabled: true,
-          configuration: JSON.stringify({ onRequestScript: 'context.setAttribute("groovy-domain-all","domainRootInfoUpdated");' }),
-        },
-      ]);
-      // Set condition in Enrich Authorization Context
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Login, 'pre', [
-        {
-          name: 'Enrich Authentication Flow',
-          policy: 'policy-am-enrich-auth-flow',
-          description: '',
-          configuration: JSON.stringify({
-            properties: [
-              {
-                key: 'groovy-domain-all',
-                value: "{#context.attributes['groovy-domain-all']}",
-              },
-            ],
-          }),
-          enabled: true,
-          condition: 'false',
-        },
-      ]);
-      // As EnrichAuth flow is not executed, we will use directly the groovy value as groovy policy is exepcuted for all request
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Login, 'post', [
-        {
-          name: 'Enrich User Profile',
-          policy: 'policy-am-enrich-profile',
-          description: '',
-          configuration: JSON.stringify({
-            exitOnError: false,
-            properties: [{ claim: 'claimFromGroovy', claimValue: "{#context.attributes['groovy-domain-all']}" }],
-          }),
-          enabled: true,
-          condition: '',
-        },
-      ]);
-      await updateDomainFlows(fixture.domain.id, fixture.accessToken, flows);
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
-    });
-
-    it('After LOGIN, flow has been executed', async () => {
-      const postLoginRedirect = await signInUser(fixture.domain, fixture.application, fixture.user, fixture.openIdConfiguration);
-
-      const tokenResponse = await requestToken(fixture.application, fixture.openIdConfiguration, postLoginRedirect);
-      const accessToken = assertGeneratedTokenAndGet(tokenResponse.body);
-      const JWT = decodeJwt(accessToken);
-      expect(JWT['domain-groovy-from-profile']).toBeDefined();
-      expect(JWT['domain-groovy-from-profile']).toEqual('domainRootInfoUpdated');
-      expect(JWT['domain-groovy-from-authflow']).not.toBeDefined();
-
-      await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
-    });
+    await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
   });
 
-  describe('App Flows', () => {
-    it('Define ALL flow - ', async () => {
-      const flows = await getApplicationFlows(fixture.domain.id, fixture.accessToken, fixture.application.id);
-      // Define Groovy policy set attribute into the context on ALL flow
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Root, 'pre', [
-        {
-          name: 'Groovy',
-          policy: 'groovy',
-          description: '',
-          condition: '',
-          enabled: true,
-          configuration: JSON.stringify({ onRequestScript: 'context.setAttribute("groovy-app-all","appRootInfo");' }),
-        },
-      ]);
-      // Define PRE LOGIN flow - Enrich Authorization Context
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Login, 'pre', [
-        {
-          name: 'Enrich Authentication Flow',
-          policy: 'policy-am-enrich-auth-flow',
-          description: '',
-          configuration: JSON.stringify({
-            properties: [
-              {
-                key: 'groovy-app-all',
-                value: "{#context.attributes['groovy-app-all']}",
-              },
-            ],
-          }),
-          enabled: true,
-          condition: '',
-        },
-      ]);
-      // Define POST LOGIN flow - Enrich User Profile
-      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Login, 'post', [
-        {
-          name: 'Enrich User Profile',
-          policy: 'policy-am-enrich-profile',
-          description: '',
-          configuration: JSON.stringify({
-            exitOnError: false,
-            properties: [{ claim: 'claimFromAppGroovy', claimValue: "{#context.attributes['authFlow']['groovy-app-all']}" }],
-          }),
-          enabled: true,
-          condition: '',
-        },
-      ]);
-      await updateApplicationFlows(fixture.domain.id, fixture.accessToken, fixture.application.id, flows);
+  it('should skip Enrich Auth Flow when condition is false', async () => {
+    // Configure domain flows with condition=false on Enrich Auth Flow
+    await fixture.configureDomainFlows({
+      rootPreScript: 'context.setAttribute("groovy-domain-all","domainRootInfoUpdated");',
+      loginPreEnrichProperties: [{ key: 'groovy-domain-all', value: "{#context.attributes['groovy-domain-all']}" }],
+      loginPreCondition: 'false',
+      loginPostEnrichProperties: [{ claim: 'claimFromGroovy', claimValue: "{#context.attributes['groovy-domain-all']}" }],
     });
 
-    it('Update App to define access_token custom claims', async () => {
-      fixture.application.settings.oauth.tokenCustomClaims = [
-        {
-          tokenType: 'access_token',
-          claimName: 'domain-groovy-from-profile',
-          claimValue: "{#context.attributes['user']['additionalInformation']['claimFromGroovy']}",
-        },
-        {
-          tokenType: 'access_token',
-          claimName: 'domain-groovy-from-authflow',
-          claimValue: "{#context.attributes['authFlow']['groovy-domain-all']}",
-        },
-      ];
-      const patch = patchApplication(fixture.domain.id, fixture.accessToken, fixture.application, fixture.application.id);
-      await syncApplication(fixture.domain.id, fixture.application.id, patch);
+    await fixture.setAppTokenClaims([
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'domain-groovy-from-profile',
+        claimValue: "{#context.attributes['user']['additionalInformation']['claimFromGroovy']}",
+      },
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'domain-groovy-from-authflow',
+        claimValue: "{#context.attributes['authFlow']['groovy-domain-all']}",
+      },
+    ]);
+
+    const { jwt, postLoginRedirect } = await fixture.loginAndGetJwt();
+
+    // Profile claim should be set (from Groovy directly, since condition skipped Enrich Auth)
+    expect(jwt['domain-groovy-from-profile']).toBeDefined();
+    expect(jwt['domain-groovy-from-profile']).toEqual('domainRootInfoUpdated');
+    // Auth flow claim should NOT be set (Enrich Auth was skipped)
+    expect(jwt['domain-groovy-from-authflow']).not.toBeDefined();
+
+    await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
+  });
+});
+
+describe('Flow Execution - App Flows', () => {
+  it('should execute both domain and app flows when inheritance is enabled', async () => {
+    // Configure domain flows
+    await fixture.configureDomainFlows({
+      rootPreScript: 'context.setAttribute("groovy-domain-all","domainRootInfo");',
+      loginPreEnrichProperties: [{ key: 'groovy-domain-all', value: "{#context.attributes['groovy-domain-all']}" }],
+      loginPreCondition: 'false', // Skip so authFlow doesn't have domain value
+      loginPostEnrichProperties: [{ claim: 'claimFromGroovy', claimValue: "{#context.attributes['groovy-domain-all']}" }],
     });
 
-    it('Update App to define access_token custom claims', async () => {
-      fixture.application.settings.oauth.tokenCustomClaims = [
-        {
-          tokenType: 'access_token',
-          claimName: 'domain-groovy-from-profile',
-          claimValue: "{#context.attributes['user']['additionalInformation']['claimFromGroovy']}",
-        },
-        {
-          tokenType: 'access_token',
-          claimName: 'domain-groovy-from-authflow',
-          claimValue: "{#context.attributes['authFlow']['groovy-domain-all']}",
-        },
-        // new claims to test app flow
-        {
-          tokenType: 'access_token',
-          claimName: 'app-groovy-from-profile',
-          claimValue: "{#context.attributes['user']['additionalInformation']['claimFromAppGroovy']}",
-        },
-        {
-          tokenType: 'access_token',
-          claimName: 'app-groovy-from-authflow',
-          claimValue: "{#context.attributes['authFlow']['groovy-app-all']}",
-        },
-      ];
-      const patch = patchApplication(fixture.domain.id, fixture.accessToken, fixture.application, fixture.application.id);
-      await syncApplication(fixture.domain.id, fixture.application.id, patch);
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+    // Configure app flows
+    await fixture.configureAppFlows({
+      rootPreScript: 'context.setAttribute("groovy-app-all","appRootInfo");',
+      loginPreEnrichProperties: [{ key: 'groovy-app-all', value: "{#context.attributes['groovy-app-all']}" }],
+      loginPostEnrichProperties: [{ claim: 'claimFromAppGroovy', claimValue: "{#context.attributes['authFlow']['groovy-app-all']}" }],
     });
 
-    it('After LOGIN, App & domain flows has been executed', async () => {
-      const postLoginRedirect = await signInUser(fixture.domain, fixture.application, fixture.user, fixture.openIdConfiguration);
+    await fixture.setAppTokenClaims([
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'domain-groovy-from-profile',
+        claimValue: "{#context.attributes['user']['additionalInformation']['claimFromGroovy']}",
+      },
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'app-groovy-from-profile',
+        claimValue: "{#context.attributes['user']['additionalInformation']['claimFromAppGroovy']}",
+      },
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'app-groovy-from-authflow',
+        claimValue: "{#context.attributes['authFlow']['groovy-app-all']}",
+      },
+    ]);
 
-      const tokenResponse = await requestToken(fixture.application, fixture.openIdConfiguration, postLoginRedirect);
-      const accessToken = assertGeneratedTokenAndGet(tokenResponse.body);
+    const { jwt, postLoginRedirect } = await fixture.loginAndGetJwt();
 
-      const JWT = decodeJwt(accessToken);
-      expect(JWT['domain-groovy-from-profile']).toBeDefined();
-      expect(JWT['domain-groovy-from-profile']).toEqual('domainRootInfoUpdated');
-      expect(JWT['domain-groovy-from-authflow']).not.toBeDefined();
-      expect(JWT['app-groovy-from-profile']).toBeDefined();
-      expect(JWT['app-groovy-from-profile']).toEqual('appRootInfo');
-      expect(JWT['app-groovy-from-authflow']).toBeDefined();
-      expect(JWT['app-groovy-from-authflow']).toEqual('appRootInfo');
+    // Domain flow results
+    expect(jwt['domain-groovy-from-profile']).toBeDefined();
+    expect(jwt['domain-groovy-from-profile']).toEqual('domainRootInfo');
 
-      await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
-    });
+    // App flow results
+    expect(jwt['app-groovy-from-profile']).toBeDefined();
+    expect(jwt['app-groovy-from-profile']).toEqual('appRootInfo');
+    expect(jwt['app-groovy-from-authflow']).toBeDefined();
+    expect(jwt['app-groovy-from-authflow']).toEqual('appRootInfo');
+
+    await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
   });
 
-  describe('App Flows with Domain disabled', () => {
-    it('Define ALL flow - ', async () => {
-      const domainFlows = await getDomainFlows(fixture.domain.id, fixture.accessToken);
-      // Update information set by Groovy
-      lookupFlowAndResetPolicies(domainFlows, FlowEntityTypeEnum.Root, 'pre', [
-        {
-          name: 'Groovy',
-          policy: 'groovy',
-          description: '',
-          condition: '',
-          enabled: true,
-          configuration: JSON.stringify({
-            onRequestScript: 'context.setAttribute("groovy-domain-all","domainRootInfoUpdatedAfterDisabled");',
-          }),
-        },
-      ]);
-
-      // Define Groovy policy set attribute into the context on ALL flow
-      fixture.application.settings.advanced.flowsInherited = false;
-      const patch = patchApplication(fixture.domain.id, fixture.accessToken, fixture.application, fixture.application.id);
-      await syncApplication(fixture.domain.id, fixture.application.id, patch);
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+  it('should execute only app flows when domain flow inheritance is disabled', async () => {
+    // Configure domain flows (these should NOT execute)
+    await fixture.configureDomainFlows({
+      rootPreScript: 'context.setAttribute("groovy-domain-all","shouldNotAppear");',
+      loginPostEnrichProperties: [{ claim: 'claimFromDomain', claimValue: "{#context.attributes['groovy-domain-all']}" }],
     });
 
-    it('After LOGIN, Only App has been executed', async () => {
-      const postLoginRedirect = await signInUser(fixture.domain, fixture.application, fixture.user, fixture.openIdConfiguration);
-
-      const tokenResponse = await requestToken(fixture.application, fixture.openIdConfiguration, postLoginRedirect);
-      const accessToken = assertGeneratedTokenAndGet(tokenResponse.body);
-      const JWT = decodeJwt(accessToken);
-      expect(JWT['domain-groovy-from-profile']).toBeDefined();
-      // value is present because persisted in the user profile but the value is the one before the "domainRootInfoUpdatedAfterDisabled" update
-      expect(JWT['domain-groovy-from-profile']).toEqual('domainRootInfoUpdated');
-      expect(JWT['domain-groovy-from-authflow']).not.toBeDefined();
-      expect(JWT['app-groovy-from-profile']).toBeDefined();
-      expect(JWT['app-groovy-from-profile']).toEqual('appRootInfo');
-      expect(JWT['app-groovy-from-authflow']).toBeDefined();
-      expect(JWT['app-groovy-from-authflow']).toEqual('appRootInfo');
-
-      await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
+    // Configure app flows
+    await fixture.configureAppFlows({
+      rootPreScript: 'context.setAttribute("groovy-app-all","appRootInfo");',
+      loginPreEnrichProperties: [{ key: 'groovy-app-all', value: "{#context.attributes['groovy-app-all']}" }],
+      loginPostEnrichProperties: [{ claim: 'claimFromAppGroovy', claimValue: "{#context.attributes['authFlow']['groovy-app-all']}" }],
     });
+
+    // Disable domain flow inheritance
+    await fixture.setFlowsInherited(false);
+
+    await fixture.setAppTokenClaims([
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'domain-claim',
+        claimValue: "{#context.attributes['user']['additionalInformation']['claimFromDomain']}",
+      },
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'app-groovy-from-profile',
+        claimValue: "{#context.attributes['user']['additionalInformation']['claimFromAppGroovy']}",
+      },
+      {
+        tokenType: TokenClaimTokenTypeEnum.AccessToken,
+        claimName: 'app-groovy-from-authflow',
+        claimValue: "{#context.attributes['authFlow']['groovy-app-all']}",
+      },
+    ]);
+
+    const { jwt, postLoginRedirect } = await fixture.loginAndGetJwt();
+
+    // Domain flow should NOT have executed (inheritance disabled)
+    expect(jwt['domain-claim']).not.toBeDefined();
+
+    // App flow should have executed
+    expect(jwt['app-groovy-from-profile']).toBeDefined();
+    expect(jwt['app-groovy-from-profile']).toEqual('appRootInfo');
+    expect(jwt['app-groovy-from-authflow']).toBeDefined();
+    expect(jwt['app-groovy-from-authflow']).toEqual('appRootInfo');
+
+    await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
   });
+});
 
-  describe('App Flows with New Conditional Flow', () => {
-    const EMAIL_SUBJECT = 'Email Send Under Condition';
+describe('Flow Execution - Conditional Flows', () => {
+  const EMAIL_SUBJECT = 'Email Send Under Condition';
 
-    it('Define new LOGIN flow with condition - ', async () => {
-      const appFlows = await getApplicationFlows(fixture.domain.id, fixture.accessToken, fixture.application.id);
+  it('should not execute conditional flow when condition is not met', async () => {
+    await clearEmails(fixture.user.email);
 
-      appFlows.push({
-        name: 'Conditionnal Login',
-        pre: [],
-        post: [
-          {
-            name: 'HTTP Callout',
-            policy: 'policy-http-callout',
-            description: '',
-            condition: '',
-            enabled: true,
-            configuration: JSON.stringify({
-              method: 'GET',
-              fireAndForget: false,
-              exitOnError: false,
-              errorCondition: '{#calloutResponse.status >= 400 and #calloutResponse.status <= 599}',
-              errorStatusCode: 500,
-              url: `${fixture.openIdConfiguration.issuer}/.well-known/openid-configuration`,
-              variables: [{ value: "{#jsonPath(#calloutResponse.content, '$.jwks_uri')}", name: 'jwks_uri_from_callout' }],
-            }),
-          },
-          {
-            name: 'Send email',
-            policy: 'policy-am-send-email',
-            description: '',
-            condition: '',
-            enabled: true,
-            configuration: JSON.stringify({
-              template: 'TEST JEST',
-              from: 'no-reply@gravitee.io',
-              fromName: 'Test',
-              to: '${user.email}',
-              subject: EMAIL_SUBJECT,
-              content: '<a href="${jwks_uri_from_callout}">jwks_uri</a>',
-            }),
-          },
-        ],
-        type: FlowEntityTypeEnum.Login,
+    await fixture.configureAppFlows({
+      conditionalFlow: {
         condition: "{#request.params['callout'] != null && #request.params['callout'][0].equals('true') }",
-      });
-
-      await updateApplicationFlows(fixture.domain.id, fixture.accessToken, fixture.application.id, appFlows);
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+        httpCalloutUrl: `${fixture.openIdConfiguration.issuer}/.well-known/openid-configuration`,
+        emailSubject: EMAIL_SUBJECT,
+        emailContent: '<a href="${jwks_uri_from_callout}">jwks_uri</a>',
+      },
     });
 
-    it("After LOGIN without the callout parameter, email isn't received ", async () => {
-      await clearEmails(fixture.user.email);
+    // Login WITHOUT the callout parameter
+    const { postLoginRedirect } = await fixture.loginAndGetJwt();
+    await new Promise((r) => setTimeout(r, 1000));
+    await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
-      const postLoginRedirect = await signInUser(fixture.domain, fixture.application, fixture.user, fixture.openIdConfiguration);
-      await new Promise((r) => setTimeout(r, 1000));
-      await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
+    // Email should NOT have been sent
+    const emailReceived = await hasEmail(1000, fixture.user.email);
+    expect(emailReceived).toBeFalsy();
+  });
 
-      const emailReceived = await hasEmail(1000, fixture.user.email);
-      expect(emailReceived).toBeFalsy();
+  it('should execute conditional flow and send email when condition is met', async () => {
+    await clearEmails(fixture.user.email);
+
+    await fixture.configureAppFlows({
+      conditionalFlow: {
+        condition: "{#request.params['callout'] != null && #request.params['callout'][0].equals('true') }",
+        httpCalloutUrl: `${fixture.openIdConfiguration.issuer}/.well-known/openid-configuration`,
+        emailSubject: EMAIL_SUBJECT,
+        emailContent: '<a href="${jwks_uri_from_callout}">jwks_uri</a>',
+      },
     });
 
-    it('After LOGIN with the callout parameter, email is received ', async () => {
-      await clearEmails(fixture.user.email);
-      const postLoginRedirect = await signInUser(
-        fixture.domain,
-        fixture.application,
-        fixture.user,
-        fixture.openIdConfiguration,
-        'callout=true',
-      );
-      await new Promise((r) => setTimeout(r, 1000));
-      await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
+    // Login WITH the callout parameter
+    const { postLoginRedirect } = await fixture.loginAndGetJwt('callout=true');
+    await new Promise((r) => setTimeout(r, 1000));
+    await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
-      const emailReceived = await hasEmail(1000, fixture.user.email);
-      expect(emailReceived).toBeTruthy();
+    // Email SHOULD have been sent
+    const emailReceived = await hasEmail(1000, fixture.user.email);
+    expect(emailReceived).toBeTruthy();
 
-      const email = await getLastEmail(1000, fixture.user.email);
-      expect(email.subject).toBeDefined();
-      expect(email.subject).toContain(EMAIL_SUBJECT);
-      const jwks_uri = email.extractLink();
-      expect(jwks_uri).toEqual(fixture.openIdConfiguration.jwks_uri);
-    });
+    const email = await getLastEmail(1000, fixture.user.email);
+    expect(email.subject).toBeDefined();
+    expect(email.subject).toContain(EMAIL_SUBJECT);
+    const jwks_uri = email.extractLink();
+    expect(jwks_uri).toEqual(fixture.openIdConfiguration.jwks_uri);
   });
 });
