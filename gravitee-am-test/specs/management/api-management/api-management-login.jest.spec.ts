@@ -133,10 +133,6 @@ describe('API Management - Login', () => {
       const { origin: o2, pathAndSearch: p2 } = parseLocation(redirectToAuthorize!, MANAGEMENT_URL);
       const followRes = await performGet(o2, p2, { Cookie: cookie });
       expect(followRes.status).not.toBe(302);
-      if (followRes.status === 302) {
-        expect(followRes.headers.location).toBeDefined();
-        expect(followRes.headers.location).toContain('nowhere.com');
-      }
     });
 
     it('should logout and redirect to target url', async () => {
