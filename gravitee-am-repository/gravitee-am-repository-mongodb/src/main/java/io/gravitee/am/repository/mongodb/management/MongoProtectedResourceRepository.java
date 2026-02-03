@@ -61,6 +61,10 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(TYPE_FIELD, 1).append(UPDATED_AT_FIELD, -1), new IndexOptions().name("d1t1ua_1"));
         indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(RESOURCE_IDENTIFIERS_FIELD, 1), new IndexOptions().name("d1ri1"));
 
+        // Case-insensitive indexes for search functionality
+        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(CLIENT_ID_FIELD, 1), indexOptionsWithCollation("d1ci1_ci"));
+        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(NAME_FIELD, 1), indexOptionsWithCollation("d1n1_ci"));
+
         super.createIndex(collection, indexes);
     }
 
@@ -146,9 +150,11 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
 
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> search(String domain, String query, PageSortRequest pageSortRequest) {
+        // Search - use collation for non-wildcard queries to leverage case-insensitive indexes
         Bson mongoQuery = buildSearchQuery(query, domain, DOMAIN_ID_FIELD, CLIENT_ID_FIELD);
+        boolean useCollation = !isWildcardQuery(query);
         return findPage(collection, mongoQuery, pageSortRequest.getPage(), pageSortRequest.getSize(),
-                doc -> ProtectedResourcePrimaryData.of(convert(doc)));
+                doc -> ProtectedResourcePrimaryData.of(convert(doc)), useCollation);
     }
 
     @Override

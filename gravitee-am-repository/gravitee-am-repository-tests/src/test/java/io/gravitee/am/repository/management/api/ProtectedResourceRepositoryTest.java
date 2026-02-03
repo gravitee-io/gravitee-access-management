@@ -986,15 +986,14 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testSearch_caseInsensitive() {
-        final String domain = "domain";
+    public void testSearch_caseInsensitive_wildcard() {
+        final String domain = "domain-ci-wildcard";
         // create resource
         ClientSecret clientSecret = generateClientSecret();
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
         ProtectedResource resource = generateResource(clientSecret, secretSettings);
         resource.setDomainId(domain);
         resource.setClientId("clientId-CaseSensitive");
-        resource.setDomainId(domain);
         repository.create(resource).blockingGet();
 
         // fetch resource with wildcard and different case
@@ -1005,6 +1004,106 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(page -> page.getData().size() == 1);
         testObserver.assertValue(page -> page.getData().iterator().next().id().equals(resource.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_exactMatch_byClientId() {
+        final String domain = "domain-ci-exact-clientid";
+        // create resource with mixed case clientId
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings);
+        resource.setDomainId(domain);
+        resource.setClientId("MyClientId");
+        repository.create(resource).blockingGet();
+
+        // search with different case - should find the resource (exact match, case-insensitive)
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "myclientid", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().id().equals(resource.getId()));
+
+        // search with uppercase - should also find the resource
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver2 = repository.search(domain, "MYCLIENTID", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().id().equals(resource.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_exactMatch_byName() {
+        final String domain = "domain-ci-exact-name";
+        // create resource with mixed case name
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings);
+        resource.setDomainId(domain);
+        resource.setClientId("some-unique-client-id");
+        resource.setName("MyResourceName");
+        repository.create(resource).blockingGet();
+
+        // search by name with different case - should find the resource
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "myresourcename", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().id().equals(resource.getId()));
+
+        // search with uppercase - should also find the resource
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver2 = repository.search(domain, "MYRESOURCENAME", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().id().equals(resource.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_unicodeCharacters() {
+        final String domain = "domain-ci-unicode";
+        // create resources with Unicode characters that have case variants
+        ClientSecret clientSecret1 = generateClientSecret();
+        ApplicationSecretSettings secretSettings1 = generateApplicationSecretSettings();
+        ProtectedResource resource1 = generateResource(clientSecret1, secretSettings1);
+        resource1.setDomainId(domain);
+        resource1.setClientId("Café-App");
+        resource1.setName("Ñoño-Resource");
+        repository.create(resource1).blockingGet();
+
+        ClientSecret clientSecret2 = generateClientSecret();
+        ApplicationSecretSettings secretSettings2 = generateApplicationSecretSettings();
+        ProtectedResource resource2 = generateResource(clientSecret2, secretSettings2);
+        resource2.setDomainId(domain);
+        resource2.setClientId("Über-Client");
+        resource2.setName("Größe-Resource");
+        repository.create(resource2).blockingGet();
+
+        // search with different case for accented characters
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "café-app", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().id().equals(resource1.getId()));
+
+        // search for German umlaut with different case
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver2 = repository.search(domain, "über-client", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().id().equals(resource2.getId()));
     }
 
     @Test
