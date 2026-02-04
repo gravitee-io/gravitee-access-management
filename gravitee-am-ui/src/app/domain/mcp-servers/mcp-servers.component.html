@@ -35,6 +35,7 @@
       [rows]="page.data"
       [limit]="PAGE_SIZE"
       [count]="page.totalCount"
+      [offset]="currentPage"
       (page)="changePage($event)"
       [externalSorting]="false"
       [externalPaging]="true"
