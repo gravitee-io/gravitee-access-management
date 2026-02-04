@@ -96,6 +96,7 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         routingContext.put(TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY, optionalSettings.map(LoginSettings::isRegisterEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_ALLOW_CBA_CONTEXT_KEY, optionalSettings.map(LoginSettings::isCertificateBasedAuthEnabled).orElse(false));
+        routingContext.put(TEMPLATE_KEY_ALLOW_MAGIC_LINK_CONTEXT_KEY, optionalSettings.map(LoginSettings::isMagicLinkAuthEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_HIDE_FORM_CONTEXT_KEY, optionalSettings.map(LoginSettings::isHideForm).orElse(false));
         routingContext.put(TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, isIdentifierFirstLoginEnabled);
         routingContext.put(TEMPLATE_KEY_REMEMBER_ME_KEY, accountSettingsOptionalSettings.map(AccountSettings::isRememberMe).orElse(false));
@@ -133,6 +134,7 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         routingContext.put(TEMPLATE_KEY_REGISTER_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
         routingContext.put(TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
         routingContext.put(TEMPLATE_KEY_CBA_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/cba/login", queryParams, true));
+        routingContext.put(TEMPLATE_KEY_MAGIC_LINK_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/magic-link/login", queryParams, true));
         if (isIdentifierFirstLoginEnabled) {
             // we remove the login_hint in the backToIdFirst login action to avoid
             // * infinite loop (if the idFirst login page submit the form if these parameter is provided)

@@ -73,6 +73,10 @@ public class LoginSettings {
      */
     private String certificateBasedAuthUrl;
     /**
+     * Enable/Disable Magic Link Authentication feature
+     */
+    private boolean magicLinkAuthEnabled;
+    /**
      * Enable/Disable hide login form
      */
     private boolean hideForm;
@@ -101,6 +105,7 @@ public class LoginSettings {
         this.passwordlessDeviceNamingEnabled = other.passwordlessDeviceNamingEnabled;
         this.certificateBasedAuthEnabled = other.certificateBasedAuthEnabled;
         this.certificateBasedAuthUrl = other.certificateBasedAuthUrl;
+        this.magicLinkAuthEnabled = other.magicLinkAuthEnabled;
         this.hideForm = !other.identifierFirstEnabled && other.hideForm;
         this.identifierFirstEnabled = other.identifierFirstEnabled;
         this.resetPasswordOnExpiration = other.resetPasswordOnExpiration;

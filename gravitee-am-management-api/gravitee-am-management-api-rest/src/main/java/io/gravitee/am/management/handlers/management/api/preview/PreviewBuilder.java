@@ -198,6 +198,7 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.TEMPLATE_KEY_FORGOT_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_CBA_ACTION_KEY, EMPTY_STRING);
+                variables.put(ConstantKeys.TEMPLATE_KEY_MAGIC_LINK_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_REGISTER_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
@@ -207,6 +208,7 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_CBA_CONTEXT_KEY, Boolean.TRUE.toString());
+                variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_MAGIC_LINK_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, Boolean.FALSE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));

@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { EmailTemplateFactoryService } from '../../../services/email.template.factory.service';
+import { PlatformCapabilitiesService } from '../../../services/platform-capabilities.service';
 
 @Component({
   selector: 'app-domain-emails',
@@ -28,22 +29,42 @@ export class DomainSettingsEmailsComponent implements OnInit {
   domain: any;
   private emailTemplateFactoryService: EmailTemplateFactoryService;
 
+  private magicLinkDeployed = true;
+
   constructor(
     private route: ActivatedRoute,
     emailTemplateFactoryService: EmailTemplateFactoryService,
+    private platformCapabilitiesService: PlatformCapabilitiesService,
   ) {
     this.emailTemplateFactoryService = emailTemplateFactoryService;
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
+    this.platformCapabilitiesService.get().subscribe((caps) => {
+      this.magicLinkDeployed = !!caps?.magicLinkAuthenticatorDeployed;
+    });
   }
 
   getEmails() {
     return this.emailTemplateFactoryService.findAll().map((email) => {
-      email.enabled = email.template !== 'RESET_PASSWORD' || this.allowResetPassword();
+      if (email.template === 'RESET_PASSWORD') {
+        email.enabled = this.allowResetPassword();
+        return email;
+      }
+
+      if (email.template === 'MAGIC_LINK') {
+        email.enabled = this.allowMagicLink();
+        return email;
+      }
+
+      email.enabled = true;
       return email;
     });
+  }
+
+  private allowMagicLink(): boolean {
+    return this.magicLinkDeployed;
   }
 
   private allowResetPassword(): boolean {

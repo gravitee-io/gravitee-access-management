@@ -19,6 +19,7 @@ import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { FormTemplateFactoryService } from '../../../../../services/form.template.factory.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
+import { PlatformCapabilitiesService } from '../../../../../services/platform-capabilities.service';
 
 @Component({
   selector: 'app-application-forms',
@@ -29,20 +30,29 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
 export class ApplicationFormsComponent implements OnInit {
   domain: any;
   application: any;
+  private magicLinkDeployed = false;
 
   constructor(
     private route: ActivatedRoute,
     private formTemplateFactoryService: FormTemplateFactoryService,
     private domainStore: DomainStoreService,
+    private platformCapabilitiesService: PlatformCapabilitiesService,
   ) {}
 
   ngOnInit() {
     this.domain = deepClone(this.domainStore.current);
     this.application = this.route.snapshot.data['application'];
+    this.platformCapabilitiesService.get().subscribe((caps) => {
+      this.magicLinkDeployed = !!caps?.magicLinkAuthenticatorDeployed;
+    });
   }
 
   getForms() {
     return this.formTemplateFactoryService.findAll().map((form) => {
+      if (form.template === 'MAGIC_LINK_LOGIN') {
+        form.enabled = this.allowMagicLink();
+        return form;
+      }
       form.enabled = form.template === 'ERROR' || this.applicationSettingsValid();
       return form;
     });
@@ -59,5 +69,9 @@ export class ApplicationFormsComponent implements OnInit {
       );
     }
     return false;
+  }
+
+  private allowMagicLink(): boolean {
+    return this.magicLinkDeployed;
   }
 }
