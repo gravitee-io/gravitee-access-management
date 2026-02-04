@@ -100,4 +100,40 @@ public class MsSqlHelper extends AbstractDialectHelper {
         return "DELETE FROM authorization_codes OUTPUT DELETED.* where code = :code and client_id = :clientId and (expire_at > :now or expire_at is null)";
     }
 
+    /**
+     * Escapes SQL Server LIKE pattern special characters using backslash escape.
+     * In SQL Server, [ and ] are used for character class matching in LIKE patterns.
+     * When using ESCAPE '\' clause, we escape these characters with backslash.
+     * Also escapes % and _ which are LIKE wildcards, but only when they appear
+     * literally (not as wildcards added by the search logic).
+     *
+     * @param value the value to escape (may already contain % from wildcard conversion)
+     * @return the escaped value safe for use in SQL Server LIKE patterns with ESCAPE '\'
+     */
+    @Override
+    public String escapeLikePatternValue(String value) {
+        if (value == null) {
+            return null;
+        }
+        // Escape backslash first, then special characters
+        // Note: % characters are intentional wildcards added by the repository,
+        // so we don't escape them here
+        return value
+                .replace("\\", "\\\\")
+                .replace("[", "\\[")
+                .replace("]", "\\]")
+                .replace("_", "\\_");
+    }
+
+    /**
+     * Returns the ESCAPE clause for LIKE patterns in SQL Server.
+     * This is needed because SQL Server treats [ ] as special characters in LIKE.
+     *
+     * @return the ESCAPE clause to append to LIKE queries
+     */
+    @Override
+    public String getLikeEscapeClause() {
+        return " ESCAPE '\\' ";
+    }
+
 }
