@@ -101,6 +101,7 @@ public enum Permission {
     LICENSE_NOTIFICATION(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION),
 
     PROTECTED_RESOURCE(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.PROTECTED_RESOURCE),
+    PROTECTED_RESOURCE_MEMBER(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.PROTECTED_RESOURCE),
     INSTALLATION(ReferenceType.PLATFORM);
 
 

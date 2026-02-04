@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -90,7 +91,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @Parameter(name = "email", required = true) @Valid @NotNull UpdateEmail updateEmail,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE)
                 .andThen(emailTemplateValidator.validate(updateEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
@@ -119,7 +120,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @PathParam("email") String email,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE)
                 .andThen(emailTemplateService.delete(email))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

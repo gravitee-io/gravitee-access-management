@@ -18,15 +18,15 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.MembershipListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -38,12 +38,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -54,11 +49,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.List;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class ApplicationMembersResource extends AbstractResource {
+public class ProtectedResourceMembersResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -70,19 +61,19 @@ public class ApplicationMembersResource extends AbstractResource {
     private MembershipService membershipService;
 
     @Autowired
-    private ApplicationService applicationService;
+    private ProtectedResourceService service;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "getMembers",
-            summary = "List members for an application",
-            description = "User must have APPLICATION_MEMBER[LIST] permission on the specified application " +
-                    "or APPLICATION_MEMBER[LIST] permission on the specified domain " +
-                    "or APPLICATION_MEMBER[LIST] permission on the specified environment " +
-                    "or APPLICATION_MEMBER[LIST] permission on the specified organization")
+            summary = "List members for an protected resource",
+            description = "User must have PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified protected resource " +
+                    "or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List members for an application",
+            @ApiResponse(responseCode = "200", description = "List members for an protected resource",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = MembershipListItem.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
@@ -90,15 +81,15 @@ public class ApplicationMembersResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @PathParam("application") String application,
+            @PathParam("protected-resource") String protectedResourceId,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.LIST)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_MEMBER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
-                        .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
-                        .flatMap(application1 -> membershipService.findByReference(application1.getId(), ReferenceType.APPLICATION).toList())
+                        .flatMap(__ -> service.findById(protectedResourceId))
+                        .switchIfEmpty(Single.error(new ProtectedResourceNotFoundException(protectedResourceId)))
+                        .flatMap(protectedResource -> membershipService.findByReference(protectedResource.getId(), ReferenceType.PROTECTED_RESOURCE).toList())
                         .flatMap(memberships -> membershipService.getMetadata(memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
     }
@@ -108,20 +99,21 @@ public class ApplicationMembersResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "addOrUpdateMember",
-            summary = "Add or update an application member",
-            description = "User must have APPLICATION_MEMBER[CREATE] permission on the specified application " +
-                    "or APPLICATION_MEMBER[CREATE] permission on the specified domain " +
-                    "or APPLICATION_MEMBER[CREATE] permission on the specified environment " +
-                    "or APPLICATION_MEMBER[CREATE] permission on the specified organization")
+            summary = "Add or update an protected resource member",
+            description = "User must have PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified protected resource " +
+                    "or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Member has been added or updated successfully"),
             @ApiResponse(responseCode = "400", description = "Membership parameter is not valid"),
+            @ApiResponse(responseCode = "404", description = "Domain or protected resource is not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void addOrUpdateMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @PathParam("application") String application,
+            @PathParam("protected-resource") String protectedResourceId,
             @Valid @NotNull NewMembership newMembership,
             @Suspended final AsyncResponse response) {
 
@@ -129,19 +121,19 @@ public class ApplicationMembersResource extends AbstractResource {
 
         final Membership membership = convert(newMembership);
         membership.setDomain(domain);
-        membership.setReferenceId(application);
-        membership.setReferenceType(ReferenceType.APPLICATION);
+        membership.setReferenceId(protectedResourceId);
+        membership.setReferenceType(ReferenceType.PROTECTED_RESOURCE);
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.CREATE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_MEMBER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
-                        .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
+                        .flatMap(__ -> service.findById(protectedResourceId))
+                        .switchIfEmpty(Single.error(new ProtectedResourceNotFoundException(protectedResourceId)))
                         .flatMap(__ -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
-                        .flatMap(membership1 -> membershipService.addDomainUserRoleIfNecessary(organizationId, environmentId, domain, newMembership, authenticatedUser)
+                        .flatMap(savedMembership -> membershipService.addDomainUserRoleIfNecessary(organizationId, environmentId, domain, newMembership, authenticatedUser)
                                 .andThen(Single.just(Response
-                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/members/" + membership1.getId()))
-                                        .entity(membership1)
+                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/protected-resources/" + protectedResourceId + "/members/" + savedMembership.getId()))
+                                        .entity(savedMembership)
                                         .build()))))
                 .subscribe(response::resume, response::resume);
     }
@@ -150,14 +142,14 @@ public class ApplicationMembersResource extends AbstractResource {
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "getApplicationMemberPermissions",
-            summary = "List application member's permissions",
-            description = "User must have APPLICATION[READ] permission on the specified application " +
-                    "or APPLICATION[READ] permission on the specified domain " +
-                    "or APPLICATION[READ] permission on the specified environment " +
-                    "or APPLICATION[READ] permission on the specified organization")
+            operationId = "getProtectedResourceMemberPermissions",
+            summary = "List protected resource member's permissions",
+            description = "User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Application member's permissions",
+            @ApiResponse(responseCode = "200", description = "Protected resource member's permissions",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = List.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
@@ -165,20 +157,20 @@ public class ApplicationMembersResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @PathParam("application") String application,
+            @PathParam("protected-resource") String protectedResourceId,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ)
-                .andThen(permissionService.findAllPermissions(authenticatedUser, ReferenceType.APPLICATION, application)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, Acl.READ)
+                .andThen(permissionService.findAllPermissions(authenticatedUser, ReferenceType.PROTECTED_RESOURCE, protectedResourceId)
                         .map(Permission::flatten))
                 .subscribe(response::resume, response::resume);
     }
 
     @Path("{member}")
-    public ApplicationMemberResource getMemberResource() {
-        return resourceContext.getResource(ApplicationMemberResource.class);
+    public ProtectedResourceMemberResource getMemberResource() {
+        return resourceContext.getResource(ProtectedResourceMemberResource.class);
     }
 
     private Membership convert(NewMembership newMembership) {

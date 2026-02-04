@@ -79,6 +79,14 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
     }
 
     @Override
+    public Flowable<Organization> findAll() {
+        LOGGER.debug("findAll()");
+        return organizationRepository.findAll()
+                .map(this::toOrganization)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<Long> count() {
         return organizationRepository.count()
                 .observeOn(Schedulers.computation());

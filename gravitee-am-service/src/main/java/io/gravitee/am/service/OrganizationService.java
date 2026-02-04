@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.am.service.model.PatchOrganization;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -29,6 +30,8 @@ import io.reactivex.rxjava3.core.Single;
 public interface OrganizationService {
 
     Single<Organization> findById(String organizationId);
+
+    Flowable<Organization> findAll();
 
     Maybe<Organization> createDefault();
 

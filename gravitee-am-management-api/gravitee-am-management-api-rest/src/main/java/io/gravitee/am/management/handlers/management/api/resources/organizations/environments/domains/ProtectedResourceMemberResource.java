@@ -16,15 +16,15 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,11 +36,7 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class ApplicationMemberResource extends AbstractResource {
+public class ProtectedResourceMemberResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
@@ -49,16 +45,16 @@ public class ApplicationMemberResource extends AbstractResource {
     private MembershipService membershipService;
 
     @Autowired
-    private ApplicationService applicationService;
+    private ProtectedResourceService service;
 
     @DELETE
     @Operation(
-            operationId = "removeApplicationMember",
+            operationId = "removeProtectedResourceMember",
             summary = "Remove a membership",
-            description = "User must have APPLICATION_MEMBER[DELETE] permission on the specified application " +
-                    "or APPLICATION_MEMBER[DELETE] permission on the specified domain " +
-                    "or APPLICATION_MEMBER[DELETE] permission on the specified environment " +
-                    "or APPLICATION_MEMBER[DELETE] permission on the specified organization")
+            description = "User must have PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified protected resource " +
+                    "or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Membership successfully deleted"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
@@ -66,17 +62,17 @@ public class ApplicationMemberResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @PathParam("application") String application,
+            @PathParam("protected-resource") String protectedResourceId,
             @PathParam("member") String membershipId,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.DELETE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_MEMBER, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapCompletable(__ -> membershipService.delete(Reference.application(application), membershipId, authenticatedUser)))
+                        .flatMap(__ -> service.findById(protectedResourceId))
+                        .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId)))
+                        .flatMapCompletable(__ -> membershipService.delete(Reference.protectedResource(protectedResourceId), membershipId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

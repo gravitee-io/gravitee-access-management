@@ -16,20 +16,19 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ApplicationService } from '../../../../../services/application.service';
 import { AuthService } from '../../../../../services/auth.service';
+import { ProtectedResource, ProtectedResourceService } from '../../../../../services/protected-resource.service';
 import { MembershipsDialogData } from '../../../../../components/memberships/dialog/memberships-dialog.component';
 
 @Component({
-  selector: 'app-application-memberships',
+  selector: 'app-domain-mcp-server-memberships',
   templateUrl: './memberships.component.html',
   styleUrls: ['./memberships.component.scss'],
   standalone: false,
 })
-export class ApplicationMembershipsComponent implements OnInit {
+export class DomainMcpServerMembershipsComponent implements OnInit {
   private domainId: string;
-  private application: any;
-  appId: string;
+  protectedResource: ProtectedResource;
   members: any;
   dialogData: MembershipsDialogData;
   createMode = false;
@@ -37,19 +36,18 @@ export class ApplicationMembershipsComponent implements OnInit {
   deleteMode = false;
 
   constructor(
-    private applicationService: ApplicationService,
+    private protectedResourceService: ProtectedResourceService,
     private authService: AuthService,
     private route: ActivatedRoute,
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.application = this.route.snapshot.data['application'];
-    this.appId = this.application.id;
+    this.protectedResource = this.route.snapshot.data['mcpServer'];
     this.members = this.route.snapshot.data['members'];
-    this.createMode = this.authService.hasPermissions(['application_member_create']);
-    this.editMode = this.authService.hasPermissions(['application_member_update']);
-    this.deleteMode = this.authService.hasPermissions(['application_member_delete']);
+    this.createMode = this.authService.hasPermissions(['protected_resource_member_create']);
+    this.editMode = this.authService.hasPermissions(['protected_resource_member_update']);
+    this.deleteMode = this.authService.hasPermissions(['protected_resource_member_delete']);
     this.updateDialogData();
   }
 
@@ -58,19 +56,20 @@ export class ApplicationMembershipsComponent implements OnInit {
   }
 
   reloadMembers() {
-    this.applicationService.members(this.domainId, this.application.id).subscribe((response) => {
+    this.protectedResourceService.members(this.domainId, this.protectedResource.id).subscribe((response) => {
       this.members = response;
       this.updateDialogData();
     });
   }
+
   private updateDialogData() {
     this.dialogData = {
-      context: 'APPLICATION',
+      context: 'PROTECTED_RESOURCE',
       domainId: this.domainId,
-      appId: this.appId,
-      resource: this.application,
+      protectedResourceId: this.protectedResource?.id,
+      resource: this.protectedResource,
       members: this.members,
-      roleType: 'APPLICATION',
+      roleType: 'PROTECTED_RESOURCE',
       createMode: this.createMode,
       editMode: this.editMode,
       deleteMode: this.deleteMode,

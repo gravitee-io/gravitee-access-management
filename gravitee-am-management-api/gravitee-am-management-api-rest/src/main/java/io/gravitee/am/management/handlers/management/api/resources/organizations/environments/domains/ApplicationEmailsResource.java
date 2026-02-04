@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -95,7 +96,7 @@ public class ApplicationEmailsResource extends AbstractResource {
             @NotNull @QueryParam("template") Template emailTemplate,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ)
                 .andThen(emailTemplateService.findByDomainAndClientAndTemplate(domain, application, emailTemplate.template())
                         .map(email -> Response.ok(email).build())
                         .defaultIfEmpty(Response.ok(new Email(false, emailTemplate.template())).build()))

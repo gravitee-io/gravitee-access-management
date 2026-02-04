@@ -57,6 +57,13 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
     }
 
     @Override
+    public Flowable<Organization> findAll() {
+        return Flowable.fromPublisher(withMaxTime(collection.find()))
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<Organization> findById(String id) {
 
         return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first())

@@ -29,6 +29,7 @@ import io.gravitee.am.service.model.PatchOrganization;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.OrganizationAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -71,6 +72,11 @@ public class OrganizationServiceImpl implements OrganizationService {
         LOGGER.debug("Find organization by id: {}", id);
         return organizationRepository.findById(id)
                 .switchIfEmpty(Single.error(new OrganizationNotFoundException(id)));
+    }
+
+    @Override
+    public Flowable<Organization> findAll() {
+        return organizationRepository.findAll();
     }
 
     @Override

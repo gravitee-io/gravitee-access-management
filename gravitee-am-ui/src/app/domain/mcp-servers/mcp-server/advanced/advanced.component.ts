@@ -47,6 +47,8 @@ export class DomainMcpServerAdvancedComponent implements OnDestroy {
   private loadPermissions(): void {
     if (this.canNavigate(['protected_resource_read'])) {
       this.router.navigate(['general'], { relativeTo: this.route });
+    } else if (this.canNavigate(['protected_resource_member_list'])) {
+      this.router.navigate(['members'], { relativeTo: this.route });
     }
   }
 

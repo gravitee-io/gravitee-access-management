@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import { DomainService } from '../../../services/domain.service';
-import { SnackbarService } from '../../../services/snackbar.service';
-import { DialogService } from '../../../services/dialog.service';
 import { AuthService } from '../../../services/auth.service';
+import { MembershipsDialogData } from '../../../components/memberships/dialog/memberships-dialog.component';
 
 @Component({
   selector: 'app-domain-settings-memberships',
@@ -29,21 +27,18 @@ import { AuthService } from '../../../services/auth.service';
   standalone: false,
 })
 export class DomainSettingsMembershipsComponent implements OnInit {
-  @ViewChild('membersTable') table: any;
   private domain: any;
   domainId: string;
   members: any;
+  dialogData: MembershipsDialogData;
   createMode = false;
   editMode = false;
   deleteMode = false;
 
   constructor(
     private domainService: DomainService,
-    private dialogService: DialogService,
-    private snackbarService: SnackbarService,
     private authService: AuthService,
     private route: ActivatedRoute,
-    public dialog: MatDialog,
   ) {}
 
   ngOnInit() {
@@ -53,95 +48,29 @@ export class DomainSettingsMembershipsComponent implements OnInit {
     this.createMode = this.authService.hasPermissions(['domain_member_create']);
     this.editMode = this.authService.hasPermissions(['domain_member_update']);
     this.deleteMode = this.authService.hasPermissions(['domain_member_delete']);
-  }
-
-  openDialog(): void {
-    const dialogRef = this.dialog.open(DomainMembershipsDialogComponent, {
-      panelClass: 'no-padding-dialog-container',
-      minWidth: '100vw',
-      height: '100vh',
-      data: {
-        domain: this.domain,
-        members: this.members,
-        createMode: this.createMode,
-        editMode: this.editMode,
-        deleteMode: this.deleteMode,
-      },
-    });
-
-    dialogRef.afterClosed().subscribe(() => {
-      this.reloadMembers();
-    });
+    this.updateDialogData();
   }
 
   isEditable() {
     return this.createMode || this.editMode || this.deleteMode;
   }
 
-  private reloadMembers() {
+  reloadMembers() {
     this.domainService.members(this.domainId).subscribe((response) => {
       this.members = response;
+      this.updateDialogData();
     });
   }
-}
-
-@Component({
-  selector: 'app-domain-memberships-dialog',
-  templateUrl: '../../components/memberships/dialog/memberships-dialog.html',
-  styleUrls: ['../../components/memberships/dialog/memberships-dialog.scss'],
-  standalone: false,
-})
-export class DomainMembershipsDialogComponent {
-  private domainId: string;
-  resource: any;
-  members = [];
-  roleType = 'DOMAIN';
-  createMode: boolean;
-  editMode: boolean;
-  deleteMode: boolean;
-
-  constructor(
-    private domainService: DomainService,
-    private snackbarService: SnackbarService,
-    public dialogRef: MatDialogRef<DomainMembershipsDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-  ) {
-    this.resource = data.domain;
-    this.domainId = data.domain.id;
-    this.members = data.members;
-    this.createMode = data.createMode;
-    this.editMode = data.editMode;
-    this.deleteMode = data.deleteMode;
-  }
-
-  close(): void {
-    this.dialogRef.close();
-  }
-
-  add(membership) {
-    this.domainService.addMember(this.domainId, membership.memberId, membership.memberType, membership.role).subscribe(() => {
-      this.snackbarService.open('Member added');
-      this.reloadMembers();
-    });
-  }
-
-  delete(membershipId) {
-    this.domainService.removeMember(this.domainId, membershipId).subscribe(() => {
-      this.snackbarService.open('Member deleted');
-      this.reloadMembers();
-    });
-  }
-
-  update(membership) {
-    this.domainService.addMember(this.domainId, membership.memberId, membership.memberType, membership.role).subscribe(() => {
-      this.snackbarService.open('Member updated');
-      this.reloadMembers();
-    });
-  }
-
-  private reloadMembers() {
-    this.domainService.members(this.domainId).subscribe((response) => {
-      this.members = response;
-    });
+  private updateDialogData() {
+    this.dialogData = {
+      context: 'DOMAIN',
+      domainId: this.domainId,
+      resource: this.domain,
+      members: this.members,
+      roleType: 'DOMAIN',
+      createMode: this.createMode,
+      editMode: this.editMode,
+      deleteMode: this.deleteMode,
+    };
   }
 }
