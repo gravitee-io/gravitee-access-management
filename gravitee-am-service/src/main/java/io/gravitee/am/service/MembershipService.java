@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
@@ -51,14 +52,14 @@ public interface MembershipService {
 
     Single<Map<String, Map<String, Object>>> getMetadata(List<Membership> memberships);
 
-    Completable delete(String membershipId, User principal);
+    Completable delete(Reference reference, String membershipId, User principal);
 
     default Single<Membership> addOrUpdate(String organizationId, Membership membership) {
         return addOrUpdate(organizationId, membership, null);
     }
 
-    default Completable delete(String membershipId) {
-        return delete(membershipId, null);
+    default Completable delete(Reference reference, String membershipId) {
+        return delete(reference, membershipId, null);
     }
 
     /**

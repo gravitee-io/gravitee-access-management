@@ -40,19 +40,11 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.InvalidRoleException;
-import io.gravitee.am.service.exception.MembershipNotFoundException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.exception.SinglePrimaryOwnerException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.MembershipAuditBuilder;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -237,11 +229,13 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public Completable delete(String membershipId, User principal) {
-        LOGGER.debug("Delete membership {}", membershipId);
+    public Completable delete(Reference reference, String membershipId, User principal) {
+        LOGGER.debug("Delete membership {} and ref {}", membershipId, reference);
 
         return membershipRepository.findById(membershipId)
                 .switchIfEmpty(Maybe.error(new MembershipNotFoundException(membershipId)))
+                .filter(membership -> reference.matches(membership.getReferenceType(), membership.getReferenceId()))
+                .switchIfEmpty(Maybe.error(new ResourceForbiddenAccessException("referenceType and membershipId mismatch")))
                 .flatMapCompletable(membership -> membershipRepository.delete(membershipId)
                         .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getReferenceType(), membership.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class)
@@ -351,6 +345,8 @@ public class MembershipServiceImpl implements MembershipService {
         Role filteredRole = new Role();
         filteredRole.setId(role.getId());
         filteredRole.setName(role.getName());
+        filteredRole.setSystem(role.isSystem());
+        filteredRole.setDefaultRole(role.isDefaultRole());
         return filteredRole;
     }
 
@@ -405,4 +401,6 @@ public class MembershipServiceImpl implements MembershipService {
                 .switchIfEmpty(Single.error(new InvalidRoleException("Invalid role")))
                 .ignoreElement();
     }
+
+
 }
