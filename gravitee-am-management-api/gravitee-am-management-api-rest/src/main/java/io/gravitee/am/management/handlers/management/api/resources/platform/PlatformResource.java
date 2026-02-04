@@ -63,6 +63,11 @@ public class PlatformResource {
         return resourceContext.getResource(SystemRoleResource.class);
     }
 
+    @Path("capabilities")
+    public CapabilitiesResource getCapabilitiesResource() {
+        return resourceContext.getResource(CapabilitiesResource.class);
+    }
+
     @Path("configuration")
     public ConfigurationResource getConfigurationResource() {
         return resourceContext.getResource(ConfigurationResource.class);

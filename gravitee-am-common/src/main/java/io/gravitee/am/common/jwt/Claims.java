@@ -136,6 +136,8 @@ public interface Claims {
 
     String CLIENT_ID = "client_id";
 
+    String SESSION_ID = "session_id";
+
     /**
      * RFC 8693 Token Exchange - Actor claim for delegation scenarios.
      * Contains a JSON object with claims identifying the actor (at minimum "sub").

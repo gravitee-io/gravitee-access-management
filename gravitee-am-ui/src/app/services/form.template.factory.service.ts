@@ -114,6 +114,12 @@ export class FormTemplateFactoryService {
       template: 'CBA_LOGIN',
       icon: 'fingerprint',
     },
+    magic_link_login: {
+      name: 'Magic Link Login',
+      description: 'Magic Link authentication login page',
+      template: 'MAGIC_LINK_LOGIN',
+      icon: 'fingerprint',
+    },
     error: {
       name: 'Error',
       description: 'Error page to display a message describing the problem',

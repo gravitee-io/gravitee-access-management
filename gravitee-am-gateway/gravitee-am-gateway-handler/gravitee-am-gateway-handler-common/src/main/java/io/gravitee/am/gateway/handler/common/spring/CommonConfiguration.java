@@ -326,6 +326,9 @@ public class CommonConfiguration {
         final String registrationConfirmationSubject = environment.getProperty("user.registration.confirmation.email.subject", String.class, "${msg('email.registration_confirmation.subject')}");
         final int userRegistrationConfirmationTimeValue = environment.getProperty("user.registration.confirmation.time.value", Integer.class, 24);
         final TimeUnit userRegistrationConfirmationTimeUnit = environment.getProperty("user.registration.confirmation.time.unit", TimeUnit.class, TimeUnit.HOURS);
+        final String userMagicLinkLoginSubject = environment.getProperty("user.magic.link.login.email.subject", String.class, "Sign in");
+        final int userMagicLinkLoginTimeValue = environment.getProperty("user.magic.link.login.time.value", Integer.class, 15);
+        final TimeUnit userMagicLinkLoginTimeUnit = environment.getProperty("user.magic.link.login.time.unit", TimeUnit.class, TimeUnit.MINUTES);
 
         return new EmailServiceImpl(
                 enabled,
@@ -339,7 +342,9 @@ public class CommonConfiguration {
                 registrationVerifySubject,
                 Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue)),
                 registrationConfirmationSubject,
-                Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue))
+                Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue)),
+                userMagicLinkLoginSubject,
+                Math.toIntExact(userMagicLinkLoginTimeUnit.toSeconds(userMagicLinkLoginTimeValue))
         );
     }
 
