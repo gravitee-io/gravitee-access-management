@@ -31,6 +31,7 @@ import { createApplication, updateApplication } from '@management-commands/appli
 import { createIdp } from '@management-commands/idp-management-commands';
 import { getDefaultApi, getIdpApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
+import { retryUntil } from '@utils-commands/retry';
 import { Fixture } from '../../../test-fixture';
 import {
   cookieHeaderFromSetCookie,
@@ -49,19 +50,21 @@ const MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL!;
  * Organization settings may take time to propagate.
  */
 async function waitForSocialProviderOnLoginPage(maxWaitMs = 10000, intervalMs = 500): Promise<void> {
-  const startTime = Date.now();
-  while (Date.now() - startTime < maxWaitMs) {
-    try {
-      const { loginFormRes } = await getLoginFormFromUtils(MANAGEMENT_URL, 'https://nowhere.com');
-      if (hasSocialProviderLink(loginFormRes.text)) {
-        return;
+  await retryUntil(
+    async () => {
+      try {
+        const { loginFormRes } = await getLoginFormFromUtils(MANAGEMENT_URL, 'https://nowhere.com');
+        return loginFormRes.text;
+      } catch {
+        return '';
       }
-    } catch {
-      // Ignore errors during polling
-    }
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
-  throw new Error('Social provider link did not appear on login page within timeout');
+    },
+    (text) => hasSocialProviderLink(text),
+    {
+      timeoutMillis: maxWaitMs,
+      intervalMillis: intervalMs,
+    },
+  );
 }
 
 export interface ApiManagementLoginSocialFixture extends Fixture {
