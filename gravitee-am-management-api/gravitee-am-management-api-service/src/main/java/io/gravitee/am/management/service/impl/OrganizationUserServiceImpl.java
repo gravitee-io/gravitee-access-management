@@ -316,7 +316,8 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                         })
                         .andThen(getUserService().delete(userId).ignoreElement())
                         // remove from memberships if user is an administrative user
-                        .andThen(membershipService.findByMember(userId, MemberType.USER).flatMapCompletable(membership -> membershipService.delete(membership.getId())))
+                        .andThen(membershipService.findByMember(userId, MemberType.USER)
+                                .flatMapCompletable(membership -> membershipService.delete(new Reference(membership.getReferenceType(), membership.getReferenceId()), membership.getId())))
                         .toSingleDefault(user))
                 .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)))

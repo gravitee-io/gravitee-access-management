@@ -60,7 +60,7 @@ public class MemberResourceTest extends JerseySpringTest {
         organization.setId(Organization.DEFAULT);
 
         doReturn(Single.just(organization)).when(organizationService).findById(organization.getId());
-        doReturn(Completable.complete()).when(membershipService).delete(eq(membershipId), any(io.gravitee.am.identityprovider.api.User.class));
+        doReturn(Completable.complete()).when(membershipService).delete(any(), eq(membershipId), any(io.gravitee.am.identityprovider.api.User.class));
 
         final Response response = target("/organizations")
                 .path(organization.getId())

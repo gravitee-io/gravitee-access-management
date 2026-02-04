@@ -118,7 +118,7 @@ public class OrganizationUserServiceTest {
                 .assertComplete()
                 .assertNoErrors();
         verify(commonUserService, times(1)).delete(any());
-        verify(membershipService, never()).delete(anyString());
+        verify(membershipService, never()).delete(any(), anyString());
     }
 
     @Test
@@ -134,24 +134,30 @@ public class OrganizationUserServiceTest {
 
         Membership m1 = mock(Membership.class);
         when(m1.getId()).thenReturn("m1");
+        when(m1.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(m1.getReferenceId()).thenReturn(organization);
         Membership m2 = mock(Membership.class);
         when(m2.getId()).thenReturn("m2");
+        when(m2.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(m2.getReferenceId()).thenReturn(organization);
         Membership m3 = mock(Membership.class);
         when(m3.getId()).thenReturn("m3");
+        when(m3.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(m3.getReferenceId()).thenReturn(organization);
 
         when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
         when(commonUserService.delete(anyString())).thenReturn(Single.just(user));
         when(commonUserService.revokeUserAccessTokens(any(), any(), any())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Flowable.just(m1, m2, m3));
-        when(membershipService.delete(anyString())).thenReturn(Completable.complete());
+        when(membershipService.delete(any(), anyString())).thenReturn(Completable.complete());
 
         organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(commonUserService, times(1)).delete(any());
-        verify(membershipService, times(3)).delete(anyString());
+        verify(membershipService, times(3)).delete(any(), anyString());
     }
 
     private NewOrganizationUser newOrganizationUser() {

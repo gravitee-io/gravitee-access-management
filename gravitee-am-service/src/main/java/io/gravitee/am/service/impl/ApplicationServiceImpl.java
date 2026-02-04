@@ -488,7 +488,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                             )
                             // delete memberships
                             .andThen(membershipService.findByReference(application.getId(), ReferenceType.APPLICATION)
-                                    .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
+                                    .flatMapCompletable(membership -> membershipService.delete(Reference.application(application.getId()), membership.getId()))
                             )
                             // trigger events to delete client secrets notifiers
                             .andThen(Flowable.fromIterable(application.getSecrets())
