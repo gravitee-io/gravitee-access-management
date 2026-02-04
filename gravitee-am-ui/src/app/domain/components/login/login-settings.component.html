@@ -152,6 +152,16 @@
         </mat-form-field>
       </div>
       <div fxLayout="column" style="margin-top: 10px">
+        <h5 style="margin-bottom: 8px">Magic Link Authentication</h5>
+        <mat-slide-toggle (change)="enableMagicLinkAuth($event)" [checked]="isMagicLinkAuthEnabled()" [disabled]="readonly">
+          Passwordless Magic Link Authentication
+        </mat-slide-toggle>
+        <div class="info-box warning">
+          <mat-icon>warning_outline</mat-icon> Install the <b>Magic Link Authenticator</b> plugin on the Gateway to enable this feature.
+        </div>
+        <mat-hint style="font-size: 75%">Allows users to enroll and sign in using a magic link sent to e-mail.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px">
         <h5 style="margin-bottom: 8px">Settings</h5>
         <mat-slide-toggle
           (change)="enablePasswordlessEnforcePassword($event)"

@@ -106,6 +106,15 @@ export class LoginSettingsComponent implements OnChanges {
     return this.loginSettings?.certificateBasedAuthEnabled;
   }
 
+  enableMagicLinkAuth(event) {
+    this.loginSettings.magicLinkAuthEnabled = event.checked;
+    this.formChanged = true;
+  }
+
+  isMagicLinkAuthEnabled() {
+    return this.loginSettings?.magicLinkAuthEnabled;
+  }
+
   setCertificateBasedAuthUrl(value: string) {
     this.loginSettings.certificateBasedAuthUrl = value;
     this.formChanged = true;
