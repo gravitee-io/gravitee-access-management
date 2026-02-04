@@ -554,6 +554,91 @@ public class ClientAssertionServiceTest {
                 .assertValue(client);
     }
 
+    @Test
+    public void testHmacJwt_protectedResource_notSupported() throws JOSEException {
+        // HMAC/client_secret_jwt is NOT supported for protected resources
+        // Only private_key_jwt is supported for protected resources
+        SecureRandom random = new SecureRandom();
+        byte[] sharedSecret = new byte[32];
+        random.nextBytes(sharedSecret);
+        String clientSecret = new String(sharedSecret, StandardCharsets.UTF_8);
+        JWSSigner signer = new MACSigner(clientSecret);
+
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+        client.setClientSecret(new String(sharedSecret));
+        client.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+
+        String assertion = generateJWT(signer);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        // Regular client not found, protected resource exists but should not be used for HMAC
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    @Test
+    public void testRsaJwt_withEmptyTokenEndpointAuthMethod() throws NoSuchAlgorithmException, JOSEException {
+        // Empty string tokenEndpointAuthMethod should be treated like null (based on incoming request)
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        RSAKey key = new RSAKey();
+        key.setKty("RSA");
+        key.setKid(KID);
+        key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
+        key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
+
+        Client client = generateClient(key);
+        client.setTokenEndpointAuthMethod(""); // Empty string instead of null
+        String assertion = generateJWT(privateKey);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
+    }
+
+    @Test
+    public void testHmacJwt_withEmptyTokenEndpointAuthMethod() throws JOSEException {
+        // Empty string tokenEndpointAuthMethod should be treated like null (based on incoming request)
+        SecureRandom random = new SecureRandom();
+        byte[] sharedSecret = new byte[32];
+        random.nextBytes(sharedSecret);
+        String clientSecret = new String(sharedSecret, StandardCharsets.UTF_8);
+        JWSSigner signer = new MACSigner(clientSecret);
+
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+        client.setClientSecret(new String(sharedSecret));
+        client.setTokenEndpointAuthMethod(""); // Empty string instead of null
+        String assertion = generateJWT(signer);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
+    }
+
     private KeyPair generateRsaKeyPair() throws NoSuchAlgorithmException{
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
