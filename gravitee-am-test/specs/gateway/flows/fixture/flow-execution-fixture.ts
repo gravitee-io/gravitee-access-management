@@ -54,22 +54,22 @@ export interface FlowExecutionFixture extends Fixture {
   cleanUp: () => Promise<void>;
 
   // Helper methods for isolated tests
-  configureDomainFlows: (config: DomainFlowConfig) => Promise<void>;
-  configureAppFlows: (config: AppFlowConfig) => Promise<void>;
+  configureDomainFlows: (config: DomainFlowTestConfig) => Promise<void>;
+  configureAppFlows: (config: AppFlowTestConfig) => Promise<void>;
   setAppTokenClaims: (claims: TokenClaim[]) => Promise<void>;
   setFlowsInherited: (inherited: boolean) => Promise<void>;
   loginAndGetJwt: (extraParams?: string) => Promise<{ jwt: any; postLoginRedirect: any }>;
   resetFlows: () => Promise<void>;
 }
 
-export interface DomainFlowConfig {
+export interface DomainFlowTestConfig {
   rootPreScript?: string;
   loginPreEnrichProperties?: { key: string; value: string }[];
   loginPreCondition?: string;
   loginPostEnrichProperties?: { claim: string; claimValue: string }[];
 }
 
-export interface AppFlowConfig {
+export interface AppFlowTestConfig {
   rootPreScript?: string;
   loginPreEnrichProperties?: { key: string; value: string }[];
   loginPostEnrichProperties?: { claim: string; claimValue: string }[];
@@ -141,7 +141,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
   await clearEmails(user.email);
 
   // Helper: Configure domain flows
-  const configureDomainFlows = async (config: DomainFlowConfig) => {
+  const configureDomainFlows = async (config: DomainFlowTestConfig) => {
     const flows = await getDomainFlows(domain.id, accessToken);
 
     if (config.rootPreScript) {
@@ -191,7 +191,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
   };
 
   // Helper: Configure app flows
-  const configureAppFlows = async (config: AppFlowConfig) => {
+  const configureAppFlows = async (config: AppFlowTestConfig) => {
     const flows = await getApplicationFlows(domain.id, accessToken, application.id);
 
     if (config.rootPreScript) {

@@ -71,13 +71,7 @@ export function extractCsrfFromManagementLoginHtml(html: string): string {
  */
 export function hasSocialProviderLink(html: string): boolean {
   const $ = cheerio.load(html);
-  const href =
-    $('.button.social.btn-oauth2-generic-am-idp').attr('href') ||
-    $('[class*="social"][class*="oauth2-generic-am-idp"]').attr('href') ||
-    $('a[href*="oauth2"], a[href*="social"]').first().attr('href') ||
-    $('a[href*="/oauth/authorize"], a[href*="client_id"]').first().attr('href') ||
-    $('a.btn[href]').filter((_, el) => $(el).attr('href')?.includes('authorize') || $(el).attr('href')?.includes('login')).first().attr('href');
-  return !!href;
+  return $('[data-testid^="social-provider-"]').length > 0;
 }
 
 /**
@@ -90,12 +84,7 @@ export function extractSocialUrlFromManagementLoginHtml(
   gatewayUrl: string,
 ): string {
   const $ = cheerio.load(html);
-  let href =
-    $('.button.social.btn-oauth2-generic-am-idp').attr('href') ||
-    $('[class*="social"][class*="oauth2-generic-am-idp"]').attr('href') ||
-    $('a[href*="oauth2"], a[href*="social"]').first().attr('href') ||
-    $('a[href*="/oauth/authorize"], a[href*="client_id"]').first().attr('href') ||
-    $('a.btn[href]').filter((_, el) => $(el).attr('href')?.includes('authorize') || $(el).attr('href')?.includes('login')).first().attr('href');
+  const href = $('[data-testid^="social-provider-"]').first().attr('href');
   if (!href) {
     throw new Error('Could not find social provider link in login form');
   }
