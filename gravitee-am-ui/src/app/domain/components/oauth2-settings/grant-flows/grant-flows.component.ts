@@ -191,7 +191,8 @@ export class GrantFlowsComponent implements OnInit {
     const updatedSettings = {
       ...this.oauthSettings,
       grantTypes: selectedGrantTypes.concat(this.selectedCustomGrantTypes),
-      // jwks parsing handled by parent on save usually, but we keep the string version in local state
+      // Convert empty string to null for tokenEndpointAuthMethod to maintain backend compatibility
+      tokenEndpointAuthMethod: this.oauthSettings.tokenEndpointAuthMethod || null,
     };
     this.settingsChange.emit(updatedSettings);
   }
