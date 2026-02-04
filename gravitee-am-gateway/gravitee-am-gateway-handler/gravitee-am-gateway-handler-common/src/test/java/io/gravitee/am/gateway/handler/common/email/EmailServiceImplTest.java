@@ -269,6 +269,8 @@ public class EmailServiceImplTest {
                 "Complete your registration",
                 Long.valueOf(DAYS.toSeconds(7)).intValue(),
                 "Verify your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue(),
+                "Sign in",
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
     }
 

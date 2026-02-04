@@ -75,7 +75,10 @@ public class EmailServiceTest {
             "Complete your registration",
             Long.valueOf(DAYS.toSeconds(7)).intValue(),
             "Verify your registration",
-            Long.valueOf(DAYS.toSeconds(7)).intValue());
+            Long.valueOf(DAYS.toSeconds(7)).intValue(),
+            "Sing in",
+            Long.valueOf(DAYS.toSeconds(7)).intValue()
+    );
 
     @Mock
     private EmailService emailService;

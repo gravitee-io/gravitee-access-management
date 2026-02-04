@@ -19,6 +19,7 @@ import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { EmailTemplateFactoryService } from '../../../../../services/email.template.factory.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
+import { PlatformCapabilitiesService } from '../../../../../services/platform-capabilities.service';
 
 @Component({
   selector: 'app-application-emails',
@@ -32,10 +33,13 @@ export class ApplicationEmailsComponent implements OnInit {
   domain: any;
   private emailTemplateFactoryService: EmailTemplateFactoryService;
 
+  private magicLinkDeployed = true;
+
   constructor(
     private route: ActivatedRoute,
     private domainStore: DomainStoreService,
     emailTemplateFactoryService: EmailTemplateFactoryService,
+    private platformCapabilitiesService: PlatformCapabilitiesService,
   ) {
     this.emailTemplateFactoryService = emailTemplateFactoryService;
   }
@@ -43,15 +47,33 @@ export class ApplicationEmailsComponent implements OnInit {
   ngOnInit() {
     this.domain = deepClone(this.domainStore.current);
     this.application = this.route.snapshot.data['application'];
+
+    this.platformCapabilitiesService.get().subscribe((caps) => {
+      this.magicLinkDeployed = !!caps?.magicLinkAuthenticatorDeployed;
+    });
   }
 
   getEmails() {
     return this.emailTemplateFactoryService
       .findBy((email) => email.template !== 'CERTIFICATE_EXPIRATION')
       .map((email) => {
-        email.enabled = email.template === 'RESET_PASSWORD' ? this.allowResetPassword() : this.applicationSettingsValid();
+        if (email.template === 'RESET_PASSWORD') {
+          email.enabled = this.allowResetPassword();
+          return email;
+        }
+
+        if (email.template === 'MAGIC_LINK') {
+          email.enabled = this.allowMagicLink();
+          return email;
+        }
+
+        email.enabled = this.applicationSettingsValid();
         return email;
       });
+  }
+
+  private allowMagicLink(): boolean {
+    return this.magicLinkDeployed;
   }
 
   applicationSettingsValid() {

@@ -175,6 +175,18 @@ export class DomainDashboardComponent implements OnInit {
           },
         },
       },
+      {
+        flex: 50,
+        title: 'Magic link Logins',
+        subhead: 'Latest Magic Link logins',
+        chart: {
+          type: 'pie',
+          request: {
+            type: 'group_by',
+            field: 'magic_link',
+          },
+        },
+      },
     ],
   };
 

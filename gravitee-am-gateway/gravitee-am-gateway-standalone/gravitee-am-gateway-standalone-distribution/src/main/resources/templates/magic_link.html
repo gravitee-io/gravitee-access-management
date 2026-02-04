@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Sign in to ${client.name}</title>
+    <style>
+        body {
+            background-color: #E5E5E5;
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+                'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            font-style: normal;
+        }
+        .body {
+            background-color: #E5E5E5;
+            width: 100%;
+        }
+        .container {
+            display: block;
+            margin: 0 auto !important;
+            max-width: 600px;
+            padding: 10px;
+            width: 600px;
+        }
+        .content {
+            box-sizing: border-box;
+            display: block;
+            margin: 0 auto;
+            max-width: 600px;
+            padding: 10px;
+        }
+        .main {
+            background: #FFFFFF;
+            border-radius: 8px;
+            width: 100%;
+            padding: 54px;
+        }
+        h1 {
+            font-weight: 800;
+            font-size: 24px;
+            line-height: 32px;
+            color: #25213A;
+            text-align: center;
+        }
+        p {
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 22px;
+            color: #5C5959;
+            text-align: center;
+        }
+        a {
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            box-sizing: border-box;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 22px;
+            text-decoration: none;
+            display: block;
+        }
+        a.primary {
+            color: #FFFFFF;
+            background: #F01114;
+        }
+    </style>
+</head>
+<body style="background-color: #E5E5E5; font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" class="body" width="100%" bgcolor="#E5E5E5">
+    <tr>
+        <td class="container" width="600" style="margin: 0 auto;">
+            <div class="content">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" class="main">
+
+                    <#include "header.html" />
+
+                    <tr>
+                        <td>
+                            <h1>
+                                ${msg('email.magic_link.header.title', client.name)}
+                            </h1>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <p>${msg('email.magic_link.header.description.first.row')}</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <p>${msg('email.magic_link.header.description.second.row', client.name)}</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding-top: 40px;">
+                            <a href="${url}" class="primary">
+                                ${msg('email.magic_link.button', client.name)}
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 32px 0 16px 0;">
+                            <hr style="border: 0; border-top: 1px solid #E5E5E5; margin: 0;">
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <p>
+                                ${msg('email.magic_link.expiration', expireAfterSeconds / 60,
+                                msg('email.common.unit.minutes'))}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <p>
+                                ${msg('email.magic_link.raw.link')}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <a href="${url}" style="color:#F01114; text-decoration:none; display:inline-block; max-width:40ch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:normal; font-size:14px; line-height:22px;">
+                                ${url}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
