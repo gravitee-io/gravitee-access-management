@@ -371,10 +371,16 @@ describe('Token Exchange with requested_token_type=id_token', () => {
     expect(decoded.payload['iat']).toBeDefined();
   });
 
-  it('should return ID token with correct expires_in', async () => {
+  it('should return ID token with expires_in consistent with subject token expiration', async () => {
     const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    // Decode the subject token to get its expiration time
+    const subjectPayload = JSON.parse(Buffer.from(subjectAccessToken.split('.')[1], 'base64').toString());
+    const subjectExp = subjectPayload.exp;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const subjectRemainingTime = subjectExp - nowSeconds;
 
     const response = await performPost(
       oidc.token_endpoint,
@@ -389,6 +395,32 @@ describe('Token Exchange with requested_token_type=id_token', () => {
     // expires_in should be present and reasonable
     expect(response.body.expires_in).toBeDefined();
     expect(response.body.expires_in).toBeGreaterThan(0);
+
+    // The exchanged token's expires_in should not exceed the subject token's remaining time
+    // Allow a small buffer (5 seconds) for processing time
+    expect(response.body.expires_in).toBeLessThanOrEqual(subjectRemainingTime + 5);
+  });
+
+  it('should NOT include scope in ID token response', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    // Request with openid scope - but ID token response should not include scope
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&requested_token_type=urn:ietf:params:oauth:token-type:id_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // ID tokens are for identity/authentication, not authorization
+    // Therefore scope should NOT be included in the response
+    expect(response.body.scope).toBeUndefined();
+    expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:id_token');
   });
 
   it('should reject id_token request when not in allowedRequestedTokenTypes', async () => {

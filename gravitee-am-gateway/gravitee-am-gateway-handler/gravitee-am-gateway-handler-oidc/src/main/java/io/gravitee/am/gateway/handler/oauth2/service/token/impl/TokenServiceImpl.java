@@ -248,9 +248,9 @@ public class TokenServiceImpl implements TokenService {
                 .flatMap(executionContext ->
                         idTokenService.create(oAuth2Request, client, endUser, executionContext)
                                 .map(idTokenString -> {
-                                    // Create AccessToken wrapper with the ID token string
-                                    AccessToken token = new AccessToken(idTokenString);
-                                    token.setIssuedTokenType(TokenType.ID_TOKEN);
+                                    // Create ExchangedIDToken with the ID token string
+                                    // ExchangedIDToken sets token_type="N_A" and issued_token_type=ID_TOKEN by default
+                                    ExchangedIDToken token = new ExchangedIDToken(idTokenString);
 
                                     // Calculate expires_in based on client's ID token validity
                                     // Also respect exchange expiration if set
@@ -262,15 +262,9 @@ public class TokenServiceImpl implements TokenService {
                                     }
                                     token.setExpiresIn(expiresIn);
 
-                                    // Per RFC 8693, token_type is "N_A" for non-access tokens
-                                    token.setTokenType("N_A");
+                                    // Note: No scope is set for ID tokens as they are for identity/authentication,
+                                    // not authorization. The ExchangedIDTokenSerializer also omits scope from serialization.
 
-                                    // Set scope if present
-                                    if (oAuth2Request.getScopes() != null && !oAuth2Request.getScopes().isEmpty()) {
-                                        token.setScope(String.join(" ", oAuth2Request.getScopes()));
-                                    }
-
-                                    // No refresh token for ID token-only response
                                     return (Token) token;
                                 })
                 )
