@@ -1,6 +1,4 @@
-# Migration Tool - AM Gateway Dataplane 2 only (PostgreSQL). Release: am-gateway-dp2. Port-forward: 8092.
-# Chart: graviteeio/am. API + UI disabled; gateway uses dataplane dp2 (gravitee-am-dp2).
-
+# Gateway dp2 (PostgreSQL). Release: am-gateway-dp2. Port-forward: 8092.
 labels:
   environment: migration-test
   part-of: am-migration-tool
@@ -23,7 +21,9 @@ jdbc:
     - https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar
     - https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.7.RELEASE/r2dbc-postgresql-1.0.7.RELEASE.jar
 
-commonEnv: &commonEnv
+gatewayEnv: &gatewayEnv
+  - name: gravitee_repositories_system_cluster
+    value: gateway
   - name: GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE
     value: jdbc
   - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER
@@ -38,22 +38,14 @@ commonEnv: &commonEnv
     value: gravitee
   - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD
     value: gravitee-password
-  - name: GRAVITEE_REPOSITORIES_OAUTH2_TYPE
-    value: jdbc
-  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER
-    value: postgresql
-  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST
-    value: postgres-postgresql
-  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT
-    value: "5432"
-  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
-    value: gravitee-am
-  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME
-    value: gravitee
-  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
-    value: gravitee-password
   - name: GRAVITEE_REPOSITORIES_GATEWAY_TYPE
     value: jdbc
+  - name: gravitee_repositories_gateway_use_management_settings
+    value: "false"
+  - name: gravitee_repositories_gateway_dataPlane_id
+    value: dp2
+  - name: gravitee_repositories_gateway_dataPlane_url
+    value: "http://localhost:8092"
   - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER
     value: postgresql
   - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST
@@ -61,63 +53,29 @@ commonEnv: &commonEnv
   - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT
     value: "5432"
   - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE
-    value: gravitee-am
+    value: gravitee-am-dp2
   - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME
     value: gravitee
   - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD
     value: gravitee-password
-  # Dataplane config (gravitee.dataPlanes.* via relaxed binding)
-  - name: gravitee_dataPlanes_0_id
-    value: default
-  - name: gravitee_dataPlanes_0_type
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_TYPE
     value: jdbc
-  - name: gravitee_dataPlanes_0_jdbc_driver
+  - name: gravitee_repositories_oauth2_use_management_settings
+    value: "false"
+  - name: gravitee_repositories_oauth2_use_gateway_settings
+    value: "true"
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER
     value: postgresql
-  - name: gravitee_dataPlanes_0_jdbc_host
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST
     value: postgres-postgresql
-  - name: gravitee_dataPlanes_0_jdbc_port
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT
     value: "5432"
-  - name: gravitee_dataPlanes_0_jdbc_database
-    value: gravitee-am
-  - name: gravitee_dataPlanes_0_jdbc_username
-    value: gravitee
-  - name: gravitee_dataPlanes_0_jdbc_password
-    value: gravitee-password
-  - name: gravitee_dataPlanes_1_id
-    value: dp1
-  - name: gravitee_dataPlanes_1_type
-    value: jdbc
-  - name: gravitee_dataPlanes_1_jdbc_driver
-    value: postgresql
-  - name: gravitee_dataPlanes_1_jdbc_host
-    value: postgres-postgresql
-  - name: gravitee_dataPlanes_1_jdbc_port
-    value: "5432"
-  - name: gravitee_dataPlanes_1_jdbc_database
-    value: gravitee-am-dp1
-  - name: gravitee_dataPlanes_1_jdbc_username
-    value: gravitee
-  - name: gravitee_dataPlanes_1_jdbc_password
-    value: gravitee-password
-  - name: gravitee_dataPlanes_2_id
-    value: dp2
-  - name: gravitee_dataPlanes_2_type
-    value: jdbc
-  - name: gravitee_dataPlanes_2_jdbc_driver
-    value: postgresql
-  - name: gravitee_dataPlanes_2_jdbc_host
-    value: postgres-postgresql
-  - name: gravitee_dataPlanes_2_jdbc_port
-    value: "5432"
-  - name: gravitee_dataPlanes_2_jdbc_database
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
     value: gravitee-am-dp2
-  - name: gravitee_dataPlanes_2_jdbc_username
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME
     value: gravitee
-  - name: gravitee_dataPlanes_2_jdbc_password
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
     value: gravitee-password
-  # Gateway uses dataplane dp2 (port-forward 8092)
-  - name: gravitee_repositories_gateway_dataPlane_id
-    value: dp2
   - name: LIQUIBASE_ANALYTICS_ENABLED
     value: "false"
 
@@ -127,13 +85,16 @@ api:
 gateway:
   enabled: true
   replicaCount: 1
+  services:
+    sync:
+      permissions: true
   image:
     repository: graviteeio/am-gateway
     tag: 4.10.0
     pullPolicy: IfNotPresent
   ingress:
     enabled: false
-  env: *commonEnv
+  env: *gatewayEnv
 
 ui:
   enabled: false

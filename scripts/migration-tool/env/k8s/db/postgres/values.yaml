@@ -1,6 +1,9 @@
-# Minimal Postgres for migration test. Uses official postgres image (postgres:16.6) so md5() works.
-# postgres.password is for local/migration test only; override in production.
+# Postgres chart for migration test (postgres:16.6).
 fullnameOverride: postgres-postgresql
+
+securityContext:
+  runAsUser: 10001
+  runAsGroup: 10001
 
 image:
   repository: postgres
@@ -27,8 +30,17 @@ persistence:
 
 resources:
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: "1"
+    memory: 2Gi
   requests:
-    cpu: 250m
-    memory: 256Mi
+    cpu: 500m
+    memory: 1Gi
+
+initContainer:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi

@@ -7,6 +7,20 @@ export class Kubectl {
         this.shell = options.shell || $; // Use global zx shell by default
     }
 
+    /**
+     * Verify the cluster from kubeconfig is reachable. Call before clean/setup to fail fast with a clear message.
+     * @throws {Error} If cluster is unreachable (e.g. Kind not running)
+     */
+    async checkClusterReachable() {
+        try {
+            await this.shell`kubectl cluster-info --request-timeout=5s`;
+        } catch (e) {
+            throw new Error(
+                'Kubernetes cluster unreachable. Start a local cluster first (e.g. kind create cluster --name am-migration).'
+            );
+        }
+    }
+
     async secretExists(name) {
         try {
             await this.shell`kubectl get secret ${name} -n ${this.namespace}`;

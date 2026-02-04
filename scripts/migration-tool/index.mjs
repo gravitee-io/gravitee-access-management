@@ -61,7 +61,7 @@ const parsed = parseArgs({
 
 // When launcher runs script via zx, first positional can be the script path (index.mjs); command is then the next arg
 const zxArgv = typeof argv === 'undefined' ? null : argv;
-const knownCommands = ['run', 'setup', 'trigger'];
+const knownCommands = ['run', 'setup', 'teardown', 'trigger'];
 const positionals = parsed.positionals;
 const firstIsCommand = positionals.length > 0 && knownCommands.includes(positionals[0]);
 const firstIsScriptPath = positionals.length > 0 && (positionals[0].endsWith('.mjs') || positionals[0].includes('migration-tool'));
@@ -155,62 +155,95 @@ switch (options.providerName) {
         process.exit(1);
 }
 
-// 2. Main Entry Point Logic
-if (command === 'trigger') {
-    if (!options.token) {
-        console.error('❌ CIRCLECI_TOKEN environment variable is required for trigger command');
-        process.exit(1);
-    }
-    const ci = new CircleCI(options.token);
-    await ci.triggerPipeline({
-        fromTag: options.fromTag,
-        toTag: options.toTag,
-        dbType: options.dbType,
-        provider: options.providerName,
-        testFilter: options.testFilter,
-        withDowngrade: options.withDowngrade
-    });
-} else if (command === 'setup') {
-    const orchestrator = new Orchestrator(provider, options);
-    try {
-        await orchestrator.run(['clean', 'k8s:setup', 'deploy-from'], { skipCleanup: true });
-        console.log('\n✅ Environment setup complete. Ready for manual testing.');
-        process.exit(0);
-    } catch (e) {
-        process.exit(1);
-    }
-} else if (command === 'run') {
-    const orchestrator = new Orchestrator(provider, options);
+// 2. Command pattern: each command is an async (ctx) => exitCode
+const commands = {
+    async trigger({ options }) {
+        if (!options.token) {
+            console.error('❌ CIRCLECI_TOKEN environment variable is required for trigger command');
+            return 1;
+        }
+        const ci = new CircleCI(options.token);
+        await ci.triggerPipeline({
+            fromTag: options.fromTag,
+            toTag: options.toTag,
+            dbType: options.dbType,
+            provider: options.providerName,
+            testFilter: options.testFilter,
+            withDowngrade: options.withDowngrade
+        });
+        return 0;
+    },
 
-    const allStages = [
-        'clean',
-        'k8s:setup',
-        'deploy-from',
-        'verify-baseline',
-        'upgrade-mapi',
-        'verify-mapi',
-        'upgrade-gw',
-        'verify-all',
-        ...(options.withDowngrade
-            ? ['downgrade-mapi', 'verify-after-downgrade-mapi', 'downgrade-gw', 'verify-after-downgrade']
-            : [])
-    ];
+    async setup({ provider, options }) {
+        if (typeof provider.ensureCluster === 'function') {
+            await provider.ensureCluster();
+        }
+        const orchestrator = new Orchestrator(provider, options);
+        try {
+            await orchestrator.run(['clean', 'k8s:setup', 'deploy-from'], { skipCleanup: true });
+            console.log('\n✅ Environment setup complete. Ready for manual testing.');
+            return 0;
+        } catch (e) {
+            return 1;
+        }
+    },
 
-    const stagesToRun = options.stage ? [options.stage] : allStages;
-    try {
-        await orchestrator.run(stagesToRun);
-    } catch (e) {
-        process.exit(1);
+    async teardown({ provider }) {
+        try {
+            await provider.clean();
+        } catch (e) {
+            console.log('⚠️  Clean skipped (cluster unreachable):', e.message);
+        }
+        if (typeof provider.teardownCluster === 'function') {
+            await provider.teardownCluster();
+        }
+        console.log('✅ Teardown complete.');
+        return 0;
+    },
+
+    async run({ provider, options }) {
+        if (typeof provider.ensureCluster === 'function') {
+            await provider.ensureCluster();
+        }
+        const orchestrator = new Orchestrator(provider, options);
+        const allStages = [
+            'clean',
+            'k8s:setup',
+            'deploy-from',
+            'verify-baseline',
+            'upgrade-mapi',
+            'verify-mapi',
+            'upgrade-gw',
+            'verify-all',
+            ...(options.withDowngrade
+                ? ['downgrade-mapi', 'verify-after-downgrade-mapi', 'downgrade-gw', 'verify-after-downgrade']
+                : [])
+        ];
+        const stagesToRun = options.stage ? [options.stage] : allStages;
+        try {
+            await orchestrator.run(stagesToRun);
+            return 0;
+        } catch (e) {
+            return 1;
+        }
     }
-} else {
-    printHelp();
+};
+
+const ctx = { provider, options };
+const handler = commands[command];
+if (handler) {
+    const code = await handler(ctx);
+    process.exit(code ?? 0);
 }
+printHelp();
+process.exit(0);
 
 function printHelp() {
     console.log('Usage: migration-test [command] [options]');
     console.log('\nCommands:');
     console.log('  trigger    Trigger CircleCI pipeline');
     console.log('  setup      One-time environment setup (Clean + K8s Setup + Deploy From)');
+    console.log('  teardown   Remove resources and delete Kind cluster (k8s)');
     console.log('  run        Run migration orchestration');
     console.log('\nOptions (use --key <value> or --key=<value>):');
     console.log('  --from-tag <tag>   Initial AM version (default: 4.10.0)');

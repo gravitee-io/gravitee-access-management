@@ -25,6 +25,7 @@ describe('K8sProvider', () => {
             uninstall: jest.fn()
         };
         mockKubectl = {
+            checkClusterReachable: jest.fn().mockResolvedValue(undefined),
             secretExists: jest.fn(),
             deleteSecret: jest.fn(),
             deleteNamespace: jest.fn(),
@@ -46,7 +47,7 @@ describe('K8sProvider', () => {
 
         provider = new K8sProvider({
             namespace: 'gravitee-am',
-            valuesPath: 'scripts/migration-tool/env/k8s/am/am-mongodb.yaml',
+            valuesPath: ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
             helm: mockHelm,
             kubectl: mockKubectl,
             licenseManager: mockLicenseManager,
@@ -77,6 +78,74 @@ describe('K8sProvider', () => {
         expect(mockPortForwarder.stop).toHaveBeenCalledWith(456);
     });
 
+    test('ensureCluster returns when cluster is reachable (no kind create)', async () => {
+        mockKubectl.checkClusterReachable.mockResolvedValue(undefined);
+        await provider.ensureCluster();
+        expect(mockKubectl.checkClusterReachable).toHaveBeenCalled();
+    });
+
+    test('ensureCluster throws when cluster unreachable and no shell', async () => {
+        mockKubectl.checkClusterReachable.mockRejectedValue(new Error('connection refused'));
+        await expect(provider.ensureCluster()).rejects.toThrow('no shell available');
+    });
+
+    test('ensureCluster creates Kind cluster when unreachable and shell provided', async () => {
+        mockKubectl.checkClusterReachable.mockRejectedValueOnce(new Error('unreachable'));
+        const mockShell = jest.fn().mockResolvedValue({ exitCode: 0 });
+        const providerWithShell = new K8sProvider({
+            namespace: 'gravitee-am',
+            valuesPath: ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
+            helm: mockHelm,
+            kubectl: mockKubectl,
+            licenseManager: mockLicenseManager,
+            portForwarder: mockPortForwarder,
+            databaseStrategy: mockDatabaseStrategy,
+            shell: mockShell,
+            clusterName: 'am-migration'
+        });
+        await providerWithShell.ensureCluster();
+        expect(mockKubectl.checkClusterReachable).toHaveBeenCalled();
+        expect(mockShell).toHaveBeenCalled();
+        const kindCall = mockShell.mock.calls[0];
+        const templateParts = kindCall[0];
+        const interpolated = kindCall.slice(1);
+        const cmd = (Array.isArray(templateParts) ? templateParts : [templateParts]).reduce(
+            (acc, p, i) => acc + p + (interpolated[i] ?? ''),
+            ''
+        );
+        expect(cmd).toContain('kind create cluster');
+        expect(cmd).toContain('am-migration');
+    });
+
+    test('teardownCluster deletes Kind cluster when shell provided', async () => {
+        const mockShell = jest.fn().mockResolvedValue({ exitCode: 0 });
+        const providerWithShell = new K8sProvider({
+            namespace: 'gravitee-am',
+            valuesPath: ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
+            helm: mockHelm,
+            kubectl: mockKubectl,
+            licenseManager: mockLicenseManager,
+            portForwarder: mockPortForwarder,
+            databaseStrategy: mockDatabaseStrategy,
+            shell: mockShell,
+            clusterName: 'am-migration'
+        });
+        await providerWithShell.teardownCluster();
+        expect(mockShell).toHaveBeenCalled();
+        const call = mockShell.mock.calls[0];
+        const cmd = (Array.isArray(call[0]) ? call[0] : [call[0]]).reduce(
+            (acc, p, i) => acc + p + (call[i + 1] ?? ''),
+            ''
+        );
+        expect(cmd).toContain('kind delete cluster');
+        expect(cmd).toContain('am-migration');
+    });
+
+    test('teardownCluster is no-op when shell not provided', async () => {
+        await provider.teardownCluster();
+        expect(mockKubectl.checkClusterReachable).not.toHaveBeenCalled();
+    });
+
     test('should setup environment and delegate DB deployment', async () => {
         await provider.setup();
         expect(mockHelm.repoAdd).toHaveBeenCalledWith('graviteeio', 'https://helm.gravitee.io');
@@ -91,10 +160,13 @@ describe('K8sProvider', () => {
 
         expect(mockLicenseManager.getLicenseBase64).toHaveBeenCalled();
         expect(mockHelm.installOrUpgrade).toHaveBeenCalledWith('am', 'graviteeio/am', expect.objectContaining({
-            valuesFile: 'scripts/migration-tool/env/k8s/am/am-mongodb.yaml',
+            valuesFiles: ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
             createNamespace: true,
             version: '4.7.0',
             set: expect.objectContaining({
+                'api.image.tag': appVersion,
+                'gateway.image.tag': appVersion,
+                'ui.image.tag': appVersion,
                 'license.key': 'dGVzdC1saWNlbnNl',
                 'license.name': 'am-license-v4'
             })
@@ -122,7 +194,11 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
             installOrUpgrade: jest.fn(),
             uninstall: jest.fn()
         };
-        mockKubectl = { deleteSecret: jest.fn(), deleteNamespace: jest.fn() };
+        mockKubectl = {
+            checkClusterReachable: jest.fn().mockResolvedValue(undefined),
+            deleteSecret: jest.fn(),
+            deleteNamespace: jest.fn()
+        };
         mockPortForwarder = {
             start: jest.fn().mockResolvedValue(999),
             stop: jest.fn(),
@@ -168,6 +244,7 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
             set: expect.objectContaining({
                 'api.image.tag': '4.10.0',
                 'gateway.image.tag': '4.10.0',
+                'ui.image.tag': '4.10.0',
                 'license.name': 'am-mapi-license'
             })
         }));

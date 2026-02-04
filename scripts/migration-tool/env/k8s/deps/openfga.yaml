@@ -1,0 +1,55 @@
+# Migration tool K8s: OpenFGA dependency (same as docker-compose openfga).
+# Service name "openfga" so AM_INTERNAL_OPENFGA_URL = http://openfga:8080 resolves from pods.
+# Port-forward 8090 -> 8080 so AM_OPENFGA_URL = http://localhost:8090 works for Jest.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openfga
+  labels:
+    app.kubernetes.io/name: openfga
+    app.kubernetes.io/component: authz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openfga
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openfga
+    spec:
+      containers:
+        - name: openfga
+          image: openfga/openfga:v1.8.5
+          args: ["run", "--playground-enabled=false"]
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 8081
+              name: grpc
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openfga
+  labels:
+    app.kubernetes.io/name: openfga
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: openfga
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: grpc
+      port: 8081
+      targetPort: 8081

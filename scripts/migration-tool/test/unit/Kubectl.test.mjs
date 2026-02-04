@@ -99,4 +99,19 @@ describe('Kubectl', () => {
         expect(cmd).toContain('--from-literal');
         expect(cmd).toContain('apply -f -');
     });
+
+    test('checkClusterReachable resolves when cluster-info succeeds', async () => {
+        mockShell.mockImplementation(() => Promise.resolve({ exitCode: 0 }));
+        await expect(kubectl.checkClusterReachable()).resolves.toBeUndefined();
+        const cmdParts = mockShell.mock.calls[0][0];
+        const cmd = Array.isArray(cmdParts) ? cmdParts.join('') : String(cmdParts);
+        expect(cmd).toContain('kubectl cluster-info');
+    });
+
+    test('checkClusterReachable throws clear error when cluster unreachable', async () => {
+        mockShell.mockRejectedValue(new Error('connection refused'));
+        await expect(kubectl.checkClusterReachable()).rejects.toThrow(
+            'Kubernetes cluster unreachable. Start a local cluster first (e.g. kind create cluster --name am-migration).'
+        );
+    });
 });

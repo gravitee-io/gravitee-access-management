@@ -1,3 +1,7 @@
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
 import { BaseProvider } from './BaseProvider.mjs';
 import { Config } from '../core/Config.mjs';
 import { validateAmImageTag } from '../core/VersionValidator.mjs';
@@ -35,7 +39,98 @@ export class K8sProvider extends BaseProvider {
         this.releases = options.releases || [];
         this.valuesPath = options.valuesPath || Config.k8s.valuesPath;
 
+        this.clusterName = options.clusterName || 'am-migration';
         this.pids = { mapi: null, gatewayDp1: null, gatewayDp2: null, ui: null };
+    }
+
+    /**
+     * Ensure a Kubernetes cluster is reachable. If not, create a Kind cluster (used by setup/run so cluster is installed automatically).
+     * @throws {Error} If cluster is unreachable and Kind creation fails (e.g. kind not installed, or cluster name already exists).
+     */
+    async ensureCluster() {
+        try {
+            await this.kubectl.checkClusterReachable();
+            return;
+        } catch (_) {
+            // Cluster unreachable; try to create Kind cluster.
+        }
+        if (!this.shell) {
+            throw new Error(
+                'Kubernetes cluster unreachable and no shell available to create Kind cluster. Start a cluster manually (e.g. kind create cluster --name am-migration).'
+            );
+        }
+        console.log(`🔄 Cluster unreachable. Creating Kind cluster '${this.clusterName}'...`);
+        try {
+            await this.shell`kind create cluster --name ${this.clusterName} --wait 2m`;
+            console.log(`✅ Kind cluster '${this.clusterName}' created.`);
+        } catch (e) {
+            const msg = (e.stderr ?? e.stdout ?? e.message ?? '').toString();
+            if (/already exists/.test(msg)) {
+                throw new Error(
+                    `Kind cluster '${this.clusterName}' already exists but is unreachable. Delete it and retry: kind delete cluster --name ${this.clusterName}`
+                );
+            }
+            if (/Cannot connect to the Docker daemon|docker daemon running/.test(msg)) {
+                throw new Error(
+                    'Docker is not running. Kind needs Docker to create clusters. Start Docker Desktop (or the Docker daemon) and retry.'
+                );
+            }
+            if (/command not found|not found|ENOENT/.test(msg) || /kind:/.test(msg)) {
+                throw new Error(
+                    'Kind is not installed or not on PATH. Install it: https://kind.sigs.k8s.io/docs/user/quick-start/#installation'
+                );
+            }
+            throw new Error(`Failed to create Kind cluster: ${msg.trim() || e.message}`);
+        }
+
+        // Use Kind's kubeconfig so kubectl/helm (child processes) talk to the new cluster, not an old context.
+        const kubeconfigPath = join(tmpdir(), `am-migration-kind-${this.clusterName}.yaml`);
+        const kubeconfigOut = await this.shell`kind get kubeconfig --name ${this.clusterName}`;
+        const kubeconfigContent = typeof kubeconfigOut.stdout === 'string' ? kubeconfigOut.stdout : kubeconfigOut.stdout?.toString?.() ?? String(kubeconfigOut);
+        writeFileSync(kubeconfigPath, kubeconfigContent.trim());
+        process.env.KUBECONFIG = kubeconfigPath;
+
+        // Wait for the API server to be reachable (avoids connection refused on the next clean/setup steps).
+        const kindContext = `kind-${this.clusterName}`;
+        const maxAttempts = 10;
+        const delayMs = 2000;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                await this.kubectl.checkClusterReachable();
+                break;
+            } catch (err) {
+                if (attempt === maxAttempts) {
+                    throw new Error(
+                        `Kind cluster created but API server not reachable after ${maxAttempts} attempts. Try running: kubectl cluster-info --context ${kindContext}`
+                    );
+                }
+                console.log(`⏳ Waiting for API server (attempt ${attempt}/${maxAttempts})...`);
+                await new Promise((r) => setTimeout(r, delayMs));
+            }
+        }
+    }
+
+    /**
+     * Delete the Kind cluster (used by teardown). Idempotent: no-op if cluster does not exist or shell unavailable.
+     */
+    async teardownCluster() {
+        if (!this.shell) return;
+        console.log(`🗑️  Deleting Kind cluster '${this.clusterName}'...`);
+        try {
+            await this.shell`kind delete cluster --name ${this.clusterName}`;
+            console.log(`✅ Kind cluster '${this.clusterName}' deleted.`);
+        } catch (e) {
+            const msg = (e.stderr ?? e.stdout ?? e.message ?? '').toString();
+            if (/not found|does not exist|No such cluster/.test(msg)) {
+                console.log(`⏭️  Kind cluster '${this.clusterName}' not found (already deleted).`);
+                return;
+            }
+            if (/Cannot connect to the Docker daemon|docker daemon running/.test(msg)) {
+                console.log('⚠️  Docker not running; cannot delete Kind cluster. Start Docker and run: kind delete cluster --name ' + this.clusterName);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -66,6 +161,7 @@ export class K8sProvider extends BaseProvider {
     }
 
     async clean() {
+        await this.kubectl.checkClusterReachable();
         console.log('🧹 Cleaning up K8s environment...');
 
         console.log('🗑️  Uninstalling Helm releases...');
@@ -135,11 +231,13 @@ export class K8sProvider extends BaseProvider {
                 if (r.component === 'mapi') {
                     set['api.image.tag'] = version;
                     set['gateway.image.tag'] = version;
+                    set['ui.image.tag'] = version;
                 } else {
                     set['gateway.image.tag'] = version;
                 }
+                const valuesOpt = Array.isArray(r.valuesPath) ? { valuesFiles: r.valuesPath } : { valuesFile: r.valuesPath };
                 await this.helm.installOrUpgrade(r.name, 'graviteeio/am', {
-                    valuesFile: r.valuesPath,
+                    ...valuesOpt,
                     wait: true,
                     createNamespace: true,
                     version: Config.k8s.amChartVersion,
@@ -147,14 +245,16 @@ export class K8sProvider extends BaseProvider {
                 });
             }
         } else {
+            const valuesOpt = Array.isArray(this.valuesPath) ? { valuesFiles: this.valuesPath } : { valuesFile: this.valuesPath };
             await this.helm.installOrUpgrade('am', 'graviteeio/am', {
-                valuesFile: this.valuesPath,
+                ...valuesOpt,
                 wait: true,
                 createNamespace: true,
                 version: Config.k8s.amChartVersion,
                 set: {
                     'api.image.tag': version,
                     'gateway.image.tag': version,
+                    'ui.image.tag': version,
                     'license.key': licenseBase64,
                     'license.name': 'am-license-v4'
                 }
@@ -193,19 +293,21 @@ export class K8sProvider extends BaseProvider {
         if (this.releases.length > 0) {
             const mapiRelease = this.releases.find(r => r.component === 'mapi');
             if (mapiRelease) {
+                const valuesOpt = Array.isArray(mapiRelease.valuesPath) ? { valuesFiles: mapiRelease.valuesPath } : { valuesFile: mapiRelease.valuesPath };
                 await this.helm.installOrUpgrade(mapiRelease.name, 'graviteeio/am', {
-                    valuesFile: mapiRelease.valuesPath,
+                    ...valuesOpt,
                     version: Config.k8s.amChartVersion,
-                    set: { 'api.image.tag': toTag },
+                    set: { 'api.image.tag': toTag, 'ui.image.tag': toTag },
                     reuseValues: true,
                     wait: true
                 });
             }
         } else {
+            const valuesOpt = Array.isArray(this.valuesPath) ? { valuesFiles: this.valuesPath } : { valuesFile: this.valuesPath };
             await this.helm.installOrUpgrade('am', 'graviteeio/am', {
-                valuesFile: this.valuesPath,
+                ...valuesOpt,
                 version: Config.k8s.amChartVersion,
-                set: { 'api.image.tag': toTag },
+                set: { 'api.image.tag': toTag, 'ui.image.tag': toTag },
                 reuseValues: true,
                 wait: true
             });
@@ -271,8 +373,9 @@ export class K8sProvider extends BaseProvider {
         if (this.releases.length > 0) {
             const gatewayReleases = this.releases.filter(r => r.component === 'gateway');
             for (const r of gatewayReleases) {
+                const valuesOpt = Array.isArray(r.valuesPath) ? { valuesFiles: r.valuesPath } : { valuesFile: r.valuesPath };
                 await this.helm.installOrUpgrade(r.name, 'graviteeio/am', {
-                    valuesFile: r.valuesPath,
+                    ...valuesOpt,
                     version: Config.k8s.amChartVersion,
                     set: { 'gateway.image.tag': toTag },
                     reuseValues: true,
@@ -280,8 +383,9 @@ export class K8sProvider extends BaseProvider {
                 });
             }
         } else {
+            const valuesOpt = Array.isArray(this.valuesPath) ? { valuesFiles: this.valuesPath } : { valuesFile: this.valuesPath };
             await this.helm.installOrUpgrade('am', 'graviteeio/am', {
-                valuesFile: this.valuesPath,
+                ...valuesOpt,
                 version: Config.k8s.amChartVersion,
                 set: { 'gateway.image.tag': toTag },
                 reuseValues: true,

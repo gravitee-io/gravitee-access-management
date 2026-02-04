@@ -1,6 +1,4 @@
-# Migration Tool - AM Gateway Dataplane 2 only (MongoDB). Release: am-gateway-dp2. Port-forward: 8092.
-# Chart: graviteeio/am. API + UI disabled; gateway uses dataplane dp2 (gravitee-dp2).
-
+# Gateway dp2 (MongoDB). Release: am-gateway-dp2. Port-forward: 8092.
 labels:
   environment: migration-test
   part-of: am-migration-tool
@@ -8,53 +6,37 @@ labels:
 mongodb-replicaset:
   enabled: false
 
-commonEnv: &commonEnv
-  - name: GRAVITEE_REPOSITORY_TYPE
-    value: mongodb
-  - name: gravitee_repositories_0_type
-    value: mongodb
+gatewayEnv: &gatewayEnv
+  - name: gravitee_repositories_system_cluster
+    value: gateway
   - name: gravitee_repositories_management_type
-    value: mongodb
-  - name: gravitee_repositories_oauth2_type
     value: mongodb
   - name: gravitee_repositories_management_mongodb_uri
     value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
   - name: gravitee_repositories_management_mongodb_dbname
     value: "gravitee"
-  - name: gravitee_repositories_oauth2_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
-  - name: gravitee_repositories_oauth2_mongodb_dbname
-    value: "gravitee"
-  # Dataplane 0: default → gravitee (CP)
-  - name: gravitee_dataPlanes_0_id
-    value: default
-  - name: gravitee_dataPlanes_0_type
+  - name: gravitee_repositories_gateway_type
     value: mongodb
-  - name: gravitee_dataPlanes_0_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
-  - name: gravitee_dataPlanes_0_mongodb_dbname
-    value: "gravitee"
-  # Dataplane 1: dp1 → gravitee-dp1
-  - name: gravitee_dataPlanes_1_id
-    value: dp1
-  - name: gravitee_dataPlanes_1_type
-    value: mongodb
-  - name: gravitee_dataPlanes_1_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000"
-  - name: gravitee_dataPlanes_1_mongodb_dbname
-    value: "gravitee-dp1"
-  # Dataplane 2: dp2 → gravitee-dp2
-  - name: gravitee_dataPlanes_2_id
-    value: dp2
-  - name: gravitee_dataPlanes_2_type
-    value: mongodb
-  - name: gravitee_dataPlanes_2_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp2?serverSelectionTimeoutMS=30000"
-  - name: gravitee_dataPlanes_2_mongodb_dbname
-    value: "gravitee-dp2"
-  # Gateway uses dataplane dp2 (port-forward 8092)
+  - name: gravitee_repositories_gateway_use_management_settings
+    value: "false"
   - name: gravitee_repositories_gateway_dataPlane_id
     value: dp2
+  - name: gravitee_repositories_gateway_dataPlane_url
+    value: "http://localhost:8092"
+  - name: gravitee_repositories_gateway_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp2?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_gateway_mongodb_dbname
+    value: "gravitee-dp2"
+  - name: gravitee_repositories_oauth2_type
+    value: mongodb
+  - name: gravitee_repositories_oauth2_use_management_settings
+    value: "false"
+  - name: gravitee_repositories_oauth2_use_gateway_settings
+    value: "true"
+  - name: gravitee_repositories_oauth2_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp2?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_oauth2_mongodb_dbname
+    value: "gravitee-dp2"
 
 api:
   enabled: false
@@ -62,13 +44,16 @@ api:
 gateway:
   enabled: true
   replicaCount: 1
+  services:
+    sync:
+      permissions: true
   image:
     repository: graviteeio/am-gateway
     tag: 4.10.0
     pullPolicy: IfNotPresent
   ingress:
     enabled: false
-  env: *commonEnv
+  env: *gatewayEnv
 
 ui:
   enabled: false

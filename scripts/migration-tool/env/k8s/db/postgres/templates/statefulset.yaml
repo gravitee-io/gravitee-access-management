@@ -18,11 +18,37 @@ spec:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      # fsGroup makes the data volume writable by runAsUser 10001 without a root chown init (Aqua-friendly).
       securityContext:
-        fsGroup: 10001
+        fsGroup: {{ .Values.securityContext.runAsGroup | default 10001 }}
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: chown-data
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          command: ["chown", "-R", "{{ .Values.securityContext.runAsUser | default 10001 }}:{{ .Values.securityContext.runAsGroup | default 10001 }}", "/var/lib/postgresql/data"]
+          securityContext:
+            runAsUser: 0
+            runAsGroup: {{ .Values.securityContext.runAsGroup | default 10001 }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              add: [CHOWN]
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          resources:
+            {{- with .Values.initContainer.resources }}
+{{ . | toYaml | indent 12 }}
+            {{- else }}
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
       containers:
         - name: postgres
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -30,12 +56,11 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
-              drop:
-                - ALL
+              drop: [ALL]
             readOnlyRootFilesystem: true
             runAsNonRoot: true
-            runAsUser: 10001
-            runAsGroup: 10001
+            runAsUser: {{ .Values.securityContext.runAsUser | default 10001 }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup | default 10001 }}
             seccompProfile:
               type: RuntimeDefault
           env:
@@ -53,6 +78,8 @@ spec:
               mountPath: /var/lib/postgresql/data
             - name: tmp
               mountPath: /tmp
+            - name: run
+              mountPath: /var/run/postgresql
             {{- if or .Values.postgres.gatewayDatabase .Values.postgres.dataplaneDatabases }}
             - name: init-dbs
               mountPath: /docker-entrypoint-initdb.d
@@ -66,6 +93,8 @@ spec:
           emptyDir: {}
         {{- end }}
         - name: tmp
+          emptyDir: {}
+        - name: run
           emptyDir: {}
         {{- if or .Values.postgres.gatewayDatabase .Values.postgres.dataplaneDatabases }}
         - name: init-dbs

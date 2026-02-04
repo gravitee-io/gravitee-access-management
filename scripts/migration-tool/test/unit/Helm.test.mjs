@@ -52,6 +52,23 @@ describe('Helm', () => {
         expect(flags).toContain('4.7.0');
     });
 
+    test('should install or upgrade with multiple values files (base + override)', async () => {
+        await helm.installOrUpgrade('am-mapi', 'graviteeio/am', {
+            valuesFiles: ['am-mongodb-common.yaml', 'am-mongodb-mapi.yaml'],
+            wait: true
+        });
+
+        const args = mockShell.mock.calls[0];
+        const flags = args[1];
+        expect(flags).toContain('-f');
+        expect(flags).toContain('am-mongodb-common.yaml');
+        expect(flags).toContain('am-mongodb-mapi.yaml');
+        const fIndexes = flags.flatMap((f, i) => (f === '-f' ? [i] : []));
+        expect(fIndexes.length).toBe(2);
+        expect(flags[fIndexes[0] + 1]).toBe('am-mongodb-common.yaml');
+        expect(flags[fIndexes[1] + 1]).toBe('am-mongodb-mapi.yaml');
+    });
+
     test('should add a repository', async () => {
         await helm.repoAdd('bitnami', 'https://charts.bitnami.com/bitnami');
 
