@@ -21,6 +21,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -28,9 +29,11 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenEx
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
@@ -38,20 +41,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TokenExchangeServiceImpl implements TokenExchangeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenExchangeServiceImpl.class);
+
+    private static final String ERROR_SCOPE_NOT_ALLOWED_FOR_RESOURCE = "Requested scope is not allowed for the specified resource.";
 
     @Autowired
     private List<TokenValidator> validators;
 
     @Autowired
     private SubjectManager subjectManager;
+
+    @Autowired(required = false)
+    private ProtectedResourceManager protectedResourceManager;
 
     @Override
     public Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain) {
@@ -96,7 +107,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     }
 
                                     ActorTokenInfo actorInfo = extractActorInfo(actorToken, subjectToken, resultingDepth);
-                                    return buildDelegationResult(tokenRequest, subjectToken, actorInfo, request, client);
+                                    return buildDelegationResult(tokenRequest, subjectToken, actorToken, actorInfo, request, client);
                                 })
                 );
     }
@@ -282,44 +293,152 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return gis instanceof String ? (String) gis : null;
     }
 
+    /**
+     * Parse scope string (space-delimited per RFC 6749 §3.3) to set of scope values.
+     * Null or empty string returns empty set.
+     */
+    private static Set<String> parseScope(String scope) {
+        if (StringUtils.isEmpty(scope)) {
+            return Collections.emptySet();
+        }
+        String[] parts = StringUtils.split(scope);
+        return Stream.of(parts).collect(Collectors.toSet());
+    }
+
+    private static Set<String> nullToEmpty(Set<String> scopes) {
+        return scopes == null ? Collections.emptySet() : scopes;
+    }
+
+    /**
+     * When the client sends the resource parameter and a non-empty scope parameter, validate that every requested
+     * scope is in the scopes referenced by that resource. If not, returns invalid_scope with a dedicated message.
+     */
+    private Single<Boolean> validateRequestedScopeAgainstResource(String scopeParam, Set<String> requestedResources) {
+        if (protectedResourceManager == null
+                || requestedResources == null
+                || requestedResources.isEmpty()
+                || StringUtils.isBlank(scopeParam)) {
+            return Single.just(true);
+        }
+        Set<String> requested = parseScope(scopeParam);
+        if (requested.isEmpty()) {
+            return Single.just(true);
+        }
+        Set<String> resourceScopes = protectedResourceManager.getScopesForResources(requestedResources);
+        if (resourceScopes == null || !resourceScopes.containsAll(requested)) {
+            return Single.error(new InvalidScopeException(ERROR_SCOPE_NOT_ALLOWED_FOR_RESOURCE));
+        }
+        return Single.just(true);
+    }
+
+    /**
+     * Restrict allowed scopes by the scopes referenced by the resource parameter.
+     * When the client sends {@code resource}, allowed scope becomes the intersection of current allowed
+     * and resource-referenced scopes.
+     *
+     * @param requestedResources resource identifiers from the request (may be null or empty)
+     * @param allowedScopes      current allowed scopes (subject or subject ∩ actor)
+     * @return allowedScopes restricted to resource-referenced scopes when resource is present; otherwise unchanged
+     */
+    private Set<String> restrictAllowedScopesByResource(Set<String> requestedResources, Set<String> allowedScopes) {
+        if (protectedResourceManager == null
+                || requestedResources == null
+                || requestedResources.isEmpty()) {
+            return allowedScopes;
+        }
+        Set<String> resourceScopes = protectedResourceManager.getScopesForResources(requestedResources);
+        if (resourceScopes == null || resourceScopes.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return allowedScopes.stream()
+                .filter(resourceScopes::contains)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Resolve granted scopes: requested scope must be subset of allowed; if omitted or empty, grant full allowed.
+     * Returns Single.error(InvalidScopeException) when requested scope is not allowed.
+     */
+    private Single<Set<String>> resolveGrantedScopes(String scopeParam, Set<String> allowedScopes) {
+        Set<String> requested = parseScope(scopeParam);
+        if (requested.isEmpty()) {
+            return Single.just(allowedScopes);
+        }
+        if (allowedScopes.containsAll(requested)) {
+            return Single.just(requested);
+        }
+        return Single.error(new InvalidScopeException("Requested scope is not allowed"));
+    }
+
+    /**
+     * Validate that granted scopes are allowed for the client.
+     * When client has no scope settings, no restriction is applied (backward compatible).
+     */
+    private Single<Set<String>> validateClientScopes(Set<String> grantedScopes, Client client) {
+        if (grantedScopes == null || grantedScopes.isEmpty()) {
+            return Single.just(grantedScopes != null ? grantedScopes : Collections.emptySet());
+        }
+        if (client.getScopeSettings() == null || client.getScopeSettings().isEmpty()) {
+            return Single.just(grantedScopes);
+        }
+        Set<String> clientScopes = client.getScopeSettings().stream()
+                .map(ApplicationScopeSettings::getScope)
+                .collect(Collectors.toSet());
+        if (clientScopes.containsAll(grantedScopes)) {
+            return Single.just(grantedScopes);
+        }
+        return Single.error(new InvalidScopeException("Granted scope is not allowed for the client"));
+    }
+
     private Single<TokenExchangeResult> buildImpersonationResult(TokenRequest tokenRequest,
                                                                   ValidatedToken subjectToken,
                                                                   ParsedRequest parsedRequest,
                                                                   Client client) {
-        return Single.fromCallable(() -> {
-            Set<String> grantedScopes = subjectToken.getScopes();
-            User user = createUser(subjectToken, grantedScopes, client.getClientId(), false);
-            tokenRequest.setScopes(grantedScopes);
+        Set<String> allowedScopes = restrictAllowedScopesByResource(tokenRequest.getResources(),
+                nullToEmpty(subjectToken.getScopes()));
+        return validateRequestedScopeAgainstResource(parsedRequest.scope(), tokenRequest.getResources())
+                .flatMap(ok -> resolveGrantedScopes(parsedRequest.scope(), allowedScopes))
+                .flatMap(grantedScopes -> validateClientScopes(grantedScopes, client))
+                .flatMap(grantedScopes -> Single.fromCallable(() -> {
+                    User user = createUser(subjectToken, grantedScopes, client.getClientId(), false);
+                    tokenRequest.setScopes(grantedScopes);
 
-            return TokenExchangeResult.forImpersonation(
-                    user,
-                    parsedRequest.requestedTokenType(),
-                    subjectToken.getExpiration(),
-                    subjectToken.getTokenId(),
-                    parsedRequest.subjectTokenType()
-            );
-        });
+                    return TokenExchangeResult.forImpersonation(
+                            user,
+                            parsedRequest.requestedTokenType(),
+                            subjectToken.getExpiration(),
+                            subjectToken.getTokenId(),
+                            parsedRequest.subjectTokenType()
+                    );
+                }));
     }
 
     private Single<TokenExchangeResult> buildDelegationResult(TokenRequest tokenRequest,
                                                                ValidatedToken subjectToken,
+                                                               ValidatedToken actorToken,
                                                                ActorTokenInfo actorInfo,
                                                                ParsedRequest parsedRequest,
                                                                Client client) {
-        return Single.fromCallable(() -> {
-            Set<String> grantedScopes = subjectToken.getScopes();
-            User user = createUser(subjectToken, grantedScopes, client.getClientId(), true);
-            tokenRequest.setScopes(grantedScopes);
+        Set<String> subjectScopes = nullToEmpty(subjectToken.getScopes());
+        Set<String> actorScopes = nullToEmpty(actorToken.getScopes());
+        Set<String> allowedScopes = restrictAllowedScopesByResource(tokenRequest.getResources(),
+                subjectScopes.stream().filter(actorScopes::contains).collect(Collectors.toSet()));
+        return validateRequestedScopeAgainstResource(parsedRequest.scope(), tokenRequest.getResources())
+                .flatMap(ok -> resolveGrantedScopes(parsedRequest.scope(), allowedScopes))
+                .flatMap(grantedScopes -> validateClientScopes(grantedScopes, client))
+                .flatMap(grantedScopes -> Single.fromCallable(() -> {
+                    User user = createUser(subjectToken, grantedScopes, client.getClientId(), true);
+                    tokenRequest.setScopes(grantedScopes);
 
-            return TokenExchangeResult.forDelegation(
-                    user,
-                    parsedRequest.requestedTokenType(),
-                    subjectToken.getExpiration(),
-                    subjectToken.getTokenId(),
-                    parsedRequest.subjectTokenType(),
-                    actorInfo
-            );
-        });
+                    return TokenExchangeResult.forDelegation(
+                            user,
+                            parsedRequest.requestedTokenType(),
+                            subjectToken.getExpiration(),
+                            subjectToken.getTokenId(),
+                            parsedRequest.subjectTokenType(),
+                            actorInfo
+                    );
+                }));
     }
 
     private User createUser(ValidatedToken subjectToken,
