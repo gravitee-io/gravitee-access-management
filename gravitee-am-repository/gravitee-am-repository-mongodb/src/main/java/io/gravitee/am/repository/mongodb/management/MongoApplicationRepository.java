@@ -191,11 +191,31 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Single<Page<Application>> search(String domain, String query, int page, int size) {
+<<<<<<< HEAD
         // currently search on client_id field
         Bson searchQuery = or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query));
         // if query contains wildcard, use the regex query
         if (query.contains("*")) {
             String compactQuery = query.replaceAll("\\*+", ".*");
+=======
+        // search - use collation for non-wildcard queries to leverage case-insensitive indexes
+        Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        boolean useCollation = !isWildcardQuery(query);
+        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
+        // Search on client_id and name fields with case-insensitive matching
+        boolean useWildcard = isWildcardQuery(query);
+
+        Bson searchQuery;
+        if (useWildcard) {
+            // Wildcard search: use regex (cannot leverage indexes efficiently)
+            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
+            String escapedQuery = escapeRegexMetacharacters(query);
+            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
+>>>>>>> 75f081ac2 (fix(search): escape regex metacharacters in search queries)
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             searchQuery = or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern));

@@ -538,4 +538,237 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         assertEqualsTo(updatedApp, testObserver);
     }
 
+<<<<<<< HEAD
+=======
+    @Test
+    public void testSearch_byName() {
+        final String domain = "domain";
+        // create app
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("Application Name");
+        applicationRepository.create(app).blockingGet();
+
+        // fetch app by name
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "Application Name", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_wildcard() {
+        final String domain = "domain-ci-wildcard";
+        // create app
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("ClientId-CaseSensitive");
+        applicationRepository.create(app).blockingGet();
+
+        // fetch app with wildcard and different case
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "clIeNtId-caSe*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_exactMatch_byName() {
+        final String domain = "domain-ci-exact-name";
+        // create app with mixed case name
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("MyApplicationName");
+        applicationRepository.create(app).blockingGet();
+
+        // search with different case - should find the app (exact match, case-insensitive)
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "myapplicationname", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+
+        // search with uppercase - should also find the app
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "MYAPPLICATIONNAME", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_exactMatch_byClientId() {
+        final String domain = "domain-ci-exact-clientid";
+        // create app with mixed case clientId
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("some-app-name");
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauthSettings = new ApplicationOAuthSettings();
+        oauthSettings.setClientId("MyClientId");
+        settings.setOauth(oauthSettings);
+        app.setSettings(settings);
+        applicationRepository.create(app).blockingGet();
+
+        // search by clientId with different case - should find the app
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "myclientid", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+
+        // search with uppercase - should also find the app
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "MYCLIENTID", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getId().equals(app.getId()));
+    }
+
+    @Test
+    public void testSearch_caseInsensitive_unicodeCharacters() {
+        final String domain = "domain-ci-unicode";
+        // create apps with Unicode characters that have case variants
+        Application app1 = new Application();
+        app1.setDomain(domain);
+        app1.setName("Café-Application");
+        applicationRepository.create(app1).blockingGet();
+
+        Application app2 = new Application();
+        app2.setDomain(domain);
+        app2.setName("Über-Application");
+        applicationRepository.create(app2).blockingGet();
+
+        // search with different case for accented characters
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "café-application", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getId().equals(app1.getId()));
+
+        // search for German umlaut with different case
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "über-application", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getId().equals(app2.getId()));
+    }
+
+    @Test
+    public void testSearch_pagination() {
+        final String domain = "domain-pagination-search";
+        // create 10 apps
+        for (int i = 0; i < 10; i++) {
+            Application app = new Application();
+            app.setDomain(domain);
+            app.setName("pagination-test-" + i);
+            applicationRepository.create(app).blockingGet();
+        }
+
+        // fetch page 1 size 3
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "pagination-test*", 0, 3).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 3);
+        testObserver.assertValue(page -> page.getTotalCount() == 10);
+
+        // fetch page 2 size 3
+        testObserver = applicationRepository.search(domain, "pagination-test*", 1, 3).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 3);
+        testObserver.assertValue(page -> page.getTotalCount() == 10);
+    }
+
+    @Test
+    public void testSearch_specialRegexCharacters() {
+        // Test that special regex characters in search queries do not cause errors (AM-6422)
+        final String domain = "domain-special-chars";
+
+        // create app with special characters in name
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("app[test]");
+        applicationRepository.create(app).blockingGet();
+
+        Application app2 = new Application();
+        app2.setDomain(domain);
+        app2.setName("app{test}");
+        applicationRepository.create(app2).blockingGet();
+
+        // Search with brackets - should not throw PatternSyntaxException
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "*[*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getName().equals("app[test]"));
+
+        // Search with braces - should not throw PatternSyntaxException
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "*{*", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getName().equals("app{test}"));
+
+        // Search with multiple special characters
+        TestObserver<Page<Application>> testObserver3 = applicationRepository.search(domain, "*[test]*", 0, 10).test();
+        testObserver3.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver3.assertComplete();
+        testObserver3.assertNoErrors();
+        testObserver3.assertValue(page -> page.getData().size() == 1);
+    }
+
+    @Test
+    public void testSearchApplicationIds_specialRegexCharacters() {
+        // Test that special regex characters in search queries do not cause errors (AM-6422)
+        final String domain = "domain-special-chars-ids";
+
+        // create app with special characters in name
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("app[test]");
+        app = applicationRepository.create(app).blockingGet();
+
+        Application app2 = new Application();
+        app2.setDomain(domain);
+        app2.setName("app{test}");
+        app2 = applicationRepository.create(app2).blockingGet();
+
+        // Search with brackets - should not throw PatternSyntaxException
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, List.of(app.getId(), app2.getId()), "*[*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getName().equals("app[test]"));
+    }
+>>>>>>> 75f081ac2 (fix(search): escape regex metacharacters in search queries)
 }
