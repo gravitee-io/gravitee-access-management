@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.MembershipService;
@@ -57,7 +58,7 @@ public class MemberResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_MEMBER, Acl.DELETE)
                 .andThen(organizationService.findById(organizationId)
-                        .flatMapCompletable(irrelevant -> membershipService.delete(membershipId, authenticatedUser)))
+                        .flatMapCompletable(irrelevant -> membershipService.delete(Reference.organization(organizationId), membershipId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
