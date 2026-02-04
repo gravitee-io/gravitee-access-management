@@ -618,7 +618,7 @@ public class DomainServiceImpl implements DomainService {
                             )
                             // delete memberships
                             .andThen(membershipService.findByReference(domainId, DOMAIN)
-                                    .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
+                                    .flatMapCompletable(membership -> membershipService.delete(new Reference(membership.getReferenceType(), membership.getReferenceId()), membership.getId()))
                             )
                             // delete factors
                             .andThen(factorService.findByDomain(domainId)
