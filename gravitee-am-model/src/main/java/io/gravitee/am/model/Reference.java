@@ -50,5 +50,8 @@ public record Reference(ReferenceType type, String id) implements Serializable {
         return new Reference(ReferenceType.APPLICATION, id);
     }
 
+    public static Reference protectedResource(String id) {
+        return new Reference(ReferenceType.PROTECTED_RESOURCE, id);
+    }
 
 }

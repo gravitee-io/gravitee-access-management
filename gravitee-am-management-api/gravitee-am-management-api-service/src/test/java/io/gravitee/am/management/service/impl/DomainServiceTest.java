@@ -1082,8 +1082,10 @@ public class DomainServiceTest {
         when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(flow));
         when(flowService.delete(anyString())).thenReturn(complete());
         when(membership.getId()).thenReturn(MEMBERSHIP_ID);
+        when(membership.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(membership.getReferenceType()).thenReturn(DOMAIN);
         when(membershipService.findByReference(DOMAIN_ID, DOMAIN)).thenReturn(Flowable.just(membership));
-        when(membershipService.delete(anyString())).thenReturn(complete());
+        when(membershipService.delete(any(), anyString())).thenReturn(complete());
         when(factor.getId()).thenReturn(FACTOR_ID);
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(factor));
         when(factorService.delete(DOMAIN_ID, FACTOR_ID)).thenReturn(complete());
@@ -1130,7 +1132,7 @@ public class DomainServiceTest {
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
         verify(flowService, times(1)).delete(FLOW_ID);
-        verify(membershipService, times(1)).delete(MEMBERSHIP_ID);
+        verify(membershipService, times(1)).delete(any(), eq(MEMBERSHIP_ID));
         verify(factorService, times(1)).delete(DOMAIN_ID, FACTOR_ID);
         verify(eventService, times(1)).create(any(), any());
         verify(auditService).report(argThat(builder -> {
@@ -1191,7 +1193,7 @@ public class DomainServiceTest {
         verify(emailTemplateService, never()).delete(anyString());
         verify(reporterService, never()).delete(anyString());
         verify(flowService, never()).delete(anyString());
-        verify(membershipService, never()).delete(anyString());
+        verify(membershipService, never()).delete(any(), anyString());
         verify(factorService, never()).delete(anyString(), anyString());
         verify(alertTriggerService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));
         verify(alertNotifierService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));

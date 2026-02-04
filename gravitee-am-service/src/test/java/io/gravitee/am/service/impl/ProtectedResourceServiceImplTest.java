@@ -406,14 +406,14 @@ public class ProtectedResourceServiceImplTest {
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.PROTECTED_RESOURCE)))
                 .thenReturn(Flowable.just(new Membership()));
-        when(membershipService.delete(any())).thenReturn(Completable.complete());
+        when(membershipService.delete(any(), any())).thenReturn(Completable.complete());
 
         service.delete(createDomain(), "res-2", null, createUser())
                 .test()
                 .assertComplete()
                 .assertNoErrors();
 
-        verify(membershipService, atLeastOnce()).delete(any());
+        verify(membershipService, atLeastOnce()).delete(any(), any());
     }
 
     @Test
