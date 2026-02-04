@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.MembershipService;
@@ -66,7 +67,7 @@ public class MemberResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_MEMBER, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(irrelevant -> membershipService.delete(membershipId, authenticatedUser)))
+                        .flatMapCompletable(irrelevant -> membershipService.delete(Reference.domain(domain), membershipId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
