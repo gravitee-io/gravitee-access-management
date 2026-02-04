@@ -25,6 +25,7 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
@@ -66,6 +67,9 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Autowired
     private ClientSyncService clientSyncService;
+
+    @Autowired
+    private ProtectedResourceSyncService protectedResourceSyncService;
 
     @Autowired
     private JWKService jwkService;
@@ -163,6 +167,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             SignedJWT signedJWT = (SignedJWT) jwt;
 
             return this.clientSyncService.findByClientId(clientId)
+                    .switchIfEmpty(protectedResourceSyncService.findByClientId(clientId))
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
                         if (client.getTokenEndpointAuthMethod() == null ||
@@ -207,6 +212,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
 
             return this.clientSyncService.findByClientId(clientId)
+                    .switchIfEmpty(protectedResourceSyncService.findByClientId(clientId))
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
                         try {

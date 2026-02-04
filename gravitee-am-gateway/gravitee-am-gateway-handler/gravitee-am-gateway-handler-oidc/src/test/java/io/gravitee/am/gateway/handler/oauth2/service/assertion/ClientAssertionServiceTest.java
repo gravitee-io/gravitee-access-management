@@ -26,6 +26,7 @@ import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
@@ -79,6 +80,9 @@ public class ClientAssertionServiceTest {
 
     @Mock
     private ClientSyncService clientSyncService;
+
+    @Mock
+    private ProtectedResourceSyncService protectedResourceSyncService;
 
     @Mock
     private JWKService jwkService;
@@ -509,6 +513,65 @@ public class ClientAssertionServiceTest {
         clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
+    }
+
+    @Test
+    public void testHmacJwt_protectedResource() throws JOSEException {
+        SecureRandom random = new SecureRandom();
+        byte[] sharedSecret = new byte[32];
+        random.nextBytes(sharedSecret);
+        String clientSecret = new String(sharedSecret, StandardCharsets.UTF_8);
+        JWSSigner signer = new MACSigner(clientSecret);
+
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+        client.setClientSecret(new String(sharedSecret));
+        client.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+
+        String assertion = generateJWT(signer);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath="/";
+
+        // Regular client not found, but protected resource found
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
+        when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
+    }
+
+    @Test
+    public void testRsaJwt_protectedResource() throws NoSuchAlgorithmException, JOSEException {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        RSAKey key = new RSAKey();
+        key.setKty("RSA");
+        key.setKid(KID);
+        key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
+        key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
+
+        Client client = generateClient(key);
+        client.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
+        String assertion = generateJWT(privateKey);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath="/";
+
+        // Regular client not found, but protected resource found
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
+        when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+        when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
+        when(jwsService.isValidSignature(any(),any())).thenReturn(true);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
     }
 
     private KeyPair generateRsaKeyPair() throws NoSuchAlgorithmException{
