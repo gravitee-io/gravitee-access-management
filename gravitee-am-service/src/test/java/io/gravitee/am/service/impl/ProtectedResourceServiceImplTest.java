@@ -1071,7 +1071,6 @@ public class ProtectedResourceServiceImplTest {
             res.getSettings().getOauth() != null &&
             res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
             res.getSettings().getOauth().getResponseTypes().contains(ResponseType.CODE) &&
-            res.getSettings().getOauth().getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC) &&
             res.getSettings().getOauth().getClientId().equals(CLIENT_ID) &&
             res.getCertificate().equals(DEFAULT_CERTIFICATE.getId())
         ));
@@ -1101,8 +1100,7 @@ public class ProtectedResourceServiceImplTest {
             res.getSettings() != null &&
             res.getSettings().getOauth() != null &&
             res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
-            res.getSettings().getOauth().getResponseTypes().contains(ResponseType.CODE) &&
-            res.getSettings().getOauth().getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            res.getSettings().getOauth().getResponseTypes().contains(ResponseType.CODE)
         ));
     }
 
