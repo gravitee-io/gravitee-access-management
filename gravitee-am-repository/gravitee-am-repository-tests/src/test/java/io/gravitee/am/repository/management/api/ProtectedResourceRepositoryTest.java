@@ -1138,5 +1138,51 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(page -> page.getData().size() == 3);
         testObserver.assertValue(page -> page.getTotalCount() == 10);
     }
+
+    @Test
+    public void testSearch_specialRegexCharacters() {
+        // Test that special regex characters in search queries do not cause errors (AM-6422)
+        final String domain = "domain-special-chars";
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+
+        // create resource with special characters in name
+        ProtectedResource resource = generateResource(generateClientSecret(), secretSettings);
+        resource.setDomainId(domain);
+        resource.setClientId("client[test]");
+        resource.setName("resource[test]");
+        repository.create(resource).blockingGet();
+
+        ProtectedResource resource2 = generateResource(generateClientSecret(), secretSettings);
+        resource2.setDomainId(domain);
+        resource2.setClientId("client{test}");
+        resource2.setName("resource{test}");
+        repository.create(resource2).blockingGet();
+
+        // Search with brackets - should not throw PatternSyntaxException
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver = repository.search(domain, "*[*", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().clientId().equals("client[test]"));
+
+        // Search with braces - should not throw PatternSyntaxException
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver2 = repository.search(domain, "*{*", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().clientId().equals("client{test}"));
+
+        // Search with multiple special characters
+        TestObserver<Page<ProtectedResourcePrimaryData>> testObserver3 = repository.search(domain, "*[test]*", PageSortRequest.builder().page(0).size(10).build()).test();
+        testObserver3.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver3.assertComplete();
+        testObserver3.assertNoErrors();
+        testObserver3.assertValue(page -> page.getData().size() == 1);
+    }
 }
 

@@ -159,7 +159,9 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
         if (query.contains("*")) {
             // Wildcard search: replace * with .* for regex matching
             // Note: Regex queries cannot efficiently use indexes regardless of collation
-            String compactQuery = query.replaceAll("\\*+", ".*");
+            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
+            String escapedQuery = escapeRegexMetacharacters(query);
+            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             return or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject(FIELD_NAME, pattern));
@@ -169,6 +171,20 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
             // which allows MongoDB to use collation-enabled indexes
             return or(eq(fieldClientId, query), eq(FIELD_NAME, query));
         }
+    }
+
+    /**
+     * Escapes regex metacharacters in a query string, except for the asterisk (*) which is
+     * used as a wildcard. This prevents PatternSyntaxException when users search for
+     * special characters like [ ] { } etc.
+     *
+     * @param query the search query that may contain regex metacharacters
+     * @return the query with metacharacters escaped
+     */
+    protected static String escapeRegexMetacharacters(String query) {
+        // Escape all regex metacharacters except * (which we use as wildcard)
+        // Metacharacters: . ^ $ | ? + \ [ ] { } ( )
+        return query.replaceAll("([\\[\\]{}()^$.|?+\\\\])", "\\\\$1");
     }
 
     /**
