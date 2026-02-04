@@ -212,7 +212,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
 
             return this.clientSyncService.findByClientId(clientId)
-                    .switchIfEmpty(protectedResourceSyncService.findByClientId(clientId))
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
                         try {

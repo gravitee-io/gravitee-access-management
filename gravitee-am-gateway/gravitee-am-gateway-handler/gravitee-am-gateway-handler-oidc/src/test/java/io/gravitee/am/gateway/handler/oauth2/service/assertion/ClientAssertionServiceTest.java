@@ -40,6 +40,7 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.rxjava3.core.Maybe;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -63,6 +64,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 /**
@@ -98,7 +100,13 @@ public class ClientAssertionServiceTest {
 
     @Mock
     private Domain domain;
-    
+
+    @BeforeEach
+    void setUp() {
+        // Default mock for protectedResourceSyncService to avoid NPE in switchIfEmpty
+        lenient().when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.empty());
+    }
+
     @Test
     public void testAssertionTypeNotValid() {
         clientAssertionService.assertClient("",null,null).test()
@@ -513,34 +521,6 @@ public class ClientAssertionServiceTest {
         clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
-    }
-
-    @Test
-    public void testHmacJwt_protectedResource() throws JOSEException {
-        SecureRandom random = new SecureRandom();
-        byte[] sharedSecret = new byte[32];
-        random.nextBytes(sharedSecret);
-        String clientSecret = new String(sharedSecret, StandardCharsets.UTF_8);
-        JWSSigner signer = new MACSigner(clientSecret);
-
-        Client client = new Client();
-        client.setClientId(CLIENT_ID);
-        client.setClientSecret(new String(sharedSecret));
-        client.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
-
-        String assertion = generateJWT(signer);
-        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
-        String basePath="/";
-
-        // Regular client not found, but protected resource found
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
-        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
-        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
-
-        clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test()
-                .assertNoErrors()
-                .assertValue(client);
     }
 
     @Test
