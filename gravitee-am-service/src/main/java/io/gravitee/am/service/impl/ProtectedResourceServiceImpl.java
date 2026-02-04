@@ -20,7 +20,6 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
-import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -757,9 +756,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         if (oauth.getResponseTypes() == null || oauth.getResponseTypes().isEmpty()) {
             oauth.setResponseTypes(List.of(ResponseType.CODE));
         }
-        if (oauth.getTokenEndpointAuthMethod() == null) {
-            oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
-        }
+
         if (oauth.getClientId() == null) {
             oauth.setClientId(resource.getClientId());
         }
