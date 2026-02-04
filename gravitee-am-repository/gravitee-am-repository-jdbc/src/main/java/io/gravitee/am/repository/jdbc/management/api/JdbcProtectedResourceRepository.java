@@ -493,13 +493,15 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
         boolean wildcardMatch = query.contains("*");
         String wildcardQuery = query.replaceAll("\\*+", "%");
+        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
+        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
 
         String search = databaseDialectHelper.buildSearchProtectedResourceQuery(wildcardMatch, pageSortRequest.getPage(), pageSortRequest.getSize(), COLUMN_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountProtectedResourceQuery(wildcardMatch);
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(COLUMN_DOMAIN_ID, domainId)
-                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                .bind("value", escapedQuery.toUpperCase())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity)
@@ -508,7 +510,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .toList()
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(COLUMN_DOMAIN_ID, domainId)
-                        .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                        .bind("value", escapedQuery.toUpperCase())
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
                 .doOnError(error -> LOGGER.error("Unable to search protected resources with domain {} (page={}/size={})", domainId, pageSortRequest.getPage(), pageSortRequest.getSize(), error));

@@ -211,7 +211,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         Bson searchQuery;
         if (useWildcard) {
             // Wildcard search: use regex (cannot leverage indexes efficiently)
-            String compactQuery = query.replaceAll("\\*+", ".*");
+            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
+            String escapedQuery = escapeRegexMetacharacters(query);
+            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             searchQuery = and(in(FIELD_ID, applicationIds), or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern)));

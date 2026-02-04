@@ -376,12 +376,15 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     protected StringBuilder buildSearchProtectedResource(boolean wildcard, StringBuilder builder) {
+        String escapeSuffix = wildcard ? getLikeEscapeClause() : "";
         return builder.append("pr.domain_id = :domain_id")
                 .append(" AND (")
                 .append(" upper(pr.name) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" OR upper(pr.client_id) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" ) ");
     }
 
@@ -402,13 +405,16 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, StringBuilder builder) {
+        String escapeSuffix = wildcard ? getLikeEscapeClause() : "";
         return builder.append("a.domain = :domain")
                 .append(withIds ? " AND a.id IN (:applicationIds)" : "")
                 .append(" AND (")
                 .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" OR upper(a.settings_client_id) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" ) ");
     }
 
