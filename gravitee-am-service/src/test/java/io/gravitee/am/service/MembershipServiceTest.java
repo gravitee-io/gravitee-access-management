@@ -20,6 +20,7 @@ import io.gravitee.am.service.impl.MembershipServiceImpl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
@@ -31,6 +32,7 @@ import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.ResourceForbiddenAccessException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.SinglePrimaryOwnerException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -49,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
@@ -564,6 +567,27 @@ public class MembershipServiceTest {
 
         verify(membershipRepository, times(0)).create(any());
         verify(auditService, times(0)).report(any());
+    }
+
+    @Test
+    public void shouldNotDelete_membershipWithReferenceMismatch() {
+
+        String membershipId = "membership-id";
+        Membership membership = new Membership();
+        membership.setId(membershipId);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setReferenceId(DOMAIN_ID);
+
+        when(membershipRepository.findById(membershipId)).thenReturn(Maybe.just(membership));
+
+        TestObserver<Void> obs = membershipService.delete(Reference.organization(ORGANIZATION_ID), membershipId, null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+
+        verify(membershipRepository, never()).delete(anyString());
+        verify(eventService, never()).create(any());
+        verify(roleService, never()).findById(any());
     }
 
     @Test
