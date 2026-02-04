@@ -1472,7 +1472,7 @@ public class ApplicationServiceTest {
         Membership membership = new Membership();
         membership.setId("membership-id");
         when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.just(membership));
-        when(membershipService.delete(anyString())).thenReturn(Completable.complete());
+        when(membershipService.delete(any(), anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = applicationService.delete(existingClient.getId(), DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1483,7 +1483,7 @@ public class ApplicationServiceTest {
         verify(applicationRepository, times(1)).delete(existingClient.getId());
         verify(formService, times(1)).delete(eq("my-domain"), anyString());
         verify(emailTemplateService, times(1)).delete(anyString());
-        verify(membershipService, times(1)).delete(anyString());
+        verify(membershipService, times(1)).delete(any(), anyString());
     }
 
     @Test
@@ -1507,7 +1507,7 @@ public class ApplicationServiceTest {
         verify(applicationRepository, times(1)).delete(existingClient.getId());
         verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());
-        verify(membershipService, never()).delete(anyString());
+        verify(membershipService, never()).delete(any(), anyString());
     }
 
     @Test

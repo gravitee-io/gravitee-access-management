@@ -549,7 +549,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                             )
                             // delete memberships
                             .andThen(membershipService.findByReference(application.getId(), ReferenceType.APPLICATION)
-                                    .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
+                                    .flatMapCompletable(membership -> membershipService.delete(Reference.application(application.getId()), membership.getId()))
                             )
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).application(application)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).application(application).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
