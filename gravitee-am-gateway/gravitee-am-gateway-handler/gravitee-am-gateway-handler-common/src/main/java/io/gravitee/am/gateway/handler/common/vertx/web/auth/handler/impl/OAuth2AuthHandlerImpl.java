@@ -205,7 +205,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                 }
 
                 if (!BEARER.equalsIgnoreCase(authorization.substring(0, idx))) {
-                    handler.handle(Future.failedFuture(new HttpException(401)));
+                    handler.handle(Future.failedFuture(new InvalidTokenException("Authorization header must use Bearer scheme")));
                     return;
                 }
                 authToken = authorization.substring(idx + 1);
@@ -215,7 +215,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
             }
 
             if (authToken == null) {
-                handler.handle(Future.failedFuture(new HttpException(401)));
+                handler.handle(Future.failedFuture(new InvalidTokenException("Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter")));
                 return;
             }
 
