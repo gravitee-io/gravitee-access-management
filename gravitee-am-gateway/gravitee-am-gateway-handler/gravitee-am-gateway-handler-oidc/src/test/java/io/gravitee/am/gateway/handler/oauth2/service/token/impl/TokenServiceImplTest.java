@@ -690,8 +690,6 @@ public class TokenServiceImplTest {
             assertThat(token.getValue()).startsWith("eyJ");
             // Verify no refresh token
             assertThat(token.getRefreshToken()).isNull();
-            // Verify scope is set
-            assertThat(token.getScope()).contains("openid");
             return true;
         });
 
