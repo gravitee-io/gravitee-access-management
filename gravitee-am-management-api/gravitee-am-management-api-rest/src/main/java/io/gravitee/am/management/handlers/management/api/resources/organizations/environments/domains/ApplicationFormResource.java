@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.management.service.DomainService;
@@ -89,7 +90,7 @@ public class ApplicationFormResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))
@@ -119,7 +120,7 @@ public class ApplicationFormResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.DELETE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.DELETE)
                 .andThen(formService.delete(domain, form, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

@@ -31,4 +31,6 @@ public interface OrganizationRepository extends CrudRepository<Organization, Str
     Single<Long> count();
 
     Flowable<Organization> findByHrids(List<String> hrids);
+
+    Flowable<Organization> findAll();
 }

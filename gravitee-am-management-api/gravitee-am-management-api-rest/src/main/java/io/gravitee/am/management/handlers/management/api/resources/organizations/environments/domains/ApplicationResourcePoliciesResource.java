@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -83,7 +84,7 @@ public class ApplicationResourcePoliciesResource extends AbstractResource {
             @PathParam("resource") String resource,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domainId, application, Permission.APPLICATION_RESOURCE, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.APPLICATION, application, Permission.APPLICATION_RESOURCE, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMap(domain -> applicationService.findById(application)

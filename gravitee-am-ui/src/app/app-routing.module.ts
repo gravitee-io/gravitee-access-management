@@ -142,6 +142,7 @@ import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/com
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/advanced/client-secrets/domain-mcp-server-client-secrets.component';
+import { DomainMcpServerMembershipsComponent } from './domain/mcp-servers/mcp-server/advanced/memberships/memberships.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
@@ -149,6 +150,7 @@ import { ApplicationFlowsComponent } from './domain/applications/application/des
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
 import { ManagementRoleComponent } from './settings/management/roles/role/role.component';
 import { MembershipsResolver } from './resolvers/memberships.resolver';
+import { McpServerMembershipsResolver } from './resolvers/mcp-server-memberships.resolver';
 import { SettingsResolver } from './resolvers/settings.resolver';
 import { AuthGuard } from './guards/auth-guard.service';
 import { HomeComponent } from './home/home.component';
@@ -1448,7 +1450,7 @@ export const routes: Routes = [
                         include: true,
                       },
                       perms: {
-                        only: ['protected_resource_read'],
+                        only: ['protected_resource_list'],
                       },
                     },
                     children: [
@@ -1575,6 +1577,24 @@ export const routes: Routes = [
                                 resolve: {
                                   domainGrantTypes: DomainGrantTypesResolver,
                                   scopes: ScopesAllResolver,
+                                },
+                              },
+                              {
+                                path: 'members',
+                                component: DomainMcpServerMembershipsComponent,
+                                canActivate: [AuthGuard],
+                                resolve: {
+                                  members: McpServerMembershipsResolver,
+                                },
+                                data: {
+                                  menu: {
+                                    label: 'Administrative roles',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['protected_resource_member_list'],
+                                  },
                                 },
                               },
                             ],

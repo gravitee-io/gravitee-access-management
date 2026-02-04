@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -171,5 +172,37 @@ public class OrganizationRepositoryTest extends AbstractManagementTest {
         obs.assertNoErrors();
         obs.assertValue(o -> o.size() == 1);
         obs.assertValue(o -> o.get(0).getName().equals(organizationCreated.getName()));
+    }
+
+    @Test
+    public void testFindAllEmpty() {
+        TestObserver<List<Organization>> obs = organizationRepository.findAll().toList().test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(List::isEmpty);
+    }
+
+    @Test
+    public void testFindAll() {
+        Organization organization = new Organization();
+        organization.setName("testName");
+
+        Organization organization2 = new Organization();
+        organization2.setName("testName2");
+
+        Organization organizationCreated = organizationRepository.create(organization).blockingGet();
+        Organization organizationCreated2 = organizationRepository.create(organization2).blockingGet();
+
+        TestObserver<List<Organization>> obs = organizationRepository.findAll().toList().test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(items -> items.stream().map(Organization::getId)
+                .collect(Collectors.toList())
+                .containsAll(Arrays.asList(organizationCreated.getId(), organizationCreated2.getId())));
+        obs.assertValue(items -> items.size() == 2);
     }
 }

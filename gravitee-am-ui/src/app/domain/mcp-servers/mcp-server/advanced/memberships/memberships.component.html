@@ -15,15 +15,10 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container">
-  <h1>Administrative roles</h1>
-  <div class="gv-page-content" fxLayout="column">
-    <app-memberships-list
-      [members]="members"
-      [editable]="isEditable()"
-      [userContextLabel]="'security domain'"
-      [dialogData]="dialogData"
-      (dialogClosed)="reloadMembers()"
-    ></app-memberships-list>
-  </div>
-</div>
+<app-memberships-list
+  [members]="members"
+  [editable]="isEditable()"
+  [userContextLabel]="'MCP server'"
+  [dialogData]="dialogData"
+  (dialogClosed)="reloadMembers()"
+></app-memberships-list>

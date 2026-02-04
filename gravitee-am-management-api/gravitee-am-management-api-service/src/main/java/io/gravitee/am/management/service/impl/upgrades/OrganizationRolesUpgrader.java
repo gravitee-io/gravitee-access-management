@@ -16,38 +16,39 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.node.api.upgrader.Upgrader;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Component
 @RequiredArgsConstructor
 @ManagementRepositoryScope
-public class DefaultRoleUpgrader implements Upgrader {
+@Slf4j
+public class OrganizationRolesUpgrader implements Upgrader {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultRoleUpgrader.class);
 
+    private final OrganizationService organizationService;
     private final RoleService roleService;
 
-    // bump every time system roles are modified
     private static final String VERSION = "4_11_0_a";
 
     @Override
     public boolean upgrade() {
-        logger.info("Applying default roles upgrade");
         try {
-            // create or update system roles
-            roleService.createOrUpdateSystemRoles().blockingAwait();
-            logger.info("Default roles upgrade, done.");
+            log.info("Applying default roles upgrade for all organizations");
+            organizationService.findAll()
+                    .map(Organization::getId)
+                    .doOnNext(orgId -> log.info("Default roles upgrade start for org={}", orgId))
+                    .flatMapCompletable(roleService::createDefaultRoles)
+                    .doOnComplete(() -> log.info("All default roles upgraded."))
+                    .blockingAwait();
+
         } catch (Throwable e) {
-            logger.error("An error occurs while updating default roles", e);
+            log.error("An error occurs while updating default roles for organizations", e);
             return false;
         }
 
@@ -61,6 +62,6 @@ public class DefaultRoleUpgrader implements Upgrader {
 
     @Override
     public int getOrder() {
-        return UpgraderOrder.DEFAULT_ROLE_UPGRADER;
+        return UpgraderOrder.ORGANIZATION_STANDARD_ROLE_UPGRADER;
     }
 }

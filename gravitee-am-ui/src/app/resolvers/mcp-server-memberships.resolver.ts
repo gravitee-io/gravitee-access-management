@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.permissions;
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
 
-import java.util.Arrays;
+import { ProtectedResourceService } from '../services/protected-resource.service';
 
-/**
- * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum DefaultRole {
-    ORGANIZATION_OWNER, ORGANIZATION_USER,
-    DOMAIN_OWNER, DOMAIN_USER,
-    ENVIRONMENT_OWNER, ENVIRONMENT_USER,
-    APPLICATION_OWNER, APPLICATION_USER,
-    PROTECTED_RESOURCE_OWNER, PROTECTED_RESOURCE_USER;
+@Injectable()
+export class McpServerMembershipsResolver {
+  constructor(private protectedResourceService: ProtectedResourceService) {}
 
-    public static DefaultRole fromName(String name) {
-        return Arrays.stream(values()).filter(e -> e.name().equalsIgnoreCase(name)).findFirst().orElse(null);
-    }
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
+    const domainId = route.parent.data['domain']?.id;
+    const mcpServerId = route.paramMap.get('mcpServerId');
+
+    return this.protectedResourceService.members(domainId, mcpServerId);
+  }
 }

@@ -18,9 +18,9 @@ import { UntypedFormControl } from '@angular/forms';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { map } from 'lodash';
 
-import { OrganizationService } from '../../../services/organization.service';
-import { DialogService } from '../../../services/dialog.service';
-import { AuthService } from '../../../services/auth.service';
+import { OrganizationService } from '../../services/organization.service';
+import { DialogService } from '../../services/dialog.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-memberships',

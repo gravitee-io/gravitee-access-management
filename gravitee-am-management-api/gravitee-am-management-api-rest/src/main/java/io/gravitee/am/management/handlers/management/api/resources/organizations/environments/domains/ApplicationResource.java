@@ -104,7 +104,7 @@ public class ApplicationResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))
@@ -197,7 +197,7 @@ public class ApplicationResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.UPDATE)
                 .andThen(applicationService.updateType(domain, application, patchApplicationType.getType(), authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
@@ -221,7 +221,7 @@ public class ApplicationResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.DELETE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapCompletable(exitingDomain -> applicationService.delete(application, authenticatedUser, exitingDomain)))
@@ -273,7 +273,7 @@ public class ApplicationResource extends AbstractResource {
             response.resume(new BadRequestException("You need to specify at least one value to update."));
         } else {
             Completable.merge(requiredPermissions.stream()
-                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, application, permission, Acl.UPDATE))
+                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.APPLICATION, application, permission, Acl.UPDATE))
                     .collect(Collectors.toList()))
                     .andThen(domainService.findById(domainId)
                             .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))

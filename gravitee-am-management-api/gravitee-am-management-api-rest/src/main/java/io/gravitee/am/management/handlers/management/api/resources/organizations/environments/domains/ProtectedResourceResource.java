@@ -62,6 +62,11 @@ public class ProtectedResourceResource extends AbstractDomainResource {
         return resourceContext.getResource(ProtectedResourceSecretsResource.class);
     }
 
+    @Path("members")
+    public ProtectedResourceMembersResource getMembersResource() {
+        return resourceContext.getResource(ProtectedResourceMembersResource.class);
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
