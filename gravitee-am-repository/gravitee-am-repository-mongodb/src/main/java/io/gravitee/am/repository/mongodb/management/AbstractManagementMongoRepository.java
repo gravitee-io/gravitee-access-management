@@ -74,4 +74,81 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     protected Maybe<Bson> toBsonFilter(boolean logicalOr, Bson... filter) {
         return MongoUtils.toBsonFilter(logicalOr, filter);
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * Find paginated results with optional case-insensitive collation.
+     * When useCollation is true, queries will use case-insensitive matching and can leverage collation indexes.
+     */
+    protected <T, R> Single<Page<R>> findPage(MongoCollection<T> collection, Bson query, int page, int size,
+                                               io.reactivex.rxjava3.functions.Function<T, R> mapper, boolean useCollation) {
+        CountOptions countOpts = useCollation ? countOptionsWithCollation() : countOptions();
+        Single<Long> countOperation = countItems(collection, query, countOpts);
+
+        FindPublisher<T> findPublisher = withMaxTime(collection.find(query))
+                .sort(new BasicDBObject(MongoUtils.FIELD_UPDATED_AT, -1))
+                .skip(size * page)
+                .limit(size);
+
+        if (useCollation) {
+            findPublisher = findPublisher.collation(CASE_INSENSITIVE_COLLATION);
+        }
+
+        Single<Set<R>> contentOperation = Observable.fromPublisher(findPublisher)
+                .map(mapper)
+                .collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, contentOperation, (count, content) -> new Page<>(content, page, count))
+                .observeOn(Schedulers.computation());
+    }
+    protected Bson buildSearchQuery(String query, String domain, String domainFieldName, String fieldClientId) {
+        return and(
+                eq(domainFieldName, domain),
+                buildTextQuery(query, fieldClientId));
+    }
+
+    protected Bson buildTextQuery(String query, String fieldClientId) {
+        if (query.contains("*")) {
+            // Wildcard search: replace * with .* for regex matching
+            // Note: Regex queries cannot efficiently use indexes regardless of collation
+            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
+            String escapedQuery = escapeRegexMetacharacters(query);
+            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            return or(new BasicDBObject(fieldClientId, pattern), new BasicDBObject(FIELD_NAME, pattern));
+        } else {
+            // Exact match: use simple equality filter
+            // Case-insensitivity is handled by collation at query execution time,
+            // which allows MongoDB to use collation-enabled indexes
+            return or(eq(fieldClientId, query), eq(FIELD_NAME, query));
+        }
+    }
+
+    /**
+     * Escapes regex metacharacters in a query string, except for the asterisk (*) which is
+     * used as a wildcard. This prevents PatternSyntaxException when users search for
+     * special characters like [ ] { } etc.
+     *
+     * @param query the search query that may contain regex metacharacters
+     * @return the query with metacharacters escaped
+     */
+    protected static String escapeRegexMetacharacters(String query) {
+        // Escape all regex metacharacters except * (which we use as wildcard)
+        // Metacharacters: . ^ $ | ? + \ [ ] { } ( )
+        return query.replaceAll("([\\[\\]{}()^$.|?+\\\\])", "\\\\$1");
+    }
+
+    /**
+     * Checks if a search query contains wildcards.
+     * Wildcard queries use regex and cannot leverage collation indexes.
+     */
+    protected boolean isWildcardQuery(String query) {
+        return query != null && query.contains("*");
+    }
+
+    protected Single<Long> countItems(MongoCollection collection, Bson query, CountOptions options) {
+        return Observable.fromPublisher(collection.countDocuments(query, options)).first(0L);
+    }
+>>>>>>> 75f081ac2 (fix(search): escape regex metacharacters in search queries)
 }

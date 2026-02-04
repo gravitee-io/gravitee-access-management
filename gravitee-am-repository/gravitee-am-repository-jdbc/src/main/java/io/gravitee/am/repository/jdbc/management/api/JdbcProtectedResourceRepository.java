@@ -448,4 +448,35 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .concatMap(jdbc -> getTemplate().insert(jdbc))
                 .map(jdbc -> mapper.map(jdbc, ProtectedResourceFeature.class));
     }
+<<<<<<< HEAD
+=======
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> search(String domainId, String query, PageSortRequest pageSortRequest) {
+        LOGGER.debug("search({}, {}, {}, {})", domainId, query, pageSortRequest.getPage(),pageSortRequest.getSize());
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
+        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+
+        String search = databaseDialectHelper.buildSearchProtectedResourceQuery(wildcardMatch, pageSortRequest.getPage(), pageSortRequest.getSize(), COLUMN_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountProtectedResourceQuery(wildcardMatch);
+
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+                .bind(COLUMN_DOMAIN_ID, domainId)
+                .bind("value", escapedQuery.toUpperCase())
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> complete(app).toFlowable())
+                .map(ProtectedResourcePrimaryData::of)
+                .toList()
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
+                        .bind(COLUMN_DOMAIN_ID, domainId)
+                        .bind("value", escapedQuery.toUpperCase())
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .doOnError(error -> LOGGER.error("Unable to search protected resources with domain {} (page={}/size={})", domainId, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+    }
+>>>>>>> 75f081ac2 (fix(search): escape regex metacharacters in search queries)
 }
