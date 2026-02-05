@@ -22,6 +22,8 @@ import { retryUntil } from '@utils-commands/retry';
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_INTERVAL_MS = 500;
 
+type PollOptions = { timeoutMillis?: number; intervalMillis?: number };
+
 /**
  * Creates a MonitoringApi instance that handles 503 responses gracefully.
  * The _node/domains endpoint returns 503 with a valid JSON body when domains aren't ready,
@@ -31,47 +33,33 @@ function createApi() {
   return getMonitoringApi().withPostMiddleware(async ({ response }) => {
     if (response.status === 503) {
       const body = await response.text();
-      return new Response(body, {
-        status: 200,
-        statusText: 'OK',
-        headers: response.headers,
-      });
+      return new Response(body, { status: 200, statusText: 'OK', headers: response.headers });
     }
     return response;
   });
 }
 
-/**
- * Get the readiness state of a specific domain from the gateway's _node/domains endpoint.
- * Returns the full DomainState regardless of whether the domain is ready or not.
- *
- * @param domainId - The domain ID to check
- * @returns DomainState with sync status, plugin creation states, and readiness flags
- * @throws ResponseError if the domain is not found (404) or other unexpected errors
- */
+const isReady = (state: DomainState | null): boolean => state !== null && state.stable && state.synchronized;
+
+/** Fetch domain state, returning null on transient errors instead of throwing. */
+function fetchStateSafe(domainId: string): Promise<DomainState | null> {
+  return getDomainState(domainId).catch((error) => {
+    console.debug(`Error fetching domain state for ${domainId}: ${error instanceof Error ? error.message : error}`);
+    return null;
+  });
+}
+
 export const getDomainState = async (domainId: string): Promise<DomainState> => {
   return createApi().getDomainState({ domainId });
 };
 
-/**
- * Get the readiness state of all domains from the gateway's _node/domains endpoint.
- *
- * @returns Map of domain ID to DomainState
- */
 export const getAllDomainStates = async (): Promise<Record<string, DomainState>> => {
   return createApi().getAllDomainStates();
 };
 
-/**
- * Check if a specific domain is fully ready (stable and synchronized).
- *
- * @param domainId - The domain ID to check
- * @returns true if the domain is deployed, all plugins loaded successfully, and sync is complete
- */
 export const isDomainReady = async (domainId: string): Promise<boolean> => {
   try {
-    const state = await getDomainState(domainId);
-    return state.stable && state.synchronized;
+    return isReady(await getDomainState(domainId));
   } catch (error) {
     if (error instanceof ResponseError && error.response.status === 404) {
       return false;
@@ -83,41 +71,36 @@ export const isDomainReady = async (domainId: string): Promise<boolean> => {
 /**
  * Wait for a domain to become fully ready (stable and synchronized) on the gateway.
  * Polls the _node/domains endpoint until the domain reports as ready or timeout is reached.
- *
- * @param domainId - The domain ID to wait for
- * @param options - Polling configuration
- * @returns The final DomainState once ready
- * @throws TimeoutError if the domain does not become ready within the timeout
  */
-export const waitForDomainReady = async (
-  domainId: string,
-  options?: {
-    timeoutMillis?: number;
-    intervalMillis?: number;
-  },
-): Promise<DomainState> => {
+export const waitForDomainReady = async (domainId: string, options?: PollOptions): Promise<DomainState> => {
   const { timeoutMillis = DEFAULT_TIMEOUT_MS, intervalMillis = DEFAULT_INTERVAL_MS } = options || {};
+  return retryUntil(() => fetchStateSafe(domainId), isReady, {
+    timeoutMillis,
+    intervalMillis,
+    onDone: (state) => console.debug(`Domain ${domainId} is ready (status: ${state?.status})`),
+  });
+};
+
+/**
+ * Wait for a domain to complete a NEW sync cycle after a change has been made.
+ *
+ * Unlike `waitForDomainReady` which returns immediately if the domain is already ready,
+ * this captures the current `lastSync` timestamp and waits for it to advance,
+ * ensuring the gateway has processed a new sync cycle (e.g. after secret renewal,
+ * application update, etc.) before returning.
+ */
+export const waitForNextSync = async (domainId: string, options?: PollOptions): Promise<DomainState> => {
+  const { timeoutMillis = DEFAULT_TIMEOUT_MS, intervalMillis = DEFAULT_INTERVAL_MS } = options || {};
+  const lastSyncBefore = await fetchStateSafe(domainId).then((s) => s?.lastSync ?? 0);
 
   return retryUntil(
-    async () => {
-      try {
-        return await getDomainState(domainId);
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.debug(`Error fetching domain state for ${domainId}: ${errorMessage}`);
-        return null;
-      }
-    },
-    (state) => state !== null && state.stable && state.synchronized,
+    () => fetchStateSafe(domainId),
+    (state) => isReady(state) && state.lastSync > lastSyncBefore,
     {
       timeoutMillis,
       intervalMillis,
-      onDone: (state) => console.debug(`Domain ${domainId} is ready (status: ${state?.status})`),
-      onRetry: (state) => {
-        if (state) {
-          console.debug(`Domain ${domainId} not ready (status: ${state.status}, stable: ${state.stable}, synchronized: ${state.synchronized})`);
-        }
-      },
+      onDone: (state) =>
+      console.debug(`Domain ${domainId} synced (lastSync: ${new Date(lastSyncBefore).toISOString()} -> ${new Date(state?.lastSync).toISOString()})`),
     },
   );
 };

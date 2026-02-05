@@ -17,9 +17,8 @@
 import { getDomainApi, getDomainManagerUrl } from './service/utils';
 import { Domain } from '../../management/models';
 import { DomainPage } from '../../management/models/DomainPage';
-import { retryUntil } from '@utils-commands/retry';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
-import { waitForDomainReady } from '@gateway-commands/monitoring-commands';
+import { waitForDomainReady, waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { expect } from '@jest/globals';
 import faker from 'faker';
@@ -168,17 +167,12 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
     flow: flows,
   });
 
-export const waitForDomainStart: (domain: Domain) => Promise<DomainWithOidcConfig> = (domain: Domain) => {
+export const waitForDomainStart = async (domain: Domain): Promise<DomainWithOidcConfig> => {
   const start = Date.now();
-  return retryUntil(
-    () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
-    (res) => res.status == 200,
-    {
-      timeoutMillis: 5000,
-      onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
-      onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
-    },
-  ).then((response) => ({ domain, oidcConfig: response.body }));
+  await waitForDomainReady(domain.id);
+  const response = await getWellKnownOpenIdConfiguration(domain.hrid);
+  console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`);
+  return { domain, oidcConfig: response.body };
 };
 
 /**
@@ -216,7 +210,7 @@ export const waitForDomainSync = async (
   const { timeoutMillis = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS, intervalMillis = DEFAULT_DOMAIN_SYNC_INTERVAL_MS } = options || {};
 
   try {
-    await waitForDomainReady(domainId, { timeoutMillis, intervalMillis });
+    await waitForNextSync(domainId, { timeoutMillis, intervalMillis });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
