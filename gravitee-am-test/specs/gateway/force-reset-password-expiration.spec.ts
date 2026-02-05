@@ -41,6 +41,7 @@ import { enableDomain } from './mfa/fixture/mfa-setup-fixture';
 import { setup } from '../test-fixture';
 import { withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
+import {waitForDomainReady} from "@gateway-commands/monitoring-commands";
 
 setup(200000);
 
@@ -84,9 +85,10 @@ async function initDomain(resetPasswordOnExpiration: boolean) {
     expiryDuration: 1,
   }).then((policy) => assignPasswordPolicyToIdp(createdDomain.id, accessToken, defaultIdp.id, policy.id));
 
-  const oidc = await startDomain(createdDomain.id, accessToken)
-    .then(() => waitFor(3000))
-    .then(() => withRetry(() => getWellKnownOpenIdConfiguration(createdDomain.hrid).expect(200)));
+  await startDomain(createdDomain.id, accessToken);
+  await waitForDomainReady(createdDomain.id);
+
+  const oidc = await getWellKnownOpenIdConfiguration(createdDomain.hrid);
 
   const today = new Date();
   const twoDaysAgo = new Date(today);

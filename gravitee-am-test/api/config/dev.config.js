@@ -24,5 +24,6 @@ module.exports = {
     '@utils-commands/(.*)': '<rootDir>/api/commands/utils/$1',
     '@utils/(.*)': '<rootDir>/api/utils/$1',
     '@api-fixtures/(.*)': '<rootDir>/api/fixtures/$1',
+    '@gateway-apis/(.*)': '<rootDir>/api/gateway/apis/$1',
   },
 };
