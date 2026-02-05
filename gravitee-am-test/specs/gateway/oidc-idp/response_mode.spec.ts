@@ -23,7 +23,7 @@ setup(200000);
 let fixture: OIDCFixture;
 
 beforeAll(async function () {
-  fixture = await setupOidcProviderTest(uniqueName('response-mode'));
+  fixture = await setupOidcProviderTest(uniqueName('response-mode', true));
 });
 
 function expectRedirectToClientWithAuthCode(res) {

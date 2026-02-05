@@ -24,19 +24,8 @@ const DEFAULT_INTERVAL_MS = 500;
 
 type PollOptions = { timeoutMillis?: number; intervalMillis?: number };
 
-/**
- * Creates a MonitoringApi instance that handles 503 responses gracefully.
- * The _node/domains endpoint returns 503 with a valid JSON body when domains aren't ready,
- * so we use post-middleware to treat 503 as a successful response for parsing purposes.
- */
 function createApi() {
-  return getMonitoringApi().withPostMiddleware(async ({ response }) => {
-    if (response.status === 503) {
-      const body = await response.text();
-      return new Response(body, { status: 200, statusText: 'OK', headers: response.headers });
-    }
-    return response;
-  });
+  return getMonitoringApi();
 }
 
 const isReady = (state: DomainState | null): boolean => state !== null && state.stable && state.synchronized;

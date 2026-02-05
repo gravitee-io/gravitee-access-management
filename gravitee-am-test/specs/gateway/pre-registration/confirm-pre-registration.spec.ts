@@ -16,14 +16,11 @@
 
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
 
-import { beforeAll, expect } from '@jest/globals';
-import {
-  waitForDomainSync,
-} from '@management-commands/domain-management-commands';
+import { afterAll, beforeAll, expect } from '@jest/globals';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createUser, getUserPage } from '@management-commands/user-management-commands';
 import { extractXsrfToken, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
-import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
+import { patchApplication } from '@management-commands/application-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
 import cheerio from 'cheerio';
@@ -36,6 +33,10 @@ let fixture: ConfirmPreRegistrationFixture;
 
 beforeAll(async () => {
   fixture = await setupFixture();
+});
+
+afterAll(async () => {
+  if (fixture) await fixture.cleanup();
 });
 
 describe('AM - User Pre-Registration', () => {
@@ -138,7 +139,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
     });
 
     it('Update Application to allow account validation using forgot password', async () => {
-      patchApplication(
+      await patchApplication(
         fixture.domain.id,
         fixture.accessToken,
         {
@@ -151,7 +152,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
         },
         fixture.application.id,
       );
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+      await waitForNextSync(fixture.domain.id);
     });
 
     it('Can reset the password', async () => {
@@ -177,7 +178,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
 
 describe('AM - User Pre-Registration - Dynamic User Registration', () => {
   it('Update Application to allow Dynamic User Registration', async () => {
-    patchApplication(
+    await patchApplication(
       fixture.domain.id,
       fixture.accessToken,
       {
@@ -191,7 +192,7 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
       },
       fixture.application.id,
     );
-    await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+    await waitForNextSync(fixture.domain.id);
   });
 
   it('Pre-Registered user without application id MUST NOT have registration contact point information', async () => {

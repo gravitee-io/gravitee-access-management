@@ -20,8 +20,8 @@ import {
   DomainWithOidcConfig,
   startDomain,
   waitForDomainStart,
-  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { Domain } from '@management-models/Domain';
 import { createTestApp } from '@utils-commands/application-commands';
 import { expect } from '@jest/globals';
@@ -118,8 +118,9 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
 
   let clientIdentityProvider = await createOidcProvider(clientDomain, providerDomain, accessToken, providerIdpApplication);
 
+  const clientAppName = uniqueName('oidc-pkce-test-client', true);
   let clientApp = await createApp(
-    'oidc-pkce-test-client',
+    clientAppName,
     clientDomain,
     accessToken,
     clientIdentityProvider.id,
@@ -164,8 +165,8 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
     return codeMatch ? codeMatch[1] : '';
   };
 
-  // Wait for both domains to sync before starting login flow
-  await Promise.all([waitForDomainSync(providerDomain.id, accessToken), waitForDomainSync(clientDomain.id, accessToken)])
+  // Wait for both domains to complete a new sync cycle before starting login flow
+  await Promise.all([waitForNextSync(providerDomain.id), waitForNextSync(clientDomain.id)])
     .then(() => initiateLoginFlow(clientApp.settings.oauth.clientId, clientOpenIdConfiguration, clientDomain))
     .then((response) => navigateToOidcProviderLogin(response))
     .then((response) => login(response, TEST_USER.username, providerIdpApplication.settings.oauth.clientId, TEST_USER.password))
@@ -226,7 +227,7 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
           },
         };
         return patchApplication(providerDomain.id, accessToken, patch, providerIdpApplication.id).then(async (res) => {
-          await waitForDomainSync(providerDomain.id, accessToken);
+          await waitForNextSync(providerDomain.id);
           return res;
         });
       },
@@ -262,7 +263,7 @@ async function updateIdpConfiguration(idp: IdentityProvider, newConfig: any, dom
     roleMapper: idp.roleMapper,
     domainWhitelist: idp.domainWhitelist,
   };
-  return updateIdp(domain.id, accessToken, updatedIdp, idp.id).then(() => waitForDomainSync(domain.id, accessToken));
+  return updateIdp(domain.id, accessToken, updatedIdp, idp.id).then(() => waitForNextSync(domain.id));
 }
 
 async function createApp(name: string, domain: Domain, accessToken: string, idpId: string, redirectUri: string) {

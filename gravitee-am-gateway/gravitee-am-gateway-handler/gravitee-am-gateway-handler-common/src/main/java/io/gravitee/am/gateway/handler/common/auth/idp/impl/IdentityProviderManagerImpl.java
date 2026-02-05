@@ -170,8 +170,9 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 .flatMapSingle(this::updateAuthenticationProvider)
                 .subscribe(
                         identityProvider -> {
+                            // Note: pluginLoaded is already called in deployProvider/redeployProvider doOnSuccess,
+                            // so we only log here to avoid a redundant (and potentially racy) second call.
                             logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
-                            domainReadinessService.pluginLoaded(domain.getId(), identityProviderId);
                         },
                         error -> {
                             logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error);
@@ -186,7 +187,9 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
-        domainReadinessService.initPluginSync(domain.getId(), identityProvider.getId(), Type.IDENTITY_PROVIDER.name());
+        // Note: initPluginSync is NOT called here because it is already called inside both
+        // deployProvider() and redeployProvider(). Calling it here would create an orphaned init
+        // when needDeployment() returns false (no matching pluginLoaded would follow).
         if (needDeployment(identityProvider)) {
             return forceUpdateAuthenticationProvider(identityProvider);
         } else {
@@ -247,7 +250,10 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         return Completable.fromAction(() -> {
             if (oldProviders.authProvider != null) {
                 try {
-                    domainReadinessService.pluginUnloaded(domain.getId(), oldProviders.identity.getId());
+                    // Note: do NOT call pluginUnloaded here. This method stops the *old* provider
+                    // during a redeploy — the plugin ID is the same as the new provider, so calling
+                    // pluginUnloaded would remove readiness tracking that initPluginSync set up for
+                    // the replacement. pluginUnloaded is only appropriate in clearProvider() (UNDEPLOY).
                     oldProviders.authProvider.stop();
                     logger.debug("Stopped old authentication provider after replacement");
                 } catch (Exception e) {
