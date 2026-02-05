@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { getDomainFlows, updateDomainFlows, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { getDomainFlows, updateDomainFlows } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createUser, deleteUser, getAllUsers } from '@management-commands/user-management-commands';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
@@ -61,6 +62,7 @@ describe('Account Linking - local IDP and OIDC', () => {
     await deleteUser(fixture.upstreamDomain.domain.id, fixture.accessToken, allUsers.data[0].id);
     await deleteUser(fixture.upstreamDomain.domain.id, fixture.accessToken, allUsers.data[1].id);
     await createUser(fixture.upstreamDomain.domain.id, fixture.accessToken, fixture.upstreamDomain.user);
+    await waitForNextSync(fixture.upstreamDomain.domain.id);
   });
 
   it('Should login and create double user - account linking setup', async () => {
@@ -80,7 +82,7 @@ describe('Account Linking - local IDP and OIDC', () => {
       },
     ]);
     await updateDomainFlows(fixture.upstreamDomain.domain.id, fixture.accessToken, flows);
-    await waitForDomainSync(fixture.upstreamDomain.domain.id, fixture.accessToken);
+    await waitForNextSync(fixture.upstreamDomain.domain.id);
 
     const user1TokenResponse = await loginUserNameAndPassword(
       fixture.upstreamDomain.oidcApp.settings.oauth.clientId,

@@ -1035,6 +1035,58 @@ Before submitting a test file, ensure:
 
 ---
 
+## Running Tests Locally
+
+### Prerequisites: Build & Deploy to Local Stack
+
+The integration tests run against a local Docker stack. After code changes (or on first setup), you must build the distribution ZIPs and deploy them to Docker:
+
+```bash
+# 1. Build distribution ZIPs (includes mock plugins from Artifactory)
+mvn install -DskipTests -P full-bundle
+
+# 2. Copy ZIPs into Docker build context
+npm --prefix docker/local-stack run stack:init:copy-am
+
+# 3. Rebuild Docker images
+npm --prefix docker/local-stack run stack:init:build
+
+# 4. Restart containers
+npm --prefix docker/local-stack run stack:down && npm --prefix docker/local-stack run stack:dev:setup:mongo
+```
+
+> **Important:** The `-P full-bundle` profile is required to include mock test plugins (`gravitee-am-factor-mock`, `gravitee-am-resource-mfa-mock`). Without it, tests that use MFA mocks will fail with `Plugin type mock-am-factor not deployed`.
+
+### Running Tests
+
+```bash
+# All tests (sequential)
+npm --prefix gravitee-am-test run ci
+
+# Management tests (parallel)
+npm --prefix gravitee-am-test run ci:management:parallel
+
+# Gateway tests (sequential)
+npm --prefix gravitee-am-test run ci:gateway
+
+# Single test suite
+npm --prefix gravitee-am-test run test -- specs/gateway/path/to/test.spec.ts
+
+# Single test suite, quiet mode (output to file)
+npm --prefix gravitee-am-test run test -- --silent specs/gateway/path/to/test.spec.ts 2>&1 > /tmp/jest-results.log
+
+# Single test by name pattern
+npm --prefix gravitee-am-test run test -- specs/gateway/path/to/test.spec.ts -t "test name pattern"
+
+# JSON output for structured analysis
+npm --prefix gravitee-am-test run ci -- --silent --json --outputFile=/tmp/jest-results.json
+
+# PostgreSQL (prefix any command with REPOSITORY_TYPE=jdbc)
+REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
+```
+
+---
+
 ## Quick Reference
 
 ### Essential Commands

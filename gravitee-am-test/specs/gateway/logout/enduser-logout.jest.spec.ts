@@ -16,10 +16,11 @@
 import { setup } from '../../test-fixture';
 
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { patchDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { patchDomain } from '@management-commands/domain-management-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { logoutUser } from '@gateway-commands/oauth-oidc-commands';
 import { syncApplication } from '@gateway-commands/application-sync-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { EnduserLogoutFixture, setupFixture } from './fixture/enduser-logout-fixture';
 
 let fixture: EnduserLogoutFixture;
@@ -63,7 +64,7 @@ describe('OAuth2 - Logout tests', () => {
           postLogoutRedirectUris: ['https://somewhere/after/logout'],
         },
       });
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+      await waitForNextSync(fixture.domain.id);
     });
 
     it('After sign-in a user can logout without target_uri', async () => {
