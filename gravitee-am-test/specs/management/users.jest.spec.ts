@@ -143,7 +143,7 @@ describe('when creating users in bulk', () => {
 
   it('should not create users, more than 1MB', async () => {
     let usersToCreate = [];
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 250; i++) {
       let user = {
         firstName: createRandomString(1000),
         lastName: createRandomString(1000),

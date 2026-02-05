@@ -123,42 +123,31 @@ export interface FeatureFixture {
 export const setupFeatureFixture = async (): Promise<FeatureFixture> => {
   let domain: Domain | null = null;
   let accessToken: string | null = null;
-  
+
   try {
-    // 1. Setup environment
+    // 1. Setup environment — setupDomainForTest handles create, start, readiness, and OIDC config
     accessToken = await requestAdminAccessToken();
-    domain = await createDomain(
+    const domainResult = await setupDomainForTest(uniqueName('feature-name', true), {
       accessToken,
-      uniqueName('feature-name', true), // Always use uniqueName with forceRandom
-      'Test domain description'
-    );
-    
-    // 2. Start domain if needed
-    const startedDomain = await startDomain(domain.id, accessToken);
-    const domainReady = await waitForDomainStart(startedDomain);
-    await waitForDomainSync(domainReady.domain.id, accessToken);
-    
-    // 3. Create other resources
+      waitForStart: true,
+    });
+    domain = domainResult.domain;
+    const openIdConfiguration = domainResult.oidcConfig; // guaranteed valid when waitForStart: true
+
+    // 2. Create other resources
     // ... application, user, etc.
-    
-    // 4. Get OIDC config if needed (gateway tests)
-    let openIdConfiguration: any;
-    try {
-      const oidcResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-      openIdConfiguration = oidcResponse.body;
-    } catch (error) {
-      // OK for management-only tests
-      openIdConfiguration = undefined;
-    }
-    
-    // 5. Define cleanup function
+
+    // 3. Wait for resource changes to sync to gateway
+    await waitForDomainSync(domain.id);
+
+    // 4. Define cleanup function
     const cleanup = async () => {
       if (domain?.id && accessToken) {
         await safeDeleteDomain(domain.id, accessToken);
       }
     };
-    
-    // 6. Return fixture
+
+    // 5. Return fixture
     return {
       domain,
       accessToken,
@@ -192,8 +181,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { setupFeatureFixture, FeatureFixture } from './fixtures/feature-name-fixture';
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(20000);
 
 // 2. FIXTURE SETUP
 let fixture: FeatureFixture;
@@ -227,8 +215,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { setupFeatureFixture, FeatureFixture } from './fixtures/feature-name-fixture';
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(20000);
 
 let fixture: FeatureFixture;
 
@@ -274,8 +261,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { setupResourceFixture, ResourceFixture } from './fixtures/resource-name-fixture';
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(20000);
 
 let fixture: ResourceFixture;
 
@@ -293,10 +279,15 @@ describe('Resource Name - CRUD Operations', () => {
   let createdResourceId: string;
 
   it('should create a new resource', async () => {
-    const resource = await fixture.createResource({
+    await fixture.createResource({
       name: 'test-resource',
     });
 
+    // Wait for resource changes to sync to gateway
+    await waitForDomainSync(fixture.domain.id);
+    
+    const resource = await fixture.getResource(createdResourceId);
+    
     expect(resource).toBeDefined();
     expect(resource.id).toBeDefined();
     createdResourceId = resource.id;
@@ -308,9 +299,14 @@ describe('Resource Name - CRUD Operations', () => {
   });
 
   it('should update resource', async () => {
-    const updated = await fixture.updateResource(createdResourceId, {
+    await fixture.updateResource(createdResourceId, {
       name: 'updated-name',
     });
+    
+    // Wait for resource changes to sync to gateway
+    await waitForDomainSync(fixture.domain.id);
+    
+    var updated = await fixture.getResource(createdResourceId);
     expect(updated.name).toEqual('updated-name');
   });
 
@@ -327,12 +323,11 @@ describe('Resource Name - CRUD Operations', () => {
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
-  createDomain,
+  setupDomainForTest,
   safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -341,7 +336,6 @@ import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { User } from '@management-models/User';
 import { uniqueName } from '@utils-commands/misc';
-import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 
 /**
  * Fixture interface defining all resources and helper methods available to tests
@@ -353,13 +347,13 @@ export interface FeatureFixture {
   user: User;
   defaultIdp: IdentityProvider;
   accessToken: string;
-  
-  // Configuration
-  openIdConfiguration?: any;
-  
+
+  // Configuration (guaranteed when setupDomainForTest uses waitForStart: true)
+  openIdConfiguration: any;
+
   // Cleanup function (REQUIRED)
   cleanup: () => Promise<void>;
-  
+
   // Helper methods (optional)
   performOperation?: (params: any) => Promise<any>;
 }
@@ -369,7 +363,6 @@ export interface FeatureFixture {
  */
 export const FEATURE_TEST = {
   DOMAIN_NAME_PREFIX: 'feature-name',
-  DOMAIN_DESCRIPTION: 'Feature test domain',
   APP_NAME: 'feature-app',
   APP_TYPE: 'WEB' as const,
   USER_PASSWORD: 'FeatureP@ssw0rd123!',
@@ -382,28 +375,24 @@ export const FEATURE_TEST = {
 
 /**
  * Helper function to setup test environment (domain, IDP)
+ * Uses setupDomainForTest which handles create, start, readiness polling, and OIDC config.
  */
 async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const domain = await createDomain(
-    accessToken,
+  const { domain, oidcConfig } = await setupDomainForTest(
     uniqueName(FEATURE_TEST.DOMAIN_NAME_PREFIX, true),
-    FEATURE_TEST.DOMAIN_DESCRIPTION,
+    { accessToken, waitForStart: true },
   );
   expect(domain).toBeDefined();
   expect(domain.id).toBeDefined();
 
-  const startedDomain = await startDomain(domain.id, accessToken);
-  const domainReady = await waitForDomainStart(startedDomain);
-  await waitForDomainSync(domainReady.domain.id, accessToken);
-
-  const idpSet = await getAllIdps(domainReady.domain.id, accessToken);
+  const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
   expect(defaultIdp).toBeDefined();
 
-  return { domain: domainReady.domain, defaultIdp, accessToken };
+  return { domain, defaultIdp, accessToken, oidcConfig };
 }
 
 /**
@@ -467,11 +456,11 @@ export const setupFeatureFixture = async (): Promise<FeatureFixture> => {
   let accessToken: string | null = null;
 
   try {
-    // Setup test environment
+    // Setup test environment (domain ready + OIDC config guaranteed)
     const envResult = await setupTestEnvironment();
     domain = envResult.domain;
     accessToken = envResult.accessToken;
-    const { defaultIdp } = envResult;
+    const { defaultIdp, oidcConfig: openIdConfiguration } = envResult;
 
     // Create test application
     const application = await createTestApplication(domain, defaultIdp, accessToken);
@@ -479,18 +468,8 @@ export const setupFeatureFixture = async (): Promise<FeatureFixture> => {
     // Create test user
     const user = await createTestUser(domain, application, defaultIdp, accessToken);
 
-    // Wait for sync
-    await waitForDomainSync(domain.id, accessToken);
-
-    // Get OIDC configuration (if needed)
-    let openIdConfiguration: any;
-    try {
-      const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-      openIdConfiguration = openIdConfigurationResponse.body;
-      expect(openIdConfiguration).toBeDefined();
-    } catch (error) {
-      openIdConfiguration = undefined;
-    }
+    // Wait for resource changes to sync to gateway
+    await waitForDomainSync(domain.id);
 
     // Optional: Add helper methods
     const performOperation = async (params: any) => {
@@ -569,12 +548,65 @@ afterAll(async () => {
 });
 ```
 
-### 3. Wait for Sync
+### 3. Domain Readiness and Sync
 
-When creating resources that need to be available in the gateway, **always** wait for sync:
+Use the domain state commands from `@gateway-commands/monitoring-commands` and `@management-commands/domain-management-commands` to wait for domains. **Never** use raw `getWellKnownOpenIdConfiguration()` or `waitFor()` delays to check domain readiness.
+
+#### Available Commands
+
+| Command | Purpose | When to Use |
+|---|---|---|
+| `setupDomainForTest(name, { waitForStart: true })` | Creates, starts, and waits for domain + OIDC config | **Preferred** for all test/fixture setup |
+| `waitForDomainSync(domainId)` | Polls `_node/domains` until domain is stable and synchronized | After management API changes that must propagate to gateway |
+| `waitForNextSync(domainId)` | Waits for a **new** sync cycle to complete | After modifying resources (apps, secrets, IdPs) when the domain is already synced |
+| `waitForDomainReady(domainId)` | Low-level poll until domain state is `stable && synchronized` | Internal use; prefer `waitForDomainSync` or `setupDomainForTest` |
+| `waitForOidcReady(domainHrid)` | Retries well-known OIDC config endpoint until 200 | When you need OIDC config independently of domain setup |
+
+#### Domain Setup
+
+Always use `setupDomainForTest` which handles domain creation, start, readiness polling, and OIDC config retrieval:
 
 ```typescript
-await waitForDomainSync(domain.id, accessToken);
+const { domain, oidcConfig } = await setupDomainForTest(uniqueName('my-feature', true), {
+  accessToken,
+  waitForStart: true,
+});
+// oidcConfig is guaranteed to have token_endpoint, introspection_endpoint, etc.
+```
+
+#### After Resource Changes
+
+After creating or modifying resources (applications, identity providers, protected resources, etc.) that must propagate to the gateway, use `waitForDomainSync` or `waitForNextSync`:
+
+```typescript
+// After creating a resource — wait for gateway to pick it up
+await createApplication(domain.id, accessToken, appRequest);
+await waitForDomainSync(domain.id);
+
+// After modifying a resource that was already synced — wait for a NEW sync cycle
+await updateApplication(domain.id, accessToken, updateRequest, app.id);
+await waitForNextSync(domain.id);
+```
+
+#### Anti-patterns (DO NOT USE)
+
+```typescript
+// BAD: Raw well-known fetch without retry — may fail under parallel load
+const response = await getWellKnownOpenIdConfiguration(domain.hrid);
+const oidcConfig = response.body; // token_endpoint could be undefined!
+
+// BAD: Manual retry around well-known endpoint
+await withRetry(() => getWellKnownOpenIdConfiguration(domain.hrid).expect(200));
+
+// BAD: Fixed delay instead of state-based polling
+await waitFor(5000); // hoping the gateway syncs in time
+
+// GOOD: Use setupDomainForTest (handles everything)
+const { domain, oidcConfig } = await setupDomainForTest(name, { accessToken, waitForStart: true });
+
+// GOOD: Use waitForOidcReady when you need OIDC config separately
+const response = await waitForOidcReady(domain.hrid);
+const oidcConfig = response.body;
 ```
 
 ### 4. Error Handling
@@ -973,7 +1005,9 @@ Before submitting a test file, ensure:
 ### Setup & Teardown
 
 - [ ] Uses `uniqueName()` for all resource names
-- [ ] Waits for domain sync when needed
+- [ ] Uses `setupDomainForTest` with `waitForStart: true` for domain setup
+- [ ] Uses `waitForDomainSync` or `waitForNextSync` after resource changes (no raw `waitFor()` delays)
+- [ ] Does **not** call `getWellKnownOpenIdConfiguration` directly for setup (use `setupDomainForTest` or `waitForOidcReady`)
 - [ ] Error handling in fixture setup
 - [ ] Cleanup in `afterAll` (even if domain deletion cascades)
 
@@ -1006,20 +1040,20 @@ Before submitting a test file, ensure:
 ### Essential Commands
 
 ```typescript
-// Create domain with unique name
-const domain = await createDomain(
+// Create, start, and wait for domain + OIDC config (preferred)
+const { domain, oidcConfig } = await setupDomainForTest(uniqueName('feature-name', true), {
   accessToken,
-  uniqueName('feature-name', true),
-  'Description'
-);
+  waitForStart: true,
+});
 
-// Start domain and wait for sync
-const started = await startDomain(domain.id, accessToken);
-const ready = await waitForDomainStart(started);
-await waitForDomainSync(ready.domain.id, accessToken);
+// Wait for gateway to sync after resource changes
+await waitForDomainSync(domain.id);
 
-// Get OIDC config
-const oidcResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
+// Wait for a NEW sync cycle after modifying an already-synced resource
+await waitForNextSync(domain.id);
+
+// Get OIDC config independently (retries until 200)
+const oidcResponse = await waitForOidcReady(domain.hrid);
 const oidcConfig = oidcResponse.body;
 
 // Cleanup
@@ -1035,13 +1069,16 @@ import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 
 // Management Commands
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { setupDomainForTest, safeDeleteDomain, waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { createApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 
+// Domain State Commands (gateway monitoring)
+import { waitForDomainReady, waitForNextSync } from '@gateway-commands/monitoring-commands';
+
 // Gateway Commands
-import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 
 // Utils
 import { uniqueName } from '@utils-commands/misc';

@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 import { Domain } from '@management-models/Domain';
-import {
-  createDomain,
-  DomainOidcConfig,
-  safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
-} from '@management-commands/domain-management-commands';
+import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { Application } from '@management-models/Application';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
@@ -38,15 +32,19 @@ export interface ConfirmPreRegistrationFixture {
 
 export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const domain = await createDomain(accessToken, uniqueName('pre-registration', true), 'Description');
+  const { domain, oidcConfig } = await setupDomainForTest(uniqueName('pre-registration', true), {
+    accessToken,
+    waitForStart: true,
+  });
+
   const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
 
+  const appClientId = uniqueName('preregapp', true);
   const application = await createApplication(domain.id, accessToken, {
-    name: 'appName',
+    name: appClientId,
     type: 'WEB',
-    clientId: 'appClientId',
-    clientSecret: 'appClientSecret',
+    clientId: appClientId,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -73,12 +71,9 @@ export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => 
     }),
   );
 
-  await startDomain(domain.id, accessToken);
-  const domainWithOidc = await waitForDomainStart(domain);
-
   return {
     domain: domain,
-    oidc: domainWithOidc.oidcConfig,
+    oidc: oidcConfig,
     accessToken: accessToken,
     application: application,
     clientId: application.settings.oauth.clientId,

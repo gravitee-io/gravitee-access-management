@@ -16,13 +16,8 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {
-  createDomain,
-  safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
-  waitForDomainSync,
-} from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -31,7 +26,7 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { uniqueName } from '@utils-commands/misc';
-import { performGet, performPost, getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { Fixture } from '../../../test-fixture';
@@ -94,24 +89,16 @@ async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const domain = await createDomain(
+  const { domain, oidcConfig } = await setupDomainForTest(uniqueName(PROTECTED_RESOURCES_TEST.DOMAIN_NAME_PREFIX, true), {
     accessToken,
-    uniqueName(PROTECTED_RESOURCES_TEST.DOMAIN_NAME_PREFIX, true),
-    PROTECTED_RESOURCES_TEST.DOMAIN_DESCRIPTION,
-  );
-  expect(domain).toBeDefined();
-  expect(domain.id).toBeDefined();
+    waitForStart: true,
+  });
 
-  const startedDomain = await startDomain(domain.id, accessToken);
-  // Wait for domain to be ready before getting IDPs
-  const domainReady = await waitForDomainStart(startedDomain);
-  await waitForDomainSync(domainReady.domain.id, accessToken);
-
-  const idpSet = await getAllIdps(domainReady.domain.id, accessToken);
+  const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
   expect(defaultIdp).toBeDefined();
 
-  return { domain: domainReady.domain, defaultIdp, accessToken };
+  return { domain, defaultIdp, accessToken, oidcConfig };
 }
 
 async function createTestApplication(domain: Domain, defaultIdp: IdentityProvider, accessToken: string, redirectUri: string) {
@@ -224,18 +211,16 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     const envResult = await setupTestEnvironment();
     domain = envResult.domain;
     accessToken = envResult.accessToken;
-    const { defaultIdp } = envResult;
+    const { defaultIdp, oidcConfig } = envResult;
 
     const application = await createTestApplication(domain, defaultIdp, accessToken, PROTECTED_RESOURCES_TEST.REDIRECT_URI);
     const serviceApplication = await createServiceApplication(domain, accessToken);
     const user = await createTestUser(domain, application, defaultIdp, accessToken);
     const protectedResources = await createTestProtectedResources(domain, accessToken);
-    // Ensure protected resources are synced to gateway before using them
-    await waitForDomainSync(domain.id, accessToken);
+    // Wait for a NEW sync cycle so the gateway picks up app, user, and protected resources
+    await waitForNextSync(domain.id);
 
-    // Domain is already ready from setupTestEnvironment, just get OIDC config
-    const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-    const openIdConfiguration = openIdConfigurationResponse.body;
+    const openIdConfiguration = oidcConfig;
     expect(openIdConfiguration).toBeDefined();
     expect(openIdConfiguration.authorization_endpoint).toBeDefined();
 

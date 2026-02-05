@@ -21,7 +21,7 @@ import {
     safeDeleteDomain,
     setupDomainForTest,
     waitForOidcReady,
-    waitFor,
+    waitFor, waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import {uniqueName} from '@utils-commands/misc';
 import {buildTestUser, createUser} from '@management-commands/user-management-commands';
@@ -67,13 +67,7 @@ beforeAll(async () => {
     testDomain = await setupDomainForTest(uniqueName('agentic-flow', true), {accessToken}).then((it) => it.domain);
     expect(testDomain).toBeDefined();
 
-    // 3. Wait for OIDC to be ready
-    const oidcResponse = await waitForOidcReady(testDomain.hrid, {
-        timeoutMs: 30000,
-        intervalMs: 500,
-    });
-    expect(oidcResponse.status).toBe(200);
-    openIdConfig = oidcResponse.body;
+    openIdConfig = testDomain.oidc;
 
     // 4. Create OpenFGA store
     const storeName = `agentic-flow-store-${Date.now()}`;
@@ -208,7 +202,7 @@ beforeAll(async () => {
     // 12. Add OpenFGA tuples - User1 is owner, User2 is viewer
     await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, 'weather_tool'));
 
-    await waitFor(6000);
+    await waitForDomainSync(testDomain.id);
 });
 
 afterAll(async () => {
