@@ -170,7 +170,7 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
 export const waitForDomainStart = async (domain: Domain): Promise<DomainWithOidcConfig> => {
   const start = Date.now();
   await waitForDomainReady(domain.id);
-  const response = await getWellKnownOpenIdConfiguration(domain.hrid);
+  const response = await waitForOidcReady(domain.hrid);
   console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`);
   return { domain, oidcConfig: response.body };
 };

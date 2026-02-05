@@ -32,7 +32,8 @@ import {
 } from '@management-commands/protected-resources-management-commands';
 import { Domain } from '@management-models/Domain';
 import { uniqueName } from '@utils-commands/misc';
-import {waitForDomainsReady} from "../../../scripts/provisioning/provisioners/domain-provisioner";
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+
 
 export interface McpOAuth2ResourceFixture {
   domain: Domain;
@@ -102,8 +103,8 @@ export const setupMcpOAuth2ResourceFixture = async (settings: any = {}): Promise
     await patchProtectedResource(domain.id, accessToken, mcpResource.id, {
       settings: settings,
     });
-
-    // Refresh local mcpResource to ensure it's up to date if needed, though often we just need the resource ID
+    // Use waitForNextSync to ensure gateway picks up the changes (not just domain readiness)
+    await waitForNextSync(domain.id, { timeoutMillis: 10000 });
     mcpResource = await getMcpServer(domain.id, accessToken, mcpResource.id);
   };
 
