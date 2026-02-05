@@ -18,6 +18,7 @@ services:
   gateway:
     environment:
       - GRAVITEE_LICENSE_KEY=${GRAVITEE_LICENSE_KEY}
+      - GRAVITEE_SERVICES_SYNC_PROBES_STATE_ENABLED=true
 
   management:
     environment:
