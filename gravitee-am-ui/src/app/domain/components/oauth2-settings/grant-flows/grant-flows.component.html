@@ -115,7 +115,7 @@
               (ngModelChange)="tokenEndpointAuthMethodChanged($event)"
               [disabled]="readonly"
             >
-              <mat-option value=""><em>Based on incoming request</em></mat-option>
+              <mat-option [value]="null"><em>Based on incoming request</em></mat-option>
               <mat-option
                 *ngFor="let tokenEndpointAuthMethod of filteredTokenEndpointAuthMethods"
                 [value]="tokenEndpointAuthMethod.value"

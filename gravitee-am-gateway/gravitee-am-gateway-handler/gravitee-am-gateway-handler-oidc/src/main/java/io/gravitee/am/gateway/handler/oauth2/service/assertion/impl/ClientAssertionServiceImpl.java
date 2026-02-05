@@ -167,10 +167,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             SignedJWT signedJWT = (SignedJWT) jwt;
 
             return this.clientSyncService.findByClientId(clientId)
-                    .switchIfEmpty(protectedResourceSyncService.findByClientId(clientId))
+                    .switchIfEmpty(Maybe.defer(() -> protectedResourceSyncService.findByClientId(clientId)))
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
-                        if (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty() ||
+                        if (client.getTokenEndpointAuthMethod() == null ||
                                 ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
                             return this.getClientJwkSet(client)
                                     .switchIfEmpty(Maybe.error(new InvalidClientException("No jwk keys available on client")))
@@ -212,11 +212,12 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
 
             return this.clientSyncService.findByClientId(clientId)
+                    .switchIfEmpty(Maybe.defer(() -> protectedResourceSyncService.findByClientId(clientId)))
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
                         try {
                             // Ensure to validate JWT using client_secret_key only if client is authorized to use this auth method
-                            if (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty() ||
+                            if (client.getTokenEndpointAuthMethod() == null ||
                                     ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
 
                                 if (verifyJws(client, signedJWT)) {

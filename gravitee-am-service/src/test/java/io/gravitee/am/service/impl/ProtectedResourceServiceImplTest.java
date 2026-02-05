@@ -1066,13 +1066,41 @@ public class ProtectedResourceServiceImplTest {
                 .test()
                 .assertComplete();
 
-        verify(repository).create(argThat(res -> 
+        verify(repository).create(argThat(res ->
             res.getSettings() != null &&
             res.getSettings().getOauth() != null &&
             res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
             res.getSettings().getOauth().getResponseTypes().contains(ResponseType.CODE) &&
             res.getSettings().getOauth().getClientId().equals(CLIENT_ID) &&
+            ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(res.getSettings().getOauth().getTokenEndpointAuthMethod()) &&
             res.getCertificate().equals(DEFAULT_CERTIFICATE.getId())
+        ));
+    }
+
+    @Test
+    public void shouldPreserveExplicitAuthMethodOnCreate() {
+        NewProtectedResource newResource = createNewProtectedResource();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+        settings.setOauth(oauth);
+        newResource.setSettings(settings);
+
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(repository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
+                .thenReturn(Completable.complete());
+        when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.just(DEFAULT_CERTIFICATE));
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        service.create(createDomain(), createUser(), newResource)
+                .test()
+                .assertComplete();
+
+        verify(repository).create(argThat(res ->
+            ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(res.getSettings().getOauth().getTokenEndpointAuthMethod())
         ));
     }
 

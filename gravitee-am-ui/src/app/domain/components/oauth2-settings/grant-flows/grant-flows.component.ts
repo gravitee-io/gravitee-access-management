@@ -46,6 +46,7 @@ export class GrantFlowsComponent implements OnInit {
 
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
+  private UMA_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:uma-ticket';
 
   tokenEndpointAuthMethods: any[] = [
     { name: 'client_secret_basic', value: 'client_secret_basic' },
@@ -63,7 +64,7 @@ export class GrantFlowsComponent implements OnInit {
     { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false, disabled: false },
     { name: 'PASSWORD', value: 'password', checked: false },
     { name: 'CLIENT CREDENTIALS', value: this.CLIENT_CREDENTIALS_GRANT_TYPE, checked: false, disabled: false },
-    { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false },
+    { name: 'UMA TICKET', value: this.UMA_GRANT_TYPE, checked: false, disabled: false },
     { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false },
     { name: 'TOKEN EXCHANGE', value: this.TOKEN_EXCHANGE_GRANT_TYPE, checked: false, disabled: false },
   ];
@@ -92,7 +93,6 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   get filteredGrantTypes() {
-    // For MCP Server context, show client_credentials and token exchange (custom grant types shown separately)
     if (this.context === this.MCP_SERVER_CONTEXT) {
       return this.grantTypes.filter(
         (grantType) => grantType.value === this.CLIENT_CREDENTIALS_GRANT_TYPE || grantType.value === this.TOKEN_EXCHANGE_GRANT_TYPE,
@@ -102,9 +102,7 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   get filteredTokenEndpointAuthMethods() {
-    // For MCP Server context, only show client_secret_* methods
-    // The "Based on incoming request" (null) option is hardcoded in the template
-    if (this.context === 'McpServer') {
+    if (this.context === this.MCP_SERVER_CONTEXT) {
       const allowedMethods = ['client_secret_basic', 'client_secret_post', 'client_secret_jwt'];
       return this.tokenEndpointAuthMethods.filter((method) => allowedMethods.includes(method.value));
     }
@@ -191,8 +189,6 @@ export class GrantFlowsComponent implements OnInit {
     const updatedSettings = {
       ...this.oauthSettings,
       grantTypes: selectedGrantTypes.concat(this.selectedCustomGrantTypes),
-      // Convert empty string to null for tokenEndpointAuthMethod to maintain backend compatibility
-      tokenEndpointAuthMethod: this.oauthSettings.tokenEndpointAuthMethod || null,
     };
     this.settingsChange.emit(updatedSettings);
   }
@@ -244,14 +240,6 @@ export class GrantFlowsComponent implements OnInit {
         grantType.disabled = !domain.tokenExchangeSettings || !domain.tokenExchangeSettings.enabled;
       }
     });
-  }
-
-  private isCustomGrantType(grantType: string): boolean {
-    return this.customGrantTypes.some(
-      (customGrantType) =>
-        grantType.toLowerCase() === (customGrantType.grantType + '~' + customGrantType.id).toLowerCase() ||
-        grantType.toLowerCase() === customGrantType.grantType.toLowerCase(),
-    );
   }
 
   private initCustomGrantTypes() {

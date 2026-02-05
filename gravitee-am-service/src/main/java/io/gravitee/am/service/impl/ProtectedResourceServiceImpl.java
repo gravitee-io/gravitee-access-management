@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
@@ -178,7 +179,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         if (newProtectedResource.getSettings() != null) {
             toCreate.setSettings(newProtectedResource.getSettings());
         }
+
         applyDefaultOAuthSettings(toCreate, rawSecret);
+        applyDefaultAuthMethod(toCreate);
 
         toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
             ProtectedResourceFeature feature = f.asFeature();
@@ -756,12 +759,17 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         if (oauth.getResponseTypes() == null || oauth.getResponseTypes().isEmpty()) {
             oauth.setResponseTypes(List.of(ResponseType.CODE));
         }
-
         if (oauth.getClientId() == null) {
             oauth.setClientId(resource.getClientId());
         }
         if (oauth.getClientSecret() == null && defaultClientSecret != null) {
             oauth.setClientSecret(defaultClientSecret);
+        }
+    }
+
+    private static void applyDefaultAuthMethod(ProtectedResource resource){
+        if (resource.getSettings().getOauth().getTokenEndpointAuthMethod() == null) {
+            resource.getSettings().getOauth().setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         }
     }
 

@@ -555,9 +555,8 @@ public class ClientAssertionServiceTest {
     }
 
     @Test
-    public void testHmacJwt_protectedResource_notSupported() throws JOSEException {
-        // HMAC/client_secret_jwt is NOT supported for protected resources
-        // Only private_key_jwt is supported for protected resources
+    public void testHmacJwt_protectedResource() throws JOSEException {
+        // HMAC/client_secret_jwt IS supported for protected resources via switchIfEmpty fallback
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
         random.nextBytes(sharedSecret);
@@ -573,7 +572,30 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath = "/";
 
-        // Regular client not found, protected resource exists but should not be used for HMAC
+        // Regular client not found, but protected resource found
+        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
+        when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertNoErrors()
+                .assertValue(client);
+    }
+
+    @Test
+    public void testHmacJwt_neitherClientNorProtectedResourceFound() throws JOSEException {
+        // When neither regular client nor protected resource is found, should return error
+        SecureRandom random = new SecureRandom();
+        byte[] sharedSecret = new byte[32];
+        random.nextBytes(sharedSecret);
+        String clientSecret = new String(sharedSecret, StandardCharsets.UTF_8);
+        JWSSigner signer = new MACSigner(clientSecret);
+
+        String assertion = generateJWT(signer);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
         when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
@@ -585,7 +607,7 @@ public class ClientAssertionServiceTest {
 
     @Test
     public void testRsaJwt_withEmptyTokenEndpointAuthMethod() throws NoSuchAlgorithmException, JOSEException {
-        // Empty string tokenEndpointAuthMethod should be treated like null (based on incoming request)
+        // Empty string tokenEndpointAuthMethod is NOT treated as null — it's an unsupported auth method
         KeyPair rsaKey = generateRsaKeyPair();
         RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
         RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
@@ -597,7 +619,7 @@ public class ClientAssertionServiceTest {
         key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
 
         Client client = generateClient(key);
-        client.setTokenEndpointAuthMethod(""); // Empty string instead of null
+        client.setTokenEndpointAuthMethod(""); // Empty string — unsupported auth method
         String assertion = generateJWT(privateKey);
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath = "/";
@@ -605,17 +627,15 @@ public class ClientAssertionServiceTest {
         when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
-        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
-        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
         clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
-                .assertNoErrors()
-                .assertValue(client);
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
     public void testHmacJwt_withEmptyTokenEndpointAuthMethod() throws JOSEException {
-        // Empty string tokenEndpointAuthMethod should be treated like null (based on incoming request)
+        // Empty string tokenEndpointAuthMethod is NOT treated as null — it's an unsupported auth method
         SecureRandom random = new SecureRandom();
         byte[] sharedSecret = new byte[32];
         random.nextBytes(sharedSecret);
@@ -625,7 +645,7 @@ public class ClientAssertionServiceTest {
         Client client = new Client();
         client.setClientId(CLIENT_ID);
         client.setClientSecret(new String(sharedSecret));
-        client.setTokenEndpointAuthMethod(""); // Empty string instead of null
+        client.setTokenEndpointAuthMethod(""); // Empty string — unsupported auth method
         String assertion = generateJWT(signer);
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath = "/";
@@ -635,8 +655,8 @@ public class ClientAssertionServiceTest {
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
         clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
-                .assertNoErrors()
-                .assertValue(client);
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     private KeyPair generateRsaKeyPair() throws NoSuchAlgorithmException{
