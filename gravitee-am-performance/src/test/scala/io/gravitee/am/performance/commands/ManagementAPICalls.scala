@@ -19,6 +19,7 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gravitee.am.performance.utils.ScopeSettings
 import io.gravitee.am.performance.utils.SimulationSettings._
+import ujson._
 
 object ManagementAPICalls {
 
@@ -140,5 +141,70 @@ object ManagementAPICalls {
             .header("Authorization", "Bearer #{auth-token}")
             .body(StringBody("""{"factors":["#{smsMFAId}"],"settings":{"riskAssessment":{"enabled":false,"deviceAssessment":{"enabled":false,"thresholds":{}},"ipReputationAssessment":{"enabled":false,"thresholds":{}},"geoVelocityAssessment":{"enabled":false,"thresholds":{}}},"mfa":{"factor":{"defaultFactorId":"#{smsMFAId}","applicationFactors":[{"id":"#{smsMFAId}"}]},"stepUpAuthenticationRule":"","stepUpAuthentication":{},"adaptiveAuthenticationRule":"","rememberDevice":{},"enrollment":{"forceEnrollment":true,"skipTimeSeconds":null},"enroll":{"active":true,"enrollmentRule":"","enrollmentSkipActive":false,"enrollmentSkipRule":"","forceEnrollment":true,"skipTimeSeconds":null,"type":"REQUIRED"},"challenge":{"active":true,"challengeRule":"","type":"REQUIRED"}}}}""")).asJson
             .check(status.is(200))
+  }
+
+  def listAuthorizationEngines = {
+    http("List Authorization Engines")
+      .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/#{domainId}/authorization-engines")
+      .header("Authorization", "Bearer #{auth-token}")
+      .check(status.is(200))
+      .check(jsonPath("$[0].id").optional.saveAs("existingAuthEngineId"))
+      .check(jsonPath("$[0].type").optional.saveAs("existingAuthEngineType"))
+      .check(jsonPath("$[0].configuration").optional.saveAs("existingAuthEngineConfig"))
+  }
+
+  def createAuthorizationEngine = {
+    val requestBody = Obj(
+      "type" -> "openfga",
+      "name" -> "OpenFGA Performance Test Engine",
+      "configuration" -> ujson.write(Obj(
+        "connectionUri" -> FGA_API_URL,
+        "storeId" -> FGA_STORE_ID,
+        "authorizationModelId" -> FGA_AUTHORIZATION_MODEL_ID,
+        "apiToken" -> ""
+      ))
+    )
+
+    http("Create Authorization Engine")
+      .post(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/#{domainId}/authorization-engines")
+      .header("Authorization", "Bearer #{auth-token}")
+      .body(StringBody(ujson.write(requestBody))).asJson
+      .check(status.is(201))
+      .check(jsonPath("$.id").saveAs("authEngineId"))
+  }
+
+  def ensureOpenFGAAuthorizationEngine: Session => Session = { session =>
+    session("existingAuthEngineId").asOption[String] match {
+      case Some(_) =>
+        val existingEngineType = session("existingAuthEngineType").as[String]
+        val existingEngineConfig = session("existingAuthEngineConfig").as[String]
+
+        if (existingEngineType != "openfga") {
+          val errorMsg = s"Domain already has an authorization engine of type '$existingEngineType', expected 'openfga'"
+          println(s"[ERROR] $errorMsg")
+          session.markAsFailed.set("error", errorMsg)
+        } else {
+          try {
+            val config = ujson.read(existingEngineConfig).obj
+            val foundStoreId = config.get("storeId").map(_.str).getOrElse("")
+            val foundAuthModelId = config.get("authorizationModelId").map(_.str).getOrElse("")
+
+            if (foundStoreId != FGA_STORE_ID || foundAuthModelId != FGA_AUTHORIZATION_MODEL_ID) {
+              val errorMsg = s"Domain already has an authorization engine configured with different storeId or authorizationModelId. Expected storeId: ${FGA_STORE_ID}, authorizationModelId: ${FGA_AUTHORIZATION_MODEL_ID}, but found storeId: $foundStoreId, authorizationModelId: $foundAuthModelId"
+              println(s"[ERROR] $errorMsg")
+              session.markAsFailed.set("error", errorMsg)
+            } else {
+              session.set("needsAuthEngineCreation", false)
+            }
+          } catch {
+            case e: Exception =>
+              val errorMsg = s"Failed to parse existing authorization engine configuration: ${e.getMessage}"
+              println(s"[ERROR] $errorMsg")
+              session.markAsFailed.set("error", errorMsg)
+          }
+        }
+      case None =>
+        session.set("needsAuthEngineCreation", true)
+    }
   }
 }
