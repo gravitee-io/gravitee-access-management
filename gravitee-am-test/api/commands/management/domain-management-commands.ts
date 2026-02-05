@@ -18,7 +18,7 @@ import { getDomainApi, getDomainManagerUrl } from './service/utils';
 import { Domain } from '../../management/models';
 import { DomainPage } from '../../management/models/DomainPage';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
-import { waitForDomainReady, waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { expect } from '@jest/globals';
 import faker from 'faker';
@@ -210,7 +210,7 @@ export const waitForDomainSync = async (
   const { timeoutMillis = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS, intervalMillis = DEFAULT_DOMAIN_SYNC_INTERVAL_MS } = options || {};
 
   try {
-    await waitForNextSync(domainId, { timeoutMillis, intervalMillis });
+    await waitForDomainReady(domainId, { timeoutMillis, intervalMillis });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);

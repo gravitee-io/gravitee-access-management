@@ -24,7 +24,7 @@ import {
 } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { patchApplication } from '@management-commands/application-management-commands';
-import { patchDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { patchDomain, waitFor, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getParamsInvalidAuthorizeRequests } from './fixture/oauth2-invalid-params-fixture';
 import { setup } from '../../test-fixture';
 
@@ -266,12 +266,13 @@ describe('OAuth2 - RFC 6746 - Authorization Code Grant', () => {
     expect(postConsentRedirect.headers['location']).toContain('http://localhost:4000/?');
     expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
 
-    // Initiate the Login Flow again
-    const authResponse2 = await waitForDomainSync(fixture.masterDomain.id, fixture.accessToken).then((_) =>
-      performGet(fixture.oidc.authorization_endpoint, params, {
-        Cookie: postConsentRedirect.headers['set-cookie'],
-      }).expect(302),
-    );
+    // Wait for the short-living scope consent to expire (expiresIn: 2s)
+    await waitFor(3000);
+
+    // Initiate the Login Flow again — consent should be required again
+    const authResponse2 = await performGet(fixture.oidc.authorization_endpoint, params, {
+      Cookie: postConsentRedirect.headers['set-cookie'],
+    }).expect(302);
 
     expect(authResponse2.headers['location']).toBeDefined();
     expect(authResponse2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${fixture.masterDomain.hrid}/oauth/consent`);
