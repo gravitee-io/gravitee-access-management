@@ -1,0 +1,128 @@
+# MAPI base only (PostgreSQL). Use with: helm -f am-postgres-common.yaml -f am-postgres-mapi.yaml
+labels:
+  environment: migration-test
+  part-of: am-migration-tool
+
+management:
+  type: jdbc
+oauth2:
+  type: jdbc
+gateway:
+  type: jdbc
+
+jdbc:
+  driver: postgresql
+  host: postgres-postgresql
+  port: 5432
+  database: gravitee-am
+  username: gravitee
+  password: gravitee-password
+  drivers:
+    - https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar
+    - https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.7.RELEASE/r2dbc-postgresql-1.0.7.RELEASE.jar
+
+mapiEnv: &mapiEnv
+  - name: gravitee_repositories_system_cluster
+    value: gateway
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE
+    value: jdbc
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE
+    value: gravitee-am
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD
+    value: gravitee-password
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_TYPE
+    value: jdbc
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
+    value: gravitee-am
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
+    value: gravitee-password
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_TYPE
+    value: jdbc
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER
+    value: postgresql
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST
+    value: postgres-postgresql
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT
+    value: "5432"
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE
+    value: gravitee-am
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME
+    value: gravitee
+  - name: GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD
+    value: gravitee-password
+  - name: gravitee_dataPlanes_0_id
+    value: default
+  - name: gravitee_dataPlanes_0_type
+    value: jdbc
+  - name: gravitee_dataPlanes_0_jdbc_driver
+    value: postgresql
+  - name: gravitee_dataPlanes_0_jdbc_host
+    value: postgres-postgresql
+  - name: gravitee_dataPlanes_0_jdbc_port
+    value: "5432"
+  - name: gravitee_dataPlanes_0_jdbc_database
+    value: gravitee-am
+  - name: gravitee_dataPlanes_0_jdbc_username
+    value: gravitee
+  - name: gravitee_dataPlanes_0_jdbc_password
+    value: gravitee-password
+  - name: gravitee_dataPlanes_1_id
+    value: dp1
+  - name: gravitee_dataPlanes_1_type
+    value: jdbc
+  - name: gravitee_dataPlanes_1_jdbc_driver
+    value: postgresql
+  - name: gravitee_dataPlanes_1_jdbc_host
+    value: postgres-postgresql
+  - name: gravitee_dataPlanes_1_jdbc_port
+    value: "5432"
+  - name: gravitee_dataPlanes_1_jdbc_database
+    value: gravitee-am-dp1
+  - name: gravitee_dataPlanes_1_jdbc_username
+    value: gravitee
+  - name: gravitee_dataPlanes_1_jdbc_password
+    value: gravitee-password
+  - name: gravitee_dataPlanes_2_id
+    value: dp2
+  - name: gravitee_dataPlanes_2_type
+    value: jdbc
+  - name: gravitee_dataPlanes_2_jdbc_driver
+    value: postgresql
+  - name: gravitee_dataPlanes_2_jdbc_host
+    value: postgres-postgresql
+  - name: gravitee_dataPlanes_2_jdbc_port
+    value: "5432"
+  - name: gravitee_dataPlanes_2_jdbc_database
+    value: gravitee-am-dp2
+  - name: gravitee_dataPlanes_2_jdbc_username
+    value: gravitee
+  - name: gravitee_dataPlanes_2_jdbc_password
+    value: gravitee-password
+  - name: LIQUIBASE_ANALYTICS_ENABLED
+    value: "false"
+
+api:
+  enabled: false
+  env: *mapiEnv
+
+gateway:
+  enabled: false
+
+license:
+  accept: true

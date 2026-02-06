@@ -40,7 +40,7 @@ public final class UpgraderOrder {
     public static final int IDP_DATA_PLANE_UPGRADER = 19;
     public static final int APPLICATION_CLIENT_SECRETS_UPGRADER = 20;
     public static final int EMAIL_CONFIGURATION_UPGRADER = 21;
-
+    public static final int ORGANIZATION_STANDARD_ROLE_UPGRADER = 22;
 
     private UpgraderOrder() {
         throw new UnsupportedOperationException("utility class, don't instantiate");

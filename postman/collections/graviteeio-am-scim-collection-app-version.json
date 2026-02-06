@@ -450,7 +450,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -534,7 +534,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -626,7 +626,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -720,7 +720,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -814,7 +814,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -898,7 +898,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -992,7 +992,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],
@@ -1084,7 +1084,7 @@
 											"pm.test(\"SCIM is secured with a bearer token\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+											"    pm.expect(jsonData.detail).to.eql(\"Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter\");",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
 											"});"
 										],

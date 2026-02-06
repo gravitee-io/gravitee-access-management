@@ -2,11 +2,15 @@
 
 ## Prerequisites
 
-Provisioning and OpenFGA simulations have no dependency on AM but do require
+All authorization simulations require:
 - an instance of **OpenFGA**
 - an OpenFGA Store configured with an Authorization Model compatible with the tuples being generated
 
-The [AuthZen evaluation simulation](#authzenevaluation) additionally has a dependency on AM and requires an OpenFGA authorization engine instance.
+The [OpenFGAProvision](#openfgaprovision) simulation can optionally configure the target **AM** domain with the OpenFGA authorization engine after provisioning tuples (see the `configure_domain` parameter).
+
+The [AuthZen evaluation simulation](#authzenevaluation) additionally requires the following to be configured on the target domain:
+- an OpenFGA authorization engine (e.g. by running OpenFGAProvision first)
+- an OAuth2 client configured with `client_credentials` grant flow (e.g. an application)
 
 ### Docker Compose Setup (recommended)
 
@@ -21,7 +25,7 @@ After an OpenFGA store is successfully imported, its **Store ID** and the **Auth
 
 ### OpenFGAProvision
 
-This is a simulation to generate relationship tuples for an OpenFGA instance.
+This is a simulation to generate relationship tuples for an OpenFGA instance. Optionally, when `configure_domain` is true, it will also configure the target AM domain with the OpenFGA authorization engine (if not already configured).
 
 The OpenFGA store is designed to be single tenancy (i.e. it might be used by one domain in AM) and it relies upon an authorization model that is designed to be capable of describing a large company organization.
 
@@ -37,8 +41,16 @@ The resultant data generated in OpenFGA is intended to be reused in other perfor
 
 In the `gravitee-am-performance/` folder, run:
 
+Tuple provisioning only (no AM dependency):
+
 ```
 mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorization.OpenFGAProvision -Dfga_store_id=01KFDJWH9H1CV45WPXB6P7Y0VB -Dfga_authorization_model_id=01KFDJWH9RWT20QN56N52YVDRC -Dfga_api_url=http://localhost:8090 -Dnumber_of_users=10000
+```
+
+With domain authorization engine configuration (requires AM Management API):
+
+```
+mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorization.OpenFGAProvision -Dfga_store_id=01KFDJWH9H1CV45WPXB6P7Y0VB -Dfga_authorization_model_id=01KFDJWH9RWT20QN56N52YVDRC -Dfga_api_url=http://localhost:8090 -Dnumber_of_users=10000 -Dconfigure_domain=true -Dmng_url=http://localhost:8093 -Dmng_user=admin -Dmng_password=adminadmin -Ddomain=gatling-domain
 ```
 
 #### Parameters
@@ -51,6 +63,11 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 * `number_of_resources_per_user`: how many resources per user the simulation will create tuples for
 * `number_of_resources_per_team`: how many resources per team the simulation will create tuples for
 * `number_of_shared_resources`: how many global resources the simulation will create tuples for
+* `configure_domain`: when true, configure the AM domain with the OpenFGA authorization engine after provisioning (default: false). When true, `mng_url`, `mng_user`, `mng_password` and `domain` are required.
+* `mng_url`: base URL of the AM Management API (required when configure_domain is true; default: http://localhost:8093)
+* `mng_user`: Management API admin username (required when configure_domain is true; default: admin)
+* `mng_password`: Management API admin password (required when configure_domain is true; default: adminadmin)
+* `domain`: name of the AM domain to configure (required when configure_domain is true; default: gatling-domain)
 
 #### Authorization check examples
 

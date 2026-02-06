@@ -84,6 +84,36 @@ export class ProtectedResourceService {
   deleteSecret(domainId: string, id: string, secretId: string): Observable<any> {
     return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${id}/secrets/${secretId}`);
   }
+
+  members(domainId: string, resourceId: string): Observable<any> {
+    return this.http.get<any>(this.baseURL + `${domainId}/protected-resources/${resourceId}/members`).pipe(
+      map((response) => {
+        const memberships = response.memberships;
+        const metadata = response.metadata;
+        return memberships.map((m) => {
+          m.roleName = metadata['roles'][m.roleId] ? metadata['roles'][m.roleId].name : 'Unknown role';
+          if (m.memberType === 'user') {
+            m.name = metadata['users'][m.memberId] ? metadata['users'][m.memberId].displayName : 'Unknown user';
+          } else if (m.memberType === 'group') {
+            m.name = metadata['groups'][m.memberId] ? metadata['groups'][m.memberId].displayName : 'Unknown group';
+          }
+          return m;
+        });
+      }),
+    );
+  }
+
+  addMember(domainId: string, resourceId: string, memberId: string, memberType: string, role: string): Observable<any> {
+    return this.http.post<any>(this.baseURL + `${domainId}/protected-resources/${resourceId}/members`, {
+      memberId: memberId,
+      memberType: memberType,
+      role: role,
+    });
+  }
+
+  removeMember(domainId: string, resourceId: string, membershipId: string): Observable<any> {
+    return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${resourceId}/members/${membershipId}`);
+  }
 }
 
 export enum ProtectedResourceType {

@@ -1,0 +1,41 @@
+name: Trigger Migration Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_tag:
+        description: "Source version tag (e.g., 4.10.5)"
+        required: true
+        default: "4.10.5"
+      to_tag:
+        description: "Target version tag (e.g., latest)"
+        required: true
+        default: "latest"
+      db_type:
+        description: "Database type"
+        required: true
+        type: choice
+        options:
+          - mongodb
+          - postgres
+        default: "mongodb"
+
+jobs:
+  trigger-circleci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Trigger CircleCI Migration Test"
+        run: |
+          curl -X POST https://circleci.com/api/v2/project/gh/gravitee-io/gravitee-access-management/pipeline \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "Circle-Token: ${{ secrets.CCI_TOKEN }}" \
+            -d "{
+              \"branch\": \"${{ github.ref_name }}\",
+              \"parameters\": {
+                \"migration_test_from_tag\": \"${{ github.event.inputs.from_tag }}\",
+                \"migration_test_to_tag\": \"${{ github.event.inputs.to_tag }}\",
+                \"migration_test_db_type\": \"${{ github.event.inputs.db_type }}\",
+                \"migration_test_provider\": \"k8s\"
+              }
+            }"

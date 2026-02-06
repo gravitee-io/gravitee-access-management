@@ -85,7 +85,7 @@ describe('SCIM Access', () => {
 
             const body = response.body;
             expect(body.status).toEqual('401');
-            expect(body.detail).toEqual('Authorization failure. The authorization header is invalid or missing.');
+            expect(body.detail).toEqual('Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the \'access_token\' body parameter');
             expect(body.schemas).toEqual(['urn:ietf:params:scim:api:messages:2.0:Error']);
           });
 

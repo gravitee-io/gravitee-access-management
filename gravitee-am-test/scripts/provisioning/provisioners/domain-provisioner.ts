@@ -45,10 +45,11 @@ export async function createAndStartDomains(
     const domainName = `${namePrefix}-d${d}-${shortTag || d}`;
     info(`Creating domain: ${domainName}`);
 
+    const dataPlaneId = process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
     const domain = await api.createDomain({
       organizationId: orgId,
       environmentId: envId,
-      newDomain: { name: domainName, description: 'Provisioned by provision.ts', dataPlaneId: 'default' },
+      newDomain: { name: domainName, description: 'Provisioned by provision.ts', dataPlaneId },
     });
 
     const domainId = (domain as any).id;

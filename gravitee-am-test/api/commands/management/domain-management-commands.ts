@@ -61,6 +61,12 @@ export const setupDomainForTest = async (
   }
 };
 
+/**
+ * Dataplane ID used when creating domains. Default 'default' (single gateway).
+ * Set AM_DOMAIN_DATA_PLANE_ID when testing against a specific dataplane (e.g. 'dp1' for migration K8s dp1 on 8091).
+ */
+const getDomainDataPlaneId = (): string => process.env.AM_DOMAIN_DATA_PLANE_ID || 'default';
+
 export const createDomain = (accessToken, name, description): Promise<Domain> =>
   getDomainApi(accessToken).createDomain({
     organizationId: process.env.AM_DEF_ORG_ID,
@@ -68,7 +74,7 @@ export const createDomain = (accessToken, name, description): Promise<Domain> =>
     newDomain: {
       name: name,
       description: description,
-      dataPlaneId: 'default',
+      dataPlaneId: getDomainDataPlaneId(),
     },
   });
 

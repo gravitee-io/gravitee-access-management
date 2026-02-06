@@ -468,6 +468,7 @@ public class RoleServiceImpl implements RoleService {
         Map<Permission, Set<Acl>> environmentOwnerPermissions = Permission.allPermissionAcls(ReferenceType.ENVIRONMENT);
         Map<Permission, Set<Acl>> domainOwnerPermissions = Permission.allPermissionAcls(ReferenceType.DOMAIN);
         Map<Permission, Set<Acl>> applicationOwnerPermissions = Permission.allPermissionAcls(ReferenceType.APPLICATION);
+        Map<Permission, Set<Acl>> protectedResourceOwnerPermissions = Permission.allPermissionAcls(ReferenceType.PROTECTED_RESOURCE);
 
         organizationOwnerPermissions.put(Permission.ORGANIZATION, Acl.of(READ));
         organizationOwnerPermissions.put(Permission.ORGANIZATION_SETTINGS, Acl.of(READ, UPDATE));
@@ -486,16 +487,21 @@ public class RoleServiceImpl implements RoleService {
 
         applicationOwnerPermissions.put(Permission.APPLICATION, Acl.of(READ, UPDATE));
 
+        protectedResourceOwnerPermissions.put(Permission.PROTECTED_RESOURCE, Acl.of(READ, UPDATE));
+
         roles.add(buildDefaultRole(DefaultRole.ORGANIZATION_OWNER.name(), ReferenceType.ORGANIZATION, organizationId, organizationOwnerPermissions));
         roles.add(buildDefaultRole(DefaultRole.ENVIRONMENT_OWNER.name(), ReferenceType.ENVIRONMENT, organizationId, environmentOwnerPermissions));
         roles.add(buildDefaultRole(DefaultRole.DOMAIN_OWNER.name(), ReferenceType.DOMAIN, organizationId, domainOwnerPermissions));
         roles.add(buildDefaultRole(DefaultRole.APPLICATION_OWNER.name(), ReferenceType.APPLICATION, organizationId, applicationOwnerPermissions));
+        roles.add(buildDefaultRole(DefaultRole.PROTECTED_RESOURCE_OWNER.name(), ReferenceType.PROTECTED_RESOURCE, organizationId, protectedResourceOwnerPermissions));
+
 
         // Create USER roles.
         Map<Permission, Set<Acl>> organizationUserPermissions = new EnumMap<>(Permission.class);
         Map<Permission, Set<Acl>> environmentUserPermissions = new EnumMap<>(Permission.class);
         Map<Permission, Set<Acl>> domainUserPermissions = new EnumMap<>(Permission.class);
         Map<Permission, Set<Acl>> applicationUserPermissions = new EnumMap<>(Permission.class);
+        Map<Permission, Set<Acl>> protectedResourceUserPermissions = new EnumMap<>(Permission.class);
 
         organizationUserPermissions.put(Permission.ORGANIZATION, Acl.of(READ));
         organizationUserPermissions.put(Permission.ORGANIZATION_GROUP, Acl.of(LIST));
@@ -516,15 +522,19 @@ public class RoleServiceImpl implements RoleService {
         domainUserPermissions.put(Permission.DOMAIN_FACTOR, Acl.of(LIST));
         domainUserPermissions.put(Permission.DOMAIN_RESOURCE, Acl.of(LIST));
         domainUserPermissions.put(Permission.APPLICATION, Acl.of(LIST));
+        domainUserPermissions.put(Permission.PROTECTED_RESOURCE, Acl.of(LIST));
         domainUserPermissions.put(Permission.DOMAIN_BOT_DETECTION, Acl.of(LIST));
         domainUserPermissions.put(Permission.DOMAIN_DEVICE_IDENTIFIER, Acl.of(LIST));
 
         applicationUserPermissions.put(Permission.APPLICATION, Acl.of(READ));
 
+        protectedResourceUserPermissions.put(Permission.PROTECTED_RESOURCE, Acl.of(READ));
+
         roles.add(buildDefaultRole(DefaultRole.ORGANIZATION_USER.name(), ReferenceType.ORGANIZATION, organizationId, organizationUserPermissions));
         roles.add(buildDefaultRole(DefaultRole.ENVIRONMENT_USER.name(), ReferenceType.ENVIRONMENT, organizationId, environmentUserPermissions));
         roles.add(buildDefaultRole(DefaultRole.DOMAIN_USER.name(), ReferenceType.DOMAIN, organizationId, domainUserPermissions));
         roles.add(buildDefaultRole(DefaultRole.APPLICATION_USER.name(), ReferenceType.APPLICATION, organizationId, applicationUserPermissions));
+        roles.add(buildDefaultRole(DefaultRole.PROTECTED_RESOURCE_USER.name(), ReferenceType.PROTECTED_RESOURCE, organizationId, protectedResourceUserPermissions));
 
         return roles;
     }

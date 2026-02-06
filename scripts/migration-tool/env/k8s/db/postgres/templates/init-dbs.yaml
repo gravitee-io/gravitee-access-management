@@ -1,0 +1,21 @@
+{{- if or .Values.postgres.gatewayDatabase .Values.postgres.dataplaneDatabases }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "pg.name" . }}-init-dbs
+  labels:
+    {{- include "pg.labels" . | nindent 4 }}
+data:
+  {{- if .Values.postgres.gatewayDatabase }}
+  02-create-gateway-db.sql: |
+    CREATE DATABASE "{{ .Values.postgres.gatewayDatabase }}";
+    GRANT ALL PRIVILEGES ON DATABASE "{{ .Values.postgres.gatewayDatabase }}" TO {{ .Values.postgres.user | quote }};
+  {{- end }}
+  {{- if .Values.postgres.dataplaneDatabases }}
+  03-create-dp-dbs.sql: |
+    {{- range .Values.postgres.dataplaneDatabases }}
+    CREATE DATABASE "{{ . }}";
+    GRANT ALL PRIVILEGES ON DATABASE "{{ . }}" TO {{ $.Values.postgres.user | quote }};
+    {{- end }}
+  {{- end }}
+{{- end }}

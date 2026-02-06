@@ -137,7 +137,7 @@ import { DomainSettingsEmailsComponent } from './domain/settings/emails/emails.c
 import { DomainSettingsEmailComponent } from './domain/settings/emails/email/email.component';
 import { DomainSettingsAccountComponent } from './domain/settings/account/account.component';
 import { DomainSettingsSelfServiceAccountComponent } from './domain/settings/self-service-account/self-service-account.component';
-import { DomainMembershipsDialogComponent, DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
+import { DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
 import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
 import { DomainSettingsResourcesComponent } from './domain/settings/resources/resources.component';
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
@@ -290,16 +290,16 @@ import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/com
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
-import {
-  ApplicationMembershipsComponent,
-  ApplicationMembershipsDialogComponent,
-} from './domain/applications/application/advanced/memberships/memberships.component';
+import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
 import { ManagementRoleComponent } from './settings/management/roles/role/role.component';
 import { MembershipsResolver } from './resolvers/memberships.resolver';
+import { McpServerMembershipsResolver } from './resolvers/mcp-server-memberships.resolver';
 import { SettingsResolver } from './resolvers/settings.resolver';
-import { MembershipsComponent } from './domain/components/memberships/memberships.component';
+import { MembershipsComponent } from './components/memberships/memberships.component';
+import { MembershipsListComponent } from './components/memberships/list/memberships-list.component';
+import { MembershipsDialogComponent } from './components/memberships/dialog/memberships-dialog.component';
 import { ApplicationPermissionsResolver } from './resolvers/application-permissions.resolver';
 import { DomainPermissionsResolver } from './resolvers/domain-permissions.resolver';
 import { AuthGuard } from './guards/auth-guard.service';
@@ -469,6 +469,7 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
+import { DomainMcpServerMembershipsComponent } from './domain/mcp-servers/mcp-server/advanced/memberships/memberships.component';
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/advanced/client-secrets/domain-mcp-server-client-secrets.component';
 import {
   DomainNewMcpServerToolDialogComponent,
@@ -534,6 +535,7 @@ import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/t
     DomainMcpServerToolsComponent,
     DomainMcpServerAdvancedComponent,
     DomainMcpServerGeneralComponent,
+    DomainMcpServerMembershipsComponent,
     DomainMcpServerClientSecretsComponent,
     DomainNewMcpServerToolDialogComponent,
     DomainMcpServerToolEditDialogComponent,
@@ -687,6 +689,8 @@ import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/t
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
+    MembershipsListComponent,
+    MembershipsDialogComponent,
     HasPermissionDirective,
     HasAnyPermissionDirective,
     IdenticonHashDirective,
@@ -699,8 +703,6 @@ import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/t
     WidgetDataTableComponent,
     WidgetCountComponent,
     LoaderComponent,
-    DomainMembershipsDialogComponent,
-    ApplicationMembershipsDialogComponent,
     UserAvatarComponent,
     NotFoundComponent,
     UmaComponent,
@@ -912,6 +914,7 @@ import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/t
     ApplicationsResolver,
     ApplicationResolver,
     MembershipsResolver,
+    McpServerMembershipsResolver,
     SettingsResolver,
     ApplicationPermissionsResolver,
     DomainPermissionsResolver,

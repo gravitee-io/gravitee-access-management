@@ -1,0 +1,46 @@
+# Postgres chart for migration test (postgres:16.6).
+fullnameOverride: postgres-postgresql
+
+securityContext:
+  runAsUser: 10001
+  runAsGroup: 10001
+
+image:
+  repository: postgres
+  tag: "16.6"
+  pullPolicy: IfNotPresent
+
+postgres:
+  user: gravitee
+  password: gravitee-password
+  database: gravitee-am
+  # Second DB for gateway dataplane (created by init script when data dir is empty)
+  gatewayDatabase: gravitee-am-gateway
+  # Dataplane DBs for multi-gateway (dp1, dp2)
+  dataplaneDatabases:
+    - gravitee-am-dp1
+    - gravitee-am-dp2
+
+service:
+  port: 5432
+
+persistence:
+  enabled: false
+  size: 5Gi
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+initContainer:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi

@@ -4,7 +4,20 @@ setup: true
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am, publish_maven_central, release_helm, publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version ]
+    enum:
+      [
+        release,
+        publish_rpms,
+        publish_docker_images,
+        pull_requests,
+        release_notes_am,
+        publish_maven_central,
+        release_helm,
+        publish-images-azure-registry,
+        release-version,
+        release-alpha-version,
+        release-hotfix-version,
+      ]
     default: pull_requests
   gio_product:
     type: enum
@@ -61,15 +74,58 @@ parameters:
     type: boolean
     default: true
     description: "Runs UI jest tests + Lint"
+  # Migration test (trigger via API; setup continues with .circleci/workflows-migration.yml when set)
+  migration_test_from_tag:
+    type: string
+    default: ""
+  migration_test_to_tag:
+    type: string
+    default: ""
+  migration_test_db_type:
+    type: string
+    default: ""
+  migration_test_provider:
+    type: string
+    default: "k8s"
+  migration_test_filter:
+    type: string
+    default: ""
+  migration_test_with_downgrade:
+    type: string
+    default: "true"
 
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
+  continuation: circleci/continuation@2.0.0
+
+jobs:
+  # Wrapper so workflow-level when is applied by CircleCI (continuation/continue orb does not accept when).
+  migration-continuation:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      # Do not pass parameters: pipeline already has migration_test_* from trigger; passing them again causes "Conflicting pipeline parameters".
+      - continuation/continue:
+          configuration_path: .circleci/workflows-migration.yml
+
 workflows:
-  containter-test-check:
+  # When migration is requested: one workflow, one job (no job-level when).
+  migration-continuation-workflow:
+    when:
+      not:
+        equal: [ "", << pipeline.parameters.migration_test_from_tag >> ]
+    jobs:
+      - migration-continuation
+  # Otherwise: path-filtering then continue with workflows.yml.
+  standard-workflow:
+    when:
+      equal: [ "", << pipeline.parameters.migration_test_from_tag >> ]
     jobs:
       - path-filtering/filter:
+          name: "Standard CI"
           base-revision: << pipeline.git.branch >>
-          config-path: ".circleci/workflows.yml"
+          config-path: .circleci/workflows.yml
           mapping: |
             gravitee-am-reporter/.* run-container-test true
             gravitee-am-repository/.* run-container-test true

@@ -25,7 +25,8 @@ public enum DefaultRole {
     ORGANIZATION_OWNER, ORGANIZATION_USER,
     DOMAIN_OWNER, DOMAIN_USER,
     ENVIRONMENT_OWNER, ENVIRONMENT_USER,
-    APPLICATION_OWNER, APPLICATION_USER;
+    APPLICATION_OWNER, APPLICATION_USER,
+    PROTECTED_RESOURCE_OWNER, PROTECTED_RESOURCE_USER;
 
     public static DefaultRole fromName(String name) {
         return Arrays.stream(values()).filter(e -> e.name().equalsIgnoreCase(name)).findFirst().orElse(null);

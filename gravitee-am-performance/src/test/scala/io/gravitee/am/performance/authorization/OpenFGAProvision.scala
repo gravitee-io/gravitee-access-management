@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.performance.authorization
 
+import io.gatling.commons.validation.Success
 import io.gatling.core.Predef._
 import io.gravitee.am.performance.commands.OpenFGACalls._
+import io.gravitee.am.performance.commands.ManagementAPICalls
 import io.gravitee.am.performance.utils.SimulationSettings._
 import io.gravitee.am.performance.utils.TreeGenerator
 
@@ -34,6 +36,11 @@ import io.gravitee.am.performance.utils.TreeGenerator
  * - number_of_resources_per_user: how many resources per user the simulation will create tuples for
  * - number_of_resources_per_team: how many resources per team the simulation will create tuples for
  * - number_of_shared_resources: how many global resources the simulation will create tuples for
+ * - configure_domain: when true, configure the AM domain with the OpenFGA authorization engine (default: false)
+ * - mng_url: base URL of the AM Management API (required when configure_domain is true)
+ * - mng_user: Management API admin username (required when configure_domain is true)
+ * - mng_password: Management API admin password (required when configure_domain is true)
+ * - domain: name of the AM domain to configure (required when configure_domain is true)
  */
 class OpenFGAProvision extends Simulation {
 
@@ -333,6 +340,51 @@ class OpenFGAProvision extends Simulation {
       feed(userResourceFeederIterator)
         .exec(buildUserResourceTuples())
         .exec(writeTuples("Add User Resource"))
+    }
+    .doIf(_ => Success(CONFIGURE_DOMAIN_AUTH_ENGINE)) {
+      exec(ManagementAPICalls.login)
+        .doIf(_.isFailed) {
+          exec(session => {
+            println(s"[ERROR] Unable to login to Management API - exiting")
+            session
+          })
+        }
+        .exitHereIfFailed
+        .exec(ManagementAPICalls.retrieveDomainId(DOMAIN_NAME))
+        .doIf(_.isFailed) {
+          exec(session => {
+            println(s"[ERROR] Unable to retrieve domain ID for domain '$DOMAIN_NAME' - exiting")
+            session
+          })
+        }
+        .exitHereIfFailed
+        .exec(ManagementAPICalls.listAuthorizationEngines)
+        .doIf(_.isFailed) {
+          exec(session => {
+            println(s"[ERROR] Unable to list authorization engines - exiting")
+            session
+          })
+        }
+        .exitHereIfFailed
+        .exec(ManagementAPICalls.ensureOpenFGAAuthorizationEngine)
+        .doIf(_.isFailed) {
+          exec(session => {
+            val error = session("error").asOption[String].getOrElse("Unknown error")
+            println(s"[ERROR] Authorization engine validation failed: $error")
+            session
+          })
+        }
+        .exitHereIfFailed
+        .doIf(session => Success(session("needsAuthEngineCreation").asOption[Boolean].getOrElse(false))) {
+          exec(ManagementAPICalls.createAuthorizationEngine)
+            .doIf(_.isFailed) {
+              exec(session => {
+                println(s"[ERROR] Unable to create authorization engine - exiting")
+                session
+              })
+            }
+            .exitHereIfFailed
+        }
     }
 
   setUp(

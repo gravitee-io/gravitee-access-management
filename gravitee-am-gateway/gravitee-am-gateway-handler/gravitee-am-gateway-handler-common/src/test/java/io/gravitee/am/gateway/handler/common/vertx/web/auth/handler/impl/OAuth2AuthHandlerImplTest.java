@@ -114,7 +114,22 @@ public class    OAuth2AuthHandlerImplTest extends RxWebTestBase {
         testRequest(HttpMethod.GET, "/test", withAuthorization("Bearer pretend-its-a-token"), HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
     }
 
+    @Test
+    public void noToken_shouldReturnMeaningfulErrorMessage() throws Exception {
+        testRequest(HttpMethod.GET, "/test", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized",
+                errorJson("Missing access token. The access token must be sent using the Authorization header field (Bearer scheme) or the 'access_token' body parameter", 401));
+    }
 
+    @Test
+    public void notBearer_shouldReturnMeaningfulErrorMessage() throws Exception {
+        testRequest(HttpMethod.GET, "/test", withAuthorization("Basic dXNlcjpwYXNz"),
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized",
+                errorJson("Authorization header must use Bearer scheme", 401));
+    }
+
+    private String errorJson(String message, int httpStatus) {
+        return "{\n  \"message\" : \"" + message + "\",\n  \"http_status\" : " + httpStatus + "\n}";
+    }
 
     private void givenTokenDecodesTo(Map<String, ?> claims) {
         doAnswer(invocation -> {

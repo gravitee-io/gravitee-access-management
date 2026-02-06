@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "pg.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pg.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "pg.name" . }}-hl
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.securityContext.runAsGroup | default 10001 }}
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: chown-data
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          command: ["chown", "-R", "{{ .Values.securityContext.runAsUser | default 10001 }}:{{ .Values.securityContext.runAsGroup | default 10001 }}", "/var/lib/postgresql/data"]
+          securityContext:
+            runAsUser: 0
+            runAsGroup: {{ .Values.securityContext.runAsGroup | default 10001 }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              add: [CHOWN]
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          resources:
+            {{- with .Values.initContainer.resources }}
+{{ . | toYaml | indent 12 }}
+            {{- else }}
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      containers:
+        - name: postgres
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: {{ .Values.securityContext.runAsUser | default 10001 }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup | default 10001 }}
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.user | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgres.password | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database | quote }}
+          ports:
+            - containerPort: 5432
+              name: pg
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run/postgresql
+            {{- if or .Values.postgres.gatewayDatabase .Values.postgres.dataplaneDatabases }}
+            - name: init-dbs
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+            {{- end }}
+          resources:
+{{ .Values.resources | toYaml | nindent 12 }}
+      volumes:
+        {{- if not .Values.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+        {{- if or .Values.postgres.gatewayDatabase .Values.postgres.dataplaneDatabases }}
+        - name: init-dbs
+          configMap:
+            name: {{ include "pg.name" . }}-init-dbs
+        {{- end }}
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+  {{- end }}

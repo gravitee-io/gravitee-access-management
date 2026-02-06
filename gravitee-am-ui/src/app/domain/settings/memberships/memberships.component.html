@@ -18,56 +18,12 @@
 <div class="gv-page-container">
   <h1>Administrative roles</h1>
   <div class="gv-page-content" fxLayout="column">
-    <p>
-      Administrators can be used to grant access to specific areas of this resource. Depending of the role permissions, administrators can
-      have full access to this resource.
-    </p>
-    <p>
-      Administrator users are managed separately from security domain users; administrator accounts represent users that can access to the
-      administration portal.
-    </p>
-    <p>The users/groups listed here can either view and/or edit this resource configuration.</p>
-    <p *ngIf="isEditable()">
-      Administrators and administrative roles can be assigned
-      <a (click)="openDialog()" style="font-size: 18px; text-decoration: underline; cursor: pointer">here</a>.
-    </p>
-
-    <ngx-datatable
-      class="material"
-      [columnMode]="'flex'"
-      [headerHeight]="40"
-      [footerHeight]="50"
-      [rowHeight]="50"
-      [rows]="members"
-      [sorts]="[{ prop: 'memberType', dir: 'desc' }]"
-    >
-      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="membership-header" fxLayout="row">
-            <div *ngIf="row.memberType === 'user'" class="user-avatar">
-              <app-user-avatar [user]="row" [width]="'40'"></app-user-avatar>
-            </div>
-            <div *ngIf="row.memberType === 'group'" class="membership-icon">
-              <mat-icon>group</mat-icon>
-            </div>
-            <div class="membership-information" fxLayout="column">
-              <h3>{{ row.name }}</h3>
-            </div>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Type" [flexGrow]="2" prop="memberType">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <p>{{ row.memberType }}</p>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Role" [flexGrow]="2" prop="roleName">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <small
-            ><b>{{ row.roleName }}</b></small
-          >
-        </ng-template>
-      </ngx-datatable-column>
-    </ngx-datatable>
+    <app-memberships-list
+      [members]="members"
+      [editable]="isEditable()"
+      [userContextLabel]="'security domain'"
+      [dialogData]="dialogData"
+      (dialogClosed)="reloadMembers()"
+    ></app-memberships-list>
   </div>
 </div>
