@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 import { Domain } from '@management-models/Domain';
-import {
-  createDomain,
-  DomainOidcConfig,
-  safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
-} from '@management-commands/domain-management-commands';
+import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { Application } from '@management-models/Application';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 
 export interface ConfirmPreRegistrationFixture {
   domain: Domain;
@@ -38,18 +33,24 @@ export interface ConfirmPreRegistrationFixture {
 
 export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const domain = await createDomain(accessToken, uniqueName('pre-registration', true), 'Description');
+  const { domain, oidcConfig } = await setupDomainForTest(uniqueName('pre-registration', true), {
+    accessToken,
+    waitForStart: true,
+  });
+
   const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
 
-  const application = await createApplication(domain.id, accessToken, {
-    name: 'appName',
+  const appClientId = uniqueName('preregapp', true);
+  const app = await createApplication(domain.id, accessToken, {
+    name: appClientId,
     type: 'WEB',
-    clientId: 'appClientId',
-    clientSecret: 'appClientSecret',
+    clientId: appClientId,
     redirectUris: ['https://callback'],
-  }).then((app) =>
-    updateApplication(
+  });
+  const updatedApp = await waitForSyncAfter(
+    domain.id,
+    () => updateApplication(
       domain.id,
       accessToken,
       {
@@ -66,19 +67,15 @@ export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => 
         identityProviders: [{ identity: defaultIdp.id, priority: -1 }],
       },
       app.id,
-    ).then((updatedApp) => {
-      // restore the clientSecret coming from the create order
-      updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-      return updatedApp;
-    }),
+    ),
   );
-
-  await startDomain(domain.id, accessToken);
-  const domainWithOidc = await waitForDomainStart(domain);
+  // restore the clientSecret coming from the create order
+  updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+  const application = updatedApp;
 
   return {
     domain: domain,
-    oidc: domainWithOidc.oidcConfig,
+    oidc: oidcConfig,
     accessToken: accessToken,
     application: application,
     clientId: application.settings.oauth.clientId,

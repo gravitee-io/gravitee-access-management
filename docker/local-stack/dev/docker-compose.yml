@@ -46,6 +46,7 @@ services:
       - GRAVITEE_HTTP_SSL_CERTIFICATEHEADER=X-Client-Cert
       - GIO_MAX_MEM=512m
       - GRAVITEE_SERVICES_CORE_HTTP_HOST=0.0.0.0
+      - GRAVITEE_SERVICES_SYNC_PROBES_STATE_ENABLED=true
 
   management:
     build:

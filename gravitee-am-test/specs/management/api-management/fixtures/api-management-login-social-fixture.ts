@@ -302,7 +302,7 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
 
   await startDomain(domain.id, accessToken);
   const started = await waitForDomainStart(domain);
-  await waitForDomainSync(started.domain.id, accessToken);
+  await waitForDomainSync(started.domain.id);
 
   const defaultApi = getDefaultApi(accessToken);
   const settings = await defaultApi.getOrganizationSettings({ organizationId: ORG_ID });
@@ -351,7 +351,7 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
     patchOrganization: { identities: [currentIdp, newIdp] },
   });
 
-  await waitForDomainSync(started.domain.id, accessToken);
+  await waitForDomainSync(started.domain.id);
 
   // Wait for the social provider to appear on the management login page
   // Organization settings may take time to propagate to the management console

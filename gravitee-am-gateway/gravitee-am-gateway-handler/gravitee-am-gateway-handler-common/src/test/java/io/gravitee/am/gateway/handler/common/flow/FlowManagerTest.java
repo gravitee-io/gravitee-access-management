@@ -20,6 +20,7 @@ import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Step;
@@ -62,6 +63,9 @@ public class FlowManagerTest {
 
     @Mock
     private EventManager eventManager;
+
+    @Mock
+    private DomainReadinessService domainReadinessService;
 
     @InjectMocks
     private FlowManagerImpl flowManager = new FlowManagerImpl();

@@ -32,9 +32,7 @@ export interface LoginFlowFixture extends Fixture {
 
 export const setupFixture = async (): Promise<LoginFlowFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const domain = await createDomain(accessToken, uniqueName('login-flow-domain', true), 'test user login').then((domain) =>
-    startDomain(domain.id, accessToken),
-  );
+  const domain = await createDomain(accessToken, uniqueName('login-flow-domain', true), 'test user login');
 
   const customIdp = await createCustomIdp(domain.id, accessToken);
   const multiUserLoginApp = await createTestApp('multi-user-login-app', domain, accessToken, 'WEB', {
@@ -53,7 +51,8 @@ export const setupFixture = async (): Promise<LoginFlowFixture> => {
     identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
-  const started = await waitForDomainStart(domain);
+  const startedDomain = await startDomain(domain.id, accessToken);
+  const started = await waitForDomainStart(startedDomain);
   const openIdConfiguration = started.oidcConfig;
   let passwordCounter = 1;
   return {

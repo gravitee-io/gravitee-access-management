@@ -20,13 +20,13 @@ import {
   safeDeleteDomain,
   patchDomain,
   startDomain,
-  waitFor,
-  waitForDomainSync,
+  waitForDomainStart,
 } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { buildCreateAndTestUser, updateUserStatus } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
@@ -37,9 +37,7 @@ import {
 } from '@management-commands/password-policy-management-commands';
 import { initiateLoginFlow, login } from '@gateway-commands/login-commands';
 import { TEST_USER } from './oidc-idp/common';
-import { enableDomain } from './mfa/fixture/mfa-setup-fixture';
 import { setup } from '../test-fixture';
-import { withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
 
 setup(200000);
@@ -84,20 +82,21 @@ async function initDomain(resetPasswordOnExpiration: boolean) {
     expiryDuration: 1,
   }).then((policy) => assignPasswordPolicyToIdp(createdDomain.id, accessToken, defaultIdp.id, policy.id));
 
-  const oidc = await startDomain(createdDomain.id, accessToken)
-    .then(() => waitFor(3000))
-    .then(() => withRetry(() => getWellKnownOpenIdConfiguration(createdDomain.hrid).expect(200)));
+  await startDomain(createdDomain.id, accessToken);
+  const domainStarted = await waitForDomainStart(createdDomain);
 
   const today = new Date();
   const twoDaysAgo = new Date(today);
   twoDaysAgo.setDate(today.getDate() - 2);
 
   const user = await buildCreateAndTestUser(createdDomain.id, accessToken, 1, false, 'SomeP@sswo0rd', twoDaysAgo);
+  await waitForNextSync(createdDomain.id);
+
   return {
     domain: createdDomain,
     client: client,
     user: user,
-    oidc: oidc.body,
+    oidc: domainStarted.oidcConfig,
   };
 }
 

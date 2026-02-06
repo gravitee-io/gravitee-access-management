@@ -171,7 +171,6 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 .subscribe(
                         identityProvider -> {
                             logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
-                            domainReadinessService.pluginLoaded(domain.getId(), identityProviderId);
                         },
                         error -> {
                             logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error);
@@ -186,7 +185,6 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
-        domainReadinessService.initPluginSync(domain.getId(), identityProvider.getId(), Type.IDENTITY_PROVIDER.name());
         if (needDeployment(identityProvider)) {
             return forceUpdateAuthenticationProvider(identityProvider);
         } else {
@@ -247,7 +245,6 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         return Completable.fromAction(() -> {
             if (oldProviders.authProvider != null) {
                 try {
-                    domainReadinessService.pluginUnloaded(domain.getId(), oldProviders.identity.getId());
                     oldProviders.authProvider.stop();
                     logger.debug("Stopped old authentication provider after replacement");
                 } catch (Exception e) {

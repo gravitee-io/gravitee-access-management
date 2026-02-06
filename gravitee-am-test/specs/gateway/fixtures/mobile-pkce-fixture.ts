@@ -16,13 +16,7 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {
-  createDomain,
-  safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
-  waitForDomainSync,
-} from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -106,22 +100,17 @@ async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  // Create and start domain
+  // Create domain (not started yet)
   const domain = await createDomain(accessToken, uniqueName(TEST_CONSTANTS.DOMAIN_NAME_PREFIX), TEST_CONSTANTS.DOMAIN_DESCRIPTION);
   expect(domain).toBeDefined();
   expect(domain.id).toBeDefined();
 
-  const startedDomain = await startDomain(domain.id, accessToken);
-  // Wait for domain to be ready before getting IDPs
-  const domainReady = await waitForDomainStart(startedDomain);
-  await waitForDomainSync(domainReady.domain.id, accessToken);
-
-  // Get default IDP
-  const idpSet = await getAllIdps(domainReady.domain.id, accessToken);
+  // Get default IDP (available immediately after domain creation)
+  const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
   expect(defaultIdp).toBeDefined();
 
-  return { domain: domainReady.domain, defaultIdp, accessToken };
+  return { domain, defaultIdp, accessToken };
 }
 
 async function createTestApplication(
@@ -210,16 +199,15 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   const appName = uniqueName('mobile-pkce-app', true);
   const username = uniqueName('mobileuser', true);
 
-  // Create test application
+  // Create test application and user BEFORE starting domain
   const application = await createTestApplication(domain, defaultIdp, accessToken, redirectUri, clientId, clientSecret, appName);
-
-  // Create test user
   const user = await createTestUser(domain, application, defaultIdp, accessToken, username);
 
-  // Ensure application and user are synced before using them
-  await waitForDomainSync(domain.id, accessToken);
+  // Start domain — initial sync picks up app + user
+  await startDomain(domain.id, accessToken);
+  await waitForDomainStart(domain);
 
-  // Domain is already ready from setupTestEnvironment, just get OIDC config
+  // Get OIDC config
   const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
   const openIdConfiguration = openIdConfigurationResponse.body;
   expect(openIdConfiguration).toBeDefined();

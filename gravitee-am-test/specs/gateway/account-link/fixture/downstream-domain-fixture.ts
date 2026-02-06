@@ -19,6 +19,7 @@ import {
   safeDeleteDomain,
   startDomain,
   waitForDomainStart,
+  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -77,7 +78,9 @@ export const setupDownstreamDomain = async (
 
   await createUser(oidcDomain.id, accessToken, userData);
 
-  const domainWithOidc = await startDomain(oidcDomain.id, accessToken).then((domain) => waitForDomainStart(domain));
+  await startDomain(oidcDomain.id, accessToken);
+  const domainWithOidc = await waitForDomainStart(oidcDomain);
+  await waitForDomainSync(oidcDomain.id);
 
   return {
     oidcDomain: oidcDomain,

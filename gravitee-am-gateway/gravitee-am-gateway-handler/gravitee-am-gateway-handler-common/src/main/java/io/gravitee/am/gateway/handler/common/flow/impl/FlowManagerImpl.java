@@ -29,6 +29,7 @@ import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.common.event.Event;
@@ -92,6 +93,9 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     @Autowired
     private EventManager eventManager;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     private final ConcurrentMap<String, Flow> flows = new ConcurrentHashMap<>();
     private final ConcurrentMap<ExtensionPoint, Set<ExecutionFlow>> policies = new ConcurrentHashMap<>();
@@ -172,15 +176,23 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private void updateFlow(String flowId, FlowEvent flowEvent) {
         final String eventType = flowEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} flow event for {}", domain.getName(), eventType, flowId);
+        domainReadinessService.initPluginSync(domain.getId(), flowId, io.gravitee.am.common.event.Type.FLOW.name());
         flowService.findById(flowId)
                 .subscribe(
                         flow -> {
                             loadFlow(flow);
                             flows.put(flow.getId(), flow);
                             logger.info("Flow {} has been deployed for domain {}", flowId, domain.getName());
+                            domainReadinessService.pluginLoaded(domain.getId(), flowId);
                         },
-                        error -> logger.error("Unable to deploy flow {} for domain {}", flowId, domain.getName(), error),
-                        () -> logger.error("No flow found with id {}", flowId));
+                        error -> {
+                            logger.error("Unable to deploy flow {} for domain {}", flowId, domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), flowId, error.getMessage());
+                        },
+                        () -> {
+                            logger.error("No flow found with id {}", flowId);
+                            domainReadinessService.pluginUnloaded(domain.getId(), flowId);
+                        });
     }
 
     private void removeFlow(String flowId) {
@@ -189,6 +201,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         if (deletedFlow != null) {
             extensionPoints.get(deletedFlow.getType()).forEach(extensionPoint -> removeExecutionFlow(extensionPoint, deletedFlow.getId()));
         }
+        domainReadinessService.pluginUnloaded(domain.getId(), flowId);
     }
 
     private void loadFlows() {

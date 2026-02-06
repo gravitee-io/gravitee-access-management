@@ -369,7 +369,7 @@ beforeAll(async () => {
   domain = domainStarted;
 
   await waitForDomainStart(domain);
-  await waitForDomainSync(domain.id, accessToken);
+  await waitForDomainSync(domain.id);
 
   // Get existing flows and add RegistrationConfirmation flow
   const flows = await getApplicationFlows(domain.id, accessToken, application.id);
@@ -396,7 +396,7 @@ beforeAll(async () => {
   });
 
   await updateApplicationFlows(domain.id, accessToken, application.id, flows);
-  await waitForDomainSync(domain.id, accessToken);
+  await waitForDomainSync(domain.id);
 
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
   const tokenResponse = await performPost(openIdConfiguration.body.token_endpoint, '', 'grant_type=client_credentials', {

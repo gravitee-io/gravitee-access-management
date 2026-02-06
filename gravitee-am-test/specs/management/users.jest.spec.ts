@@ -143,7 +143,7 @@ describe('when creating users in bulk', () => {
 
   it('should not create users, more than 1MB', async () => {
     let usersToCreate = [];
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 200; i++) {
       let user = {
         firstName: createRandomString(1000),
         lastName: createRandomString(1000),
@@ -160,6 +160,9 @@ describe('when creating users in bulk', () => {
       action: 'CREATE',
       items: usersToCreate,
     };
+
+    var requestSize = JSON.stringify(request).length;
+    expect(requestSize).toBeGreaterThan(1048576);
 
     const response = await performPost(getDomainManagerUrl(domain.id), '/users/bulk', JSON.stringify(request), {
       'Content-type': 'application/json',

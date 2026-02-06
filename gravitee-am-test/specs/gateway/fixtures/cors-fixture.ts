@@ -22,17 +22,17 @@ import {
   safeDeleteDomain,
   startDomain,
   waitForDomainStart,
-  waitForDomainSync,
+  waitForOidcReady,
 } from '@management-commands/domain-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { Application } from '@management-models/Application';
 import { CorsSettings } from '@management-models/CorsSettings';
 import { Domain } from '@management-models/Domain';
-import { IdentityProvider } from '@management-models/IdentityProvider';
 import { User } from '@management-models/User';
-import { delay, uniqueName } from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { Fixture } from '../../test-fixture';
@@ -52,30 +52,26 @@ const TEST_CONSTANTS = {
   REDIRECT_URI: 'https://example.com/callback',
 } as const;
 
-// Helper functions for test setup
-async function setupTestEnvironment() {
+/**
+ * Create a complete CORS test environment.
+ * All resources (app, user) are created BEFORE starting the domain so the
+ * initial sync picks up everything — no need for waitForNextSync.
+ */
+export const setupCorsFixture = async (): Promise<CorsFixture> => {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  // Create and start domain
+  // Create domain (not started yet)
   const domain = await createDomain(accessToken, uniqueName('cors-test', true), 'CORS test domain');
   expect(domain).toBeDefined();
   expect(domain.id).toBeDefined();
 
-  const startedDomain = await startDomain(domain.id, accessToken);
-  // Wait for domain to be ready before getting IDPs
-  const domainReady = await waitForDomainStart(startedDomain);
-  await waitForDomainSync(domainReady.domain.id, accessToken);
-
-  // Get default IDP
-  const idpSet = await getAllIdps(domainReady.domain.id, accessToken);
+  // Get default IDP (available immediately after domain creation)
+  const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
   expect(defaultIdp).toBeDefined();
 
-  return { domain: domainReady.domain, defaultIdp, accessToken };
-}
-
-async function createTestApplication(domain: Domain, defaultIdp: IdentityProvider, accessToken: string) {
+  // Create test application before domain start
   const appName = uniqueName('cors-app', true);
   const application = await createTestApp(appName, domain, accessToken, 'WEB', {
     settings: {
@@ -90,17 +86,13 @@ async function createTestApplication(domain: Domain, defaultIdp: IdentityProvide
     },
     identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
   });
-
   expect(application).toBeDefined();
   expect(application.id).toBeDefined();
   expect(application.settings.oauth.clientId).toBeDefined();
 
-  return application;
-}
-
-async function createTestUser(domain: Domain, application: Application, defaultIdp: IdentityProvider, accessToken: string) {
+  // Create test user before domain start
   const username = uniqueName('corsuser', true);
-  const testUser = await createUser(domain.id, accessToken, {
+  const user = await createUser(domain.id, accessToken, {
     firstName: 'Cors',
     lastName: 'User',
     email: `${username}@test.com`,
@@ -110,29 +102,14 @@ async function createTestUser(domain: Domain, application: Application, defaultI
     source: defaultIdp.id,
     preRegistration: false,
   });
+  expect(user).toBeDefined();
 
-  expect(testUser).toBeDefined();
-  return testUser;
-}
-
-/**
- * Create a complete CORS test environment
- */
-export const setupCorsFixture = async (): Promise<CorsFixture> => {
-  // Setup test environment
-  const { domain, defaultIdp, accessToken } = await setupTestEnvironment();
-
-  // Create test application
-  const application = await createTestApplication(domain, defaultIdp, accessToken);
-
-  // Create test user
-  const user = await createTestUser(domain, application, defaultIdp, accessToken);
-
-  // Ensure application and user are synced before using them
-  await waitForDomainSync(domain.id, accessToken);
+  // Now start the domain — initial sync picks up app + user
+  await startDomain(domain.id, accessToken);
+  const domainReady = await waitForDomainStart(domain);
 
   // Get OIDC config
-  const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
+  const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domainReady.domain.hrid).expect(200);
   const openIdConfiguration = openIdConfigurationResponse.body;
   expect(openIdConfiguration).toBeDefined();
   expect(openIdConfiguration.authorization_endpoint).toBeDefined();
@@ -142,13 +119,16 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
 
   // Helper function to update CORS settings
   const updateCorsSettings = async (corsSettings: Partial<CorsSettings>) => {
-    await patchDomain(domain.id, accessToken, {
-      path: domain.path,
-      vhostMode: false,
-      vhosts: [],
-      corsSettings,
-    });
-    await waitForDomainSync(domain.id, accessToken, { stabilityMillis: 5000 });
+    await waitForSyncAfter(domain.id,
+      () => patchDomain(domain.id, accessToken, {
+        path: domain.path,
+        vhostMode: false,
+        vhosts: [],
+        corsSettings,
+      }),
+    );
+    // After sync, verify domain HTTP routes are live (may lag behind monitoring state)
+    await waitForOidcReady(domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
   };
 
   // Helper function to get access token via password grant
