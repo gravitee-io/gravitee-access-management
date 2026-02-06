@@ -101,6 +101,8 @@ public record TokenCreationRequest(
      * @param expiration the expiration constraint from subject token
      * @param subjectTokenId the ID of the subject token
      * @param subjectTokenType the type of the subject token
+     * @param actorTokenId the ID of the actor token (only for delegation)
+     * @param actorTokenType the type of the actor token (only for delegation)
      * @param actorInfo actor information for delegation (null for impersonation)
      */
     public static TokenCreationRequest forTokenExchange(
@@ -110,6 +112,8 @@ public record TokenCreationRequest(
             Date expiration,
             String subjectTokenId,
             String subjectTokenType,
+            String actorTokenId,
+            String actorTokenType,
             ActorTokenInfo actorInfo) {
 
         return new TokenCreationRequest(
@@ -117,7 +121,7 @@ public record TokenCreationRequest(
                 GrantType.TOKEN_EXCHANGE,
                 original.getScopes(),
                 user,
-                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorInfo),
+                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo),
                 false, // token exchange doesn't support refresh
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),

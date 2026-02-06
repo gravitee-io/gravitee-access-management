@@ -96,7 +96,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     }
 
                                     ActorTokenInfo actorInfo = extractActorInfo(actorToken, subjectToken, resultingDepth);
-                                    return buildDelegationResult(tokenRequest, subjectToken, actorInfo, request, client);
+                                    return buildDelegationResult(tokenRequest, subjectToken, actorToken, actorInfo, request, client);
                                 })
                 );
     }
@@ -303,6 +303,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
     private Single<TokenExchangeResult> buildDelegationResult(TokenRequest tokenRequest,
                                                                ValidatedToken subjectToken,
+                                                               ValidatedToken actorToken,
                                                                ActorTokenInfo actorInfo,
                                                                ParsedRequest parsedRequest,
                                                                Client client) {
@@ -317,6 +318,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                     subjectToken.getExpiration(),
                     subjectToken.getTokenId(),
                     parsedRequest.subjectTokenType(),
+                    actorToken.getTokenId(),
+                    parsedRequest.actorTokenType(),
                     actorInfo
             );
         });

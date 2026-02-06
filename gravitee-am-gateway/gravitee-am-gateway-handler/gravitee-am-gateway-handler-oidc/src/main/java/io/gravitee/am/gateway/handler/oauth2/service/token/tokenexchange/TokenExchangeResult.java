@@ -27,6 +27,8 @@ import java.util.Date;
  * @param exchangeExpiration the expiration time from the subject token
  * @param subjectTokenId the ID of the subject token (if available)
  * @param subjectTokenType the type of the subject token (e.g., access_token, id_token)
+ * @param actorTokenId the ID of the actor token
+ * @param actorTokenType the type of the actor token
  * @param actorInfo information about the actor for delegation scenarios (null for impersonation)
  */
 public record TokenExchangeResult(
@@ -35,6 +37,8 @@ public record TokenExchangeResult(
         Date exchangeExpiration,
         String subjectTokenId,
         String subjectTokenType,
+        String actorTokenId,
+        String actorTokenType,
         ActorTokenInfo actorInfo
 ) {
 
@@ -52,7 +56,7 @@ public record TokenExchangeResult(
             String subjectTokenId,
             String subjectTokenType) {
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
-                subjectTokenId, subjectTokenType, null);
+                subjectTokenId, subjectTokenType, null, null, null);
     }
 
     /**
@@ -64,8 +68,10 @@ public record TokenExchangeResult(
             Date exchangeExpiration,
             String subjectTokenId,
             String subjectTokenType,
+            String actorTokenId,
+            String actorTokenType,
             ActorTokenInfo actorInfo) {
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
-                subjectTokenId, subjectTokenType, actorInfo);
+                subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo);
     }
 }

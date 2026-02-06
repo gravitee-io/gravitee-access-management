@@ -22,6 +22,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
@@ -272,6 +273,7 @@ public class TokenServiceImpl implements TokenService {
                         AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                 .idTokenFor(endUser)
                                 .tokenActor(client)
+                                .withParams(() -> buildAuditParams(oAuth2Request, null))
                                 .tokenTarget(endUser)))
                 .doOnError(error -> auditService.report(
                         AuditBuilder.builder(ClientTokenAuditBuilder.class)
@@ -668,15 +670,15 @@ public class TokenServiceImpl implements TokenService {
 
     private Map<String, Object> buildAuditParams(OAuth2Request oAuth2Request, CertificateInfo certificateInfo) {
         var params = new HashMap<String, Object>();
-        params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE, oAuth2Request.getGrantType());
-        params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, oAuth2Request.getResponseType());
+        params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE.toUpperCase(), oAuth2Request.getGrantType());
+        params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE.toUpperCase(), oAuth2Request.getResponseType());
 
         if (!isEmpty(oAuth2Request.getScopes())) {
-            params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE, String.join(" ", oAuth2Request.getScopes()));
+            params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE.toUpperCase(), String.join(" ", oAuth2Request.getScopes()));
         }
 
         if (!isEmpty(oAuth2Request.getResources())) {
-            params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE, String.join(" ", oAuth2Request.getResources()));
+            params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE.toUpperCase(), String.join(" ", oAuth2Request.getResources()));
         }
 
         if (certificateInfo != null) {
@@ -684,6 +686,37 @@ public class TokenServiceImpl implements TokenService {
             params.put(SIGNING_CERTIFICATE_NAME, certificateInfo.certificateAlias());
         }
 
+        if (GrantType.TOKEN_EXCHANGE.equals(oAuth2Request.getGrantType())) {
+            addTokenExchangeAuditParams(params, oAuth2Request);
+        }
+
         return params;
+    }
+
+    /**
+     * Adds token exchange (RFC 8693) specific parameters to the audit event.
+     */
+    private void addTokenExchangeAuditParams(Map<String, Object> params, OAuth2Request oAuth2Request) {
+        if (oAuth2Request.getIssuedTokenType() != null) {
+            params.put(io.gravitee.am.common.oauth2.Parameters.REQUESTED_TOKEN_TYPE.toUpperCase(), oAuth2Request.getIssuedTokenType());
+        }
+
+        if (oAuth2Request.getSubjectTokenId() != null) {
+            params.put(io.gravitee.am.common.oauth2.Parameters.SUBJECT_TOKEN.toUpperCase(), oAuth2Request.getSubjectTokenId());
+        }
+
+        if (oAuth2Request.getSubjectTokenType() != null) {
+            params.put(io.gravitee.am.common.oauth2.Parameters.SUBJECT_TOKEN_TYPE.toUpperCase(), oAuth2Request.getSubjectTokenType());
+        }
+
+        if (oAuth2Request.isDelegation()) {
+            if (oAuth2Request.getActorTokenId() != null) {
+                params.put(io.gravitee.am.common.oauth2.Parameters.ACTOR_TOKEN.toUpperCase(), oAuth2Request.getActorTokenId());
+            }
+
+            if (oAuth2Request.getActorTokenType() != null) {
+                params.put(io.gravitee.am.common.oauth2.Parameters.ACTOR_TOKEN_TYPE.toUpperCase(), oAuth2Request.getActorTokenType());
+            }
+        }
     }
 }
