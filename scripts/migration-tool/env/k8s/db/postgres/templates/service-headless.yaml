@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pg.name" . }}-hl
+  labels:
+    {{- include "pg.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: pg
+      port: {{ .Values.service.port }}
+      targetPort: 5432
+      protocol: TCP

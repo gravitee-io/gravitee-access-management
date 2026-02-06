@@ -1,0 +1,63 @@
+# MAPI base only (MongoDB). Use with: helm -f am-mongodb-common.yaml -f am-mongodb-mapi.yaml
+labels:
+  environment: migration-test
+  part-of: am-migration-tool
+
+mongodb-replicaset:
+  enabled: false
+
+mapiEnv: &mapiEnv
+  - name: gravitee_repositories_system_cluster
+    value: gateway
+  - name: gravitee_repositories_management_type
+    value: mongodb
+  - name: gravitee_repositories_management_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_management_mongodb_dbname
+    value: "gravitee"
+  - name: gravitee_repositories_gateway_type
+    value: mongodb
+  - name: gravitee_repositories_gateway_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_gateway_mongodb_dbname
+    value: "gravitee"
+  - name: gravitee_repositories_oauth2_type
+    value: mongodb
+  - name: gravitee_repositories_oauth2_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_repositories_oauth2_mongodb_dbname
+    value: "gravitee"
+  - name: gravitee_dataPlanes_0_id
+    value: default
+  - name: gravitee_dataPlanes_0_type
+    value: mongodb
+  - name: gravitee_dataPlanes_0_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_0_mongodb_dbname
+    value: "gravitee"
+  - name: gravitee_dataPlanes_1_id
+    value: dp1
+  - name: gravitee_dataPlanes_1_type
+    value: mongodb
+  - name: gravitee_dataPlanes_1_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_1_mongodb_dbname
+    value: "gravitee-dp1"
+  - name: gravitee_dataPlanes_2_id
+    value: dp2
+  - name: gravitee_dataPlanes_2_type
+    value: mongodb
+  - name: gravitee_dataPlanes_2_mongodb_uri
+    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp2?serverSelectionTimeoutMS=30000"
+  - name: gravitee_dataPlanes_2_mongodb_dbname
+    value: "gravitee-dp2"
+
+api:
+  enabled: false
+  env: *mapiEnv
+
+gateway:
+  enabled: false
+
+license:
+  accept: true

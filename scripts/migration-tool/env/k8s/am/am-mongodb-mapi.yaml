@@ -1,0 +1,23 @@
+# MAPI override (MongoDB). Use with: helm -f am-mongodb-common.yaml -f am-mongodb-mapi.yaml
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-api
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+
+gateway:
+  enabled: false
+
+ui:
+  replicaCount: 1
+  image:
+    repository: graviteeio/am-management-ui
+    tag: 4.10.0
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: false
+  baseURL: "http://localhost:8093/management"

@@ -1,0 +1,7 @@
+apiVersion: v2
+name: postgres
+description: Minimal PostgreSQL for migration test (official postgres image, no Bitnami)
+type: application
+version: 0.1.0
+appVersion: "16.6"
+maintainers: []

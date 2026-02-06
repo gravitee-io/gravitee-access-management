@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Local cache and temporary files
+.npm-cache/
+charts/
+helm-local/
+
+# License (sensitive)
+license.key
+
+# OS files
+.DS_Store
