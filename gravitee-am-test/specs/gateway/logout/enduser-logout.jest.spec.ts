@@ -16,11 +16,10 @@
 import { setup } from '../../test-fixture';
 
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { patchDomain } from '@management-commands/domain-management-commands';
+import { patchDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { logoutUser } from '@gateway-commands/oauth-oidc-commands';
-import { syncApplication } from '@gateway-commands/application-sync-commands';
-import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { EnduserLogoutFixture, setupFixture } from './fixture/enduser-logout-fixture';
 
 let fixture: EnduserLogoutFixture;
@@ -59,12 +58,14 @@ describe('OAuth2 - Logout tests', () => {
 
   describe('Domain Settings - target_uri is restricted', () => {
     it('Update domain settings', async () => {
-      await patchDomain(fixture.domain.id, fixture.accessToken, {
-        oidc: {
-          postLogoutRedirectUris: ['https://somewhere/after/logout'],
-        },
-      });
-      await waitForNextSync(fixture.domain.id);
+      await waitForSyncAfter(fixture.domain.id,
+        patchDomain(fixture.domain.id, fixture.accessToken, {
+          oidc: {
+            postLogoutRedirectUris: ['https://somewhere/after/logout'],
+          },
+        }),
+      );
+      await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
     });
 
     it('After sign-in a user can logout without target_uri', async () => {
@@ -105,7 +106,7 @@ describe('OAuth2 - Logout tests', () => {
         },
         fixture.application.id,
       );
-      await syncApplication(fixture.domain.id, fixture.application.id, patch);
+      await waitForSyncAfter(fixture.domain.id, patch);
     });
 
     it('After sign-in a user can logout without target_uri', async () => {

@@ -15,8 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
-import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import {
   configureRateLimitPolicy,
   makeTokenRequests,
@@ -31,6 +30,9 @@ import {
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../test-fixture';
 
+const runId = Date.now();
+const key = (name: string) => `${name}-${runId}`;
+
 let accessToken;
 let domain;
 let application;
@@ -43,16 +45,14 @@ beforeAll(async () => {
   expect(accessToken).toBeDefined();
 
   const createdDomain = await createDomain(accessToken, uniqueName('rate-limit', true), 'Rate limiting test domain');
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  domain = domainStarted;
 
-  await waitForDomainSync(domain.id, accessToken);
+  // Create application before starting domain so initial sync picks up everything
+  application = await createServiceApplication(createdDomain.id, accessToken, 'rate-limit-b2b-app', 'rate-limit-app', 'rate-limit-app');
 
-  application = await createServiceApplication(domain.id, accessToken, 'rate-limit-b2b-app', 'rate-limit-app', 'rate-limit-app');
-  await waitForDomainSync(domain.id, accessToken);
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  await startDomain(createdDomain.id, accessToken);
+  const domainStarted = await waitForDomainStart(createdDomain);
+  domain = domainStarted.domain;
+  openIdConfiguration = domainStarted.oidcConfig;
 });
 
 afterAll(async () => {
@@ -72,7 +72,9 @@ describe('Rate Limiting Policy Tests', () => {
   it('Should enforce rate limiting when no rate limit key header is set', async () => {
     await configureRateLimitPolicy(domain.id, accessToken, DEFAULT_RATE_LIMIT_CONFIG);
 
-    const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4);
+    const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
+      headers: { 'test-rate-limit-key': key('no-key') },
+    });
     const results = analyzeRateLimitResults(requests);
     expect(results.successCount).toEqual(2);
     expect(results.rateLimitedCount).toEqual(2);
@@ -84,7 +86,7 @@ describe('Rate Limiting Policy Tests', () => {
     await configureRateLimitPolicy(domain.id, accessToken, DEFAULT_RATE_LIMIT_CONFIG);
 
     const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
-      headers: { 'test-rate-limit-key': 'key1' },
+      headers: { 'test-rate-limit-key': key('single-key') },
     });
 
     const results = analyzeRateLimitResults(requests);
@@ -98,11 +100,11 @@ describe('Rate Limiting Policy Tests', () => {
     await configureRateLimitPolicy(domain.id, accessToken, DEFAULT_RATE_LIMIT_CONFIG);
 
     const key1Requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'key1' },
+      headers: { 'test-rate-limit-key': key('separate-key1') },
     });
 
     const key2Requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'key2' },
+      headers: { 'test-rate-limit-key': key('separate-key2') },
     });
 
     const key1Results = analyzeRateLimitResults(key1Requests);
@@ -123,7 +125,7 @@ describe('Rate Limiting Policy Tests', () => {
 
     console.log('🔍 Phase 1: Exhausting rate limit...');
     const initialRequests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'recovery-test-key' },
+      headers: { 'test-rate-limit-key': key('recovery') },
     });
 
     const initialResults = analyzeRateLimitResults(initialRequests);
@@ -136,7 +138,7 @@ describe('Rate Limiting Policy Tests', () => {
 
     console.log('🔍 Phase 3: Testing rate limit recovery...');
     const recoveryRequests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'recovery-test-key' },
+      headers: { 'test-rate-limit-key': key('recovery') },
     });
 
     const recoveryResults = analyzeRateLimitResults(recoveryRequests);
@@ -155,7 +157,7 @@ describe('Rate Limiting Policy Tests', () => {
     await configureRateLimitPolicy(domain.id, accessToken, configWithHeadersDisabled);
 
     const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
-      headers: { 'test-rate-limit-key': 'no-headers-test-key' },
+      headers: { 'test-rate-limit-key': key('no-headers') },
     });
 
     const results = analyzeRateLimitResults(requests);
@@ -183,7 +185,7 @@ describe('Rate Limiting Policy Tests', () => {
 
     const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
       headers: {
-        'test-rate-limit-key': 'dynamic-limit-test',
+        'test-rate-limit-key': key('dynamic-limit'),
       },
     });
 
@@ -210,7 +212,7 @@ describe('Rate Limiting Policy Tests', () => {
 
     const requestsLimit5 = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
       headers: {
-        'test-rate-limit-key': 'hdr-limit-5',
+        'test-rate-limit-key': key('hdr-limit-5'),
         'x-test-ratelimit': '5',
       },
     });
@@ -223,7 +225,7 @@ describe('Rate Limiting Policy Tests', () => {
 
     const requestsLimit2 = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
       headers: {
-        'test-rate-limit-key': 'hdr-limit-2',
+        'test-rate-limit-key': key('hdr-limit-2'),
         'x-test-ratelimit': '2',
       },
     });
@@ -245,7 +247,7 @@ describe('Rate Limiting Policy Tests', () => {
     await configureRateLimitPolicy(domain.id, accessToken, asyncConfig);
 
     const asyncRequests = await makeConcurrentTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
-      headers: { 'test-rate-limit-key': 'async-concurrent-test' },
+      headers: { 'test-rate-limit-key': key('async-concurrent') },
     });
     const asyncResults = analyzeRateLimitResults(asyncRequests);
 

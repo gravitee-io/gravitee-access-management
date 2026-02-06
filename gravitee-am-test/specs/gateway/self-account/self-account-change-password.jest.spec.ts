@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { patchDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { patchDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitForNextSync, waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { SelfAccountFixture, setupFixture } from './fixture/sef-account-fixture';
@@ -83,7 +84,7 @@ describe('SelfAccount - Change Password', () => {
         ).expect(204);
 
         // Wait for password change to sync to gateway
-        await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+        await waitForNextSync(fixture.domain.id);
       });
 
       it('must be able to sign in using new password', async () => {
@@ -105,8 +106,11 @@ describe('SelfAccount - Change Password', () => {
     beforeAll(async () => {
       // Update domain settings once for this test group
       PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.oldPasswordRequired = true;
-      await patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+      await waitForSyncAfter(fixture.domain.id,
+        patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS),
+      );
+      // Wait for HTTP routes to be live after domain redeploy
+      await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
     });
 
     describe('EndUser ', () => {
@@ -185,7 +189,7 @@ describe('SelfAccount - Change Password', () => {
         ).expect(204);
 
         // Wait for password change to sync to gateway
-        await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+        await waitForNextSync(fixture.domain.id);
       });
 
       it('must be able to sign in using new password', async () => {
@@ -207,8 +211,11 @@ describe('SelfAccount - Change Password', () => {
     beforeAll(async () => {
       // Update domain settings once for this test group
       PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.tokenAge = 10;
-      await patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+      await waitForSyncAfter(fixture.domain.id,
+        patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS),
+      );
+      // Wait for HTTP routes to be live after domain redeploy
+      await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
     });
 
     describe('EndUser ', () => {

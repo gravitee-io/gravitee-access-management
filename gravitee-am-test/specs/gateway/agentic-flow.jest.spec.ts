@@ -20,9 +20,8 @@ import {requestAdminAccessToken} from '@management-commands/token-management-com
 import {
     safeDeleteDomain,
     setupDomainForTest,
-    waitForOidcReady,
-    waitFor, waitForDomainSync,
 } from '@management-commands/domain-management-commands';
+import {waitForSyncAfter} from '@gateway-commands/monitoring-commands';
 import {uniqueName} from '@utils-commands/misc';
 import {buildTestUser, createUser} from '@management-commands/user-management-commands';
 import {createAuthorizationEngine, deleteAuthorizationEngine} from '@management-commands/authorization-engine-management-commands';
@@ -64,10 +63,11 @@ beforeAll(async () => {
     expect(accessToken).toBeDefined();
 
     // 2. Create unique test domain and wait for it to be ready
-    testDomain = await setupDomainForTest(uniqueName('agentic-flow', true), {accessToken}).then((it) => it.domain);
+    const domainSetup = await setupDomainForTest(uniqueName('agentic-flow', true), {accessToken, waitForStart: true});
+    testDomain = domainSetup.domain;
     expect(testDomain).toBeDefined();
 
-    openIdConfig = testDomain.oidc;
+    openIdConfig = domainSetup.oidcConfig;
 
     // 4. Create OpenFGA store
     const storeName = `agentic-flow-store-${Date.now()}`;
@@ -200,9 +200,9 @@ beforeAll(async () => {
     testUser1.password = user1Data.password;
 
     // 12. Add OpenFGA tuples - User1 is owner, User2 is viewer
-    await addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, 'weather_tool'));
-
-    await waitForDomainSync(testDomain.id);
+    await waitForSyncAfter(testDomain.id,
+        addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, 'weather_tool')),
+    );
 });
 
 afterAll(async () => {
@@ -246,6 +246,7 @@ describe('Agentic Flow - User → Application → Token → MCP Server → AuthZ
 
         // Initiate authorization request
         const authResponse = await performGet(authUrl).expect(302);
+        expect(authResponse.headers['location']).toContain('/login');
 
         // User logs in
         const loginResponse = await login(authResponse, testUser1.username, clientId, testUser1.password, false, false);

@@ -93,3 +93,30 @@ export const waitForNextSync = async (domainId: string, options?: PollOptions): 
     },
   );
 };
+
+/**
+ * Snapshot the domain's lastSync, await a mutation, then poll until lastSync advances.
+ *
+ * This avoids the race in `waitForNextSync` where the sync cycle completes
+ * between the mutation returning and the polling starting. By capturing
+ * lastSync *before* the mutation executes, we guarantee we detect the sync
+ * that processes it.
+ */
+export const waitForSyncAfter = async <T>(domainId: string, mutation: Promise<T>, options?: PollOptions): Promise<T> => {
+  const { timeoutMillis = DEFAULT_TIMEOUT_MS, intervalMillis = DEFAULT_INTERVAL_MS } = options || {};
+  const lastSyncBefore = await fetchStateSafe(domainId).then((s) => s?.lastSync ?? 0);
+  const result = await mutation;
+
+  await retryUntil(
+    () => fetchStateSafe(domainId),
+    (state) => isReady(state) && state.lastSync > lastSyncBefore,
+    {
+      timeoutMillis,
+      intervalMillis,
+      onDone: (state) =>
+        console.debug(`Domain ${domainId} synced after mutation (lastSync: ${new Date(lastSyncBefore).toISOString()} -> ${new Date(state?.lastSync).toISOString()})`),
+    },
+  );
+
+  return result;
+};

@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, beforeEach, expect, it } from '@jest/globals';
-import {
-  createDomain,
-  safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
-  waitForDomainSync,
-} from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createApplication,
@@ -62,12 +57,13 @@ beforeAll(async () => {
 
   app = await createApp(domain, accessToken, smsFactor.id, callFactor.id);
 
-  // Wait for application to sync to gateway
-  await waitForDomainSync(domain.id, accessToken);
-
-  let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
+  await startDomain(domain.id, accessToken);
+  let started = await waitForDomainStart(domain);
   domain = started.domain;
   openIdConfiguration = started.oidcConfig;
+
+  // Wait for app/factors to sync to gateway after start
+  await waitForNextSync(domain.id);
 });
 
 describe('MFA double enrollment scenario', () => {

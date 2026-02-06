@@ -15,11 +15,12 @@
  */
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { buildCreateAndTestUser, updateUserStatus } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
@@ -61,17 +62,13 @@ beforeAll(async () => {
     identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
   });
 
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(createdDomain.id);
+  // Create user before starting domain so initial sync picks up everything
+  user = await buildCreateAndTestUser(createdDomain.id, accessToken, 0);
 
-  domain = domainStarted;
-  await waitForDomainSync(domain.id, accessToken);
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  oidc = result.body;
-
-  user = await buildCreateAndTestUser(domain.id, accessToken, 0);
+  await startDomain(createdDomain.id, accessToken);
+  const domainStarted = await waitForDomainStart(createdDomain);
+  domain = domainStarted.domain;
+  oidc = domainStarted.oidcConfig;
 });
 
 afterAll(async () => {
@@ -99,8 +96,9 @@ describe('when user is enabled', () => {
 
   describe('tokens will be revoked', () => {
     it('when user is disabled by MAPI', async () => {
-      await updateUserStatus(domain.id, accessToken, user.id, false);
-      await waitForDomainSync(domain.id, accessToken); // wait sync as since 4.7, token revocations are managed asynchornously
+      await waitForSyncAfter(domain.id,
+        updateUserStatus(domain.id, accessToken, user.id, false),
+      );
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + applicationBase64Token(client),
@@ -110,8 +108,9 @@ describe('when user is enabled', () => {
     });
 
     it('and will remain revoked, when user is enabled back', async () => {
-      await updateUserStatus(domain.id, accessToken, user.id, true);
-      await waitForDomainSync(domain.id, accessToken); // wait sync as since 4.7, token revocations are managed asynchornously
+      await waitForSyncAfter(domain.id,
+        updateUserStatus(domain.id, accessToken, user.id, true),
+      );
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + applicationBase64Token(client),

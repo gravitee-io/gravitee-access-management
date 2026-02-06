@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { expect } from '@jest/globals';
-import { getDomainFlows, updateDomainFlows, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { getDomainFlows, updateDomainFlows } from '@management-commands/domain-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { FlowEntityTypeEnum } from '../../../api/management/models';
@@ -107,17 +108,9 @@ export const configureRateLimitPolicy = async (domainId: string, accessToken: st
     },
   ]);
 
-  await updateDomainFlows(domainId, accessToken, flows);
-
-  // Restart domain to apply policy
-  const restartedDomain = await startDomain(domainId, accessToken);
-  await waitForDomainSync(domainId, accessToken);
-
-  // Additional delay to ensure rate limit policy is fully applied
-  // Domain sync doesn't guarantee policy application is complete
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  return restartedDomain;
+  await waitForSyncAfter(domainId,
+    updateDomainFlows(domainId, accessToken, flows),
+  );
 };
 
 /**

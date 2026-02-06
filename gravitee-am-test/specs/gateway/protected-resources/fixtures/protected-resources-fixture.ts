@@ -17,7 +17,7 @@
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
-import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -216,9 +216,10 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     const application = await createTestApplication(domain, defaultIdp, accessToken, PROTECTED_RESOURCES_TEST.REDIRECT_URI);
     const serviceApplication = await createServiceApplication(domain, accessToken);
     const user = await createTestUser(domain, application, defaultIdp, accessToken);
-    const protectedResources = await createTestProtectedResources(domain, accessToken);
-    // Wait for a NEW sync cycle so the gateway picks up app, user, and protected resources
-    await waitForNextSync(domain.id);
+    // Wrap last mutation in waitForSyncAfter to ensure gateway picks up all resources
+    const protectedResources = await waitForSyncAfter(domain.id,
+      createTestProtectedResources(domain, accessToken),
+    );
 
     const openIdConfiguration = oidcConfig;
     expect(openIdConfiguration).toBeDefined();

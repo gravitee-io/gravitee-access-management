@@ -19,7 +19,6 @@ import { Domain } from '@management-models/Domain';
 import { DomainOidcConfig } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
-import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -39,9 +38,7 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName('enduser-logout', true), 'test end-user logout');
 
-  await startDomain(domain.id, accessToken);
-  const domainStarted = await waitForDomainStart(domain);
-
+  // Create all resources BEFORE starting domain so initial sync picks up everything
   const idpSet = await getAllIdps(domain.id, accessToken);
   const appClientId = uniqueName('app-logout', true);
   const appClientSecret = uniqueName('app-logout', true);
@@ -73,8 +70,6 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
     }),
   );
 
-  await waitForNextSync(domain.id);
-
   const user = {
     username: uniqueName('LogoutUser', true),
     password: 'SomeP@ssw0rd',
@@ -84,7 +79,10 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
     preRegistration: false,
   };
   await createUser(domain.id, accessToken, user);
-  await waitForNextSync(domain.id);
+
+  // Start domain — initial sync picks up app + user
+  await startDomain(domain.id, accessToken);
+  const domainStarted = await waitForDomainStart(domain);
 
   const openIdConfiguration = domainStarted.oidcConfig;
 

@@ -489,8 +489,8 @@ jobs:
           name: Run Management Jest tests (parallel)
           command: npm --prefix gravitee-am-test run ci:management:parallel
       - run:
-          name: Run Gateway Jest tests (parallel)
-          command: npm --prefix gravitee-am-test run ci:gateway:parallel
+          name: Run Gateway Jest tests
+          command: npm --prefix gravitee-am-test run ci:gateway
       - run:
           name: Stop
           when: always
@@ -532,8 +532,8 @@ jobs:
           name: Run Management Jest tests (parallel)
           command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
       - run:
-          name: Run Gateway Jest tests (parallel)
-          command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway:parallel
+          name: Run Gateway Jest tests
+          command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
       - run:
           name: Stop
           when: always

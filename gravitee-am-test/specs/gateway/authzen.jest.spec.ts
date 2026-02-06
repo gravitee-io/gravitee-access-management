@@ -20,9 +20,8 @@ import {requestAdminAccessToken} from '@management-commands/token-management-com
 import {
     safeDeleteDomain,
     setupDomainForTest,
-    startDomain,
-    waitForDomainSync,
 } from '@management-commands/domain-management-commands';
+import {waitForNextSync} from '@gateway-commands/monitoring-commands';
 import {uniqueName} from '@utils-commands/misc';
 import {buildTestUser, createUser} from '@management-commands/user-management-commands';
 import {createAuthorizationEngine, deleteAuthorizationEngine} from '@management-commands/authorization-engine-management-commands';
@@ -55,7 +54,7 @@ beforeAll(async () => {
   expect(accessToken).toBeDefined();
 
   // 2. Create unique test domain
-  testDomain = await setupDomainForTest(uniqueName('openfga-authzen', true), { accessToken }).then((it) => it.domain);
+  testDomain = await setupDomainForTest(uniqueName('openfga-authzen', true), { accessToken, waitForStart: true }).then((it) => it.domain);
   expect(testDomain).toBeDefined();
 
   // 3. Create OpenFGA store
@@ -129,7 +128,7 @@ beforeAll(async () => {
   testUser2.password = user2Data.password;
 
   // 8. Wait for users and application to sync to gateway before getting OIDC config
-  await waitForDomainSync(testDomain.id, accessToken);
+  await waitForNextSync(testDomain.id);
 
   // 9. Get OpenID configuration for token endpoint
   const openIdConfigResponse = await getWellKnownOpenIdConfiguration(testDomain.hrid).expect(200);
@@ -410,7 +409,7 @@ describe('AuthZen API - Basic Authorization Checks', () => {
       expect(protectedResource?.clientSecret).toBeDefined();
 
       // Wait for Protected Resource to sync to gateway
-      await waitForDomainSync(testDomain.id, accessToken);
+      await waitForNextSync(testDomain.id);
 
       // Obtain access token using client_credentials WITHOUT resource parameter
       // Token aud = Protected Resource clientId (for AuthZen PDP authentication, not resource access)

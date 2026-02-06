@@ -91,6 +91,13 @@ export const extractXsrfTokenAndActionResponse = async (response) => {
   const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
   const action = dom('form').attr('action');
 
+  if (!xsrfToken || !action) {
+    const title = dom('title').text() || '(no title)';
+    const errorMsg = dom('.error-message, .alert, [class*=error]').text()?.trim() || '';
+    console.error(`Login page missing expected form. URL: ${result.request.url}, title: "${title}", error: "${errorMsg}"`);
+    console.error(`Body (first 500 chars): ${result.text?.substring(0, 500)}`);
+  }
+
   expect(xsrfToken).toBeDefined();
   expect(action).toBeDefined();
 
