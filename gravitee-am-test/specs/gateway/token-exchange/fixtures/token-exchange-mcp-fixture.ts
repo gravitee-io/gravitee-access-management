@@ -36,6 +36,9 @@ import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { User } from '@management-models/User';
 import type { ProtectedResourceSecret } from '@management-models/ProtectedResourceSecret';
+import type { NewProtectedResource } from '@management-models/NewProtectedResource';
+import type { NewProtectedResourceFeature } from '@management-models/NewProtectedResourceFeature';
+import type { NewMcpTool } from '@management-models/NewMcpTool';
 import request from 'supertest';
 
 /**
@@ -87,6 +90,8 @@ export interface TokenExchangeMcpFixture {
   accessToken: string;
   cleanup: () => Promise<void>;
   obtainSubjectToken: (scope?: string) => Promise<SubjectTokens>;
+  /** Obtain actor token (same app/user as subject; only present when delegation is enabled) */
+  obtainActorToken?: (scope?: string) => Promise<SubjectTokens>;
 }
 
 /**
@@ -113,6 +118,11 @@ export const TOKEN_EXCHANGE_MCP_TEST = {
   DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES: [
     'urn:ietf:params:oauth:token-type:access_token',
     'urn:ietf:params:oauth:token-type:refresh_token',
+    'urn:ietf:params:oauth:token-type:id_token',
+    'urn:ietf:params:oauth:token-type:jwt',
+  ],
+  DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES: [
+    'urn:ietf:params:oauth:token-type:access_token',
     'urn:ietf:params:oauth:token-type:id_token',
     'urn:ietf:params:oauth:token-type:jwt',
   ],
@@ -147,23 +157,28 @@ export async function expectTokenIntrospectionMatchesMcpClient(
 }
 
 /**
- * Enable token exchange for a domain
+ * Enable token exchange for a domain (optionally with delegation)
  */
 async function enableTokenExchange(
   domainId: string,
   token: string,
   allowedSubjectTokenTypes: string[] = TOKEN_EXCHANGE_MCP_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+  delegation?: { allowDelegation: boolean; allowedActorTokenTypes: string[]; maxDelegationDepth: number },
 ): Promise<void> {
+  const tokenExchangeSettings: Record<string, unknown> = {
+    enabled: true,
+    allowedSubjectTokenTypes,
+  };
+  if (delegation?.allowDelegation) {
+    tokenExchangeSettings.allowDelegation = true;
+    tokenExchangeSettings.allowedActorTokenTypes = delegation.allowedActorTokenTypes;
+    tokenExchangeSettings.maxDelegationDepth = delegation.maxDelegationDepth;
+  }
   await request(getDomainManagerUrl(domainId))
     .patch('')
     .set('Authorization', `Bearer ${token}`)
     .set('Content-Type', 'application/json')
-    .send({
-      tokenExchangeSettings: {
-        enabled: true,
-        allowedSubjectTokenTypes,
-      },
-    })
+    .send({ tokenExchangeSettings })
     .expect(200);
 }
 
@@ -176,6 +191,12 @@ export interface TokenExchangeMcpFixtureConfig {
   appGrantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
   allowedSubjectTokenTypes?: string[];
+  /** When set, the protected resource is created with an MCP tool feature with these scopes. */
+  mcpToolScopes?: string[];
+  /** When true, enables delegation and exposes obtainActorToken (same app/user as subject). */
+  allowDelegation?: boolean;
+  allowedActorTokenTypes?: string[];
+  maxDelegationDepth?: number;
 }
 
 /**
@@ -198,6 +219,10 @@ export const setupTokenExchangeMcpFixture = async (
       appGrantTypes = TOKEN_EXCHANGE_MCP_TEST.APP_GRANT_TYPES,
       scopes = TOKEN_EXCHANGE_MCP_TEST.DEFAULT_SCOPES,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_MCP_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+      mcpToolScopes,
+      allowDelegation = false,
+      allowedActorTokenTypes = TOKEN_EXCHANGE_MCP_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+      maxDelegationDepth = 1,
     } = config;
 
     accessToken = await requestAdminAccessToken();
@@ -212,7 +237,9 @@ export const setupTokenExchangeMcpFixture = async (
     const defaultIdp = idpSet.values().next().value;
     expect(defaultIdp).toBeDefined();
 
-    await enableTokenExchange(createdDomain.id, accessToken, allowedSubjectTokenTypes);
+    await enableTokenExchange(createdDomain.id, accessToken, allowedSubjectTokenTypes, allowDelegation
+      ? { allowDelegation: true, allowedActorTokenTypes, maxDelegationDepth }
+      : undefined);
 
     // Application: used only to obtain subject tokens (password + refresh_token)
     const application = await createTestApp(uniqueName(appClientName, true), createdDomain, accessToken, 'WEB', {
@@ -229,7 +256,7 @@ export const setupTokenExchangeMcpFixture = async (
     expect(application.id).toBeDefined();
 
     // MCP Server: ONLY client_credentials and token exchange (performs the token exchange)
-    const mcpServer = await createProtectedResource(createdDomain.id, accessToken, {
+    const mcpServerBody: NewProtectedResource = {
       name: uniqueName(mcpServerName, true),
       type: 'MCP_SERVER',
       resourceIdentifiers: [TOKEN_EXCHANGE_MCP_TEST.RESOURCE_IDENTIFIER],
@@ -238,7 +265,12 @@ export const setupTokenExchangeMcpFixture = async (
           grantTypes: TOKEN_EXCHANGE_MCP_TEST.MCP_GRANT_TYPES,
         },
       },
-    });
+    };
+    if (mcpToolScopes != null && mcpToolScopes.length > 0) {
+      const tool: NewMcpTool = { key: 'default', type: 'MCP_TOOL', scopes: mcpToolScopes };
+      mcpServerBody.features = [tool] as NewProtectedResourceFeature[];
+    }
+    const mcpServer = await createProtectedResource(createdDomain.id, accessToken, mcpServerBody);
     expect(mcpServer).toBeDefined();
     expect(mcpServer.clientId).toBeDefined();
     expect(mcpServer.clientSecret).toBeDefined();
@@ -279,6 +311,11 @@ export const setupTokenExchangeMcpFixture = async (
       };
     };
 
+    const obtainActorToken = allowDelegation
+      ? (actorScope: string = 'openid%20profile%20offline_access'): Promise<SubjectTokens> =>
+          obtainSubjectToken(actorScope)
+      : undefined;
+
     const cleanup = async () => {
       if (domain?.id && accessToken) {
         await safeDeleteDomain(domain.id, accessToken);
@@ -296,6 +333,7 @@ export const setupTokenExchangeMcpFixture = async (
       mcpServerBasicAuth,
       accessToken,
       obtainSubjectToken,
+      obtainActorToken,
       cleanup,
     };
   } catch (error) {

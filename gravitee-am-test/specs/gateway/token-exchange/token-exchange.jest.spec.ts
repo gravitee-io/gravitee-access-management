@@ -33,6 +33,7 @@ let delegationFixture: TokenExchangeFixture;
 let impersonationOnlyFixture: TokenExchangeFixture;
 let limitedDepthFixture: TokenExchangeFixture;
 let accessTokenOnlyFixture: TokenExchangeFixture;
+let noScopeFixture: TokenExchangeFixture;
 
 beforeAll(async () => {
   // Setup default fixture with all token types allowed (impersonation only by default)
@@ -94,6 +95,15 @@ beforeAll(async () => {
     allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
     maxDelegationDepth: 1,
   });
+
+  // Fixture for token exchange when subject token has no scopes (issued token has no scopes)
+  noScopeFixture = await setupTokenExchangeFixture({
+    domainNamePrefix: 'token-exchange-no-scope',
+    domainDescription: 'Token exchange no-scope (subject token no scopes)',
+    clientName: 'token-exchange-no-scope-client',
+    grantTypes: ['password', 'urn:ietf:params:oauth:grant-type:token-exchange'],
+    scopes: [], // No scope settings → token can have no scope when no scope requested
+  });
 });
 
 afterAll(async () => {
@@ -114,6 +124,9 @@ afterAll(async () => {
   }
   if (accessTokenOnlyFixture) {
     await accessTokenOnlyFixture.cleanup();
+  }
+  if (noScopeFixture) {
+    await noScopeFixture.cleanup();
   }
 });
 
@@ -141,6 +154,18 @@ describe('Token Exchange grant', () => {
 
     const decoded = parseJwt(exchangedToken.access_token);
     expect(decoded.payload['client_id']).toBe(application.settings.oauth.clientId);
+    // No scope param → full allowed scopes granted; response includes granted scopes when non-empty
+    const issuedScopes = (decoded.payload['scope'] as string)?.split(' ') ?? [];
+    expect(issuedScopes).toHaveLength(3);
+    expect(issuedScopes).toContain('openid');
+    expect(issuedScopes).toContain('profile');
+    expect(issuedScopes).toContain('offline_access');
+    expect(exchangedToken.scope).toBeDefined();
+    const responseScopeSet = new Set((exchangedToken.scope as string).split(' '));
+    expect(responseScopeSet.size).toBe(3);
+    expect(responseScopeSet.has('openid')).toBe(true);
+    expect(responseScopeSet.has('profile')).toBe(true);
+    expect(responseScopeSet.has('offline_access')).toBe(true);
 
     // Introspect the exchanged token to verify it's valid
     const introspectResponse = await performPost(
@@ -292,6 +317,77 @@ describe('Token Exchange grant', () => {
     expect(exchangeResponse.body.access_token).toBeDefined();
     expect(exchangeResponse.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
     expect(exchangeResponse.body.id_token).toBeUndefined();
+  });
+
+  it('should include granted scopes in response when client requests subset', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    // Given: subject token has full scopes (openid, profile, offline_access)
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile%20offline_access');
+
+    // When: exchange with scope=openid (narrowing)
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&scope=openid`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // Then: response includes granted scopes (non-empty); issued token has same scope
+    expect(exchangeResponse.body.access_token).toBeDefined();
+    expect(exchangeResponse.body.scope).toBe('openid');
+    const decoded = parseJwt(exchangeResponse.body.access_token);
+    expect(decoded.payload['scope']).toBe('openid');
+  });
+
+  it('should issue new token with no scopes when subject token has no scopes', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = noScopeFixture;
+
+    // Given: subject token with no scopes (client has no scope settings; request empty scope)
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('');
+
+    // When: exchange without scope parameter
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // Then: issued token has no scope (claim omitted); response does not include scope (key omitted)
+    expect(exchangeResponse.body.access_token).toBeDefined();
+    expect(exchangeResponse.body.scope).toBeUndefined();
+    const decoded = parseJwt(exchangeResponse.body.access_token);
+    expect(decoded.payload['scope']).toBeUndefined();
+  });
+
+  it('should return 400 invalid_scope when requested scope is not a subset of subject token scopes', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    // Given: subject token has openid and profile only (allowed scope)
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    // When: request scope=offline_access which is not in subject token (not a subset of allowed)
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&scope=offline_access`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(400);
+
+    // Then: 400 invalid_scope; error_description indicates invalid or disallowed scope
+    expect(response.body.error).toBe('invalid_scope');
+    expect(response.body.error_description).toBeDefined();
+    expect(String(response.body.error_description).toLowerCase()).toMatch(/scope|disallowed|invalid/);
   });
 
   it('should exchange jwt subject token when allowed', async () => {
@@ -543,6 +639,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     const actClaim = decoded.payload['act'] as Record<string, unknown>;
     expect(actClaim).toBeDefined();
     expect(actClaim['sub']).toBeDefined();
+    // delegation → issued scope is intersection of subject and actor (both have same scopes here)
+    const issuedScopes = (decoded.payload['scope'] as string)?.split(' ') ?? [];
+    expect(issuedScopes).toHaveLength(3);
+    expect(issuedScopes).toContain('openid');
+    expect(issuedScopes).toContain('profile');
+    expect(issuedScopes).toContain('offline_access');
   });
 
   it('should reject delegation when delegation is not allowed', async () => {
