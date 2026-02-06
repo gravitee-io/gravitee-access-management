@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.jwt.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jwt.SignedJWT;
+
+import java.io.IOException;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
@@ -38,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyPair;
-import java.text.ParseException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -235,10 +236,26 @@ public class JWTServiceImpl implements JWTService {
     }
 
     private Optional<String> extractKid(String jwt) {
+        return extractHeaderParameter(jwt, "kid");
+    }
+
+    private Optional<String> extractHeaderParameter(String jwt, String parameterName) {
         try {
-            return Optional.ofNullable(SignedJWT.parse(jwt).getHeader().getKeyID());
-        } catch (ParseException e) {
-            logger.debug("Unable to parse JWT header to extract kid", e);
+            String[] parts = jwt.split("\\.");
+            if (parts.length < 2) {
+                logger.debug("Unable to parse JWT header to extract {} - not enough parts", parameterName);
+                return Optional.empty();
+            }
+            byte[] headerBytes = Base64.getUrlDecoder().decode(parts[0]);
+            JsonNode headerJson = objectMapper.readTree(headerBytes);
+            JsonNode parameterNode = headerJson.get(parameterName);
+            if (parameterNode == null || !parameterNode.isTextual()) {
+                return Optional.empty();
+            }
+            String value = parameterNode.asText();
+            return value.isEmpty() ? Optional.empty() : Optional.of(value);
+        } catch (IllegalArgumentException | IOException e) {
+            logger.debug("Unable to parse JWT header to extract {}", parameterName);
             return Optional.empty();
         }
     }
