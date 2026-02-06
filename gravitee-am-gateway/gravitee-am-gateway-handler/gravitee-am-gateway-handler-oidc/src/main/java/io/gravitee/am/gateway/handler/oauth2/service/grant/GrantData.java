@@ -47,6 +47,8 @@ public sealed interface GrantData permits
      * @param expiration the expiration time constraint from subject token
      * @param subjectTokenId the ID of the subject token
      * @param subjectTokenType the type of the subject token
+     * @param actorTokenId the ID of the actor token (only for delegation)
+     * @param actorTokenType the type of the actor token (only for delegation)
      * @param actorInfo actor information for delegation scenarios (null for impersonation)
      */
     record TokenExchangeData(
@@ -54,6 +56,8 @@ public sealed interface GrantData permits
             Date expiration,
             String subjectTokenId,
             String subjectTokenType,
+            String actorTokenId,
+            String actorTokenType,
             ActorTokenInfo actorInfo
     ) implements GrantData {
         public boolean isDelegation() {
