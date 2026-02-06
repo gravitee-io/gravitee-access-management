@@ -108,7 +108,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
         Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(mongoQuery, countOptions())).first(0l);
         Single<List<Role>> rolesOperation = Observable.fromPublisher(withMaxTime(rolesCollection.find(mongoQuery)).skip(size * page).limit(size)).map(this::convert).toList();
-        return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, 0, count))
+        return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, page, count))
                 .observeOn(Schedulers.computation());
     }
 
