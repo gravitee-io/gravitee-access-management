@@ -76,5 +76,28 @@ public interface DatabaseDialectHelper {
 
     String buildPagingClauseUsingOffset(String field, boolean asc, int offset, int size);
 
+    /**
+     * Escapes special characters in a value that will be used in a SQL LIKE pattern.
+     * Different databases have different special characters in LIKE patterns.
+     * For example, SQL Server treats [ and ] as character class delimiters.
+     *
+     * @param value the value to escape
+     * @return the escaped value safe for use in LIKE patterns
+     */
+    default String escapeLikePatternValue(String value) {
+        return value;
+    }
+
+    /**
+     * Returns the ESCAPE clause to append to LIKE queries, if needed.
+     * Most databases don't need this, but SQL Server requires ESCAPE '\' when
+     * using backslash-escaped special characters.
+     *
+     * @return the ESCAPE clause (e.g., " ESCAPE '\' ") or empty string if not needed
+     */
+    default String getLikeEscapeClause() {
+        return "";
+    }
+
     enum ScimRepository {GROUPS, ORGANIZATION_USERS, USERS}
 }

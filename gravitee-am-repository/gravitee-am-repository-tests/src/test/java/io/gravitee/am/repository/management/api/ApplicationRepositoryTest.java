@@ -489,6 +489,75 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testSearch_specialRegexCharacters() {
+        // Test that special regex characters in search queries do not cause errors (AM-6422)
+        final String domain = "domain-special-chars";
+
+        // create app with special characters in name
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("app[test]");
+        applicationRepository.create(app).blockingGet();
+
+        Application app2 = new Application();
+        app2.setDomain(domain);
+        app2.setName("app{test}");
+        applicationRepository.create(app2).blockingGet();
+
+        // Search with brackets - should not throw PatternSyntaxException
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, "*[*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getName().equals("app[test]"));
+
+        // Search with braces - should not throw PatternSyntaxException
+        TestObserver<Page<Application>> testObserver2 = applicationRepository.search(domain, "*{*", 0, 10).test();
+        testObserver2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(page -> page.getData().size() == 1);
+        testObserver2.assertValue(page -> page.getData().iterator().next().getName().equals("app{test}"));
+
+        // Search with multiple special characters
+        TestObserver<Page<Application>> testObserver3 = applicationRepository.search(domain, "*[test]*", 0, 10).test();
+        testObserver3.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver3.assertComplete();
+        testObserver3.assertNoErrors();
+        testObserver3.assertValue(page -> page.getData().size() == 1);
+    }
+
+    @Test
+    public void testSearchApplicationIds_specialRegexCharacters() {
+        // Test that special regex characters in search queries do not cause errors (AM-6422)
+        final String domain = "domain-special-chars-ids";
+
+        // create app with special characters in name
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("app[test]");
+        app = applicationRepository.create(app).blockingGet();
+
+        Application app2 = new Application();
+        app2.setDomain(domain);
+        app2.setName("app{test}");
+        app2 = applicationRepository.create(app2).blockingGet();
+
+        // Search with brackets - should not throw PatternSyntaxException
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, List.of(app.getId(), app2.getId()), "*[*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == 1);
+        testObserver.assertValue(page -> page.getData().iterator().next().getName().equals("app[test]"));
+    }
+
+    @Test
     public void testUpdateMfaSettings() {
         // create app
         var app = buildApplication();
