@@ -201,7 +201,7 @@ beforeAll(async () => {
 
     // 12. Add OpenFGA tuples - User1 is owner, User2 is viewer
     await waitForSyncAfter(testDomain.id,
-        addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, 'weather_tool')),
+        () => addTuple(testDomain.id, authEngine.id, accessToken, tupleFactory.ownerTuple(testUser1.username, 'weather_tool')),
     );
 });
 

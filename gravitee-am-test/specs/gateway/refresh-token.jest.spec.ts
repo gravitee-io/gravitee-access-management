@@ -97,7 +97,7 @@ describe('when user is enabled', () => {
   describe('tokens will be revoked', () => {
     it('when user is disabled by MAPI', async () => {
       await waitForSyncAfter(domain.id,
-        updateUserStatus(domain.id, accessToken, user.id, false),
+        () => updateUserStatus(domain.id, accessToken, user.id, false),
       );
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',
@@ -109,7 +109,7 @@ describe('when user is enabled', () => {
 
     it('and will remain revoked, when user is enabled back', async () => {
       await waitForSyncAfter(domain.id,
-        updateUserStatus(domain.id, accessToken, user.id, true),
+        () => updateUserStatus(domain.id, accessToken, user.id, true),
       );
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',

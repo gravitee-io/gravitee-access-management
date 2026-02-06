@@ -281,7 +281,7 @@ describe('OAuth2 - RFC 6746 - Authorization Code Grant', () => {
       .then((_) =>
         patchApplication(fixture.masterDomain.id, fixture.accessToken, { settings: fixture.application.settings }, fixture.application.id),
       )
-      .then((_) => waitForDomainSync(fixture.masterDomain.id, fixture.accessToken));
+      .then((_) => waitForDomainSync(fixture.masterDomain.id));
   });
 
   it('must handle invalid client', async () => {
@@ -669,7 +669,7 @@ describe('OAuth2 - RFC 6746 - Authorization Code Grant', () => {
               redirectUriStrictMatching: true,
             },
           })
-            .then((_) => waitForDomainSync(fixture.masterDomain.id, fixture.accessToken))
+            .then((_) => waitForDomainSync(fixture.masterDomain.id))
             .then((_) => performGet(fixture.oidc.authorization_endpoint, params).expect(302));
         } else {
           authResponse = await performGet(fixture.oidc.authorization_endpoint, params).expect(302);

@@ -247,7 +247,7 @@ export const setupTokenExchangeMcpFixture = async (
     expect(startedDomain).toBeDefined();
 
     const domainReady = await waitForDomainStart(startedDomain);
-    await waitForDomainSync(domainReady.domain.id, accessToken);
+    await waitForDomainSync(domainReady.domain.id);
     domain = domainReady.domain;
 
     const oidc = (domainReady.oidcConfig ?? {}) as OidcConfiguration;

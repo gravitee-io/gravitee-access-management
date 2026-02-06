@@ -81,7 +81,7 @@ export const initEnv = async (applicationConfiguration, domainConfiguration = nu
     identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
-  await waitForDomainSync(domain.id, accessToken);
+  await waitForDomainSync(domain.id);
 
   // Wait for domain to be ready to serve requests
   const started = await waitForDomainStart(domain);

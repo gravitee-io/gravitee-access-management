@@ -131,7 +131,7 @@ export const setupUpstreamDomain = async (
 
   await startDomain(domain.id, accessToken);
   const domainWithOidc = await waitForDomainStart(domain);
-  await waitForDomainSync(domain.id, accessToken);
+  await waitForDomainSync(domain.id);
 
   return {
     domain: domain,

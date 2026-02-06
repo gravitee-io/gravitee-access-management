@@ -188,7 +188,6 @@ export const waitForDomainStart = async (domain: Domain): Promise<DomainWithOidc
  * plugins are synchronized, rather than relying on updatedAt timestamp heuristics.
  *
  * @param domainId - Optional domain ID to poll. If not provided, uses a shorter fixed wait.
- * @param accessToken - Kept for backward compatibility, no longer used (auth is handled internally).
  * @param options - Optional configuration:
  *   - timeoutMillis: Maximum time to wait (default: 30000ms)
  *   - intervalMillis: Polling interval (default: 500ms)
@@ -201,11 +200,9 @@ const DOMAIN_SYNC_FALLBACK_WAIT_MS = 2000;
 
 export const waitForDomainSync = async (
   domainId?: string,
-  accessToken?: string,
   options?: {
     timeoutMillis?: number;
     intervalMillis?: number;
-    stabilityMillis?: number;
   },
 ): Promise<void> => {
   if (!domainId) {
@@ -215,12 +212,7 @@ export const waitForDomainSync = async (
 
   const { timeoutMillis = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS, intervalMillis = DEFAULT_DOMAIN_SYNC_INTERVAL_MS } = options || {};
 
-  try {
-    await waitForDomainReady(domainId, { timeoutMillis, intervalMillis });
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
-  }
+  await waitForDomainReady(domainId, { timeoutMillis, intervalMillis });
 };
 
 export async function waitForOidcReady(

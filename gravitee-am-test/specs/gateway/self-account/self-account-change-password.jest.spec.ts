@@ -107,7 +107,7 @@ describe('SelfAccount - Change Password', () => {
       // Update domain settings once for this test group
       PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.oldPasswordRequired = true;
       await waitForSyncAfter(fixture.domain.id,
-        patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS),
+        () => patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS),
       );
       // Wait for HTTP routes to be live after domain redeploy
       await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
@@ -212,7 +212,7 @@ describe('SelfAccount - Change Password', () => {
       // Update domain settings once for this test group
       PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.tokenAge = 10;
       await waitForSyncAfter(fixture.domain.id,
-        patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS),
+        () => patchDomain(fixture.domain.id, fixture.accessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS),
       );
       // Wait for HTTP routes to be live after domain redeploy
       await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });

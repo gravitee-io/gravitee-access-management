@@ -50,7 +50,7 @@ export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => 
   });
   const updatedApp = await waitForSyncAfter(
     domain.id,
-    updateApplication(
+    () => updateApplication(
       domain.id,
       accessToken,
       {

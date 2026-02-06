@@ -24,8 +24,13 @@ const DEFAULT_INTERVAL_MS = 500;
 
 type PollOptions = { timeoutMillis?: number; intervalMillis?: number };
 
+let cachedApi: ReturnType<typeof getMonitoringApi> | null = null;
+
 function createApi() {
-  return getMonitoringApi();
+  if (!cachedApi) {
+    cachedApi = getMonitoringApi();
+  }
+  return cachedApi;
 }
 
 const isReady = (state: DomainState | null): boolean => state !== null && state.stable && state.synchronized;
@@ -95,17 +100,17 @@ export const waitForNextSync = async (domainId: string, options?: PollOptions): 
 };
 
 /**
- * Snapshot the domain's lastSync, await a mutation, then poll until lastSync advances.
+ * Snapshot the domain's lastSync, execute a mutation, then poll until lastSync advances.
  *
  * This avoids the race in `waitForNextSync` where the sync cycle completes
  * between the mutation returning and the polling starting. By capturing
  * lastSync *before* the mutation executes, we guarantee we detect the sync
  * that processes it.
  */
-export const waitForSyncAfter = async <T>(domainId: string, mutation: Promise<T>, options?: PollOptions): Promise<T> => {
+export const waitForSyncAfter = async <T>(domainId: string, mutation: () => Promise<T>, options?: PollOptions): Promise<T> => {
   const { timeoutMillis = DEFAULT_TIMEOUT_MS, intervalMillis = DEFAULT_INTERVAL_MS } = options || {};
   const lastSyncBefore = await fetchStateSafe(domainId).then((s) => s?.lastSync ?? 0);
-  const result = await mutation;
+  const result = await mutation();
 
   await retryUntil(
     () => fetchStateSafe(domainId),

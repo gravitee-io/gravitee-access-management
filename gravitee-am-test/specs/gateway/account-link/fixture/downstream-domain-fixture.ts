@@ -80,7 +80,7 @@ export const setupDownstreamDomain = async (
 
   await startDomain(oidcDomain.id, accessToken);
   const domainWithOidc = await waitForDomainStart(oidcDomain);
-  await waitForDomainSync(oidcDomain.id, accessToken);
+  await waitForDomainSync(oidcDomain.id);
 
   return {
     oidcDomain: oidcDomain,

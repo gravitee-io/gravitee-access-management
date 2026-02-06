@@ -29,8 +29,9 @@ import {
 } from './fixtures/rate-limit-fixture';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../test-fixture';
+import crypto from 'crypto';
 
-const runId = Date.now();
+const runId = crypto.randomUUID();
 const key = (name: string) => `${name}-${runId}`;
 
 let accessToken;

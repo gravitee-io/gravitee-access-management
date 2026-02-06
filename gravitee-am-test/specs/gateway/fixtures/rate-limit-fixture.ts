@@ -109,7 +109,7 @@ export const configureRateLimitPolicy = async (domainId: string, accessToken: st
   ]);
 
   await waitForSyncAfter(domainId,
-    updateDomainFlows(domainId, accessToken, flows),
+    () => updateDomainFlows(domainId, accessToken, flows),
   );
 };
 

@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-#!/usr/bin/env bash
 # Runs gateway and management tests in a loop until a failure occurs.
 # Usage: ./scripts/run-until-fail.sh [max_runs]
 #   max_runs: optional limit on iterations (default: unlimited)
@@ -40,19 +39,43 @@ while true; do
     break
   fi
 
-  echo "[Run $RUN] Starting gateway tests..."
-  if ! npm --prefix gravitee-am-test run ci:gateway --silent -- --bail > "$LOG_DIR/run-${RUN}-gateway.log" 2>&1; then
-    echo "[Run $RUN] GATEWAY FAILED after $PASS_COUNT successful runs."
+  echo 'Resetting docker env...'
+  npm --prefix docker/local-stack run stack:down --silent > /dev/null 2>&1
+  npm --prefix docker/local-stack run stack:dev:setup:mongo --silent > /dev/null 2>&1
+
+  GW_START=$(date +%s)
+  GW_START_FMT=$(date -r "$GW_START" +%H:%M)
+  GW_ETA_FMT=$(date -r $((GW_START + 9 * 60)) +%H:%M)
+  echo "[Run $RUN] Gateway: Started at $GW_START_FMT, finishes at ~$GW_ETA_FMT"
+  if ! npm --prefix gravitee-am-test run ci:gateway --silent -- > "$LOG_DIR/run-${RUN}-gateway.log" 2>&1; then
+    GW_DUR=$(( $(date +%s) - GW_START ))
+    echo "[Run $RUN] GATEWAY FAILED after ${GW_DUR}s ($PASS_COUNT successful runs)."
     echo "Log: $LOG_DIR/run-${RUN}-gateway.log"
     exit 1
   fi
-#
-#  echo "[Run $RUN] Starting management tests (parallel)..."
-#  if ! npm --prefix gravitee-am-test run ci:management:parallel --silent -- > "$LOG_DIR/run-${RUN}-management.log" 2>&1; then
-#    echo "[Run $RUN] MANAGEMENT FAILED after $PASS_COUNT successful runs."
-#    echo "Log: $LOG_DIR/run-${RUN}-management.log"
-#    exit 1
-#  fi
+  GW_DUR=$(( $(date +%s) - GW_START ))
+  GW_MINS=$((GW_DUR / 60))
+  GW_SECS=$((GW_DUR % 60))
+  echo "[Run $RUN] Gateway PASSED in ${GW_MINS}m${GW_SECS}s"
+
+  echo 'Resetting docker env...'
+  npm --prefix docker/local-stack run stack:down --silent > /dev/null 2>&1
+  npm --prefix docker/local-stack run stack:dev:setup:mongo --silent > /dev/null 2>&1
+
+  MGMT_START=$(date +%s)
+  MGMT_START_FMT=$(date -r "$MGMT_START" +%H:%M)
+  MGMT_ETA_FMT=$(date -r $((MGMT_START + 3 * 60)) +%H:%M)
+  echo "[Run $RUN] Management: Started at $MGMT_START_FMT, finishes at ~$MGMT_ETA_FMT"
+  if ! npm --prefix gravitee-am-test run ci:management:parallel --silent -- > "$LOG_DIR/run-${RUN}-management.log" 2>&1; then
+    MGMT_DUR=$(( $(date +%s) - MGMT_START ))
+    echo "[Run $RUN] MANAGEMENT FAILED after ${MGMT_DUR}s ($PASS_COUNT successful runs)."
+    echo "Log: $LOG_DIR/run-${RUN}-management.log"
+    exit 1
+  fi
+  MGMT_DUR=$(( $(date +%s) - MGMT_START ))
+  MGMT_MINS=$((MGMT_DUR / 60))
+  MGMT_SECS=$((MGMT_DUR % 60))
+  echo "[Run $RUN] Management PASSED in ${MGMT_MINS}m${MGMT_SECS}s"
 
   PASS_COUNT=$RUN
   echo "[Run $RUN] PASSED ($PASS_COUNT total)"

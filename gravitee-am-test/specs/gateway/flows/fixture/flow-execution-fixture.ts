@@ -133,7 +133,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
     preRegistration: false,
   };
   await waitForSyncAfter(domain.id,
-    createUser(domain.id, accessToken, user),
+    () => createUser(domain.id, accessToken, user),
   );
 
   await clearEmails(user.email);
@@ -185,7 +185,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
     }
 
     await waitForSyncAfter(domain.id,
-      updateDomainFlows(domain.id, accessToken, flows),
+      () => updateDomainFlows(domain.id, accessToken, flows),
     );
   };
 
@@ -278,23 +278,21 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
     }
 
     await waitForSyncAfter(domain.id,
-      updateApplicationFlows(domain.id, accessToken, application.id, flows),
+      () => updateApplicationFlows(domain.id, accessToken, application.id, flows),
     );
   };
 
   // Helper: Set custom token claims
   const setAppTokenClaims = async (claims: TokenClaim[]) => {
     application.settings.oauth.tokenCustomClaims = claims;
-    const patch = patchApplication(domain.id, accessToken, application, application.id);
-    await waitForSyncAfter(domain.id, patch);
+    await waitForSyncAfter(domain.id, () => patchApplication(domain.id, accessToken, application, application.id));
   };
 
   // Helper: Set flows inherited flag
   const setFlowsInherited = async (inherited: boolean) => {
     application.settings.advanced = application.settings.advanced || {};
     application.settings.advanced.flowsInherited = inherited;
-    const patch = patchApplication(domain.id, accessToken, application, application.id);
-    await waitForSyncAfter(domain.id, patch);
+    await waitForSyncAfter(domain.id, () => patchApplication(domain.id, accessToken, application, application.id));
   };
 
   // Helper: Login and get decoded JWT
@@ -326,8 +324,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
     application.settings.oauth.tokenCustomClaims = [];
     application.settings.advanced = application.settings.advanced || {};
     application.settings.advanced.flowsInherited = true;
-    const patch = patchApplication(domain.id, accessToken, application, application.id);
-    await waitForSyncAfter(domain.id, patch);
+    await waitForSyncAfter(domain.id, () => patchApplication(domain.id, accessToken, application, application.id));
   };
 
   return {

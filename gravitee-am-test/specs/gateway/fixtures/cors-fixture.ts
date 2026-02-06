@@ -120,7 +120,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
   // Helper function to update CORS settings
   const updateCorsSettings = async (corsSettings: Partial<CorsSettings>) => {
     await waitForSyncAfter(domain.id,
-      patchDomain(domain.id, accessToken, {
+      () => patchDomain(domain.id, accessToken, {
         path: domain.path,
         vhostMode: false,
         vhosts: [],

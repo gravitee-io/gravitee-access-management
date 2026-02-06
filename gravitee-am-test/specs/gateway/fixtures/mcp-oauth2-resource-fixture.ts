@@ -91,7 +91,7 @@ export const setupMcpOAuth2ResourceFixture = async (settings: any = {}): Promise
   const openIdConfiguration = domainStarted.oidcConfig;
 
   // Wait for sync
-  await waitForDomainSync(domain.id, accessToken);
+  await waitForDomainSync(domain.id);
 
   const cleanup = async () => {
     if (domain) {

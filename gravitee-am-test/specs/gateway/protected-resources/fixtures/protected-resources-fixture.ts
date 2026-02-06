@@ -218,7 +218,7 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     const user = await createTestUser(domain, application, defaultIdp, accessToken);
     // Wrap last mutation in waitForSyncAfter to ensure gateway picks up all resources
     const protectedResources = await waitForSyncAfter(domain.id,
-      createTestProtectedResources(domain, accessToken),
+      () => createTestProtectedResources(domain, accessToken),
     );
 
     const openIdConfiguration = oidcConfig;

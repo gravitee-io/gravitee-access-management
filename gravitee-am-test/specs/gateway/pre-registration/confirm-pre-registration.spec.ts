@@ -141,7 +141,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
     it('Update Application to allow account validation using forgot password', async () => {
       await waitForSyncAfter(
         fixture.domain.id,
-        patchApplication(
+        () => patchApplication(
           fixture.domain.id,
           fixture.accessToken,
           {
@@ -182,7 +182,7 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
   it('Update Application to allow Dynamic User Registration', async () => {
     await waitForSyncAfter(
       fixture.domain.id,
-      patchApplication(
+      () => patchApplication(
         fixture.domain.id,
         fixture.accessToken,
         {
