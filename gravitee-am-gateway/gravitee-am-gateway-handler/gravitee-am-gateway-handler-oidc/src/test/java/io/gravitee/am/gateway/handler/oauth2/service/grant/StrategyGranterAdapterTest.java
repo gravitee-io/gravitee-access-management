@@ -306,6 +306,8 @@ class StrategyGranterAdapterTest {
                 new Date(),
                 "subject-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
+                "actor-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo
         );
 
@@ -346,6 +348,7 @@ class StrategyGranterAdapterTest {
         OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
         assertTrue(capturedRequest.isDelegation(), "Should be delegation");
         assertNotNull(capturedRequest.getActClaim(), "Should have act claim");
+        assertEquals("subject-token-id", capturedRequest.getSubjectTokenId(), "Should have subject token ID for audit");
 
         Map<String, Object> actClaim = capturedRequest.getActClaim();
         assertEquals("actor-sub", actClaim.get(Claims.SUB), "Act claim should have actor sub");
@@ -368,6 +371,8 @@ class StrategyGranterAdapterTest {
                 "urn:ietf:params:oauth:token-type:access_token",
                 new Date(),
                 "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo
         );
@@ -438,6 +443,8 @@ class StrategyGranterAdapterTest {
                 new Date(),
                 "subject-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
+                "actor-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo
         );
 
@@ -506,6 +513,8 @@ class StrategyGranterAdapterTest {
                 "urn:ietf:params:oauth:token-type:access_token",
                 new Date(),
                 "subject-token-id",
+                "urn:ietf:params:oauth:token-type:access_token",
+                "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo
         );

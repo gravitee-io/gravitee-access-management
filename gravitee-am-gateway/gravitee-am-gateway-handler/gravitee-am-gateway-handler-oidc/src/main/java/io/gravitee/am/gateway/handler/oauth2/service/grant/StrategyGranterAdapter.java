@@ -244,8 +244,12 @@ public class StrategyGranterAdapter implements TokenGranter {
             case GrantData.TokenExchangeData data -> {
                 oAuth2Request.setIssuedTokenType(data.issuedTokenType());
                 oAuth2Request.setExchangeExpiration(data.expiration());
+                oAuth2Request.setSubjectTokenId(data.subjectTokenId());
+                oAuth2Request.setSubjectTokenType(data.subjectTokenType());
                 oAuth2Request.setDelegation(data.isDelegation());
                 if (data.isDelegation()) {
+                    oAuth2Request.setActorTokenId(data.actorTokenId());
+                    oAuth2Request.setActorTokenType(data.actorTokenType());
                     oAuth2Request.setActClaim(buildActClaim(data.actorInfo()));
                 }
             }

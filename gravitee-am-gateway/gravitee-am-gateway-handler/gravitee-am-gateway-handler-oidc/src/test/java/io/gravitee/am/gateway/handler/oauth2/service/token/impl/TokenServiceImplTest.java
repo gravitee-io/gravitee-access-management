@@ -508,7 +508,7 @@ public class TokenServiceImplTest {
 
         // Verify the audit contains the resource parameter
         String auditMessage = capturedBuilder.build(new ObjectMapper()).getOutcome().getMessage();
-        assertThat(auditMessage).contains("resource");
+        assertThat(auditMessage).contains("RESOURCE");
         assertThat(auditMessage).contains("https://mcp.example.com/api/v1");
         assertThat(auditMessage).contains("https://mcp2.example.com/api/v1");
     }
@@ -842,6 +842,153 @@ public class TokenServiceImplTest {
         // Verify normal token creation path was used
         verify(jwtService, Mockito.atLeastOnce()).encodeJwt(any(JWT.class), any(Client.class));
         verify(idTokenService, Mockito.never()).create(any(OAuth2Request.class), any(Client.class), any(User.class), any());
+    }
+
+    // ========== Token Exchange Audit Tests ==========
+
+    @Test
+    public void when_token_exchange_should_include_exchange_params_in_audit() {
+        // Arrange: Token exchange request with delegation
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap<>());
+        request.setClientId("exchange-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ACCESS_TOKEN);
+        request.setSubjectTokenId("subject-jti-123");
+        request.setSubjectTokenType("urn:ietf:params:oauth:token-type:access_token");
+        request.setActorTokenType("urn:ietf:params:oauth:token-type:access_token");
+        request.setActorTokenId("actor-jti-456");
+        request.setDelegation(true);
+        request.setActClaim(Map.of(Claims.SUB, "actor-sub-789"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("exchange-client");
+        client.setDomain("test-domain");
+        User user = createUser("user-789");
+        setupCommonMocks(request);
+
+        // Act
+        executeTokenCreation(request, client, user);
+
+        // Assert: Verify audit contains token exchange params
+        ArgumentCaptor<AuditBuilder> auditCaptor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, Mockito.atLeastOnce()).report(auditCaptor.capture());
+
+        AuditBuilder capturedBuilder = auditCaptor.getAllValues().stream()
+                .filter(ClientTokenAuditBuilder.class::isInstance)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Expected ClientTokenAuditBuilder in audit reports"));
+
+        String auditMessage = capturedBuilder.build(new ObjectMapper()).getOutcome().getMessage();
+
+        // Token exchange specific params
+        assertThat(auditMessage).contains("REQUESTED_TOKEN_TYPE");
+        assertThat(auditMessage).contains(TokenType.ACCESS_TOKEN);
+        assertThat(auditMessage).contains("SUBJECT_TOKEN");
+        assertThat(auditMessage).contains("subject-jti-123");
+        assertThat(auditMessage).contains("SUBJECT_TOKEN_TYPE");
+        assertThat(auditMessage).contains("urn:ietf:params:oauth:token-type:access_token");
+        assertThat(auditMessage).contains("ACTOR_TOKEN");
+        assertThat(auditMessage).contains("actor-jti-456");
+        assertThat(auditMessage).contains("ACTOR_TOKEN_TYPE");
+
+        // Standard params still present
+        assertThat(auditMessage).contains("GRANT_TYPE");
+        assertThat(auditMessage).contains(GrantType.TOKEN_EXCHANGE);
+    }
+
+    @Test
+    public void when_token_exchange_impersonation_should_not_include_actor_params_in_audit() {
+        // Arrange: Token exchange without delegation (impersonation)
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap<>());
+        request.setClientId("exchange-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ACCESS_TOKEN);
+        request.setSubjectTokenId("subject-jti-456");
+        request.setSubjectTokenType("urn:ietf:params:oauth:token-type:access_token");
+        request.setDelegation(false);
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("exchange-client");
+        client.setDomain("test-domain");
+        User user = createUser("user-456");
+        setupCommonMocks(request);
+
+        // Act
+        executeTokenCreation(request, client, user);
+
+        // Assert
+        ArgumentCaptor<AuditBuilder> auditCaptor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, Mockito.atLeastOnce()).report(auditCaptor.capture());
+
+        AuditBuilder capturedBuilder = auditCaptor.getAllValues().stream()
+                .filter(ClientTokenAuditBuilder.class::isInstance)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Expected ClientTokenAuditBuilder in audit reports"));
+
+        String auditMessage = capturedBuilder.build(new ObjectMapper()).getOutcome().getMessage();
+
+        // Subject token params present
+        assertThat(auditMessage).contains("SUBJECT_TOKEN");
+        assertThat(auditMessage).contains("subject-jti-456");
+        assertThat(auditMessage).contains("SUBJECT_TOKEN_TYPE");
+
+        // Actor params NOT present (impersonation, no delegation)
+        assertThat(auditMessage).doesNotContain("ACTOR_TOKEN_TYPE");
+        assertThat(auditMessage).doesNotContain("ACTOR_TOKEN");
+    }
+
+    @Test
+    public void when_token_exchange_id_token_only_should_include_exchange_params_in_audit() {
+        // Arrange: Token exchange requesting ID token
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap<>());
+        request.setClientId("exchange-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ID_TOKEN);
+        request.setSubjectTokenId("subject-jti-789");
+        request.setSubjectTokenType("urn:ietf:params:oauth:token-type:access_token");
+        request.setDelegation(false);
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("exchange-client");
+        client.setDomain("test-domain");
+        client.setIdTokenValiditySeconds(3600);
+        User user = createUser("user-321");
+
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
+        when(idTokenService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
+                .thenReturn(Single.just("eyJhbGciOiJSUzI1NiJ9.test.signature"));
+
+        // Act
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        // Assert: Verify audit contains token exchange params
+        ArgumentCaptor<AuditBuilder> auditCaptor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, Mockito.atLeastOnce()).report(auditCaptor.capture());
+
+        AuditBuilder capturedBuilder = auditCaptor.getAllValues().stream()
+                .filter(ClientTokenAuditBuilder.class::isInstance)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Expected ClientTokenAuditBuilder in audit reports"));
+
+        String auditMessage = capturedBuilder.build(new ObjectMapper()).getOutcome().getMessage();
+
+        assertThat(auditMessage).contains("GRANT_TYPE");
+        assertThat(auditMessage).contains(GrantType.TOKEN_EXCHANGE);
+        assertThat(auditMessage).contains("REQUESTED_TOKEN_TYPE");
+        assertThat(auditMessage).contains(TokenType.ID_TOKEN);
+        assertThat(auditMessage).contains("SUBJECT_TOKEN");
+        assertThat(auditMessage).contains("subject-jti-789");
+        assertThat(auditMessage).contains("SUBJECT_TOKEN_TYPE");
     }
 
 }
