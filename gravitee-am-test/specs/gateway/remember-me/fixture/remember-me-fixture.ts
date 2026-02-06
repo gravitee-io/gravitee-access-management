@@ -18,14 +18,7 @@ import { expect } from '@jest/globals';
 import { Domain } from '@management-models/Domain';
 import { DomainOidcConfig } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {
-  createDomain,
-  patchDomain,
-  safeDeleteDomain,
-  startDomain,
-  waitForDomainStart,
-  waitForDomainSync,
-} from '@management-commands/domain-management-commands';
+import { createDomain, patchDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';
@@ -62,15 +55,11 @@ export interface RememberMeFixture {
 
 export const initEnv = async (applicationConfiguration, domainConfiguration = null): Promise<RememberMeFixture> => {
   const accessToken = await requestAdminAccessToken();
-  let domain = await createDomain(accessToken, uniqueName('remember-me', true), 'test remember me option')
-    .then((createdDomain) => startDomain(createdDomain.id, accessToken))
-    .then((startedDomain) => {
-      if (domainConfiguration != null) {
-        return patchDomain(startedDomain.id, accessToken, domainConfiguration);
-      }
+  let domain = await createDomain(accessToken, uniqueName('remember-me', true), 'test remember me option');
 
-      return startedDomain;
-    });
+  if (domainConfiguration != null) {
+    domain = await patchDomain(domain.id, accessToken, domainConfiguration);
+  }
 
   const customIdp = jdbc === 'jdbc' ? await createJdbcIdp(domain.id, accessToken) : await createMongoIdp(domain.id, accessToken);
   const app = await createTestApp('remember-me-app', domain, accessToken, 'browser', {
@@ -81,10 +70,8 @@ export const initEnv = async (applicationConfiguration, domainConfiguration = nu
     identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
-  await waitForDomainSync(domain.id);
-
-  // Wait for domain to be ready to serve requests
-  const started = await waitForDomainStart(domain);
+  const startedDomain = await startDomain(domain.id, accessToken);
+  const started = await waitForDomainStart(startedDomain);
   domain = started.domain;
   const openIdConfiguration = started.oidcConfig;
 
