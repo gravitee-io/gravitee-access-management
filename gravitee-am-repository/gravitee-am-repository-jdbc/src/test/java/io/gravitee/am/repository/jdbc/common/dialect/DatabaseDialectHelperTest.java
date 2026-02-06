@@ -156,4 +156,67 @@ public class DatabaseDialectHelperTest {
         Assert.assertEquals("binding size should be 0", 0L, (long)search.getBinding().size());
 
     }
+
+    @Test
+    public void shouldEscapeLikePatternValue_MsSql_Brackets() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MsSqlHelper helper = new MsSqlHelper(dialect, null);
+
+        // Test escaping of square brackets using backslash (requires ESCAPE '\' clause)
+        assertEquals("app\\[test\\]", helper.escapeLikePatternValue("app[test]"));
+        assertEquals("\\[", helper.escapeLikePatternValue("["));
+        assertEquals("\\]", helper.escapeLikePatternValue("]"));
+        assertEquals("app\\[test\\]%name", helper.escapeLikePatternValue("app[test]%name"));
+        // Test that underscore is also escaped
+        assertEquals("app\\_test", helper.escapeLikePatternValue("app_test"));
+        // Test backslash escaping
+        assertEquals("app\\\\test", helper.escapeLikePatternValue("app\\test"));
+    }
+
+    @Test
+    public void shouldEscapeLikePatternValue_MsSql_NoSpecialChars() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MsSqlHelper helper = new MsSqlHelper(dialect, null);
+
+        // Test that values without special characters are unchanged
+        assertEquals("apptest", helper.escapeLikePatternValue("apptest"));
+        assertEquals("%test%", helper.escapeLikePatternValue("%test%"));
+        assertEquals("app{test}", helper.escapeLikePatternValue("app{test}"));
+    }
+
+    @Test
+    public void shouldEscapeLikePatternValue_MsSql_Null() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MsSqlHelper helper = new MsSqlHelper(dialect, null);
+
+        // Test null handling
+        Assert.assertNull(helper.escapeLikePatternValue(null));
+    }
+
+    @Test
+    public void shouldEscapeLikePatternValue_Postgresql_NoEscaping() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+
+        // PostgreSQL does not need escaping for brackets (default implementation)
+        assertEquals("app[test]", helper.escapeLikePatternValue("app[test]"));
+    }
+
+    @Test
+    public void shouldGetLikeEscapeClause_MsSql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MsSqlHelper helper = new MsSqlHelper(dialect, null);
+
+        // SQL Server needs ESCAPE clause for backslash-escaped patterns
+        assertEquals(" ESCAPE '\\' ", helper.getLikeEscapeClause());
+    }
+
+    @Test
+    public void shouldGetLikeEscapeClause_Postgresql_Empty() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+
+        // PostgreSQL doesn't need ESCAPE clause (default implementation)
+        assertEquals("", helper.getLikeEscapeClause());
+    }
 }
