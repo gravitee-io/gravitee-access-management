@@ -194,7 +194,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count))
+        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count))
                 .observeOn(Schedulers.computation());
     }
 
@@ -210,7 +210,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
             Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-            return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count))
+            return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count))
                     .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
