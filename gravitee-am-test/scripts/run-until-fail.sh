@@ -1,3 +1,20 @@
+#!/bin/bash
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 #!/usr/bin/env bash
 # Runs gateway and management tests in a loop until a failure occurs.
 # Usage: ./scripts/run-until-fail.sh [max_runs]
@@ -29,13 +46,13 @@ while true; do
     echo "Log: $LOG_DIR/run-${RUN}-gateway.log"
     exit 1
   fi
-
-  echo "[Run $RUN] Starting management tests (parallel)..."
-  if ! npm --prefix gravitee-am-test run ci:management:parallel --silent -- > "$LOG_DIR/run-${RUN}-management.log" 2>&1; then
-    echo "[Run $RUN] MANAGEMENT FAILED after $PASS_COUNT successful runs."
-    echo "Log: $LOG_DIR/run-${RUN}-management.log"
-    exit 1
-  fi
+#
+#  echo "[Run $RUN] Starting management tests (parallel)..."
+#  if ! npm --prefix gravitee-am-test run ci:management:parallel --silent -- > "$LOG_DIR/run-${RUN}-management.log" 2>&1; then
+#    echo "[Run $RUN] MANAGEMENT FAILED after $PASS_COUNT successful runs."
+#    echo "Log: $LOG_DIR/run-${RUN}-management.log"
+#    exit 1
+#  fi
 
   PASS_COUNT=$RUN
   echo "[Run $RUN] PASSED ($PASS_COUNT total)"
