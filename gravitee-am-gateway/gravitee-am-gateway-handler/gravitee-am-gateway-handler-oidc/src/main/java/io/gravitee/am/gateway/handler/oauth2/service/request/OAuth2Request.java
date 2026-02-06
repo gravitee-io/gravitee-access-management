@@ -167,6 +167,26 @@ public class OAuth2Request extends BaseRequest {
      */
     private boolean delegation;
 
+    /**
+     * Token Exchange (RFC 8693) - JTI of the subject token used in the exchange.
+     */
+    private String subjectTokenId;
+
+    /**
+     * Token Exchange (RFC 8693) - type URI of the subject token (e.g. urn:ietf:params:oauth:token-type:access_token).
+     */
+    private String subjectTokenType;
+
+    /**
+     * Token Exchange (RFC 8693) - type URI of the actor token (e.g. urn:ietf:params:oauth:token-type:access_token).
+     */
+    private String actorTokenType;
+
+    /**
+     * Token Exchange (RFC 8693) - JTI of the actor token used in delegation.
+     */
+    private String actorTokenId;
+
     public OAuth2Request(OAuth2Request other){
         this.clientId = other.clientId;
         this.grantType = other.grantType;
@@ -187,6 +207,10 @@ public class OAuth2Request extends BaseRequest {
         this.exchangeExpiration = other.exchangeExpiration;
         this.actClaim = other.actClaim;
         this.delegation = other.delegation;
+        this.subjectTokenId = other.subjectTokenId;
+        this.subjectTokenType = other.subjectTokenType;
+        this.actorTokenType = other.actorTokenType;
+        this.actorTokenId = other.actorTokenId;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
         this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
 
