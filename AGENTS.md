@@ -354,9 +354,9 @@ Quick-reference table of key paths in the repository.
 |------|-------------|
 | `AGENTS.md` | This file — universal AI agent instructions |
 | `CLAUDE.md` | Claude Code bridge (references this file) |
-| `docs/agent-standards/` | Detailed rules, skills, templates, commands |
+| `docs/agent-standards/` | Tool-specific rules, skills, templates (extends this file) |
 | `docs/agent-standards/commands.md` | Canonical verified commands |
-| `docs/agent-standards/cursor-rules/` | Cursor-format rules (`.mdc` files) |
+| `docs/agent-standards/cursor-rules/` | Cursor-specific rules (`.mdc` with frontmatter metadata) |
 | `docs/agent-standards/skills/` | Reusable agent skills |
 | `docs/agent-standards/templates/` | Task and checklist templates |
 | `docs/mapi/openapi.yaml` | OpenAPI 3 spec for Management API |
