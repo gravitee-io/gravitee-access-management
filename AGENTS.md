@@ -21,7 +21,7 @@ mvn clean install
 mvn install -DskipTests
 
 # Build excluding UI module
-mvn clean install -pl '!gravitee-am-ui'
+mvn install -pl '!gravitee-am-ui'
 
 # Run all unit tests
 mvn test
@@ -129,16 +129,16 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Java 17, RxJava 2, Vert.x, Spring |
-| Frontend | Angular, TypeScript |
-| Build | Maven (backend), Yarn 4.1.1 (frontend) |
-| Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server |
-| Migrations | Liquibase (JDBC), programmatic (MongoDB) |
-| API spec | OpenAPI 3 (`docs/mapi/openapi.yaml`) |
+| Layer | Technology                                                    |
+|-------|---------------------------------------------------------------|
+| Backend | Java 21, RxJava 3, Vert.x, Spring                             |
+| Frontend | Angular, TypeScript                                           |
+| Build | Maven (backend), Yarn 4.1.1 (frontend)                        |
+| Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server               |
+| Migrations | Liquibase (JDBC), programmatic (MongoDB)                      |
+| API spec | OpenAPI 3 (`docs/mapi/openapi.yaml`)                          |
 | Tests | JUnit 5, Mockito (unit); Jest + Newman (integration/contract) |
-| Containers | Docker, Docker Compose |
+| Containers | Docker, Docker Compose                                        |
 
 ### Key Module Paths
 
@@ -222,7 +222,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 - Respect layer order: **Repository → Service → Resource**.
 - **Resources** handle HTTP + permissions; **Services** handle business logic.
-- Avoid blocking operations on request paths; **do not use `blockingGet()`** on reactive chains.
+- NEVER use blocking operations on request paths; **do not use `blockingGet()`** on reactive chains.
 
 ### RxJava Usage
 
@@ -353,7 +353,6 @@ Quick-reference table of key paths in the repository.
 | Path | Description |
 |------|-------------|
 | `AGENTS.md` | This file — universal AI agent instructions |
-| `CLAUDE.md` | Claude Code bridge (references this file) |
 | `docs/agent-standards/` | Tool-specific rules, skills, templates (extends this file) |
 | `docs/agent-standards/commands.md` | Canonical verified commands |
 | `docs/agent-standards/cursor-rules/` | Cursor-specific rules (`.mdc` with frontmatter metadata) |
