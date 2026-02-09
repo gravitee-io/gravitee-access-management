@@ -112,6 +112,12 @@ public class StandaloneConfiguration {
 
     @Bean
     public io.vertx.rxjava3.core.Vertx vertx(@Autowired Vertx vertx) {
+        // Reconfigure RxJava to use Vertx schedulers.
+        // Since AM-5482, Certificate actions are using a dedicated ThreadPool to size the
+        // HSM worker pool based on the expected signing throughput.
+        // We can now bind IO scheduler to vert-x workers to avoid too many thread creations
+        // during SCIM bulk action on preRegister users (AM-6454/AM-6378)
+        RxJavaPlugins.setIoSchedulerHandler(s -> RxHelper.blockingScheduler(vertx));
         RxJavaPlugins.setComputationSchedulerHandler(s -> RxHelper.scheduler(vertx));
         RxJavaPlugins.setNewThreadSchedulerHandler(s -> RxHelper.scheduler(vertx));
         return io.vertx.rxjava3.core.Vertx.newInstance(vertx);
