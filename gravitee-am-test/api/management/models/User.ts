@@ -385,16 +385,16 @@ export interface User {
   serviceAccount?: boolean;
   /**
    *
-   * @type {UserId}
-   * @memberof User
-   */
-  fullId?: UserId;
-  /**
-   *
    * @type {string}
    * @memberof User
    */
   middleName?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -448,7 +448,7 @@ export interface User {
    * @type {{ [key: string]: any; }}
    * @memberof User
    */
-  identitiesAsMap?: { [key: string]: any };
+  lastIdentityInformation?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -463,10 +463,10 @@ export interface User {
   temporarilyLocked?: boolean;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {UserId}
    * @memberof User
    */
-  lastIdentityInformation?: { [key: string]: any };
+  fullId?: UserId;
   /**
    *
    * @type {string}
@@ -560,8 +560,8 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
     forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     middleName: json['middleName'] == null ? undefined : json['middleName'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
@@ -570,10 +570,10 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
     address: json['address'] == null ? undefined : json['address'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
     indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
     temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
-    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     locale: json['locale'] == null ? undefined : json['locale'],
   };
 }
@@ -646,8 +646,8 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
     forceResetPassword: value['forceResetPassword'],
     serviceAccount: value['serviceAccount'],
-    fullId: UserIdToJSON(value['fullId']),
     middleName: value['middleName'],
+    identitiesAsMap: value['identitiesAsMap'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],
@@ -656,10 +656,10 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     phoneNumber: value['phoneNumber'],
     address: value['address'],
     disabled: value['disabled'],
-    identitiesAsMap: value['identitiesAsMap'],
+    lastIdentityInformation: value['lastIdentityInformation'],
     indefinitelyLocked: value['indefinitelyLocked'],
     temporarilyLocked: value['temporarilyLocked'],
-    lastIdentityInformation: value['lastIdentityInformation'],
+    fullId: UserIdToJSON(value['fullId']),
     locale: value['locale'],
   };
 }

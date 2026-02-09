@@ -176,7 +176,7 @@ export interface UpdateProtectedResourceRequest {
  */
 export class ProtectedResourceApi extends runtime.BaseAPI {
   /**
-   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified organization.
    * Remove a secret for a protected resource
    */
   async _deleteRaw(
@@ -246,7 +246,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified organization.
    * Remove a secret for a protected resource
    */
   async _delete(requestParameters: DeleteRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
@@ -340,7 +340,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[CREATE] permission on the specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified organization.
    * Create a secret for a protected resource
    */
   async createRaw(
@@ -412,7 +412,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[CREATE] permission on the specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified organization.
    * Create a secret for a protected resource
    */
   async create(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ClientSecret> {
@@ -738,7 +738,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissionsRaw(
@@ -803,7 +803,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissions(
@@ -815,7 +815,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource or PROTECTED_RESOURCE[LIST] permission on the specified domain or PROTECTED_RESOURCE[LIST] permission on the specified environment or PROTECTED_RESOURCE[LIST] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified organization.
    * List secrets of a protected resource
    */
   async getSecretsRaw(
@@ -880,7 +880,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource or PROTECTED_RESOURCE[LIST] permission on the specified domain or PROTECTED_RESOURCE[LIST] permission on the specified environment or PROTECTED_RESOURCE[LIST] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified organization.
    * List secrets of a protected resource
    */
   async getSecrets(
@@ -1152,7 +1152,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified organization.
    * Renew a secret for a protected resource
    */
   async renewRaw(
@@ -1222,7 +1222,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified organization.
    * Renew a secret for a protected resource
    */
   async renew(requestParameters: RenewRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ClientSecret> {

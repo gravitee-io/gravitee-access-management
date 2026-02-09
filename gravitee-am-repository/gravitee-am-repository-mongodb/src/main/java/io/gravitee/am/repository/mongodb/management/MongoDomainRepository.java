@@ -234,6 +234,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setDataPlaneId(domainMongo.getDataPlaneId());
         domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
         domain.setTokenExchangeSettings(convert(domainMongo.getTokenExchangeSettings()));
+        domain.setCertificateSettings(domainMongo.getCertificateSettings());
 
         return domain;
     }
@@ -274,6 +275,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setDataPlaneId(domain.getDataPlaneId());
         domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
         domainMongo.setTokenExchangeSettings(convert(domain.getTokenExchangeSettings()));
+        domainMongo.setCertificateSettings(domain.getCertificateSettings());
         return domainMongo;
     }
 

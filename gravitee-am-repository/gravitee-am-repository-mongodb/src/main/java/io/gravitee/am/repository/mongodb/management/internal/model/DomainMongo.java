@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
@@ -93,6 +94,8 @@ public class DomainMongo extends Auditable {
     private SecretSettingsMongo secretSettings;
 
     private TokenExchangeSettingsMongo tokenExchangeSettings;
+
+    private CertificateSettings certificateSettings;
 
     @Override
     public boolean equals(Object o) {
