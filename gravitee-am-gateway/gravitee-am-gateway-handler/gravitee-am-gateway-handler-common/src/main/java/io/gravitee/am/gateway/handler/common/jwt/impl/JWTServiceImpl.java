@@ -110,13 +110,13 @@ public class JWTServiceImpl implements JWTService {
     @Override
     public Single<EncodedJWT> encodeJwt(JWT jwt, Client client) {
         return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
-                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwtWithFallback(jwt, certificateProvider));
     }
 
     @Override
     public Single<String> encode(JWT jwt, Client client) {
         return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
-                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeWithFallback(jwt, certificateProvider));
     }
 
     @Override
@@ -128,7 +128,7 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
                 .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
-                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwtWithFallback(jwt, certificateProvider));
     }
 
     @Override
@@ -145,7 +145,7 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(signedResponseAlg)
                 .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
-                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwtWithFallback(jwt, certificateProvider));
     }
 
     @Override
@@ -196,6 +196,32 @@ public class JWTServiceImpl implements JWTService {
             case SESSION -> new InvalidTokenException("The session token is invalid", ex);
             default -> new InvalidTokenException("The access token is invalid", ex);
         };
+    }
+
+    private Single<EncodedJWT> encodeJwtWithFallback(JWT jwt, CertificateProvider certificateProvider) {
+        return encodeJwt(jwt, certificateProvider)
+                .onErrorResumeNext(error -> {
+                    logger.warn("Failed to sign JWT with certificate {}, attempting fallback",
+                            certificateProvider.getCertificateInfo().certificateId(), error);
+                    return certificateManager.fallbackCertificateProvider()
+                            .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
+                                    certificateProvider.getCertificateInfo().certificateId()))
+                            .flatMapSingle(fallback -> encodeJwt(jwt, fallback))
+                            .switchIfEmpty(Single.error(error));
+                });
+    }
+
+    private Single<String> encodeWithFallback(JWT jwt, CertificateProvider certificateProvider) {
+        return encode(jwt, certificateProvider)
+                .onErrorResumeNext(error -> {
+                    logger.warn("Failed to sign JWT with certificate {}, attempting fallback",
+                            certificateProvider.getCertificateInfo().certificateId(), error);
+                    return certificateManager.fallbackCertificateProvider()
+                            .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
+                                    certificateProvider.getCertificateInfo().certificateId()))
+                            .flatMapSingle(fallback -> encode(jwt, fallback))
+                            .switchIfEmpty(Single.error(error));
+                });
     }
 
     private Single<EncodedJWT> signWithCertificateInfo(CertificateProvider certificateProvider, JWT jwt) {

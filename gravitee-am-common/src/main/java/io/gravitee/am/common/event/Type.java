@@ -51,5 +51,6 @@ public enum Type {
     UNKNOWN, // used during unmarshalling to avoid Exception which will block the sync process
     REVOKE_TOKEN,
     PROTECTED_RESOURCE,
-    PROTECTED_RESOURCE_SECRET
+    PROTECTED_RESOURCE_SECRET,
+    DOMAIN_CERTIFICATE_SETTINGS
 }

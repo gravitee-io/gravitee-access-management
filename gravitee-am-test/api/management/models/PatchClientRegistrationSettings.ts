@@ -73,6 +73,12 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
+  clientTemplateEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
   dynamicClientRegistrationEnabled?: boolean;
   /**
    *
@@ -80,12 +86,6 @@ export interface PatchClientRegistrationSettings {
    * @memberof PatchClientRegistrationSettings
    */
   openDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
-  clientTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -135,11 +135,11 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
     allowRedirectUriParamsExpressionLanguage:
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled:
       json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     isDynamicClientRegistrationEnabled:
       json['isDynamicClientRegistrationEnabled'] == null ? undefined : json['isDynamicClientRegistrationEnabled'],
     isOpenDynamicClientRegistrationEnabled:
@@ -168,9 +168,9 @@ export function PatchClientRegistrationSettingsToJSONTyped(
     defaultScopes: value['defaultScopes'],
     allowedScopes: value['allowedScopes'],
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
+    clientTemplateEnabled: value['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: value['clientTemplateEnabled'],
     isDynamicClientRegistrationEnabled: value['isDynamicClientRegistrationEnabled'],
     isOpenDynamicClientRegistrationEnabled: value['isOpenDynamicClientRegistrationEnabled'],
     isAllowedScopesEnabled: value['isAllowedScopesEnabled'],

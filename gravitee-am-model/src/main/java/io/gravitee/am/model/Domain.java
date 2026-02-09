@@ -189,13 +189,17 @@ public class Domain implements Resource {
     /**
      * Client secret settings
      */
-
     private SecretExpirationSettings secretExpirationSettings;
 
     /**
      * OAuth 2.0 Token Exchange settings (RFC 8693)
      */
     private TokenExchangeSettings tokenExchangeSettings;
+
+    /**
+     * Certificate settings
+     */
+    private CertificateSettings certificateSettings;
 
     public Domain() {
     }
@@ -239,6 +243,7 @@ public class Domain implements Resource {
         this.dataPlaneId = other.dataPlaneId;
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.tokenExchangeSettings = other.tokenExchangeSettings;
+        this.certificateSettings = other.certificateSettings != null ? new CertificateSettings(other.certificateSettings) : null;
     }
 
     @Override
@@ -480,6 +485,14 @@ public class Domain implements Resource {
 
     public void setTokenExchangeSettings(TokenExchangeSettings tokenExchangeSettings) {
         this.tokenExchangeSettings = tokenExchangeSettings;
+    }
+
+    public CertificateSettings getCertificateSettings() {
+        return certificateSettings;
+    }
+
+    public void setCertificateSettings(CertificateSettings certificateSettings) {
+        this.certificateSettings = certificateSettings;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

@@ -67,6 +67,7 @@ export * from './Certificate';
 export * from './CertificateCredential';
 export * from './CertificateEntity';
 export * from './CertificateKey';
+export * from './CertificateSettings';
 export * from './ChallengeSettings';
 export * from './ClientRegistrationSettings';
 export * from './ClientSecret';

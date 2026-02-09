@@ -71,6 +71,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -96,6 +97,9 @@ public class IDTokenServiceTest {
     private CertificateProvider defaultCertificateProvider;
 
     @Mock
+    private CertificateProvider fallbackCertificateProvider;
+
+    @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Mock
@@ -114,7 +118,7 @@ public class IDTokenServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        when(certificateManager.getClientCertificateProvider(any(), anyBoolean())).thenCallRealMethod();
+        lenient().when(certificateManager.getClientCertificateProvider(any(), anyBoolean())).thenCallRealMethod();
         ReflectionTestUtils.setField(idTokenService, "fallbackToHmacSignature", true);
     }
 
@@ -137,7 +141,6 @@ public class IDTokenServiceTest {
 
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.just(idTokenCert));
         when(certificateManager.get(anyString())).thenReturn(Maybe.just(clientCert));
-        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
         when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
 
@@ -148,7 +151,6 @@ public class IDTokenServiceTest {
 
         verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
-        verify(certificateManager, times(1)).defaultCertificateProvider();
         verify(jwtService, times(1)).encode(any(), eq(idTokenCert));
     }
     @Test
@@ -169,7 +171,6 @@ public class IDTokenServiceTest {
 
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.get(anyString())).thenReturn(Maybe.just(clientCert));
-        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
         when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
 
@@ -180,7 +181,6 @@ public class IDTokenServiceTest {
 
         verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
-        verify(certificateManager, times(1)).defaultCertificateProvider();
         verify(jwtService, times(1)).encode(any(), eq(clientCert));
     }
 
@@ -201,6 +201,7 @@ public class IDTokenServiceTest {
 
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
         when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
@@ -214,6 +215,73 @@ public class IDTokenServiceTest {
         verify(certificateManager, times(1)).get(anyString());
         verify(certificateManager, times(1)).defaultCertificateProvider();
         verify(jwtService, times(1)).encode(any(), eq(defaultCert));
+    }
+
+    @Test
+    public void shouldCreateIDToken_clientCertificateNotFound_fallbackCertificate() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        Client client = new Client();
+        client.setCertificate("certificate-client");
+
+        String idTokenPayload = "payload";
+
+        io.gravitee.am.gateway.certificate.CertificateProvider fallbackCert = new io.gravitee.am.gateway.certificate.CertificateProvider(fallbackCertificateProvider);
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get("certificate-client")).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.just(fallbackCert));
+
+        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateManager, times(1)).findByAlgorithm(any());
+        verify(certificateManager, times(1)).fallbackCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(fallbackCert));
+    }
+
+    @Test
+    public void shouldCreateIDToken_clientCertificateNotFound_fallbackCertificate_withEncryption() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        Client client = new Client();
+        client.setCertificate("certificate-client");
+        client.setIdTokenEncryptedResponseAlg("expectEncryption");
+
+        String idTokenPayload = "payload";
+
+        io.gravitee.am.gateway.certificate.CertificateProvider fallbackCert = new io.gravitee.am.gateway.certificate.CertificateProvider(fallbackCertificateProvider);
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get("certificate-client")).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.just(fallbackCert));
+
+        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
+        when(jweService.encryptIdToken(anyString(),any())).thenReturn(Single.just("encryptedToken"));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateManager, times(1)).findByAlgorithm(any());
+        verify(certificateManager, times(1)).fallbackCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(fallbackCert));
+        verify(jweService, times(1)).encryptIdToken(anyString(),any());
     }
 
     @Test
@@ -251,6 +319,7 @@ public class IDTokenServiceTest {
         when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
 
         TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null, executionContext).test();
@@ -299,6 +368,7 @@ public class IDTokenServiceTest {
         when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
 
         var user = new User();
@@ -358,6 +428,7 @@ public class IDTokenServiceTest {
 
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
         when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
         when(jweService.encryptIdToken(anyString(),any())).thenReturn(Single.just("encryptedToken"));
@@ -400,7 +471,6 @@ public class IDTokenServiceTest {
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
-        when(certificateManager.defaultCertificateProvider()).thenReturn(new io.gravitee.am.gateway.certificate.CertificateProvider(defaultCertificateProvider));
         when(certificateManager.get(anyString())).thenReturn(Maybe.just(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider)));
         when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("test"));
         ((IDTokenServiceImpl) idTokenService).setObjectMapper(objectMapper);

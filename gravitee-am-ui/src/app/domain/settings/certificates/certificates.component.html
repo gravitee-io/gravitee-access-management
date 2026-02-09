@@ -26,18 +26,20 @@
       <button mat-raised-button disabled="false" (click)="rotateCertificate()" [disabled]="preventRotateCertificate()">
         Rotate system key
       </button>
+      <button mat-raised-button (click)="openSettings()">Settings</button>
     </div>
 
     <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="50" rowHeight="auto" [rows]="certificates">
       <ngx-datatable-column name="Certificates" prop="name" [flexGrow]="2" [cellClass]="'certificate-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="certificate-header" fxLayout="row">
+          <div class="certificate-header" fxLayout="row" fxLayoutAlign="start center">
             <div class="certificate-icon">
               <mat-icon>{{ getCertificateTypeIcon(row.type) }}</mat-icon>
             </div>
             <div class="certificate-information">
               <h3 title="{{ row.name }}">{{ row.name }}</h3>
             </div>
+            <span *ngIf="isFallbackCertificate(row.id)" class="gio-badge-neutral badge fallback-badge">Fallback</span>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -99,9 +101,14 @@
             <a mat-button [routerLink]="[row.id]" *hasPermission="['domain_certificate_read']"
               ><mat-icon matTooltip="Settings">settings</mat-icon></a
             >
-            <button *hasPermission="['domain_certificate_delete']" mat-button (click)="delete(row.id, $event)">
-              <mat-icon matTooltip="Delete">delete</mat-icon>
-            </button>
+            <span
+              *hasPermission="['domain_certificate_delete']"
+              [matTooltip]="isFallbackCertificate(row.id) ? 'Cannot delete: certificate is configured as fallback' : 'Delete'"
+            >
+              <button mat-button (click)="delete(row.id, $event)" [disabled]="isFallbackCertificate(row.id)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </span>
           </div>
         </ng-template>
       </ngx-datatable-column>

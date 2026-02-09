@@ -27,6 +27,7 @@ import io.gravitee.am.management.service.dataplane.UserActivityManagementService
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
@@ -1560,6 +1561,181 @@ public class DomainServiceTest {
         subscriber.assertValue(entrypoints -> entrypoints.size() == 2 &&
                 entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)) &&
                 entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID2)));
+    }
+
+    @Test
+    public void shouldUpdateCertificateSettings() {
+        // Arrange
+        String fallbackCertId = "fallback-cert-id";
+        CertificateSettings certificateSettings = new CertificateSettings();
+        certificateSettings.setFallbackCertificate(fallbackCertId);
+
+        Domain existingDomain = new Domain();
+        existingDomain.setId(DOMAIN_ID);
+        existingDomain.setName("test-domain");
+        existingDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        existingDomain.setReferenceId(ENVIRONMENT_ID);
+
+        Certificate fallbackCert = new Certificate();
+        fallbackCert.setId(fallbackCertId);
+        fallbackCert.setDomain(DOMAIN_ID);
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(existingDomain));
+        when(certificateService.findById(fallbackCertId)).thenReturn(Maybe.just(fallbackCert));
+        when(domainRepository.update(any(Domain.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        // Act
+        TestObserver<Domain> testObserver = domainService.updateCertificateSettings(
+                new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID),
+                DOMAIN_ID,
+                certificateSettings,
+                new DefaultUser("admin")
+        ).test();
+
+        // Assert
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(domain -> domain.getCertificateSettings() != null &&
+                domain.getCertificateSettings().getFallbackCertificate().equals(fallbackCertId));
+
+        verify(domainRepository).findById(DOMAIN_ID);
+        verify(certificateService).findById(fallbackCertId);
+        verify(domainRepository).update(any(Domain.class));
+        verify(eventService).create(any(), any());
+        verify(auditService).report(any());
+    }
+
+    @Test
+    public void shouldUpdateCertificateSettings_nullFallbackCertificate() {
+        // Arrange
+        CertificateSettings certificateSettings = new CertificateSettings();
+        certificateSettings.setFallbackCertificate(null);
+
+        Domain existingDomain = new Domain();
+        existingDomain.setId(DOMAIN_ID);
+        existingDomain.setName("test-domain");
+        existingDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        existingDomain.setReferenceId(ENVIRONMENT_ID);
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(existingDomain));
+        when(domainRepository.update(any(Domain.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        // Act
+        TestObserver<Domain> testObserver = domainService.updateCertificateSettings(
+                new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID),
+                DOMAIN_ID,
+                certificateSettings,
+                new DefaultUser("admin")
+        ).test();
+
+        // Assert
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository).findById(DOMAIN_ID);
+        verify(certificateService, never()).findById(anyString());
+        verify(domainRepository).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldUpdateCertificateSettings_domainNotFound() {
+        // Arrange
+        CertificateSettings certificateSettings = new CertificateSettings();
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(new DomainNotFoundException(DOMAIN_ID)));
+
+        // Act
+        TestObserver<Domain> testObserver = domainService.updateCertificateSettings(
+                new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID),
+                DOMAIN_ID,
+                certificateSettings,
+                new DefaultUser("admin")
+        ).test();
+
+        // Assert
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNotComplete();
+        testObserver.assertError(DomainNotFoundException.class);
+
+        verify(domainRepository).findById(DOMAIN_ID);
+        verify(domainRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldUpdateCertificateSettings_fallbackCertificateNotFound() {
+        // Arrange
+        String fallbackCertId = "non-existent-cert";
+        CertificateSettings certificateSettings = new CertificateSettings();
+        certificateSettings.setFallbackCertificate(fallbackCertId);
+
+        Domain existingDomain = new Domain();
+        existingDomain.setId(DOMAIN_ID);
+        existingDomain.setName("test-domain");
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(existingDomain));
+        when(certificateService.findById(fallbackCertId)).thenReturn(Maybe.empty());
+
+        // Act
+        TestObserver<Domain> testObserver = domainService.updateCertificateSettings(
+                new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID),
+                DOMAIN_ID,
+                certificateSettings,
+                new DefaultUser("admin")
+        ).test();
+
+        // Assert
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidParameterException.class);
+        testObserver.assertError(error -> error.getMessage().contains("Fallback certificate not found"));
+
+        verify(domainRepository).findById(DOMAIN_ID);
+        verify(certificateService).findById(fallbackCertId);
+        verify(domainRepository, never()).update(any());
+        verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldUpdateCertificateSettings_fallbackCertificateBelongsToDifferentDomain() {
+        // Arrange
+        String fallbackCertId = "other-domain-cert";
+        String otherDomainId = "other-domain-id";
+        CertificateSettings certificateSettings = new CertificateSettings();
+        certificateSettings.setFallbackCertificate(fallbackCertId);
+
+        Domain existingDomain = new Domain();
+        existingDomain.setId(DOMAIN_ID);
+        existingDomain.setName("test-domain");
+
+        Certificate fallbackCert = new Certificate();
+        fallbackCert.setId(fallbackCertId);
+        fallbackCert.setDomain(otherDomainId);
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(existingDomain));
+        when(certificateService.findById(fallbackCertId)).thenReturn(Maybe.just(fallbackCert));
+
+        // Act
+        TestObserver<Domain> testObserver = domainService.updateCertificateSettings(
+                new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID),
+                DOMAIN_ID,
+                certificateSettings,
+                new DefaultUser("admin")
+        ).test();
+
+        // Assert
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidParameterException.class);
+        testObserver.assertError(error -> error.getMessage().contains("does not belong to this domain"));
+
+        verify(domainRepository).findById(DOMAIN_ID);
+        verify(certificateService).findById(fallbackCertId);
+        verify(domainRepository, never()).update(any());
+        verify(auditService, times(1)).report(any());
     }
 
     private static CorsSettings getCorsSettings(Set<String> allowedOrigins) {
