@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
@@ -58,6 +59,8 @@ public interface DomainService extends DomainReadService {
     Single<Domain> update(String domainId, Domain domain);
 
     Single<Domain> patch(GraviteeContext graviteeContext, String domainId, PatchDomain domain, User principal);
+
+    Single<Domain> updateCertificateSettings(GraviteeContext graviteeContext, String domainId, CertificateSettings certificateSettings, User principal);
 
     Completable delete(GraviteeContext graviteeContext, String domain, User principal);
 

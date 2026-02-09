@@ -73,6 +73,8 @@ public class JdbcDomain {
     private String secretExpirationSettings;
     @Column("token_exchange_settings")
     private String tokenExchangeSettings;
+    @Column("certificate_settings")
+    private String certificateSettings;
 
 
     /**

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
@@ -132,6 +133,9 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setUma(new UMASettings());
         domain.setWebAuthnSettings(new WebAuthnSettings());
         domain.setSelfServiceAccountManagementSettings(new SelfServiceAccountManagementSettings());
+        CertificateSettings certificateSettings = new CertificateSettings();
+        certificateSettings.setFallbackCertificate("fallback-cert-id");
+        domain.setCertificateSettings(certificateSettings);
 
         return domain;
     }
@@ -216,6 +220,8 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getScim() != null);
         testObserver.assertValue(d -> d.getWebAuthnSettings() != null);
         testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);
+        testObserver.assertValue(d -> d.getCertificateSettings() != null);
+        testObserver.assertValue(d -> "fallback-cert-id".equals(d.getCertificateSettings().getFallbackCertificate()));
     }
 
     @Test
@@ -256,6 +262,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         updatedDomain.setOidc(null);
         updatedDomain.setScim(null);
         updatedDomain.setAccountSettings(null);
+        updatedDomain.setCertificateSettings(null);
         updatedDomain.setTags(new HashSet<>(Arrays.asList("test")));
         updatedDomain.setIdentities(new HashSet<>(Arrays.asList("test")));
         TestObserver<Domain> testObserver = domainRepository.update(updatedDomain).test();
@@ -288,6 +295,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getOidc() == null);
         testObserver.assertValue(d -> d.getWebAuthnSettings() == null);
         testObserver.assertValue(d -> d.getScim() == null);
+        testObserver.assertValue(d -> d.getCertificateSettings() == null);
     }
 
     @Test

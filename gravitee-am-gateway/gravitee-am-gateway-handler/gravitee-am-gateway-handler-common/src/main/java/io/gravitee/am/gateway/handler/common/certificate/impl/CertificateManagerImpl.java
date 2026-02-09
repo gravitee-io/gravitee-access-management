@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.certificate.impl;
 
 import io.gravitee.am.certificate.api.CertificateProviders;
 import io.gravitee.am.common.event.CertificateEvent;
+import io.gravitee.am.common.event.DomainCertificateSettingsEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
@@ -24,16 +25,20 @@ import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderCertificateReloader;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_JWT_OR_CSRF_SECRET;
@@ -66,6 +72,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     private CertificateRepository certificateRepository;
 
     @Autowired
+    private DomainRepository domainRepository;
+
+    @Autowired
     private EventManager eventManager;
 
     @Autowired
@@ -82,6 +91,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     CertificateProvider noneAlgorithmCertificateProvider;
 
     private final ConcurrentMap<String, Certificate> certificates = new ConcurrentHashMap<>();
+
+    private final AtomicReference<CertificateSettings> certificateSettings = new AtomicReference<>();
+
+    @Getter
+    private final EventListener<DomainCertificateSettingsEvent, Payload> certificateSettingsListener = new CertificateSettingsListener();
 
     @Override
     public void onEvent(Event<CertificateEvent, Payload> event) {
@@ -107,6 +121,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
         logger.info("Register event listener for certificate events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, CertificateEvent.class, domain.getId());
+
+        logger.info("Register event listener for certificate settings events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(certificateSettingsListener, DomainCertificateSettingsEvent.class, domain.getId());
     }
 
     private void initialize() throws Exception {
@@ -117,6 +134,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
         initNoneAlgorithmCertificateProvider();
         logger.info("None algorithm certificate loaded for domain {}", domain.getName());
+
+        logger.info("Initializing certificate settings for domain {}", domain.getName());
+        initCertificateSettings();
 
         logger.info("Initializing certificates for domain {}", domain.getName());
         certificateRepository.findByDomain(domain.getId())
@@ -143,6 +163,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
 
+        logger.info("Dispose event listener for certificate settings events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(certificateSettingsListener, DomainCertificateSettingsEvent.class, domain.getId());
+
         for (Map.Entry<String, Certificate> entry: certificates.entrySet()) {
             certificateProviderManager.delete(entry.getKey());
             domainReadinessService.pluginUnloaded(domain.getId(), entry.getKey());
@@ -156,16 +179,21 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
             return Maybe.empty();
         }
         CertificateProvider certificateProvider = certificateProviderManager.get(id);
-        return certificateProvider != null ? Maybe.just(certificateProvider) : Maybe.empty();
+
+        return Optional.ofNullable(certificateProvider)
+                .filter(this::belongsToCurrentDomain)
+                .map(Maybe::just)
+                .orElse(Maybe.empty());
     }
 
     @Override
     public io.gravitee.am.certificate.api.CertificateProvider getCertificate(String id) {
         CertificateProvider certificateProvider = certificateProviderManager.get(id);
-        if (certificateProvider != null && domain.getId().equals(certificateProvider.getDomain())) {
-            return certificateProvider.getProvider();
-        }
-        return null;
+
+        return Optional.ofNullable(certificateProvider)
+                .filter(this::belongsToCurrentDomain)
+                .map(CertificateProvider::getProvider)
+                .orElse(null);
     }
 
     @Override
@@ -206,6 +234,16 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         return noneAlgorithmCertificateProvider;
     }
 
+    @Override
+    public Maybe<CertificateProvider> fallbackCertificateProvider() {
+        return Optional.ofNullable(certificateSettings)
+                .map(AtomicReference::get)
+                .map(CertificateSettings::getFallbackCertificate)
+                .filter(StringUtils::isNotEmpty)
+                .map(this::get)
+                .orElse(Maybe.empty());
+    }
+
     private void deployCertificate(String certificateId) {
         logger.info("Deploying certificate {} for domain {}", certificateId, domain.getName());
         domainReadinessService.initPluginSync(domain.getId(), certificateId, Type.CERTIFICATE.name());
@@ -230,6 +268,15 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                             domainReadinessService.pluginFailed(domain.getId(), certificateId, error.getMessage());
                         },
                         () -> logger.error("No certificate found with id {}", certificateId));
+    }
+
+    private boolean belongsToCurrentDomain(CertificateProvider certificateProvider) {
+        // Master domains can access certificates from all domains for cross-domain introspection
+        if (domain.isMaster()) {
+            return certificateProvider != null;
+        }
+
+        return certificateProvider != null && domain.getId().equals(certificateProvider.getDomain());
     }
 
     private void reloadIdentityProviders(Certificate certificate){
@@ -258,11 +305,40 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         this.noneAlgorithmCertificateProvider = certificateProviderManager.create(CertificateProviders.createNoneCertificateProvider());
     }
 
+    private void initCertificateSettings() {
+        this.certificateSettings.set(domain.getCertificateSettings());
+    }
+
     private String signingKeySecret() {
         return configuration.getProperty("jwt.secret", DEFAULT_JWT_OR_CSRF_SECRET);
     }
 
     private String signingKeyId() {
         return configuration.getProperty("jwt.kid", "default-gravitee-AM-key");
+    }
+
+    private class CertificateSettingsListener implements EventListener<DomainCertificateSettingsEvent, Payload> {
+        @Override
+        public void onEvent(Event<DomainCertificateSettingsEvent, Payload> event) {
+            if (event.content().getReferenceType() == ReferenceType.DOMAIN &&
+                    domain.getId().equals(event.content().getReferenceId())) {
+                if (event.type() == DomainCertificateSettingsEvent.UPDATE) {
+                    updateCertificateSettings();
+                }
+            }
+        }
+
+        private void updateCertificateSettings() {
+            logger.info("Updating certificate settings for domain {}", domain.getName());
+            domainRepository.findById(domain.getId())
+                    .observeOn(Schedulers.io())
+                    .subscribe(
+                            updatedDomain -> {
+                                certificateSettings.set(updatedDomain.getCertificateSettings());
+                                logger.info("Certificate settings updated for domain {}", domain.getName());
+                            },
+                            error -> logger.error("An error has occurred when updating certificate settings for domain {}", domain.getName(), error)
+                    );
+        }
     }
 }

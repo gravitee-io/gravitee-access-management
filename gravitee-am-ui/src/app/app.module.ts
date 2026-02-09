@@ -128,6 +128,7 @@ import {
   CertitificatePublicKeyDialogComponent,
   DomainSettingsCertificatesComponent,
 } from './domain/settings/certificates/certificates.component';
+import { CertificateSettingsDialogComponent } from './domain/settings/certificates/dialog/certificate-settings.component';
 import { DomainSettingsProvidersComponent } from './domain/settings/providers/providers.component';
 import { DomainSettingsExtensionGrantsComponent } from './domain/settings/extension-grants/extension-grants.component';
 import { DomainSettingsFormsComponent } from './domain/settings/forms/forms.component';
@@ -564,6 +565,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     CertificateCreationStep2Component,
     CertificateFormComponent,
     CertitificatePublicKeyDialogComponent,
+    CertificateSettingsDialogComponent,
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,

@@ -3241,6 +3241,48 @@ paths:
           description: Bot detection successfully deleted
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/certificate-settings:
+    put:
+      tags:
+      - domain
+      summary: Update the security domain certificate settings
+      description: "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified\
+        \ domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment\
+        \ or DOMAIN_SETTINGS[UPDATE] permission on the specified organization. This\
+        \ endpoint updates only certificate settings without triggering a full domain\
+        \ reload."
+      operationId: updateDomainCertificateSettings
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateSettings"
+        required: true
+      responses:
+        "200":
+          description: Certificate settings successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Domain"
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/certificates:
     get:
       tags:
@@ -6578,10 +6620,11 @@ paths:
       - protected-resource
       - domain
       summary: List protected resource member's permissions
-      description: "User must have PROTECTED_RESOURCE[READ] permission on the specified\
-        \ protected resource or PROTECTED_RESOURCE[READ] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[READ] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[READ] permission on the specified organization"
+      description: "User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the\
+        \ specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission\
+        \ on the specified organization"
       operationId: getProtectedResourceMemberPermissions
       parameters:
       - name: organizationId
@@ -6662,10 +6705,11 @@ paths:
       - protected-resource
       - domain
       summary: List secrets of a protected resource
-      description: "User must have the PROTECTED_RESOURCE[LIST] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[LIST] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[LIST] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[LIST] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[LIST] permission on\
+        \ the specified resource or PROTECTED_RESOURCE_OAUTH[LIST] permission on the\
+        \ specified domain or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified\
+        \ environment or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified\
+        \ organization."
       operationId: getSecrets
       parameters:
       - name: organizationId
@@ -6704,10 +6748,11 @@ paths:
       - protected-resource
       - domain
       summary: Create a secret for a protected resource
-      description: "User must have the PROTECTED_RESOURCE[CREATE] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[CREATE] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[CREATE] permission\
+        \ on the specified resource or PROTECTED_RESOURCE_OAUTH[CREATE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_OAUTH[CREATE] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_OAUTH[CREATE] permission\
+        \ on the specified organization."
       operationId: create
       parameters:
       - name: organizationId
@@ -6751,10 +6796,11 @@ paths:
       - protected-resource
       - domain
       summary: Remove a secret for a protected resource
-      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[DELETE] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[DELETE] permission\
+        \ on the specified resource or PROTECTED_RESOURCE_OAUTH[DELETE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_OAUTH[DELETE] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_OAUTH[DELETE] permission\
+        \ on the specified organization."
       operationId: delete
       parameters:
       - name: organizationId
@@ -6795,10 +6841,11 @@ paths:
       - protected-resource
       - domain
       summary: Renew a secret for a protected resource
-      description: "User must have the PROTECTED_RESOURCE[UPDATE] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[UPDATE] permission\
+        \ on the specified resource or PROTECTED_RESOURCE_OAUTH[UPDATE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_OAUTH[UPDATE] permission\
+        \ on the specified organization."
       operationId: renew
       parameters:
       - name: organizationId
@@ -12817,6 +12864,11 @@ components:
           type: object
           additionalProperties:
             type: object
+    CertificateSettings:
+      type: object
+      properties:
+        fallbackCertificate:
+          type: string
     ChallengeSettings:
       type: object
       properties:
@@ -12849,13 +12901,13 @@ components:
           type: array
           items:
             type: string
-        openDynamicClientRegistrationEnabled:
+        allowedScopesEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
-        allowedScopesEnabled:
-          type: boolean
         dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -13082,21 +13134,23 @@ components:
           $ref: "#/components/schemas/SecretExpirationSettings"
         tokenExchangeSettings:
           $ref: "#/components/schemas/TokenExchangeSettings"
+        certificateSettings:
+          $ref: "#/components/schemas/CertificateSettings"
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        redirectUriStrictMatching:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+        dynamicClientRegistrationTemplateEnabled:
+          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
-        dynamicClientRegistrationTemplateEnabled:
-          type: boolean
-        redirectUriStrictMatching:
-          type: boolean
         redirectUriExpressionLanguageEnabled:
-          type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -14924,6 +14978,9 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
     PatchApplicationAdvancedSettings:
       type: object
@@ -15202,6 +15259,9 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
     PatchApplicationType:
       required:
@@ -15267,13 +15327,13 @@ components:
             type: string
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-          writeOnly: true
         clientTemplateEnabled:
           type: boolean
           writeOnly: true
         dynamicClientRegistrationEnabled:
+          type: boolean
+          writeOnly: true
+        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         isDynamicClientRegistrationEnabled:
@@ -15336,6 +15396,8 @@ components:
           $ref: "#/components/schemas/SecretExpirationSettings"
         tokenExchangeSettings:
           $ref: "#/components/schemas/TokenExchangeSettings"
+        certificateSettings:
+          $ref: "#/components/schemas/CertificateSettings"
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -15406,6 +15468,9 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
     PatchEnrollSettings:
       type: object
@@ -15550,6 +15615,9 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
         clientRegistrationSettings:
           $ref: "#/components/schemas/PatchClientRegistrationSettings"
@@ -15714,6 +15782,9 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
     PatchScope:
       type: object
@@ -17114,18 +17185,22 @@ components:
           type: boolean
         serviceAccount:
           type: boolean
-        address:
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
+        indefinitelyLocked:
+          type: boolean
+        temporarilyLocked:
+          type: boolean
         fullId:
           $ref: "#/components/schemas/UserId"
         middleName:
           type: string
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
         inactive:
           type: boolean
         profile:
@@ -17134,22 +17209,18 @@ components:
           type: string
         birthdate:
           type: string
+        zoneInfo:
+          type: string
         phoneNumber:
           type: string
-        lastIdentityInformation:
+        address:
           type: object
           additionalProperties:
             type: object
         disabled:
           type: boolean
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        indefinitelyLocked:
-          type: boolean
-        temporarilyLocked:
-          type: boolean
+        locale:
+          type: string
     UserEntity:
       type: object
       properties:
@@ -17318,18 +17389,22 @@ components:
           $ref: "#/components/schemas/ApplicationEntity"
         sourceId:
           type: string
-        address:
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
+        indefinitelyLocked:
+          type: boolean
+        temporarilyLocked:
+          type: boolean
         fullId:
           $ref: "#/components/schemas/UserId"
         middleName:
           type: string
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
         inactive:
           type: boolean
         profile:
@@ -17338,22 +17413,18 @@ components:
           type: string
         birthdate:
           type: string
+        zoneInfo:
+          type: string
         phoneNumber:
           type: string
-        lastIdentityInformation:
+        address:
           type: object
           additionalProperties:
             type: object
         disabled:
           type: boolean
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        indefinitelyLocked:
-          type: boolean
-        temporarilyLocked:
-          type: boolean
+        locale:
+          type: string
     UserId:
       type: object
       properties:

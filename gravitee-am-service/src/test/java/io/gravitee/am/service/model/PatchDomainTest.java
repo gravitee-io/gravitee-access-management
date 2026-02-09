@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.PasswordSettings;
@@ -215,6 +216,23 @@ public class PatchDomainTest {
     }
 
     @Test
+    public void testPatchWithCertificateSettings() {
+        CertificateSettings certificateSettings = new CertificateSettings();
+        certificateSettings.setFallbackCertificate("cert-id-123");
+
+        PatchDomain patch = new PatchDomain();
+        patch.setCertificateSettings(Optional.of(certificateSettings));
+
+        Domain toPatch = new Domain();
+
+        Domain result = patch.patch(toPatch);
+
+        assertNotNull("was expecting a domain", result);
+        assertNotNull(result.getCertificateSettings());
+        assertEquals("cert-id-123", result.getCertificateSettings().getFallbackCertificate());
+    }
+
+    @Test
     public void testGetRequiredPermissions() {
 
         PatchDomain patchDomain = new PatchDomain();
@@ -245,6 +263,10 @@ public class PatchDomainTest {
 
         patchDomain = new PatchDomain();
         patchDomain.setTags(Optional.of(Collections.singleton("patchTag")));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setCertificateSettings(Optional.of(new CertificateSettings()));
         assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
 
         patchDomain = new PatchDomain();

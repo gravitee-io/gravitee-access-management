@@ -41,12 +41,21 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
     CertificateProvider noneAlgorithmCertificateProvider();
 
     default Single<CertificateProvider> getClientCertificateProvider(Client client, boolean fallbackToHmacSignature) {
-        if(client.getCertificate() == null) {
+        if (client.getCertificate() == null) {
             return Single.just(defaultCertificateProvider());
         }
+
         return get(client.getCertificate())
-                .switchIfEmpty(fallbackToHmacSignature ?
-                        Single.just(defaultCertificateProvider()) :
-                        Single.error(new TemporarilyUnavailableException("The certificate cannot be loaded")));
+                .switchIfEmpty(Maybe.defer(() ->
+                        fallbackCertificateProvider()
+                                .switchIfEmpty(Maybe.defer(() ->
+                                        fallbackToHmacSignature
+                                                ? Maybe.just(defaultCertificateProvider())
+                                                : Maybe.empty()
+                                ))
+                ))
+                .switchIfEmpty(Single.error(new TemporarilyUnavailableException("The certificate cannot be loaded")));
     }
+
+    Maybe<CertificateProvider> fallbackCertificateProvider();
 }

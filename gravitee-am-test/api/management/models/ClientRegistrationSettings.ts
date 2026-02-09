@@ -79,7 +79,7 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  openDynamicClientRegistrationEnabled?: boolean;
+  clientTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -91,7 +91,7 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  clientTemplateEnabled?: boolean;
+  openDynamicClientRegistrationEnabled?: boolean;
 }
 
 /**
@@ -118,11 +118,11 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
     allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
-    openDynamicClientRegistrationEnabled:
-      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -146,8 +146,8 @@ export function ClientRegistrationSettingsToJSONTyped(
     defaultScopes: value['defaultScopes'],
     allowedScopes: value['allowedScopes'],
     allowedScopesEnabled: value['allowedScopesEnabled'],
-    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
-    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     clientTemplateEnabled: value['clientTemplateEnabled'],
+    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
   };
 }

@@ -236,6 +236,14 @@ public class SyncManager implements InitializingBean {
             logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
             if (Objects.requireNonNull(event.getType()) == Type.DOMAIN) {
                 synchronizeDomain(event);
+            } else if (event.getType() == Type.DOMAIN_CERTIFICATE_SETTINGS) {
+                // Publish certificate settings event directly without domain reload
+                String eventId = event.getId();
+                if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
+                    eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+                } else {
+                    logger.debug("Event id {} already processed", eventId);
+                }
             } else {
                 String eventId = event.getId();
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
