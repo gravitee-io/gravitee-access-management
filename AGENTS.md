@@ -9,7 +9,7 @@ Consumed by: OpenAI Codex, GitHub Copilot, Cursor, Gemini/Jules, Windsurf, Zed, 
 
 ### Prerequisites
 
-- Java 17+, Maven 3.6+, Node.js >= 20.11.1, Yarn 4.1.1, Docker & Docker Compose
+- Java 21+, Maven 3.6+, Node.js >= 20.11.1, Yarn 4.1.1, Docker & Docker Compose
 
 ### Backend (Java / Maven)
 
@@ -34,9 +34,6 @@ mvn test -Dtest="TestClassName"
 
 # Run integration tests
 mvn verify
-
-# Run integration tests for specific module
-mvn verify -pl gravitee-am-repository
 
 # Clean (excluding UI)
 mvn clean -pl '!gravitee-am-ui'
@@ -88,23 +85,12 @@ cd gravitee-am-test && npm run update:sdk:mapi -- <MANAGEMENT_API_URL>
 make postman
 ```
 
-### Docker / Local Development
+### Run a JEST suite
 
 ```bash
-make gravitee             # first time: install, build, start
-make install              # build and package
-make run                  # build Docker images and start
-make start / make stop    # start/stop existing containers
-make status               # check container status
-make reset                # stop, delete data, restart
-
-# Database containers
-make startMongo / make startPostgres / make startMySQL
-make startMariaDB / make startSQLServer
-make stopDatabase
+# Run the users.jest.spec.ts test suite
+npx jest specs/management/users.jest.spec.ts --config api/config/dev.config.js --runInBand --no-cache
 ```
-
-### Common Workflows
 
 ```bash
 # Pre-PR verification
@@ -117,6 +103,26 @@ mvn test -pl gravitee-am-service
 
 # Quick frontend iteration
 cd gravitee-am-ui && yarn lint:fix && yarn test
+```
+
+### Build Local Stack
+
+```bash
+
+# Build AM
+mvn clean install
+
+# Copy AM to local stack
+npm --prefix docker/local-stack run stack:init:copy-am
+
+# Build the docker images
+npm --prefix docker/local-stack run stack:init:build
+
+# Start local stack (MongoDB)
+npm --prefix docker/local-stack run stack:dev:setup:mongo
+
+# Tear down local stack
+npm --prefix docker/local-stack run stack:down
 ```
 
 ---
