@@ -131,7 +131,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
                     return role != null ? Observable.just(role) : Observable.empty();
                 })
                 .toList();
-        return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, 0, count))
+        return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, page, count))
                 .observeOn(Schedulers.computation());
     }
 
