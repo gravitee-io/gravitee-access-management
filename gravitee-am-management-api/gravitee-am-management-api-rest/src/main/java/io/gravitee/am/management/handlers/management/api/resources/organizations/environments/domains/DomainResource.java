@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.permissions.Permission;
@@ -181,6 +182,38 @@ public class DomainResource extends AbstractDomainResource {
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> domainService.listEntryPoint(domain, organizationId)))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @PUT
+    @Path("/certificate-settings")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "updateDomainCertificateSettings",
+            summary = "Update the security domain certificate settings",
+            description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization. " +
+                    "This endpoint updates only certificate settings without triggering a full domain reload.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Certificate settings successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Domain.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void updateCertificateSettings(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @Parameter(name = "certificateSettings", required = true) @Valid @NotNull final CertificateSettings certificateSettings,
+            @Suspended final AsyncResponse response) {
+
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
+                .andThen(domainService.updateCertificateSettings(new GraviteeContext(organizationId, environmentId, domainId), domainId, certificateSettings, authenticatedUser)
+                        .flatMap(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
+                                .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -18,9 +18,7 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.plugin.ValidationResult;
-import io.gravitee.am.identityprovider.api.Metadata;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
@@ -30,6 +28,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
@@ -68,7 +67,6 @@ import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -134,6 +132,9 @@ public class CertificateServiceTest {
 
     @Mock
     private CertificatePluginManager certificatePluginManager;
+
+    @Mock
+    private DomainRepository domainRepository;
 
     @BeforeClass
     public static void readCertificateSchemaDefinition() throws Exception {
@@ -213,6 +214,7 @@ public class CertificateServiceTest {
         when(certificate.getDomain()).thenReturn(DOMAIN.getId());
         when(certificate.getId()).thenReturn("my-certificate");
 
+        when(domainRepository.findById(DOMAIN.getId())).thenReturn(Maybe.just(DOMAIN));
         when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
         when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));

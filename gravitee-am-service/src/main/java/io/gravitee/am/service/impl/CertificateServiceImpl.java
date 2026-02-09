@@ -36,6 +36,7 @@ import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
 import io.gravitee.am.plugins.certificate.core.schema.CertificateSchema;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
@@ -46,6 +47,7 @@ import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.CertificateIsFallbackException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
@@ -132,6 +134,10 @@ public class CertificateServiceImpl implements CertificateService {
     @Lazy
     @Autowired
     private CertificateRepository certificateRepository;
+
+    @Lazy
+    @Autowired
+    private DomainRepository domainRepository;
 
     @Autowired
     private ApplicationService applicationService;
@@ -381,6 +387,18 @@ public class CertificateServiceImpl implements CertificateService {
                 });
     }
 
+    private Single<Certificate> checkFallbackUsage(Certificate certificate) {
+        return domainRepository.findById(certificate.getDomain())
+                .flatMap(domain -> {
+                    if (domain.getCertificateSettings() != null
+                            && certificate.getId().equals(domain.getCertificateSettings().getFallbackCertificate())) {
+                        return Maybe.error(new CertificateIsFallbackException());
+                    }
+                    return Maybe.just(certificate);
+                })
+                .defaultIfEmpty(certificate);
+    }
+
     @Override
     public Completable delete(String certificateId, User principal) {
         log.debug("Delete certificate {}", certificateId);
@@ -396,6 +414,7 @@ public class CertificateServiceImpl implements CertificateService {
                 )
                 .flatMapSingle(this::checkIdentityProviderUsage)
                 .flatMapSingle(this::checkProtectedResourceUsage)
+                .flatMapSingle(this::checkFallbackUsage)
                 .flatMapCompletable(certificate -> {
                     // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));

@@ -404,16 +404,16 @@ export interface UserEntity {
   sourceId?: string;
   /**
    *
-   * @type {UserId}
-   * @memberof UserEntity
-   */
-  fullId?: UserId;
-  /**
-   *
    * @type {string}
    * @memberof UserEntity
    */
   middleName?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -467,7 +467,7 @@ export interface UserEntity {
    * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
-  identitiesAsMap?: { [key: string]: any };
+  lastIdentityInformation?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -482,10 +482,10 @@ export interface UserEntity {
   temporarilyLocked?: boolean;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {UserId}
    * @memberof UserEntity
    */
-  lastIdentityInformation?: { [key: string]: any };
+  fullId?: UserId;
   /**
    *
    * @type {string}
@@ -581,8 +581,8 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
     applicationEntity: json['applicationEntity'] == null ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
     sourceId: json['sourceId'] == null ? undefined : json['sourceId'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     middleName: json['middleName'] == null ? undefined : json['middleName'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
@@ -591,10 +591,10 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
     address: json['address'] == null ? undefined : json['address'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
     indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
     temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
-    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     locale: json['locale'] == null ? undefined : json['locale'],
   };
 }
@@ -669,8 +669,8 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     serviceAccount: value['serviceAccount'],
     applicationEntity: ApplicationEntityToJSON(value['applicationEntity']),
     sourceId: value['sourceId'],
-    fullId: UserIdToJSON(value['fullId']),
     middleName: value['middleName'],
+    identitiesAsMap: value['identitiesAsMap'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],
@@ -679,10 +679,10 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     phoneNumber: value['phoneNumber'],
     address: value['address'],
     disabled: value['disabled'],
-    identitiesAsMap: value['identitiesAsMap'],
+    lastIdentityInformation: value['lastIdentityInformation'],
     indefinitelyLocked: value['indefinitelyLocked'],
     temporarilyLocked: value['temporarilyLocked'],
-    lastIdentityInformation: value['lastIdentityInformation'],
+    fullId: UserIdToJSON(value['fullId']),
     locale: value['locale'],
   };
 }
