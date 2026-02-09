@@ -18,6 +18,8 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { McpOAuth2ResourceFixture, setupMcpOAuth2ResourceFixture } from './fixtures/mcp-oauth2-resource-fixture';
 import { setup } from '../test-fixture';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 setup(200000);
 
@@ -203,6 +205,92 @@ describe('MCP OAuth2 Resource', () => {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + getBase64BasicAuth(fixture.mcpResource.clientId, fixture.clientSecret.secret),
       }).expect(401);
+    });
+  });
+
+  describe('Client Credentials - JWT Auth', () => {
+    let fixture: McpOAuth2ResourceFixture;
+
+    function createClientAssertionJwt(clientId: string, clientSecret: string, audience: string, options?: { expired?: boolean }): string {
+      const now = Math.floor(Date.now() / 1000);
+      return jwt.sign(
+        {
+          iss: clientId,
+          sub: clientId,
+          aud: audience,
+          jti: crypto.randomUUID(),
+          iat: now,
+          exp: options?.expired ? now - 300 : now + 300,
+        },
+        clientSecret,
+        { algorithm: 'HS256' },
+      );
+    }
+
+    beforeAll(async () => {
+      fixture = await setupMcpOAuth2ResourceFixture({
+        oauth: {
+          tokenEndpointAuthMethod: 'client_secret_jwt',
+        },
+      });
+      expect(fixture.mcpResource.settings.oauth.tokenEndpointAuthMethod).toEqual('client_secret_jwt');
+    });
+
+    afterAll(async () => {
+      if (fixture) {
+        await fixture.cleanup();
+      }
+    });
+
+    it('should obtain access token using client_secret_jwt', async () => {
+      const assertion = createClientAssertionJwt(fixture.mcpResource.clientId, fixture.clientSecret.secret, fixture.openIdConfiguration.token_endpoint);
+
+      const response = await performPost(
+        fixture.openIdConfiguration.token_endpoint,
+        '',
+        `grant_type=client_credentials&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=${assertion}`,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+        },
+      ).expect(200);
+
+      expect(response.body.access_token).toBeDefined();
+      expect(response.body.token_type).toEqual('bearer');
+    });
+
+    it('should fail using client_secret_basic when JWT is configured', async () => {
+      await performPost(fixture.openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + getBase64BasicAuth(fixture.mcpResource.clientId, fixture.clientSecret.secret),
+      }).expect(401);
+    });
+
+    it('should fail with expired JWT assertion', async () => {
+      const assertion = createClientAssertionJwt(fixture.mcpResource.clientId, fixture.clientSecret.secret, fixture.openIdConfiguration.token_endpoint, {
+        expired: true,
+      });
+
+      await performPost(
+        fixture.openIdConfiguration.token_endpoint,
+        '',
+        `grant_type=client_credentials&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=${assertion}`,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+        },
+      ).expect(401);
+    });
+
+    it('should fail with wrong client secret for JWT signature', async () => {
+      const assertion = createClientAssertionJwt(fixture.mcpResource.clientId, 'wrong-secret', fixture.openIdConfiguration.token_endpoint);
+
+      await performPost(
+        fixture.openIdConfiguration.token_endpoint,
+        '',
+        `grant_type=client_credentials&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=${assertion}`,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+        },
+      ).expect(401);
     });
   });
 });

@@ -251,7 +251,7 @@ beforeAll(async () => {
   domain = domainStarted;
 
   await waitForDomainStart(domain);
-  await waitForDomainSync(domain.id, accessToken);
+  await waitForDomainSync(domain.id);
 
   // Get existing flows and add RegistrationConfirmation flow
   // Note: Flows must be created after domain is started
@@ -279,7 +279,7 @@ beforeAll(async () => {
   });
 
   await updateApplicationFlows(domain.id, accessToken, application.id, flows);
-  await waitForDomainSync(domain.id, accessToken);
+  await waitForDomainSync(domain.id);
 
   // Get SCIM access token
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);

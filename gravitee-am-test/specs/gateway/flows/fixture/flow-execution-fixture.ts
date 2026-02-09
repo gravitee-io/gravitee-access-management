@@ -25,8 +25,8 @@ import {
   startDomain,
   updateDomainFlows,
   waitForDomainStart,
-  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import {
@@ -44,7 +44,6 @@ import { lookupFlowAndResetPolicies } from '@management-commands/flow-management
 import { requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
 import { assertGeneratedTokenAndGet } from '@gateway-commands/utils';
 import { decodeJwt } from '@utils-commands/jwt';
-import { syncApplication } from '@gateway-commands/application-sync-commands';
 
 export interface FlowExecutionFixture extends Fixture {
   domain: Domain;
@@ -89,13 +88,16 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
 
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
+  await startDomain(createdDomain.id, accessToken);
+  const started = await waitForDomainStart(createdDomain);
+  const domain = started.domain;
+  const openIdConfiguration = started.oidcConfig;
 
-  const idpSet = await getAllIdps(createdDomain.id, accessToken);
+  const idpSet = await getAllIdps(domain.id, accessToken);
   const appClientId = uniqueName('flow-app', true);
   const appClientSecret = uniqueName('flow-app', true);
   const appName = uniqueName('my-client', true);
-  const application = await createApplication(createdDomain.id, accessToken, {
+  const application = await createApplication(domain.id, accessToken, {
     name: appName,
     type: 'WEB',
     clientId: appClientId,
@@ -103,7 +105,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
-      createdDomain.id,
+      domain.id,
       accessToken,
       {
         settings: {
@@ -122,8 +124,6 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
   );
   expect(application).toBeDefined();
 
-  await waitForDomainSync(createdDomain.id, accessToken);
-
   const user = {
     username: uniqueName('FlowUser', true),
     password: 'SomeP@ssw0rd',
@@ -132,11 +132,9 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
     email: `${uniqueName('flowuser', true)}@acme.fr`,
     preRegistration: false,
   };
-  await createUser(createdDomain.id, accessToken, user);
-
-  const started = await waitForDomainStart(domainStarted);
-  const domain = started.domain;
-  const openIdConfiguration = started.oidcConfig;
+  await waitForSyncAfter(domain.id,
+    () => createUser(domain.id, accessToken, user),
+  );
 
   await clearEmails(user.email);
 
@@ -186,8 +184,9 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
       ]);
     }
 
-    await updateDomainFlows(domain.id, accessToken, flows);
-    await waitForDomainSync(domain.id, accessToken);
+    await waitForSyncAfter(domain.id,
+      () => updateDomainFlows(domain.id, accessToken, flows),
+    );
   };
 
   // Helper: Configure app flows
@@ -278,25 +277,22 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
       });
     }
 
-    await updateApplicationFlows(domain.id, accessToken, application.id, flows);
-    await waitForDomainSync(domain.id, accessToken);
+    await waitForSyncAfter(domain.id,
+      () => updateApplicationFlows(domain.id, accessToken, application.id, flows),
+    );
   };
 
   // Helper: Set custom token claims
   const setAppTokenClaims = async (claims: TokenClaim[]) => {
     application.settings.oauth.tokenCustomClaims = claims;
-    const patch = patchApplication(domain.id, accessToken, application, application.id);
-    await syncApplication(domain.id, application.id, patch);
-    await waitForDomainSync(domain.id, accessToken);
+    await waitForSyncAfter(domain.id, () => patchApplication(domain.id, accessToken, application, application.id));
   };
 
   // Helper: Set flows inherited flag
   const setFlowsInherited = async (inherited: boolean) => {
     application.settings.advanced = application.settings.advanced || {};
     application.settings.advanced.flowsInherited = inherited;
-    const patch = patchApplication(domain.id, accessToken, application, application.id);
-    await syncApplication(domain.id, application.id, patch);
-    await waitForDomainSync(domain.id, accessToken);
+    await waitForSyncAfter(domain.id, () => patchApplication(domain.id, accessToken, application, application.id));
   };
 
   // Helper: Login and get decoded JWT
@@ -328,10 +324,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
     application.settings.oauth.tokenCustomClaims = [];
     application.settings.advanced = application.settings.advanced || {};
     application.settings.advanced.flowsInherited = true;
-    const patch = patchApplication(domain.id, accessToken, application, application.id);
-    await syncApplication(domain.id, application.id, patch);
-
-    await waitForDomainSync(domain.id, accessToken);
+    await waitForSyncAfter(domain.id, () => patchApplication(domain.id, accessToken, application, application.id));
   };
 
   return {

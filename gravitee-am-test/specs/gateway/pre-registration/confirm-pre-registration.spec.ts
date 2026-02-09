@@ -16,14 +16,11 @@
 
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
 
-import { beforeAll, expect } from '@jest/globals';
-import {
-  waitForDomainSync,
-} from '@management-commands/domain-management-commands';
+import { afterAll, beforeAll, expect } from '@jest/globals';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { createUser, getUserPage } from '@management-commands/user-management-commands';
 import { extractXsrfToken, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
-import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
+import { patchApplication } from '@management-commands/application-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
 import cheerio from 'cheerio';
@@ -36,6 +33,10 @@ let fixture: ConfirmPreRegistrationFixture;
 
 beforeAll(async () => {
   fixture = await setupFixture();
+});
+
+afterAll(async () => {
+  if (fixture) await fixture.cleanup();
 });
 
 describe('AM - User Pre-Registration', () => {
@@ -65,7 +66,7 @@ describe('AM - User Pre-Registration', () => {
     expect(createdUser.registrationAccessToken).not.toBeDefined();
 
     // Retrieve and use confirmation email in the same test
-    const confirmationLink = (await getLastEmail(1000, preRegisteredUser.email)).extractLink();
+    const confirmationLink = (await getLastEmail(5000, preRegisteredUser.email)).extractLink();
     expect(confirmationLink).toBeDefined();
     await clearEmails(preRegisteredUser.email);
 
@@ -122,41 +123,46 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
   });
 
   it('must pre-register a user', async () => {
-    await createUser(fixture.domain.id, fixture.accessToken, preRegisteredUser);
+    const createdUser = await createUser(fixture.domain.id, fixture.accessToken, preRegisteredUser);
+    expect(createdUser).toBeDefined();
+    expect(createdUser.enabled).toBeFalsy();
   });
 
   describe('User', () => {
     it('must received an email', async () => {
-      const link = (await getLastEmail(1000, preRegisteredUser.email)).extractLink();
+      const link = (await getLastEmail(5000, preRegisteredUser.email)).extractLink();
       expect(link).toBeDefined();
       await clearEmails(preRegisteredUser.email);
     });
 
     it("Can't request a new password", async () => {
       await forgotPassword(preRegisteredUser);
-      expect(await hasEmail(1000, preRegisteredUser.email)).toBeFalsy();
+      expect(await hasEmail(2000, preRegisteredUser.email)).toBeFalsy();
     });
 
     it('Update Application to allow account validation using forgot password', async () => {
-      patchApplication(
+      const updatedApp = await waitForSyncAfter(
         fixture.domain.id,
-        fixture.accessToken,
-        {
-          settings: {
-            account: {
-              inherited: false,
-              completeRegistrationWhenResetPassword: true,
+        () => patchApplication(
+          fixture.domain.id,
+          fixture.accessToken,
+          {
+            settings: {
+              account: {
+                inherited: false,
+                completeRegistrationWhenResetPassword: true,
+              },
             },
           },
-        },
-        fixture.application.id,
+          fixture.application.id,
+        ),
       );
-      await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+      expect(updatedApp.settings.account.completeRegistrationWhenResetPassword).toBeTruthy();
     });
 
     it('Can reset the password', async () => {
       await forgotPassword(preRegisteredUser);
-      const confirmationLink = (await getLastEmail(1000, preRegisteredUser.email)).extractLink();
+      const confirmationLink = (await getLastEmail(5000, preRegisteredUser.email)).extractLink();
       expect(confirmationLink).toBeDefined();
       await clearEmails(preRegisteredUser.email);
 
@@ -177,21 +183,24 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
 
 describe('AM - User Pre-Registration - Dynamic User Registration', () => {
   it('Update Application to allow Dynamic User Registration', async () => {
-    patchApplication(
+    const updatedApp = await waitForSyncAfter(
       fixture.domain.id,
-      fixture.accessToken,
-      {
-        settings: {
-          account: {
-            inherited: false,
-            completeRegistrationWhenResetPassword: false,
-            dynamicUserRegistration: true,
+      () => patchApplication(
+        fixture.domain.id,
+        fixture.accessToken,
+        {
+          settings: {
+            account: {
+              inherited: false,
+              completeRegistrationWhenResetPassword: false,
+              dynamicUserRegistration: true,
+            },
           },
         },
-      },
-      fixture.application.id,
+        fixture.application.id,
+      ),
     );
-    await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+    expect(updatedApp.settings.account.dynamicUserRegistration).toBeTruthy();
   });
 
   it('Pre-Registered user without application id MUST NOT have registration contact point information', async () => {
@@ -211,7 +220,7 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
     expect(createdUser.registrationUserUri).not.toBeDefined();
     expect(createdUser.registrationAccessToken).not.toBeDefined();
 
-    expect(await hasEmail(1000, preRegisteredUserWithoutApp.email)).toBeTruthy();
+    expect(await hasEmail(5000, preRegisteredUserWithoutApp.email)).toBeTruthy();
     await clearEmails(preRegisteredUserWithoutApp.email);
   });
 

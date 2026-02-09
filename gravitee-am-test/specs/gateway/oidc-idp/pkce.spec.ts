@@ -23,7 +23,7 @@ setup(200000);
 let fixture: OIDCFixture;
 
 beforeAll(async function () {
-  fixture = await setupOidcProviderTest(uniqueName('pkce'));
+  fixture = await setupOidcProviderTest(uniqueName('pkce', true));
 });
 
 function expectRedirectToClientWithAuthCode(res) {

@@ -18,16 +18,11 @@ import { expect } from '@jest/globals';
 import { Domain } from '@management-models/Domain';
 import { DomainOidcConfig } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import {
-  extractXsrfTokenAndActionResponse,
-  getWellKnownOpenIdConfiguration,
-  performFormPost,
-  performGet,
-} from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfTokenAndActionResponse, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
@@ -43,8 +38,7 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName('enduser-logout', true), 'test end-user logout');
 
-  await startDomain(domain.id, accessToken);
-
+  // Create all resources BEFORE starting domain so initial sync picks up everything
   const idpSet = await getAllIdps(domain.id, accessToken);
   const appClientId = uniqueName('app-logout', true);
   const appClientSecret = uniqueName('app-logout', true);
@@ -76,8 +70,6 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
     }),
   );
 
-  await waitForDomainSync(domain.id, accessToken);
-
   const user = {
     username: uniqueName('LogoutUser', true),
     password: 'SomeP@ssw0rd',
@@ -87,10 +79,12 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
     preRegistration: false,
   };
   await createUser(domain.id, accessToken, user);
-  await waitForDomainSync(domain.id, accessToken);
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  const openIdConfiguration = result.body;
+  // Start domain — initial sync picks up app + user
+  await startDomain(domain.id, accessToken);
+  const domainStarted = await waitForDomainStart(domain);
+
+  const openIdConfiguration = domainStarted.oidcConfig;
 
   const signInUser = async () => {
     const clientId = application.settings.oauth.clientId;

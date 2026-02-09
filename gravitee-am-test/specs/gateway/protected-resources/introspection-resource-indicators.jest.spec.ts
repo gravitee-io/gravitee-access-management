@@ -175,7 +175,7 @@ describe('Protected Resource Introspection with ClientId (AuthZen Flow)', () => 
     expect(verifiedResource.certificate).toBe(certificateId);
 
     // Wait for Protected Resource sync to gateway
-    await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+    await waitForDomainSync(fixture.domain.id);
 
     // Step 1: Obtain access token using client_credentials WITHOUT resource parameter
     const accessToken = await requestClientCredentialsToken(
@@ -229,7 +229,7 @@ describe('Protected Resource Introspection with ClientId (AuthZen Flow)', () => 
     expect(patchedResource.certificate).toBeUndefined();
 
     // Wait for Protected Resource sync to gateway
-    await waitForDomainSync(fixture.domain.id, fixture.accessToken);
+    await waitForDomainSync(fixture.domain.id);
 
     // Step 1: Obtain access token using client_credentials WITHOUT resource parameter
     const accessToken = await requestClientCredentialsToken(

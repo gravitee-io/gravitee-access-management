@@ -20,9 +20,8 @@ import {requestAdminAccessToken} from '@management-commands/token-management-com
 import {
     safeDeleteDomain,
     setupDomainForTest,
-    startDomain,
-    waitForDomainSync,
 } from '@management-commands/domain-management-commands';
+import {waitForNextSync} from '@gateway-commands/monitoring-commands';
 import {uniqueName} from '@utils-commands/misc';
 import {buildTestUser, createUser} from '@management-commands/user-management-commands';
 import {createAuthorizationEngine, deleteAuthorizationEngine} from '@management-commands/authorization-engine-management-commands';
@@ -55,13 +54,10 @@ beforeAll(async () => {
   expect(accessToken).toBeDefined();
 
   // 2. Create unique test domain
-  testDomain = await setupDomainForTest(uniqueName('openfga-authzen', true), { accessToken }).then((it) => it.domain);
+  testDomain = await setupDomainForTest(uniqueName('openfga-authzen', true), { accessToken, waitForStart: true }).then((it) => it.domain);
   expect(testDomain).toBeDefined();
 
-  // 3. Start domain for gateway endpoints
-  await startDomain(testDomain.id, accessToken);
-
-  // 4. Create OpenFGA store
+  // 3. Create OpenFGA store
   const storeName = `test-store-${Date.now()}`;
   const storeResponse = await fetch(`${process.env.AM_OPENFGA_URL}/stores`, {
     method: 'POST',
@@ -71,7 +67,7 @@ beforeAll(async () => {
   expect(storeResponse.status).toBe(201);
   storeId = (await storeResponse.json()).id;
 
-  // 5. Create authorization model
+  // 4. Create authorization model
   const modelResponse = await fetch(`${process.env.AM_OPENFGA_URL}/stores/${storeId}/authorization-models`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -80,7 +76,7 @@ beforeAll(async () => {
   expect(modelResponse.status).toBe(201);
   authorizationModelId = (await modelResponse.json()).authorization_model_id;
 
-  // 6. Create authorization engine
+  // 5. Create authorization engine
   authEngine = await createAuthorizationEngine(testDomain.id, accessToken, {
     type: 'openfga',
     name: 'OpenFGA+AuthZen Test Engine',
@@ -93,7 +89,7 @@ beforeAll(async () => {
   });
   expect(authEngine?.id).toBeDefined();
 
-  // 7. Create application for AuthZEN API authentication
+  // 6. Create application for AuthZEN API authentication
   const appClientId = uniqueName('authzen-app-client', true);
   const appClientSecret = uniqueName('authzen-app-secret', true);
   authzenApp = await createApplication(testDomain.id, accessToken, {
@@ -123,7 +119,7 @@ beforeAll(async () => {
   expect(authzenApp?.settings?.oauth?.clientId).toBeDefined();
   expect(authzenApp?.settings?.oauth?.clientSecret).toBeDefined();
 
-  // 8. Create test users
+  // 7. Create test users
   const user1Data = buildTestUser(0);
   const user2Data = buildTestUser(1);
   testUser1 = await createUser(testDomain.id, accessToken, user1Data);
@@ -131,15 +127,15 @@ beforeAll(async () => {
   testUser2 = await createUser(testDomain.id, accessToken, user2Data);
   testUser2.password = user2Data.password;
 
-  // 9. Wait for users and application to sync to gateway before getting OIDC config
-  await waitForDomainSync(testDomain.id, accessToken);
+  // 8. Wait for users and application to sync to gateway before getting OIDC config
+  await waitForNextSync(testDomain.id);
 
-  // 10. Get OpenID configuration for token endpoint
+  // 9. Get OpenID configuration for token endpoint
   const openIdConfigResponse = await getWellKnownOpenIdConfiguration(testDomain.hrid).expect(200);
   openIdConfiguration = openIdConfigResponse.body;
   expect(openIdConfiguration?.token_endpoint).toBeDefined();
 
-  // 11. Obtain access token for AuthZEN API using client_credentials grant
+  // 10. Obtain access token for AuthZEN API using client_credentials grant
   authzenAppAccessToken = await requestClientCredentialsToken(
     authzenApp.settings.oauth.clientId,
     authzenApp.settings.oauth.clientSecret,
@@ -413,7 +409,7 @@ describe('AuthZen API - Basic Authorization Checks', () => {
       expect(protectedResource?.clientSecret).toBeDefined();
 
       // Wait for Protected Resource to sync to gateway
-      await waitForDomainSync(testDomain.id, accessToken);
+      await waitForNextSync(testDomain.id);
 
       // Obtain access token using client_credentials WITHOUT resource parameter
       // Token aud = Protected Resource clientId (for AuthZen PDP authentication, not resource access)

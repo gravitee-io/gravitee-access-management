@@ -17,12 +17,14 @@ package io.gravitee.am.gateway.handler.oauth2.service.scope.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ScopeEvent;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -57,6 +59,9 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
     @Autowired
     private EventManager eventManager;
+
+    @Autowired
+    private DomainReadinessService domainReadinessService;
 
     @Deprecated
     @Value("${legacy.openid.always_enhance_scopes:false}")
@@ -132,19 +137,28 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
     private void updateScope(String scopeId, ScopeEvent scopeEvent) {
         final String eventType = scopeEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} scope event for {}", domain.getName(), eventType, scopeId);
+        domainReadinessService.initPluginSync(domain.getId(), scopeId, Type.SCOPE.name());
         scopeService.findById(scopeId)
                 .subscribe(
                         scope -> {
                             updateScopes(Collections.singleton(scope));
                             logger.info("Scope {} {}d for domain {}", scopeId, eventType, domain.getName());
+                            domainReadinessService.pluginLoaded(domain.getId(), scopeId);
                         },
-                        error -> logger.error("Unable to {} scope for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No scope found with id {}", scopeId));
+                        error -> {
+                            logger.error("Unable to {} scope for domain {}", eventType, domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), scopeId, error.getMessage());
+                        },
+                        () -> {
+                            logger.error("No scope found with id {}", scopeId);
+                            domainReadinessService.pluginUnloaded(domain.getId(), scopeId);
+                        });
     }
 
     private void removeScope(String scopeId) {
         logger.info("Domain {} has received scope event, delete scope {}", domain.getName(), scopeId);
         scopes.values().removeIf(scope -> scopeId.equals(scope.getId()));
+        domainReadinessService.pluginUnloaded(domain.getId(), scopeId);
     }
 
     public boolean isParameterizedScope(String scopeKey) {

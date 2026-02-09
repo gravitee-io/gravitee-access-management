@@ -18,7 +18,7 @@ import { assertGeneratedToken, OAuth2Fixture, setupFixture } from './fixture/oau
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import { renewApplicationSecrets } from '@management-commands/application-management-commands';
-import { waitForDomainSync } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { setup } from '../../test-fixture';
 
 setup(200000);
@@ -56,7 +56,7 @@ describe('OAuth2 - RFC 6746 - Client credentials grant', () => {
       fixture.application.id,
       fixture.application.secrets[0].id,
     ).then(async (clintSecret) => {
-      await waitForDomainSync(fixture.masterDomain.id, fixture.accessToken, { stabilityMillis: 5000 });
+      await waitForNextSync(fixture.masterDomain.id);
       await performPost(fixture.oidc.token_endpoint, '', 'grant_type=client_credentials', {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + applicationBase64Token(fixture.application),

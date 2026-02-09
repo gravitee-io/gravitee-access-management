@@ -50,16 +50,19 @@ export interface ScimFixture {
 export const setupFixture = async (): Promise<ScimFixture> => {
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName('scim', true), 'Description');
-  await startDomain(domain.id, accessToken);
+
+  // Configure SCIM and create app BEFORE starting domain so the initial sync picks up everything
   await patchDomain(domain.id, accessToken, {
     scim: {
       enabled: true,
       idpSelectionEnabled: false,
     },
   });
-
   const scimApp = await setupScimApp(domain.id, accessToken);
-  const domainWithOidc = await startDomain(domain.id, accessToken).then((domain) => waitForDomainStart(domain));
+
+  // Start domain once — initial sync includes SCIM settings and app
+  await startDomain(domain.id, accessToken);
+  const domainWithOidc = await waitForDomainStart(domain);
   const scimAccessToken = await generateScimAccessToken(domainWithOidc.oidcConfig, scimApp);
 
   const scimEndpoint = process.env.AM_GATEWAY_URL + `/${domain.hrid}/scim`;

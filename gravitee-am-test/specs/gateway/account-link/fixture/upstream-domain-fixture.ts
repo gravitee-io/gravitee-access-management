@@ -19,6 +19,7 @@ import {
   safeDeleteDomain,
   startDomain,
   waitForDomainStart,
+  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { createIdp, getAllIdps } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
@@ -128,7 +129,9 @@ export const setupUpstreamDomain = async (
     }),
   );
 
-  const domainWithOidc = await startDomain(domain.id, accessToken).then((domain) => waitForDomainStart(domain));
+  await startDomain(domain.id, accessToken);
+  const domainWithOidc = await waitForDomainStart(domain);
+  await waitForDomainSync(domain.id);
 
   return {
     domain: domain,
