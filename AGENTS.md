@@ -168,6 +168,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 - **Search for similar implementations first** before writing new code.
 - Keep changes small and reviewable; avoid unrelated refactors or reformatting.
 - Prefer existing patterns over inventing new ones.
+- Each new Java/Typescript file should contain the license header
 
 ---
 
