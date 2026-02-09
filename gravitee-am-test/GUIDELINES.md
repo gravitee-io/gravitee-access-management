@@ -181,7 +181,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { setupFeatureFixture, FeatureFixture } from './fixtures/feature-name-fixture';
 
-setup(20000);
+setup();
 
 // 2. FIXTURE SETUP
 let fixture: FeatureFixture;
@@ -558,7 +558,8 @@ Use the domain state commands from `@gateway-commands/monitoring-commands` and `
 |---|---|---|
 | `setupDomainForTest(name, { waitForStart: true })` | Creates, starts, and waits for domain + OIDC config | **Preferred** for all test/fixture setup |
 | `waitForDomainSync(domainId)` | Polls `_node/domains` until domain is stable and synchronized | After management API changes that must propagate to gateway |
-| `waitForNextSync(domainId)` | Waits for a **new** sync cycle to complete | After modifying resources (apps, secrets, IdPs) when the domain is already synced |
+| `waitForSyncAfter(domainId, mutation)` | Snapshots `lastSync`, executes mutation, polls until `lastSync` advances | **Preferred** when wrapping a mutation (avoids race condition in `waitForNextSync`) |
+| `waitForNextSync(domainId)` | Waits for a **new** sync cycle to complete | When you can't wrap the mutation; note: has a race if sync completes before polling starts |
 | `waitForDomainReady(domainId)` | Low-level poll until domain state is `stable && synchronized` | Internal use; prefer `waitForDomainSync` or `setupDomainForTest` |
 | `waitForOidcReady(domainHrid)` | Retries well-known OIDC config endpoint until 200 | When you need OIDC config independently of domain setup |
 
@@ -576,14 +577,21 @@ const { domain, oidcConfig } = await setupDomainForTest(uniqueName('my-feature',
 
 #### After Resource Changes
 
-After creating or modifying resources (applications, identity providers, protected resources, etc.) that must propagate to the gateway, use `waitForDomainSync` or `waitForNextSync`:
+After creating or modifying resources (applications, identity providers, protected resources, etc.) that must propagate to the gateway, prefer `waitForSyncAfter` which wraps the mutation and avoids a race condition:
 
 ```typescript
-// After creating a resource — wait for gateway to pick it up
-await createApplication(domain.id, accessToken, appRequest);
-await waitForDomainSync(domain.id);
+// PREFERRED: wrap the mutation — captures lastSync BEFORE the call, then polls until it advances
+await waitForSyncAfter(domain.id, () =>
+  patchApplication(domain.id, accessToken, updateRequest, app.id),
+);
 
-// After modifying a resource that was already synced — wait for a NEW sync cycle
+// Also fine for creates
+await waitForSyncAfter(domain.id, () =>
+  createApplication(domain.id, accessToken, appRequest),
+);
+
+// Use waitForNextSync only when you can't wrap the mutation
+// (⚠️ has a race: if sync completes between the mutation returning and polling starting, it may miss the cycle)
 await updateApplication(domain.id, accessToken, updateRequest, app.id);
 await waitForNextSync(domain.id);
 ```

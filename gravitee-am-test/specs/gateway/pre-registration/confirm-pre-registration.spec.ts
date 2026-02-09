@@ -123,7 +123,9 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
   });
 
   it('must pre-register a user', async () => {
-    await createUser(fixture.domain.id, fixture.accessToken, preRegisteredUser);
+    const createdUser = await createUser(fixture.domain.id, fixture.accessToken, preRegisteredUser);
+    expect(createdUser).toBeDefined();
+    expect(createdUser.enabled).toBeFalsy();
   });
 
   describe('User', () => {
@@ -139,7 +141,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
     });
 
     it('Update Application to allow account validation using forgot password', async () => {
-      await waitForSyncAfter(
+      const updatedApp = await waitForSyncAfter(
         fixture.domain.id,
         () => patchApplication(
           fixture.domain.id,
@@ -155,6 +157,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
           fixture.application.id,
         ),
       );
+      expect(updatedApp.settings.account.completeRegistrationWhenResetPassword).toBeTruthy();
     });
 
     it('Can reset the password', async () => {
@@ -180,7 +183,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
 
 describe('AM - User Pre-Registration - Dynamic User Registration', () => {
   it('Update Application to allow Dynamic User Registration', async () => {
-    await waitForSyncAfter(
+    const updatedApp = await waitForSyncAfter(
       fixture.domain.id,
       () => patchApplication(
         fixture.domain.id,
@@ -197,6 +200,7 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
         fixture.application.id,
       ),
     );
+    expect(updatedApp.settings.account.dynamicUserRegistration).toBeTruthy();
   });
 
   it('Pre-Registered user without application id MUST NOT have registration contact point information', async () => {

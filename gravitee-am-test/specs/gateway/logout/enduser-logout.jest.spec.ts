@@ -58,13 +58,14 @@ describe('OAuth2 - Logout tests', () => {
 
   describe('Domain Settings - target_uri is restricted', () => {
     it('Update domain settings', async () => {
-      await waitForSyncAfter(fixture.domain.id,
+      const updatedDomain = await waitForSyncAfter(fixture.domain.id,
         () => patchDomain(fixture.domain.id, fixture.accessToken, {
           oidc: {
             postLogoutRedirectUris: ['https://somewhere/after/logout'],
           },
         }),
       );
+      expect(updatedDomain.oidc.postLogoutRedirectUris).toContain('https://somewhere/after/logout');
       await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
     });
 
@@ -94,7 +95,7 @@ describe('OAuth2 - Logout tests', () => {
 
   describe('Application Settings - target_uri is restricted', () => {
     it('Update application settings', async () => {
-      await waitForSyncAfter(fixture.domain.id, () =>
+      const updatedApp = await waitForSyncAfter(fixture.domain.id, () =>
         patchApplication(
           fixture.domain.id,
           fixture.accessToken,
@@ -108,6 +109,7 @@ describe('OAuth2 - Logout tests', () => {
           fixture.application.id,
         ),
       );
+      expect(updatedApp.settings.oauth.postLogoutRedirectUris).toContain('https://somewhere/after/app/logout');
     });
 
     it('After sign-in a user can logout without target_uri', async () => {
