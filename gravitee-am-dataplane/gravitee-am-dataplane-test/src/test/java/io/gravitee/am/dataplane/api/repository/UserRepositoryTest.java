@@ -906,6 +906,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
         testObserverP0.assertValue(users -> users.getData().size() == 2);
+        testObserverP0.assertValue(users -> users.getCurrentPage() == 0);
         testObserverP0.assertValue(users -> {
             Iterator<User> it = users.getData().iterator();
             return it.next().getUsername().equals(user1.getUsername()) && it.next().getUsername().equals(user2.getUsername());
@@ -918,6 +919,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
         testObserverP1.assertValue(users -> users.getData().size() == 1);
+        testObserverP1.assertValue(users -> users.getCurrentPage() == 1);
         testObserverP1.assertValue(users -> users.getData().iterator().next().getUsername().equals(user3.getUsername()));
     }
 
@@ -971,6 +973,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
         testObserverP0.assertValue(users -> users.getData().size() == 3);
+        testObserverP0.assertValue(users -> users.getCurrentPage() == 0);
 
         // fetch user (page 1)
         TestObserver<Page<User>> testObserverP1 = userRepository.search(Reference.domain(domain), criteria, 1, 2).test();
@@ -979,6 +982,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
         testObserverP1.assertValue(users -> users.getData().size() == 1);
+        testObserverP1.assertValue(users -> users.getCurrentPage() == 1);
     }
 
     @Test
