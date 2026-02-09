@@ -102,6 +102,12 @@
            class="button social">
             <span th:text="#{login.cba}"/>
         </a>
+        <a th:if="${allowMagicLink}"
+           th:href="${magicLinkAction}"
+           id="magicLinkLinkButton"
+           class="button social">
+            <span th:text="#{login.magic.link}"/>
+        </a>
     </div>
 
     <div th:if="${socialProviders and !socialProviders.empty}" class="section">
