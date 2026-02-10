@@ -53,7 +53,7 @@
         </div>
       </div>
 
-      <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT && applicationType !== 'agent'">
+      <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT && applicationType?.toLowerCase() !== 'agent'">
         <div class="gv-form-section-title">
           <h5>Refresh Token</h5>
           <small>Configure how refresh tokens will be used.</small>

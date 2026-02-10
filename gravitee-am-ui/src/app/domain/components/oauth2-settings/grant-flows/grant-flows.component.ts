@@ -100,7 +100,7 @@ export class GrantFlowsComponent implements OnInit {
         (grantType) => grantType.value === this.CLIENT_CREDENTIALS_GRANT_TYPE || grantType.value === this.TOKEN_EXCHANGE_GRANT_TYPE,
       );
     }
-    if (this.applicationType === 'agent') {
+    if (this.applicationType?.toLowerCase() === 'agent') {
       return this.grantTypes.filter((grantType) => !this.AGENT_FORBIDDEN_GRANT_TYPES.includes(grantType.value));
     }
     return this.grantTypes;
@@ -191,7 +191,7 @@ export class GrantFlowsComponent implements OnInit {
         (gt) => gt === this.CLIENT_CREDENTIALS_GRANT_TYPE || gt === this.TOKEN_EXCHANGE_GRANT_TYPE,
       );
     }
-    if (this.applicationType === 'agent') {
+    if (this.applicationType?.toLowerCase() === 'agent') {
       selectedGrantTypes = selectedGrantTypes.filter((gt) => !this.AGENT_FORBIDDEN_GRANT_TYPES.includes(gt));
     }
     const updatedSettings = {
@@ -202,7 +202,7 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   private initTokenEndpointAuthMethods() {
-    if (this.applicationType === 'service' || this.applicationType === 'agent') {
+    if (this.applicationType === 'service' || this.applicationType?.toLowerCase() === 'agent') {
       this.tokenEndpointAuthMethods = this.tokenEndpointAuthMethods.map((item) => {
         if (item.value === 'none') {
           item.disabled = true;
@@ -227,7 +227,7 @@ export class GrantFlowsComponent implements OnInit {
           gt.toLowerCase() === this.CLIENT_CREDENTIALS_GRANT_TYPE || gt.toLowerCase() === this.TOKEN_EXCHANGE_GRANT_TYPE.toLowerCase(),
       );
     }
-    if (this.applicationType === 'agent') {
+    if (this.applicationType?.toLowerCase() === 'agent') {
       filteredGrantTypesList = grantTypesList.filter((gt) => !this.AGENT_FORBIDDEN_GRANT_TYPES.includes(gt.toLowerCase()));
     }
     this.grantTypes.forEach((grantType) => {

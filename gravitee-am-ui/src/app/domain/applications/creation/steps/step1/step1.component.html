@@ -31,7 +31,18 @@
     >
       <mat-card-content>
         <div>
-          <i [ngClass]="applicationType.type === application.type ? 'selected' : ''" class="material-icons">{{ applicationType.icon }}</i>
+          <mat-icon
+            *ngIf="applicationType.icon.includes(':')"
+            [svgIcon]="applicationType.icon"
+            [ngClass]="applicationType.type === application.type ? 'selected' : ''"
+            class="app-type-icon"
+          ></mat-icon>
+          <i
+            *ngIf="!applicationType.icon.includes(':')"
+            [ngClass]="applicationType.type === application.type ? 'selected' : ''"
+            class="material-icons"
+            >{{ applicationType.icon }}</i
+          >
         </div>
         <h3>{{ applicationType.name }}</h3>
         <p>
