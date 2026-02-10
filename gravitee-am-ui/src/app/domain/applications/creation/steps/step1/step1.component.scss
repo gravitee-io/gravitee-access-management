@@ -13,6 +13,11 @@
       min-height: 280px;
       margin: 10px;
 
+      .app-type-icon {
+        width: 82px;
+        height: 82px;
+      }
+
       &.selected,
       i.selected,
       .app-type-icon.selected {
@@ -40,11 +45,6 @@
           &:not(.selected) {
             border: 1px solid #e5e5e5;
           }
-        }
-
-        .app-type-icon {
-          width: 82px;
-          height: 82px;
         }
 
         p {
