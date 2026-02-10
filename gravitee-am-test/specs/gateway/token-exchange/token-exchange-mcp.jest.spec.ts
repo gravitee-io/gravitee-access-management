@@ -40,9 +40,9 @@ afterAll(async () => {
 
 describe('Token Exchange grant (MCP Server)', () => {
   it('should exchange subject token and keep expiration constraints', async () => {
-    const { oidc, mcpServer, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, mcpServer, mcpServerBasicAuth, obtainToken } = defaultFixture;
 
-    const { accessToken: subjectAccessToken, expiresIn: subjectExpiresIn } = await obtainSubjectToken();
+    const { accessToken: subjectAccessToken, expiresIn: subjectExpiresIn } = await obtainToken();
 
     const exchangeResponse = await performPost(
       oidc.token_endpoint,
@@ -72,9 +72,9 @@ describe('Token Exchange grant (MCP Server)', () => {
   });
 
   it('should keep gis claim from subject token', async () => {
-    const { oidc, mcpServer, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, mcpServer, mcpServerBasicAuth, obtainToken } = defaultFixture;
 
-    const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+    const { accessToken: subjectAccessToken } = await obtainToken();
     const subjectDecoded = parseJwt(subjectAccessToken);
     const subjectGis = subjectDecoded.payload['gis'];
     expect(subjectGis).toBeDefined();
@@ -101,9 +101,9 @@ describe('Token Exchange grant (MCP Server)', () => {
   });
 
   it('should exchange refresh token when allowed', async () => {
-    const { oidc, mcpServer, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, mcpServer, mcpServerBasicAuth, obtainToken } = defaultFixture;
 
-    const { refreshToken } = await obtainSubjectToken();
+    const { refreshToken } = await obtainToken();
     expect(refreshToken).toBeDefined();
 
     const response = await performPost(
@@ -129,9 +129,9 @@ describe('Token Exchange grant (MCP Server)', () => {
   });
 
   it('should exchange id token when allowed', async () => {
-    const { oidc, mcpServer, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, mcpServer, mcpServerBasicAuth, obtainToken } = defaultFixture;
 
-    const { idToken } = await obtainSubjectToken();
+    const { idToken } = await obtainToken();
     expect(idToken).toBeDefined();
 
     const response = await performPost(
@@ -157,9 +157,9 @@ describe('Token Exchange grant (MCP Server)', () => {
   });
 
   it('should reject when requested_token_type is not supported', async () => {
-    const { oidc, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, mcpServerBasicAuth, obtainToken } = defaultFixture;
 
-    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+    const { accessToken: subjectAccessToken } = await obtainToken('openid%20profile');
 
     const response = await performPost(
       oidc.token_endpoint,
@@ -176,9 +176,9 @@ describe('Token Exchange grant (MCP Server)', () => {
   });
 
   it('should NOT include id_token in response when exchanging access token with openid scope', async () => {
-    const { oidc, mcpServer, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, mcpServer, mcpServerBasicAuth, obtainToken } = defaultFixture;
 
-    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+    const { accessToken: subjectAccessToken } = await obtainToken('openid%20profile');
 
     const exchangeResponse = await performPost(
       oidc.token_endpoint,
@@ -203,8 +203,8 @@ describe('Token Exchange grant (MCP Server)', () => {
   });
 
   it('should exchange jwt subject token when allowed', async () => {
-    const { oidc, mcpServer, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
-    const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+    const { oidc, mcpServer, mcpServerBasicAuth, obtainToken } = defaultFixture;
+    const { accessToken: subjectAccessToken } = await obtainToken();
 
     const response = await performPost(
       oidc.token_endpoint,
@@ -231,9 +231,9 @@ describe('Token Exchange grant (MCP Server)', () => {
   });
 
   it('should reject when subject_token_type is not allowed', async () => {
-    const { oidc, mcpServerBasicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, mcpServerBasicAuth, obtainToken } = defaultFixture;
 
-    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+    const { accessToken: subjectAccessToken } = await obtainToken('openid%20profile');
 
     const response = await performPost(
       oidc.token_endpoint,

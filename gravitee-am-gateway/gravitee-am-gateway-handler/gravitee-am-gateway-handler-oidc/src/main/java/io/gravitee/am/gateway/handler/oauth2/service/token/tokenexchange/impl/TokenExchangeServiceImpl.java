@@ -21,6 +21,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -28,30 +29,42 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenEx
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TokenExchangeServiceImpl implements TokenExchangeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenExchangeServiceImpl.class);
 
-    @Autowired
-    private List<TokenValidator> validators;
+    private final List<TokenValidator> validators;
+    private final SubjectManager subjectManager;
+    private final ProtectedResourceManager protectedResourceManager;
 
-    @Autowired
-    private SubjectManager subjectManager;
+    public TokenExchangeServiceImpl(List<TokenValidator> validators,
+                                    SubjectManager subjectManager,
+                                    ProtectedResourceManager protectedResourceManager) {
+        this.validators = validators;
+        this.subjectManager = subjectManager;
+        this.protectedResourceManager = protectedResourceManager;
+    }
 
     @Override
     public Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain) {
@@ -282,23 +295,69 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return gis instanceof String ? (String) gis : null;
     }
 
+    /**
+     * Allowed = base ∩ scopePool; scopePool = client ∪ resource (when resource present), else client only.
+     * When client has no scope settings and no resource scopes, scopePool stays empty: fail closed, grant no scopes.
+     */
+    private Set<String> computeAllowedScopesWithResource(Set<String> requestedResourceUris,
+            Set<String> baseAllowedScopes,
+            Set<String> clientScopes) {
+        if (baseAllowedScopes.isEmpty()) {
+            return Collections.emptySet();
+        }
+        Set<String> scopePool = new HashSet<>(clientScopes);
+        if (requestedResourceUris != null && !requestedResourceUris.isEmpty()) {
+            scopePool.addAll(protectedResourceManager.getScopesForResources(requestedResourceUris));
+        }
+        Set<String> allowedScopes = new HashSet<>(baseAllowedScopes);
+        allowedScopes.retainAll(scopePool);
+        return allowedScopes;
+    }
+
+    private static Set<String> getClientScopes(Client client) {
+        if (client.getScopeSettings() == null || client.getScopeSettings().isEmpty()) {
+            return Collections.emptySet();
+        }
+        return client.getScopeSettings().stream()
+                .map(ApplicationScopeSettings::getScope)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Resolves allowed scopes from base (subject or subject∩actor), client and resource, then granted from requested.
+     * Requested ⊆ allowed; if omitted grant full allowed. Throws InvalidScopeException if not allowed.
+     */
+    private Single<Set<String>> computeGrantedScopes(Set<String> requestedScopes, Set<String> baseAllowedScopes,
+                                                      TokenRequest tokenRequest, Client client) {
+        Set<String> clientScopes = getClientScopes(client);
+        Set<String> allowedScopes = computeAllowedScopesWithResource(tokenRequest.getResources(), baseAllowedScopes, clientScopes);
+        if (requestedScopes == null || requestedScopes.isEmpty()) {
+            return Single.just(allowedScopes);
+        }
+        if (allowedScopes.containsAll(requestedScopes)) {
+            return Single.just(requestedScopes);
+        }
+        return Single.error(new InvalidScopeException("Requested scope is not allowed"));
+    }
+
     private Single<TokenExchangeResult> buildImpersonationResult(TokenRequest tokenRequest,
                                                                   ValidatedToken subjectToken,
                                                                   ParsedRequest parsedRequest,
                                                                   Client client) {
-        return Single.fromCallable(() -> {
-            Set<String> grantedScopes = subjectToken.getScopes();
-            User user = createUser(subjectToken, grantedScopes, client.getClientId(), false);
-            tokenRequest.setScopes(grantedScopes);
+        Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
+        Set<String> baseAllowed = Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet());
+        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client)
+                .flatMap(grantedScopes -> Single.fromCallable(() -> {
+                    User user = createUser(subjectToken, grantedScopes, client.getClientId(), false);
+                    tokenRequest.setScopes(grantedScopes);
 
-            return TokenExchangeResult.forImpersonation(
-                    user,
-                    parsedRequest.requestedTokenType(),
-                    subjectToken.getExpiration(),
-                    subjectToken.getTokenId(),
-                    parsedRequest.subjectTokenType()
-            );
-        });
+                    return TokenExchangeResult.forImpersonation(
+                            user,
+                            parsedRequest.requestedTokenType(),
+                            subjectToken.getExpiration(),
+                            subjectToken.getTokenId(),
+                            parsedRequest.subjectTokenType());
+                }));
     }
 
     private Single<TokenExchangeResult> buildDelegationResult(TokenRequest tokenRequest,
@@ -307,22 +366,24 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                                ActorTokenInfo actorInfo,
                                                                ParsedRequest parsedRequest,
                                                                Client client) {
-        return Single.fromCallable(() -> {
-            Set<String> grantedScopes = subjectToken.getScopes();
-            User user = createUser(subjectToken, grantedScopes, client.getClientId(), true);
-            tokenRequest.setScopes(grantedScopes);
+        Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
+        Set<String> baseAllowed = new HashSet<>(Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet()));
+        baseAllowed.retainAll(Optional.ofNullable(actorToken.getScopes()).orElse(Collections.emptySet()));
+        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client)
+                .flatMap(grantedScopes -> Single.fromCallable(() -> {
+                    User user = createUser(subjectToken, grantedScopes, client.getClientId(), true);
+                    tokenRequest.setScopes(grantedScopes);
 
-            return TokenExchangeResult.forDelegation(
-                    user,
-                    parsedRequest.requestedTokenType(),
-                    subjectToken.getExpiration(),
-                    subjectToken.getTokenId(),
-                    parsedRequest.subjectTokenType(),
-                    actorToken.getTokenId(),
-                    parsedRequest.actorTokenType(),
-                    actorInfo
-            );
-        });
+                    return TokenExchangeResult.forDelegation(
+                            user,
+                            parsedRequest.requestedTokenType(),
+                            subjectToken.getExpiration(),
+                            subjectToken.getTokenId(),
+                            parsedRequest.subjectTokenType(),
+                            actorToken.getTokenId(),
+                            parsedRequest.actorTokenType(),
+                            actorInfo);
+                }));
     }
 
     private User createUser(ValidatedToken subjectToken,
