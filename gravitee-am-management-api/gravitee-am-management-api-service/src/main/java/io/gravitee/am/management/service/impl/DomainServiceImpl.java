@@ -782,7 +782,7 @@ public class DomainServiceImpl implements DomainService {
         }
 
         if (domain.getTokenExchangeSettings() != null && !domain.getTokenExchangeSettings().isValid()) {
-            return Completable.error(new InvalidDomainException("Token Exchange settings are invalid: at least one of impersonation or delegation must be enabled when token exchange is enabled"));
+            return Completable.error(new InvalidDomainException("Token Exchange settings are invalid"));
         }
 
         if (domain.getWebAuthnSettings() != null) {
