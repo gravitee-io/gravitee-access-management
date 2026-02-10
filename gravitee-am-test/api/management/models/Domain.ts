@@ -246,6 +246,12 @@ export interface Domain {
   corsSettings?: CorsSettings;
   /**
    *
+   * @type {any}
+   * @memberof Domain
+   */
+  tokenExchangeSettings?: any;
+  /**
+   *
    * @type {string}
    * @memberof Domain
    */
@@ -374,6 +380,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
     saml: json['saml'] == null ? undefined : SAMLSettingsFromJSON(json['saml']),
     corsSettings: json['corsSettings'] == null ? undefined : CorsSettingsFromJSON(json['corsSettings']),
+    tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : json['tokenExchangeSettings'],
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
@@ -430,6 +437,7 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value['selfServiceAccountManagementSettings']),
     saml: SAMLSettingsToJSON(value['saml']),
     corsSettings: CorsSettingsToJSON(value['corsSettings']),
+    tokenExchangeSettings: value['tokenExchangeSettings'],
     dataPlaneId: value['dataPlaneId'],
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
     dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
