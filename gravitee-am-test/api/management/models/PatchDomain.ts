@@ -85,6 +85,13 @@ import {
 } from './WebAuthnSettings';
 import type { UMASettings } from './UMASettings';
 import { UMASettingsFromJSON, UMASettingsFromJSONTyped, UMASettingsToJSON, UMASettingsToJSONTyped } from './UMASettings';
+import type { TokenExchangeSettings } from './TokenExchangeSettings';
+import {
+  TokenExchangeSettingsFromJSON,
+  TokenExchangeSettingsFromJSONTyped,
+  TokenExchangeSettingsToJSON,
+  TokenExchangeSettingsToJSONTyped,
+} from './TokenExchangeSettings';
 
 /**
  *
@@ -220,10 +227,10 @@ export interface PatchDomain {
   secretSettings?: SecretExpirationSettings;
   /**
    *
-   * @type {any}
+   * @type {TokenExchangeSettings}
    * @memberof PatchDomain
    */
-  tokenExchangeSettings?: any;
+  tokenExchangeSettings?: TokenExchangeSettings;
   /**
    *
    * @type {Set<string>}
@@ -343,7 +350,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     corsSettings: json['corsSettings'] == null ? undefined : CorsSettingsFromJSON(json['corsSettings']),
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     secretSettings: json['secretSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretSettings']),
-    tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : json['tokenExchangeSettings'],
+    tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
@@ -379,7 +386,7 @@ export function PatchDomainToJSONTyped(value?: PatchDomain | null, ignoreDiscrim
     corsSettings: CorsSettingsToJSON(value['corsSettings']),
     dataPlaneId: value['dataPlaneId'],
     secretSettings: SecretExpirationSettingsToJSON(value['secretSettings']),
-    tokenExchangeSettings: value['tokenExchangeSettings'],
+    tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }
