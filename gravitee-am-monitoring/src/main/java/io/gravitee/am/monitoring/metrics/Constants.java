@@ -34,6 +34,10 @@ public interface Constants {
     String METRICS_IDP_EVENTS = METRICS_NAME_PREFIX + "idp_evt";
 
     String METRICS_AUTH_EVENTS = METRICS_NAME_PREFIX + "auth_evt";
+
+    String METRICS_BUFFERED_EMAILS = METRICS_NAME_PREFIX + "buffered_emails";
+    String METRICS_DROPPED_EMAILS = METRICS_NAME_PREFIX + "dropped_emails";
+
     String TAG_AUTH_STATUS = "auth_status";
     String TAG_AUTH_IDP = "idp";
     String TAG_VALUE_AUTH_IDP_INTERNAL = "internal";
