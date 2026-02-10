@@ -22,15 +22,19 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SMTPClientExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.email.EmailContainer;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -52,13 +56,12 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
-import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -75,18 +78,22 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -95,6 +102,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Boolean.FALSE;
@@ -105,7 +114,10 @@ import static java.util.Optional.ofNullable;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ProvisioningUserServiceImpl implements ProvisioningUserService, InitializingBean {
+public class ProvisioningUserServiceImpl implements ProvisioningUserService, InitializingBean, DisposableBean {
+    private static final int DEFAULT_EMAIL_PUBLISHER_BUFFER_SIZE = 1000; // align with the default limit for bulk action
+    private static final int DEFAULT_EMAIL_PUBLISHER_BATCH_SIZE = 100;
+    private static final int DEFAULT_EMAIL_PUBLISHER_PERIOD_IN_SECOND = 5;
     private static final String PARAMETER_EXIST_ERROR = "User with {0} [{1}] already exists";
     private static final Logger LOGGER = LoggerFactory.getLogger(ProvisioningUserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
@@ -174,13 +186,84 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     @Autowired
     private ApplicationService applicationService;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private SMTPClientExecutor smtpClientExecutor;
+
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
+
+    private EmailPublisher emailPublisher;
+
+    private Disposable emailPublisherDisposable;
+
+    private final AtomicReference<EmailContainer> lastSubmittedEmail = new AtomicReference<>();
+
+    @Value("${email.enabled:false}")
+    private boolean emailEnabled = false;
+
+    @Value("${email.bulk.enabled:false}")
+    private boolean bulkEnabled = false;
+
+    @Value("${email.bulk.buffer:"+ DEFAULT_EMAIL_PUBLISHER_BUFFER_SIZE +"}")
+    private int bufferSize = DEFAULT_EMAIL_PUBLISHER_BUFFER_SIZE;
+
+    @Value("${email.bulk.batch:"+ DEFAULT_EMAIL_PUBLISHER_BATCH_SIZE +"}")
+    private int batchSize = DEFAULT_EMAIL_PUBLISHER_BATCH_SIZE;
+
+    @Value("${email.bulk.period:"+ DEFAULT_EMAIL_PUBLISHER_PERIOD_IN_SECOND +"}")
+    private int batchPeriod = DEFAULT_EMAIL_PUBLISHER_PERIOD_IN_SECOND;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         this.userRepository = dataPlaneRegistry.getUserRepository(domain);
+        initEmailProcessingFlow();
     }
 
-    @Autowired
-    private EmailService emailService;
+    private void initEmailProcessingFlow() {
+        this.emailPublisher = new EmailPublisher();
+        if (emailEnabled && bulkEnabled) {
+            LOGGER.info("An email publisher has been created for domain {}", domain.getName());
+            this.emailPublisherDisposable = Flowable.create(emailPublisher, BackpressureStrategy.MISSING)
+                .onBackpressureDrop(droppedEmail -> {
+                    LOGGER.warn("The email publisher buffer is full for domain {}. Dropping email for user: {}",
+                            domain.getName(), droppedEmail.user().getUsername());
+                    emailService.traceEmailEviction(droppedEmail.user(), droppedEmail.client(), Template.REGISTRATION_CONFIRMATION);
+                    gatewayMetricProvider.incrementDroppedEmails();
+                })
+                .observeOn(Schedulers.from(smtpClientExecutor.getExecutor()), false, bufferSize)
+                .buffer(batchPeriod, TimeUnit.SECONDS, batchSize)
+                .map(emailContainers -> {
+                    if (!emailContainers.isEmpty()) {
+                        try {
+                            emailService.batch(Template.REGISTRATION_CONFIRMATION, emailContainers);
+                        } catch (Exception ex) {
+                            // should never happen
+                            LOGGER.error("An error occurs while trying to send emails to confirm registration", ex);
+                        }
+                        gatewayMetricProvider.decrementBufferedEmails(emailContainers.size());
+                    }
+                    return emailContainers;
+                })
+                .subscribe(
+                        (emailContainers) -> {
+                            if (!emailContainers.isEmpty()) {
+                                LOGGER.debug("Batch of {} emails to confirm registration has been processed", emailContainers.size());
+                            }
+                        },
+                        (error) -> LOGGER.warn("An exception occurs while trying to send a batch of emails to confirm registration: {}", error.getMessage())
+                );
+        }
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (emailPublisherDisposable != null && !emailPublisherDisposable.isDisposed()) {
+            emailPublisherDisposable.dispose();
+        }
+    }
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int startIndex, int size, String baseUrl) {
@@ -321,13 +404,12 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                         if (user1.isPreRegistration()) {
                                             // Send email with client information if available
                                             var resolvedClient = optApp.map(Application::toClient).orElse(null);
-                                            Completable.fromAction(
-                                                    () -> emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient))
-                                                    .subscribeOn(Schedulers.io())
-                                                    .subscribe(
-                                                            () -> LOGGER.debug("An email has been sent to {} to confirm his registration", user1.getUsername()),
-                                                            (error) -> LOGGER.warn("An exception occurs while trying to send an email to {} to confirm his registration: {}", user1.getUsername(), error.getMessage())
-                                                    );
+                                            if (bulkEnabled) {
+                                                emailPublisher.submit(new EmailContainer(user1, resolvedClient));
+                                                gatewayMetricProvider.incrementBufferedEmails();
+                                            } else {
+                                                emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient);
+                                            }
                                         }
                                     });
                         }))
