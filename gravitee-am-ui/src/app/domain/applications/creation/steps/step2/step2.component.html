@@ -50,7 +50,8 @@
           </div>
           <div fxFlex fxLayout="column" fxLayoutAlign="center center" style="text-align: center">
             <mat-hint style="font-size: 75%">Application's type: {{ application.type }}</mat-hint>
-            <i class="material-icons">{{ icon(application) }}</i>
+            <mat-icon *ngIf="icon(application).includes(':')" [svgIcon]="icon(application)" class="app-type-icon"></mat-icon>
+            <i *ngIf="!icon(application).includes(':')" class="material-icons">{{ icon(application) }}</i>
           </div>
         </div>
         <div *ngIf="displayRedirectUri()" style="margin-top: 20px; max-width: 70%">

@@ -50,7 +50,7 @@ export class ApplicationCreationStep1Component implements OnInit {
     },
     {
       name: 'Agentic Application',
-      icon: 'device_hub',
+      icon: 'gio:agent',
       type: 'AGENT',
       description: 'Agentic apps',
       subDescription: 'e.g : AI assistants, autonomous agents',
