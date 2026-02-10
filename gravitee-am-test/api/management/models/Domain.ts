@@ -26,26 +26,10 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
-import type { AccountSettings } from './AccountSettings';
-import {
-  AccountSettingsFromJSON,
-  AccountSettingsFromJSONTyped,
-  AccountSettingsToJSON,
-  AccountSettingsToJSONTyped,
-} from './AccountSettings';
 import type { SCIMSettings } from './SCIMSettings';
 import { SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON, SCIMSettingsToJSONTyped } from './SCIMSettings';
-import type { SelfServiceAccountManagementSettings } from './SelfServiceAccountManagementSettings';
-import {
-  SelfServiceAccountManagementSettingsFromJSON,
-  SelfServiceAccountManagementSettingsFromJSONTyped,
-  SelfServiceAccountManagementSettingsToJSON,
-  SelfServiceAccountManagementSettingsToJSONTyped,
-} from './SelfServiceAccountManagementSettings';
 import type { CorsSettings } from './CorsSettings';
 import { CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON, CorsSettingsToJSONTyped } from './CorsSettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
 import type { SecretExpirationSettings } from './SecretExpirationSettings';
 import {
   SecretExpirationSettingsFromJSON,
@@ -53,17 +37,8 @@ import {
   SecretExpirationSettingsToJSON,
   SecretExpirationSettingsToJSONTyped,
 } from './SecretExpirationSettings';
-import type { VirtualHost } from './VirtualHost';
-import { VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON, VirtualHostToJSONTyped } from './VirtualHost';
 import type { OIDCSettings } from './OIDCSettings';
 import { OIDCSettingsFromJSON, OIDCSettingsFromJSONTyped, OIDCSettingsToJSON, OIDCSettingsToJSONTyped } from './OIDCSettings';
-import type { PasswordSettings } from './PasswordSettings';
-import {
-  PasswordSettingsFromJSON,
-  PasswordSettingsFromJSONTyped,
-  PasswordSettingsToJSON,
-  PasswordSettingsToJSONTyped,
-} from './PasswordSettings';
 import type { WebAuthnSettings } from './WebAuthnSettings';
 import {
   WebAuthnSettingsFromJSON,
@@ -71,10 +46,24 @@ import {
   WebAuthnSettingsToJSON,
   WebAuthnSettingsToJSONTyped,
 } from './WebAuthnSettings';
-import type { SAMLSettings } from './SAMLSettings';
-import { SAMLSettingsFromJSON, SAMLSettingsFromJSONTyped, SAMLSettingsToJSON, SAMLSettingsToJSONTyped } from './SAMLSettings';
 import type { UMASettings } from './UMASettings';
 import { UMASettingsFromJSON, UMASettingsFromJSONTyped, UMASettingsToJSON, UMASettingsToJSONTyped } from './UMASettings';
+import type { AccountSettings } from './AccountSettings';
+import {
+  AccountSettingsFromJSON,
+  AccountSettingsFromJSONTyped,
+  AccountSettingsToJSON,
+  AccountSettingsToJSONTyped,
+} from './AccountSettings';
+import type { SelfServiceAccountManagementSettings } from './SelfServiceAccountManagementSettings';
+import {
+  SelfServiceAccountManagementSettingsFromJSON,
+  SelfServiceAccountManagementSettingsFromJSONTyped,
+  SelfServiceAccountManagementSettingsToJSON,
+  SelfServiceAccountManagementSettingsToJSONTyped,
+} from './SelfServiceAccountManagementSettings';
+import type { LoginSettings } from './LoginSettings';
+import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
 import type { TokenExchangeSettings } from './TokenExchangeSettings';
 import {
   TokenExchangeSettingsFromJSON,
@@ -82,6 +71,17 @@ import {
   TokenExchangeSettingsToJSON,
   TokenExchangeSettingsToJSONTyped,
 } from './TokenExchangeSettings';
+import type { VirtualHost } from './VirtualHost';
+import { VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON, VirtualHostToJSONTyped } from './VirtualHost';
+import type { PasswordSettings } from './PasswordSettings';
+import {
+  PasswordSettingsFromJSON,
+  PasswordSettingsFromJSONTyped,
+  PasswordSettingsToJSON,
+  PasswordSettingsToJSONTyped,
+} from './PasswordSettings';
+import type { SAMLSettings } from './SAMLSettings';
+import { SAMLSettingsFromJSON, SAMLSettingsFromJSONTyped, SAMLSettingsToJSON, SAMLSettingsToJSONTyped } from './SAMLSettings';
 
 /**
  *
@@ -253,12 +253,6 @@ export interface Domain {
   corsSettings?: CorsSettings;
   /**
    *
-   * @type {TokenExchangeSettings}
-   * @memberof Domain
-   */
-  tokenExchangeSettings?: TokenExchangeSettings;
-  /**
-   *
    * @type {string}
    * @memberof Domain
    */
@@ -271,10 +265,10 @@ export interface Domain {
   secretExpirationSettings?: SecretExpirationSettings;
   /**
    *
-   * @type {boolean}
+   * @type {TokenExchangeSettings}
    * @memberof Domain
    */
-  dynamicClientRegistrationTemplateEnabled?: boolean;
+  tokenExchangeSettings?: TokenExchangeSettings;
   /**
    *
    * @type {boolean}
@@ -304,7 +298,7 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
-  redirectUriStrictMatching?: boolean;
+  dynamicClientRegistrationTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -317,6 +311,12 @@ export interface Domain {
    * @memberof Domain
    */
   redirectUriWildcardAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriStrictMatching?: boolean;
 }
 
 /**
@@ -387,12 +387,10 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
     saml: json['saml'] == null ? undefined : SAMLSettingsFromJSON(json['saml']),
     corsSettings: json['corsSettings'] == null ? undefined : CorsSettingsFromJSON(json['corsSettings']),
-    tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
-    dynamicClientRegistrationTemplateEnabled:
-      json['dynamicClientRegistrationTemplateEnabled'] == null ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
+    tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
     redirectUriUnsecuredHttpSchemeAllowed:
       json['redirectUriUnsecuredHttpSchemeAllowed'] == null ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
     redirectUriExpressionLanguageEnabled:
@@ -401,9 +399,11 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled:
       json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
-    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
+    dynamicClientRegistrationTemplateEnabled:
+      json['dynamicClientRegistrationTemplateEnabled'] == null ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
     redirectUriLocalhostAllowed: json['redirectUriLocalhostAllowed'] == null ? undefined : json['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
   };
 }
 
@@ -444,16 +444,16 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value['selfServiceAccountManagementSettings']),
     saml: SAMLSettingsToJSON(value['saml']),
     corsSettings: CorsSettingsToJSON(value['corsSettings']),
-    tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
     dataPlaneId: value['dataPlaneId'],
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
-    dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
+    tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
     redirectUriUnsecuredHttpSchemeAllowed: value['redirectUriUnsecuredHttpSchemeAllowed'],
     redirectUriExpressionLanguageEnabled: value['redirectUriExpressionLanguageEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
-    redirectUriStrictMatching: value['redirectUriStrictMatching'],
+    dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
     redirectUriLocalhostAllowed: value['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: value['redirectUriStrictMatching'],
   };
 }

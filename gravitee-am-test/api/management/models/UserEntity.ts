@@ -404,40 +404,10 @@ export interface UserEntity {
   sourceId?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {UserId}
    * @memberof UserEntity
    */
-  address?: { [key: string]: any };
-  /**
-   *
-   * @type {string}
-   * @memberof UserEntity
-   */
-  locale?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserEntity
-   */
-  zoneInfo?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
-   * @type {boolean}
-   * @memberof UserEntity
-   */
-  indefinitelyLocked?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof UserEntity
-   */
-  temporarilyLocked?: boolean;
+  fullId?: UserId;
   /**
    *
    * @type {string}
@@ -473,7 +443,19 @@ export interface UserEntity {
    * @type {string}
    * @memberof UserEntity
    */
+  zoneInfo?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserEntity
+   */
   phoneNumber?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  address?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -482,16 +464,34 @@ export interface UserEntity {
   disabled?: boolean;
   /**
    *
-   * @type {UserId}
+   * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
-  fullId?: UserId;
+  identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {boolean}
+   * @memberof UserEntity
+   */
+  indefinitelyLocked?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UserEntity
+   */
+  temporarilyLocked?: boolean;
   /**
    *
    * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
   lastIdentityInformation?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof UserEntity
+   */
+  locale?: string;
 }
 
 /**
@@ -581,21 +581,21 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
     applicationEntity: json['applicationEntity'] == null ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
     sourceId: json['sourceId'] == null ? undefined : json['sourceId'],
-    address: json['address'] == null ? undefined : json['address'],
-    locale: json['locale'] == null ? undefined : json['locale'],
-    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
-    indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
-    temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     middleName: json['middleName'] == null ? undefined : json['middleName'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
+    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
+    address: json['address'] == null ? undefined : json['address'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
+    temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
     lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
+    locale: json['locale'] == null ? undefined : json['locale'],
   };
 }
 
@@ -669,20 +669,20 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     serviceAccount: value['serviceAccount'],
     applicationEntity: ApplicationEntityToJSON(value['applicationEntity']),
     sourceId: value['sourceId'],
-    address: value['address'],
-    locale: value['locale'],
-    zoneInfo: value['zoneInfo'],
-    identitiesAsMap: value['identitiesAsMap'],
-    indefinitelyLocked: value['indefinitelyLocked'],
-    temporarilyLocked: value['temporarilyLocked'],
+    fullId: UserIdToJSON(value['fullId']),
     middleName: value['middleName'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],
     birthdate: value['birthdate'],
+    zoneInfo: value['zoneInfo'],
     phoneNumber: value['phoneNumber'],
+    address: value['address'],
     disabled: value['disabled'],
-    fullId: UserIdToJSON(value['fullId']),
+    identitiesAsMap: value['identitiesAsMap'],
+    indefinitelyLocked: value['indefinitelyLocked'],
+    temporarilyLocked: value['temporarilyLocked'],
     lastIdentityInformation: value['lastIdentityInformation'],
+    locale: value['locale'],
   };
 }

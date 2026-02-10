@@ -26,22 +26,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
-import type { AccountSettings } from './AccountSettings';
-import {
-  AccountSettingsFromJSON,
-  AccountSettingsFromJSONTyped,
-  AccountSettingsToJSON,
-  AccountSettingsToJSONTyped,
-} from './AccountSettings';
 import type { SCIMSettings } from './SCIMSettings';
 import { SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON, SCIMSettingsToJSONTyped } from './SCIMSettings';
-import type { PatchOIDCSettings } from './PatchOIDCSettings';
-import {
-  PatchOIDCSettingsFromJSON,
-  PatchOIDCSettingsFromJSONTyped,
-  PatchOIDCSettingsToJSON,
-  PatchOIDCSettingsToJSONTyped,
-} from './PatchOIDCSettings';
 import type { PatchPasswordSettings } from './PatchPasswordSettings';
 import {
   PatchPasswordSettingsFromJSON,
@@ -49,17 +35,8 @@ import {
   PatchPasswordSettingsToJSON,
   PatchPasswordSettingsToJSONTyped,
 } from './PatchPasswordSettings';
-import type { SelfServiceAccountManagementSettings } from './SelfServiceAccountManagementSettings';
-import {
-  SelfServiceAccountManagementSettingsFromJSON,
-  SelfServiceAccountManagementSettingsFromJSONTyped,
-  SelfServiceAccountManagementSettingsToJSON,
-  SelfServiceAccountManagementSettingsToJSONTyped,
-} from './SelfServiceAccountManagementSettings';
 import type { CorsSettings } from './CorsSettings';
 import { CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON, CorsSettingsToJSONTyped } from './CorsSettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
 import type { SecretExpirationSettings } from './SecretExpirationSettings';
 import {
   SecretExpirationSettingsFromJSON,
@@ -67,8 +44,6 @@ import {
   SecretExpirationSettingsToJSON,
   SecretExpirationSettingsToJSONTyped,
 } from './SecretExpirationSettings';
-import type { VirtualHost } from './VirtualHost';
-import { VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON, VirtualHostToJSONTyped } from './VirtualHost';
 import type { PatchSAMLSettings } from './PatchSAMLSettings';
 import {
   PatchSAMLSettingsFromJSON,
@@ -85,6 +60,29 @@ import {
 } from './WebAuthnSettings';
 import type { UMASettings } from './UMASettings';
 import { UMASettingsFromJSON, UMASettingsFromJSONTyped, UMASettingsToJSON, UMASettingsToJSONTyped } from './UMASettings';
+import type { AccountSettings } from './AccountSettings';
+import {
+  AccountSettingsFromJSON,
+  AccountSettingsFromJSONTyped,
+  AccountSettingsToJSON,
+  AccountSettingsToJSONTyped,
+} from './AccountSettings';
+import type { PatchOIDCSettings } from './PatchOIDCSettings';
+import {
+  PatchOIDCSettingsFromJSON,
+  PatchOIDCSettingsFromJSONTyped,
+  PatchOIDCSettingsToJSON,
+  PatchOIDCSettingsToJSONTyped,
+} from './PatchOIDCSettings';
+import type { SelfServiceAccountManagementSettings } from './SelfServiceAccountManagementSettings';
+import {
+  SelfServiceAccountManagementSettingsFromJSON,
+  SelfServiceAccountManagementSettingsFromJSONTyped,
+  SelfServiceAccountManagementSettingsToJSON,
+  SelfServiceAccountManagementSettingsToJSONTyped,
+} from './SelfServiceAccountManagementSettings';
+import type { LoginSettings } from './LoginSettings';
+import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
 import type { TokenExchangeSettings } from './TokenExchangeSettings';
 import {
   TokenExchangeSettingsFromJSON,
@@ -92,6 +90,8 @@ import {
   TokenExchangeSettingsToJSON,
   TokenExchangeSettingsToJSONTyped,
 } from './TokenExchangeSettings';
+import type { VirtualHost } from './VirtualHost';
+import { VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON, VirtualHostToJSONTyped } from './VirtualHost';
 
 /**
  *
@@ -306,6 +306,7 @@ export const PatchDomainRequiredPermissionsEnum = {
   ApplicationFlow: 'APPLICATION_FLOW',
   LicenseNotification: 'LICENSE_NOTIFICATION',
   ProtectedResource: 'PROTECTED_RESOURCE',
+  ProtectedResourceMember: 'PROTECTED_RESOURCE_MEMBER',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchDomainRequiredPermissionsEnum = typeof PatchDomainRequiredPermissionsEnum[keyof typeof PatchDomainRequiredPermissionsEnum];

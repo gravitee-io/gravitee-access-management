@@ -31,9 +31,15 @@ import {
   ClientSecret,
   ClientSecretFromJSON,
   ClientSecretToJSON,
+  MembershipListItem,
+  MembershipListItemFromJSON,
+  MembershipListItemToJSON,
   NewClientSecret,
   NewClientSecretFromJSON,
   NewClientSecretToJSON,
+  NewMembership,
+  NewMembershipFromJSON,
+  NewMembershipToJSON,
   NewProtectedResource,
   NewProtectedResourceFromJSON,
   NewProtectedResourceToJSON,
@@ -60,6 +66,14 @@ export interface DeleteRequest {
   domain: string;
   protectedResource: string;
   secretId: string;
+}
+
+export interface AddOrUpdateMember2Request {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  newMembership: NewMembership;
 }
 
 export interface CreateRequest {
@@ -93,6 +107,20 @@ export interface FindProtectedResourceRequest {
   type?: string;
 }
 
+export interface GetMembers1Request {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+}
+
+export interface GetProtectedResourceMemberPermissionsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+}
+
 export interface GetSecretsRequest {
   organizationId: string;
   environmentId: string;
@@ -117,6 +145,14 @@ export interface PatchProtectedResourceRequest {
   domain: string;
   protectedResource: string;
   patchProtectedResource: PatchProtectedResource;
+}
+
+export interface RemoveProtectedResourceMemberRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  member: string;
 }
 
 export interface RenewRequest {
@@ -215,6 +251,92 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
    */
   async _delete(requestParameters: DeleteRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this._deleteRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified organization
+   * Add or update an protected resource member
+   */
+  async addOrUpdateMember2Raw(
+    requestParameters: AddOrUpdateMember2Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateMember2.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling addOrUpdateMember2.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling addOrUpdateMember2.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling addOrUpdateMember2.',
+      );
+    }
+
+    if (requestParameters.newMembership === null || requestParameters.newMembership === undefined) {
+      throw new runtime.RequiredError(
+        'newMembership',
+        'Required parameter requestParameters.newMembership was null or undefined when calling addOrUpdateMember2.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewMembershipToJSON(requestParameters.newMembership),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[CREATE] permission on the specified organization
+   * Add or update an protected resource member
+   */
+  async addOrUpdateMember2(
+    requestParameters: AddOrUpdateMember2Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.addOrUpdateMember2Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -539,6 +661,160 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified organization
+   * List members for an protected resource
+   */
+  async getMembers1Raw(
+    requestParameters: GetMembers1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<MembershipListItem>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getMembers1.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getMembers1.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getMembers1.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling getMembers1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => MembershipListItemFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[LIST] permission on the specified organization
+   * List members for an protected resource
+   */
+  async getMembers1(
+    requestParameters: GetMembers1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<MembershipListItem> {
+    const response = await this.getMembers1Raw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
+   * List protected resource member\'s permissions
+   */
+  async getProtectedResourceMemberPermissionsRaw(
+    requestParameters: GetProtectedResourceMemberPermissionsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getProtectedResourceMemberPermissions.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getProtectedResourceMemberPermissions.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getProtectedResourceMemberPermissions.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling getProtectedResourceMemberPermissions.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members/permissions`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
+   * List protected resource member\'s permissions
+   */
+  async getProtectedResourceMemberPermissions(
+    requestParameters: GetProtectedResourceMemberPermissionsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<string> {
+    const response = await this.getProtectedResourceMemberPermissionsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource or PROTECTED_RESOURCE[LIST] permission on the specified domain or PROTECTED_RESOURCE[LIST] permission on the specified environment or PROTECTED_RESOURCE[LIST] permission on the specified organization.
    * List secrets of a protected resource
    */
@@ -789,6 +1065,90 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   ): Promise<ProtectedResourcePrimaryData> {
     const response = await this.patchProtectedResourceRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified organization
+   * Remove a membership
+   */
+  async removeProtectedResourceMemberRaw(
+    requestParameters: RemoveProtectedResourceMemberRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling removeProtectedResourceMember.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling removeProtectedResourceMember.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling removeProtectedResourceMember.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling removeProtectedResourceMember.',
+      );
+    }
+
+    if (requestParameters.member === null || requestParameters.member === undefined) {
+      throw new runtime.RequiredError(
+        'member',
+        'Required parameter requestParameters.member was null or undefined when calling removeProtectedResourceMember.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members/{member}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource)))
+          .replace(`{${'member'}}`, encodeURIComponent(String(requestParameters.member))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[DELETE] permission on the specified organization
+   * Remove a membership
+   */
+  async removeProtectedResourceMember(
+    requestParameters: RemoveProtectedResourceMemberRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.removeProtectedResourceMemberRaw(requestParameters, initOverrides);
   }
 
   /**
