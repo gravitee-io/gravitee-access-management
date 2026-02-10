@@ -33,6 +33,7 @@ let delegationFixture: TokenExchangeFixture;
 let impersonationOnlyFixture: TokenExchangeFixture;
 let limitedDepthFixture: TokenExchangeFixture;
 let accessTokenOnlyFixture: TokenExchangeFixture;
+let noScopeFixture: TokenExchangeFixture;
 
 beforeAll(async () => {
   // Setup default fixture with all token types allowed (impersonation only by default)
@@ -94,6 +95,14 @@ beforeAll(async () => {
     allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
     maxDelegationDepth: 1,
   });
+
+  noScopeFixture = await setupTokenExchangeFixture({
+    domainNamePrefix: 'token-exchange-no-scope',
+    domainDescription: 'Token exchange no-scope (subject token no scopes)',
+    clientName: 'token-exchange-no-scope-client',
+    grantTypes: ['password', 'urn:ietf:params:oauth:grant-type:token-exchange'],
+    scopes: [],
+  });
 });
 
 afterAll(async () => {
@@ -115,14 +124,19 @@ afterAll(async () => {
   if (accessTokenOnlyFixture) {
     await accessTokenOnlyFixture.cleanup();
   }
+  if (noScopeFixture) {
+    await noScopeFixture.cleanup();
+  }
 });
 
 describe('Token Exchange grant', () => {
   it('should exchange subject token and keep expiration constraints', async () => {
     const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
 
+    // Given: subject token has openid, profile, offline_access.
     const { accessToken: subjectAccessToken, expiresIn: subjectExpiresIn } = await obtainSubjectToken();
 
+    // When: exchange without scope param.
     const exchangeResponse = await performPost(
       oidc.token_endpoint,
       '',
@@ -141,8 +155,19 @@ describe('Token Exchange grant', () => {
 
     const decoded = parseJwt(exchangedToken.access_token);
     expect(decoded.payload['client_id']).toBe(application.settings.oauth.clientId);
+    // Then: full allowed granted; response includes scope.
+    const issuedScopes = (decoded.payload['scope'] as string)?.split(' ') ?? [];
+    expect(issuedScopes).toHaveLength(3);
+    expect(issuedScopes).toContain('openid');
+    expect(issuedScopes).toContain('profile');
+    expect(issuedScopes).toContain('offline_access');
+    expect(exchangedToken.scope).toBeDefined();
+    const responseScopeSet = new Set((exchangedToken.scope as string).split(' '));
+    expect(responseScopeSet.size).toBe(3);
+    expect(responseScopeSet.has('openid')).toBe(true);
+    expect(responseScopeSet.has('profile')).toBe(true);
+    expect(responseScopeSet.has('offline_access')).toBe(true);
 
-    // Introspect the exchanged token to verify it's valid
     const introspectResponse = await performPost(
       oidc.introspection_endpoint,
       '',
@@ -292,6 +317,75 @@ describe('Token Exchange grant', () => {
     expect(exchangeResponse.body.access_token).toBeDefined();
     expect(exchangeResponse.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
     expect(exchangeResponse.body.id_token).toBeUndefined();
+  });
+
+  it('should include granted scopes in response when client requests subset', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    // Given: subject token has openid, profile, offline_access.
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile%20offline_access');
+
+    // When: exchange with scope=openid.
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&scope=openid`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    // Then: response and JWT have scope openid.
+    expect(exchangeResponse.body.access_token).toBeDefined();
+    expect(exchangeResponse.body.scope).toBe('openid');
+    const decoded = parseJwt(exchangeResponse.body.access_token);
+    expect(decoded.payload['scope']).toBe('openid');
+  });
+
+  it('should issue new token with no scopes when subject token has no scopes', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = noScopeFixture;
+
+    // Given: subject token with no scopes.
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('');
+
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    expect(exchangeResponse.body.access_token).toBeDefined();
+    expect(exchangeResponse.body.scope).toBeUndefined();
+    const decoded = parseJwt(exchangeResponse.body.access_token);
+    expect(decoded.payload['scope']).toBeUndefined();
+  });
+
+  it('should return 400 invalid_scope when requested scope is not a subset of subject token scopes', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    // Given: subject token has openid, profile only.
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+
+    // When: request scope=offline_access (not in subject).
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&scope=offline_access`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(400);
+
+    // Then: 400 invalid_scope.
+    expect(response.body.error).toBe('invalid_scope');
+    expect(response.body.error_description).toBeDefined();
+    expect(String(response.body.error_description).toLowerCase()).toMatch(/scope|disallowed|invalid/);
   });
 
   it('should exchange jwt subject token when allowed', async () => {
@@ -521,10 +615,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -543,6 +637,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     const actClaim = decoded.payload['act'] as Record<string, unknown>;
     expect(actClaim).toBeDefined();
     expect(actClaim['sub']).toBeDefined();
+    const issuedScopes = (decoded.payload['scope'] as string)?.split(' ') ?? [];
+    expect(issuedScopes).toHaveLength(3);
+    expect(issuedScopes).toContain('openid');
+    expect(issuedScopes).toContain('profile');
+    expect(issuedScopes).toContain('offline_access');
+    expect(response.body.scope.split(' ')).toHaveLength(3);
   });
 
   it('should reject delegation when delegation is not allowed', async () => {
@@ -555,10 +655,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -581,10 +681,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorRefreshToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:refresh_token`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorRefreshToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:refresh_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -605,9 +705,9 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorToken}`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorToken}`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -629,10 +729,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorIdToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:id_token`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorIdToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:id_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -658,10 +758,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${initialSubjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${initialActorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${initialSubjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${initialActorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -685,10 +785,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${delegatedToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${newActorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${delegatedToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${newActorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -710,10 +810,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectForActor}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorForActor}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${subjectForActor}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorForActor}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -737,10 +837,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${freshSubjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorTokenWithAct}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${freshSubjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorTokenWithAct}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -767,10 +867,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${token0}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actor1}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${token0}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actor1}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -787,10 +887,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${token1}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actor2}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${token1}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actor2}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -808,10 +908,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${token2}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actor3}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${token2}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actor3}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -830,10 +930,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${token3}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actor4}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${token3}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actor4}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -855,10 +955,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -893,10 +993,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${initialSubjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actor1Token}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${initialSubjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actor1Token}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -922,10 +1022,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${firstDelegatedToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actor2Token}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${firstDelegatedToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actor2Token}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -965,10 +1065,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -997,10 +1097,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${actorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -1031,10 +1131,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${firstSubjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${firstActorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${firstSubjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${firstActorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,
@@ -1052,10 +1152,10 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
       oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${secondSubjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${delegatedActorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      `&subject_token=${secondSubjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${delegatedActorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
       {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`,

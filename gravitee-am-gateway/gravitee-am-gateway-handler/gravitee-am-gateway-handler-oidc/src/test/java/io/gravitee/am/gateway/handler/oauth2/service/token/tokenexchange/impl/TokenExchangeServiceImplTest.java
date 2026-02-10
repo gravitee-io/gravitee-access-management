@@ -21,6 +21,8 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -28,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -36,7 +39,6 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -47,6 +49,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,16 +63,19 @@ public class TokenExchangeServiceImplTest {
     @Mock
     private SubjectManager subjectManager;
 
-    @InjectMocks
+    @Mock
+    private ProtectedResourceManager protectedResourceManager;
+
     private TokenExchangeServiceImpl service;
 
     @BeforeEach
-    public void setUp() throws Exception {
-        TokenValidator validator = new FixedSubjectTokenValidator();
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(validator));
-}
+    public void setUp() {
+        service = createService(List.of(new FixedSubjectTokenValidator()));
+    }
+
+    private TokenExchangeServiceImpl createService(List<TokenValidator> validators) {
+        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager);
+    }
 
     @Test
     public void shouldFailWhenTokenExchangeNotEnabled() {
@@ -305,9 +312,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(validatorWithUsername));
+        service = createService(List.of(validatorWithUsername));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -355,7 +360,7 @@ public class TokenExchangeServiceImplTest {
         Map<String, Object> additionalInfo = user.getAdditionalInformation();
 
         assertThat(additionalInfo.get("token_exchange")).isEqualTo(true);
-        assertThat(additionalInfo.get("delegation")).isEqualTo(false); // impersonation scenario
+        assertThat(additionalInfo.get("delegation")).isEqualTo(false);
         assertThat(result.isDelegation()).isFalse();
         assertThat(result.subjectTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
     }
@@ -379,9 +384,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(jwtValidator));
+        service = createService(List.of(jwtValidator));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -423,9 +426,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(validatorWithGis));
+        service = createService(List.of(validatorWithGis));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -451,6 +452,7 @@ public class TokenExchangeServiceImplTest {
         Domain domain = domainWithTokenExchange();
         Client client = new Client();
         client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("openid"));
 
         service.exchange(tokenRequest, client, domain).blockingGet();
 
@@ -467,6 +469,7 @@ public class TokenExchangeServiceImplTest {
         Domain domain = domainWithTokenExchange();
         Client client = new Client();
         client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("openid"));
 
         var result = service.exchange(tokenRequest, client, domain).blockingGet();
         User user = result.user();
@@ -511,9 +514,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(validatorWithTokenId));
+        service = createService(List.of(validatorWithTokenId));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -544,9 +545,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(differentValidator));
+        service = createService(List.of(differentValidator));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -576,9 +575,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(failingValidator));
+        service = createService(List.of(failingValidator));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -613,9 +610,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(validatorNoScopes));
+        service = createService(List.of(validatorNoScopes));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -685,9 +680,7 @@ public class TokenExchangeServiceImplTest {
     @Test
     public void shouldSucceedWithDelegation() throws Exception {
         // Set up validators for both subject and actor tokens
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(new FixedSubjectTokenValidator()));
+        service = createService(List.of(new FixedSubjectTokenValidator()));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -820,9 +813,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(subjectValidator));
+        service = createService(List.of(subjectValidator));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -895,9 +886,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(validatorWithDeepActChain));
+        service = createService(List.of(validatorWithDeepActChain));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -960,9 +949,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(validatorWithGis));
+        service = createService(List.of(validatorWithGis));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -984,9 +971,7 @@ public class TokenExchangeServiceImplTest {
     @Test
     public void shouldHandleActorTokenWithoutGis() throws Exception {
         // Actor token without gis claim should have null gis in actorInfo
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(new FixedSubjectTokenValidator()));
+        service = createService(List.of(new FixedSubjectTokenValidator()));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1044,9 +1029,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(chainValidator));
+        service = createService(List.of(chainValidator));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1110,9 +1093,7 @@ public class TokenExchangeServiceImplTest {
             }
         };
 
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(delegatedActorValidator));
+        service = createService(List.of(delegatedActorValidator));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1140,9 +1121,7 @@ public class TokenExchangeServiceImplTest {
     public void shouldNotHaveActorTokenActClaimWhenActorIsNotDelegated() throws Exception {
         // When the actor token is a normal token (not delegated),
         // actorTokenActClaim should be null.
-        var validatorsField = TokenExchangeServiceImpl.class.getDeclaredField("validators");
-        validatorsField.setAccessible(true);
-        validatorsField.set(service, List.of(new FixedSubjectTokenValidator()));
+        service = createService(List.of(new FixedSubjectTokenValidator()));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1158,6 +1137,318 @@ public class TokenExchangeServiceImplTest {
         assertThat(result.actorInfo()).isNotNull();
         assertThat(result.actorInfo().hasActorTokenActClaim()).isFalse();
         assertThat(result.actorInfo().actorTokenActClaim()).isNull();
+    }
+
+    /** Client has no scope settings: fail closed, grant no scopes (no scope param → empty granted). */
+    @Test
+    public void shouldGrantNoScopesWhenClientHasNoScopeSettingsAndNoRequestScope() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(tokenRequest.getScopes()).isEmpty();
+    }
+
+    @Test
+    public void shouldFailWithInvalidScopeWhenClientHasNoScopeSettingsAndRequestedScope() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "A"));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidScopeException.class);
+    }
+
+    /** Requested scope ⊆ allowed: grant requested and set on tokenRequest (response includes narrowed scope). */
+    @Test
+    public void shouldGrantRequestedScopeWhenSubsetOfAllowed() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "B C"));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+
+        service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B", "C");
+    }
+
+    @Test
+    public void shouldFailWithInvalidScopeWhenRequestedScopeNotAllowed() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "D"));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidScopeException.class);
+    }
+
+    /** Delegation: allowed = subject ∩ actor; both sets have differing elements to prove intersection. */
+    @Test
+    public void shouldGrantIntersectionWhenDelegationAndNoRequestScope() throws Exception {
+        TokenValidator subjectABCactorBCE = delegationScopeValidator(
+                Set.of("A", "B", "C"),
+                Set.of("B", "C", "E"));
+        service = createService(List.of(subjectABCactorBCE));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("B", "C"));
+
+        service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B", "C");
+    }
+
+    @Test
+    public void shouldGrantRequestedScopeWhenDelegationAndRequestedSubsetOfIntersection() throws Exception {
+        TokenValidator subjectABCactorBCD = delegationScopeValidator(
+                Set.of("A", "B", "C"),
+                Set.of("B", "C", "D"));
+        service = createService(List.of(subjectABCactorBCD));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "B"));
+
+        Domain domain = domainWithDelegation();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("B", "C"));
+
+        service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B");
+    }
+
+    /** No resource, no scope param: granted = subject ∩ client. */
+    @Test
+    public void shouldNarrowGrantedScopesToClientWhenNoResourceAndClientHasSubsetOfSubjectScopes() throws Exception {
+        TokenValidator validator = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validator));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B", "D"));
+
+        service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B");
+    }
+
+    /** Resource present; requested scope in client but not in resource still allowed (scopePool = client ∪ resource). */
+    @Test
+    public void shouldAllowRequestedScopeFromClientWhenNotInResourceScopes() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        Set<String> resourceUris = Set.of("https://mcp.example.com");
+        when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A", "B"));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
+        tokenRequest.setResources(resourceUris);
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+
+        service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("C");
+    }
+
+    /** With resource present, allowed = base ∩ (client ∪ resource); scope C can come from resource even if client has only A,B. */
+    @Test
+    public void shouldAllowResourceScopeWhenClientDoesNotHaveItAndResourceHasIt() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        Set<String> resourceUris = Set.of("https://mcp.example.com");
+        when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A", "B", "C"));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+        tokenRequest.setResources(resourceUris);
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B"));
+
+        service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B", "C");
+    }
+
+    @Test
+    public void shouldFailWithInvalidScopeWhenRequestedScopeNotInSubjectWithResourcePresent() throws Exception {
+        TokenValidator validatorAB = scopeValidator(Set.of("A", "B"));
+        service = createService(List.of(validatorAB));
+
+        Set<String> resourceUris = Set.of("https://mcp.example.com");
+        when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A", "B", "C"));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
+        tokenRequest.setResources(resourceUris);
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldFailWithInvalidScopeWhenRequestedScopeNotAllowedByClientAndNoResource() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B"));
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldFailWithInvalidScopeWhenRequestedScopeNotInClientOrResourceWithResourcePresent() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        Set<String> resourceUris = Set.of("https://mcp.example.com");
+        when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A", "B"));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
+        tokenRequest.setResources(resourceUris);
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B"));
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldFailWithInvalidScopeWhenResourcePresentButReturnsNoScopesAndRequestedScopeNotInClient() throws Exception {
+        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+        service = createService(List.of(validatorABC));
+
+        Set<String> resourceUris = Set.of("https://mcp.example.com");
+        when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Collections.emptySet());
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
+        tokenRequest.setResources(resourceUris);
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setScopeSettings(clientScopeSettings("A", "B"));
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidScopeException.class);
+    }
+
+    private static List<ApplicationScopeSettings> clientScopeSettings(String... scopes) {
+        return Stream.of(scopes).map(ApplicationScopeSettings::new).collect(Collectors.toList());
+    }
+
+    private static TokenValidator scopeValidator(Set<String> scopes) {
+        return new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                return Single.just(ValidatedToken.builder()
+                        .subject("subject")
+                        .scopes(scopes)
+                        .expiration(Date.from(Instant.now().plusSeconds(60)))
+                        .tokenType(TokenType.ACCESS_TOKEN)
+                        .build());
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+    }
+
+    private static TokenValidator delegationScopeValidator(Set<String> subjectScopes, Set<String> actorScopes) {
+        return new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                Set<String> scopes = "subject-token".equals(token) ? subjectScopes : actorScopes;
+                return Single.just(ValidatedToken.builder()
+                        .subject("subject")
+                        .scopes(scopes)
+                        .expiration(Date.from(Instant.now().plusSeconds(60)))
+                        .tokenType(TokenType.ACCESS_TOKEN)
+                        .build());
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
     }
 
     private Domain domainWithTokenExchange() {
@@ -1192,11 +1483,30 @@ public class TokenExchangeServiceImplTest {
     }
 
     private MultiValueMap<String, String> buildDelegationParameters(String subjectTokenType, String actorTokenType) {
+        return buildDelegationParametersWithScope(subjectTokenType, actorTokenType, null);
+    }
+
+    private MultiValueMap<String, String> buildDelegationParametersWithScope(String subjectTokenType,
+                                                                            String actorTokenType,
+                                                                            String scope) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add(Parameters.SUBJECT_TOKEN, "subject-token");
         params.add(Parameters.SUBJECT_TOKEN_TYPE, subjectTokenType);
         params.add(Parameters.ACTOR_TOKEN, "actor-token");
         params.add(Parameters.ACTOR_TOKEN_TYPE, actorTokenType);
+        if (scope != null) {
+            params.add(Parameters.SCOPE, scope);
+        }
+        return params;
+    }
+
+    private MultiValueMap<String, String> buildParametersWithScope(String subjectTokenType,
+                                                                    String requestedTokenType,
+                                                                    String scope) {
+        MultiValueMap<String, String> params = buildParameters(subjectTokenType, requestedTokenType);
+        if (scope != null) {
+            params.add(Parameters.SCOPE, scope);
+        }
         return params;
     }
 

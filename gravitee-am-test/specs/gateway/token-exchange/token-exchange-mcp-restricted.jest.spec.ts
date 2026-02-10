@@ -51,9 +51,9 @@ afterAll(async () => {
 
 describe('Token Exchange with restricted subject token types (MCP Server)', () => {
   it('should reject access token when domain only allows id tokens', async () => {
-    const { oidc, mcpServerBasicAuth, obtainSubjectToken } = restrictedFixture;
+    const { oidc, mcpServerBasicAuth, obtainToken } = restrictedFixture;
 
-    const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
+    const { accessToken: subjectAccessToken } = await obtainToken('openid%20profile');
 
     const response = await performPost(
       oidc.token_endpoint,
@@ -70,9 +70,9 @@ describe('Token Exchange with restricted subject token types (MCP Server)', () =
   });
 
   it('should accept id token when domain only allows id tokens', async () => {
-    const { oidc, mcpServer, mcpServerBasicAuth, obtainSubjectToken } = restrictedFixture;
+    const { oidc, mcpServer, mcpServerBasicAuth, obtainToken } = restrictedFixture;
 
-    const { idToken } = await obtainSubjectToken('openid%20profile');
+    const { idToken } = await obtainToken('openid%20profile');
     expect(idToken).toBeDefined();
 
     const response = await performPost(
