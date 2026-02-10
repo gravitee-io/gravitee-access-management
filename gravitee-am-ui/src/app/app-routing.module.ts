@@ -1163,7 +1163,7 @@ export const routes: Routes = [
                                 level: 'level2',
                               },
                               perms: {
-                                only: ['application_settings_read', 'application_oauth_read', 'application_certificate_list'],
+                                only: ['application_settings_read', 'application_openid_read', 'application_certificate_list'],
                               },
                             },
                             children: [
