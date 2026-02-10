@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
+import io.gravitee.am.common.utils.SMTPClientExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
@@ -53,6 +54,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
@@ -77,6 +79,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -123,8 +126,9 @@ import static org.mockito.Mockito.when;
 public class ProvisioningUserServiceTest {
 
     public static final String PASSWORD = "user-password";
+
     @InjectMocks
-    private ProvisioningUserService userService = new ProvisioningUserServiceImpl();
+    private ProvisioningUserServiceImpl userService = new ProvisioningUserServiceImpl();
 
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
@@ -187,11 +191,19 @@ public class ProvisioningUserServiceTest {
     @Mock
     private ApplicationService applicationService;
 
+    @Mock
+    private DataPlaneRegistry registry;
+    @Spy
+    private SMTPClientExecutor executor = new SMTPClientExecutor(1);
+
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(userRepository.findByExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.empty());
         domain.setId(DOMAIN_ID);
+        when(registry.getUserRepository(any())).thenReturn(userRepository);
+        ReflectionTestUtils.setField(userService, "emailEnabled", true);
+        userService.afterPropertiesSet();
     }
 
     @Test
@@ -1012,6 +1024,7 @@ public class ProvisioningUserServiceTest {
         user.setReferenceId(DOMAIN_ID);
         user.setAdditionalInformation(ai);
         user.setPreRegistration(true);
+        user.setEmail("<EMAIL>");
         when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
@@ -1021,7 +1034,7 @@ public class ProvisioningUserServiceTest {
         testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().get("preRegistration") != null);
         assertFalse(newUserDefinition.getValue().isInternal());
         assertTrue(newUserDefinition.getValue().isEnabled());
-        verify(emailService, times(1)).send(any(),any(),any());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailService, times(1)).send(any(),any(),any()));
     }
 
     @Test
@@ -1272,6 +1285,7 @@ public class ProvisioningUserServiceTest {
         user.setReferenceId(DOMAIN_ID);
         user.setClient("app-id-123");
         user.setPreRegistration(true);
+        user.setEmail("<EMAIL>");
         when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(newUser, "idp-source", "/", null, new Client()).test();
