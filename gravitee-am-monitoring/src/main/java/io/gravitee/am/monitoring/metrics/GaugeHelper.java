@@ -50,4 +50,8 @@ public class GaugeHelper {
     public void decrementValue() {
         this.value.decrementAndGet();
     }
+
+    public void decrementValue(int count) {
+        this.value.updateAndGet(v -> v - count);
+    }
 }
