@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.10.0-alpha.5-SNAPSHOT
+  version: 4.11.0-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -6228,6 +6228,10 @@ paths:
         required: true
         schema:
           type: string
+      - name: q
+        in: query
+        schema:
+          type: string
       - name: type
         in: query
         schema:
@@ -6477,6 +6481,358 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members:
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: List members for an protected resource
+      description: "User must have PROTECTED_RESOURCE_MEMBER[LIST] permission on the\
+        \ specified protected resource or PROTECTED_RESOURCE_MEMBER[LIST] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_MEMBER[LIST] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_MEMBER[LIST] permission\
+        \ on the specified organization"
+      operationId: getMembers_1
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List members for an protected resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembershipListItem"
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - protected-resource
+      - domain
+      summary: Add or update an protected resource member
+      description: "User must have PROTECTED_RESOURCE_MEMBER[CREATE] permission on\
+        \ the specified protected resource or PROTECTED_RESOURCE_MEMBER[CREATE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_MEMBER[CREATE] permission\
+        \ on the specified environment or PROTECTED_RESOURCE_MEMBER[CREATE] permission\
+        \ on the specified organization"
+      operationId: addOrUpdateMember_2
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewMembership"
+        required: true
+      responses:
+        "201":
+          description: Member has been added or updated successfully
+        "400":
+          description: Membership parameter is not valid
+        "404":
+          description: Domain or protected resource is not found
+        "500":
+          description: Internal server error
+  ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members/permissions
+  : get:
+      tags:
+      - protected-resource
+      - domain
+      summary: List protected resource member's permissions
+      description: "User must have PROTECTED_RESOURCE[READ] permission on the specified\
+        \ protected resource or PROTECTED_RESOURCE[READ] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[READ] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[READ] permission on the specified organization"
+      operationId: getProtectedResourceMemberPermissions
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Protected resource member's permissions
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal server error
+  ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/members/{member}
+  : delete:
+      tags:
+      - protected-resource
+      - domain
+      summary: Remove a membership
+      description: "User must have PROTECTED_RESOURCE_MEMBER[DELETE] permission on\
+        \ the specified protected resource or PROTECTED_RESOURCE_MEMBER[DELETE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_MEMBER[DELETE] permission\
+        \ on the specified environment or PROTECTED_RESOURCE_MEMBER[DELETE] permission\
+        \ on the specified organization"
+      operationId: removeProtectedResourceMember
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: member
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Membership successfully deleted
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/secrets:
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: List secrets of a protected resource
+      description: "User must have the PROTECTED_RESOURCE[LIST] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[LIST] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[LIST] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[LIST] permission on the specified organization."
+      operationId: getSecrets
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List secrets of a protected resource
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClientSecret"
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - protected-resource
+      - domain
+      summary: Create a secret for a protected resource
+      description: "User must have the PROTECTED_RESOURCE[CREATE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[CREATE] permission on the specified organization."
+      operationId: create
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewClientSecret"
+        required: true
+      responses:
+        "201":
+          description: Protected Resource secret successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientSecret"
+        "500":
+          description: Internal server error
+  ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/secrets/{secretId}
+  : delete:
+      tags:
+      - protected-resource
+      - domain
+      summary: Remove a secret for a protected resource
+      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[DELETE] permission on the specified organization."
+      operationId: delete
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: secretId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Protected Resource secret successfully deleted
+        "404":
+          description: Protected Resource or secret not found
+        "500":
+          description: Internal server error
+  ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}/secrets/{secretId}/_renew
+  : post:
+      tags:
+      - protected-resource
+      - domain
+      summary: Renew a secret for a protected resource
+      description: "User must have the PROTECTED_RESOURCE[UPDATE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified organization."
+      operationId: renew
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: secretId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Protected Resource secret successfully renewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientSecret"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters:
@@ -11717,6 +12073,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         description:
           type: string
         domain:
@@ -12492,13 +12849,13 @@ components:
           type: array
           items:
             type: string
-        allowedScopesEnabled:
+        openDynamicClientRegistrationEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
-        dynamicClientRegistrationEnabled:
+        allowedScopesEnabled:
           type: boolean
-        openDynamicClientRegistrationEnabled:
+        dynamicClientRegistrationEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -12723,21 +13080,23 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
-          type: boolean
+        tokenExchangeSettings:
+          $ref: "#/components/schemas/TokenExchangeSettings"
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
-        openDynamicClientRegistrationEnabled:
+        redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
         dynamicClientRegistrationTemplateEnabled:
           type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
+        redirectUriStrictMatching:
           type: boolean
         redirectUriExpressionLanguageEnabled:
+          type: boolean
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -13069,6 +13428,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         enabled:
           type: boolean
         template:
@@ -13576,6 +13936,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         description:
           type: string
         clientId:
@@ -14061,6 +14422,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NewProtectedResourceFeature"
+        settings:
+          $ref: "#/components/schemas/ApplicationSettings"
     NewProtectedResourceFeature:
       required:
       - key
@@ -14068,6 +14431,7 @@ components:
       type: object
       properties:
         key:
+          maxLength: 64
           minLength: 1
           pattern: "^[a-zA-Z0-9_-]+$"
           type: string
@@ -14557,8 +14921,9 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
-            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
+            - PROTECTED_RESOURCE
+            - PROTECTED_RESOURCE_MEMBER
             - INSTALLATION
     PatchApplicationAdvancedSettings:
       type: object
@@ -14834,8 +15199,9 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
-            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
+            - PROTECTED_RESOURCE
+            - PROTECTED_RESOURCE_MEMBER
             - INSTALLATION
     PatchApplicationType:
       required:
@@ -14850,6 +15216,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     PatchCIBASettings:
       type: object
       properties:
@@ -14900,13 +15267,13 @@ components:
             type: string
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+          writeOnly: true
         clientTemplateEnabled:
           type: boolean
           writeOnly: true
         dynamicClientRegistrationEnabled:
-          type: boolean
-          writeOnly: true
-        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         isDynamicClientRegistrationEnabled:
@@ -14967,6 +15334,8 @@ components:
           type: string
         secretSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        tokenExchangeSettings:
+          $ref: "#/components/schemas/TokenExchangeSettings"
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -15034,8 +15403,9 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
-            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
+            - PROTECTED_RESOURCE
+            - PROTECTED_RESOURCE_MEMBER
             - INSTALLATION
     PatchEnrollSettings:
       type: object
@@ -15177,8 +15547,9 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
-            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
+            - PROTECTED_RESOURCE
+            - PROTECTED_RESOURCE_MEMBER
             - INSTALLATION
         clientRegistrationSettings:
           $ref: "#/components/schemas/PatchClientRegistrationSettings"
@@ -15236,6 +15607,8 @@ components:
           type: string
         description:
           type: string
+        certificate:
+          type: string
         resourceIdentifiers:
           type: array
           items:
@@ -15244,6 +15617,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+        secretSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationSecretSettings"
+        settings:
+          $ref: "#/components/schemas/ApplicationSettings"
     PatchRememberDeviceSettings:
       type: object
       properties:
@@ -15332,8 +15711,9 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
-            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
+            - PROTECTED_RESOURCE
+            - PROTECTED_RESOURCE_MEMBER
             - INSTALLATION
     PatchScope:
       type: object
@@ -15449,6 +15829,12 @@ components:
           type: array
           items:
             type: string
+        settings:
+          $ref: "#/components/schemas/ApplicationSettings"
+        secretSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationSecretSettings"
         features:
           type: array
           items:
@@ -15456,6 +15842,8 @@ components:
         updatedAt:
           type: string
           format: date-time
+        certificate:
+          type: string
     ProtectedResourceSecret:
       type: object
       properties:
@@ -16027,6 +16415,32 @@ components:
           type: string
         claimValue:
           type: string
+    TokenExchangeSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        allowedSubjectTokenTypes:
+          type: array
+          items:
+            type: string
+        allowedRequestedTokenTypes:
+          type: array
+          items:
+            type: string
+        allowImpersonation:
+          type: boolean
+        allowedActorTokenTypes:
+          type: array
+          items:
+            type: string
+        allowDelegation:
+          type: boolean
+        maxDelegationDepth:
+          type: integer
+          format: int32
+        valid:
+          type: boolean
     UMASettings:
       type: object
       properties:
@@ -16336,6 +16750,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+        settings:
+          $ref: "#/components/schemas/ApplicationSettings"
     UpdateProtectedResourceFeature:
       required:
       - key
@@ -16343,6 +16759,7 @@ components:
       type: object
       properties:
         key:
+          maxLength: 64
           minLength: 1
           pattern: "^[a-zA-Z0-9_-]+$"
           type: string
@@ -16705,12 +17122,10 @@ components:
           type: string
         zoneInfo:
           type: string
+        fullId:
+          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -16721,14 +17136,20 @@ components:
           type: string
         phoneNumber:
           type: string
-        disabled:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        indefinitelyLocked:
+          type: boolean
+        temporarilyLocked:
+          type: boolean
     UserEntity:
       type: object
       properties:
@@ -16905,12 +17326,10 @@ components:
           type: string
         zoneInfo:
           type: string
+        fullId:
+          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -16921,14 +17340,20 @@ components:
           type: string
         phoneNumber:
           type: string
-        disabled:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        indefinitelyLocked:
+          type: boolean
+        temporarilyLocked:
+          type: boolean
     UserId:
       type: object
       properties:
