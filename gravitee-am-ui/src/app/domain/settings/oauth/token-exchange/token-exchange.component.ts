@@ -111,11 +111,29 @@ export class TokenExchangeComponent implements OnInit {
     };
   }
 
-  isFormValid(): boolean {
-    if (!this.domain.tokenExchangeSettings?.enabled) {
-      return true;
+  getValidationErrors(): string[] {
+    const settings = this.domain.tokenExchangeSettings;
+    if (!settings?.enabled) {
+      return [];
     }
-    return this.domain.tokenExchangeSettings.allowImpersonation || this.domain.tokenExchangeSettings.allowDelegation;
+    const errors: string[] = [];
+    if (!settings.allowImpersonation && !settings.allowDelegation) {
+      errors.push('At least one of Impersonation or Delegation must be enabled when Token Exchange is active.');
+    }
+    if (!settings.allowedSubjectTokenTypes?.length) {
+      errors.push('At least one Subject Token Type must be selected.');
+    }
+    if (!settings.allowedRequestedTokenTypes?.length) {
+      errors.push('At least one Requested Token Type must be selected.');
+    }
+    if (settings.allowDelegation && !settings.allowedActorTokenTypes?.length) {
+      errors.push('At least one Actor Token Type must be selected when Delegation is enabled.');
+    }
+    return errors;
+  }
+
+  isFormValid(): boolean {
+    return this.getValidationErrors().length === 0;
   }
 
   save() {

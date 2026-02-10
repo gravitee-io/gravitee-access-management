@@ -145,10 +145,14 @@
             </div>
           </div>
 
-          <!-- Validation warning -->
-          <div *ngIf="!isFormValid()" class="gv-form-section" style="color: #f44336">
+          <!-- Validation warnings -->
+          <div
+            *ngFor="let error of getValidationErrors()"
+            class="gv-form-section"
+            style="color: #f44336; display: flex; align-items: center"
+          >
             <mat-icon>warning</mat-icon>
-            <span style="margin-left: 8px">At least one of Impersonation or Delegation must be enabled when Token Exchange is active.</span>
+            <span style="margin-left: 8px">{{ error }}</span>
           </div>
         </div>
         <div fxLayout="row" *ngIf="editMode">
