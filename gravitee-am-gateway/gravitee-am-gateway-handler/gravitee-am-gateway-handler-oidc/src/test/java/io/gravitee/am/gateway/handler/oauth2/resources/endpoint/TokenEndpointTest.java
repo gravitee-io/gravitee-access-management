@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
@@ -41,6 +42,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -214,5 +216,60 @@ public class TokenEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:ietf:params:oauth:grant-type:uma-ticket",
                 HttpStatusCode.FORBIDDEN_403, "Forbidden");
+    }
+
+    @Test
+    public void shouldRejectPasswordGrant_forAgentApplication() throws Exception {
+        Client client = new Client();
+        client.setClientId("my-client");
+        client.setAppType(ApplicationType.AGENT);
+        // Simulate forbidden grant bypassing template enforcement
+        client.setAuthorizedGrantTypes(new ArrayList<>(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.PASSWORD)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=password",
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+    }
+
+    @Test
+    public void shouldRejectRefreshTokenGrant_forAgentApplication() throws Exception {
+        Client client = new Client();
+        client.setClientId("my-client");
+        client.setAppType(ApplicationType.AGENT);
+        client.setAuthorizedGrantTypes(new ArrayList<>(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=refresh_token",
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+    }
+
+    @Test
+    public void shouldAllowClientCredentialsGrant_forAgentApplication() throws Exception {
+        Client client = new Client();
+        client.setClientId("my-client");
+        client.setAppType(ApplicationType.AGENT);
+        client.setAuthorizedGrantTypes(new ArrayList<>(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        Token accessToken = new AccessToken("my-token");
+        when(tokenGranter.grant(any(TokenRequest.class), any(VertxHttpServerResponse.class), any(Client.class))).thenReturn(Single.just(accessToken));
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
+                HttpStatusCode.OK_200, "OK");
     }
 }

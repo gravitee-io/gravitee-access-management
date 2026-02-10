@@ -16,24 +16,20 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.gravitee.gateway.api.Request;
-import io.gravitee.gateway.api.Response;
-import io.vertx.core.Context;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
 
+import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
@@ -80,6 +76,13 @@ public class TokenEndpoint implements Handler<RoutingContext> {
         // check if client has authorized grant types
         if (client.getAuthorizedGrantTypes() == null || client.getAuthorizedGrantTypes().isEmpty()) {
             throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
+        }
+
+        if (ApplicationType.AGENT == client.getAppType()) {
+            String grantType = tokenRequest.getGrantType();
+            if (PASSWORD.equals(grantType) || REFRESH_TOKEN.equals(grantType) || IMPLICIT.equals(grantType)) {
+                throw new UnauthorizedClientException("Grant type '" + grantType + "' is not allowed for agent applications");
+            }
         }
 
         if (context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT) != null) {
