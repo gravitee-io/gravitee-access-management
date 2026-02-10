@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
-
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.service.i18n.DictionaryProvider;
-
-import java.util.List;
+package io.gravitee.am.common.exception.email;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailService {
-
-    void send(Email email);
-    void batch(List<Email> emails);
-
-    DictionaryProvider getDefaultDictionaryProvider();
-
+public class EmailOverflowException extends RuntimeException {
+    public EmailOverflowException(String message) {
+        super(message);
+    }
 }

@@ -55,7 +55,11 @@ public class GatewayMetricProvider {
 
     private final GaugeHelper domainGauge = new GaugeHelper(Constants.METRICS_DOMAINS);
 
-    private GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
+    private final GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
+
+    private final GaugeHelper bufferedEmails = new GaugeHelper(Constants.METRICS_BUFFERED_EMAILS);
+
+    private final GaugeHelper droppedEmails = new GaugeHelper(Constants.METRICS_DROPPED_EMAILS);
 
     private final CounterHelper internalSuccessfulAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
             Tag.of(TAG_AUTH_STATUS, "SUCCESS"),
@@ -119,6 +123,26 @@ public class GatewayMetricProvider {
 
     public void decrementDomain() {
         this.domainGauge.decrementValue();
+    }
+
+    public void incrementBufferedEmails() {
+        this.bufferedEmails.incrementValue();
+    }
+
+    public void decrementBufferedEmails() {
+        this.bufferedEmails.decrementValue();
+    }
+
+    public void decrementBufferedEmails(int count) {
+        this.bufferedEmails.decrementValue(count);
+    }
+
+    public void incrementDroppedEmails() {
+        this.droppedEmails.incrementValue();
+    }
+
+    public void decrementDroppedEmails() {
+        this.droppedEmails.decrementValue();
     }
 
     public void updateSyncEvents(int evts) {

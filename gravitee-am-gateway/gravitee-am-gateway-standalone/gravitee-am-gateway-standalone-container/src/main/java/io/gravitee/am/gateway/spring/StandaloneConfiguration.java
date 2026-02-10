@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
+import io.gravitee.am.common.utils.SMTPClientExecutor;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
 import io.gravitee.am.gateway.core.purge.GatewayPurgeServiceConfiguration;
 import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
@@ -108,7 +109,9 @@ public class StandaloneConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(StandaloneConfiguration.class);
     public static final String JWT_EXECUTOR_THREADS = "jwt.executor.threads";
+    public static final String SMTP_EXECUTOR_THREADS = "email.executor.threads";
     public static final int DEFAULT_JWT_EXECUTOR_THREADS = 20;
+    public static final int DEFAULT_SMTP_EXECUTOR_THREADS = 2;
 
     @Bean
     public Node node() {
@@ -200,9 +203,16 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public JwtSignerExecutor ioExecutor(Environment environment) {
+    public JwtSignerExecutor jwtSignerExecutor(Environment environment) {
         int ioThreads = environment.getProperty(JWT_EXECUTOR_THREADS, Integer.class, DEFAULT_JWT_EXECUTOR_THREADS);
         log.info("Initializing IO executor for remote signature with {} threads", ioThreads);
         return new JwtSignerExecutor(ioThreads);
+    }
+
+    @Bean
+    public SMTPClientExecutor smtpClientExecutor(Environment environment) {
+        int ioThreads = environment.getProperty(SMTP_EXECUTOR_THREADS, Integer.class, DEFAULT_SMTP_EXECUTOR_THREADS);
+        log.info("Initializing IO executor for SMTP client with {} threads", ioThreads);
+        return new SMTPClientExecutor(ioThreads);
     }
 }
