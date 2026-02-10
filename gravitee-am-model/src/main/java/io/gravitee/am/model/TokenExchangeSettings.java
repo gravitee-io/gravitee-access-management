@@ -136,7 +136,18 @@ public class TokenExchangeSettings {
      */
     public boolean isValid() {
         if (enabled) {
-            return allowImpersonation || allowDelegation;
+            if (!(allowImpersonation || allowDelegation)) {
+                return false;
+            }
+            if (allowedSubjectTokenTypes == null || allowedSubjectTokenTypes.isEmpty()) {
+                return false;
+            }
+            if (allowedRequestedTokenTypes == null || allowedRequestedTokenTypes.isEmpty()) {
+                return false;
+            }
+            if (allowDelegation && (allowedActorTokenTypes == null || allowedActorTokenTypes.isEmpty())) {
+                return false;
+            }
         }
         return true;
     }
