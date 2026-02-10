@@ -63,6 +63,10 @@ export class ApplicationGeneralComponent implements OnInit {
       type: 'NATIVE',
     },
     {
+      name: 'Agentic Application',
+      type: 'AGENT',
+    },
+    {
       name: 'Backend to Backend',
       type: 'SERVICE',
     },
