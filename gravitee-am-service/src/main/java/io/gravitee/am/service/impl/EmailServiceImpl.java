@@ -28,6 +28,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,6 +60,11 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     @Override
     public void send(Email email) {
         this.emailSender.send(email);
+    }
+
+    @Override
+    public void batch(List<Email> emails) {
+        this.emailSender.batch(emails);
     }
 
     @Override
