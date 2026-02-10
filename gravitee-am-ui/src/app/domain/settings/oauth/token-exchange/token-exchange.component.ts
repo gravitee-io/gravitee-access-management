@@ -119,7 +119,7 @@ export class TokenExchangeComponent implements OnInit {
     }
     const errors: string[] = [];
     if (!settings.allowImpersonation && !settings.allowDelegation) {
-      errors.push('At least one of Impersonation or Delegation must be enabled when Token Exchange is active.');
+      errors.push('At least one of Impersonation or Delegation must be enabled.');
     }
     if (!settings.allowedSubjectTokenTypes?.length) {
       errors.push('At least one Subject Token Type must be selected.');

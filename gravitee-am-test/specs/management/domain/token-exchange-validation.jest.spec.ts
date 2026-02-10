@@ -19,7 +19,7 @@ import { createDomain, patchDomain, safeDeleteDomain, startDomain } from '@manag
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 
-setup(200000);
+setup();
 
 let accessToken: string;
 let domain: any;
