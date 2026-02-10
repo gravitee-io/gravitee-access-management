@@ -93,6 +93,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     //Default value must be web.
     private String applicationType = ApplicationType.WEB;
 
+    @JsonIgnore
+    private io.gravitee.am.model.application.ApplicationType appType;
+
     private List<String> contacts;
 
     private String clientName;
@@ -292,6 +295,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.authorizedGrantTypes = other.authorizedGrantTypes != null ? new ArrayList<>(other.authorizedGrantTypes) : null;
         this.responseTypes = other.responseTypes != null ? new ArrayList<>(other.responseTypes) : null;
         this.applicationType = other.applicationType;
+        this.appType = other.appType;
         this.contacts = other.contacts != null ? new ArrayList<>(other.contacts) : null;
         this.clientName = other.clientName;
         this.logoUri = other.logoUri;
@@ -437,6 +441,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setApplicationType(String applicationType) {
         this.applicationType = applicationType;
+    }
+
+    public io.gravitee.am.model.application.ApplicationType getAppType() {
+        return appType;
+    }
+
+    public void setAppType(io.gravitee.am.model.application.ApplicationType appType) {
+        this.appType = appType;
     }
 
     public List<String> getContacts() {

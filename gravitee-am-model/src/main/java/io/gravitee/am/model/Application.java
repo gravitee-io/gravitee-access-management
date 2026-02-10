@@ -155,6 +155,7 @@ public class Application implements Resource, PasswordSettingsAware, Notifiable 
         client.setCreatedAt(this.createdAt);
         client.setUpdatedAt(this.updatedAt);
         Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
+        client.setAppType(this.type);
         client.setSecretSettings(this.secretSettings);
         client.setClientSecrets(this.getSecrets());
         return client;

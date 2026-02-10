@@ -14,7 +14,8 @@
       margin: 10px;
 
       &.selected,
-      i.selected {
+      i.selected,
+      .app-type-icon.selected {
         border: 1px solid mat.m2-get-color-from-palette(gio.$mat-primary-palette, 'default');
       }
 
@@ -30,7 +31,8 @@
         margin-top: 10px;
         text-align: center;
 
-        i {
+        i,
+        .app-type-icon {
           padding: 20px;
           border-radius: 50%;
           font-size: 42px;
@@ -38,6 +40,11 @@
           &:not(.selected) {
             border: 1px solid #e5e5e5;
           }
+        }
+
+        .app-type-icon {
+          width: 82px;
+          height: 82px;
         }
 
         p {
