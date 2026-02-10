@@ -72,7 +72,7 @@ export class McpServerOAuth2Service implements OAuth2SettingsService {
   constructor(private protectedResourceService: ProtectedResourceService) {}
 
   getPermission(): string {
-    return 'protected_resource_update';
+    return 'protected_resource_oauth_update';
   }
 
   getContext(): OAuth2Context {

@@ -265,6 +265,7 @@ import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server
 import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { ApplicationOAuth2Service, McpServerOAuth2Service, OAUTH2_SETTINGS_SERVICE } from './services/oauth2-settings.service';
+import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1466,6 +1467,11 @@ export const routes: Routes = [
                         resolve: {
                           scopes: ScopesAllResolver,
                         },
+                        data: {
+                          perms: {
+                            only: ['protected_resource_create'],
+                          },
+                        },
                         canActivate: [AuthGuard],
                       },
                       {
@@ -1474,6 +1480,7 @@ export const routes: Routes = [
                         runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
                         resolve: {
                           mcpServer: McpServerResolver,
+                          permissions: McpServerPermissionsResolver,
                         },
                         children: [
                           {
@@ -1520,7 +1527,11 @@ export const routes: Routes = [
                                 level: 'level2',
                               },
                               perms: {
-                                only: ['protected_resource_read', 'protected_resource_update'],
+                                only: [
+                                  'protected_resource_settings_read',
+                                  'protected_resource_oauth_read',
+                                  'protected_resource_certificate_list',
+                                ],
                               },
                             },
                             children: [
@@ -1535,7 +1546,7 @@ export const routes: Routes = [
                                     level: 'level3',
                                   },
                                   perms: {
-                                    only: ['protected_resource_read'],
+                                    only: ['protected_resource_settings_read'],
                                   },
                                 },
                               },
@@ -1550,7 +1561,7 @@ export const routes: Routes = [
                                     level: 'level3',
                                   },
                                   perms: {
-                                    only: ['protected_resource_read'],
+                                    only: ['protected_resource_settings_read', 'protected_resource_certificate_list'],
                                   },
                                 },
                                 resolve: {

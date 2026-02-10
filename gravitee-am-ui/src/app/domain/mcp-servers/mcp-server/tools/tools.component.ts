@@ -85,7 +85,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.protectedResource = this.route.snapshot.data['mcpServer'];
     this.features = this.mapFeaturesToTools(this.protectedResource.features ?? []);
-    this.canUpdate = this.authService.hasPermissions(['protected_resource_update']);
+    this.canUpdate = this.authService.hasPermissions(['protected_resource_settings_update']);
 
     // Load domain scopes for the edit dialog
     this.loadDomainScopes();

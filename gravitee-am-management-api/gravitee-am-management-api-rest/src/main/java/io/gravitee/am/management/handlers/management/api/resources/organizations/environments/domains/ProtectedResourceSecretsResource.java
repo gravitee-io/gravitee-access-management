@@ -57,10 +57,10 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "List secrets of a protected resource",
-               description = "User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource " +
-                    "or PROTECTED_RESOURCE[LIST] permission on the specified domain " +
-                    "or PROTECTED_RESOURCE[LIST] permission on the specified environment " +
-                    "or PROTECTED_RESOURCE[LIST] permission on the specified organization.")
+               description = "User must have the PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified resource " +
+                    "or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified organization.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List secrets of a protected resource",
                     content = @Content(mediaType = "application/json",
@@ -73,7 +73,7 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
             @PathParam("protected-resource") String protectedResourceId,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, LIST)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_OAUTH, LIST)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMap(__ -> protectedResourceService.findById(protectedResourceId))
@@ -91,10 +91,10 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create a secret for a protected resource",
-               description = "User must have the PROTECTED_RESOURCE[CREATE] permission on the specified resource " +
-                    "or PROTECTED_RESOURCE[CREATE] permission on the specified domain " +
-                    "or PROTECTED_RESOURCE[CREATE] permission on the specified environment " +
-                    "or PROTECTED_RESOURCE[CREATE] permission on the specified organization.")
+               description = "User must have the PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified resource " +
+                    "or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified organization.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Protected Resource secret successfully created",
                     content = @Content(mediaType = "application/json",
@@ -110,7 +110,7 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, CREATE)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_OAUTH, CREATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(existingDomain -> protectedResourceService.createSecret(existingDomain, protectedResourceId, clientSecret.getName(), authenticatedUser))
@@ -122,10 +122,10 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     @Path("{secretId}/_renew")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Renew a secret for a protected resource",
-               description = "User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource " +
-                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified domain " +
-                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified environment " +
-                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.")
+               description = "User must have the PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified resource " +
+                    "or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified organization.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Protected Resource secret successfully renewed",
                     content = @Content(mediaType = "application/json",
@@ -141,7 +141,7 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_OAUTH, UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(existingDomain -> protectedResourceService.renewSecret(existingDomain, protectedResourceId, secretId, authenticatedUser))
@@ -152,10 +152,10 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
     @DELETE
     @Path("{secretId}")
     @Operation(summary = "Remove a secret for a protected resource",
-               description = "User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource " +
-                    "or PROTECTED_RESOURCE[DELETE] permission on the specified domain " +
-                    "or PROTECTED_RESOURCE[DELETE] permission on the specified environment " +
-                    "or PROTECTED_RESOURCE[DELETE] permission on the specified organization.")
+               description = "User must have the PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified resource " +
+                    "or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified organization.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Protected Resource secret successfully deleted"),
             @ApiResponse(responseCode = "404", description = "Protected Resource or secret not found"),
@@ -170,7 +170,7 @@ public class ProtectedResourceSecretsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, DELETE)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_OAUTH, DELETE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapCompletable(existingDomain -> protectedResourceService.deleteSecret(existingDomain, protectedResourceId, secretId, authenticatedUser)))

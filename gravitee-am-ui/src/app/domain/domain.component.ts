@@ -56,6 +56,8 @@ export class DomainComponent implements OnInit {
         this.router.navigate(['authorization-engines'], { relativeTo: this.route });
       } else if (this.canNavigate(['application_list'])) {
         this.router.navigate(['applications'], { relativeTo: this.route });
+      } else if (this.canNavigate(['protected_resource_list'])) {
+        this.router.navigate(['mcp-servers'], { relativeTo: this.route });
       } else {
         this.router.navigate(['settings'], { relativeTo: this.route });
       }

@@ -486,6 +486,7 @@ import { CreateClaimComponent } from './domain/components/oauth2-settings/claims
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
+import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
 
 @NgModule({
   declarations: [
@@ -970,6 +971,7 @@ import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/t
     DomainStoreService,
     DomainNewMcpServerToolDialogFactory,
     McpServerResolver,
+    McpServerPermissionsResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

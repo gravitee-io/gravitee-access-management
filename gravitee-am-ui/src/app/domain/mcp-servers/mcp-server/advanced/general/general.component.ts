@@ -66,8 +66,8 @@ export class DomainMcpServerGeneralComponent implements OnInit {
       resourceUri: this.resourceUri || '',
     };
 
-    this.editMode = this.authService.hasPermissions(['protected_resource_update']);
-    this.deleteMode = this.authService.hasPermissions(['protected_resource_delete']);
+    this.editMode = this.authService.hasPermissions(['protected_resource_settings_update']);
+    this.deleteMode = this.authService.hasPermissions(['protected_resource_settings_delete']);
 
     // Check if form has changes
     this.checkFormChanges();

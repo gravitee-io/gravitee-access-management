@@ -21,11 +21,16 @@ import { map } from 'rxjs/operators';
 import { AppConfig } from '../../config/app.config';
 
 import { Page, Sort, transformToQueryParam } from './api.model';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class ProtectedResourceService {
   private baseURL = AppConfig.settings.domainBaseURL;
-  constructor(private http: HttpClient) {}
+
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+  ) {}
 
   findByDomain(
     domainId: string,
@@ -113,6 +118,15 @@ export class ProtectedResourceService {
 
   removeMember(domainId: string, resourceId: string, membershipId: string): Observable<any> {
     return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${resourceId}/members/${membershipId}`);
+  }
+
+  permissions(domainId, id): Observable<any> {
+    return this.http.get<any>(this.baseURL + domainId + '/protected-resources/' + id + '/members/permissions').pipe(
+      map((perms) => {
+        this.authService.reloadProtectedResourcePermissions(perms);
+        return perms;
+      }),
+    );
   }
 }
 
