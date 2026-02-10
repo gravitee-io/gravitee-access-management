@@ -55,6 +55,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 
 #### Parameters
 * `fga_api_url`: base URL of the OpenFGA REST API (default: http://localhost:8080)
+* `fga_api_token`: Authorization Bearer token
 * `fga_store_id`: OpenFGA Store identifier
 * `fga_authorization_model_id`: OpenFGA authorization model identifier
 * `number_of_users`: how many users the simulation will create tuples for
@@ -146,6 +147,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 
 #### Parameters
 * `fga_api_url`: base URL of the OpenFGA REST API (default: http://localhost:8080)
+* `fga_api_token`: Authorization Bearer token
 * `fga_store_id`: OpenFGA Store identifier
 * `fga_authorization_model_id`: OpenFGA authorization model identifier
 * `number_of_users`: how many users the provisioning data created
