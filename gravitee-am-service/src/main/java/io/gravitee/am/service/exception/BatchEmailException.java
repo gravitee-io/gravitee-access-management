@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
-
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.service.i18n.DictionaryProvider;
+package io.gravitee.am.service.exception;
 
 import java.util.List;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailService {
+public class BatchEmailException extends TechnicalManagementException {
+    List<String> emails;
+    public BatchEmailException(String message, List<String> emails) {
+        super(message);
+        this.emails = emails;
+    }
 
-    void send(Email email);
-    void batch(List<Email> emails);
+    public List<String> getEmails() {
+        return emails;
+    }
 
-    DictionaryProvider getDefaultDictionaryProvider();
-
+    public void setEmails(List<String> emails) {
+        this.emails = emails;
+    }
 }
