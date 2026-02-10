@@ -5,6 +5,13 @@ Consumed by: OpenAI Codex, GitHub Copilot, Cursor, Gemini/Jules, Windsurf, Zed, 
 
 ---
 
+# Agent Guide
+
+If you are an AI agent operating in this repository:
+- You MUST read this file fully before making changes.
+- You MUST follow the rules defined here.
+- If any instruction conflicts with other files, this file takes precedence.
+
 ## 1. Quick Reference Commands
 
 ### Prerequisites
@@ -22,18 +29,6 @@ mvn install -DskipTests
 
 # Build excluding UI module
 mvn install -pl '!gravitee-am-ui'
-
-# Run all unit tests
-mvn test
-
-# Run tests for specific module
-mvn test -pl gravitee-am-service
-
-# Run specific test class
-mvn test -Dtest="TestClassName"
-
-# Run integration tests
-mvn verify
 
 # Clean (excluding UI)
 mvn clean -pl '!gravitee-am-ui'
@@ -60,9 +55,6 @@ yarn lint:styles
 yarn lint:license
 yarn prettier
 
-# Unit tests
-yarn test
-
 # Build
 yarn build                # development
 yarn prod                 # production
@@ -80,35 +72,11 @@ npx @openapitools/openapi-generator-cli validate -i ../docs/mapi/openapi.yaml
 
 # Regenerate Management API SDK (TypeScript)
 cd gravitee-am-test && npm run update:sdk:mapi -- <MANAGEMENT_API_URL>
-
-# Contract/API tests (Postman via Newman)
-make postman
-```
-
-### Run a JEST suite
-
-```bash
-# Run the users.jest.spec.ts test suite
-npx jest specs/management/users.jest.spec.ts --config api/config/dev.config.js --runInBand --no-cache
-```
-
-```bash
-# Pre-PR verification
-mvn clean install
-cd gravitee-am-ui && yarn lint && yarn test
-
-# Quick backend iteration
-mvn clean install -pl gravitee-am-service -DskipTests
-mvn test -pl gravitee-am-service
-
-# Quick frontend iteration
-cd gravitee-am-ui && yarn lint:fix && yarn test
 ```
 
 ### Build Local Stack
 
 ```bash
-
 # Build AM
 mvn clean install
 
@@ -123,6 +91,23 @@ npm --prefix docker/local-stack run stack:dev:setup:mongo
 
 # Tear down local stack
 npm --prefix docker/local-stack run stack:down
+```
+
+### Running Tests
+
+See **Section 8** for full test documentation (all test types, commands, and CI pipeline details).
+
+```bash
+# Pre-PR verification
+mvn clean install
+cd gravitee-am-ui && yarn lint && yarn test
+
+# Quick backend iteration
+mvn clean install -pl gravitee-am-service -DskipTests
+mvn test -pl gravitee-am-service
+
+# Quick frontend iteration
+cd gravitee-am-ui && yarn lint:fix && yarn test
 ```
 
 ---
@@ -143,28 +128,33 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 | Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server               |
 | Migrations | Liquibase (JDBC), programmatic (MongoDB)                      |
 | API spec | OpenAPI 3 (`docs/mapi/openapi.yaml`)                          |
-| Tests | JUnit 5, Mockito (unit); Jest + Newman (integration/contract) |
+| Tests | JUnit 5, Mockito, Testcontainers (backend); Jest (integration); Newman (contract); helm-unittest (charts) |
 | Containers | Docker, Docker Compose                                        |
 
-### Key Module Paths
+### Key Paths
 
-| Module | Path |
-|--------|------|
-| Management API | `gravitee-am-management-api/` |
-| Gateway | `gravitee-am-gateway/` |
-| Services (core logic) | `gravitee-am-service/` |
-| Domain model | `gravitee-am-model/` |
-| Repositories | `gravitee-am-repository/` |
-| Identity providers | `gravitee-am-identityprovider/` |
-| Factors (MFA) | `gravitee-am-factor/` |
-| Frontend UI | `gravitee-am-ui/` |
-| Integration tests | `gravitee-am-test/` |
-| OpenAPI spec | `docs/mapi/openapi.yaml` |
-| Agent standards | `docs/agent-standards/` |
+| Path | Description |
+|------|-------------|
+| `gravitee-am-management-api/` | Management API module |
+| `gravitee-am-gateway/` | Gateway module |
+| `gravitee-am-service/` | Core business logic |
+| `gravitee-am-model/` | Domain model |
+| `gravitee-am-repository/` | Repository implementations |
+| `gravitee-am-dataplane/` | Reactive data access layer (MongoDB/JDBC) |
+| `gravitee-am-identityprovider/` | Identity provider plugins |
+| `gravitee-am-factor/` | MFA factor plugins |
+| `gravitee-am-ui/` | Angular frontend |
+| `gravitee-am-test/` | Integration tests (Jest) |
+| `gravitee-am-test/GUIDELINES.md` | Integration test guidelines |
+| `postman/collections/` | Postman/Newman API contract tests |
+| `helm/` | Helm charts and tests (`helm/tests/`) |
+| `docs/mapi/openapi.yaml` | OpenAPI 3 spec for Management API |
+| `docs/agent-standards/` | Agent rules, skills, and templates |
+| `Makefile` | Docker/local development commands |
 
 ### Conventions
 
-- Use **UK English** for comments, logs, and user-facing text.
+- Use **US English** for comments, logs, and user-facing text.
 - **Search for similar implementations first** before writing new code.
 - Keep changes small and reviewable; avoid unrelated refactors or reformatting.
 - Prefer existing patterns over inventing new ones.
@@ -197,7 +187,8 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 ### Documentation Discipline
 
 - Keep single source of truth: update existing docs; **do not create new documentation files** (*.md, README) unless explicitly asked.
-- JavaDoc, inline comments, and code documentation are always encouraged.
+- JavaDoc and code documentation are always encouraged. 
+- Inline comments should only be used if the existing logic is not self-explanatory.
 - If recurring caveats are discovered: call them out and propose whether to update existing docs.
 
 ---
@@ -219,7 +210,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 ### Standards Compliance (IAM / OAuth / OIDC)
 
 - Prefer RFC/standard compliance and established implementations over custom logic.
-- On validation, authorisation, or security uncertainty: **fail closed** rather than allowing access.
+- On validation, authorization, or security uncertainty: **fail closed** rather than allowing access.
 
 ---
 
@@ -299,10 +290,123 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 - Cover success **and error paths** when behaviour changes.
 - CREATE/UPDATE/DELETE tests **must verify audit logging**.
 
-### Integration Tests (Jest)
+### Test Types Overview
 
-- Follow `gravitee-am-test/GUIDELINES.md` for all integration test work.
-- Test specs live in `gravitee-am-test/specs/`.
+| Test Type | Framework | Location | Scope | CI Job |
+|-----------|-----------|----------|-------|--------|
+| **Unit** | JUnit 5 / Mockito | `*/src/test/java/` | Per-module logic | `junit_tests` |
+| **Repository** | JUnit + Testcontainers | `gravitee-am-repository/gravitee-am-repository-tests/src/test/java/` | Data layer against real DBs | `run_testcontainer_tests_*` |
+| **Jest Management** | Jest / TypeScript | `gravitee-am-test/specs/management/` | Management API endpoints | `run_jest_tests_*` |
+| **Jest Gateway** | Jest / TypeScript | `gravitee-am-test/specs/gateway/` | OAuth2/OIDC protocol flows | `run_jest_tests_*` |
+| **Postman** | Newman | `postman/collections/` | API contract testing | `run_postman_tests_*` |
+| **UI** | Jest / Angular | `gravitee-am-ui/src/**/*.spec.ts` | Angular component/service tests | `ui_tests` |
+| **Helm** | helm-unittest | `helm/tests/` | Kubernetes chart rendering | `job-test-am-charts` |
+
+### Running Tests Locally
+
+#### Unit Tests (JUnit)
+
+```bash
+mvn test                                       # All modules
+mvn test -pl gravitee-am-service               # Specific module
+mvn test -Dtest="TestClassName" -pl module-name # Specific class
+mvn test -Dtest="TestClass#method" -pl module   # Specific method
+```
+
+#### Repository Tests (Testcontainers)
+
+Require Docker running. These test the data layer against real database instances.
+
+The `cicd*` profiles are defined in individual module POMs (e.g., `gravitee-am-repository-mongodb`, `gravitee-am-repository-jdbc`) and toggle `skipTests` from `true` to `false`. You must build the **whole project** (not a specific `-pl` module) so Maven activates the profiles in the correct child modules.
+
+```bash
+# MongoDB
+mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests
+
+# PostgreSQL
+mvn install -pl \!gravitee-am-ui -Pcicd-jdbc -Ppostgres -DskipTests
+
+# MySQL / MariaDB / MSSQL
+mvn install -pl \!gravitee-am-ui -Pcicd-jdbc -Pmysql -DskipTests
+mvn install -pl \!gravitee-am-ui -Pcicd-jdbc -Pmariadb -DskipTests
+mvn install -pl \!gravitee-am-ui -Pcicd-jdbc -Pmssql -DskipTests
+
+# Older DB versions (append -min)
+mvn install -pl \!gravitee-am-ui -Pcicd-jdbc -Ppostgres-min -DskipTests
+
+# Redis
+mvn install -pl \!gravitee-am-ui -Pcicd-redis -DskipTests
+```
+
+**Note:** `-DskipTests` is passed globally but the `cicd*` profiles override it to `false` in the relevant modules, so only those repository tests run.
+
+**Maven profiles:** `cicd` (Mongo), `cicd-jdbc` + DB profile (JDBC), `cicd-redis` (Redis). Profiles are defined in:
+- `gravitee-am-repository/gravitee-am-repository-mongodb/pom.xml`
+- `gravitee-am-repository/gravitee-am-repository-jdbc/pom.xml`
+- `gravitee-am-repository/gravitee-am-repository-redis/pom.xml`
+- `gravitee-am-dataplane/gravitee-am-dataplane-mongodb/pom.xml`
+- `gravitee-am-dataplane/gravitee-am-dataplane-jdbc/pom.xml`
+
+#### Jest Integration Tests
+
+Require a running local stack (see section 1).
+
+```bash
+# All tests
+npm --prefix gravitee-am-test run ci
+
+# Management tests (2 parallel workers)
+npm --prefix gravitee-am-test run ci:management:parallel
+
+# Gateway tests (sequential — order-sensitive)
+npm --prefix gravitee-am-test run ci:gateway
+
+# Single test file
+npm --prefix gravitee-am-test run test -- specs/gateway/path/to/test.spec.ts
+
+# Single test by name
+npm --prefix gravitee-am-test run test -- specs/gateway/path/to/test.spec.ts -t "test name"
+
+# With PostgreSQL backend
+REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
+```
+
+Follow `gravitee-am-test/GUIDELINES.md` for all integration test work.
+
+#### Postman / Newman Tests
+
+```bash
+npm --prefix postman run test:collections
+```
+
+#### UI Tests
+
+```bash
+cd gravitee-am-ui && yarn test
+# Or via Maven:
+mvn test -pl gravitee-am-ui -Dlicense.skip=true
+```
+
+#### Helm Tests
+
+```bash
+helm lint helm/
+helm unittest -f 'tests/**/*.yaml' helm/
+```
+
+### CI Pipeline (CircleCI)
+
+The PR workflow (`pull_requests`) runs the following test jobs:
+
+1. **`junit_tests`** — Backend unit tests (`mvn verify -pl \!gravitee-am-ui`)
+2. **`ui_tests`** — Angular tests (`mvn test -pl gravitee-am-ui`)
+3. **`run_jest_tests_mongo`** — Jest management (parallel) + gateway tests against MongoDB 4.4 and 8.0
+4. **`run_jest_tests_psql`** — Jest management (parallel) + gateway tests against PostgreSQL 11.18 and 17.2
+5. **`run_postman_tests_mongo`** — Newman collections against MongoDB 4.4 and 8.0
+6. **`run_postman_tests_psql`** — Newman collections against PostgreSQL 11.18 and 17.2
+7. **`job-test-am-charts`** — Helm lint + unittest
+
+**Repository testcontainer tests** run in a separate `testcontainer_tests` workflow, triggered when files under `gravitee-am-repository/`, `gravitee-am-reporter/`, `gravitee-am-dataplane/`, or `pom.xml` are modified. This tests against a matrix of MongoDB, Redis, PostgreSQL, MySQL, MariaDB, and MSSQL (current + minimum supported versions).
 
 ### Step-by-Step Validation (Mandatory)
 
@@ -351,29 +455,3 @@ When API behaviour, endpoints, DTOs, or annotations change:
 - Do not introduce competing patterns or parallel abstractions.
 - Search for existing implementations before creating new ones.
 
----
-
-## 11. File Index
-
-Quick-reference table of key paths in the repository.
-
-| Path | Description |
-|------|-------------|
-| `AGENTS.md` | This file — universal AI agent instructions |
-| `docs/agent-standards/` | Tool-specific rules, skills, templates (extends this file) |
-| `docs/agent-standards/commands.md` | Canonical verified commands |
-| `docs/agent-standards/cursor-rules/` | Cursor-specific rules (`.mdc` with frontmatter metadata) |
-| `docs/agent-standards/skills/` | Reusable agent skills |
-| `docs/agent-standards/templates/` | Task and checklist templates |
-| `docs/mapi/openapi.yaml` | OpenAPI 3 spec for Management API |
-| `gravitee-am-management-api/` | Management API module |
-| `gravitee-am-gateway/` | Gateway module |
-| `gravitee-am-service/` | Core business logic |
-| `gravitee-am-model/` | Domain model |
-| `gravitee-am-repository/` | Repository implementations |
-| `gravitee-am-identityprovider/` | Identity provider plugins |
-| `gravitee-am-factor/` | MFA factor plugins |
-| `gravitee-am-ui/` | Angular frontend |
-| `gravitee-am-test/` | Integration tests (Jest) |
-| `gravitee-am-test/GUIDELINES.md` | Integration test guidelines |
-| `Makefile` | Docker/local development commands |
