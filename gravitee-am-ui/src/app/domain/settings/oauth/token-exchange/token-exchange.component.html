@@ -146,11 +146,7 @@
           </div>
 
           <!-- Validation warnings -->
-          <div
-            *ngFor="let error of getValidationErrors()"
-            class="gv-form-section"
-            style="color: #f44336; display: flex; align-items: center"
-          >
+          <div *ngFor="let error of getValidationErrors()" class="gv-form-section validation-error">
             <mat-icon>warning</mat-icon>
             <span style="margin-left: 8px">{{ error }}</span>
           </div>

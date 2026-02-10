@@ -34,6 +34,7 @@ interface TokenExchangeSettings {
 @Component({
   selector: 'app-token-exchange',
   templateUrl: './token-exchange.component.html',
+  styleUrls: ['./token-exchange.component.scss'],
   standalone: false,
 })
 export class TokenExchangeComponent implements OnInit {

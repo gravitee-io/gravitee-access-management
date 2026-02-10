@@ -135,20 +135,12 @@ public class TokenExchangeSettings {
      * @return true if settings are valid, false otherwise
      */
     public boolean isValid() {
-        if (enabled) {
-            if (!(allowImpersonation || allowDelegation)) {
-                return false;
-            }
-            if (allowedSubjectTokenTypes == null || allowedSubjectTokenTypes.isEmpty()) {
-                return false;
-            }
-            if (allowedRequestedTokenTypes == null || allowedRequestedTokenTypes.isEmpty()) {
-                return false;
-            }
-            if (allowDelegation && (allowedActorTokenTypes == null || allowedActorTokenTypes.isEmpty())) {
-                return false;
-            }
+        if (!enabled) {
+            return true;
         }
-        return true;
+        return (allowImpersonation || allowDelegation)
+                && (allowedSubjectTokenTypes != null && !allowedSubjectTokenTypes.isEmpty())
+                && (allowedRequestedTokenTypes != null && !allowedRequestedTokenTypes.isEmpty())
+                && (!allowDelegation || (allowedActorTokenTypes != null && !allowedActorTokenTypes.isEmpty()));
     }
 }
