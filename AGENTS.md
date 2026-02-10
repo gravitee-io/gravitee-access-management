@@ -203,7 +203,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 ### Compatibility and Correctness
 
-- Keep public contracts backwards compatible unless a breaking change is explicitly authorised.
+- Keep public contracts backwards compatible unless a breaking change is explicitly authorized.
 - Do not change exception types or HTTP status/exception semantics for the same condition without approval.
 - Do not widen method/class visibility without a documented reason.
 
@@ -388,6 +388,7 @@ mvn test -pl gravitee-am-ui -Dlicense.skip=true
 ```
 
 #### Helm Tests
+Refer to [helm/README.md](helm/README.md) for more details on testing Helm charts.
 
 ```bash
 helm lint helm/
