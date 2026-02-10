@@ -41,6 +41,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   certificates: any[] = [];
   secretSettings: any;
   editMode: boolean;
+  deleteMode: boolean;
 
   constructor(
     private route: ActivatedRoute,
@@ -59,6 +60,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
     this.certificates = this.route.snapshot.data['certificates'];
     this.secretSettings = this.application.settings.secretExpirationSettings;
     this.editMode = this.authService.hasPermissions(['application_openid_update']);
+    this.deleteMode = this.authService.hasPermissions(['application_openid_delete']);
   }
 
   onCertificateSave(certificateId: string): void {
