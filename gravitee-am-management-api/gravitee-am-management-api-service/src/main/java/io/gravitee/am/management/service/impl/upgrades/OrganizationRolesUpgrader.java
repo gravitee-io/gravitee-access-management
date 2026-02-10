@@ -34,7 +34,7 @@ public class OrganizationRolesUpgrader implements Upgrader {
     private final OrganizationService organizationService;
     private final RoleService roleService;
 
-    private static final String VERSION = "4_11_0_a";
+    private static final String VERSION = "4_11_0_b";
 
     @Override
     public boolean upgrade() {

@@ -50,7 +50,9 @@
             <div class="gv-form-section-title tools-header">
               <div class="tools-header-content">
                 <h5>Tools</h5>
-                <button mat-stroked-button type="submit" routerLink="../tools">View Tools</button>
+                <button *hasPermission="['protected_resource_settings_read']" mat-stroked-button type="submit" routerLink="../tools">
+                  View Tools
+                </button>
               </div>
               <small>This MCP Server exposes the following tools that can be invoked by authenticated clients</small>
               <mat-divider></mat-divider>

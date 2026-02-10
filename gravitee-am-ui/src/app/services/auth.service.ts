@@ -27,12 +27,19 @@ export class AuthService {
   private environmentPermissions: any[];
   private domainPermissions: any[];
   private applicationPermissions: any[];
+  private protectedResourcePermissions: any[];
+
   private environmentPermissionsSource = new BehaviorSubject(null);
   private environmentPermissionsObservable = this.environmentPermissionsSource.asObservable();
+
   private domainPermissionsSource = new BehaviorSubject(null);
   private domainPermissionsObservable = this.domainPermissionsSource.asObservable();
+
   private applicationPermissionsSource = new BehaviorSubject(null);
   private applicationPermissionsObservable = this.applicationPermissionsSource.asObservable();
+
+  private protectedResourcePermissionsSource = new BehaviorSubject(null);
+  private protectedResourcePermissionsObservable = this.protectedResourcePermissionsSource.asObservable();
   private subject = new Subject();
   notifyObservable$ = this.subject.asObservable();
 
@@ -40,6 +47,7 @@ export class AuthService {
     this.environmentPermissionsObservable.subscribe((permissions) => (this.environmentPermissions = permissions));
     this.domainPermissionsObservable.subscribe((permissions) => (this.domainPermissions = permissions));
     this.applicationPermissionsObservable.subscribe((permissions) => (this.applicationPermissions = permissions));
+    this.protectedResourcePermissionsObservable.subscribe((permissions) => (this.protectedResourcePermissions = permissions));
   }
 
   handleAuthentication(): Observable<boolean> {
@@ -82,7 +90,8 @@ export class AuthService {
           this.user().permissions.indexOf(v) >= 0 ||
           (this.environmentPermissions && this.environmentPermissions.indexOf(v) >= 0) ||
           (this.domainPermissions && this.domainPermissions.indexOf(v) >= 0) ||
-          (this.applicationPermissions && this.applicationPermissions.indexOf(v) >= 0),
+          (this.applicationPermissions && this.applicationPermissions.indexOf(v) >= 0) ||
+          (this.protectedResourcePermissions && this.protectedResourcePermissions.indexOf(v) >= 0),
       )
     );
   }
@@ -105,6 +114,10 @@ export class AuthService {
 
   reloadApplicationPermissions(permissions) {
     this.applicationPermissionsSource.next(permissions);
+  }
+
+  reloadProtectedResourcePermissions(permissions) {
+    this.protectedResourcePermissionsSource.next(permissions);
   }
 
   environmentPermissionsLoaded(): boolean {

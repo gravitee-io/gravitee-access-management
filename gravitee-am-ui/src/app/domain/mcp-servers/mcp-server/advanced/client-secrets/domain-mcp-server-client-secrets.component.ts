@@ -58,8 +58,8 @@ export class DomainMcpServerClientSecretsComponent implements OnInit {
     this.protectedResource = this.route.snapshot.data['mcpServer'];
     this.certificates = this.route.snapshot.data['certificates'] || [];
 
-    this.editMode = this.authService.hasPermissions(['protected_resource_update']);
-    this.deleteMode = this.authService.hasPermissions(['protected_resource_delete']);
+    this.editMode = this.authService.hasPermissions(['protected_resource_oauth_update']);
+    this.deleteMode = this.authService.hasPermissions(['protected_resource_oauth_delete']);
   }
 
   openSettings(event: any) {

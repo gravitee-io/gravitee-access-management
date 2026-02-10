@@ -73,7 +73,7 @@
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-button [routerLink]="[row.id]" *hasPermission="['protected_resource_read']">
+            <a mat-button [routerLink]="[row.id]" *hasPermission="['protected_resource_settings_read']">
               <mat-icon>settings</mat-icon>
             </a>
             <button *hasPermission="['protected_resource_delete']" mat-button (click)="delete(row.id, $event)">
@@ -87,7 +87,7 @@
 
   <app-emptystate *ngIf="isEmpty" [message]="'MCP Servers will appear here'" [subMessage]="'No data to display'"></app-emptystate>
 
-  <div *hasPermission="['application_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
+  <div *hasPermission="['protected_resource_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>
