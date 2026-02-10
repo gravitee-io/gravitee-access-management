@@ -165,6 +165,7 @@ export const PatchOIDCSettingsRequiredPermissionsEnum = {
   ApplicationFlow: 'APPLICATION_FLOW',
   LicenseNotification: 'LICENSE_NOTIFICATION',
   ProtectedResource: 'PROTECTED_RESOURCE',
+  ProtectedResourceMember: 'PROTECTED_RESOURCE_MEMBER',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchOIDCSettingsRequiredPermissionsEnum =

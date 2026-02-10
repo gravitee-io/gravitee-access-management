@@ -385,40 +385,10 @@ export interface User {
   serviceAccount?: boolean;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {UserId}
    * @memberof User
    */
-  address?: { [key: string]: any };
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  locale?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  zoneInfo?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  indefinitelyLocked?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  temporarilyLocked?: boolean;
+  fullId?: UserId;
   /**
    *
    * @type {string}
@@ -454,7 +424,19 @@ export interface User {
    * @type {string}
    * @memberof User
    */
+  zoneInfo?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
   phoneNumber?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  address?: { [key: string]: any };
   /**
    *
    * @type {boolean}
@@ -463,16 +445,34 @@ export interface User {
   disabled?: boolean;
   /**
    *
-   * @type {UserId}
+   * @type {{ [key: string]: any; }}
    * @memberof User
    */
-  fullId?: UserId;
+  identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  indefinitelyLocked?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  temporarilyLocked?: boolean;
   /**
    *
    * @type {{ [key: string]: any; }}
    * @memberof User
    */
   lastIdentityInformation?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  locale?: string;
 }
 
 /**
@@ -560,21 +560,21 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
     forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
-    address: json['address'] == null ? undefined : json['address'],
-    locale: json['locale'] == null ? undefined : json['locale'],
-    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
-    indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
-    temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     middleName: json['middleName'] == null ? undefined : json['middleName'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
     website: json['website'] == null ? undefined : json['website'],
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
+    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
+    address: json['address'] == null ? undefined : json['address'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
+    temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
     lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
+    locale: json['locale'] == null ? undefined : json['locale'],
   };
 }
 
@@ -646,20 +646,20 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
     forceResetPassword: value['forceResetPassword'],
     serviceAccount: value['serviceAccount'],
-    address: value['address'],
-    locale: value['locale'],
-    zoneInfo: value['zoneInfo'],
-    identitiesAsMap: value['identitiesAsMap'],
-    indefinitelyLocked: value['indefinitelyLocked'],
-    temporarilyLocked: value['temporarilyLocked'],
+    fullId: UserIdToJSON(value['fullId']),
     middleName: value['middleName'],
     inactive: value['inactive'],
     profile: value['profile'],
     website: value['website'],
     birthdate: value['birthdate'],
+    zoneInfo: value['zoneInfo'],
     phoneNumber: value['phoneNumber'],
+    address: value['address'],
     disabled: value['disabled'],
-    fullId: UserIdToJSON(value['fullId']),
+    identitiesAsMap: value['identitiesAsMap'],
+    indefinitelyLocked: value['indefinitelyLocked'],
+    temporarilyLocked: value['temporarilyLocked'],
     lastIdentityInformation: value['lastIdentityInformation'],
+    locale: value['locale'],
   };
 }
