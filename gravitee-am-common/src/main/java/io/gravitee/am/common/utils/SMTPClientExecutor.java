@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.common.utils;
 
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.service.i18n.DictionaryProvider;
-
-import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailService {
+public class SMTPClientExecutor {
 
-    void send(Email email);
-    void batch(List<Email> emails);
+    private int numberOfThreads;
 
-    DictionaryProvider getDefaultDictionaryProvider();
+    private Executor executor;
 
+    public SMTPClientExecutor(int nbOfThreads) {
+        this.numberOfThreads = nbOfThreads;
+        this.executor = Executors.newFixedThreadPool(nbOfThreads) ;
+    }
+
+    public Executor getExecutor() {
+        return executor;
+    }
+
+    public int getNumberOfThreads() {
+        return numberOfThreads;
+    }
 }
