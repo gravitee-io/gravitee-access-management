@@ -41,7 +41,11 @@ public interface EmailService {
 
     void send(Email email);
 
+    void batch(Template template, List<EmailContainer> containers);
+
     EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params, Locale preferredLanguage) throws IOException, TemplateException;
+
+    void traceEmailEviction(User user, Client client, Template emailTemplate);
 
     final class EmailWrapper {
         final io.gravitee.am.common.email.Email email;
