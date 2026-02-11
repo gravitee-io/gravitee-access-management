@@ -16,6 +16,7 @@
 
 import { getApplicationApi } from './service/utils';
 import { ApplicationPage } from '../../management/models/ApplicationPage';
+import { PatchApplicationTypeTypeEnum } from '../../management/models/PatchApplicationType';
 
 export type ApplicationListOptions = {
   page?: number;
@@ -101,11 +102,11 @@ export const updateApplicationFlows = (domainId, accessToken, applicationId, flo
     flow: flows,
   });
 
-export const updateApplicationType = (domainId, accessToken, applicationId, type: string) =>
+export const updateApplicationType = (domainId, accessToken, applicationId, type: PatchApplicationTypeTypeEnum) =>
   getApplicationApi(accessToken).updateApplicationType({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     application: applicationId,
-    patchApplicationType: { type: type as any },
+    patchApplicationType: { type },
   });

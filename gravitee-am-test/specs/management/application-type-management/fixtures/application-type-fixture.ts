@@ -16,6 +16,9 @@
 
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
+import { NewApplication } from '@management-models/NewApplication';
+import { PatchApplication } from '@management-models/PatchApplication';
+import { PatchApplicationTypeTypeEnum } from '@management-models/PatchApplicationType';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
@@ -29,9 +32,9 @@ import { uniqueName } from '@utils-commands/misc';
 export interface ApplicationTypeFixture {
   accessToken: string;
   domain: Domain;
-  createApp: (name: string, type: string, metadata?: Record<string, string>) => Promise<Application>;
-  setAppType: (appId: string, type: string) => Promise<Application>;
-  updateApp: (appId: string, body: any) => Promise<Application>;
+  createApp: (name: string, type: PatchApplicationTypeTypeEnum, metadata?: Record<string, string>) => Promise<Application>;
+  setAppType: (appId: string, type: PatchApplicationTypeTypeEnum) => Promise<Application>;
+  updateApp: (appId: string, body: PatchApplication) => Promise<Application>;
   cleanUp: () => Promise<void>;
 }
 
@@ -41,8 +44,8 @@ export const initFixture = async (): Promise<ApplicationTypeFixture> => {
 
   const createdAppIds: string[] = [];
 
-  const createApp = async (name: string, type: string, metadata?: Record<string, string>): Promise<Application> => {
-    const body: any = { name, type };
+  const createApp = async (name: string, type: PatchApplicationTypeTypeEnum, metadata?: Record<string, string>): Promise<Application> => {
+    const body: NewApplication = { name, type };
     if (metadata) {
       body.metadata = metadata;
     }
@@ -51,11 +54,11 @@ export const initFixture = async (): Promise<ApplicationTypeFixture> => {
     return app;
   };
 
-  const setAppType = async (appId: string, type: string): Promise<Application> => {
+  const setAppType = async (appId: string, type: PatchApplicationTypeTypeEnum): Promise<Application> => {
     return updateApplicationType(domain.id, accessToken, appId, type);
   };
 
-  const updateApp = async (appId: string, body: any): Promise<Application> => {
+  const updateApp = async (appId: string, body: PatchApplication): Promise<Application> => {
     return patchApplication(domain.id, accessToken, body, appId);
   };
 
