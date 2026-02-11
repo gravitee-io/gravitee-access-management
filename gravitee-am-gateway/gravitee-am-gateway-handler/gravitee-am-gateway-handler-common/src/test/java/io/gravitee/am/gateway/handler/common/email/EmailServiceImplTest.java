@@ -105,6 +105,8 @@ public class EmailServiceImplTest {
                 "Complete your registration",
                 Long.valueOf(DAYS.toSeconds(7)).intValue(),
                 "Verify your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue(),
+                "Sign in",
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
 
         emailServiceSpy = Mockito.spy(emailService);
@@ -132,6 +134,8 @@ public class EmailServiceImplTest {
                 "Complete your registration",
                 Long.valueOf(DAYS.toSeconds(7)).intValue(),
                 "Verify your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue(),
+                "Sign in",
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
@@ -182,6 +186,8 @@ public class EmailServiceImplTest {
                 "Complete your registration",
                 Long.valueOf(DAYS.toSeconds(7)).intValue(),
                 "Verify your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue(),
+                "Sign in",
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
@@ -239,6 +245,8 @@ public class EmailServiceImplTest {
                 "Complete your registration",
                 Long.valueOf(DAYS.toSeconds(7)).intValue(),
                 "Verify your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue(),
+                "Sign in",
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);

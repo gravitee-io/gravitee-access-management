@@ -136,6 +136,8 @@ public interface Claims {
 
     String CLIENT_ID = "client_id";
 
+    String SESSION_ID = "session_id";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF, CLIENT_ID);

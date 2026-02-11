@@ -24,6 +24,7 @@ import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.TokenPurpose;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
@@ -84,6 +85,8 @@ public class EmailServiceImpl implements EmailService {
     private final int userRegistrationVerifyExpiresAfter;
     private final String registrationConfirmationSubject;
     private final int userRegistrationConfirmationVerifyExpiresAfter;
+    private final String userMagicLinkLoginSubject;
+    private final int userMagicLinkLoginExpiresAfter;
     @Autowired
     private EmailManager emailManager;
 
@@ -122,7 +125,9 @@ public class EmailServiceImpl implements EmailService {
             String registrationVerifySubject,
             int userRegistrationVerifyExpiresAfter,
             String registrationConfirmationSubject,
-            int userRegistrationConfirmationVerifyExpiresAfter) {
+            int userRegistrationConfirmationVerifyExpiresAfter,
+            String userMagicLinkLoginSubject,
+            int userMagicLinkLoginExpiresAfter) {
         this.enabled = enabled;
         this.resetPasswordSubject = resetPasswordSubject;
         this.resetPasswordExpireAfter = resetPasswordExpireAfter;
@@ -135,6 +140,8 @@ public class EmailServiceImpl implements EmailService {
         this.userRegistrationVerifyExpiresAfter = userRegistrationVerifyExpiresAfter;
         this.registrationConfirmationSubject = registrationConfirmationSubject;
         this.userRegistrationConfirmationVerifyExpiresAfter = userRegistrationConfirmationVerifyExpiresAfter;
+        this.userMagicLinkLoginSubject = userMagicLinkLoginSubject;
+        this.userMagicLinkLoginExpiresAfter = userMagicLinkLoginExpiresAfter;
     }
 
     @Override
@@ -266,6 +273,9 @@ public class EmailServiceImpl implements EmailService {
         if (client != null) {
             claims.put(Claims.AUD, client.getId());
         }
+        if(queryParams != null && queryParams.contains(Parameters.SESSION_ID) ) {
+            claims.put(Claims.SESSION_ID, queryParams.get(Parameters.SESSION_ID));
+        }
 
         if (client != null && !queryParams.contains(CLIENT_ID)) {
             queryParams.add(CLIENT_ID, encodeURIComponent(client.getClientId()));
@@ -366,6 +376,7 @@ public class EmailServiceImpl implements EmailService {
             case VERIFY_ATTEMPT -> mfaVerifyAttemptSubject;
             case REGISTRATION_VERIFY -> registrationVerifySubject;
             case REGISTRATION_CONFIRMATION -> registrationConfirmationSubject;
+            case MAGIC_LINK -> userMagicLinkLoginSubject;
             default -> throw new IllegalArgumentException(template.template() + " not found");
         };
     }
@@ -378,6 +389,7 @@ public class EmailServiceImpl implements EmailService {
             case VERIFY_ATTEMPT -> 0;
             case REGISTRATION_VERIFY -> userRegistrationVerifyExpiresAfter;
             case REGISTRATION_CONFIRMATION -> userRegistrationConfirmationVerifyExpiresAfter;
+            case MAGIC_LINK -> userMagicLinkLoginExpiresAfter;
             default -> throw new IllegalArgumentException(template.template() + " not found");
         };
     }

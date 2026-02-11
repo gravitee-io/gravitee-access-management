@@ -27,11 +27,11 @@ services:
       - ./data/am-mongodb-6:/data/db
       - ./logs/am-mongodb-6:/var/log/mongodb
 
-  ciba:
-    image: local/ciba-delegated-service:${GIO_AM_VERSION}
-    container_name: gio_am_ciba
-    ports:
-      - 8080:8080
+#  ciba:
+#    image: local/ciba-delegated-service:${GIO_AM_VERSION}
+#    container_name: gio_am_ciba
+#    ports:
+#      - 8080:8080
 
   fakesmtp:
     image: gessnerfl/fake-smtp-server
