@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.oidc.Client;
@@ -256,7 +257,7 @@ public class BaseIntrospectionTokenServiceTest {
         }
 
         Maybe<JWT> introspect(String token, boolean offlineVerification, String callerClientId) {
-            return super.introspectToken(token, offlineVerification, callerClientId);
+            return super.introspectToken(token, offlineVerification, callerClientId).map(IntrospectionResult::jwt);
         }
     }
 }

@@ -191,16 +191,12 @@ public class TokenServiceImpl implements TokenService {
 
     private Maybe<Token> introspectAsAccessToken(String token, String callerClientId) {
         return introspectionTokenFacade.introspectAccessToken(token, callerClientId)
-                .flatMap(jwt -> accessTokenRepository.findByToken(jwt.getJti())
-                        .map(repoToken -> convertAccessToken(jwt, repoToken.getClient()))
-                        .switchIfEmpty(Maybe.just(convertAccessToken(jwt, null))));
+                .map(result -> convertAccessToken(result.jwt(), result.clientId()));
     }
 
     private Maybe<Token> introspectAsRefreshToken(String token, String callerClientId) {
         return introspectionTokenFacade.introspectRefreshToken(token, callerClientId)
-                .flatMap(jwt -> refreshTokenRepository.findByToken(jwt.getJti())
-                        .map(repoToken -> convertRefreshToken(jwt, repoToken.getClient()))
-                        .switchIfEmpty(Maybe.just(convertRefreshToken(jwt, null))));
+                .map(result -> convertRefreshToken(result.jwt(), result.clientId()));
     }
 
     @Override

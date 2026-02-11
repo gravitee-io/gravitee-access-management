@@ -19,6 +19,7 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { setupProtectedResourcesFixture, ProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
+import { delay } from '@utils-commands/misc';
 
 // RFC 8707 Introspection: Protected Resource can introspect tokens obtained via authorization_code grant with resource indicators
 
@@ -57,6 +58,9 @@ describe('Protected Resource Introspection with Resource Indicators (RFC 8707)',
     expect(protectedResource).toBeDefined();
     expect(protectedResource.clientId).toBeDefined();
     expect(protectedResource.clientSecret).toBeDefined();
+
+    // Add a 10 second delay to ensure offline verification is not conducted
+    await delay(10000);
 
     // Step 4: Introspect the token using the Protected Resource credentials
     // Note that the client ID of the resources indicated in the token exchange must match the client ID of the Authorization header

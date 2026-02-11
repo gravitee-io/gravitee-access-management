@@ -16,21 +16,11 @@
 package io.gravitee.am.gateway.handler.common.oauth2;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.reactivex.rxjava3.core.Maybe;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
+ * Encapsulates the result of a token introspection, including the verified JWT
+ * and optional metadata retrieved from the persistence layer (such as the
+ * original client identifier).
  */
-public interface IntrospectionTokenService {
-
-    default Maybe<JWT> introspect(String token, boolean offlineVerification) {
-        return introspect(token, offlineVerification, null).map(IntrospectionResult::jwt);
-    }
-
-    /**
-     * Performs token introspection and returns both the verified JWT and
-     * optional metadata coming from the persistence layer.
-     */
-    Maybe<IntrospectionResult> introspect(String token, boolean offlineVerification, String callerClientId);
+public record IntrospectionResult(JWT jwt, String clientId) {
 }
