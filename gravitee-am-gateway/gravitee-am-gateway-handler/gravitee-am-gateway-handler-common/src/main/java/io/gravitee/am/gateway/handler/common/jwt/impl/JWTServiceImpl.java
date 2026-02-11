@@ -16,8 +16,11 @@
 package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObject;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jose.JWSHeader;
+
+import com.nimbusds.jose.util.Base64URL;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
@@ -235,10 +238,14 @@ public class JWTServiceImpl implements JWTService {
     }
 
     private Optional<String> extractKid(String jwt) {
+        final String parameterName = "kid";
         try {
-            return Optional.ofNullable(SignedJWT.parse(jwt).getHeader().getKeyID());
-        } catch (ParseException e) {
-            logger.debug("Unable to parse JWT header to extract kid", e);
+            Base64URL[] parts = JOSEObject.split(jwt);
+            JWSHeader header = JWSHeader.parse(parts[0]);
+            Object value = header.toJSONObject().get(parameterName);
+            return !(value instanceof String stringValue) || stringValue.isEmpty() ? Optional.empty() : Optional.of(stringValue);
+        } catch (IllegalArgumentException | ParseException e) {
+            logger.debug("Unable to parse JWT header to extract {}", parameterName, e);
             return Optional.empty();
         }
     }

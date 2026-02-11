@@ -25,9 +25,11 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,13 +38,15 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.crypto.KeyGenerator;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPairGenerator;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -216,6 +220,169 @@ public class JWTServiceTest {
         var testObserver = jwtService.encode(new JWT(), client).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(TemporarilyUnavailableException.class);
+    }
+
+    @Test
+    public void decodeAndVerify_withValidKid_shouldUseKidCertificate() throws Exception {
+        // Create a JWT token with kid="my-cert-id" in the header
+        String headerJson = "{\"kid\":\"my-cert-id\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for the kid
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider kidCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager to return the kid certificate provider
+        when(certificateManager.get("my-cert-id")).thenReturn(Maybe.just(kidCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify
+        TestObserver<JWT> testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the kid certificate provider was used, not the default
+        verify(certificateManager).get("my-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withoutKid_shouldFallbackToDefaultCertificate() throws Exception {
+        // Create a JWT token without kid in the header
+        String headerJson = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify
+        TestObserver<JWT> testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withMalformedHeader_shouldFallbackToDefaultCertificate() throws Exception {
+        // Create a JWT token with malformed header (invalid base64)
+        String jwtToken = "invalid-base64-header.payload.signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - should fallback to default certificate
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withEmptyKid_shouldFallbackToDefaultCertificate() throws Exception {
+        // Create a JWT token with empty kid in the header
+        String headerJson = "{\"kid\":\"\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - should fallback to default certificate
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withInvalidJsonHeader_shouldFallbackToDefaultCertificate() throws Exception {
+        // Create a JWT token with invalid JSON in the header
+        String headerJson = "{\"kid\":\"my-cert-id\",invalid-json";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString("{\"sub\":\"test\"}".getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test"));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - should fallback to default certificate
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProviderWithParser(JWTParser jwtParser) {
+        var actualProvider = mock(CertificateProvider.class);
+
+        var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        when(theProvider.getJwtParser()).thenReturn(jwtParser);
+        when(theProvider.getProvider()).thenReturn(actualProvider);
+        return theProvider;
     }
 
 }
