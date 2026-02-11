@@ -20,6 +20,7 @@ import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Key;
 import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.utils.RandomString;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -224,21 +225,22 @@ public class JWTServiceTest {
 
     @Test
     public void decodeAndVerify_withValidKid_shouldUseKidCertificate() throws Exception {
-        // Create a JWT token with kid="my-cert-id" in the header
-        String headerJson = "{\"kid\":\"my-cert-id\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        // Create a JWT token with a valid UUID kid in the header
+        String kid = RandomString.generate();
+        String headerJson = "{\"kid\":\"" + kid + "\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
         String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
         String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
         String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
         String jwtToken = headerB64 + "." + payloadB64 + ".signature";
 
-        // Mock CertificateProvider for the kid
+        // Mock CertificateProvider for the kid UUID
         JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
         JWTParser mockParser = mock(JWTParser.class);
         when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
         io.gravitee.am.gateway.certificate.CertificateProvider kidCertProvider = mockCertProviderWithParser(mockParser);
 
         // Mock CertificateManager to return the kid certificate provider
-        when(certificateManager.get("my-cert-id")).thenReturn(Maybe.just(kidCertProvider));
+        when(certificateManager.get(kid)).thenReturn(Maybe.just(kidCertProvider));
 
         // Mock default certificate ID supplier
         Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
@@ -250,12 +252,46 @@ public class JWTServiceTest {
         testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
 
         // Verify that the kid certificate provider was used, not the default
-        verify(certificateManager).get("my-cert-id");
+        verify(certificateManager).get(kid);
         verify(mockParser).parse(jwtToken);
     }
 
     @Test
-    public void decodeAndVerify_withoutKid_shouldFallbackToDefaultCertificate() throws Exception {
+    public void decodeAndVerify_withLegacyKid_shouldFallBackToDefaultCertificate() throws Exception {
+        // Create a JWT token with non-UUID kid in the header
+        String aliasKid = "legacy-alias";
+        String headerJson = "{\"kid\":\"" + aliasKid + "\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - alias kid should be ignored and default certificate used
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used and alias kid was not looked up
+        verify(certificateManager).get("default-cert-id");
+        verify(certificateManager, never()).get("legacy-alias");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withoutKid_shouldFallBackToDefaultCertificate() throws Exception {
         // Create a JWT token without kid in the header
         String headerJson = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
         String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
@@ -287,7 +323,7 @@ public class JWTServiceTest {
     }
 
     @Test
-    public void decodeAndVerify_withMalformedHeader_shouldFallbackToDefaultCertificate() throws Exception {
+    public void decodeAndVerify_withMalformedHeader_shouldFallBackToDefaultCertificate() throws Exception {
         // Create a JWT token with malformed header (invalid base64)
         String jwtToken = "invalid-base64-header.payload.signature";
 
@@ -315,7 +351,7 @@ public class JWTServiceTest {
     }
 
     @Test
-    public void decodeAndVerify_withEmptyKid_shouldFallbackToDefaultCertificate() throws Exception {
+    public void decodeAndVerify_withEmptyKid_shouldFallBackToDefaultCertificate() throws Exception {
         // Create a JWT token with empty kid in the header
         String headerJson = "{\"kid\":\"\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
         String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
@@ -347,7 +383,7 @@ public class JWTServiceTest {
     }
 
     @Test
-    public void decodeAndVerify_withInvalidJsonHeader_shouldFallbackToDefaultCertificate() throws Exception {
+    public void decodeAndVerify_withInvalidJsonHeader_shouldFallBackToDefaultCertificate() throws Exception {
         // Create a JWT token with invalid JSON in the header
         String headerJson = "{\"kid\":\"my-cert-id\",invalid-json";
         String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));

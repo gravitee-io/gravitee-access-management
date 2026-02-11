@@ -26,6 +26,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -152,7 +153,7 @@ public class JWTServiceImpl implements JWTService {
         if (getDefaultCertificateId == null) {
             return Single.error(new IllegalArgumentException("getDefaultCertificateId is required"));
         }
-        String certificateId = extractKid(jwt).orElse(getDefaultCertificateId.get());
+        String certificateId = extractKid(jwt).orElseGet(getDefaultCertificateId);
         return certificateManager.get(certificateId)
                 .switchIfEmpty(Single.defer(() -> {
                     logger.warn("Falling back to default certificate provider for certificateId: {}", certificateId);
@@ -243,7 +244,9 @@ public class JWTServiceImpl implements JWTService {
             Base64URL[] parts = JOSEObject.split(jwt);
             JWSHeader header = JWSHeader.parse(parts[0]);
             Object value = header.toJSONObject().get(parameterName);
-            return !(value instanceof String stringValue) || stringValue.isEmpty() ? Optional.empty() : Optional.of(stringValue);
+            return value instanceof String stringValue && RandomString.isUuid(stringValue)
+                ? Optional.of(stringValue)
+                : Optional.empty();
         } catch (IllegalArgumentException | ParseException e) {
             logger.debug("Unable to parse JWT header to extract {}", parameterName, e);
             return Optional.empty();
