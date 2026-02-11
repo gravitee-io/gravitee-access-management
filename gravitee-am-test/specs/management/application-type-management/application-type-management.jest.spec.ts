@@ -16,7 +16,6 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { Application } from '@management-models/Application';
-import { ResponseError } from '../../../api/management/runtime';
 import { setup } from '../../test-fixture';
 import { ApplicationTypeFixture, initFixture } from './fixtures/application-type-fixture';
 import { uniqueName } from '@utils-commands/misc';
@@ -47,8 +46,8 @@ describe('Application Type Management', () => {
     });
 
     it('should reject implicit grant with empty redirect_uris', async () => {
-      const error = await fixture
-        .updateApp(app.id, {
+      await expect(
+        fixture.updateApp(app.id, {
           settings: {
             oauth: {
               redirectUris: [],
@@ -56,20 +55,16 @@ describe('Application Type Management', () => {
               responseTypes: ['token'],
             },
           },
-        })
-        .then(
-          () => null,
-          (e) => e,
-        );
-
-      expect(error).toBeInstanceOf(ResponseError);
-      expect(error.response.status).toBe(400);
-      expect(error.message).toContain('redirect_uris.');
+        }),
+      ).rejects.toMatchObject({
+        response: { status: 400 },
+        message: expect.stringContaining('redirect_uris.'),
+      });
     });
 
     it('should reject refresh_token without authorization_code or password', async () => {
-      const error = await fixture
-        .updateApp(app.id, {
+      await expect(
+        fixture.updateApp(app.id, {
           settings: {
             oauth: {
               redirectUris: ['https://callback'],
@@ -77,20 +72,16 @@ describe('Application Type Management', () => {
               responseTypes: [''],
             },
           },
-        })
-        .then(
-          () => null,
-          (e) => e,
-        );
-
-      expect(error).toBeInstanceOf(ResponseError);
-      expect(error.response.status).toBe(400);
-      expect(error.message).toContain('refresh_token grant type must be associated with one of');
+        }),
+      ).rejects.toMatchObject({
+        response: { status: 400 },
+        message: expect.stringContaining('refresh_token grant type must be associated with one of'),
+      });
     });
 
     it('should reject refresh_token with client_credentials only', async () => {
-      const error = await fixture
-        .updateApp(app.id, {
+      await expect(
+        fixture.updateApp(app.id, {
           settings: {
             oauth: {
               redirectUris: ['https://callback'],
@@ -98,15 +89,11 @@ describe('Application Type Management', () => {
               responseTypes: [''],
             },
           },
-        })
-        .then(
-          () => null,
-          (e) => e,
-        );
-
-      expect(error).toBeInstanceOf(ResponseError);
-      expect(error.response.status).toBe(400);
-      expect(error.message).toContain('refresh_token grant type must be associated with one of');
+        }),
+      ).rejects.toMatchObject({
+        response: { status: 400 },
+        message: expect.stringContaining('refresh_token grant type must be associated with one of'),
+      });
     });
   });
 
@@ -153,6 +140,7 @@ describe('Application Type Management', () => {
       expect(updated.settings.oauth.grantTypes).toEqual(['client_credentials']);
       expect(updated.settings.oauth.responseTypes).toEqual([]);
       expect(updated.settings.oauth.applicationType).toEqual('web');
+      expect(updated.settings.oauth.scopeSettings).toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'openid' })]));
     });
   });
 
@@ -187,6 +175,7 @@ describe('Application Type Management', () => {
       expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code']);
       expect(updated.settings.oauth.responseTypes).toEqual(CODE_RESPONSE_TYPES);
       expect(updated.settings.oauth.applicationType).toEqual('web');
+      expect(updated.settings.oauth.scopeSettings).toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'openid' })]));
     });
   });
 
@@ -218,8 +207,10 @@ describe('Application Type Management', () => {
         },
       });
 
+      expect(updated.settings.oauth.redirectUris).toEqual(['https://callback']);
       expect(updated.settings.oauth.grantTypes).toEqual(['implicit']);
       expect(updated.settings.oauth.responseTypes).toEqual(['token']);
+      expect(updated.settings.oauth.scopeSettings).toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'openid' })]));
     });
   });
 
@@ -255,6 +246,7 @@ describe('Application Type Management', () => {
       expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code', 'refresh_token']);
       expect(updated.settings.oauth.responseTypes).toEqual(CODE_RESPONSE_TYPES);
       expect(updated.settings.oauth.applicationType).toEqual('native');
+      expect(updated.settings.oauth.scopeSettings).toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'openid' })]));
     });
   });
 
