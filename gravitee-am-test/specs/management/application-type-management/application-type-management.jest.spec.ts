@@ -144,6 +144,43 @@ describe('Application Type Management', () => {
     });
   });
 
+  describe('Set type to SERVICE and validate defaults', () => {
+    let app: Application;
+
+    beforeAll(async () => {
+      app = await fixture.createApp(uniqueName('set-svc-type', true), 'SERVICE');
+      await fixture.setAppType(app.id, 'WEB');
+    });
+
+    it('should have correct SERVICE defaults after type change', async () => {
+      const updated = await fixture.setAppType(app.id, 'SERVICE');
+
+      expect(updated.settings.oauth.grantTypes).toEqual(['client_credentials']);
+      expect(updated.settings.oauth.responseTypes).toEqual([]);
+      expect(updated.settings.oauth.applicationType).toEqual('web');
+    });
+
+    it('should configure server app with client_credentials', async () => {
+      const updated = await fixture.updateApp(app.id, {
+        settings: {
+          oauth: {
+            redirectUris: [],
+            grantTypes: ['client_credentials'],
+            responseTypes: [],
+            applicationType: 'web',
+            scopeSettings: [{ scope: 'openid' }],
+          },
+        },
+      });
+
+      expect(updated.settings.oauth.redirectUris).toEqual([]);
+      expect(updated.settings.oauth.grantTypes).toEqual(['client_credentials']);
+      expect(updated.settings.oauth.responseTypes).toEqual([]);
+      expect(updated.settings.oauth.applicationType).toEqual('web');
+      expect(updated.settings.oauth.scopeSettings).toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'openid' })]));
+    });
+  });
+
   describe('WEB type defaults and configuration', () => {
     let app: Application;
 
