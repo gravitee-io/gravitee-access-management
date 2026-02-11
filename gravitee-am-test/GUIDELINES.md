@@ -633,7 +633,28 @@ try {
 }
 ```
 
-### 5. Test Constants
+### 5. Asserting Error Responses
+
+When testing that an API call rejects with an expected error, use `expect().rejects.toMatchObject()` to assert on both the HTTP status and error message in a single readable assertion:
+
+```typescript
+// GOOD: idiomatic Jest — checks status and message together
+await expect(
+  fixture.updateApp(app.id, {
+    settings: { oauth: { redirectUris: [], grantTypes: ['implicit'], responseTypes: ['token'] } },
+  }),
+).rejects.toMatchObject({
+  response: { status: 400 },
+  message: expect.stringContaining('redirect_uris.'),
+});
+
+// AVOID: manual .then() to capture the error
+const error = await fixture.updateApp(app.id, body).then(() => null, (e) => e);
+expect(error).toBeInstanceOf(ResponseError);
+expect(error.response.status).toBe(400);
+```
+
+### 6. Test Constants
 
 Define constants at the top of fixture files:
 
@@ -645,7 +666,7 @@ export const FEATURE_TEST = {
 } as const;
 ```
 
-### 6. Helper Functions
+### 7. Helper Functions
 
 Extract common operations to helper functions in fixture files:
 
@@ -659,7 +680,7 @@ export function buildAuthorizationUrl(endpoint: string, clientId: string): strin
 }
 ```
 
-### 7. Dynamic Test Generation
+### 8. Dynamic Test Generation
 
 **Recommendation: Avoid dynamic test generation in most cases**
 
@@ -720,7 +741,7 @@ describe('Password validation', () => {
 // specs/gateway/forgot-password-domain-settings.jest.spec.ts
 ```
 
-### 8. File Length
+### 9. File Length
 
 Keep test files under **300 lines**. If a file grows longer:
 
@@ -728,7 +749,7 @@ Keep test files under **300 lines**. If a file grows longer:
 - Extract complex setup to fixtures
 - Move helper functions to separate utility files
 
-### 9. Test Descriptions
+### 10. Test Descriptions
 
 Test descriptions should be:
 
@@ -752,7 +773,7 @@ it('test 1', async () => {
 });
 ```
 
-### 10. Test Organization
+### 11. Test Organization
 
 Use `describe` blocks to group related tests:
 
