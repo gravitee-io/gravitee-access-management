@@ -19,7 +19,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { ApplicationService } from './application.service';
-import { ProtectedResourceService } from './protected-resource.service';
+import { ProtectedResourceService, toUpdateProtectedResourceRequest } from './protected-resource.service';
 
 export interface OAuth2Settings {
   settings: any;
@@ -91,11 +91,9 @@ export class McpServerOAuth2Service implements OAuth2SettingsService {
   }
 
   update(domainId: string, resourceId: string, resource: any, oauthSettings: any): Observable<any> {
+    const basePayload = toUpdateProtectedResourceRequest(resource);
     const updatePayload = {
-      name: resource.name,
-      resourceIdentifiers: resource.resourceIdentifiers,
-      description: resource.description,
-      features: resource.features,
+      ...basePayload,
       settings: {
         ...resource.settings,
         oauth: oauthSettings,

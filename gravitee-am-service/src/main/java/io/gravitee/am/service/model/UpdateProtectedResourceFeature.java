@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.gravitee.am.model.ProtectedResourceFeature;
@@ -25,6 +26,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * Writable fields for a feature in an update request.
+ * Additional properties (e.g. createdAt/updatedAt from the GET response) are ignored if sent.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -32,6 +38,9 @@ import org.apache.commons.lang3.StringUtils;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = UpdateMcpTool.class, name = "MCP_TOOL"),
+        // Management API ObjectMapperResolver serialises enums as lowercase (value.name().toLowerCase()),
+        // so GET returns "mcp_tool". Accept it on PUT so the API is round-trip consistent.
+        @JsonSubTypes.Type(value = UpdateMcpTool.class, name = "mcp_tool"),
 })
 @Getter
 @Setter
