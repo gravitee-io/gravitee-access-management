@@ -100,3 +100,12 @@ export const updateApplicationFlows = (domainId, accessToken, applicationId, flo
     application: applicationId,
     flow: flows,
   });
+
+export const updateApplicationType = (domainId, accessToken, applicationId, type: string) =>
+  getApplicationApi(accessToken).updateApplicationType({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+    patchApplicationType: { type: type as any },
+  });
