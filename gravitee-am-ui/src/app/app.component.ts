@@ -56,7 +56,6 @@ export class AppComponent implements OnInit {
       'gravitee',
       this.sanitizer.bypassSecurityTrustResourceUrl('assets/gravitee-icon.svg'),
     );
-    this.matIconRegistry.addSvgIconInNamespace('gio', 'agent', this.sanitizer.bypassSecurityTrustResourceUrl('assets/agent-icon.svg'));
   }
 
   displaySidenav(): boolean {
