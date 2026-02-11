@@ -295,7 +295,7 @@ type document
             </div>
             <div class="permission-result">
               <div [class.allowed]="permissionResult.allowed" [class.denied]="!permissionResult.allowed">
-                <mat-icon [color]="permissionResult.allowed ? 'primary' : 'warn'">
+                <mat-icon>
                   {{ permissionResult.allowed ? 'check_circle' : 'cancel' }}
                 </mat-icon>
                 <span>{{ permissionResult.allowed ? 'ALLOWED' : 'DENIED' }}</span>
