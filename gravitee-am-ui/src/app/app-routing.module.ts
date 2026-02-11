@@ -1011,7 +1011,7 @@ export const routes: Routes = [
                                 only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                               },
                             },
                           },
@@ -1033,7 +1033,7 @@ export const routes: Routes = [
                                 ],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                               },
                             },
                             children: [
@@ -1149,7 +1149,7 @@ export const routes: Routes = [
                                 only: ['application_analytics_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                               },
                             },
                           },
@@ -1275,7 +1275,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
@@ -1314,7 +1314,7 @@ export const routes: Routes = [
                                     only: ['application_factor_list'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
@@ -1332,7 +1332,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
