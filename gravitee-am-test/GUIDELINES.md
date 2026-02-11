@@ -215,7 +215,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { setupFeatureFixture, FeatureFixture } from './fixtures/feature-name-fixture';
 
-setup(20000);
+setup();
 
 let fixture: FeatureFixture;
 
@@ -261,7 +261,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { setupResourceFixture, ResourceFixture } from './fixtures/resource-name-fixture';
 
-setup(20000);
+setup();
 
 let fixture: ResourceFixture;
 

@@ -21,7 +21,7 @@ import { setup } from '../../test-fixture';
 import { ApplicationTypeFixture, initFixture } from './fixtures/application-type-fixture';
 import { uniqueName } from '@utils-commands/misc';
 
-setup(200000);
+setup();
 
 let fixture: ApplicationTypeFixture;
 
@@ -108,12 +108,14 @@ describe('Application Type Management', () => {
     });
   });
 
-  describe('Type defaults and configuration', () => {
+  describe('SERVICE type defaults and configuration', () => {
     let app: Application;
 
-    it('should create a SERVICE app with correct default values', async () => {
-      app = await fixture.createApp(uniqueName('nominal-svc', true), 'SERVICE', { key: 'value' });
+    beforeAll(async () => {
+      app = await fixture.createApp(uniqueName('svc-type', true), 'SERVICE', { key: 'value' });
+    });
 
+    it('should create a SERVICE app with correct default values', async () => {
       expect(app).toBeDefined();
       expect(app.metadata).toBeDefined();
       expect(app.settings).toBeDefined();
@@ -130,89 +132,6 @@ describe('Application Type Management', () => {
       expect(app.domain).toEqual(fixture.domain.id);
       expect(app.enabled).toEqual(true);
       expect(app.settings.oauth.enhanceScopesWithUserPermissions).toEqual(false);
-    });
-
-    it('should set type to WEB and validate defaults', async () => {
-      const updated = await fixture.setAppType(app.id, 'WEB');
-
-      expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code', 'password']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
-      expect(updated.settings.oauth.applicationType).toEqual('web');
-    });
-
-    it('should configure WEB app with authorization_code', async () => {
-      const updated = await fixture.updateApp(app.id, {
-        settings: {
-          oauth: {
-            redirectUris: ['https://callback'],
-            grantTypes: ['authorization_code'],
-            scopeSettings: [{ scope: 'openid' }],
-          },
-        },
-      });
-
-      expect(updated.settings.oauth.redirectUris).toEqual(['https://callback']);
-      expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
-      expect(updated.settings.oauth.applicationType).toEqual('web');
-    });
-
-    it('should set type to BROWSER (SPA) and validate defaults', async () => {
-      const updated = await fixture.setAppType(app.id, 'BROWSER');
-
-      expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
-      expect(updated.settings.oauth.applicationType).toEqual('web');
-    });
-
-    it('should configure SPA with implicit grant', async () => {
-      const updated = await fixture.updateApp(app.id, {
-        settings: {
-          oauth: {
-            redirectUris: ['https://callback'],
-            grantTypes: ['implicit'],
-            responseTypes: ['token'],
-            scopeSettings: [{ scope: 'openid' }],
-          },
-        },
-      });
-
-      expect(updated.settings.oauth.grantTypes).toEqual(['implicit']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['token']);
-    });
-
-    it('should set type to NATIVE (mobile) and validate defaults', async () => {
-      const updated = await fixture.setAppType(app.id, 'NATIVE');
-
-      expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
-      expect(updated.settings.oauth.applicationType).toEqual('native');
-    });
-
-    it('should configure mobile app with authorization_code + refresh_token', async () => {
-      const updated = await fixture.updateApp(app.id, {
-        settings: {
-          oauth: {
-            redirectUris: ['com.gravitee.app://callback'],
-            grantTypes: ['authorization_code', 'refresh_token'],
-            applicationType: 'native',
-            scopeSettings: [{ scope: 'openid' }],
-          },
-        },
-      });
-
-      expect(updated.settings.oauth.redirectUris).toEqual(['com.gravitee.app://callback']);
-      expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code', 'refresh_token']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
-      expect(updated.settings.oauth.applicationType).toEqual('native');
-    });
-
-    it('should set type to SERVICE (server) and validate defaults', async () => {
-      const updated = await fixture.setAppType(app.id, 'SERVICE');
-
-      expect(updated.settings.oauth.grantTypes).toEqual(['client_credentials']);
-      expect(updated.settings.oauth.responseTypes).toEqual([]);
-      expect(updated.settings.oauth.applicationType).toEqual('web');
     });
 
     it('should configure server app with client_credentials', async () => {
@@ -232,6 +151,116 @@ describe('Application Type Management', () => {
       expect(updated.settings.oauth.grantTypes).toEqual(['client_credentials']);
       expect(updated.settings.oauth.responseTypes).toEqual([]);
       expect(updated.settings.oauth.applicationType).toEqual('web');
+    });
+  });
+
+  describe('WEB type defaults and configuration', () => {
+    let app: Application;
+
+    beforeAll(async () => {
+      app = await fixture.createApp(uniqueName('web-type', true), 'SERVICE');
+      await fixture.setAppType(app.id, 'WEB');
+    });
+
+    it('should have correct WEB defaults after type change', async () => {
+      const fetched = await fixture.setAppType(app.id, 'WEB');
+
+      expect(fetched.settings.oauth.grantTypes).toEqual(['authorization_code', 'password']);
+      expect(fetched.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(fetched.settings.oauth.applicationType).toEqual('web');
+    });
+
+    it('should configure WEB app with authorization_code', async () => {
+      const updated = await fixture.updateApp(app.id, {
+        settings: {
+          oauth: {
+            redirectUris: ['https://callback'],
+            grantTypes: ['authorization_code'],
+            scopeSettings: [{ scope: 'openid' }],
+          },
+        },
+      });
+
+      expect(updated.settings.oauth.redirectUris).toEqual(['https://callback']);
+      expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code']);
+      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(updated.settings.oauth.applicationType).toEqual('web');
+    });
+  });
+
+  describe('BROWSER (SPA) type defaults and configuration', () => {
+    let app: Application;
+
+    beforeAll(async () => {
+      app = await fixture.createApp(uniqueName('spa-type', true), 'SERVICE');
+      await fixture.setAppType(app.id, 'BROWSER');
+    });
+
+    it('should have correct BROWSER defaults after type change', async () => {
+      const fetched = await fixture.setAppType(app.id, 'BROWSER');
+
+      expect(fetched.settings.oauth.grantTypes).toEqual(['authorization_code']);
+      expect(fetched.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(fetched.settings.oauth.applicationType).toEqual('web');
+    });
+
+    it('should configure SPA with implicit grant', async () => {
+      const updated = await fixture.updateApp(app.id, {
+        settings: {
+          oauth: {
+            redirectUris: ['https://callback'],
+            grantTypes: ['implicit'],
+            responseTypes: ['token'],
+            scopeSettings: [{ scope: 'openid' }],
+          },
+        },
+      });
+
+      expect(updated.settings.oauth.grantTypes).toEqual(['implicit']);
+      expect(updated.settings.oauth.responseTypes).toEqual(['token']);
+    });
+  });
+
+  describe('NATIVE (mobile) type defaults and configuration', () => {
+    let app: Application;
+
+    beforeAll(async () => {
+      app = await fixture.createApp(uniqueName('native-type', true), 'SERVICE');
+      await fixture.setAppType(app.id, 'NATIVE');
+    });
+
+    it('should have correct NATIVE defaults after type change', async () => {
+      const fetched = await fixture.setAppType(app.id, 'NATIVE');
+
+      expect(fetched.settings.oauth.grantTypes).toEqual(['authorization_code']);
+      expect(fetched.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(fetched.settings.oauth.applicationType).toEqual('native');
+    });
+
+    it('should configure mobile app with authorization_code + refresh_token', async () => {
+      const updated = await fixture.updateApp(app.id, {
+        settings: {
+          oauth: {
+            redirectUris: ['com.gravitee.app://callback'],
+            grantTypes: ['authorization_code', 'refresh_token'],
+            applicationType: 'native',
+            scopeSettings: [{ scope: 'openid' }],
+          },
+        },
+      });
+
+      expect(updated.settings.oauth.redirectUris).toEqual(['com.gravitee.app://callback']);
+      expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code', 'refresh_token']);
+      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(updated.settings.oauth.applicationType).toEqual('native');
+    });
+  });
+
+  describe('Template flag', () => {
+    let app: Application;
+
+    beforeAll(async () => {
+      app = await fixture.createApp(uniqueName('template-type', true), 'SERVICE');
     });
 
     it('should set template flag to true', async () => {
