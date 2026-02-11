@@ -35,6 +35,8 @@ afterAll(async () => {
   }
 });
 
+const CODE_RESPONSE_TYPES = ['code', 'code id_token token', 'code id_token', 'code token'];
+
 describe('Application Type Management', () => {
   describe('OAuth settings validation', () => {
     let app: Application;
@@ -166,7 +168,7 @@ describe('Application Type Management', () => {
       const fetched = await fixture.setAppType(app.id, 'WEB');
 
       expect(fetched.settings.oauth.grantTypes).toEqual(['authorization_code', 'password']);
-      expect(fetched.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(fetched.settings.oauth.responseTypes).toEqual(CODE_RESPONSE_TYPES);
       expect(fetched.settings.oauth.applicationType).toEqual('web');
     });
 
@@ -183,7 +185,7 @@ describe('Application Type Management', () => {
 
       expect(updated.settings.oauth.redirectUris).toEqual(['https://callback']);
       expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(updated.settings.oauth.responseTypes).toEqual(CODE_RESPONSE_TYPES);
       expect(updated.settings.oauth.applicationType).toEqual('web');
     });
   });
@@ -200,7 +202,7 @@ describe('Application Type Management', () => {
       const fetched = await fixture.setAppType(app.id, 'BROWSER');
 
       expect(fetched.settings.oauth.grantTypes).toEqual(['authorization_code']);
-      expect(fetched.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(fetched.settings.oauth.responseTypes).toEqual(CODE_RESPONSE_TYPES);
       expect(fetched.settings.oauth.applicationType).toEqual('web');
     });
 
@@ -233,7 +235,7 @@ describe('Application Type Management', () => {
       const fetched = await fixture.setAppType(app.id, 'NATIVE');
 
       expect(fetched.settings.oauth.grantTypes).toEqual(['authorization_code']);
-      expect(fetched.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(fetched.settings.oauth.responseTypes).toEqual(CODE_RESPONSE_TYPES);
       expect(fetched.settings.oauth.applicationType).toEqual('native');
     });
 
@@ -251,7 +253,7 @@ describe('Application Type Management', () => {
 
       expect(updated.settings.oauth.redirectUris).toEqual(['com.gravitee.app://callback']);
       expect(updated.settings.oauth.grantTypes).toEqual(['authorization_code', 'refresh_token']);
-      expect(updated.settings.oauth.responseTypes).toEqual(['code', 'code id_token token', 'code id_token', 'code token']);
+      expect(updated.settings.oauth.responseTypes).toEqual(CODE_RESPONSE_TYPES);
       expect(updated.settings.oauth.applicationType).toEqual('native');
     });
   });
