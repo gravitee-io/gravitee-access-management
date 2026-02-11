@@ -213,7 +213,7 @@ jwt:
 
 # SMTP configuration used to send mails
 email:
-  enabled: true
+  enabled: false
   host: smtp.my.domain
   subject: "[Gravitee.io] %s"
   port: 587

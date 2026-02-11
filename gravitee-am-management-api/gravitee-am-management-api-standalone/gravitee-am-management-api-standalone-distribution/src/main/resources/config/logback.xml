@@ -41,8 +41,8 @@
         </encoder>
     </appender>
 
-    <logger name="io.gravitee" level="DEBUG" />
-    <logger name="com.graviteesource" level="DEBUG" />
+    <logger name="io.gravitee" level="INFO" />
+    <logger name="com.graviteesource" level="INFO" />
 
     <!--
     add repository.jdbc.common & dataplane.jdbc.spring by default
