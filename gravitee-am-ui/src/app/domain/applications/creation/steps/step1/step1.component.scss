@@ -13,14 +13,8 @@
       min-height: 280px;
       margin: 10px;
 
-      .app-type-icon {
-        width: 82px;
-        height: 82px;
-      }
-
       &.selected,
-      i.selected,
-      .app-type-icon.selected {
+      i.selected {
         border: 1px solid mat.m2-get-color-from-palette(gio.$mat-primary-palette, 'default');
       }
 
@@ -36,8 +30,7 @@
         margin-top: 10px;
         text-align: center;
 
-        i,
-        .app-type-icon {
+        i {
           padding: 20px;
           border-radius: 50%;
           font-size: 42px;

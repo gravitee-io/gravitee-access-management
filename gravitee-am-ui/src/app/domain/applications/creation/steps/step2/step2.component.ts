@@ -41,7 +41,7 @@ export class ApplicationCreationStep2Component implements OnInit {
       type: 'NATIVE',
     },
     {
-      icon: 'gio:agent',
+      icon: 'memory',
       type: 'AGENT',
     },
     {
