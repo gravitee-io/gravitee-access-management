@@ -24,6 +24,7 @@ import { createCertificate } from '@management-commands/certificate-management-c
 import { patchProtectedResource, getMcpServer } from '@management-commands/protected-resources-management-commands';
 import { waitForDomainSync } from '@management-commands/domain-management-commands';
 import { buildCertificate } from '@api-fixtures/certificates';
+import { delay } from '@utils-commands/misc';
 
 // RFC 8707 Introspection: Protected Resource can introspect tokens obtained via authorization_code grant with resource indicators
 // AuthZen Introspection: Protected Resource can introspect tokens obtained via client_credentials grant with aud = clientId
@@ -63,6 +64,9 @@ describe('Protected Resource Introspection with Resource Indicators (RFC 8707)',
     expect(protectedResource).toBeDefined();
     expect(protectedResource.clientId).toBeDefined();
     expect(protectedResource.clientSecret).toBeDefined();
+
+    // Add a 10 second delay to ensure offline verification is not conducted
+    await delay(10000);
 
     // Step 4: Introspect the token using the Protected Resource credentials
     // Note that the client ID of the resources indicated in the token exchange must match the client ID of the Authorization header
