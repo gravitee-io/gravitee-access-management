@@ -547,8 +547,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         }
 
         // Default to authorization_code if no grant types provided or all were stripped
-        if (request.getGrantTypes() == null || request.getGrantTypes().isEmpty()
-                || request.getGrantTypes().get().isEmpty()) {
+        if (request.getGrantTypes() == null || request.getGrantTypes().map(List::isEmpty).orElse(true)) {
             request.setGrantTypes(Optional.of(List.of(GrantType.AUTHORIZATION_CODE)));
             request.setResponseTypes(Optional.of(List.of("code")));
         } else {
@@ -556,6 +555,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             if (request.getResponseTypes() != null && request.getResponseTypes().isPresent()) {
                 List<String> responseTypes = new ArrayList<>(request.getResponseTypes().get());
                 responseTypes.removeAll(forbiddenResponseTypes);
+                if (responseTypes.isEmpty() && request.getGrantTypes().get().contains(GrantType.AUTHORIZATION_CODE)) {
+                    responseTypes.add("code");
+                }
                 request.setResponseTypes(Optional.of(responseTypes));
             }
         }
