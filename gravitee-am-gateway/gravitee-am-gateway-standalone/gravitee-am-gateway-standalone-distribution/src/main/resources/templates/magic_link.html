@@ -64,25 +64,6 @@
             color: #FFFFFF;
             background: #F01114;
         }
-        .short-link {
-            display: inline-block;
-            max-width: 40ch;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: center;
-            font-weight: normal;
-            font-size: 14px;
-            line-height: 22px;
-        }
-        .short-link,
-        .short-link:link,
-        .short-link:visited,
-        .short-link:hover,
-        .short-link:active {
-            color: #F01114;
-            text-decoration: none;
-        }
     </style>
 </head>
 <body style="background-color: #E5E5E5; font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
@@ -147,7 +128,7 @@
 
                     <tr>
                         <td style="text-align: center; vertical-align: middle;">
-                            <a href="${url}" class="short-link">
+                            <a href="${url}" style="color:#F01114; text-decoration:none; display:inline-block; max-width:40ch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:normal; font-size:14px; line-height:22px;">
                                 ${url}
                             </a>
                         </td>
