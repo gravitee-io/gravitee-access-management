@@ -1655,6 +1655,25 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
+    public void create_agentType_strippedResponseTypesDefaultsToCodeWhenAuthCodeGrantPresent() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
+        request.setApplicationType(Optional.of("agent"));
+        request.setGrantTypes(Optional.of(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
+        request.setResponseTypes(Optional.of(Arrays.asList("token")));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client ->
+                client.getApplicationType().equals("agent") &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.AUTHORIZATION_CODE) &&
+                        client.getResponseTypes().size() == 1 &&
+                        client.getResponseTypes().contains("code")
+        );
+    }
+
+    @Test
     public void create_agentType_preservesExplicitTokenEndpointAuthMethod() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
