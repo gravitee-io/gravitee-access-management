@@ -1584,6 +1584,9 @@ export const routes: Routes = [
                                     section: 'Security',
                                     level: 'level3',
                                   },
+                                  perms: {
+                                    only: ['protected_resource_oauth_read'],
+                                  },
                                 },
                                 resolve: {
                                   domainGrantTypes: DomainGrantTypesResolver,
