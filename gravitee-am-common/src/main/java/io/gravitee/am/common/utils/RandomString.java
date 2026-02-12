@@ -28,4 +28,15 @@ public final class RandomString {
     public static String generate() {
         return UUID.toString(UUID.random());
     }
+
+    public static boolean isUuid(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        try {
+            return UUID.toString(UUID.fromString(value)).equals(value);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
 }
