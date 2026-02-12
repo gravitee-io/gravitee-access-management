@@ -70,8 +70,10 @@ public class IncompatibleDataTestUtils {
 
     /**
      * Insert incompatible entity into JDBC database.
+     * JdbcRole uses raw SQL (repository's insertStatement) to handle MySQL reserved words (system, default)
+     * and database-specific null binding for JSON/JSONB columns.
      */
-    public static String insertIncompatibleEntityJDBC(Object repository, String jdbcEntityClass, 
+    public static String insertIncompatibleEntityJDBC(Object repository, String jdbcEntityClass,
                                                       Consumer<Object> fieldSetter) throws Exception {
         Class<?> r2dbcTemplateClass = Class.forName("org.springframework.data.r2dbc.core.R2dbcEntityTemplate");
         Object templateObj = ReflectionTestUtils.getField(repository, "template");
@@ -86,7 +88,6 @@ public class IncompatibleDataTestUtils {
         ReflectionTestUtils.setField(entity, "id", entityId);
         fieldSetter.accept(entity);
 
-        // Special handling for JdbcRole: MySQL reserved words and MSSQL strict types
         String jdbcRoleClassName = "io.gravitee.am.repository.jdbc.management.api.model.JdbcRole";
         if (jdbcRoleClassName.equals(jdbcEntityClass)) {
             String insertStatement = (String) ReflectionTestUtils.getField(repository, "insertStatement");
@@ -97,7 +98,7 @@ public class IncompatibleDataTestUtils {
             MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
             Class<?> databaseClientInterface = Class.forName("org.springframework.r2dbc.core.DatabaseClient");
             MethodHandle getDatabaseClientHandle = publicLookup.findVirtual(r2dbcTemplateClass, "getDatabaseClient", MethodType.methodType(databaseClientInterface));
-            
+
             Object databaseClient;
             try {
                 databaseClient = getDatabaseClientHandle.invoke(templateObj);
@@ -107,7 +108,7 @@ public class IncompatibleDataTestUtils {
 
             Class<?> genericExecuteSpecClass = Class.forName("org.springframework.r2dbc.core.DatabaseClient$GenericExecuteSpec");
             MethodHandle sqlHandle = publicLookup.findVirtual(databaseClientInterface, "sql", MethodType.methodType(genericExecuteSpecClass, String.class));
-            
+
             Object spec;
             try {
                 spec = sqlHandle.invoke(databaseClient, insertStatement);
@@ -115,7 +116,6 @@ public class IncompatibleDataTestUtils {
                 throw new Exception("Failed to create SQL spec", e);
             }
 
-            // Explicit types required for MSSQL null handling
             spec = bindParameter(spec, "id", ReflectionTestUtils.getField(entity, "id"), String.class);
             spec = bindParameter(spec, "name", ReflectionTestUtils.getField(entity, "name"), String.class);
             spec = bindParameter(spec, "system", ReflectionTestUtils.getField(entity, "system"), Boolean.class);
@@ -124,7 +124,7 @@ public class IncompatibleDataTestUtils {
             spec = bindParameter(spec, "reference_id", ReflectionTestUtils.getField(entity, "referenceId"), String.class);
             spec = bindParameter(spec, "reference_type", ReflectionTestUtils.getField(entity, "referenceType"), String.class);
             spec = bindParameter(spec, "assignable_type", ReflectionTestUtils.getField(entity, "assignableType"), String.class);
-            spec = bindParameter(spec, "permission_acls", ReflectionTestUtils.getField(entity, "permissionAcls"), Object.class);
+            spec = bindParameter(spec, "permission_acls", ReflectionTestUtils.getField(entity, "permissionAcls"), getJsonNullType());
             spec = bindParameter(spec, "created_at", ReflectionTestUtils.getField(entity, "createdAt"), LocalDateTime.class);
             spec = bindParameter(spec, "updated_at", ReflectionTestUtils.getField(entity, "updatedAt"), LocalDateTime.class);
 
@@ -146,8 +146,20 @@ public class IncompatibleDataTestUtils {
     }
 
     /**
-     * Bind parameter with explicit type for MSSQL null handling.
+     * PostgreSQL JSONB requires Json.class; MySQL/MariaDB/MSSQL use String.class for JSON/CLOB columns.
      */
+    private static Class<?> getJsonNullType() {
+        String jdbcType = System.getProperty("jdbcType", "");
+        if (jdbcType.startsWith("postgresql-tc")) {
+            try {
+                return Class.forName("io.r2dbc.postgresql.codec.Json");
+            } catch (ClassNotFoundException e) {
+                return String.class;
+            }
+        }
+        return String.class;
+    }
+
     private static Object bindParameter(Object spec, String name, Object value, Class<?> type) throws Exception {
         if (value == null) {
             Method bindNullMethod = spec.getClass().getMethod("bindNull", String.class, Class.class);
