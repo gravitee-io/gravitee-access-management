@@ -64,6 +64,25 @@
             color: #FFFFFF;
             background: #F01114;
         }
+        .short-link {
+            display: inline-block;
+            max-width: 40ch;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 22px;
+        }
+        .short-link,
+        .short-link:link,
+        .short-link:visited,
+        .short-link:hover,
+        .short-link:active {
+            color: #F01114;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body style="background-color: #E5E5E5; font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
@@ -85,12 +104,18 @@
 
                     <tr>
                         <td>
-                            <p>${msg('email.magic_link.header.description', client.name)}</p>
+                            <p>${msg('email.magic_link.header.description.first.row')}</p>
                         </td>
                     </tr>
 
                     <tr>
                         <td>
+                            <p>${msg('email.magic_link.header.description.second.row', client.name)}</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding-top: 40px;">
                             <a href="${url}" class="primary">
                                 ${msg('email.magic_link.button', client.name)}
                             </a>
@@ -98,19 +123,35 @@
                     </tr>
 
                     <tr>
+                        <td style="padding: 32px 0 16px 0;">
+                            <hr style="border: 0; border-top: 1px solid #E5E5E5; margin: 0;">
+                        </td>
+                    </tr>
+
+                    <tr>
                         <td>
                             <p>
-                                <#if expireAfterSeconds gte 3600>
-                                    ${msg('email.reset_password.description',
-                                    expireAfterSeconds / 3600, msg('email.common.unit.hours'))}
-                                <#else>
-                                    ${msg('email.reset_password.description',
-                                    expireAfterSeconds / 60, msg('email.common.unit.minutes'))}
-                                </#if>
+                                ${msg('email.magic_link.expiration', expireAfterSeconds / 60,
+                                msg('email.common.unit.minutes'))}
                             </p>
                         </td>
                     </tr>
 
+                    <tr>
+                        <td>
+                            <p>
+                                ${msg('email.magic_link.raw.link')}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <a href="${url}" class="short-link">
+                                ${url}
+                            </a>
+                        </td>
+                    </tr>
                 </table>
             </div>
         </td>
