@@ -204,6 +204,7 @@ public class ClientServiceImpl implements ClientService {
             case io.gravitee.am.common.oidc.ApplicationType.WEB -> ApplicationType.WEB;
             case io.gravitee.am.common.oidc.ApplicationType.NATIVE -> ApplicationType.NATIVE;
             case io.gravitee.am.common.oidc.ApplicationType.BROWSER -> ApplicationType.BROWSER;
+            case io.gravitee.am.common.oidc.ApplicationType.AGENT -> ApplicationType.AGENT;
             default -> ApplicationType.SERVICE;
         };
     }
