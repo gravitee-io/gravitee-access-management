@@ -28,7 +28,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (fixture) {
-    await fixture.cleanup();
+    await fixture.cleanUp();
   }
 });
 

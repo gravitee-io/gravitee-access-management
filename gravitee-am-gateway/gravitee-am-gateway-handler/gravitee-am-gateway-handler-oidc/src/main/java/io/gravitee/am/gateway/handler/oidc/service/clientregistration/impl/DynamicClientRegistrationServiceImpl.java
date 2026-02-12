@@ -21,6 +21,7 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
@@ -524,45 +525,57 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     /**
-     * When application_type is "agent", enforce constraints matching the ApplicationAgentTemplate:
+     * When application_type is "agent", enforce agent constraints (see {@link AgentApplicationConstraints}):
      * - Strip forbidden grant types (implicit, password, refresh_token)
-     * - Strip implicit response types (token, id_token, id_token token)
-     * - Default to authorization_code if no grant types remain
+     * - If no grant types remain (or none were provided), default to authorization_code with response type "code"
+     * - Otherwise, strip implicit response types (token, id_token, id_token token),
+     *   falling back to "code" if the list becomes empty and authorization_code is granted
      * - Default to client_secret_basic auth method if not explicitly set
      */
     private Single<DynamicClientRegistrationRequest> validateAgentConstraints(DynamicClientRegistrationRequest request) {
-        if (request.getApplicationType() == null || request.getApplicationType().isEmpty()
-                || !io.gravitee.am.common.oidc.ApplicationType.AGENT.equals(request.getApplicationType().get())) {
+        boolean isAgent = request.getApplicationType() != null
+                && request.getApplicationType().filter(io.gravitee.am.common.oidc.ApplicationType.AGENT::equals).isPresent();
+        if (!isAgent) {
             return Single.just(request);
         }
 
-        List<String> forbiddenGrantTypes = List.of(GrantType.IMPLICIT, GrantType.PASSWORD, GrantType.REFRESH_TOKEN);
-        List<String> forbiddenResponseTypes = List.of("token", "id_token", "id_token token");
+        // Strip forbidden grant types, keeping only allowed ones
+        List<String> grantTypes = request.getGrantTypes() != null
+                ? request.getGrantTypes().orElse(Collections.emptyList()).stream()
+                    .filter(g -> !AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES.contains(g)).toList()
+                : Collections.emptyList();
 
-        // Strip forbidden grant types
         if (request.getGrantTypes() != null && request.getGrantTypes().isPresent()) {
-            List<String> grantTypes = new ArrayList<>(request.getGrantTypes().get());
-            grantTypes.removeAll(forbiddenGrantTypes);
-            request.setGrantTypes(Optional.of(grantTypes));
-        }
-
-        // Default to authorization_code if no grant types provided or all were stripped
-        if (request.getGrantTypes() == null || request.getGrantTypes().map(List::isEmpty).orElse(true)) {
-            request.setGrantTypes(Optional.of(List.of(GrantType.AUTHORIZATION_CODE)));
-            request.setResponseTypes(Optional.of(List.of("code")));
-        } else {
-            // Strip forbidden response types (only needed when grant types weren't fully defaulted)
-            if (request.getResponseTypes() != null && request.getResponseTypes().isPresent()) {
-                List<String> responseTypes = new ArrayList<>(request.getResponseTypes().get());
-                responseTypes.removeAll(forbiddenResponseTypes);
-                if (responseTypes.isEmpty() && request.getGrantTypes().get().contains(GrantType.AUTHORIZATION_CODE)) {
-                    responseTypes.add("code");
-                }
-                request.setResponseTypes(Optional.of(responseTypes));
+            List<String> stripped = request.getGrantTypes().get().stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES::contains).toList();
+            if (!stripped.isEmpty()) {
+                LOGGER.warn("Agent application registration: stripped forbidden grant types {} from request", stripped);
             }
         }
 
-        // Set token endpoint auth method to client_secret_basic if not already set
+        if (grantTypes.isEmpty()) {
+            // Default to authorization_code when no allowed grant types remain
+            request.setGrantTypes(Optional.of(List.of(GrantType.AUTHORIZATION_CODE)));
+            request.setResponseTypes(Optional.of(List.of("code")));
+        } else {
+            request.setGrantTypes(Optional.of(grantTypes));
+
+            // Strip forbidden response types
+            List<String> responseTypes = new ArrayList<>(
+                    request.getResponseTypes() != null ? request.getResponseTypes().orElse(Collections.emptyList()) : Collections.emptyList());
+            List<String> strippedResponseTypes = responseTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES::contains).toList();
+            if (!strippedResponseTypes.isEmpty()) {
+                LOGGER.warn("Agent application registration: stripped forbidden response types {} from request", strippedResponseTypes);
+            }
+            responseTypes.removeAll(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES);
+            if (responseTypes.isEmpty() && grantTypes.contains(GrantType.AUTHORIZATION_CODE)) {
+                responseTypes.add("code");
+            }
+            request.setResponseTypes(Optional.of(responseTypes));
+        }
+
+        // Default to client_secret_basic if no auth method specified
         if (request.getTokenEndpointAuthMethod() == null || request.getTokenEndpointAuthMethod().isEmpty()) {
             request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.CLIENT_SECRET_BASIC));
         }

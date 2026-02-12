@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl.application;
 
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -26,7 +27,6 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,10 +36,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public class ApplicationAgentTemplate extends ApplicationAbstractTemplate {
-
-    private static final List<String> FORBIDDEN_GRANT_TYPES = Arrays.asList(
-            GrantType.IMPLICIT, GrantType.PASSWORD, GrantType.REFRESH_TOKEN
-    );
 
     @Override
     public boolean canHandle(Application application) {
@@ -69,7 +65,7 @@ public class ApplicationAgentTemplate extends ApplicationAbstractTemplate {
         oAuthSettings.setClientSecret(oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret());
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
-        oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
+        oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.AGENT);
         if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
             oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
             oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
@@ -77,7 +73,7 @@ public class ApplicationAgentTemplate extends ApplicationAbstractTemplate {
         } else {
             // Strip forbidden grant types
             List<String> grantTypes = new ArrayList<>(oAuthSettings.getGrantTypes());
-            grantTypes.removeAll(FORBIDDEN_GRANT_TYPES);
+            grantTypes.removeAll(AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES);
             oAuthSettings.setGrantTypes(grantTypes);
 
             Set<String> defaultResponseTypes = oAuthSettings.getResponseTypes() == null ? new HashSet<>() : new HashSet<>(oAuthSettings.getResponseTypes());
@@ -89,7 +85,7 @@ public class ApplicationAgentTemplate extends ApplicationAbstractTemplate {
                 defaultResponseTypes.removeAll(defaultAuthorizationCodeResponseTypes());
             }
             // Always remove implicit response types for agent applications
-            defaultResponseTypes.removeAll(defaultImplicitResponseTypes());
+            defaultResponseTypes.removeAll(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES);
             oAuthSettings.setResponseTypes(new ArrayList<>(defaultResponseTypes));
         }
     }

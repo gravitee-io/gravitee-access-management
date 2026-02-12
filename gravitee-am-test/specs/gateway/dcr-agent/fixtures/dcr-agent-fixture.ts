@@ -26,7 +26,7 @@ import { Fixture } from '../../../test-fixture';
 export interface DcrAgentFixture extends Fixture {
   domain: Domain;
   accessToken: string;
-  cleanup: () => Promise<void>;
+  cleanUp: () => Promise<void>;
   registerAgent: (body: Record<string, any>) => Promise<any>;
   getTokenWithClientCredentials: (clientId: string, clientSecret: string) => Promise<any>;
 }
@@ -87,7 +87,7 @@ export const setupDcrAgentFixture = async (): Promise<DcrAgentFixture> => {
       );
     };
 
-    const cleanup = async () => {
+    const cleanUp = async () => {
       if (domain?.id && accessToken) {
         await safeDeleteDomain(domain.id, accessToken);
       }
@@ -96,17 +96,13 @@ export const setupDcrAgentFixture = async (): Promise<DcrAgentFixture> => {
     return {
       domain,
       accessToken,
-      cleanup,
+      cleanUp,
       registerAgent,
       getTokenWithClientCredentials,
     };
   } catch (error) {
     if (domain?.id && accessToken) {
-      try {
-        await safeDeleteDomain(domain.id, accessToken);
-      } catch (cleanupError) {
-        console.error('Failed to cleanup domain after setup failure:', cleanupError);
-      }
+      await safeDeleteDomain(domain.id, accessToken);
     }
     throw error;
   }
