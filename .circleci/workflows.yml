@@ -838,8 +838,8 @@ jobs:
         description: "Directory where the Sonarcloud analysis will be run"
         default: "."
         type: string
-      workspace_attach_at_root:
-        description: "Attach workspace at . (true for back, needs target/; false for front, preserves checkout)"
+      copy_build_artifacts:
+        description: "Copy target/ and am.version from workspace (true for back; false for front)"
         default: false
         type: boolean
     docker:
@@ -859,15 +859,19 @@ jobs:
       - run:
           name: Copy workspace content
           command: |
-            if [ "<< parameters.workspace_attach_at_root >>" = "true" ]; then
-              cp -r /tmp/workspace/. .
-            else
-              if [ -f /tmp/workspace/am.version ]; then
-                cp /tmp/workspace/am.version .
-              fi
-              if [ -f /tmp/workspace/gravitee-am-ui/am.version ] && [ -d gravitee-am-ui ]; then
-                cp /tmp/workspace/gravitee-am-ui/am.version gravitee-am-ui/
-              fi
+            if [ -f /tmp/workspace/am.version ]; then
+              cp /tmp/workspace/am.version .
+            fi
+            if [ -f /tmp/workspace/gravitee-am-ui/am.version ] && [ -d gravitee-am-ui ]; then
+              cp /tmp/workspace/gravitee-am-ui/am.version gravitee-am-ui/
+            fi
+            if [ "<< parameters.copy_build_artifacts >>" = "true" ]; then
+              find /tmp/workspace -type d -name target | while read d; do
+                rel="${d#/tmp/workspace/}"
+                dest_dir="$(dirname "$rel")"
+                mkdir -p "$dest_dir"
+                cp -r "$d" "$dest_dir/"
+              done
             fi
             if [ ! -f am.version ] && [ ! -f gravitee-am-ui/am.version ]; then
               echo "ERROR: am.version not found in workspace (expected at root or gravitee-am-ui/)"
@@ -2083,7 +2087,7 @@ workflows:
             - cicd-orchestrator
           requires:
             - coverage_build
-          workspace_attach_at_root: true
+          copy_build_artifacts: true
 
   sonarcloud_analysis_front:
     when:
