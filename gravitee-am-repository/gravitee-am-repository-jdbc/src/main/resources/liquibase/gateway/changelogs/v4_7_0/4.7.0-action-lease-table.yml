@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-action-lease-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: dp_action_lease
+      changes:
+        # Action_Lease #
+        ############################
+        - createTable:
+            tableName: dp_action_lease
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: action, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: node_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: expiry_date, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_dp_action_lease
+            columnNames: id
+            tableName: dp_action_lease
+
+        - createIndex:
+            columns:
+              - column:
+                  name: action
+            indexName: idx_dp_action_lease_action
+            tableName: dp_action_lease
+            unique: true
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expiry_date
+            indexName: idx_dp_action_lease_expiry
+            tableName: dp_action_lease
+            unique: false
