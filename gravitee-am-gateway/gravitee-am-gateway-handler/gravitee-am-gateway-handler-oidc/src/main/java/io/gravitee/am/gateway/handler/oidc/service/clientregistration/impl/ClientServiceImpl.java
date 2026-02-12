@@ -179,6 +179,11 @@ public class ClientServiceImpl implements ClientService {
     private ApplicationType getType(Client client) {
         GrantTypeUtils.completeGrantTypeCorrespondance(client);
 
+        // Explicit agent type takes priority over grant-type heuristics
+        if (io.gravitee.am.common.oidc.ApplicationType.AGENT.equals(client.getApplicationType())) {
+            return ApplicationType.AGENT;
+        }
+
         // if client has no grant => SERVICE
         // if client has only client_credentials grant_type => SERVICE
         // if client has only implicit => BROWSER

@@ -1689,6 +1689,64 @@ public class DynamicClientRegistrationServiceTest {
         );
     }
 
+    @Test
+    public void create_agentType_clientCredentialsOnlyPreserved() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
+        request.setApplicationType(Optional.of("agent"));
+        request.setGrantTypes(Optional.of(Arrays.asList(GrantType.CLIENT_CREDENTIALS)));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client ->
+                client.getApplicationType().equals("agent") &&
+                        client.getAuthorizedGrantTypes().size() == 1 &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)
+        );
+    }
+
+    @Test
+    public void create_nonAgentType_doesNotStripGrantTypes() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
+        request.setApplicationType(Optional.of("web"));
+        request.setGrantTypes(Optional.of(Arrays.asList(
+                GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT, GrantType.PASSWORD
+        )));
+        request.setResponseTypes(Optional.of(Arrays.asList("code", "token")));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client ->
+                client.getApplicationType().equals("web") &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.AUTHORIZATION_CODE) &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.IMPLICIT) &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.PASSWORD) &&
+                        client.getResponseTypes().contains("code") &&
+                        client.getResponseTypes().contains("token")
+        );
+    }
+
+    @Test
+    public void create_agentType_nullResponseTypesDefaultsToCodeWithAuthCodeGrant() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
+        request.setApplicationType(Optional.of("agent"));
+        request.setGrantTypes(Optional.of(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
+        // response_types not set (null)
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client ->
+                client.getApplicationType().equals("agent") &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.AUTHORIZATION_CODE) &&
+                        client.getResponseTypes().contains("code")
+        );
+    }
+
     private RSAKey generateRSAKey() throws Exception {
         return new RSAKeyGenerator(2048)
                 .keyID("123")
