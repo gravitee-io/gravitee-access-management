@@ -842,6 +842,10 @@ jobs:
         description: "Directory where the Sonarcloud analysis will be run"
         default: "."
         type: string
+      workspace_attach_at_root:
+        description: "Attach workspace at . (true for back, needs target/; false for front, preserves checkout)"
+        default: false
+        type: boolean
     docker:
       - image: sonarsource/sonar-scanner-cli:11.4
         user: root
@@ -862,7 +866,24 @@ jobs:
             fi
       - checkout
       - attach_workspace:
-          at: .
+          at: /tmp/workspace
+      - run:
+          name: Copy workspace content
+          command: |
+            if [ "<< parameters.workspace_attach_at_root >>" = "true" ]; then
+              cp -r /tmp/workspace/. .
+            else
+              if [ -f /tmp/workspace/am.version ]; then
+                cp /tmp/workspace/am.version .
+              fi
+              if [ -f /tmp/workspace/gravitee-am-ui/am.version ] && [ -d gravitee-am-ui ]; then
+                cp /tmp/workspace/gravitee-am-ui/am.version gravitee-am-ui/
+              fi
+            fi
+            if [ ! -f am.version ] && [ ! -f gravitee-am-ui/am.version ]; then
+              echo "ERROR: am.version not found in workspace (expected at root or gravitee-am-ui/)"
+              exit 1
+            fi
       - run:
           name: Setup Git/SSH for Sonar SCM
           command: |
@@ -2072,6 +2093,7 @@ workflows:
             - cicd-orchestrator
           requires:
             - coverage_build
+          workspace_attach_at_root: true
 
   sonarcloud_analysis_front:
     when:
