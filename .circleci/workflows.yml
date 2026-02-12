@@ -861,6 +861,8 @@ jobs:
               exit 1
             fi
       - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: Setup Git/SSH for Sonar SCM
           command: |
@@ -873,8 +875,6 @@ jobs:
             if [ -n "${CIRCLE_PR_NUMBER:-}" ]; then
               git fetch origin master:refs/remotes/origin/master --depth=1000000 || true
             fi
-      - attach_workspace:
-          at: .
       - restore_cache:
           keys:
             - gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
