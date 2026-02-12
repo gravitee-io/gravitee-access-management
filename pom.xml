@@ -84,7 +84,7 @@
         <gravitee-node.version>7.23.0</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
-        <gravitee-expression-language.version>4.2.0</gravitee-expression-language.version>
+        <gravitee-expression-language.version>4.3.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>3.0.51</gravitee-cockpit-api.version>
         <gravitee-kubernetes-client-version>3.1.0</gravitee-kubernetes-client-version>
