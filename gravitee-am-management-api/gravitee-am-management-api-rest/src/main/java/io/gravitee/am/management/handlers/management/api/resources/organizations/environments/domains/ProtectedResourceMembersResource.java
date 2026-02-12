@@ -144,10 +144,10 @@ public class ProtectedResourceMembersResource extends AbstractResource {
     @Operation(
             operationId = "getProtectedResourceMemberPermissions",
             summary = "List protected resource member's permissions",
-            description = "User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource " +
-                    "or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain " +
-                    "or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment " +
-                    "or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization")
+            description = "User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Protected resource member's permissions",
                     content = @Content(mediaType = "application/json",
@@ -162,7 +162,7 @@ public class ProtectedResourceMembersResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_MEMBER, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE, Acl.READ)
                 .andThen(permissionService.findAllPermissions(authenticatedUser, ReferenceType.PROTECTED_RESOURCE, protectedResourceId)
                         .map(Permission::flatten))
                 .subscribe(response::resume, response::resume);
