@@ -26,7 +26,8 @@
     </div>
     <div class="section">
         <form class="form" role="form" id="login" method="post" th:action="${action}">
-            <div class="form-field">
+
+            <div class="form-field" th:if="${emailSent == null || emailSent == false}">
                 <input class="input-field" type="text" id="email" name="email"
                        th:placeholder="#{magic.link.label.email}"
                        th:value="${param.email}"
@@ -34,6 +35,10 @@
                        required
                        th:autofocus="${param.email == null}"
                        th:readonly="${param.email != null}" />
+            </div>
+
+            <div th:if="${emailSent}">
+                <p class="black" th:text="#{magic.link.email.sent}" />
             </div>
 
             <div id="cba-error" class="item error-text hide">
@@ -50,7 +55,7 @@
                 </span>
             </div>
 
-            <div>
+            <div th:if="${emailSent == null or emailSent == false}">
                 <button class="button primary" th:text="#{magic.link.login.button.send}"></button>
             </div>
         </form>
