@@ -1160,6 +1160,10 @@ jobs:
         description: "Directory where the Sonarcloud analysis will be run"
         default: "."
         type: string
+      workspace_attach_at_root:
+        description: "Attach workspace at . (true for back, needs target/; false for front, preserves checkout)"
+        default: false
+        type: boolean
     docker:
       - image: sonarsource/sonar-scanner-cli:11.4
         user: root
@@ -1170,7 +1174,40 @@ jobs:
       #          command: apk add --no-cache openssh
       - checkout
       - attach_workspace:
+<<<<<<< HEAD
           at: .
+=======
+          at: /tmp/workspace
+      - run:
+          name: Copy workspace content
+          command: |
+            if [ "<< parameters.workspace_attach_at_root >>" = "true" ]; then
+              cp -r /tmp/workspace/. .
+            else
+              if [ -f /tmp/workspace/am.version ]; then
+                cp /tmp/workspace/am.version .
+              fi
+              if [ -f /tmp/workspace/gravitee-am-ui/am.version ] && [ -d gravitee-am-ui ]; then
+                cp /tmp/workspace/gravitee-am-ui/am.version gravitee-am-ui/
+              fi
+            fi
+            if [ ! -f am.version ] && [ ! -f gravitee-am-ui/am.version ]; then
+              echo "ERROR: am.version not found in workspace (expected at root or gravitee-am-ui/)"
+              exit 1
+            fi
+      - run:
+          name: Setup Git/SSH for Sonar SCM
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+            export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
+
+            git fetch --tags --force || true
+            git fetch --unshallow 2>/dev/null || git fetch --depth=1000000 || true
+            if [ -n "${CIRCLE_PR_NUMBER:-}" ]; then
+              git fetch origin master:refs/remotes/origin/master --depth=1000000 || true
+            fi
+>>>>>>> e1c66daa6 (fix(ci): fix Sonar MissingObjectException by attaching workspace at /tmp and copying only am.version)
       - restore_cache:
           keys:
             - gravitee-access-management-v1-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
@@ -2371,6 +2408,7 @@ workflows:
             - cicd-orchestrator
           requires:
             - coverage_build
+          workspace_attach_at_root: true
 
   sonarcloud_analysis_front:
     when:
