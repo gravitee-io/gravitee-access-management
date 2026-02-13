@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.0-update-domain-certificate-settings
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: domains
+              columnName: certificate_settings
+      changes:
+        #############################
+        # domains #
+        ############################
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: { name: certificate_settings, type: clob, constraints: { nullable: true } }

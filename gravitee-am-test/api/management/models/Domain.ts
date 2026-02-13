@@ -28,6 +28,13 @@
 import { mapValues } from '../runtime';
 import type { SCIMSettings } from './SCIMSettings';
 import { SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON, SCIMSettingsToJSONTyped } from './SCIMSettings';
+import type { CertificateSettings } from './CertificateSettings';
+import {
+  CertificateSettingsFromJSON,
+  CertificateSettingsFromJSONTyped,
+  CertificateSettingsToJSON,
+  CertificateSettingsToJSONTyped,
+} from './CertificateSettings';
 import type { CorsSettings } from './CorsSettings';
 import { CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON, CorsSettingsToJSONTyped } from './CorsSettings';
 import type { SecretExpirationSettings } from './SecretExpirationSettings';
@@ -271,22 +278,22 @@ export interface Domain {
   tokenExchangeSettings?: TokenExchangeSettings;
   /**
    *
-   * @type {boolean}
+   * @type {CertificateSettings}
    * @memberof Domain
    */
-  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
-  redirectUriExpressionLanguageEnabled?: boolean;
+  certificateSettings?: CertificateSettings;
   /**
    *
    * @type {boolean}
    * @memberof Domain
    */
   dynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriStrictMatching?: boolean;
   /**
    *
    * @type {boolean}
@@ -316,7 +323,13 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
-  redirectUriStrictMatching?: boolean;
+  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriExpressionLanguageEnabled?: boolean;
 }
 
 /**
@@ -391,19 +404,20 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
     tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
-    redirectUriUnsecuredHttpSchemeAllowed:
-      json['redirectUriUnsecuredHttpSchemeAllowed'] == null ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
-    redirectUriExpressionLanguageEnabled:
-      json['redirectUriExpressionLanguageEnabled'] == null ? undefined : json['redirectUriExpressionLanguageEnabled'],
+    certificateSettings: json['certificateSettings'] == null ? undefined : CertificateSettingsFromJSON(json['certificateSettings']),
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
+    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     openDynamicClientRegistrationEnabled:
       json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
     dynamicClientRegistrationTemplateEnabled:
       json['dynamicClientRegistrationTemplateEnabled'] == null ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
     redirectUriLocalhostAllowed: json['redirectUriLocalhostAllowed'] == null ? undefined : json['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
-    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
+    redirectUriUnsecuredHttpSchemeAllowed:
+      json['redirectUriUnsecuredHttpSchemeAllowed'] == null ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
+    redirectUriExpressionLanguageEnabled:
+      json['redirectUriExpressionLanguageEnabled'] == null ? undefined : json['redirectUriExpressionLanguageEnabled'],
   };
 }
 
@@ -447,13 +461,14 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     dataPlaneId: value['dataPlaneId'],
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
     tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
-    redirectUriUnsecuredHttpSchemeAllowed: value['redirectUriUnsecuredHttpSchemeAllowed'],
-    redirectUriExpressionLanguageEnabled: value['redirectUriExpressionLanguageEnabled'],
+    certificateSettings: CertificateSettingsToJSON(value['certificateSettings']),
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    redirectUriStrictMatching: value['redirectUriStrictMatching'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
     dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
     redirectUriLocalhostAllowed: value['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
-    redirectUriStrictMatching: value['redirectUriStrictMatching'],
+    redirectUriUnsecuredHttpSchemeAllowed: value['redirectUriUnsecuredHttpSchemeAllowed'],
+    redirectUriExpressionLanguageEnabled: value['redirectUriExpressionLanguageEnabled'],
   };
 }

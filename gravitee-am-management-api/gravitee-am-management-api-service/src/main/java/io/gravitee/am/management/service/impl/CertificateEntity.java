@@ -58,7 +58,7 @@ public record CertificateEntity(
                                             Duration certExpiryWarningThreshold,
                                             boolean isRenewedSystemCert,
                                             List<Application> apps,
-                                            List<IdentityProvider> idps) {
+                List<IdentityProvider> idps) {
         return new CertificateEntity(certificate.getId(),
                 certificate.getName(),
                 certificate.getType(),

@@ -19,11 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.CertificateSettings;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
@@ -32,6 +35,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.TaskManager;
+import io.gravitee.am.service.exception.CertificateIsFallbackException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithIdpException;
 import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
@@ -55,6 +59,9 @@ class CertificateServiceImplTest {
 
     @Mock
     private CertificateRepository certificateRepository;
+
+    @Mock
+    private DomainRepository domainRepository;
 
     @Mock
     private ApplicationService applicationService;
@@ -111,6 +118,9 @@ class CertificateServiceImplTest {
 
         Mockito.when(identityProviderService.findByDomain("domainId"))
                 .thenReturn(Flowable.empty());
+
+        Mockito.when(domainRepository.findById("domainId"))
+                .thenReturn(Maybe.just(new Domain()));
 
         Mockito.when(certificateRepository.delete(certId))
                 .thenReturn(Completable.complete());
@@ -198,6 +208,87 @@ class CertificateServiceImplTest {
 
         // then
         observer.assertError(ex -> ex instanceof CertificateWithIdpException);
+    }
+
+    @Test
+    void onCertificateDeleteShouldThrowExIfCertificateIsFallback() {
+        // given
+        String certId = "fallback-cert-id";
+        Certificate cert = new Certificate();
+        cert.setId(certId);
+        cert.setDomain("domainId");
+
+        CertificateSettings certSettings = new CertificateSettings();
+        certSettings.setFallbackCertificate(certId);
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+        domain.setCertificateSettings(certSettings);
+
+        Maybe<Certificate> certificate = Maybe.just(cert);
+        Mockito.when(certificateRepository.findById(certId))
+                .thenReturn(certificate);
+
+        Mockito.when(applicationService.findByCertificate(certId))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(protectedResourceService.findByCertificate(certId))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(identityProviderService.findByDomain("domainId"))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(domainRepository.findById("domainId"))
+                .thenReturn(Maybe.just(domain));
+
+        // when
+        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+
+        // then
+        observer.assertError(ex -> ex instanceof CertificateIsFallbackException);
+    }
+
+    @Test
+    void shouldDeleteCertificateWhenDifferentCertificateIsFallback() {
+        // given
+        String certId = "certId";
+        Certificate cert = new Certificate();
+        cert.setId(certId);
+        cert.setDomain("domainId");
+
+        CertificateSettings certSettings = new CertificateSettings();
+        certSettings.setFallbackCertificate("other-cert-id");
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+        domain.setCertificateSettings(certSettings);
+
+        Maybe<Certificate> certificate = Maybe.just(cert);
+        Mockito.when(certificateRepository.findById(certId))
+                .thenReturn(certificate);
+
+        Mockito.when(applicationService.findByCertificate(certId))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(protectedResourceService.findByCertificate(certId))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(identityProviderService.findByDomain("domainId"))
+                .thenReturn(Flowable.empty());
+
+        Mockito.when(domainRepository.findById("domainId"))
+                .thenReturn(Maybe.just(domain));
+
+        Mockito.when(certificateRepository.delete(certId))
+                .thenReturn(Completable.complete());
+
+        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        // when
+        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+
+        // then
+        observer.assertComplete();
     }
 
 }

@@ -76,6 +76,9 @@ import {
   CertificateKey,
   CertificateKeyFromJSON,
   CertificateKeyToJSON,
+  CertificateSettings,
+  CertificateSettingsFromJSON,
+  CertificateSettingsToJSON,
   ClientSecret,
   ClientSecretFromJSON,
   ClientSecretToJSON,
@@ -1809,6 +1812,13 @@ export interface UpdateDomainRequest {
   patchDomain: PatchDomain;
 }
 
+export interface UpdateDomainCertificateSettingsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  certificateSettings: CertificateSettings;
+}
+
 export interface UpdateDomainEmailRequest {
   organizationId: string;
   environmentId: string;
@@ -1950,7 +1960,7 @@ export interface UpdateUsernameRequest {
  */
 export class DomainApi extends runtime.BaseAPI {
   /**
-   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified organization.
    * Remove a secret for a protected resource
    */
   async _deleteRaw(
@@ -2020,7 +2030,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[DELETE] permission on the specified organization.
    * Remove a secret for a protected resource
    */
   async _delete(requestParameters: DeleteRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
@@ -2696,7 +2706,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[CREATE] permission on the specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified organization.
    * Create a secret for a protected resource
    */
   async createRaw(
@@ -2768,7 +2778,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[CREATE] permission on the specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[CREATE] permission on the specified organization.
    * Create a secret for a protected resource
    */
   async create(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ClientSecret> {
@@ -10530,7 +10540,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissionsRaw(
@@ -10595,7 +10605,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissions(
@@ -10684,7 +10694,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource or PROTECTED_RESOURCE[LIST] permission on the specified domain or PROTECTED_RESOURCE[LIST] permission on the specified environment or PROTECTED_RESOURCE[LIST] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified organization.
    * List secrets of a protected resource
    */
   async getSecretsRaw(
@@ -10749,7 +10759,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified resource or PROTECTED_RESOURCE[LIST] permission on the specified domain or PROTECTED_RESOURCE[LIST] permission on the specified environment or PROTECTED_RESOURCE[LIST] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified organization.
    * List secrets of a protected resource
    */
   async getSecrets(
@@ -14882,7 +14892,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified organization.
    * Renew a secret for a protected resource
    */
   async renewRaw(
@@ -14952,7 +14962,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * User must have the PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified resource or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified domain or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified environment or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on the specified organization.
    * Renew a secret for a protected resource
    */
   async renew(requestParameters: RenewRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ClientSecret> {
@@ -17130,6 +17140,85 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async updateDomain(requestParameters: UpdateDomainRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
     const response = await this.updateDomainRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment or DOMAIN_SETTINGS[UPDATE] permission on the specified organization. This endpoint updates only certificate settings without triggering a full domain reload.
+   * Update the security domain certificate settings
+   */
+  async updateDomainCertificateSettingsRaw(
+    requestParameters: UpdateDomainCertificateSettingsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Domain>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateDomainCertificateSettings.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling updateDomainCertificateSettings.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling updateDomainCertificateSettings.',
+      );
+    }
+
+    if (requestParameters.certificateSettings === null || requestParameters.certificateSettings === undefined) {
+      throw new runtime.RequiredError(
+        'certificateSettings',
+        'Required parameter requestParameters.certificateSettings was null or undefined when calling updateDomainCertificateSettings.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/certificate-settings`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: CertificateSettingsToJSON(requestParameters.certificateSettings),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => DomainFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment or DOMAIN_SETTINGS[UPDATE] permission on the specified organization. This endpoint updates only certificate settings without triggering a full domain reload.
+   * Update the security domain certificate settings
+   */
+  async updateDomainCertificateSettings(
+    requestParameters: UpdateDomainCertificateSettingsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Domain> {
+    const response = await this.updateDomainCertificateSettingsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

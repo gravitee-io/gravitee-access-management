@@ -81,6 +81,7 @@ models/Certificate.ts
 models/CertificateCredential.ts
 models/CertificateEntity.ts
 models/CertificateKey.ts
+models/CertificateSettings.ts
 models/ChallengeSettings.ts
 models/ClientRegistrationSettings.ts
 models/ClientSecret.ts

@@ -28,6 +28,13 @@
 import { mapValues } from '../runtime';
 import type { SCIMSettings } from './SCIMSettings';
 import { SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON, SCIMSettingsToJSONTyped } from './SCIMSettings';
+import type { CertificateSettings } from './CertificateSettings';
+import {
+  CertificateSettingsFromJSON,
+  CertificateSettingsFromJSONTyped,
+  CertificateSettingsToJSON,
+  CertificateSettingsToJSONTyped,
+} from './CertificateSettings';
 import type { PatchPasswordSettings } from './PatchPasswordSettings';
 import {
   PatchPasswordSettingsFromJSON,
@@ -233,6 +240,12 @@ export interface PatchDomain {
   tokenExchangeSettings?: TokenExchangeSettings;
   /**
    *
+   * @type {CertificateSettings}
+   * @memberof PatchDomain
+   */
+  certificateSettings?: CertificateSettings;
+  /**
+   *
    * @type {Set<string>}
    * @memberof PatchDomain
    */
@@ -307,6 +320,9 @@ export const PatchDomainRequiredPermissionsEnum = {
   LicenseNotification: 'LICENSE_NOTIFICATION',
   ProtectedResource: 'PROTECTED_RESOURCE',
   ProtectedResourceMember: 'PROTECTED_RESOURCE_MEMBER',
+  ProtectedResourceSettings: 'PROTECTED_RESOURCE_SETTINGS',
+  ProtectedResourceOauth: 'PROTECTED_RESOURCE_OAUTH',
+  ProtectedResourceCertificate: 'PROTECTED_RESOURCE_CERTIFICATE',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchDomainRequiredPermissionsEnum = typeof PatchDomainRequiredPermissionsEnum[keyof typeof PatchDomainRequiredPermissionsEnum];
@@ -352,6 +368,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     secretSettings: json['secretSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretSettings']),
     tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
+    certificateSettings: json['certificateSettings'] == null ? undefined : CertificateSettingsFromJSON(json['certificateSettings']),
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
@@ -388,6 +405,7 @@ export function PatchDomainToJSONTyped(value?: PatchDomain | null, ignoreDiscrim
     dataPlaneId: value['dataPlaneId'],
     secretSettings: SecretExpirationSettingsToJSON(value['secretSettings']),
     tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
+    certificateSettings: CertificateSettingsToJSON(value['certificateSettings']),
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }

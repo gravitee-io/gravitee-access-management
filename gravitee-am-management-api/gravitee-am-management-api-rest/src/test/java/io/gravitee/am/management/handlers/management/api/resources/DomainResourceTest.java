@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
@@ -82,6 +83,8 @@ public class DomainResourceTest extends JerseySpringTest {
         assertNotNull(domain.getLoginSettings());
         assertNotNull(domain.getAccountSettings());
         assertEquals(mockDomain.getTags(), domain.getTags());
+        assertNotNull(domain.getCertificateSettings());
+        assertEquals("fallback-cert-id", domain.getCertificateSettings().getFallbackCertificate());
     }
 
     @Test
@@ -111,6 +114,7 @@ public class DomainResourceTest extends JerseySpringTest {
         assertNull(domain.getLoginSettings());
         assertNull(domain.getAccountSettings());
         assertNull(domain.getTags());
+        assertNull(domain.getCertificateSettings());
     }
 
     @Test
@@ -171,6 +175,8 @@ public class DomainResourceTest extends JerseySpringTest {
         assertNotNull(domain.getLoginSettings());
         assertNotNull(domain.getAccountSettings());
         assertEquals(mockDomain.getTags(), domain.getTags());
+        assertNotNull(domain.getCertificateSettings());
+        assertEquals("fallback-cert-id", domain.getCertificateSettings().getFallbackCertificate());
     }
 
     @Test
@@ -215,6 +221,8 @@ public class DomainResourceTest extends JerseySpringTest {
         assertNotNull(domain.getLoginSettings());
         assertNotNull(domain.getAccountSettings());
         assertEquals(mockDomain.getTags(), domain.getTags());
+        assertNotNull(domain.getCertificateSettings());
+        assertEquals("fallback-cert-id", domain.getCertificateSettings().getFallbackCertificate());
     }
 
     @Test
@@ -246,6 +254,7 @@ public class DomainResourceTest extends JerseySpringTest {
         assertNull(domain.getLoginSettings());
         assertNull(domain.getAccountSettings());
         assertNull(domain.getTags());
+        assertNull(domain.getCertificateSettings());
     }
 
     @Test
@@ -289,6 +298,9 @@ public class DomainResourceTest extends JerseySpringTest {
         mockDomain.setLoginSettings(new LoginSettings());
         mockDomain.setAccountSettings(new AccountSettings());
         mockDomain.setTags(Collections.singleton("tag"));
+        CertificateSettings certificateSettings = new CertificateSettings();
+        certificateSettings.setFallbackCertificate("fallback-cert-id");
+        mockDomain.setCertificateSettings(certificateSettings);
         return mockDomain;
     }
 }

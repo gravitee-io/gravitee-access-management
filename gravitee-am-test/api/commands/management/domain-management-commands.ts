@@ -263,3 +263,11 @@ export async function allowHttpLocalhostRedirects(domain: Domain, accessToken: s
     },
   });
 }
+
+export const updateCertificateSettings = (domainId: string, accessToken: string, certificateSettings: { fallbackCertificate?: string | null }): Promise<Domain> =>
+  getDomainApi(accessToken).updateDomainCertificateSettings({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    certificateSettings: certificateSettings,
+  });

@@ -210,4 +210,8 @@ export class DomainService {
   updateFlows(id, flows) {
     return this.http.put<any>(this.domainsURL + id + '/flows', flows);
   }
+
+  updateCertificateSettings(id, certificateSettings): Observable<any> {
+    return this.http.put<any>(this.domainsURL + id + '/certificate-settings', certificateSettings);
+  }
 }

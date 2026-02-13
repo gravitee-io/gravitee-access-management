@@ -21,6 +21,9 @@ import { filter, switchMap, tap } from 'rxjs/operators';
 import { DialogService } from '../../../services/dialog.service';
 import { CertificateService } from '../../../services/certificate.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { DomainService } from '../../../services/domain.service';
+
+import { CertificateSettingsDialogComponent, CertificateSettingsDialogResult } from './dialog/certificate-settings.component';
 
 @Component({
   selector: 'app-certificates',
@@ -47,12 +50,14 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   ]);
 
   certificates: any[];
+  domain: any;
   domainId: string;
   threshold: number;
   ongoingRotation = false;
 
   constructor(
     private certificateService: CertificateService,
+    private domainService: DomainService,
     private dialogService: DialogService,
     private snackbarService: SnackbarService,
     private route: ActivatedRoute,
@@ -60,7 +65,8 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain']?.id;
+    this.domain = this.route.snapshot.data['domain'];
+    this.domainId = this.domain?.id;
     this.certificates = this.route.snapshot.data['certificates'];
   }
 
@@ -161,6 +167,34 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     dialogRef.componentInstance.error = error;
   }
 
+  openSettings() {
+    const dialogRef = this.dialog.open(CertificateSettingsDialogComponent, {
+      width: '500px',
+      data: {
+        certificates: this.certificates.filter((cert) => !cert.system),
+        selectedCertificateId: this.domain?.certificateSettings?.fallbackCertificate || null,
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(
+        filter((result: CertificateSettingsDialogResult) => result && result.action === 'confirm'),
+        switchMap((result: CertificateSettingsDialogResult) => {
+          const certificateSettings = {
+            fallbackCertificate: result.selectedCertificateId,
+          };
+          return this.domainService.updateCertificateSettings(this.domainId, certificateSettings).pipe(
+            tap(() => {
+              this.snackbarService.open('Certificate settings updated');
+              this.domain.certificateSettings = certificateSettings;
+            }),
+          );
+        }),
+      )
+      .subscribe();
+  }
+
   rotateCertificate() {
     this.dialogService
       .confirm(
@@ -189,6 +223,10 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 
   preventRotateCertificate() {
     return this.ongoingRotation;
+  }
+
+  isFallbackCertificate(certificateId: string): boolean {
+    return this.domain?.certificateSettings?.fallbackCertificate === certificateId;
   }
 }
 
