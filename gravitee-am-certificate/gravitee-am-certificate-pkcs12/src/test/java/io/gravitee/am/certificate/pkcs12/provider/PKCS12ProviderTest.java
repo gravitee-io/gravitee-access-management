@@ -18,6 +18,8 @@ package io.gravitee.am.certificate.pkcs12.provider;
 import com.nimbusds.jose.jwk.KeyUse;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.pkcs12.PKCS12Configuration;
+import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.jose.RSAKey;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -28,6 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 import static java.util.Map.of;
@@ -40,38 +43,63 @@ import static java.util.Map.of;
 public class PKCS12ProviderTest {
 
     private static final String CERTIFICATE_ID = "cert123";
+    private static final String ALIAS = "am-server";
 
     @ParameterizedTest
     @ValueSource(strings = {"/server-no-extension.p12", "/server-sign-extension.p12"})
     public void should_have_use_with_sig_default(String file) throws Exception {
         final var provider = loadProvider(file, null);
-
-        final var jwk = provider.keys().blockingFirst();
-        Assertions.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
+        final List<JWK> keys = provider.keys().toList().blockingGet();
+        Assertions.assertTrue(keys.stream().anyMatch(jwk -> KeyUse.SIGNATURE.getValue().equals(jwk.getUse())));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"/server-no-extension.p12", "/server-sign-extension.p12"})
     public void should_have_use_with_sig_config_empty(String file) throws Exception {
         final var provider = loadProvider(file, Set.of());
-        final var jwk = provider.keys().blockingFirst();
-        Assertions.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
+        final List<JWK> keys = provider.keys().toList().blockingGet();
+        Assertions.assertTrue(keys.stream().anyMatch(jwk -> KeyUse.SIGNATURE.getValue().equals(jwk.getUse())));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"/server-no-extension.p12", "/server-sign-extension.p12"})
     public void should_have_use_with_enc_config(String file) throws Exception {
         final var provider = loadProvider(file, Set.of(KeyUse.ENCRYPTION.getValue()));
-        final var jwk = provider.keys().blockingFirst();
-        Assertions.assertEquals(KeyUse.ENCRYPTION.getValue(), jwk.getUse());
+        final List<JWK> keys = provider.keys().toList().blockingGet();
+        Assertions.assertTrue(keys.stream().anyMatch(jwk -> KeyUse.ENCRYPTION.getValue().equals(jwk.getUse())));
     }
 
     @Test
     public void should_have_certificate_key_id() throws Exception {
         final var provider = loadProvider("/server-no-extension.p12", null);
         Assertions.assertEquals(CERTIFICATE_ID, provider.key().blockingGet().getKeyId());
-        Assertions.assertEquals(CERTIFICATE_ID, provider.keys().blockingFirst().getKid());
         Assertions.assertEquals(CERTIFICATE_ID, provider.privateKey().blockingFirst().getKid());
+
+        final List<JWK> keys = provider.keys().toList().blockingGet();
+        Assertions.assertTrue(keys.stream().anyMatch(jwk -> CERTIFICATE_ID.equals(jwk.getKid())),
+                "keys() should contain a JWK with kid = certificate ID");
+        Assertions.assertTrue(keys.stream().anyMatch(jwk -> ALIAS.equals(jwk.getKid())),
+                "keys() should contain a JWK with kid = alias (backward compat)");
+        Assertions.assertEquals(2, keys.size(), "when alias != cert ID, keys() should expose both kids");
+    }
+
+    @Test
+    public void should_share_same_public_material_in_duplicate_keys() throws Exception {
+        final var provider = loadProvider("/server-no-extension.p12", null);
+        final List<JWK> keys = provider.keys().toList().blockingGet();
+
+        List<RSAKey> rsaKeys = keys.stream()
+                .filter(RSAKey.class::isInstance)
+                .map(RSAKey.class::cast)
+                .toList();
+        Assertions.assertFalse(rsaKeys.isEmpty(), "At least one RSAKey should be present in the JWKS");
+        final String n = rsaKeys.getFirst().getN();
+        final String e = rsaKeys.getFirst().getE();
+        Assertions.assertNotNull(n, "RSA key modulus (n) should be present");
+        Assertions.assertNotNull(e, "RSA key exponent (e) should be present");
+        Assertions.assertTrue(
+                rsaKeys.stream().allMatch(k -> n.equals(k.getN()) && e.equals(k.getE())),
+                "All RSA JWKs should share the same public key material (n, e)");
     }
 
     private PKCS12Provider loadProvider(String certificate, Set<String> use) throws Exception {
