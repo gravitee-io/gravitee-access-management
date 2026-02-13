@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-email-staging-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: dp_email_staging
+      changes:
+        # dp_email_staging #
+        ############################
+        - createTable:
+            tableName: dp_email_staging
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: application_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: email_template_name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: attempts, type: integer, constraints: { nullable: false }, defaultValue: 0 }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_dp_email_staging
+            columnNames: id
+            tableName: dp_email_staging
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_type
+              - column:
+                  name: reference_id
+              - column:
+                  name: updated_at
+            indexName: idx_dp_email_staging_updated_at
+            tableName: dp_email_staging
+            unique: false
+
