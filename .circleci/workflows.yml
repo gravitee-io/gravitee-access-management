@@ -792,7 +792,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore-maven-job-cache:
           jobName: coverage_build
       - run:
@@ -815,7 +816,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore_cache:
           keys:
             - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
@@ -842,64 +844,13 @@ jobs:
         description: "Directory where the Sonarcloud analysis will be run"
         default: "."
         type: string
-      copy_build_artifacts:
-        description: "Copy target/ and am.version from workspace (true for back; false for front)"
-        default: false
-        type: boolean
     docker:
       - image: sonarsource/sonar-scanner-cli:11.4
         user: root
     resource_class: xlarge
     steps:
-      - run:
-          name: Install Git/SSH for Sonar SCM
-          command: |
-            if command -v apk >/dev/null 2>&1; then
-              apk add --no-cache openssh-client git findutils
-            elif command -v apt-get >/dev/null 2>&1; then
-              apt-get update -qq && apt-get install -y --no-install-recommends openssh-client git findutils
-            elif command -v dnf >/dev/null 2>&1; then
-              dnf install -y git openssh-clients findutils
-            else
-              echo "No supported package manager (apk/apt-get/dnf) found"
-              exit 1
-            fi
-      - checkout
       - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          name: Copy workspace content
-          command: |
-            if [ -f /tmp/workspace/am.version ]; then
-              cp /tmp/workspace/am.version .
-            fi
-            if [ -f /tmp/workspace/gravitee-am-ui/am.version ] && [ -d gravitee-am-ui ]; then
-              cp /tmp/workspace/gravitee-am-ui/am.version gravitee-am-ui/
-            fi
-            if [ "<< parameters.copy_build_artifacts >>" = "true" ]; then
-              find /tmp/workspace -type d -name target | while read d; do
-                rel="${d#/tmp/workspace/}"
-                dest_dir="$(dirname "$rel")"
-                mkdir -p "$dest_dir"
-                cp -r "$d" "$dest_dir/"
-              done
-            fi
-            if [ ! -f am.version ] && [ ! -f gravitee-am-ui/am.version ]; then
-              echo "ERROR: am.version not found in workspace (expected at root or gravitee-am-ui/)"
-              exit 1
-            fi
-      - run:
-          name: Setup Git/SSH for Sonar SCM
-          command: |
-            mkdir -p ~/.ssh
-            ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null || true
-            export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
-
-            git fetch --tags --force || true
-            git fetch --unshallow 2>/dev/null || git fetch --depth=1000000 || true
-            if [ -n "${CIRCLE_PR_NUMBER:-}" ]; then
-              git fetch origin master:refs/remotes/origin/master --depth=1000000 || true
-            fi
+          at: .
       - restore_cache:
           keys:
             - gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
@@ -2097,7 +2048,6 @@ workflows:
             - cicd-orchestrator
           requires:
             - coverage_build
-          copy_build_artifacts: true
 
   sonarcloud_analysis_front:
     when:
