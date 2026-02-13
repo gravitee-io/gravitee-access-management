@@ -37,8 +37,8 @@
                        th:readonly="${param.email != null}" />
             </div>
 
-            <div th:if="${emailSent}">
-                <p class="black" th:text="#{magic.link.email.sent}" />
+            <div th:if="${emailSent}" class="header-description">
+                <label th:text="#{magic.link.email.sent}" />
             </div>
 
             <div id="cba-error" class="item error-text hide">

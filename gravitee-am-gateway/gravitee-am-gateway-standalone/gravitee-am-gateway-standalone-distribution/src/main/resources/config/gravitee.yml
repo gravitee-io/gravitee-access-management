@@ -342,6 +342,14 @@ user:
     #maxAllowCredentials: 20 # number of credentials sent back to perform passwordless authentication. Keep in mind, Firefox handles max 20
   certificate:
     #maxCertificatesPerUser: 20 # number of certificates per user (default 20)
+  magic:
+    link:
+      login:
+        email:
+          #subject: Sign in
+        time:
+          #unit: MINUTES
+          #value: 15
 
 handlers:
   request:
