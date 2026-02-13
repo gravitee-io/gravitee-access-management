@@ -793,7 +793,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore-maven-job-cache:
           jobName: coverage_build
       - run:
@@ -816,7 +817,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore_cache:
           keys:
             - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
@@ -824,7 +826,12 @@ jobs:
       - run:
           name: Maven Package
           command: |
-            export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            AM_VERSION=$(sed -n '/<packaging>pom<\/packaging>/,/<\/project>/p' pom.xml | grep -oP '<version>\K[^<]+' 2>/dev/null | head -1)
+            AM_VERSION=${AM_VERSION:-$(sed -n '/<packaging>pom<\/packaging>/,/<\/project>/p' pom.xml | sed -n 's/.*<version>\([^<]*\)<.*/\1/p' | head -1)}
+            if [[ ! "$AM_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?$ ]]; then
+              echo "ERROR: Invalid version extracted from pom.xml: '$AM_VERSION'"
+              exit 1
+            fi
             echo $AM_VERSION > gravitee-am-ui/am.version
             echo $AM_VERSION
       - persist_to_workspace:
@@ -843,10 +850,6 @@ jobs:
         user: root
     resource_class: xlarge
     steps:
-      #      - run:
-      #          name: Add SSH tool
-      #          command: apk add --no-cache openssh
-      - checkout
       - attach_workspace:
           at: .
       - restore_cache:
