@@ -18,7 +18,9 @@ package io.gravitee.am.certificate.api;
 import com.nimbusds.jose.jwk.JWKSet;
 import io.gravitee.am.certificate.api.jwk.JwkNimbusConverter;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,6 +66,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
     private SignatureAlgorithm signature = SignatureAlgorithm.RS256;
     private io.gravitee.am.certificate.api.Key certificateKey;
     private List<CertificateKey> certificateKeys;
+    private String certificateKeyId;
 
     public void createCertificateKeys(CertificateMetadata certificateMetadata) throws Exception {
         Object file = getCertificateContent(certificateMetadata);
@@ -74,6 +78,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
             // generate JWK set
             // TODO : should be moved to the gravitee-am-jwt module
             String keyId = certificateMetadata.getMetadata().get(CertificateMetadata.ID).toString();
+            this.certificateKeyId = keyId;
             jwkSet = loadJwkSet(keystore, keyId);
             keys = getKeys();
             // generate Key pair
@@ -183,12 +188,58 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
     }
 
     private Set<JWK> getKeys() {
-        return jwkSet.toPublicJWKSet().getKeys().stream()
+        Set<JWK> keysWithCertId = jwkSet.toPublicJWKSet().getKeys().stream()
                 .map(nimbusJwk -> converter(nimbusJwk, false, getUse(), getAlgorithm()))
                 .flatMap(JwkNimbusConverter::createJwk)
                 .collect(Collectors.toSet());
+
+        // TODO remove this backwards-compatibility after 2027-02-13
+        return addLegacyAliasKidEntries(keysWithCertId);
     }
 
+    private Set<JWK> addLegacyAliasKidEntries(Set<JWK> keysWithCertId) {
+        if (Objects.equals(certificateKeyId, getAlias())) {
+            return keysWithCertId;
+        }
+        Set<JWK> result = new HashSet<>(keysWithCertId);
+        keysWithCertId.stream()
+            .map(AbstractCertificateProvider::copyPublicJwk)
+            .flatMap(Optional::stream)
+            .forEach(copy -> {
+                copy.setKid(getAlias());
+                result.add(copy);
+            });
+        return result;
+    }
+
+    private static Optional<JWK> copyPublicJwk(JWK jwk) {
+        if (jwk instanceof RSAKey rsaKey) {
+            RSAKey copy = new RSAKey();
+            copyCommonFields(jwk, copy);
+            copy.setN(rsaKey.getN());
+            copy.setE(rsaKey.getE());
+            return Optional.of(copy);
+        } else if (jwk instanceof ECKey ecKey) {
+            ECKey copy = new ECKey();
+            copyCommonFields(jwk, copy);
+            copy.setCrv(ecKey.getCrv());
+            copy.setX(ecKey.getX());
+            copy.setY(ecKey.getY());
+            return Optional.of(copy);
+        }
+        return Optional.empty();
+    }
+
+    private static void copyCommonFields(JWK source, JWK target) {
+        target.setKty(source.getKty());
+        target.setUse(source.getUse());
+        target.setKeyOps(source.getKeyOps());
+        target.setAlg(source.getAlg());
+        target.setX5u(source.getX5u());
+        target.setX5c(source.getX5c());
+        target.setX5t(source.getX5t());
+        target.setX5tS256(source.getX5tS256());
+    }
 
     private SignatureAlgorithm getSignature(String signingAlgorithm) {
         return Stream.of(SignatureAlgorithm.values())
