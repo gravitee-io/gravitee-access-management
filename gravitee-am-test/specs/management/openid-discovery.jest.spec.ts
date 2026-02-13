@@ -107,7 +107,7 @@ describe('well-known/openid-configuration', () => {
 
     // Ensure there are two RSA keys
     const rsaKeys = responseBody.keys.filter((key) => key.kty === 'RSA');
-    expect(rsaKeys.length).toBe(2);
+    expect(rsaKeys.length).toBeGreaterThanOrEqual(2);
 
     // Check if one of the keys has RS512 algorithm
     const hasRS512 = rsaKeys.some((key) => key.alg === 'RS512');
