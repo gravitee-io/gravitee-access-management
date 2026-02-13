@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.gateway.handler.scim.service.impl;
 
 import io.gravitee.am.gateway.handler.common.email.EmailContainer;
 import io.gravitee.am.gateway.handler.scim.service.EmailStagingService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EmailStaging;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.gateway.api.ActionLeaseRepository;
 import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,7 @@ public class EmailStagingServiceImpl implements EmailStagingService {
         staging.setReferenceId(domain.getId());
         staging.setReferenceType(domain.getReferenceType());
         staging.setEmailTemplateName(template.name());
+        staging.setAttempts(0);
         Optional.ofNullable(emailContainer.client()).ifPresent(emailClient -> staging.setApplicationId(emailClient.getId()));
 
         return emailStagingRepository.create(staging)
@@ -66,5 +68,28 @@ public class EmailStagingServiceImpl implements EmailStagingService {
                     gatewayMetricProvider.incrementStagingEmails();
                 })
                 .ignoreElement();
+    }
+
+    // TODO ask for test
+    @Override
+    public Flowable<EmailStaging> fetch(Reference reference, int batchSize) {
+        // TODO get lease and if non empty, execute the search other wise flowable.empty
+        return null;
+    }
+
+    // TODO ask for test
+    @Override
+    public Single<EmailStaging> manageAfterProcessing(EmailStaging emailStaging) {
+        Single<EmailStaging> single;
+        if (emailStaging.isProcessed()) {
+            single = emailStagingRepository.delete(emailStaging.getId()).andThen(Single.just(emailStaging));
+        } else {
+            single = emailStagingRepository.updateAttempts(emailStaging.getId(), emailStaging.getAttempts());
+        }
+
+        return single.onErrorResumeNext(error -> {
+            log.error("An error occurs while processing email staging {}", emailStaging, error);
+            return Single.just(emailStaging);
+        });
     }
 }

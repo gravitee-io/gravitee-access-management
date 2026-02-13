@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.email;
 
 import io.gravitee.am.common.email.Email;
+import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 
@@ -23,9 +24,18 @@ import io.gravitee.am.model.oidc.Client;
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-public record EmailContainer(User user, Client client, Email email) {
+public record EmailContainer(User user, Client client, EmailStaging stagingEmail, Email email) {
     public EmailContainer(User user, Client client) {
-        this(user, client, null);
+        this(user, client, null, null);
     }
+
+    public EmailContainer(User user, Client client, EmailStaging stagingEmail) {
+        this(user, client, stagingEmail, null);
+    }
+
+    public EmailContainer with(Email email) {
+        return new EmailContainer(user, client, stagingEmail, email);
+    }
+
 }
 

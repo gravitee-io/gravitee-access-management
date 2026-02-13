@@ -160,15 +160,16 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void batch(io.gravitee.am.model.Template template, List<EmailContainer> containers) {
+    public List<EmailContainer> batch(List<EmailContainer> containers, int maxAttempt) {
         if (enabled) {
             var emailsToSend = containers.stream().map(container -> {
+                var template = io.gravitee.am.model.Template.parse(container.stagingEmail().getEmailTemplateName());
                 // get raw email template
                 io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, container.client());
                 // prepare email
                 Email email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap());
                 try {
-                    return new EmailContainer(container.user(), container.client(), prepareEmailToSendBySCIM(email, container.user()));
+                    return container.with(prepareEmailToSendBySCIM(email, container.user()));
                 } catch (Exception ex) {
                     log.warn("Unable to prepare email for user [{}], batch will exclude it", container.user().getUsername(), ex);
                     auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
@@ -185,23 +186,42 @@ public class EmailServiceImpl implements EmailService {
 
             try {
                 emailService.batch(emailsToSend.values().stream().flatMap(List::stream).map(EmailContainer::email).toList());
-                emailsToSend.values().stream().flatMap(List::stream).forEach(container -> traceSuccessfulEmail(container.email(), container.user(), container.client()));
+                emailsToSend.values().stream().flatMap(List::stream).forEach(container -> {
+                    container.stagingEmail().markAsProcessed();
+                    log.debug("Email staging process {}", container.stagingEmail());
+                    traceSuccessfulEmail(container.email(), container.user(), container.client());
+                });
             } catch (BatchEmailException batchEx) {
                 batchEx.getEmails().forEach(email -> {
-                    log.warn("{} email failed to send for user {}", template.name(), email);
                     Optional.ofNullable(emailsToSend.get(email)).ifPresent(failureContainers ->
-                        failureContainers.forEach(container -> traceFailureEmail(container.email(), container.user(), container.client(), batchEx))
+                        failureContainers.forEach(container -> {
+                            container.stagingEmail().incrementAttempts();
+                            if (container.stagingEmail().getAttempts() >= maxAttempt) {
+                                // maxAttempt reached, mark it as processed
+                                // and trace the failure in the audit logs
+                                container.stagingEmail().markAsProcessed();
+                                log.warn("Send {} email failed for user {}, max attempts have been reach", container.stagingEmail().getEmailTemplateName(), email);
+                                traceFailureEmail(container.email(), container.user(), container.client(), batchEx);
+                            } else {
+                                log.info("Send {} email failed for user {}", container.stagingEmail().getEmailTemplateName(), email);
+                            }
+                        })
                     );
                 });
 
-                // create an audit for all the email missing from the exception
+                // create an audit for all the email missing from the exception, they are processed
                 emailsToSend.forEach((email, containerValues) -> {
                     if (!batchEx.getEmails().contains(email)) {
-                        containerValues.forEach(successfulContainer -> traceSuccessfulEmail(successfulContainer.email(), successfulContainer.user(), successfulContainer.client()));
+                        containerValues.forEach(successfulContainer -> {
+                            successfulContainer.stagingEmail().markAsProcessed();
+                            traceSuccessfulEmail(successfulContainer.email(), successfulContainer.user(), successfulContainer.client());
+                        });
                     }
                 });
             }
         }
+
+        return containers;
     }
 
     @Override

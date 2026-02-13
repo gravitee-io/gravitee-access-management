@@ -1390,5 +1390,4 @@ public class ProvisioningUserServiceTest {
         assertEquals("app-id-123", clientCaptor.getValue().getId());
     }
 
-
 }

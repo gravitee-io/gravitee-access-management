@@ -54,6 +54,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -109,9 +110,9 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 public class ProvisioningUserServiceImpl implements ProvisioningUserService, InitializingBean {
-    private static final int DEFAULT_EMAIL_PUBLISHER_BUFFER_SIZE = 1000; // align with the default limit for bulk action
-    private static final int DEFAULT_EMAIL_PUBLISHER_BATCH_SIZE = 100;
-    private static final int DEFAULT_EMAIL_PUBLISHER_PERIOD_IN_SECOND = 5;
+    private static final int DEFAULT_EMAIL_BATCH_SIZE = 100;
+    private static final int DEFAULT_EMAIL_PERIOD_IN_SECOND = 5;
+    private static final int DEFAULT_EMAIL_MAX_ATTEMPTS = 2;
     private static final String PARAMETER_EXIST_ERROR = "User with {0} [{1}] already exists";
     private static final Logger LOGGER = LoggerFactory.getLogger(ProvisioningUserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
@@ -125,7 +126,6 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
             StandardClaims.PICTURE,
             StandardClaims.ZONEINFO,
             StandardClaims.LOCALE);
-
 
     private UserRepository userRepository;
 
@@ -195,18 +195,19 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     @Value("${email.bulk.enabled:false}")
     private boolean bulkEnabled = false;
 
-    @Value("${email.bulk.buffer:"+ DEFAULT_EMAIL_PUBLISHER_BUFFER_SIZE +"}")
-    private int bufferSize = DEFAULT_EMAIL_PUBLISHER_BUFFER_SIZE;
+    @Value("${email.bulk.batch:"+ DEFAULT_EMAIL_BATCH_SIZE +"}")
+    private int batchSize = DEFAULT_EMAIL_BATCH_SIZE;
 
-    @Value("${email.bulk.batch:"+ DEFAULT_EMAIL_PUBLISHER_BATCH_SIZE +"}")
-    private int batchSize = DEFAULT_EMAIL_PUBLISHER_BATCH_SIZE;
+    @Value("${email.bulk.period:"+ DEFAULT_EMAIL_PERIOD_IN_SECOND +"}")
+    private int batchPeriod = DEFAULT_EMAIL_PERIOD_IN_SECOND;
 
-    @Value("${email.bulk.period:"+ DEFAULT_EMAIL_PUBLISHER_PERIOD_IN_SECOND +"}")
-    private int batchPeriod = DEFAULT_EMAIL_PUBLISHER_PERIOD_IN_SECOND;
+    @Value("${email.bulk.attempts:"+ DEFAULT_EMAIL_MAX_ATTEMPTS +"}")
+    private int maxAttempts = DEFAULT_EMAIL_MAX_ATTEMPTS;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         this.userRepository = dataPlaneRegistry.getUserRepository(domain);
+        // TODO on startup initialize a tack
     }
 
     @Override
@@ -392,7 +393,27 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                     // we don't want to stop the Flowable in case of insertion error
                     // we trace the eviction in an audit and return false to complete the Completable
                     return true;
-                }).subscribe();
+                })
+                .doOnComplete(() -> LOGGER.debug("Schedule a processing task for staging emails")) // TODO do the call if a task doesn't exist
+                .subscribe();
+    }
+
+    public final void processBatchOfStagingEmails() {
+        emailStagingService.fetch(domain.asReference(), batchSize)
+                .flatMapMaybe(stagingEmail ->
+                        userRepository.findById(domain.asReference(), UserId.internal(stagingEmail.getUserId()))
+                            .flatMap(user -> checkClient(stagingEmail.getApplicationId())
+                                    .map(Application::toClient)
+                                    .map(client -> new EmailContainer(user, client, stagingEmail))
+                                    .switchIfEmpty(Maybe.defer(() -> Maybe.just(new EmailContainer(user, null, stagingEmail))))
+                            )
+                ).toList()
+                .flattenStreamAsFlowable(containers -> emailService.batch(containers, maxAttempts).stream())
+                .flatMapSingle(container -> emailStagingService.manageAfterProcessing(container.stagingEmail()))
+                .count()
+                .subscribe();// TODO on success trigger the next task, on error log and trigger next task in case, remove the lock if no new task
+
+        ;
     }
 
     @Override

@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.model;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.util.Date;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@ToString
 public class EmailStaging {
     private String id;
     private String userId;
@@ -31,91 +38,13 @@ public class EmailStaging {
     private int attempts;
     private Date createdAt;
     private Date updatedAt;
+    private boolean processed;
 
-    public String getId() {
-        return id;
+    public void incrementAttempts() {
+        this.attempts++;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getApplicationId() {
-        return applicationId;
-    }
-
-    public void setApplicationId(String applicationId) {
-        this.applicationId = applicationId;
-    }
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public String getEmailTemplateName() {
-        return emailTemplateName;
-    }
-
-    public void setEmailTemplateName(String emailTemplateName) {
-        this.emailTemplateName = emailTemplateName;
-    }
-
-    public int getAttempts() {
-        return attempts;
-    }
-
-    public void setAttempts(int attempts) {
-        this.attempts = attempts;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "EmailStaging{" +
-                "id='" + id + '\'' +
-                ", userId='" + userId + '\'' +
-                ", applicationId='" + applicationId + '\'' +
-                ", referenceType=" + referenceType +
-                ", referenceId='" + referenceId + '\'' +
-                ", emailTemplateName='" + emailTemplateName + '\'' +
-                ", attempts=" + attempts +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+    public void markAsProcessed() {
+        this.processed = true;
     }
 }

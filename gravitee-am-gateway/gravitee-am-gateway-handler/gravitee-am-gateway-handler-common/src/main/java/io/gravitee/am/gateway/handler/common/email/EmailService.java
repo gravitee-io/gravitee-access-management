@@ -41,7 +41,7 @@ public interface EmailService {
 
     void send(Email email);
 
-    void batch(Template template, List<EmailContainer> containers);
+    List<EmailContainer> batch(List<EmailContainer> containers, int maxAttempt);
 
     EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params, Locale preferredLanguage) throws IOException, TemplateException;
 
