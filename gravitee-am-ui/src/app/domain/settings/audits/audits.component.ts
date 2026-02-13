@@ -17,8 +17,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';
 import { UntypedFormControl } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { filter, map, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
+import { filter, map, startWith, switchMap } from 'rxjs/operators';
 import { find } from 'lodash';
 
 import { AuditService } from '../../../services/audit.service';
@@ -40,11 +40,11 @@ export class AuditsComponent implements OnInit {
   requiredReadPermission: string;
   @ViewChild('auditsTable', { static: true }) table: any;
   userCtrl = new UntypedFormControl();
+  eventTypeCtrl = new UntypedFormControl();
   audits: any[];
   domainId: string;
   page: any = {};
-  eventTypes: string[];
-  eventType: string;
+  eventTypes: string[] = [];
   eventStatus: string;
   startDate: any;
   endDate: any;
@@ -53,6 +53,8 @@ export class AuditsComponent implements OnInit {
   loadingIndicator: boolean;
   config: any = { lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json' };
   filteredUsers$: Observable<any[]>;
+  private eventTypesSubject = new BehaviorSubject<string[]>([]);
+  filteredEventTypes$: Observable<string[]>;
   selectedUser: string;
   selectedTimeRange = defaultTimeRangeId;
   readonly timeRanges = availableTimeRanges;
@@ -73,6 +75,12 @@ export class AuditsComponent implements OnInit {
       switchMap((searchTerm) => this.userService.search(this.domainId, 'q=' + searchTerm + '*', 0, 30, this.organizationContext)),
       map((response) => response.data),
     );
+    this.filteredEventTypes$ = combineLatest([this.eventTypesSubject, this.eventTypeCtrl.valueChanges.pipe(startWith(''))]).pipe(
+      map(([types, term]) => {
+        const search = typeof term === 'string' ? (term || '').toLowerCase() : '';
+        return types.filter((e) => e.toLowerCase().includes(search));
+      }),
+    );
   }
 
   ngOnInit() {
@@ -84,7 +92,10 @@ export class AuditsComponent implements OnInit {
       this.requiredReadPermission = 'domain_audit_read';
     }
     // load event types
-    this.organizationService.auditEventTypes().subscribe((data) => (this.eventTypes = data));
+    this.organizationService.auditEventTypes().subscribe((data) => {
+      this.eventTypes = data || [];
+      this.eventTypesSubject.next(this.eventTypes);
+    });
     // load audits
     this.search();
   }
@@ -213,7 +224,7 @@ export class AuditsComponent implements OnInit {
 
   resetForm() {
     this.page.pageNumber = 0;
-    this.eventType = null;
+    this.eventTypeCtrl.reset();
     this.eventStatus = null;
     this.startDateChanged = false;
     this.startDate = null;
@@ -242,11 +253,12 @@ export class AuditsComponent implements OnInit {
       userId = typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username;
     }
     this.loadingIndicator = true;
+    const selectedEventType = this.eventTypes.includes(this.eventTypeCtrl.value) ? this.eventTypeCtrl.value : null;
     const searchParams = {
       domainId: this.domainId,
       page: this.page.pageNumber,
       size: this.page.size,
-      type: this.eventType,
+      type: selectedEventType,
       status: this.eventStatus,
       userId: userId,
       from: from,
@@ -311,6 +323,10 @@ export class AuditsComponent implements OnInit {
 
   displayUserFn(user?: any): string | undefined {
     return user ? user.username : undefined;
+  }
+
+  onEventTypeSelectionChanged() {
+    this.displayReset = true;
   }
 
   displayUserName(user) {
