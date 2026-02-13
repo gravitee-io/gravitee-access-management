@@ -20,12 +20,12 @@
   <form (submit)="search()" #auditsSearchForm="ngForm" fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center start" class="audits-search">
     <mat-form-field fxFlex="10" appearance="fill">
       <mat-label>Event</mat-label>
-      <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
-        <mat-option></mat-option>
-        <mat-option *ngFor="let eventType of eventTypes" [value]="eventType">
+      <input matInput name="eventType" [matAutocomplete]="eventTypeAutocomplete" [formControl]="eventTypeCtrl" (input)="updateForm()" />
+      <mat-autocomplete #eventTypeAutocomplete="matAutocomplete" panelWidth="auto" (optionSelected)="onEventTypeSelectionChanged()">
+        <mat-option *ngFor="let eventType of filteredEventTypes$ | async" [value]="eventType">
           {{ eventType }}
         </mat-option>
-      </mat-select>
+      </mat-autocomplete>
     </mat-form-field>
 
     <mat-form-field fxFlex="10" appearance="fill">
@@ -38,8 +38,8 @@
     </mat-form-field>
 
     <mat-form-field fxFlex="10" appearance="fill">
-      <input matInput placeholder="User" [matAutocomplete]="auto" [formControl]="userCtrl" (input)="updateForm()" />
-      <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayUserFn" (optionSelected)="onUserSelectionChanged($event)">
+      <input matInput placeholder="User" [matAutocomplete]="userAutocomplete" [formControl]="userCtrl" (input)="updateForm()" />
+      <mat-autocomplete #userAutocomplete="matAutocomplete" [displayWith]="displayUserFn" (optionSelected)="onUserSelectionChanged($event)">
         <mat-option
           *ngFor="let user of filteredUsers$ | async"
           [value]="user"
