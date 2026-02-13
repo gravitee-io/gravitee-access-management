@@ -792,7 +792,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore-maven-job-cache:
           jobName: coverage_build
       - run:
@@ -802,17 +803,6 @@ jobs:
             echo $AM_VERSION > am.version
             echo $AM_VERSION
             mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
-      - run:
-          name: Fetch full history for Sonar SCM
-          command: |
-            echo "=== Pre-fetch: remote=$(git remote -v | tr '\n' ' ')"
-            echo "shallow? $(git rev-parse --is-shallow-repository 2>/dev/null || echo '?')"
-            git fetch --prune --tags --force origin '+refs/heads/*:refs/remotes/origin/*'
-            if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
-              git fetch --prune --tags --force --unshallow origin
-            fi
-            git fsck --full
-            echo "=== Post-fetch: shallow? $(git rev-parse --is-shallow-repository)"
       - persist_to_workspace:
           root: .
           paths:
@@ -826,7 +816,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout
+      - checkout:
+          method: full
       - restore_cache:
           keys:
             - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
@@ -842,17 +833,6 @@ jobs:
             fi
             echo $AM_VERSION > gravitee-am-ui/am.version
             echo $AM_VERSION
-      - run:
-          name: Fetch full history for Sonar SCM
-          command: |
-            echo "=== Pre-fetch: remote=$(git remote -v | tr '\n' ' ')"
-            echo "shallow? $(git rev-parse --is-shallow-repository 2>/dev/null || echo '?')"
-            git fetch --prune --tags --force origin '+refs/heads/*:refs/remotes/origin/*'
-            if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
-              git fetch --prune --tags --force --unshallow origin
-            fi
-            git fsck --full
-            echo "=== Post-fetch: shallow? $(git rev-parse --is-shallow-repository)"
       - persist_to_workspace:
           root: .
           paths:
