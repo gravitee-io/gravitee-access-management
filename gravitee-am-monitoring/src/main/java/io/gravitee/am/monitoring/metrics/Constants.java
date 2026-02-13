@@ -35,7 +35,7 @@ public interface Constants {
 
     String METRICS_AUTH_EVENTS = METRICS_NAME_PREFIX + "auth_evt";
 
-    String METRICS_BUFFERED_EMAILS = METRICS_NAME_PREFIX + "buffered_emails";
+    String METRICS_STAGING_EMAILS = METRICS_NAME_PREFIX + "staging_emails";
     String METRICS_DROPPED_EMAILS = METRICS_NAME_PREFIX + "dropped_emails";
 
     String TAG_AUTH_STATUS = "auth_status";

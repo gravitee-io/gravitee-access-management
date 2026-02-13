@@ -22,7 +22,6 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.common.utils.SMTPClientExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -44,6 +43,7 @@ import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
+import io.gravitee.am.gateway.handler.scim.service.EmailStagingService;
 import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.model.Application;
@@ -76,21 +76,17 @@ import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -102,8 +98,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Boolean.FALSE;
@@ -114,7 +108,7 @@ import static java.util.Optional.ofNullable;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ProvisioningUserServiceImpl implements ProvisioningUserService, InitializingBean, DisposableBean {
+public class ProvisioningUserServiceImpl implements ProvisioningUserService, InitializingBean {
     private static final int DEFAULT_EMAIL_PUBLISHER_BUFFER_SIZE = 1000; // align with the default limit for bulk action
     private static final int DEFAULT_EMAIL_PUBLISHER_BATCH_SIZE = 100;
     private static final int DEFAULT_EMAIL_PUBLISHER_PERIOD_IN_SECOND = 5;
@@ -190,16 +184,10 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     private EmailService emailService;
 
     @Autowired
-    private SMTPClientExecutor smtpClientExecutor;
-
-    @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
 
-    private EmailPublisher emailPublisher;
-
-    private Disposable emailPublisherDisposable;
-
-    private final AtomicReference<EmailContainer> lastSubmittedEmail = new AtomicReference<>();
+    @Autowired
+    private EmailStagingService emailStagingService;
 
     @Value("${email.enabled:false}")
     private boolean emailEnabled = false;
@@ -219,50 +207,6 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     @Override
     public void afterPropertiesSet() throws Exception {
         this.userRepository = dataPlaneRegistry.getUserRepository(domain);
-        initEmailProcessingFlow();
-    }
-
-    private void initEmailProcessingFlow() {
-        this.emailPublisher = new EmailPublisher();
-        if (emailEnabled && bulkEnabled) {
-            LOGGER.info("An email publisher has been created for domain {}", domain.getName());
-            this.emailPublisherDisposable = Flowable.create(emailPublisher, BackpressureStrategy.MISSING)
-                .onBackpressureDrop(droppedEmail -> {
-                    LOGGER.warn("The email publisher buffer is full for domain {}. Dropping email for user: {}",
-                            domain.getName(), droppedEmail.user().getUsername());
-                    emailService.traceEmailEviction(droppedEmail.user(), droppedEmail.client(), Template.REGISTRATION_CONFIRMATION);
-                    gatewayMetricProvider.incrementDroppedEmails();
-                })
-                .observeOn(Schedulers.from(smtpClientExecutor.getExecutor()), false, bufferSize)
-                .buffer(batchPeriod, TimeUnit.SECONDS, batchSize)
-                .map(emailContainers -> {
-                    if (!emailContainers.isEmpty()) {
-                        try {
-                            emailService.batch(Template.REGISTRATION_CONFIRMATION, emailContainers);
-                        } catch (Exception ex) {
-                            // should never happen
-                            LOGGER.error("An error occurs while trying to send emails to confirm registration", ex);
-                        }
-                        gatewayMetricProvider.decrementBufferedEmails(emailContainers.size());
-                    }
-                    return emailContainers;
-                })
-                .subscribe(
-                        (emailContainers) -> {
-                            if (!emailContainers.isEmpty()) {
-                                LOGGER.debug("Batch of {} emails to confirm registration has been processed", emailContainers.size());
-                            }
-                        },
-                        (error) -> LOGGER.warn("An exception occurs while trying to send a batch of emails to confirm registration: {}", error.getMessage())
-                );
-        }
-    }
-
-    @Override
-    public void destroy() throws Exception {
-        if (emailPublisherDisposable != null && !emailPublisherDisposable.isDisposed()) {
-            emailPublisherDisposable.dispose();
-        }
     }
 
     @Override
@@ -405,8 +349,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                             // Send email with client information if available
                                             var resolvedClient = optApp.map(Application::toClient).orElse(null);
                                             if (bulkEnabled) {
-                                                emailPublisher.submit(new EmailContainer(user1, resolvedClient));
-                                                gatewayMetricProvider.incrementBufferedEmails();
+                                                pushStagingEmail(user1, resolvedClient);
                                             } else {
                                                 emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient);
                                             }
@@ -436,6 +379,20 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                     LOGGER.error("An error occurs while trying to create a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
                 });
+    }
+
+    private void pushStagingEmail(io.gravitee.am.model.User user1, Client resolvedClient) {
+        emailStagingService.push(new EmailContainer(user1, resolvedClient), Template.REGISTRATION_CONFIRMATION)
+                .retryWhen(new RetryAtMostWithDelay(2, 1000))
+                .onErrorComplete(error -> {
+                    LOGGER.warn("The email cannot be push on staging on domain {} for user {}",
+                            domain.getName(), user1.getUsername(), error);
+                    emailService.traceEmailEviction(user1, resolvedClient, Template.REGISTRATION_CONFIRMATION);
+                    gatewayMetricProvider.incrementDroppedEmails();
+                    // we don't want to stop the Flowable in case of insertion error
+                    // we trace the eviction in an audit and return false to complete the Completable
+                    return true;
+                }).subscribe();
     }
 
     @Override

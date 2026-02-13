@@ -21,7 +21,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
-import io.gravitee.am.common.exception.email.EmailOverflowException;
+import io.gravitee.am.common.exception.email.EmailDroppedException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.TokenPurpose;
@@ -66,7 +66,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
@@ -93,7 +92,7 @@ public class EmailServiceImpl implements EmailService {
     private final String registrationConfirmationSubject;
     private final int userRegistrationConfirmationVerifyExpiresAfter;
 
-    private final EmailOverflowException emailOverflowException = new EmailOverflowException("Too many emails sent in a short time. Email has been dropped to avoid memory issue");
+    private final EmailDroppedException droppedException = new EmailDroppedException("Email not delivered due to staging persistence issue");
 
     @Autowired
     private EmailManager emailManager;
@@ -463,6 +462,6 @@ public class EmailServiceImpl implements EmailService {
                 .client(client)
                 .user(user)
                 .email(email)
-                .throwable(emailOverflowException));
+                .throwable(droppedException));
     }
 }

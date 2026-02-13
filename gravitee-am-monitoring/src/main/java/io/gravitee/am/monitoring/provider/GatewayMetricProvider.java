@@ -51,7 +51,7 @@ public class GatewayMetricProvider {
 
     private final GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
 
-    private final GaugeHelper bufferedEmails = new GaugeHelper(Constants.METRICS_BUFFERED_EMAILS);
+    private final GaugeHelper stagingEmails = new GaugeHelper(Constants.METRICS_STAGING_EMAILS);
 
     private final GaugeHelper droppedEmails = new GaugeHelper(Constants.METRICS_DROPPED_EMAILS);
 
@@ -107,16 +107,12 @@ public class GatewayMetricProvider {
         this.domainGauge.decrementValue();
     }
 
-    public void incrementBufferedEmails() {
-        this.bufferedEmails.incrementValue();
+    public void incrementStagingEmails() {
+        this.stagingEmails.incrementValue();
     }
 
-    public void decrementBufferedEmails() {
-        this.bufferedEmails.decrementValue();
-    }
-
-    public void decrementBufferedEmails(int count) {
-        this.bufferedEmails.decrementValue(count);
+    public void decrementStagingEmails() {
+        this.stagingEmails.decrementValue();
     }
 
     public void incrementDroppedEmails() {
