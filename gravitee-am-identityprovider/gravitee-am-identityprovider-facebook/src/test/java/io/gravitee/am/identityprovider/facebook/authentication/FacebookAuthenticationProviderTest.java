@@ -47,12 +47,17 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_CITY_FIELD;
 import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_COUNTRY_FIELD;
@@ -113,7 +118,7 @@ public class FacebookAuthenticationProviderTest {
     @Test
     public void shouldGenerateSignInUrl() {
 
-        when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v7.0/dialog/oauth");
+        when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v24.0/dialog/oauth");
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getResponseType()).thenReturn("code");
         when(configuration.getScopes()).thenReturn(Collections.emptySet());
@@ -123,14 +128,14 @@ public class FacebookAuthenticationProviderTest {
 
         assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&state=" + state, request.getUri());
+        assertEquals("https://www.facebook.com/v24.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&state=" + state, request.getUri());
         assertNull(request.getHeaders());
     }
 
     @Test
     public void shouldGenerateAsyncSignInUrl() {
 
-        when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v7.0/dialog/oauth");
+        when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v24.0/dialog/oauth");
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getResponseType()).thenReturn("code");
         when(configuration.getScopes()).thenReturn(Collections.emptySet());
@@ -140,14 +145,14 @@ public class FacebookAuthenticationProviderTest {
 
         assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&state=" + state, request.getUri());
+        assertEquals("https://www.facebook.com/v24.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&state=" + state, request.getUri());
         assertNull(request.getHeaders());
     }
 
     @Test
     public void shouldGenerateSignInUrl_withScopes() {
 
-        when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v7.0/dialog/oauth");
+        when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v24.0/dialog/oauth");
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getResponseType()).thenReturn("code");
         when(configuration.getScopes()).thenReturn(new HashSet<>(Arrays.asList("scope1", "scope2", "scope3")));
@@ -157,7 +162,7 @@ public class FacebookAuthenticationProviderTest {
 
         assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&scope=scope1%20scope2%20scope3&state=" + state, request.getUri());
+        assertEquals("https://www.facebook.com/v24.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&scope=scope1%20scope2%20scope3&state=" + state, request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -180,8 +185,9 @@ public class FacebookAuthenticationProviderTest {
         when(configuration.getCodeParameter()).thenReturn("code");
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.getAccessTokenUri()).thenReturn("https://graph.facebook.com/v7.0/oauth/access_token");
-        when(configuration.getUserProfileUri()).thenReturn("https://graph.facebook.com/v7.0/me");
+        when(configuration.getAccessTokenUri()).thenReturn("https://graph.facebook.com/v24.0/oauth/access_token");
+        when(configuration.getUserProfileUri()).thenReturn("https://graph.facebook.com/v24.0/me");
+        when(configuration.getApiVersion()).thenReturn("v24.0");
 
         when(authentication.getContext().get("redirect_uri")).thenReturn("https://gravitee.io");
         when(httpResponse.statusCode())
@@ -198,8 +204,7 @@ public class FacebookAuthenticationProviderTest {
                                 .put(LOCATION_REGION_FIELD, "facebookRegion")
                                 .put(LOCATION_ZIP_FIELD, 123456)
                                 .put(LOCATION_COUNTRY_FIELD, "facebookCountry")))
-                        .put(FacebookUser.BIRTHDAY, "10/24")
-                        .put(FacebookUser.ABOUT, "facebook about me"));
+                        .put(FacebookUser.BIRTHDAY, "10/24"));
 
 
         TestObserver<User> obs = cut.loadUserByUsername(authentication).test();
@@ -219,13 +224,12 @@ public class FacebookAuthenticationProviderTest {
             assertEquals(123456, address.get("postal_code"));
             assertEquals("facebookCountry", address.get("country"));
             assertEquals("0000-10-24", user.getAdditionalInformation().get(StandardClaims.BIRTHDATE));
-            assertNotNull(user.getAdditionalInformation().get(FacebookUser.ABOUT));
             assertTrue(user.getGroups().contains("Group1"));
             return true;
         });
 
-        verify(client, times(1)).postAbs("https://graph.facebook.com/v7.0/oauth/access_token");
-        verify(client, times(1)).postAbs("https://graph.facebook.com/v7.0/me");
+        verify(client, times(1)).postAbs("https://graph.facebook.com/v24.0/oauth/access_token");
+        verify(client, times(1)).postAbs("https://graph.facebook.com/v24.0/me");
     }
 
     @Test
@@ -245,7 +249,7 @@ public class FacebookAuthenticationProviderTest {
         when(configuration.getCodeParameter()).thenReturn("code");
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.getAccessTokenUri()).thenReturn("https://graph.facebook.com/v7.0/oauth/access_token");
+        when(configuration.getAccessTokenUri()).thenReturn("https://graph.facebook.com/v24.0/oauth/access_token");
 
         when(authentication.getContext().get("redirect_uri")).thenReturn("https://gravitee.io");
         when(httpResponse.statusCode())
@@ -259,7 +263,7 @@ public class FacebookAuthenticationProviderTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(BadCredentialsException.class);
 
-        verify(client, times(1)).postAbs("https://graph.facebook.com/v7.0/oauth/access_token");
+        verify(client, times(1)).postAbs("https://graph.facebook.com/v24.0/oauth/access_token");
     }
 
     @Test
@@ -279,8 +283,9 @@ public class FacebookAuthenticationProviderTest {
         when(configuration.getCodeParameter()).thenReturn("code");
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.getAccessTokenUri()).thenReturn("https://graph.facebook.com/v7.0/oauth/access_token");
-        when(configuration.getUserProfileUri()).thenReturn("https://graph.facebook.com/v7.0/me");
+        when(configuration.getAccessTokenUri()).thenReturn("https://graph.facebook.com/v24.0/oauth/access_token");
+        when(configuration.getUserProfileUri()).thenReturn("https://graph.facebook.com/v24.0/me");
+        when(configuration.getApiVersion()).thenReturn("v24.0");
 
         when(authentication.getContext().get("redirect_uri")).thenReturn("https://gravitee.io");
         when(httpResponse.statusCode())
@@ -296,7 +301,67 @@ public class FacebookAuthenticationProviderTest {
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(BadCredentialsException.class);
 
-        verify(client, times(1)).postAbs("https://graph.facebook.com/v7.0/oauth/access_token");
-        verify(client, times(1)).postAbs("https://graph.facebook.com/v7.0/me");
+        verify(client, times(1)).postAbs("https://graph.facebook.com/v24.0/oauth/access_token");
+        verify(client, times(1)).postAbs("https://graph.facebook.com/v24.0/me");
+    }
+
+    @Test
+    public void shouldAuthenticate_withLegacyApiVersion() {
+
+        Authentication authentication = mock(Authentication.class);
+        AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+        when(authentication.getContext()).thenReturn(authenticationContext);
+
+        io.gravitee.gateway.api.Request request = mock(io.gravitee.gateway.api.Request.class);
+        when(authenticationContext.request()).thenReturn(request);
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.set("code", "facebookAuthorizationCode");
+
+        when(request.parameters()).thenReturn(parameters);
+        when(configuration.getCodeParameter()).thenReturn("code");
+        when(configuration.getClientId()).thenReturn("testClientId");
+        when(configuration.getClientSecret()).thenReturn("testClientSecret");
+        when(configuration.getAccessTokenUri()).thenReturn("https://graph.facebook.com/v8.0/oauth/access_token");
+        when(configuration.getUserProfileUri()).thenReturn("https://graph.facebook.com/v8.0/me");
+        when(configuration.getApiVersion()).thenReturn("v8.0");
+
+        when(authentication.getContext().get("redirect_uri")).thenReturn("https://gravitee.io");
+        when(httpResponse.statusCode())
+                .thenReturn(HttpStatusCode.OK_200)
+                .thenReturn(HttpStatusCode.OK_200);
+        when(httpResponse.bodyAsJsonObject())
+                .thenReturn(new JsonObject().put("access_token", "facebookGeneratedAccessToken"))
+                .thenReturn(new JsonObject().put(FacebookUser.ID, "facebookID")
+                        .put(FacebookUser.NAME, "facebookName"));
+
+        TestObserver<User> obs = cut.loadUserByUsername(authentication).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(user -> {
+            assertEquals("facebookID", user.getId());
+            return true;
+        });
+
+        verify(client, times(1)).postAbs("https://graph.facebook.com/v8.0/oauth/access_token");
+        verify(client, times(1)).postAbs("https://graph.facebook.com/v8.0/me");
+    }
+
+    @Test
+    public void shouldComputeCorrectAppSecretProof() throws Exception {
+        String accessToken = "test_access_token";
+        String clientSecret = "test_client_secret";
+
+        // Compute expected HMAC-SHA256 independently.
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(clientSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] hmac = mac.doFinal(accessToken.getBytes(StandardCharsets.UTF_8));
+        String expected = HexFormat.of().formatHex(hmac);
+
+        String actual = FacebookAuthenticationProvider.computeAppSecretProof(accessToken, clientSecret);
+
+        assertEquals(expected, actual);
+        // SHA-256 produces 32 bytes = 64 hex characters.
+        assertEquals(64, actual.length());
     }
 }
