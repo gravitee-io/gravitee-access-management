@@ -42,8 +42,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.ALL_FIELDS_PARAM;
 import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION;
@@ -63,6 +69,7 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
     private static final String CODE = "code";
     private static final String ACCESS_TOKEN = "access_token";
     private static final String FIELDS = "fields";
+    private static final String APPSECRET_PROOF = "appsecret_proof";
 
     @Autowired
     @Qualifier("facebookWebClient")
@@ -141,12 +148,38 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
                 });
     }
 
+    /**
+     * Computes the {@code appsecret_proof} HMAC-SHA256 hash required by the Facebook Graph API.
+     * When "Require App Secret" is enabled in a Facebook app's settings, all API calls must
+     * include this parameter. It is harmless when not required.
+     *
+     * @see <a href="https://developers.facebook.com/docs/graph-api/securing-requests/">Securing Graph API Requests</a>
+     */
+    static String computeAppSecretProof(String accessToken, String clientSecret) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(clientSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hmac = mac.doFinal(accessToken.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hmac);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Failed to compute appsecret_proof", e);
+        }
+    }
+
+    private static final String LEGACY_API_VERSION = "v8.0";
+
     protected Maybe<User> profile(Token accessToken, Authentication auth) {
 
+        MultiMap form = MultiMap.caseInsensitiveMultiMap()
+                .set(ACCESS_TOKEN, accessToken.value())
+                .set(FIELDS, ALL_FIELDS_PARAM);
+
+        if (!LEGACY_API_VERSION.equals(configuration.getApiVersion())) {
+            form.set(APPSECRET_PROOF, computeAppSecretProof(accessToken.value(), configuration.getClientSecret()));
+        }
+
         return client.postAbs(configuration.getUserProfileUri())
-                .rxSendForm(MultiMap.caseInsensitiveMultiMap()
-                        .set(ACCESS_TOKEN, accessToken.value())
-                        .set(FIELDS, ALL_FIELDS_PARAM))
+                .rxSendForm(form)
                 .toMaybe()
                 .flatMap(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {

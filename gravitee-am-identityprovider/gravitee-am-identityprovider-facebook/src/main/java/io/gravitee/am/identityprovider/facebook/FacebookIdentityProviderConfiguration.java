@@ -18,7 +18,9 @@ package io.gravitee.am.identityprovider.facebook;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 import io.gravitee.secrets.api.annotation.Secret;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.Set;
 
@@ -29,9 +31,21 @@ import java.util.Set;
 @Data
 public class FacebookIdentityProviderConfiguration implements SocialIdentityProviderConfiguration {
 
-    private String userAuthorizationUri = "https://www.facebook.com/v8.0/dialog/oauth";
-    private String accessTokenUri = "https://graph.facebook.com/v8.0/oauth/access_token";
-    private String userProfileUri = "https://graph.facebook.com/v8.0/me";
+    private static final String FACEBOOK_AUTH_BASE = "https://www.facebook.com";
+    private static final String GRAPH_API_BASE = "https://graph.facebook.com";
+
+    // Default to v8.0 for backward compatibility with existing configurations that lack this field.
+    // The schema form sets "default": "v24.0" so new IDPs created via the UI will use v24.0.
+    private String apiVersion = "v8.0";
+
+    // URL fields kept for backward-compatible deserialization; getters compute from apiVersion.
+    @Getter(AccessLevel.NONE)
+    private String userAuthorizationUri;
+    @Getter(AccessLevel.NONE)
+    private String accessTokenUri;
+    @Getter(AccessLevel.NONE)
+    private String userProfileUri;
+
     private String codeParameter = "code";
 
     private String clientId;
@@ -41,6 +55,18 @@ public class FacebookIdentityProviderConfiguration implements SocialIdentityProv
     private Integer connectTimeout = 10000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
+
+    public String getUserAuthorizationUri() {
+        return FACEBOOK_AUTH_BASE + "/" + apiVersion + "/dialog/oauth";
+    }
+
+    public String getAccessTokenUri() {
+        return GRAPH_API_BASE + "/" + apiVersion + "/oauth/access_token";
+    }
+
+    public String getUserProfileUri() {
+        return GRAPH_API_BASE + "/" + apiVersion + "/me";
+    }
 
     @Override
     public ProviderResponseType getProviderResponseType() {
