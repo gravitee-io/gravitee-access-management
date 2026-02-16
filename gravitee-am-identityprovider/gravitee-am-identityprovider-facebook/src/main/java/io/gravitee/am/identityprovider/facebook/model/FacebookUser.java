@@ -65,12 +65,9 @@ public abstract class FacebookUser {
     public static final String LOCATION = "location";
 
     // Other fields, but there are many others that can be added if necessary (see https://developers.facebook.com/docs/graph-api/reference/user).
-    public static final String ABOUT = "about";
     public static final String INSTALLED = "installed";
-    public static final String INSTALL_TYPE = "install_type";
     public static final String IS_GUEST_USER = "is_guest_user";
     public static final String LANGUAGES = "languages";
-    public static final String PUBLIC_KEY = "public_key";
     public static final String QUOTES = "quotes";
     public static final String SHARED_LOGIN_UPGRADE_REQUIRED_BY = "shared_login_upgrade_required_by";
     public static final String SIGNIFICANT_OTHER = "significant_other";
@@ -99,8 +96,8 @@ public abstract class FacebookUser {
     /**
      * Contains all others fields we can retrieve and store as additional information.
      */
-    public static final List<String> OTHER_FIELDS_LIST = Arrays.asList(ABOUT, INSTALLED, INSTALL_TYPE, IS_GUEST_USER, LANGUAGES,
-            PUBLIC_KEY, QUOTES, SHARED_LOGIN_UPGRADE_REQUIRED_BY, SIGNIFICANT_OTHER, SPORTS, SUPPORTS_DONATE_BUTTON_IN_LIVE_VIDEO);
+    public static final List<String> OTHER_FIELDS_LIST = Arrays.asList(INSTALLED, IS_GUEST_USER, LANGUAGES,
+            QUOTES, SHARED_LOGIN_UPGRADE_REQUIRED_BY, SIGNIFICANT_OTHER, SPORTS, SUPPORTS_DONATE_BUTTON_IN_LIVE_VIDEO);
 
     /**
      * Contains all fields we have to retrieve from Facebook api.
