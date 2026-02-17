@@ -94,7 +94,7 @@ object OpenFGACalls {
     val requestBody = Obj(
       "tuple_key" -> tupleKeyToJson(TupleKey(user, relation, objectKey)),
       "authorization_model_id" -> FGA_AUTHORIZATION_MODEL_ID,
-      "consistency" -> "HIGHER_CONSISTENCY"
+      "consistency" -> CHECK_CONSISTENCY_LEVEL
     )
 
     context.foreach(ctx => requestBody("context") = mapToJson(ctx))

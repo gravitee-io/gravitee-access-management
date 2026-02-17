@@ -157,6 +157,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 * `inject-during`: duration (in sec) of the steady-state load (default: 300)
 * `repeat`: number of evaluation checks each virtual agent performs per iteration (default: 10)
 * `evaluation_tags`: optional comma-separated tags to filter evaluation cases
+* `consistency`: optional, values: MINIMIZE_LATENCY, HIGHER_CONSISTENCY (default) or UNSPECIFIED
 
 #### Tag filtering
 Evaluation cases are tagged to support comparisons with AuthZen/PDP runs:

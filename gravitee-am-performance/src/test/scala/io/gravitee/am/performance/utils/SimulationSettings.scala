@@ -46,6 +46,7 @@ object SimulationSettings {
 
   val MIN_USER_INDEX = Integer.getInteger("min_user_index", 1)
   val NUMBER_OF_USERS = Integer.getInteger("number_of_users", 2000)
+  val CHECK_CONSISTENCY_LEVEL = System.getProperty("consistency", "HIGHER_CONSISTENCY")
 
   // useful if in future simulation we want multiple IDP
   // it will be possible to generate username with IDP relationship

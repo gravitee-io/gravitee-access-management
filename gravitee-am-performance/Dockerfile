@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM openjdk:21-slim
+FROM eclipse-temurin:21-jdk-jammy
 
 ENV GATLING_VERSION=3.14.3
 
