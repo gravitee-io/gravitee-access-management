@@ -147,6 +147,9 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             validateDelegationAllowed(settings);
             validateDelegationParameters(actorTokenType, settings);
         } else {
+            if (!StringUtils.isEmpty(actorTokenType)) {
+                throw new InvalidRequestException("actor_token_type must not be provided when actor_token is not provided");
+            }
             validateImpersonationAllowed(settings);
         }
 
