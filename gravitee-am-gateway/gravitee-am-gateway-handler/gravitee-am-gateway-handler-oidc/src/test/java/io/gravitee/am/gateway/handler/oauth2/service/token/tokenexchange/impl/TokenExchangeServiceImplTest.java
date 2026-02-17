@@ -675,6 +675,26 @@ public class TokenExchangeServiceImplTest {
                 .hasMessageContaining("Impersonation is not allowed");
     }
 
+    @Test
+    public void shouldFailWhenActorTokenTypeProvidedWithoutActorToken() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(Parameters.SUBJECT_TOKEN, "subject-token");
+        params.add(Parameters.SUBJECT_TOKEN_TYPE, TokenType.ACCESS_TOKEN);
+        params.add(Parameters.ACTOR_TOKEN_TYPE, TokenType.ACCESS_TOKEN);
+        tokenRequest.setParameters(params);
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("actor_token_type must not be provided when actor_token is not provided");
+    }
+
     // ==================== Delegation Tests ====================
 
     @Test
