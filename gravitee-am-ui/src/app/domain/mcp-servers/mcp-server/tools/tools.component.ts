@@ -177,6 +177,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
       resourceIdentifiers: this.protectedResource.resourceIdentifiers,
       description: this.protectedResource.description,
       features: updatedFeatures,
+      settings: this.protectedResource.settings,
     };
 
     this.protectedResourceService
@@ -217,6 +218,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
       resourceIdentifiers: this.protectedResource.resourceIdentifiers,
       description: this.protectedResource.description,
       features: updatedFeatures,
+      settings: this.protectedResource.settings,
     };
 
     this.protectedResourceService
@@ -271,6 +273,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
       resourceIdentifiers: this.protectedResource.resourceIdentifiers,
       description: this.protectedResource.description,
       features: updatedFeatures,
+      settings: this.protectedResource.settings,
     };
 
     this.protectedResourceService
