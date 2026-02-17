@@ -40,9 +40,15 @@ class OpenFGAEvaluation
     extends AuthorizationEvaluation(OpenFGAAuthorizationBackend, OpenFGAEvaluation.tagFilter) {
   require(FGA_STORE_ID.nonEmpty, "fga_store_id system property must be set")
   require(FGA_AUTHORIZATION_MODEL_ID.nonEmpty, "fga_authorization_model_id system property must be set")
+  require(
+    OpenFGAEvaluation.allowedConsistencyLevels.contains(CHECK_CONSISTENCY_LEVEL),
+    s"consistency param value unknown: ${CHECK_CONSISTENCY_LEVEL}"
+  )
+
 }
 
 object OpenFGAEvaluation {
+  val allowedConsistencyLevels: Set[String] = Set("MINIMIZE_LATENCY", "HIGHER_CONSISTENCY", "UNSPECIFIED")
   val tagFilter: Set[String] = System
     .getProperty("evaluation_tags", "")
     .split(",")
