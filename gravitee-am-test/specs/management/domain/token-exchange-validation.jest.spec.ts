@@ -17,7 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, patchDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { ResponseError } from '../../api/management/runtime';
+import { ResponseError } from '../../../api/management/runtime';
 import { setup } from '../../test-fixture';
 
 setup();
