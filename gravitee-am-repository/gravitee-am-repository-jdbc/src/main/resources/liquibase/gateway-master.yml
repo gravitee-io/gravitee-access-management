@@ -1,5 +1,7 @@
 databaseChangeLog:
   - include:
+      - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-action-lease-table.yml
+  - include:
       - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-auth-flow-ctx-table.yml
   - include:
       - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-login-attempts-table.yml
@@ -9,3 +11,5 @@ databaseChangeLog:
       - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-scope-approvals-table.yml
   - include:
       - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-verify-attempt-table.yml
+  - include:
+      - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-email-staging-table.yml
