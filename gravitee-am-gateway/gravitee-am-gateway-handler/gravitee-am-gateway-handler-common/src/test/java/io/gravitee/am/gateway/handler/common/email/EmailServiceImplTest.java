@@ -24,10 +24,12 @@ import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.exception.BatchEmailException;
@@ -46,6 +48,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -94,6 +97,9 @@ public class EmailServiceImplTest {
 
     @Mock
     private GraviteeMessageResolver graviteeMessageResolver;
+
+    @Mock
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @InjectMocks
     private EmailService emailServiceSpy;
@@ -279,13 +285,25 @@ public class EmailServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        List<EmailContainer> containers = Arrays.asList(new EmailContainer(user, client));
+        List<EmailContainer> containers = Arrays.asList(new EmailContainer(user, client, defaultStagingEmail(user, client)));
 
-        emailServiceSpy.batch(Template.RESET_PASSWORD, containers);
+        emailServiceSpy.batch(containers, 1);
 
         verify(emailManager, never()).getEmail(any(), any(), anyInt());
         verify(this.emailService, never()).batch(any());
         verify(auditService, never()).report(any());
+    }
+
+    protected EmailStaging defaultStagingEmail(User user, Client client) {
+        EmailStaging emailStaging = new EmailStaging();
+        emailStaging.setEmailTemplateName(Template.RESET_PASSWORD.name());
+        emailStaging.setApplicationId(client.getId());
+        emailStaging.setAttempts(0);
+        emailStaging.setCreatedAt(new Date());
+        emailStaging.setUpdatedAt(new Date());
+        emailStaging.setReferenceId("domain-id");
+        emailStaging.setReferenceType(ReferenceType.DOMAIN);
+        return emailStaging;
     }
 
     @Test
@@ -332,11 +350,11 @@ public class EmailServiceImplTest {
         client.setClientId("client-id");
 
         List<EmailContainer> containers = Arrays.asList(
-                new EmailContainer(user1, client),
-                new EmailContainer(user2, client)
+                new EmailContainer(user1, client, defaultStagingEmail(user1, client)),
+                new EmailContainer(user2, client, defaultStagingEmail(user2, client))
         );
 
-        emailServiceSpy.batch(Template.RESET_PASSWORD, containers);
+        emailServiceSpy.batch(containers, 1);
 
         ArgumentCaptor<List<io.gravitee.am.common.email.Email>> captor = ArgumentCaptor.forClass(List.class);
         verify(this.emailService, times(1)).batch(captor.capture());
@@ -397,9 +415,9 @@ public class EmailServiceImplTest {
         client.setClientId("client-id");
 
         List<EmailContainer> containers = Arrays.asList(
-                new EmailContainer(user1, client),
-                new EmailContainer(user2, client),
-                new EmailContainer(user3, client)
+                new EmailContainer(user1, client, defaultStagingEmail(user1, client)),
+                new EmailContainer(user2, client, defaultStagingEmail(user2, client)),
+                new EmailContainer(user3, client, defaultStagingEmail(user3, client))
         );
 
         // Simulate BatchEmailException with failed emails
@@ -408,7 +426,7 @@ public class EmailServiceImplTest {
 
         Mockito.doThrow(batchException).when(this.emailService).batch(any());
 
-        emailServiceSpy.batch(Template.RESET_PASSWORD, containers);
+        emailServiceSpy.batch(containers, 1);
 
         ArgumentCaptor<List<io.gravitee.am.common.email.Email>> captor = ArgumentCaptor.forClass(List.class);
         verify(this.emailService, times(1)).batch(captor.capture());
@@ -473,9 +491,9 @@ public class EmailServiceImplTest {
         client.setClientId("client-id");
 
         List<EmailContainer> containers = Arrays.asList(
-                new EmailContainer(user1, client),
-                new EmailContainer(user2, client),
-                new EmailContainer(user3, client)
+                new EmailContainer(user1, client, defaultStagingEmail(user1, client)),
+                new EmailContainer(user2, client, defaultStagingEmail(user2, client)),
+                new EmailContainer(user3, client, defaultStagingEmail(user3, client))
         );
 
         // Simulate BatchEmailException with the shared email failing
@@ -484,7 +502,7 @@ public class EmailServiceImplTest {
 
         Mockito.doThrow(batchException).when(this.emailService).batch(any());
 
-        emailServiceSpy.batch(Template.RESET_PASSWORD, containers);
+        emailServiceSpy.batch(containers, 1);
 
         // Verify audit service was called for both users with the shared email
         // 2 calls for user1 and user2 who share the same email
@@ -550,12 +568,12 @@ public class EmailServiceImplTest {
         client.setClientId("client-id");
 
         List<EmailContainer> containers = Arrays.asList(
-                new EmailContainer(user1, client),
-                new EmailContainer(user2, client),
-                new EmailContainer(user3, client)
+                new EmailContainer(user1, client, defaultStagingEmail(user1, client)),
+                new EmailContainer(user2, client, defaultStagingEmail(user2, client)),
+                new EmailContainer(user3, client, defaultStagingEmail(user3, client))
         );
 
-        emailServiceSpy.batch(Template.RESET_PASSWORD, containers);
+        emailServiceSpy.batch(containers, 1);
 
         ArgumentCaptor<List<io.gravitee.am.common.email.Email>> captor = ArgumentCaptor.forClass(List.class);
         verify(this.emailService, times(1)).batch(captor.capture());
