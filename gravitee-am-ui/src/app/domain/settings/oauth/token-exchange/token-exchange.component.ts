@@ -77,8 +77,13 @@ export class TokenExchangeComponent implements OnInit {
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
     this.initializeSettings();
-    this.domainService.getTokenExchangeSettings().subscribe((settings) => {
-      this.maxDelegationDepthLimit = settings.maxDelegationDepth;
+    this.domainService.getTokenExchangeSettings().subscribe({
+      next: (settings) => {
+        this.maxDelegationDepthLimit = settings.maxDelegationDepth;
+      },
+      error: () => {
+        // Keep default limit if platform config is unavailable
+      },
     });
   }
 
@@ -134,7 +139,7 @@ export class TokenExchangeComponent implements OnInit {
     if (settings.allowDelegation && !settings.allowedActorTokenTypes?.length) {
       errors.push('At least one Actor Token Type must be selected when Delegation is enabled.');
     }
-    if (settings.allowDelegation && settings.maxDelegationDepth > this.maxDelegationDepthLimit) {
+    if (settings.allowDelegation && settings.maxDelegationDepth > 0 && settings.maxDelegationDepth > this.maxDelegationDepthLimit) {
       errors.push(`Maximum Delegation Depth must not exceed ${this.maxDelegationDepthLimit}.`);
     }
     return errors;
