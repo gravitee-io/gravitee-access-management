@@ -87,6 +87,56 @@ describe('Token exchange validation - reject empty options when enabled', () => 
   });
 });
 
+describe('Token exchange validation - maxDelegationDepth limit', () => {
+  it('should reject maxDelegationDepth exceeding the configured maximum', async () => {
+    await expect(
+      patchDomain(domain.id, accessToken, {
+        tokenExchangeSettings: {
+          enabled: true,
+          allowImpersonation: true,
+          allowDelegation: true,
+          allowedSubjectTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+          allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+          allowedActorTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+          maxDelegationDepth: 100,
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('should accept maxDelegationDepth at the boundary (10)', async () => {
+    const patched: any = await patchDomain(domain.id, accessToken, {
+      tokenExchangeSettings: {
+        enabled: true,
+        allowImpersonation: true,
+        allowDelegation: true,
+        allowedSubjectTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+        allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+        allowedActorTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+        maxDelegationDepth: 10,
+      },
+    });
+
+    expect(patched.tokenExchangeSettings.maxDelegationDepth).toEqual(10);
+  });
+
+  it('should accept maxDelegationDepth of 0 (unlimited)', async () => {
+    const patched: any = await patchDomain(domain.id, accessToken, {
+      tokenExchangeSettings: {
+        enabled: true,
+        allowImpersonation: true,
+        allowDelegation: true,
+        allowedSubjectTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+        allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+        allowedActorTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+        maxDelegationDepth: 0,
+      },
+    });
+
+    expect(patched.tokenExchangeSettings.maxDelegationDepth).toEqual(0);
+  });
+});
+
 describe('Token exchange validation - accept valid configurations', () => {
   it('should accept valid token exchange config with all required fields populated', async () => {
     const patched: any = await patchDomain(domain.id, accessToken, {
