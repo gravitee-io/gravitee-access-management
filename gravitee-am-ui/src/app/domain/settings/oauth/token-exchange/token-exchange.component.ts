@@ -134,6 +134,9 @@ export class TokenExchangeComponent implements OnInit {
     if (settings.allowDelegation && !settings.allowedActorTokenTypes?.length) {
       errors.push('At least one Actor Token Type must be selected when Delegation is enabled.');
     }
+    if (settings.allowDelegation && settings.maxDelegationDepth > this.maxDelegationDepthLimit) {
+      errors.push(`Maximum Delegation Depth must not exceed ${this.maxDelegationDepthLimit}.`);
+    }
     return errors;
   }
 
