@@ -16,16 +16,21 @@
 package io.gravitee.am.gateway.handler.scim.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.email.EmailStagingProcessor;
+import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
 import io.gravitee.am.gateway.handler.scim.resources.bulk.BulkEndpointConfiguration;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
-import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.gateway.handler.scim.service.impl.BulkServiceImpl;
+import io.gravitee.am.gateway.handler.scim.service.impl.ProvisioningUserServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.ScimGroupServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.ServiceProviderConfigServiceImpl;
-import io.gravitee.am.gateway.handler.scim.service.impl.ProvisioningUserServiceImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.authentication.crypto.password.Argon2IdPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +47,30 @@ public class SCIMConfiguration implements ProtocolConfiguration {
     @Bean
     public ProvisioningUserService userService() {
         return new ProvisioningUserServiceImpl();
+    }
+
+    @Bean
+    public EmailStagingProcessor emailStagingProcessor(
+            EmailStagingService emailStagingService,
+            EmailService emailService,
+            DataPlaneRegistry dataPlaneRegistry,
+            ApplicationService applicationService,
+            Domain domain,
+            @Value("${email.enabled:false}") boolean emailEnabled,
+            @Value("${email.bulk.enabled:false}") boolean bulkEnabled,
+            @Value("${email.bulk.batch:" + EmailStagingProcessor.DEFAULT_BATCH_SIZE + "}") int batchSize,
+            @Value("${email.bulk.period:" + EmailStagingProcessor.DEFAULT_PERIOD_IN_SECONDS + "}") int batchPeriod,
+            @Value("${email.bulk.attempts:" + EmailStagingProcessor.DEFAULT_MAX_ATTEMPTS + "}") int maxAttempts) {
+        return new EmailStagingProcessor(
+                emailStagingService,
+                emailService,
+                dataPlaneRegistry,
+                applicationService,
+                domain,
+                batchSize,
+                batchPeriod,
+                maxAttempts,
+                emailEnabled && bulkEnabled);
     }
 
     @Bean
