@@ -25,6 +25,7 @@ import { AuthService } from './auth.service';
 @Injectable()
 export class DomainService {
   private domainsURL: string = AppConfig.settings.domainBaseURL;
+  private platformURL: string = AppConfig.settings.baseURL + '/platform';
   private domainUpdatedSource = new Subject<any>();
   domainUpdated$ = this.domainUpdatedSource.asObservable();
 
@@ -213,5 +214,9 @@ export class DomainService {
 
   updateCertificateSettings(id, certificateSettings): Observable<any> {
     return this.http.put<any>(this.domainsURL + id + '/certificate-settings', certificateSettings);
+  }
+
+  getTokenExchangeSettings(): Observable<{ maxDelegationDepth: number }> {
+    return this.http.get<{ maxDelegationDepth: number }>(this.platformURL + '/configuration/domains/token-exchange/settings');
   }
 }

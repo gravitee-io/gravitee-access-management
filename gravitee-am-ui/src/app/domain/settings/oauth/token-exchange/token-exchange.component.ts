@@ -42,6 +42,7 @@ export class TokenExchangeComponent implements OnInit {
   domain: any = {};
   formChanged = false;
   editMode: boolean;
+  maxDelegationDepthLimit: number = 10;
 
   readonly SUBJECT_TOKEN_TYPES = [
     { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
@@ -76,6 +77,9 @@ export class TokenExchangeComponent implements OnInit {
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
     this.initializeSettings();
+    this.domainService.getTokenExchangeSettings().subscribe((settings) => {
+      this.maxDelegationDepthLimit = settings.maxDelegationDepth;
+    });
   }
 
   private initializeSettings() {
