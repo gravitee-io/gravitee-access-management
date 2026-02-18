@@ -27,6 +27,7 @@ import io.gravitee.am.common.utils.SMTPClientExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
@@ -54,6 +55,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -186,6 +188,9 @@ public class ProvisioningUserServiceTest {
     private EmailService emailService;
 
     @Mock
+    private EmailStagingService emailStagingService;
+
+    @Mock
     private CredentialGatewayService credentialService;
 
     @Mock
@@ -193,6 +198,10 @@ public class ProvisioningUserServiceTest {
 
     @Mock
     private DataPlaneRegistry registry;
+
+    @Mock
+    private GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+
     @Spy
     private SMTPClientExecutor executor = new SMTPClientExecutor(1);
 
@@ -203,6 +212,7 @@ public class ProvisioningUserServiceTest {
         domain.setId(DOMAIN_ID);
         when(registry.getUserRepository(any())).thenReturn(userRepository);
         ReflectionTestUtils.setField(userService, "emailEnabled", true);
+        ReflectionTestUtils.setField(userService, "bulkEnabled", false);
         userService.afterPropertiesSet();
     }
 
@@ -1005,7 +1015,6 @@ public class ProvisioningUserServiceTest {
 
     @Test
     public void shouldCreateUser_with_preRegistration() {
-
         GraviteeUser newUser = mock(GraviteeUser.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
         when(newUser.getUserName()).thenReturn("username");
@@ -1035,6 +1044,79 @@ public class ProvisioningUserServiceTest {
         assertFalse(newUserDefinition.getValue().isInternal());
         assertTrue(newUserDefinition.getValue().isEnabled());
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailService, times(1)).send(any(),any(),any()));
+    }
+
+    @Test
+    public void shouldCreateUser_with_preRegistration_bulkMode() {
+        ReflectionTestUtils.setField(userService, "bulkEnabled", true);
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("preRegistration", true);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+        user.setPreRegistration(true);
+        user.setEmail("<EMAIL>");
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        when(emailStagingService.push(any(), any())).thenReturn(Completable.complete());
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().get("preRegistration") != null);
+        assertFalse(newUserDefinition.getValue().isInternal());
+        assertTrue(newUserDefinition.getValue().isEnabled());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailStagingService, times(1)).push(any(),any()));
+    }
+
+    @Test
+    public void shouldCreateUser_with_preRegistration_bulkMode_trace_staging_failure() {
+        ReflectionTestUtils.setField(userService, "bulkEnabled", true);
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("preRegistration", true);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+        user.setPreRegistration(true);
+        user.setEmail("<EMAIL>");
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        when(emailStagingService.push(any(), any())).thenReturn(Completable.error(new RuntimeException()));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().get("preRegistration") != null);
+        assertFalse(newUserDefinition.getValue().isInternal());
+        assertTrue(newUserDefinition.getValue().isEnabled());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailStagingService, times(1)).push(any(),any()));
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailService, times(1)).traceEmailEviction(any(),any(),any()));
     }
 
     @Test
@@ -1308,6 +1390,5 @@ public class ProvisioningUserServiceTest {
         assertEquals("app-id-123", emailUserCaptor.getValue().getClient());
         assertEquals("app-id-123", clientCaptor.getValue().getId());
     }
-
 
 }
