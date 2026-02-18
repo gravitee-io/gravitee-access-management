@@ -93,6 +93,7 @@ import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
@@ -1736,6 +1737,110 @@ public class DomainServiceTest {
         verify(certificateService).findById(fallbackCertId);
         verify(domainRepository, never()).update(any());
         verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldRejectPatchDomainWithTokenExchangeMaxDelegationDepthExceedingLimit() {
+        final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        final Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+
+        var tokenExchangeSettings = new TokenExchangeSettings();
+        tokenExchangeSettings.setEnabled(true);
+        tokenExchangeSettings.setMaxDelegationDepth(11);
+        domain.setTokenExchangeSettings(tokenExchangeSettings);
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertFailure(InvalidDomainException.class);
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldAcceptPatchDomainWithTokenExchangeMaxDelegationDepthAtLimit() {
+        final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        final Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+
+        var tokenExchangeSettings = new TokenExchangeSettings();
+        tokenExchangeSettings.setEnabled(true);
+        tokenExchangeSettings.setMaxDelegationDepth(10);
+        domain.setTokenExchangeSettings(tokenExchangeSettings);
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldAcceptPatchDomainWithTokenExchangeMaxDelegationDepthZero() {
+        final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        final Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+
+        var tokenExchangeSettings = new TokenExchangeSettings();
+        tokenExchangeSettings.setEnabled(true);
+        tokenExchangeSettings.setMaxDelegationDepth(0);
+        domain.setTokenExchangeSettings(tokenExchangeSettings);
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
     }
 
     private static CorsSettings getCorsSettings(Set<String> allowedOrigins) {

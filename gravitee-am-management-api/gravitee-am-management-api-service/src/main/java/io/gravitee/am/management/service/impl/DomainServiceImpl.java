@@ -842,7 +842,10 @@ public class DomainServiceImpl implements DomainService {
         }
 
         if (domain.getTokenExchangeSettings() != null && !domain.getTokenExchangeSettings().isValid(maxDelegationDepthLimit)) {
-            return Completable.error(new InvalidDomainException("Token Exchange settings are invalid"));
+            var depthMsg = domain.getTokenExchangeSettings().getMaxDelegationDepth() > maxDelegationDepthLimit
+                    ? ": maxDelegationDepth must not exceed " + maxDelegationDepthLimit
+                    : "";
+            return Completable.error(new InvalidDomainException("Token Exchange settings are invalid" + depthMsg));
         }
 
         if (domain.getWebAuthnSettings() != null) {
