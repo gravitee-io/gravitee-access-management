@@ -33,6 +33,7 @@ import io.gravitee.am.management.service.dataplane.UserActivityManagementService
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
@@ -275,6 +276,9 @@ public class DomainServiceImpl implements DomainService {
     private ServiceResourceService serviceResourceService;
     @Autowired
     private AuthorizationEngineService authorizationEngineService;
+
+    @Value("${" + TokenExchangeSettings.PROPERTY_MAX_DELEGATION_DEPTH_LIMIT + ":" + TokenExchangeSettings.DEFAULT_MAX_DELEGATION_DEPTH_LIMIT + "}")
+    private int maxDelegationDepthLimit = TokenExchangeSettings.DEFAULT_MAX_DELEGATION_DEPTH_LIMIT;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -837,7 +841,7 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("CORS settings are invalid"));
         }
 
-        if (domain.getTokenExchangeSettings() != null && !domain.getTokenExchangeSettings().isValid()) {
+        if (domain.getTokenExchangeSettings() != null && !domain.getTokenExchangeSettings().isValid(maxDelegationDepthLimit)) {
             return Completable.error(new InvalidDomainException("Token Exchange settings are invalid"));
         }
 

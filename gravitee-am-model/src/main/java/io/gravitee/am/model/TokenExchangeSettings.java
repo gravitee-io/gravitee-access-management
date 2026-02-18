@@ -41,6 +41,9 @@ public class TokenExchangeSettings {
 
     private static final List<String> DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES = List.of(ACCESS_TOKEN, ID_TOKEN);
 
+    public static final String PROPERTY_MAX_DELEGATION_DEPTH_LIMIT = "domains.tokenExchange.maxDelegationDepth.max";
+    public static final int DEFAULT_MAX_DELEGATION_DEPTH_LIMIT = 10;
+
     /**
      * Default value for maxDelegationDepth (0 = unlimited/disabled).
      */
@@ -135,8 +138,21 @@ public class TokenExchangeSettings {
      * @return true if settings are valid, false otherwise
      */
     public boolean isValid() {
+        return isValid(Integer.MAX_VALUE);
+    }
+
+    /**
+     * Check if the settings are valid with a configurable maximum delegation depth.
+     *
+     * @param maxAllowedDelegationDepth the maximum allowed value for maxDelegationDepth (0 values are always allowed as they mean unlimited)
+     * @return true if settings are valid, false otherwise
+     */
+    public boolean isValid(int maxAllowedDelegationDepth) {
         if (!enabled) {
             return true;
+        }
+        if (maxDelegationDepth > 0 && maxDelegationDepth > maxAllowedDelegationDepth) {
+            return false;
         }
         return (allowImpersonation || allowDelegation)
                 && (allowedSubjectTokenTypes != null && !allowedSubjectTokenTypes.isEmpty())

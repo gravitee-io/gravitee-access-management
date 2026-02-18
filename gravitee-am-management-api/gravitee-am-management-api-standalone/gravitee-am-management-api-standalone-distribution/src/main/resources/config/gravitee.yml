@@ -230,6 +230,9 @@ domains:
       validity: 365             # Validity of the certificate
       algorithm: SHA256withRSA  # Algorithm used to sign certificate
       name: cn=Gravitee.io      # Certificate X.500 name
+#  tokenExchange:
+#    maxDelegationDepth:
+#      max: 10    # Maximum allowed value for delegation chain depth (default: 10)
 #  reporters:
 #    default:
 #      # should the default (database) reporter be created. E.g. if the organization defines a global reporter,

@@ -156,4 +156,44 @@ class TokenExchangeSettingsTest {
         settings.setAllowedActorTokenTypes(new ArrayList<>(List.of(ACCESS_TOKEN)));
         assertTrue(settings.isValid());
     }
+
+    @Test
+    void isValid_maxDelegationDepthExceedingLimitIsInvalid() {
+        var settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setMaxDelegationDepth(15);
+        assertFalse(settings.isValid(10));
+    }
+
+    @Test
+    void isValid_maxDelegationDepthAtLimitIsValid() {
+        var settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setMaxDelegationDepth(10);
+        assertTrue(settings.isValid(10));
+    }
+
+    @Test
+    void isValid_maxDelegationDepthZeroAlwaysValid() {
+        var settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setMaxDelegationDepth(0);
+        assertTrue(settings.isValid(5));
+    }
+
+    @Test
+    void isValid_disabledIgnoresMaxDelegationDepthLimit() {
+        var settings = new TokenExchangeSettings();
+        settings.setEnabled(false);
+        settings.setMaxDelegationDepth(100);
+        assertTrue(settings.isValid(10));
+    }
+
+    @Test
+    void isValid_noArgOverloadAllowsAnyDepth() {
+        var settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setMaxDelegationDepth(10000);
+        assertTrue(settings.isValid());
+    }
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.con
 
 import io.gravitee.am.management.handlers.management.api.model.AlertServiceStatusEntity;
 import io.gravitee.am.management.service.AlertService;
+import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.SpelService;
 import io.gravitee.am.service.validators.email.UserEmail;
@@ -84,7 +85,7 @@ public class ConfigurationResource {
 
     @GET
     @Path("spel/grammar")
-    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "getSpelGrammar",
             summary = "Get the spel grammar",
@@ -96,10 +97,22 @@ public class ConfigurationResource {
 
     @GET
     @Path("users/email-required")
-    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public void getUserEmailRequired(@Suspended final AsyncResponse response) {
         var emailRequired = environment.getProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, boolean.class, true);
         response.resume(Map.of("emailRequired", emailRequired));
+    }
+
+    @GET
+    @Path("domains/token-exchange/settings")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "getTokenExchangeSettings",
+            summary = "Get token exchange platform settings",
+            description = "There is no particular permission needed. User must be authenticated.")
+    public void getTokenExchangeSettings(@Suspended final AsyncResponse response) {
+        var maxDepth = environment.getProperty(TokenExchangeSettings.PROPERTY_MAX_DELEGATION_DEPTH_LIMIT, int.class, TokenExchangeSettings.DEFAULT_MAX_DELEGATION_DEPTH_LIMIT);
+        response.resume(Map.of("maxDelegationDepth", maxDepth));
     }
 
 }
