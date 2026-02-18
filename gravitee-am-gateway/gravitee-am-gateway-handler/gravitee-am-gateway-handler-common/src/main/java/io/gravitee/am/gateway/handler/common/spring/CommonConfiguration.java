@@ -38,8 +38,10 @@ import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailManagerImpl;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
+import io.gravitee.am.gateway.handler.common.email.impl.EmailStagingServiceImpl;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
@@ -337,6 +339,11 @@ public class CommonConfiguration {
                 registrationConfirmationSubject,
                 Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue))
         );
+    }
+
+    @Bean
+    public EmailStagingService emailStagingService() {
+        return new EmailStagingServiceImpl();
     }
 
     @Bean

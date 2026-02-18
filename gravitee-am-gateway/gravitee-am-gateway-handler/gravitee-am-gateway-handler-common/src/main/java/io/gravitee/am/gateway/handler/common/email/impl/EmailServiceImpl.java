@@ -21,7 +21,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
-import io.gravitee.am.common.exception.email.EmailOverflowException;
+import io.gravitee.am.common.exception.email.EmailDroppedException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.TokenPurpose;
@@ -38,6 +38,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.exception.BatchEmailException;
@@ -66,7 +67,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
@@ -93,7 +93,7 @@ public class EmailServiceImpl implements EmailService {
     private final String registrationConfirmationSubject;
     private final int userRegistrationConfirmationVerifyExpiresAfter;
 
-    private final EmailOverflowException emailOverflowException = new EmailOverflowException("Too many emails sent in a short time. Email has been dropped to avoid memory issue");
+    private final EmailDroppedException droppedException = new EmailDroppedException("Email not delivered due to staging persistence issue");
 
     @Autowired
     private EmailManager emailManager;
@@ -120,6 +120,9 @@ public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private GraviteeMessageResolver graviteeMessageResolver;
+
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
 
     public EmailServiceImpl(
             boolean enabled,
@@ -161,48 +164,79 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void batch(io.gravitee.am.model.Template template, List<EmailContainer> containers) {
+    public List<EmailContainer> batch(List<EmailContainer> containers, int maxAttempt) {
+        if (containers == null || containers.isEmpty()) {
+            return List.of();
+        }
+
         if (enabled) {
             var emailsToSend = containers.stream().map(container -> {
-                // get raw email template
-                io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, container.client());
-                // prepare email
-                Email email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap());
+                Email email = null;
                 try {
-                    return new EmailContainer(container.user(), container.client(), prepareEmailToSendBySCIM(email, container.user()));
+                    var template = io.gravitee.am.model.Template.valueOf(container.stagingEmail().getEmailTemplateName());
+                    // get raw email template
+                    io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, container.client());
+                    // prepare email
+                    email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap());
+
+                    return container.with(prepareEmailToSend(email, container.user()));
                 } catch (Exception ex) {
-                    log.warn("Unable to prepare email for user [{}], batch will exclude it", container.user().getUsername(), ex);
+                    log.warn("Unable to prepare email for user [{}], batch will exclude it and it will be removed from staging collection", container.user().getUsername(), ex);
+                    // mark as processed to remove the entry from the staging collection
+                    container.stagingEmail().markAsProcessed();
                     auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                             .reference(Reference.domain(domain.getId()))
-                            .email(email)
+                            .email(email) // email() method check ignore null value
                             .throwable(ex));
                     return null;
                 }
             }).filter(Objects::nonNull)
-            // it may happen that multiple users have the same email address
-            // so we group them together, so in case of delivery error all users will be notified
+            // It may happen that multiple users have the same email address
+            // we group them together. In case of error all users will be notified
             // as we do not have a way to uniquely identify the user in that case
             .collect(Collectors.groupingBy(container -> container.user().getEmail()));
 
             try {
                 emailService.batch(emailsToSend.values().stream().flatMap(List::stream).map(EmailContainer::email).toList());
-                emailsToSend.values().stream().flatMap(List::stream).forEach(container -> traceSuccessfulEmail(container.email(), container.user(), container.client()));
+                emailsToSend.values().stream().flatMap(List::stream).forEach(container -> {
+                    container.stagingEmail().markAsProcessed();
+                    log.debug("Email staging process {}", container.stagingEmail());
+                    gatewayMetricProvider.incrementProcessedStagingEmails(true);
+                    traceSuccessfulEmail(container.email(), container.user(), container.client());
+                });
             } catch (BatchEmailException batchEx) {
                 batchEx.getEmails().forEach(email -> {
-                    log.warn("{} email failed to send for user {}", template.name(), email);
                     Optional.ofNullable(emailsToSend.get(email)).ifPresent(failureContainers ->
-                        failureContainers.forEach(container -> traceFailureEmail(container.email(), container.user(), container.client(), batchEx))
+                        failureContainers.forEach(container -> {
+                            container.stagingEmail().incrementAttempts();
+                            if (container.stagingEmail().getAttempts() >= maxAttempt) {
+                                // maxAttempt reached, mark it as processed
+                                // and trace the failure in the audit logs
+                                container.stagingEmail().markAsProcessed();
+                                log.warn("Send {} email failed for user {}, max attempts have been reach", container.stagingEmail().getEmailTemplateName(), email);
+                                gatewayMetricProvider.incrementProcessedStagingEmails(false);
+                                traceFailureEmail(container.email(), container.user(), container.client(), batchEx);
+                            } else {
+                                log.info("Send {} email failed for user {}", container.stagingEmail().getEmailTemplateName(), email);
+                            }
+                        })
                     );
                 });
 
-                // create an audit for all the email missing from the exception
+                // create an audit for all the email missing from the exception, they are processed
                 emailsToSend.forEach((email, containerValues) -> {
                     if (!batchEx.getEmails().contains(email)) {
-                        containerValues.forEach(successfulContainer -> traceSuccessfulEmail(successfulContainer.email(), successfulContainer.user(), successfulContainer.client()));
+                        containerValues.forEach(successfulContainer -> {
+                            successfulContainer.stagingEmail().markAsProcessed();
+                            gatewayMetricProvider.incrementProcessedStagingEmails(true);
+                            traceSuccessfulEmail(successfulContainer.email(), successfulContainer.user(), successfulContainer.client());
+                        });
                     }
                 });
             }
         }
+
+        return containers;
     }
 
     @Override
@@ -267,7 +301,7 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendEmail(Email email, User user, Client client) {
         try {
-            final Email emailToSend = prepareEmailToSendBySCIM(email, user);
+            final Email emailToSend = prepareEmailToSend(email, user);
             emailService.send(emailToSend);
             traceSuccessfulEmail(email, user, client);
         } catch (final Exception ex) {
@@ -275,7 +309,7 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private Email prepareEmailToSendBySCIM(Email email, User user) throws IOException, TemplateException {
+    private Email prepareEmailToSend(Email email, User user) throws IOException, TemplateException {
         final Locale preferredLanguage = preferredLanguage(user, Locale.ENGLISH);
         final Map<String, Object> params = email.getParams();
         final Email emailToSend = new Email(email);
@@ -463,6 +497,6 @@ public class EmailServiceImpl implements EmailService {
                 .client(client)
                 .user(user)
                 .email(email)
-                .throwable(emailOverflowException));
+                .throwable(droppedException));
     }
 }
