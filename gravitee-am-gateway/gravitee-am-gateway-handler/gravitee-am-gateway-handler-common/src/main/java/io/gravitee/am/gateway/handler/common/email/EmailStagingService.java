@@ -13,14 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.exception.email;
+package io.gravitee.am.gateway.handler.common.email;
+
+import io.gravitee.am.model.EmailStaging;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.Template;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailOverflowException extends RuntimeException {
-    public EmailOverflowException(String message) {
-        super(message);
-    }
+public interface EmailStagingService {
+
+    Completable push(EmailContainer emailContainer, Template template);
+
+    Flowable<EmailStaging> acquireLeaseAndFetch(Reference reference, int batchSize);
+
+    Completable releaseLease(Reference reference);
+
+    Single<EmailStaging> manageAfterProcessing(EmailStaging emailStaging);
 }

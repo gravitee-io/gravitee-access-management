@@ -20,6 +20,7 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.SystemTaskTypes;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
+import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Flowable;
@@ -73,7 +74,7 @@ public abstract class SystemTaskUpgrader implements Upgrader {
                             // SUCCESS case
                             return Single.just(true);
                     }
-                }).retryWhen(new RetryWithDelay(3, 5000)).blockingGet();
+                }).retryWhen(new RetryAtMostWithDelay(3, 5000)).blockingGet();
 
         if (!upgraded) {
             throw getIllegalStateException();
@@ -109,32 +110,5 @@ public abstract class SystemTaskUpgrader implements Upgrader {
         task.setUpdatedAt(new Date());
         task.setStatus(status.name());
         return systemTaskRepository.updateIf(task, operationId);
-    }
-
-    private static class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
-        private final int maxRetries;
-        private final int retryDelayMillis;
-        private int retryCount;
-
-        public RetryWithDelay(int retries, int delay) {
-            this.maxRetries = retries;
-            this.retryDelayMillis = delay;
-            this.retryCount = 0;
-        }
-
-        @Override
-        public Publisher<?> apply(@NonNull Flowable<Throwable> attempts) {
-            return attempts
-                    .flatMap(throwable -> {
-                        if (++retryCount < maxRetries) {
-                            // When this Observable calls onNext, the original
-                            // Observable will be retried (i.e. re-subscribed).
-                            return Flowable.timer((long) retryDelayMillis * (retryCount + 1),
-                                    TimeUnit.MILLISECONDS);
-                        }
-                        // Max retries hit. Just pass the error along.
-                        return Flowable.error(throwable);
-                    });
-        }
     }
 }
