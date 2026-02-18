@@ -17,6 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, patchDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { ResponseError } from '../../api/management/runtime';
 import { setup } from '../../test-fixture';
 
 setup();
@@ -54,7 +55,7 @@ describe('Token exchange validation - reject empty options when enabled', () => 
           allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
         },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(ResponseError);
   });
 
   it('should reject token exchange enabled with empty allowedRequestedTokenTypes', async () => {
@@ -68,7 +69,7 @@ describe('Token exchange validation - reject empty options when enabled', () => 
           allowedRequestedTokenTypes: [],
         },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(ResponseError);
   });
 
   it('should reject delegation enabled with empty allowedActorTokenTypes', async () => {
@@ -83,7 +84,7 @@ describe('Token exchange validation - reject empty options when enabled', () => 
           allowedActorTokenTypes: [],
         },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(ResponseError);
   });
 });
 
@@ -101,7 +102,23 @@ describe('Token exchange validation - maxDelegationDepth limit', () => {
           maxDelegationDepth: 100,
         },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(ResponseError);
+  });
+
+  it('should reject maxDelegationDepth just above the limit (11)', async () => {
+    await expect(
+      patchDomain(domain.id, accessToken, {
+        tokenExchangeSettings: {
+          enabled: true,
+          allowImpersonation: true,
+          allowDelegation: true,
+          allowedSubjectTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+          allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+          allowedActorTokenTypes: ['urn:ietf:params:oauth:token-type:access_token'],
+          maxDelegationDepth: 11,
+        },
+      }),
+    ).rejects.toThrow(ResponseError);
   });
 
   it('should accept maxDelegationDepth at the boundary (10)', async () => {
