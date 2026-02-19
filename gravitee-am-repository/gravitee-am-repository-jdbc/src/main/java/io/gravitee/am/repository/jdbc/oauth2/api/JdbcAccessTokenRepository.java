@@ -115,17 +115,6 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject) {
-        LOGGER.debug("findByClientIdAndSubject({}, {})", clientId, subject);
-        return accessTokenRepository.findByClientIdAndSubject(clientId, subject, LocalDateTime.now(UTC))
-                .map(this::toEntity)
-                .toObservable()
-                .doOnError(error -> LOGGER.error("Unable to retrieve access tokens with client {} and subject {}",
-                        clientId, subject, error))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
     public Observable<AccessToken> findByAuthorizationCode(String authorizationCode) {
         LOGGER.debug("findByAuthorizationCode({})", authorizationCode);
         return accessTokenRepository.findByAuthorizationCode(authorizationCode, LocalDateTime.now(UTC))
