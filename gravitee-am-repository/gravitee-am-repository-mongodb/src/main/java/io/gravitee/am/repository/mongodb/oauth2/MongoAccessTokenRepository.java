@@ -105,15 +105,6 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
-    public Observable<AccessToken> findByClientId(String clientId) {
-        return Observable
-                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT, clientId),
-                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
-                .map(this::convert)
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
     public Observable<AccessToken> findByAuthorizationCode(String authorizationCode) {
         return Observable
                 .fromPublisher(accessTokenCollection.find(and(eq(FIELD_AUTHORIZATION_CODE, authorizationCode),
