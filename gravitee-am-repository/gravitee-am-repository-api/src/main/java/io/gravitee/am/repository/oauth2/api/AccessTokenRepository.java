@@ -79,14 +79,6 @@ public interface AccessTokenRepository extends ExpiredDataSweeper {
     Observable<AccessToken> findByAuthorizationCode(String authorizationCode);
 
     /**
-     * Count access tokens stored against the provided client id.
-     *
-     * @param clientId the client id to search
-     * @return the number of access tokens
-     */
-    Single<Long> countByClientId(String clientId);
-
-    /**
      * Delete access tokens by user id
      *
      * @param userId end-user

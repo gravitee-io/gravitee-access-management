@@ -178,23 +178,6 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
-    public void shouldCountByClientId() {
-        AccessToken token = new AccessToken();
-        token.setId(RandomString.generate());
-        token.setToken("my-token");
-        token.setClient("my-client-id-count");
-
-        TestObserver<Long> observer = Completable.fromSingle(accessTokenRepository.create(token))
-                .andThen(accessTokenRepository.countByClientId("my-client-id-count"))
-                .test();
-
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
-        observer.assertValue(Long.valueOf(1));
-    }
-
-    @Test
     public void shouldDeleteByDomainIdClientIdAndAndUserId() {
         AccessToken token1 = new AccessToken();
         token1.setId("my-token");

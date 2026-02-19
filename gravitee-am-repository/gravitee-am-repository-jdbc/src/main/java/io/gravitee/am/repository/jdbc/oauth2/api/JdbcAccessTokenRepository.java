@@ -148,12 +148,6 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<Long> countByClientId(String clientId) {
-        return accessTokenRepository.countByClientId(clientId, LocalDateTime.now(UTC))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
