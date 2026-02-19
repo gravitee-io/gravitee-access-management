@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.core.env.Environment;
@@ -29,21 +30,21 @@ import org.springframework.core.env.Environment;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
 
 public class IntrospectionRefreshTokenService extends BaseIntrospectionTokenService implements IntrospectionTokenService {
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final TokenRepository tokenRepository;
 
     public IntrospectionRefreshTokenService(JWTService jwtService,
                                             ClientSyncService clientService,
                                             ProtectedResourceManager protectedResourceManager,
                                             ProtectedResourceSyncService protectedResourceSyncService,
                                             Environment environment,
-                                            RefreshTokenRepository refreshTokenRepository) {
+                                            TokenRepository tokenRepository) {
         super(REFRESH_TOKEN, jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment);
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.tokenRepository = tokenRepository;
     }
 
     @Override
     protected Maybe<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
+        return tokenRepository.findRefreshTokenByJti(token);
     }
 
     @Override
