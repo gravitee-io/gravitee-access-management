@@ -12170,6 +12170,9 @@ components:
           type: boolean
         flowsInherited:
           type: boolean
+        agentCardUrl:
+          type: string
+          format: uri
     ApplicationEntity:
       type: object
       properties:
@@ -14005,6 +14008,9 @@ components:
           type: object
           additionalProperties:
             type: object
+        agentCardUrl:
+          type: string
+          format: uri
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -14989,6 +14995,9 @@ components:
           type: boolean
         flowsInherited:
           type: boolean
+        agentCardUrl:
+          type: string
+          format: uri
     PatchApplicationFactorSettings:
       type: object
       properties:

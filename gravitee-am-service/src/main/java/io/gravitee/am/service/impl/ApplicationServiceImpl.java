@@ -37,6 +37,7 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
@@ -346,6 +347,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                 LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
             }
         }
+        
+        // apply agent card url
+        if (hasLength(newApplication.getAgentCardUrl())) {
+            ApplicationAdvancedSettings advancedSettings = applicationSettings.getAdvanced();
+            if (advancedSettings == null) {
+                advancedSettings = new ApplicationAdvancedSettings();
+            }
+            advancedSettings.setAgentCardUrl(newApplication.getAgentCardUrl());
+            applicationSettings.setAdvanced(advancedSettings);
+        }
 
         application.setSettings(applicationSettings);
 
@@ -443,8 +454,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                         return Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()));
                     }
 
-                    final AccountSettings accountSettings = toPatch.getSettings().getAccount();
-                    if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
+                    final AccountSettings accountSettings = toPatch.getSettings() != null ? toPatch.getSettings().getAccount() : null;
+                    if (accountSettings != null && Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
                     return innerUpdate(existingApplication, toPatch, principal)
@@ -756,7 +767,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMap(this::validateTokenEndpointAuthMethod)
                 .flatMap(this::validateTlsClientAuth)
                 .flatMap(this::validatePostLogoutRedirectUris)
-                .flatMap(this::validateRequestUris);
+                .flatMap(this::validateRequestUris)
+                .flatMap(this::validateAgentCardUrl);
     }
 
     private Single<Application> validateRedirectUris(Application application, boolean updateTypeOnly) {
@@ -987,5 +999,29 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return Single.just(application);
                 });
+    }
+
+    private Single<Application> validateAgentCardUrl(Application application) {
+        if (application.getSettings() == null) {
+            return Single.just(application);
+        }
+        final ApplicationAdvancedSettings advancedSettings = application.getSettings().getAdvanced();
+        if (advancedSettings == null) {
+            return Single.just(application);
+        }
+        final String agentCardUrl = advancedSettings.getAgentCardUrl();
+        if (!hasLength(agentCardUrl)) {
+            return Single.just(application);
+        }
+        try {
+            final URI parsed = new URI(agentCardUrl);
+            final String scheme = parsed.getScheme();
+            if (scheme == null || (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme))) {
+                return Single.error(new InvalidParameterException("agent_card_url : " + agentCardUrl + IS_MALFORMED));
+            }
+        } catch (URISyntaxException e) {
+            return Single.error(new InvalidParameterException("agent_card_url : " + agentCardUrl + IS_MALFORMED));
+        }
+        return Single.just(application);
     }
 }

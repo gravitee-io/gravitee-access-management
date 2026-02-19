@@ -15,8 +15,7 @@
  */
 
 import { getApplicationApi } from './service/utils';
-import { ApplicationPage } from '../../management/models/ApplicationPage';
-import { PatchApplicationTypeTypeEnum } from '../../management/models/PatchApplicationType';
+import { Application, ApplicationPage, NewApplication, PatchApplicationTypeTypeEnum } from '../../management/models';
 
 export type ApplicationListOptions = {
   page?: number;
@@ -24,7 +23,7 @@ export type ApplicationListOptions = {
   q?: string;
 };
 
-export const createApplication = (domainId, accessToken, body) =>
+export const createApplication = (domainId: string, accessToken: string, body: NewApplication): Promise<Application> =>
   getApplicationApi(accessToken).createApplication({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,

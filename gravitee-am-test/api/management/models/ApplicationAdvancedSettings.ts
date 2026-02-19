@@ -44,6 +44,12 @@ export interface ApplicationAdvancedSettings {
    * @memberof ApplicationAdvancedSettings
    */
   flowsInherited?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationAdvancedSettings
+   */
+  agentCardUrl?: string;
 }
 
 /**
@@ -64,6 +70,7 @@ export function ApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreDiscri
   return {
     skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
     flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
+    agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
   };
 }
 
@@ -82,5 +89,6 @@ export function ApplicationAdvancedSettingsToJSONTyped(
   return {
     skipConsent: value['skipConsent'],
     flowsInherited: value['flowsInherited'],
+    agentCardUrl: value['agentCardUrl'],
   };
 }
