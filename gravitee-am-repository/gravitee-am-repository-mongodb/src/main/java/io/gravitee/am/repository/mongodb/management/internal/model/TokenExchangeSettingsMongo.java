@@ -92,7 +92,7 @@ public class TokenExchangeSettingsMongo {
 
     /**
      * Convert MongoDB representation to domain model.
-     * Note: maxDelegationDepth of 0 means unlimited (depth check disabled).
+     * When maxDelegationDepth is null (old data), the domain model default applies.
      */
     public TokenExchangeSettings convert() {
         TokenExchangeSettings settings = new TokenExchangeSettings();

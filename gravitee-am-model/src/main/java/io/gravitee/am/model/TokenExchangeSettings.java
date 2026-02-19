@@ -42,9 +42,19 @@ public class TokenExchangeSettings {
     private static final List<String> DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES = List.of(ACCESS_TOKEN, ID_TOKEN);
 
     /**
-     * Default value for maxDelegationDepth (0 = unlimited/disabled).
+     * Minimum allowed value for maxDelegationDepth.
      */
-    public static final int DEFAULT_MAX_DELEGATION_DEPTH = 0;
+    public static final int MIN_MAX_DELEGATION_DEPTH = 1;
+
+    /**
+     * Maximum allowed value for maxDelegationDepth.
+     */
+    public static final int MAX_MAX_DELEGATION_DEPTH = 100;
+
+    /**
+     * Default value for maxDelegationDepth.
+     */
+    public static final int DEFAULT_MAX_DELEGATION_DEPTH = 25;
 
     /**
      * Enable or disable token exchange functionality.
@@ -84,8 +94,8 @@ public class TokenExchangeSettings {
 
     /**
      * Maximum depth of delegation chain (nested "act" claims).
-     * Value of 0 means unlimited (depth check is disabled).
-     * Default is 0 (unlimited).
+     * Must be between {@link #MIN_MAX_DELEGATION_DEPTH} and {@link #MAX_MAX_DELEGATION_DEPTH}.
+     * Default is {@link #DEFAULT_MAX_DELEGATION_DEPTH}.
      */
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
@@ -107,14 +117,13 @@ public class TokenExchangeSettings {
     }
 
     /**
-     * Set maximum delegation depth.
-     * Value of 0 means unlimited (depth check is disabled).
-     * Negative values are treated as 0 (unlimited).
+     * Set maximum delegation depth, clamped to the allowed range
+     * [{@link #MIN_MAX_DELEGATION_DEPTH}, {@link #MAX_MAX_DELEGATION_DEPTH}].
      *
-     * @param maxDelegationDepth the maximum delegation depth (0 = unlimited)
+     * @param maxDelegationDepth the maximum delegation depth
      */
     public void setMaxDelegationDepth(int maxDelegationDepth) {
-        this.maxDelegationDepth = Math.max(0, maxDelegationDepth);
+        this.maxDelegationDepth = Math.max(MIN_MAX_DELEGATION_DEPTH, Math.min(MAX_MAX_DELEGATION_DEPTH, maxDelegationDepth));
     }
 
     /**
@@ -141,6 +150,7 @@ public class TokenExchangeSettings {
         return (allowImpersonation || allowDelegation)
                 && (allowedSubjectTokenTypes != null && !allowedSubjectTokenTypes.isEmpty())
                 && (allowedRequestedTokenTypes != null && !allowedRequestedTokenTypes.isEmpty())
-                && (!allowDelegation || (allowedActorTokenTypes != null && !allowedActorTokenTypes.isEmpty()));
+                && (!allowDelegation || (allowedActorTokenTypes != null && !allowedActorTokenTypes.isEmpty()))
+                && (!allowDelegation || (maxDelegationDepth >= MIN_MAX_DELEGATION_DEPTH && maxDelegationDepth <= MAX_MAX_DELEGATION_DEPTH));
     }
 }
