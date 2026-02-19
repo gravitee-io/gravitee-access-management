@@ -48,6 +48,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenVa
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.DefaultTokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenExchangeServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceValidationServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
@@ -86,23 +87,28 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TokenValidator accessTokenValidator(JWTService jwtService) {
-        return new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN);
+    public TrustedIssuerResolver trustedIssuerResolver() {
+        return new TrustedIssuerResolver();
     }
 
     @Bean
-    public TokenValidator idTokenValidator(JWTService jwtService) {
-        return new DefaultTokenValidator(jwtService, JWTService.TokenType.ID_TOKEN, TokenType.ID_TOKEN);
+    public TokenValidator accessTokenValidator(JWTService jwtService, TrustedIssuerResolver trustedIssuerResolver) {
+        return new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, trustedIssuerResolver);
     }
 
     @Bean
-    public TokenValidator refreshTokenValidator(JWTService jwtService) {
-        return new DefaultTokenValidator(jwtService, JWTService.TokenType.REFRESH_TOKEN, TokenType.REFRESH_TOKEN);
+    public TokenValidator idTokenValidator(JWTService jwtService, TrustedIssuerResolver trustedIssuerResolver) {
+        return new DefaultTokenValidator(jwtService, JWTService.TokenType.ID_TOKEN, TokenType.ID_TOKEN, trustedIssuerResolver);
     }
 
     @Bean
-    public TokenValidator jwtTokenValidator(JWTService jwtService) {
-        return new DefaultTokenValidator(jwtService, JWTService.TokenType.JWT, TokenType.JWT);
+    public TokenValidator refreshTokenValidator(JWTService jwtService, TrustedIssuerResolver trustedIssuerResolver) {
+        return new DefaultTokenValidator(jwtService, JWTService.TokenType.REFRESH_TOKEN, TokenType.REFRESH_TOKEN, trustedIssuerResolver);
+    }
+
+    @Bean
+    public TokenValidator jwtTokenValidator(JWTService jwtService, TrustedIssuerResolver trustedIssuerResolver) {
+        return new DefaultTokenValidator(jwtService, JWTService.TokenType.JWT, TokenType.JWT, trustedIssuerResolver);
     }
 
     @Bean
