@@ -918,10 +918,12 @@ jobs:
             
             echo $IMAGE_TAG_LATEST > /tmp/built-docker-images.txt
             echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
-            
+            echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
+
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -929,13 +931,15 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
-            
+
             echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
             echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
-            
+            echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
+
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -1502,51 +1506,61 @@ jobs:
             
             tag_gateway="-t graviteeio/am-gateway:${RELEASE_VERSION}"
             tag_gateway_noble="-t graviteeio/am-gateway:${RELEASE_VERSION}-noble"
+            tag_gateway_debian="-t graviteeio/am-gateway:${RELEASE_VERSION}-debian"
             tag_management_api="-t graviteeio/am-management-api:${RELEASE_VERSION}"
             tag_management_api_noble="-t graviteeio/am-management-api:${RELEASE_VERSION}-noble"
+            tag_management_api_debian="-t graviteeio/am-management-api:${RELEASE_VERSION}-debian"
             tag_management_ui="-t graviteeio/am-management-ui:${RELEASE_VERSION}"
-            
+
             if [ "$TAG_LATEST_SUPPORT" == "true" ]; then
               echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest support"
-            
-              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" 
-              tag_gateway_noble="${tag_gateway_noble} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-noble" 
-              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" 
-              tag_management_api_noble="${tag_management_api_noble} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-noble" 
-              tag_management_ui="${tag_management_ui} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}" 
-            
+
+              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+              tag_gateway_noble="${tag_gateway_noble} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-noble"
+              tag_gateway_debian="${tag_gateway_debian} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-debian"
+              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+              tag_management_api_noble="${tag_management_api_noble} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-noble"
+              tag_management_api_debian="${tag_management_api_debian} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-debian"
+              tag_management_ui="${tag_management_ui} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
+
             fi;
-            
+
             if [ "${TAG_LATEST}" == "true" ]; then
               echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest"
-            
-              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR} -t graviteeio/am-gateway:latest" 
-              tag_gateway_noble="${tag_gateway_noble} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}-noble -t graviteeio/am-gateway:latest-noble" 
-              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR} -t graviteeio/am-management-api:latest" 
-              tag_management_api_noble="${tag_management_api_noble} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}-noble -t graviteeio/am-management-api:latest-noble" 
+
+              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR} -t graviteeio/am-gateway:latest"
+              tag_gateway_noble="${tag_gateway_noble} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}-noble -t graviteeio/am-gateway:latest-noble"
+              tag_gateway_debian="${tag_gateway_debian} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}-debian -t graviteeio/am-gateway:latest-debian"
+              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR} -t graviteeio/am-management-api:latest"
+              tag_management_api_noble="${tag_management_api_noble} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}-noble -t graviteeio/am-management-api:latest-noble"
+              tag_management_api_debian="${tag_management_api_debian} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}-debian -t graviteeio/am-management-api:latest-debian"
               tag_management_ui="${tag_management_ui} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR} -t graviteeio/am-management-ui:latest"
-            
+
             fi;
-            
+
             docker login --username="${DOCKERHUB_BOT_USER_NAME}" -p="${DOCKERHUB_BOT_USER_TOKEN}"
-            
+
             if [ "${DRY_RUN}" == "true" ]; then
               echo "# --->>> THIS IS A DRY RUN : Build images without push"
-            
+
               docker buildx build --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway} docker/gateway/
               docker buildx build --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-noble --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway_noble} docker/gateway/
+              docker buildx build --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-debian --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway_debian} docker/gateway/
               docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api} docker/management-api/
               docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-noble --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api_noble} docker/management-api/
+              docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-debian --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api_debian} docker/management-api/
               docker buildx build --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_ui} docker/management-ui/
-            
+
             else
-            
+
               docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway} docker/gateway/
               docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-noble --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway_noble} docker/gateway/
+              docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-debian --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_gateway_debian} docker/gateway/
               docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api} docker/management-api/
               docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-noble --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api_noble} docker/management-api/
+              docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-debian --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_api_debian} docker/management-api/
               docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_ui} docker/management-ui/
-            
+
             fi;
 
   publish_am_rpms:
@@ -1695,6 +1709,16 @@ jobs:
           artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-debian
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-debian
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-debian
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-debian
           scanner_url: https://82fb8f75da.cloud.aquasec.com
 
   job-test-am-charts:
