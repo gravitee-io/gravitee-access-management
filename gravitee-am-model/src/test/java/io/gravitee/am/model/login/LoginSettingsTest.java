@@ -98,4 +98,23 @@ public class LoginSettingsTest {
         LoginSettings copy = new LoginSettings(settings);        
         assertEquals("https://cba.example.com", copy.getCertificateBasedAuthUrl());
     }
+
+    @Test
+    public void testMagicLinkEnabledGetterSetter() {
+        LoginSettings settings = new LoginSettings();
+        settings.setMagicLinkAuthEnabled(true);
+        assertTrue(settings.isMagicLinkAuthEnabled());
+
+        settings.setMagicLinkAuthEnabled(false);
+        assertFalse(settings.isMagicLinkAuthEnabled());
+    }
+
+    @Test
+    public void testCopyConstructorIncludesMagicLinkEnabled() {
+        LoginSettings original = new LoginSettings();
+        original.setMagicLinkAuthEnabled(true);
+
+        LoginSettings copy = new LoginSettings(original);
+        assertTrue(copy.isMagicLinkAuthEnabled());
+    }
 }

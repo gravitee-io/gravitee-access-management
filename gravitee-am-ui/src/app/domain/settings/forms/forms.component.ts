@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { FormTemplateFactoryService } from '../../../services/form.template.factory.service';
+import { PlatformCapabilitiesService } from '../../../services/platform-capabilities.service';
 
 @Component({
   selector: 'app-domain-forms',
@@ -27,11 +28,13 @@ import { FormTemplateFactoryService } from '../../../services/form.template.fact
 export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];
   domain: any;
+  private magicLinkDeployed = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private formTemplateFactoryService: FormTemplateFactoryService,
+    private platformCapabilitiesService: PlatformCapabilitiesService,
   ) {}
 
   ngOnInit() {
@@ -39,12 +42,19 @@ export class DomainSettingsFormsComponent implements OnInit {
       this.forms = this.getOrganizationForms();
     } else {
       this.domain = this.route.snapshot.data['domain'];
-      this.forms = this.getForms();
+      this.platformCapabilitiesService.get().subscribe((caps) => {
+        this.magicLinkDeployed = !!caps?.magicLinkAuthenticatorDeployed;
+        this.forms = this.getForms();
+      });
     }
   }
 
   getForms() {
     return this.formTemplateFactoryService.findAll().map((form) => {
+      if (form.template === 'MAGIC_LINK_LOGIN') {
+        form.enabled = this.allowMagicLink();
+        return form;
+      }
       form.enabled = true;
       return form;
     });
@@ -57,5 +67,9 @@ export class DomainSettingsFormsComponent implements OnInit {
         form.enabled = true;
         return form;
       });
+  }
+
+  private allowMagicLink(): boolean {
+    return this.magicLinkDeployed;
   }
 }

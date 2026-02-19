@@ -34,6 +34,7 @@ public class LoginSettingsMongo {
     private boolean passwordlessDeviceNamingEnabled;
     private boolean certificateBasedAuthEnabled;
     private String certificateBasedAuthUrl;
+    private boolean magicLinkAuthEnabled;
     private boolean hideForm;
     private boolean identifierFirstLoginEnabled;
 
@@ -127,6 +128,14 @@ public class LoginSettingsMongo {
         this.certificateBasedAuthUrl = certificateBasedAuthUrl;
     }
 
+    public boolean isMagicLinkAuthEnabled() {
+        return magicLinkAuthEnabled;
+    }
+
+    public void setMagicLinkAuthEnabled(boolean magicLinkAuthEnabled) {
+        this.magicLinkAuthEnabled = magicLinkAuthEnabled;
+    }
+
     public boolean isHideForm() {
         return hideForm;
     }
@@ -164,6 +173,7 @@ public class LoginSettingsMongo {
         loginSettings.setPasswordlessDeviceNamingEnabled(isPasswordlessDeviceNamingEnabled());
         loginSettings.setCertificateBasedAuthEnabled(isCertificateBasedAuthEnabled());
         loginSettings.setCertificateBasedAuthUrl(getCertificateBasedAuthUrl());
+        loginSettings.setMagicLinkAuthEnabled(isMagicLinkAuthEnabled());
         loginSettings.setHideForm(!isIdentifierFirstLoginEnabled() && isHideForm());
         loginSettings.setIdentifierFirstEnabled(isIdentifierFirstLoginEnabled());
         loginSettings.setResetPasswordOnExpiration(getResetPasswordOnExpiration());
@@ -188,6 +198,7 @@ public class LoginSettingsMongo {
         loginSettingsMongo.setPasswordlessDeviceNamingEnabled(loginSettings.isPasswordlessDeviceNamingEnabled());
         loginSettingsMongo.setCertificateBasedAuthEnabled(loginSettings.isCertificateBasedAuthEnabled());
         loginSettingsMongo.setCertificateBasedAuthUrl(loginSettings.getCertificateBasedAuthUrl());
+        loginSettingsMongo.setMagicLinkAuthEnabled(loginSettings.isMagicLinkAuthEnabled());
         loginSettingsMongo.setHideForm(!loginSettings.isIdentifierFirstEnabled() && loginSettings.isHideForm());
         loginSettingsMongo.setIdentifierFirstLoginEnabled(loginSettings.isIdentifierFirstEnabled());
         loginSettingsMongo.setResetPasswordOnExpiration(loginSettings.getResetPasswordOnExpiration());

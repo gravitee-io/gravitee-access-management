@@ -42,6 +42,8 @@ public enum Template {
     WEBAUTHN_REGISTER_SUCCESS("webauthn_register_success", "/webauthn/register/success"),
     WEBAUTHN_LOGIN("webauthn_login", "/webauthn/login"),
     CBA_LOGIN("cba_login", "/cba/login"),
+    MAGIC_LINK_LOGIN("magic_link_login", "/magic-link/login"),
+    MAGIC_LINK("magic_link", "/magic-link/auth"),
     IDENTIFIER_FIRST_LOGIN("identifier_first_login", "/login/identifier"),
     ERROR("error", "/error"),
     CERTIFICATE_EXPIRATION("certificate_expiration", null),

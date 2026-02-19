@@ -36,6 +36,7 @@ public interface EventType {
     String USER_LOGIN = "USER_LOGIN";
     String USER_WEBAUTHN_LOGIN = "USER_WEBAUTHN_LOGIN";
     String USER_CBA_LOGIN = "USER_CBA_LOGIN";
+    String USER_MAGIC_LINK_LOGIN = "USER_MAGIC_LINK_LOGIN";
     String USER_LOGOUT = "USER_LOGOUT";
     String USER_CREATED = "USER_CREATED";
     String USER_UPDATED = "USER_UPDATED";
@@ -412,6 +413,6 @@ public interface EventType {
         ));
     }
     static List<String> loginTypes(){
-        return Arrays.asList(USER_LOGIN, USER_WEBAUTHN_LOGIN, USER_CBA_LOGIN);
+        return Arrays.asList(USER_LOGIN, USER_WEBAUTHN_LOGIN, USER_CBA_LOGIN, USER_MAGIC_LINK_LOGIN);
     }
 }

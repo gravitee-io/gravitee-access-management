@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
+import static io.gravitee.am.common.audit.EventType.USER_MAGIC_LINK_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_CBA_LOGIN;
 
@@ -113,7 +114,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         switch (query.getField()) {
             case Field.APPLICATION:
                 // applications are group by login attempts
-                queryBuilder.types(List.of(USER_LOGIN, USER_WEBAUTHN_LOGIN, USER_CBA_LOGIN));
+                queryBuilder.types(List.of(USER_LOGIN, USER_WEBAUTHN_LOGIN, USER_CBA_LOGIN, USER_MAGIC_LINK_LOGIN));
                 queryBuilder.status(Status.SUCCESS.name());
                 queryBuilder.field("accessPoint.id");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
@@ -121,7 +122,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             case Field.USER_STATUS, Field.USER_REGISTRATION:
                 return dataPlaneRegistry.getUserRepository(domain).statistics(query).map(AnalyticsGroupByResponse::new);
             case Field.USER_LOGIN:
-                queryBuilder.types(List.of(USER_LOGIN, USER_WEBAUTHN_LOGIN, USER_CBA_LOGIN));
+                queryBuilder.types(List.of(USER_LOGIN, USER_WEBAUTHN_LOGIN, USER_CBA_LOGIN, USER_MAGIC_LINK_LOGIN));
                 queryBuilder.field("type");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
                         .flatMap(response -> Single.just(transformKeys((AnalyticsGroupByResponse) response)));
@@ -132,6 +133,11 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                         .flatMap(response -> Single.just(transformKeys((AnalyticsGroupByResponse) response)));
             case Field.CBA:
                 queryBuilder.types(List.of(USER_CBA_LOGIN));
+                queryBuilder.field("outcome.status");
+                return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
+                        .flatMap(response -> Single.just(transformKeys((AnalyticsGroupByResponse) response)));
+            case Field.MAGIC_LINK:
+                queryBuilder.types(List.of(USER_MAGIC_LINK_LOGIN));
                 queryBuilder.field("outcome.status");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
                         .flatMap(response -> Single.just(transformKeys((AnalyticsGroupByResponse) response)));
@@ -215,6 +221,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 case USER_LOGIN -> "username login";
                 case USER_WEBAUTHN_LOGIN -> "webauthn login";
                 case USER_CBA_LOGIN -> "cba login";
+                case USER_MAGIC_LINK_LOGIN -> "magic link login";
                 default -> ((String) key).toLowerCase();
             };
         }

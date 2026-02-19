@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Magic Link based Login</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{../assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span th:text="#{login.title} + ' ' + ${client.name}"></span>
+        </div>
+    </div>
+    <div class="section">
+        <form class="form" role="form" id="login" method="post" th:action="${action}">
+
+            <div class="form-field" th:if="${emailSent == null || emailSent == false}">
+                <input class="input-field" type="text" id="email" name="email"
+                       th:placeholder="#{magic.link.label.email}"
+                       th:value="${param.email}"
+                       autofocus="autofocus"
+                       required
+                       th:autofocus="${param.email == null}"
+                       th:readonly="${param.email != null}" />
+            </div>
+
+            <div th:if="${emailSent}" class="header-description">
+                <label th:text="#{magic.link.email.sent}" />
+            </div>
+
+            <div id="cba-error" class="item error-text hide">
+                <span>
+                    <span class="error" th:text="#{magic.link.login.error}"/>
+                    <small class="error_description" th:text="#{magic.link.login.error.description}"/>
+                </span>
+            </div>
+
+            <div th:if="${error}" class="item error-text">
+                <span>
+                    <span class="error" th:text="${error}"></span>
+                    <small th:text="*{error_description}?: #{magic.link.login.error.description}"></small>
+                </span>
+            </div>
+
+            <div th:if="${emailSent == null or emailSent == false}">
+                <button class="button primary" th:text="#{magic.link.login.button.send}"></button>
+            </div>
+        </form>
+    </div>
+    <div class="section">
+        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span th:text="#{common.back.to.sign.in}"/></a>
+    </div>
+</div>
+
+</body>
+</html>
