@@ -38,7 +38,6 @@ const setting: DomainTestSettings = {
       inherited: false,
       autoLoginAfterResetPassword: true,
       redirectUriAfterResetPassword: 'http://localhost:4000',
-      resetPasswordInvalidateTokens: true,
     },
     passwordSettings: {
       inherited: false,
@@ -81,22 +80,11 @@ afterAll(async () => {
   }
 });
 
-describe('Gateway reset password with token invalidation (non-inherited)', () => {
-  it('should auto-login with redirect and invalidate old token after successful reset', async () => {
-    await clearEmails(userProps.email);
-    await requestForgotPassword(
-      {
-        domainHrid: fixture.domain.hrid,
-        clientId: fixture.clientId,
-        openIdConfiguration: fixture.openIdConfiguration,
-        user: fixture.user,
-      },
-      setting.settings,
-    );
-    const freshConfirmationLink = await retrieveEmailLinkForReset(userProps.email);
+describe('Gateway reset password success (non-inherited, no token invalidation)', () => {
+  it('should redirect to redirectUriAfterResetPassword with auto-login and old token remains active', async () => {
     const validPassword = 'V@l1dNewP@ss99';
     await resetPassword(
-      freshConfirmationLink,
+      confirmationLink,
       validPassword,
       setting.settings.accountSettings.redirectUriAfterResetPassword,
       setting.settings,

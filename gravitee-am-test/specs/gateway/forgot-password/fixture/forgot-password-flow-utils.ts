@@ -43,10 +43,10 @@ const getCookieAndXsrfToken = async (authorizationEndpoint: string, clientId: st
 export const requestForgotPassword = async (context: ForgotPasswordContext, settings) => {
   const uri = `/${context.domainHrid}/forgotPassword${buildAuthParams(context.clientId)}`;
   if (settings.accountSettings.resetPasswordCustomForm && !settings.accountSettings.resetPasswordConfirmIdentity) {
-    const forgotResponse = await performGet(process.env.AM_GATEWAY_URL, uri);
+    const forgotResponse = await performGet(process.env.AM_GATEWAY_URL, uri).expect(200);
     const dom = cheerio.load(forgotResponse.text);
-    expect(dom('#username')).toBeDefined();
-    expect(dom('#email')).toBeDefined();
+    expect(dom('#username').length).toEqual(1);
+    expect(dom('#email').length).toEqual(1);
   }
 
   const { headers, token } = await getCookieAndXsrfToken(context.openIdConfiguration.authorization_endpoint, context.clientId);
@@ -68,10 +68,10 @@ export const requestForgotPassword = async (context: ForgotPasswordContext, sett
     expect(postResponse.headers['location']).toContain('forgot_password_confirm');
     const confirmResponse = await performGet(postResponse.headers['location'], '', {
       Cookie: headers['set-cookie'],
-    });
+    }).expect(200);
     const dom = cheerio.load(confirmResponse.text);
-    expect(dom('#username')).toBeDefined();
-    expect(dom('#email')).toBeDefined();
+    expect(dom('#username').length).toEqual(1);
+    expect(dom('#email').length).toEqual(1);
 
     await performFormPost(
       process.env.AM_GATEWAY_URL,
@@ -92,7 +92,7 @@ export const requestForgotPassword = async (context: ForgotPasswordContext, sett
 
 export const retrieveEmailLinkForReset = async (email: string) => {
   const confirmationLink = (await getLastEmail(1000, email)).extractLink();
-  expect(confirmationLink).toBeDefined();
+  expect(confirmationLink).toMatch(/^https?:\/\//);
   await clearEmails(email);
   return confirmationLink;
 };
