@@ -123,13 +123,6 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
-    public Single<Long> countByClientId(String clientId) {
-        return Single.fromPublisher(accessTokenCollection.countDocuments(and(eq(FIELD_CLIENT, clientId),
-                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
     public Completable deleteByUserId(String userId) {
         return Completable.fromPublisher(accessTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)))
                 .observeOn(Schedulers.computation());
