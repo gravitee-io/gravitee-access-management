@@ -50,6 +50,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
 
         var tables = List.of(
                 "access_tokens",
+                "tokens",
                 "authorization_codes",
                 "refresh_tokens",
                 "scope_approvals",

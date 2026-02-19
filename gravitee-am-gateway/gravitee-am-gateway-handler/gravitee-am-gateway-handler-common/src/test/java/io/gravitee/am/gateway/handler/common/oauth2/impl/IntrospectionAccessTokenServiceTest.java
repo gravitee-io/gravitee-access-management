@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -69,14 +69,14 @@ public class IntrospectionAccessTokenServiceTest {
     private Environment environment;
 
     @Mock
-    private AccessTokenRepository accessTokenRepository;
+    private TokenRepository tokenRepository;
 
     private IntrospectionTokenService introspectionTokenService;
 
     @Before
     public void setUp() throws Exception {
         when(environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(false);
-        introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment, accessTokenRepository);
+        introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class IntrospectionAccessTokenServiceTest {
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(accessTokenRepository, never()).findByToken(jwt.getJti());
+        verify(tokenRepository, never()).findAccessTokenByJti(jwt.getJti());
     }
 
     @Test
@@ -120,12 +120,12 @@ public class IntrospectionAccessTokenServiceTest {
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
-        when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.just(accessToken));
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.just(accessToken));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(accessTokenRepository, times(1)).findByToken(jwt.getJti());
+        verify(tokenRepository, times(1)).findAccessTokenByJti(jwt.getJti());
     }
 
     @Test
@@ -149,7 +149,7 @@ public class IntrospectionAccessTokenServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         // repository should not be call because the token is too recent
-        verify(accessTokenRepository, never()).findByToken(jwt.getJti());
+        verify(tokenRepository, never()).findAccessTokenByJti(jwt.getJti());
     }
 
     @Test
@@ -171,7 +171,7 @@ public class IntrospectionAccessTokenServiceTest {
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
         testObserver.assertError(InvalidTokenException.class);
-        verify(accessTokenRepository, never()).findByToken(jwt.getJti());
+        verify(tokenRepository, never()).findAccessTokenByJti(jwt.getJti());
     }
 
     @Test
@@ -189,11 +189,11 @@ public class IntrospectionAccessTokenServiceTest {
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
-        when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.empty());
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
         testObserver.assertError(InvalidTokenException.class);
-        verify(accessTokenRepository, times(1)).findByToken(jwt.getJti());
+        verify(tokenRepository, times(1)).findAccessTokenByJti(jwt.getJti());
     }
 
     @Test
@@ -213,11 +213,11 @@ public class IntrospectionAccessTokenServiceTest {
         when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
-        when(accessTokenRepository.findByToken(jwt.getJti())).thenReturn(Maybe.just(accessToken));
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.just(accessToken));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
         testObserver.assertError(InvalidTokenException.class);
-        verify(accessTokenRepository, times(1)).findByToken(jwt.getJti());
+        verify(tokenRepository, times(1)).findAccessTokenByJti(jwt.getJti());
     }
 
     @Test
@@ -258,6 +258,6 @@ public class IntrospectionAccessTokenServiceTest {
                 && "The token is invalid".equals(e.getMessage())
                 && "Token audience values [client] do not match any client or protected resource identifiers in domain [domain]".equals(e.getDetails()));
         verify(clientService).findByDomainAndClientId("domain", "client");
-        verify(accessTokenRepository, never()).findByToken(anyString());
+        verify(tokenRepository, never()).findAccessTokenByJti(anyString());
     }
 }

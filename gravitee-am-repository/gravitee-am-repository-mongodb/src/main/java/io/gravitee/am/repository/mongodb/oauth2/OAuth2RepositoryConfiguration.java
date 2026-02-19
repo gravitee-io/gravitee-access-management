@@ -20,11 +20,15 @@ import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.net.URI;
 
@@ -61,5 +65,17 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
         }
 
         return environment.getProperty(propertyPrefix + ".mongodb.dbname", "gravitee-am");
+    }
+
+    @Bean
+    public TokenRepository tokenRepository(MongoTokenRepository mongoTokenRepository,
+                                           MongoAccessTokenRepository accessTokenRepository,
+                                           MongoRefreshTokenRepository refreshTokenRepository,
+                                           @Value("${legacy.repositories.useLegacyTokenRepositories:true}") boolean useLegacyTokenRepositories) {
+        return new BackwardCompatibleTokenRepository(
+                mongoTokenRepository,
+                accessTokenRepository,
+                refreshTokenRepository,
+                useLegacyTokenRepositories);
     }
 }
