@@ -20,12 +20,13 @@ import { requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forg
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
 import { setup } from '../../test-fixture';
+import { uniqueName } from '@utils-commands/misc';
 
 const userProps = {
   firstName: 'firstName',
   lastName: 'lastName',
-  email: 'test@mail.com',
-  username: `test123`,
+  email: uniqueName('fp-nii', true) + '@mail.com',
+  username: uniqueName('fp-nii', true),
   password: 'SomeP@ssw0rd01',
 };
 
@@ -50,21 +51,9 @@ const setting: DomainTestSettings = {
 
 let resetPasswordContext: ResetPasswordContext;
 let fixture: ForgotPasswordFixture;
-let confirmationLink: string;
 
 beforeAll(async () => {
   fixture = await setupFixture(setting, userProps);
-  await clearEmails(userProps.email);
-  await requestForgotPassword(
-    {
-      domainHrid: fixture.domain.hrid,
-      clientId: fixture.clientId,
-      openIdConfiguration: fixture.openIdConfiguration,
-      user: fixture.user,
-    },
-    setting.settings,
-  );
-  confirmationLink = await retrieveEmailLinkForReset(userProps.email);
   resetPasswordContext = {
     openIdConfiguration: fixture.openIdConfiguration,
     application: fixture.application,

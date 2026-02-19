@@ -20,12 +20,13 @@ import { requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forg
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
 import { setup } from '../../test-fixture';
+import { uniqueName } from '@utils-commands/misc';
 
 const userProps = {
   firstName: 'firstName',
   lastName: 'lastName',
-  email: 'test@mail.com',
-  username: `test123`,
+  email: uniqueName('fp-cfnc', true) + '@mail.com',
+  username: uniqueName('fp-cfnc', true),
   password: 'SomeP@ssw0rd01',
 };
 
