@@ -44,6 +44,12 @@ export interface PatchApplicationAdvancedSettings {
    * @memberof PatchApplicationAdvancedSettings
    */
   flowsInherited?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationAdvancedSettings
+   */
+  agentCardUrl?: string;
 }
 
 /**
@@ -64,6 +70,7 @@ export function PatchApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreD
   return {
     skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
     flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
+    agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
   };
 }
 
@@ -82,5 +89,6 @@ export function PatchApplicationAdvancedSettingsToJSONTyped(
   return {
     skipConsent: value['skipConsent'],
     flowsInherited: value['flowsInherited'],
+    agentCardUrl: value['agentCardUrl'],
   };
 }

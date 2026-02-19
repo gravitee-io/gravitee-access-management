@@ -17,16 +17,17 @@ import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { setupDomainForTest, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { createApplication } from '@management-commands/application-management-commands';
-import { Domain } from '@management-models/Domain';
-import { Application } from '@management-models/Application';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
+import { Application, NewApplication, Domain } from '../../../../api/management/models';
+
+export type CreateAgentAppOptions = Partial<NewApplication>;
 
 export interface AgentApplicationFixture extends Fixture {
   domain: Domain;
   accessToken: string;
-  createAgentApp: (name?: string) => Promise<Application>;
-  cleanup: () => Promise<void>;
+  createAgentApp: (name?: string, options?: CreateAgentAppOptions) => Promise<Application>;
+  cleanUp: () => Promise<void>;
 }
 
 export const AGENT_APP_TEST = {
@@ -49,18 +50,20 @@ export const setupAgentApplicationFixture = async (): Promise<AgentApplicationFi
     expect(domain).toBeDefined();
     expect(domain.id).toBeDefined();
 
-    const createAgentApp = async (name?: string): Promise<Application> => {
-      const app = await createApplication(domain!.id, accessToken!, {
+    const createAgentApp = async (name?: string, options?: CreateAgentAppOptions): Promise<Application> => {
+      const body: NewApplication = {
         name: name ?? uniqueName('agent-app', true),
         type: AGENT_APP_TEST.APP_TYPE,
         description: AGENT_APP_TEST.APP_DESCRIPTION,
         redirectUris: [AGENT_APP_TEST.REDIRECT_URI],
-      });
+        ...options,
+      };
+      const app = await createApplication(domain!.id, accessToken!, body);
       expect(app).toBeDefined();
       return app;
     };
 
-    const cleanup = async () => {
+    const cleanUp = async () => {
       if (domain?.id && accessToken) {
         await safeDeleteDomain(domain.id, accessToken);
       }
@@ -70,7 +73,7 @@ export const setupAgentApplicationFixture = async (): Promise<AgentApplicationFi
       domain,
       accessToken,
       createAgentApp,
-      cleanup,
+      cleanUp,
     };
   } catch (error) {
     if (domain?.id && accessToken) {

@@ -56,6 +56,7 @@ import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
+import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
 import io.gravitee.am.service.model.PatchApplicationFactorSettings;
 import io.gravitee.am.service.model.PatchApplicationIdentityProvider;
 import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
@@ -81,6 +82,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.time.LocalDateTime;
@@ -922,7 +925,6 @@ public class ApplicationServiceTest {
         Application updated = emptyAppWithDomain();
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(updated));
 
-        doReturn(true).when(accountSettingsValidator).validate(any());
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
@@ -999,7 +1001,6 @@ public class ApplicationServiceTest {
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1151,7 +1152,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
-        when(accountSettingsValidator.validate(any())).thenReturn(true);
 
         PatchApplication toPatch = new PatchApplication();
         PatchApplicationSettings settings = new PatchApplicationSettings();
@@ -1277,7 +1277,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1396,7 +1395,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1426,7 +1424,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1545,7 +1542,6 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
-        doReturn(true).when(accountSettingsValidator).validate(any());
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
@@ -1573,7 +1569,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1599,7 +1594,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1625,7 +1619,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1651,7 +1644,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1674,7 +1666,6 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        doReturn(true).when(accountSettingsValidator).validate(any());
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
@@ -1703,7 +1694,6 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidClientMetadataException.class);
@@ -1732,7 +1722,6 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1753,7 +1742,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
@@ -1777,7 +1765,6 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
-        doReturn(true).when(accountSettingsValidator).validate(any());
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
@@ -1799,7 +1786,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
@@ -1819,7 +1805,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
@@ -1839,7 +1824,6 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
-        doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
@@ -1957,5 +1941,206 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         return client;
+    }
+
+    @Test
+    public void shouldCreate_AgentApplication_WithValidAgentCardUrl() {
+        NewApplication newClient = Mockito.mock(NewApplication.class);
+        when(newClient.getName()).thenReturn("my-agent-app");
+        when(newClient.getType()).thenReturn(ApplicationType.AGENT);
+        when(newClient.getRedirectUris()).thenReturn(List.of("https://redirect"));
+        when(newClient.getAgentCardUrl()).thenReturn("https://example.com/.well-known/agent-card.json");
+        when(applicationRepository.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.empty());
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+        when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
+        when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<Application> appCaptor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationRepository, times(1)).create(appCaptor.capture());
+        Application createdApp = appCaptor.getValue();
+        assertNotNull(createdApp.getSettings());
+        assertNotNull(createdApp.getSettings().getAdvanced());
+        assertEquals("https://example.com/.well-known/agent-card.json", createdApp.getSettings().getAdvanced().getAgentCardUrl());
+    }
+
+    @Test
+    public void shouldCreate_AgentApplication_WithInvalidAgentCardUrl_Malformed() {
+        NewApplication newClient = Mockito.mock(NewApplication.class);
+        when(newClient.getName()).thenReturn("my-agent-app");
+        when(newClient.getType()).thenReturn(ApplicationType.AGENT);
+        when(newClient.getRedirectUris()).thenReturn(List.of("https://redirect"));
+        when(newClient.getAgentCardUrl()).thenReturn("not-a-valid-url");
+        when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+        testObserver.assertNotComplete();
+        verify(applicationRepository, never()).create(any(Application.class));
+    }
+
+    @Test
+    public void shouldCreate_AgentApplication_WithInvalidAgentCardUrl_NonHttpScheme() {
+        NewApplication newClient = Mockito.mock(NewApplication.class);
+        when(newClient.getName()).thenReturn("my-agent-app");
+        when(newClient.getType()).thenReturn(ApplicationType.AGENT);
+        when(newClient.getRedirectUris()).thenReturn(List.of("https://redirect"));
+        when(newClient.getAgentCardUrl()).thenReturn("ftp://example.com/agent-card.json");
+        when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+        testObserver.assertNotComplete();
+        verify(applicationRepository, never()).create(any(Application.class));
+    }
+
+    @Test
+    public void shouldPatch_Application_WithValidAgentCardUrl() {
+        Application client = emptyAppWithDomain();
+        client.setType(ApplicationType.AGENT);
+
+        PatchApplication patchClient = new PatchApplication();
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationAdvancedSettings patchAdvancedSettings = new PatchApplicationAdvancedSettings();
+        patchAdvancedSettings.setAgentCardUrl(Optional.of("https://example.com/.well-known/agent-card.json"));
+        patchApplicationSettings.setAdvanced(Optional.of(patchAdvancedSettings));
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<Application> appCaptor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationRepository, times(1)).update(appCaptor.capture());
+        Application updatedApp = appCaptor.getValue();
+        assertNotNull(updatedApp.getSettings());
+        assertNotNull(updatedApp.getSettings().getAdvanced());
+        assertEquals("https://example.com/.well-known/agent-card.json", updatedApp.getSettings().getAdvanced().getAgentCardUrl());
+    }
+
+    @Test
+    public void shouldPatch_Application_WithInvalidAgentCardUrl_Malformed() {
+        Application client = emptyAppWithDomain();
+        client.setId("my-client");
+        client.setType(ApplicationType.AGENT);
+        ApplicationSettings clientSettings = new ApplicationSettings();
+        ApplicationOAuthSettings clientOauth = new ApplicationOAuthSettings();
+        clientOauth.setRedirectUris(List.of("https://callback"));
+        clientOauth.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        clientSettings.setOauth(clientOauth);
+        client.setSettings(clientSettings);
+
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setId("my-client");
+        toPatch.setType(ApplicationType.AGENT);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(List.of("https://callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        settings.setOauth(oAuthSettings);
+        settings.setAccount(new AccountSettings());
+        ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();
+        advancedSettings.setAgentCardUrl("not-a-valid-url");
+        settings.setAdvanced(advancedSettings);
+        toPatch.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(toPatch);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+        testObserver.assertNotComplete();
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldPatch_Application_WithInvalidAgentCardUrl_NonHttpScheme() {
+        Application client = emptyAppWithDomain();
+        client.setId("my-client");
+        client.setType(ApplicationType.AGENT);
+        ApplicationSettings clientSettings = new ApplicationSettings();
+        ApplicationOAuthSettings clientOauth = new ApplicationOAuthSettings();
+        clientOauth.setRedirectUris(List.of("https://callback"));
+        clientOauth.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        clientSettings.setOauth(clientOauth);
+        client.setSettings(clientSettings);
+
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setId("my-client");
+        toPatch.setType(ApplicationType.AGENT);
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(List.of("https://callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        settings.setOauth(oAuthSettings);
+        settings.setAccount(new AccountSettings());
+        ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();
+        advancedSettings.setAgentCardUrl("ftp://example.com/agent-card.json");
+        settings.setAdvanced(advancedSettings);
+        toPatch.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(toPatch);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+        testObserver.assertNotComplete();
+        verify(applicationRepository, never()).update(any(Application.class));
     }
 }

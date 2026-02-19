@@ -74,6 +74,12 @@ export interface NewApplication {
    * @memberof NewApplication
    */
   metadata?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof NewApplication
+   */
+  agentCardUrl?: string;
 }
 
 /**
@@ -114,6 +120,7 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
     redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
+    agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
   };
 }
 
@@ -134,5 +141,6 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
     clientSecret: value['clientSecret'],
     redirectUris: value['redirectUris'],
     metadata: value['metadata'],
+    agentCardUrl: value['agentCardUrl'],
   };
 }

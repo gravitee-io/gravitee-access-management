@@ -61,6 +61,18 @@
             ></textarea>
             <mat-hint>The application's description</mat-hint>
           </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always" *ngIf="displaySection() && applicationType === 'AGENT'">
+            <mat-label>AgentCard URL</mat-label>
+            <input
+              matInput
+              type="url"
+              placeholder="https://example.com/.well-known/agent-card.json"
+              name="agentCardUrl"
+              [(ngModel)]="agentCardUrl"
+              [disabled]="!editMode"
+            />
+            <mat-hint>URL to the agent's AgentCard, as defined in the A2A specification.</mat-hint>
+          </mat-form-field>
         </div>
 
         <div *ngIf="displaySection()" class="gv-form-section">

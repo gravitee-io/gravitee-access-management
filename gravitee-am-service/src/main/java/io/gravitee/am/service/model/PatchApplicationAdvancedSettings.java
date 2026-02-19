@@ -28,6 +28,7 @@ public class PatchApplicationAdvancedSettings {
 
     private Optional<Boolean> skipConsent;
     private Optional<Boolean> flowsInherited;
+    private Optional<String> agentCardUrl;
 
     public Optional<Boolean> getSkipConsent() {
         return skipConsent;
@@ -45,11 +46,20 @@ public class PatchApplicationAdvancedSettings {
         this.flowsInherited = flowsInherited;
     }
 
+    public Optional<String> getAgentCardUrl() {
+        return agentCardUrl;
+    }
+
+    public void setAgentCardUrl(Optional<String> agentCardUrl) {
+        this.agentCardUrl = agentCardUrl;
+    }
+
     public ApplicationAdvancedSettings patch(ApplicationAdvancedSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationAdvancedSettings toPatch = _toPatch == null ? new ApplicationAdvancedSettings() : new ApplicationAdvancedSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setSkipConsent, this.getSkipConsent(), boolean.class);
         SetterUtils.safeSet(toPatch::setFlowsInherited, this.getFlowsInherited(), boolean.class);
+        SetterUtils.safeSet(toPatch::setAgentCardUrl, this.getAgentCardUrl(), String.class);
 
         return toPatch;
     }

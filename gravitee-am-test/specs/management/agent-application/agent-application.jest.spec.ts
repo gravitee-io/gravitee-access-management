@@ -30,7 +30,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (fixture) {
-    await fixture.cleanup();
+    await fixture.cleanUp();
   }
 });
 
@@ -148,5 +148,55 @@ describe('AGENT application - grant type restrictions', () => {
     expect(patched.settings.oauth.grantTypes).not.toContain('implicit');
     expect(patched.settings.oauth.grantTypes).not.toContain('password');
     expect(patched.settings.oauth.grantTypes).not.toContain('refresh_token');
+  });
+});
+
+describe('AGENT application - AgentCard URL', () => {
+  const validAgentCardUrl = 'https://example.com/.well-known/agent-card.json';
+
+  it('should create application with agentCardUrl and persist it', async () => {
+    const app = await fixture.createAgentApp(uniqueName('agent-agentcard-create', true), {
+      agentCardUrl: validAgentCardUrl,
+    });
+    expect(app).toBeDefined();
+    expect(app.settings?.advanced?.agentCardUrl).toEqual(validAgentCardUrl);
+
+    const fetched = await getApplication(fixture.domain.id, fixture.accessToken, app.id);
+    expect(fetched.settings?.advanced?.agentCardUrl).toEqual(validAgentCardUrl);
+  });
+
+  it('should patch application to set agentCardUrl and persist it', async () => {
+    const app = await fixture.createAgentApp(uniqueName('agent-agentcard-patch', true));
+    expect(app.settings?.advanced?.agentCardUrl).toBeFalsy();
+
+    const patched = await patchApplication(
+      fixture.domain.id,
+      fixture.accessToken,
+      { settings: { advanced: { agentCardUrl: validAgentCardUrl } } },
+      app.id,
+    );
+    expect(patched.settings?.advanced?.agentCardUrl).toEqual(validAgentCardUrl);
+
+    const fetched = await getApplication(fixture.domain.id, fixture.accessToken, app.id);
+    expect(fetched.settings?.advanced?.agentCardUrl).toEqual(validAgentCardUrl);
+  });
+
+  it('should patch application to update agentCardUrl', async () => {
+    const app = await fixture.createAgentApp(uniqueName('agent-agentcard-update', true), {
+      agentCardUrl: validAgentCardUrl,
+    });
+    expect(app.settings?.advanced?.agentCardUrl).toEqual(validAgentCardUrl);
+
+    const newUrl = 'https://other.example.com/.well-known/agent-card.json';
+    const patched = await patchApplication(
+      fixture.domain.id,
+      fixture.accessToken,
+      { settings: { advanced: { agentCardUrl: newUrl } } },
+      app.id,
+    );
+    expect(patched.settings?.advanced?.agentCardUrl).toEqual(newUrl);
+
+    const fetched = await getApplication(fixture.domain.id, fixture.accessToken, app.id);
+    expect(fetched.settings?.advanced?.agentCardUrl).toEqual(newUrl);
   });
 });
