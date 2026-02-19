@@ -38,6 +38,8 @@ interface TokenExchangeSettings {
   standalone: false,
 })
 export class TokenExchangeComponent implements OnInit {
+  readonly maxDelegationDepthLimit = 2147483647; // Java Integer.MAX_VALUE
+
   domainId: string;
   domain: any = {};
   formChanged = false;
@@ -129,6 +131,9 @@ export class TokenExchangeComponent implements OnInit {
     }
     if (settings.allowDelegation && !settings.allowedActorTokenTypes?.length) {
       errors.push('At least one Actor Token Type must be selected when Delegation is enabled.');
+    }
+    if (settings.allowDelegation && settings.maxDelegationDepth > this.maxDelegationDepthLimit) {
+      errors.push(`Maximum Delegation Depth must not exceed ${this.maxDelegationDepthLimit}.`);
     }
     return errors;
   }
