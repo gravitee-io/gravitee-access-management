@@ -1,0 +1,190 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@use 'sass:map';
+@use '@angular/material' as mat;
+@use '@gravitee/ui-particles-angular' as gio;
+
+:host {
+  font-family: mat.m2-font-family(gio.$mat-typography, body-1);
+}
+
+$text-muted: rgb(0 0 0 / 60%);
+$text-secondary: rgb(0 0 0 / 54%);
+$border-subtle: rgb(0 0 0 / 12%);
+
+.gv-form-section-title span {
+  font-family: 'Golos UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.field-value:not(a),
+.ext-description,
+.skill-description {
+  color: $text-muted;
+}
+
+.agent-card-state {
+  display: flex;
+  align-items: center;
+  padding: 16px 0;
+  gap: 8px;
+}
+
+.agent-card-url {
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.agent-card-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.agent-card-summary {
+  margin-bottom: 16px;
+}
+
+.agent-card-field {
+  margin: 4px 0;
+}
+
+.agent-card-name {
+  font-weight: 800;
+}
+
+.field-label {
+  margin-right: 4px;
+  font-weight: 500;
+}
+
+.agent-card-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-right: 4px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.chip-true {
+    background-color: #cef3d1;
+    color: map.get(gio.$mat-success-palette, darker40);
+  }
+
+  &.chip-false {
+    background-color: map.get(gio.$mat-error-palette, lighter80);
+    color: map.get(gio.$mat-error-palette, darker40);
+  }
+
+  &.chip-neutral {
+    background-color: map.get(gio.$mat-blue-palette, lighter80);
+    color: map.get(gio.$mat-blue-palette, default);
+  }
+}
+
+.ext-badge {
+  margin-left: 6px;
+}
+
+.ext-description {
+  margin-left: 6px;
+}
+
+.agent-card-raw,
+code {
+  @include gio.code-typography;
+}
+
+.agent-card-raw {
+  overflow: auto;
+  max-height: 500px;
+  padding: 16px;
+  border-radius: 4px;
+  background: #f5f5f5;
+  font-size: 12px;
+}
+
+.gv-form-section-content {
+  padding: 16px 4px;
+}
+
+.skill-defaults {
+  display: flex;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $border-subtle;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+
+.skill-card {
+  margin-bottom: 12px;
+}
+
+.skill-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 6px;
+}
+
+.skill-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.skill-description {
+  margin: 4px 0 8px;
+  font-size: 13px;
+}
+
+.skill-modes-section {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 6px 0;
+  gap: 6px;
+}
+
+.skill-modes-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.skill-modes-label {
+  margin-right: 2px;
+  color: $text-secondary;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.skill-examples {
+  margin-top: 8px;
+}
+
+.skill-examples-list {
+  margin: 4px 0 0 16px;
+  font-size: 13px;
+
+  li {
+    margin-bottom: 2px;
+    color: rgb(0 0 0 / 70%);
+  }
+}

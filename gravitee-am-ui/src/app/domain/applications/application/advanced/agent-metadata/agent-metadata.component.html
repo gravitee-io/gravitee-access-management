@@ -1,0 +1,247 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column" class="gv-page-container">
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h2>Agent Metadata</h2>
+      <span>Displays the A2A agent card fetched from the configured AgentCard URL.</span>
+    </div>
+
+    <!-- No URL configured -->
+    <div *ngIf="!agentCardUrl" class="agent-card-state">
+      <mat-icon>info_outline</mat-icon>
+      <span>No AgentCard URL is configured for this application. Set it in the <strong>General</strong> settings tab.</span>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="agentCardUrl && loading" class="agent-card-state">
+      <mat-progress-spinner mode="indeterminate" diameter="24"></mat-progress-spinner>
+      <span>Loading agent card...</span>
+    </div>
+
+    <!-- Source URL - shown whenever a URL is set and not loading -->
+    <p *ngIf="agentCardUrl && !loading" class="agent-card-url">
+      Source: <a [href]="agentCardUrl" target="_blank" rel="noopener noreferrer">{{ agentCardUrl }}</a>
+    </p>
+
+    <!-- Error -->
+    <div *ngIf="agentCardUrl && !loading && loadError" class="agent-card-state">
+      <mat-icon color="warn">error_outline</mat-icon>
+      <span>{{ loadError }}</span>
+      <button mat-stroked-button color="primary" (click)="loadAgentCard()">Retry</button>
+    </div>
+
+    <!-- Loaded -->
+    <div *ngIf="agentCardUrl && !loading && agentCard">
+      <!-- Summary card -->
+      <mat-card class="agent-card-summary">
+        <mat-card-content>
+          <div fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center">
+            <img *ngIf="agentCard.iconUrl" [src]="agentCard.iconUrl" alt="Agent icon" class="agent-card-icon" />
+            <div>
+              <p class="agent-card-field agent-card-name">{{ agentCard.name }}</p>
+              <p *ngIf="agentCard.version" class="agent-card-field">
+                <span class="field-label">Version:</span>
+                <span class="field-value">{{ agentCard.version }}</span>
+              </p>
+              <p *ngIf="agentCard.description" class="agent-card-field">
+                <span class="field-label">Description:</span>
+                <span class="field-value">{{ agentCard.description }}</span>
+              </p>
+              <p *ngIf="agentCard.provider" class="agent-card-field">
+                <span class="field-label">Provider:</span>
+                <a
+                  *ngIf="agentCard.provider.url; else providerName"
+                  [href]="agentCard.provider.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ agentCard.provider.organization }}</a
+                >
+                <ng-template #providerName
+                  ><span class="field-value">{{ agentCard.provider.organization }}</span></ng-template
+                >
+              </p>
+              <p *ngIf="agentCard.url" class="agent-card-field">
+                <span class="field-label">Service URL:</span>
+                <a [href]="agentCard.url" target="_blank" rel="noopener noreferrer">{{ agentCard.url }}</a>
+              </p>
+              <p *ngIf="agentCard.documentationUrl" class="agent-card-field">
+                <span class="field-label">Documentation:</span>
+                <a [href]="agentCard.documentationUrl" target="_blank" rel="noopener noreferrer">{{ agentCard.documentationUrl }}</a>
+              </p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Tabs -->
+      <mat-tab-group>
+        <!-- Capabilities tab -->
+        <mat-tab *ngIf="hasCapabilities" label="Capabilities">
+          <div class="gv-form-section-content">
+            <div class="agent-card-field">
+              <span
+                class="agent-card-chip"
+                [ngClass]="{ 'chip-true': agentCard.capabilities?.streaming, 'chip-false': !agentCard.capabilities?.streaming }"
+              >
+                Streaming: {{ agentCard.capabilities?.streaming ? 'Yes' : 'No' }}
+              </span>
+            </div>
+            <div class="agent-card-field">
+              <span
+                class="agent-card-chip"
+                [ngClass]="{
+                  'chip-true': agentCard.capabilities?.pushNotifications,
+                  'chip-false': !agentCard.capabilities?.pushNotifications
+                }"
+              >
+                Push Notifications: {{ agentCard.capabilities?.pushNotifications ? 'Yes' : 'No' }}
+              </span>
+            </div>
+            <div class="agent-card-field">
+              <span
+                class="agent-card-chip"
+                [ngClass]="{
+                  'chip-true': agentCard.capabilities?.stateTransitionHistory,
+                  'chip-false': !agentCard.capabilities?.stateTransitionHistory
+                }"
+              >
+                State Transition History: {{ agentCard.capabilities?.stateTransitionHistory ? 'Yes' : 'No' }}
+              </span>
+            </div>
+            <div *ngIf="agentCard.capabilities?.extensions?.length" class="agent-card-field">
+              <br />
+              <strong>Extensions:</strong>
+              <ul>
+                <li *ngFor="let ext of agentCard.capabilities.extensions">
+                  <code>{{ ext.uri }}</code>
+                  <span *ngIf="ext.required" class="agent-card-chip chip-false ext-badge">required</span>
+                  <span *ngIf="ext.description" class="ext-description">— {{ ext.description }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Security tab -->
+        <mat-tab *ngIf="hasSecurity" label="Security">
+          <div class="gv-form-section-content">
+            <div *ngFor="let entry of securitySchemeEntries()" class="agent-card-field">
+              <strong>{{ entry.name }}</strong>
+              <ul>
+                <ng-container *ngIf="entry.scheme.type === 'oauth2'; else genericScheme">
+                  <li>
+                    <span class="field-label">type:</span> <span class="field-value">{{ entry.scheme.type }}</span>
+                  </li>
+                  <li *ngIf="$any(entry.scheme).description">
+                    <span class="field-label">description:</span>
+                    <span class="field-value">{{ $any(entry.scheme).description }}</span>
+                  </li>
+                  <li *ngIf="$any(entry.scheme).oauth2MetadataUrl">
+                    <span class="field-label">metadata URL:</span>
+                    <a [href]="$any(entry.scheme).oauth2MetadataUrl" target="_blank" rel="noopener noreferrer" class="field-value">{{
+                      $any(entry.scheme).oauth2MetadataUrl
+                    }}</a>
+                  </li>
+                  <li>
+                    <span class="field-label">flows:</span>
+                    <span *ngFor="let flow of oauthFlowNames(entry.scheme)" class="agent-card-chip chip-neutral">{{ flow }}</span>
+                  </li>
+                </ng-container>
+                <ng-template #genericScheme>
+                  <li *ngFor="let key of $any(entry.scheme) | keyvalue">
+                    <span class="field-label">{{ key.key }}:</span>
+                    <a
+                      *ngIf="isUrl(key.value); else plainValue"
+                      [href]="key.value"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="field-value"
+                      >{{ key.value }}</a
+                    >
+                    <ng-template #plainValue
+                      ><span class="field-value">{{ key.value }}</span></ng-template
+                    >
+                  </li>
+                </ng-template>
+              </ul>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Skills tab -->
+        <mat-tab *ngIf="hasSkills" label="Skills">
+          <div class="gv-form-section-content">
+            <!-- Default I/O modes -->
+            <div *ngIf="agentCard.defaultInputModes?.length || agentCard.defaultOutputModes?.length" class="skill-defaults">
+              <div *ngIf="agentCard.defaultInputModes?.length" class="skill-modes-row">
+                <small class="skill-modes-label">Default input</small>
+                <span *ngFor="let mode of agentCard.defaultInputModes" class="agent-card-chip chip-neutral">{{ mode }}</span>
+              </div>
+              <div *ngIf="agentCard.defaultOutputModes?.length" class="skill-modes-row">
+                <small class="skill-modes-label">Default output</small>
+                <span *ngFor="let mode of agentCard.defaultOutputModes" class="agent-card-chip chip-neutral">{{ mode }}</span>
+              </div>
+            </div>
+
+            <!-- Individual skills -->
+            <mat-card *ngFor="let skill of agentCard.skills" class="skill-card">
+              <mat-card-content>
+                <!-- Name + tags -->
+                <div class="skill-header">
+                  <span class="skill-name">{{ skill.name || skill.id }}</span>
+                  <span *ngFor="let tag of skill.tags" class="agent-card-chip chip-neutral">{{ tag }}</span>
+                </div>
+
+                <!-- Description -->
+                <p *ngIf="skill.description" class="skill-description">{{ skill.description }}</p>
+
+                <!-- Per-skill I/O modes -->
+                <div *ngIf="skill.inputModes?.length || skill.outputModes?.length" class="skill-modes-section">
+                  <div *ngIf="skill.inputModes?.length" class="skill-modes-row">
+                    <small class="skill-modes-label">Input</small>
+                    <span *ngFor="let mode of skill.inputModes" class="agent-card-chip chip-neutral">{{ mode }}</span>
+                  </div>
+                  <div *ngIf="skill.outputModes?.length" class="skill-modes-row">
+                    <small class="skill-modes-label">Output</small>
+                    <span *ngFor="let mode of skill.outputModes" class="agent-card-chip chip-neutral">{{ mode }}</span>
+                  </div>
+                </div>
+
+                <!-- Examples -->
+                <div *ngIf="skill.examples?.length" class="skill-examples">
+                  <small class="skill-modes-label">Examples</small>
+                  <ul class="skill-examples-list">
+                    <li *ngFor="let ex of skill.examples">{{ ex }}</li>
+                  </ul>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </mat-tab>
+
+        <!-- Raw JSON tab -->
+        <mat-tab label="Raw JSON">
+          <div class="gv-form-section-content">
+            <pre class="agent-card-raw">{{ rawJson }}</pre>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </div>
+</div>

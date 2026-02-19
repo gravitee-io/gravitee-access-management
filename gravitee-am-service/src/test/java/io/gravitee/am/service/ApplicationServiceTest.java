@@ -36,6 +36,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
+import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -44,16 +45,16 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.InvalidTargetUrlException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.impl.OAuthClientUniquenessValidator;
 import io.gravitee.am.service.impl.SecretService;
-import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
@@ -82,8 +83,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.time.LocalDateTime;
@@ -2142,5 +2141,47 @@ public class ApplicationServiceTest {
         testObserver.assertError(InvalidParameterException.class);
         testObserver.assertNotComplete();
         verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldPatch_Application_ClearAgentCardUrl() {
+        Application client = emptyAppWithDomain();
+        client.setId("my-client");
+        client.setType(ApplicationType.AGENT);
+        ApplicationSettings clientSettings = new ApplicationSettings();
+        ApplicationOAuthSettings clientOauth = new ApplicationOAuthSettings();
+        clientOauth.setRedirectUris(List.of("https://callback"));
+        clientOauth.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        clientSettings.setOauth(clientOauth);
+        ApplicationAdvancedSettings clientAdvanced = new ApplicationAdvancedSettings();
+        clientAdvanced.setAgentCardUrl("https://example.com/.well-known/agent-card.json");
+        clientSettings.setAdvanced(clientAdvanced);
+        client.setSettings(clientSettings);
+
+        PatchApplication patchClient = new PatchApplication();
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationAdvancedSettings patchAdvancedSettings = new PatchApplicationAdvancedSettings();
+        patchAdvancedSettings.setAgentCardUrl(Optional.of(""));
+        patchApplicationSettings.setAdvanced(Optional.of(patchAdvancedSettings));
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<Application> appCaptor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationRepository, times(1)).update(appCaptor.capture());
+        Application updatedApp = appCaptor.getValue();
+        assertNotNull(updatedApp.getSettings());
+        assertNotNull(updatedApp.getSettings().getAdvanced());
+        assertEquals("", updatedApp.getSettings().getAdvanced().getAgentCardUrl());
     }
 }

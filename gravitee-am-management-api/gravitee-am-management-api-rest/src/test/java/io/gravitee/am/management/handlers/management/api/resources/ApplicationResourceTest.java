@@ -314,6 +314,71 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
+    @Test
+    public void shouldGetAgentCard_success() {
+        final String domainId = "domain-id";
+        final String appId = "app-id";
+        final String agentCardJson = "{\"name\":\"Test Agent\",\"version\":\"1.0\"}";
+
+        final Application mockApp = new Application();
+        mockApp.setId(appId);
+        mockApp.setDomain(domainId);
+        final ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();
+        advancedSettings.setAgentCardUrl("https://example.com/.well-known/agent-card.json");
+        final ApplicationSettings settings = new ApplicationSettings();
+        settings.setAdvanced(advancedSettings);
+        mockApp.setSettings(settings);
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Maybe.just(mockApp)).when(applicationService).findById(appId);
+        doReturn(Single.just(agentCardJson)).when(agentCardService).fetchAgentCard("https://example.com/.well-known/agent-card.json");
+
+        final Response response = target("domains").path(domainId).path("applications").path(appId).path("agent-card").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetAgentCard_noUrl() {
+        final String domainId = "domain-id";
+        final String appId = "app-id";
+
+        final Application mockApp = new Application();
+        mockApp.setId(appId);
+        mockApp.setDomain(domainId);
+        final ApplicationSettings settings = new ApplicationSettings();
+        settings.setAdvanced(new ApplicationAdvancedSettings());
+        mockApp.setSettings(settings);
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Maybe.just(mockApp)).when(applicationService).findById(appId);
+
+        final Response response = target("domains").path(domainId).path("applications").path(appId).path("agent-card").request().get();
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetAgentCard_appNotFound() {
+        final String domainId = "domain-id";
+        final String appId = "app-id";
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Maybe.empty()).when(applicationService).findById(appId);
+
+        final Response response = target("domains").path(domainId).path("applications").path(appId).path("agent-card").request().get();
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetAgentCard_forbidden() {
+        final String domainId = "domain-id";
+        final String appId = "app-id";
+
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains").path(domainId).path("applications").path(appId).path("agent-card").request().get();
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+    }
+
     private Application buildApplicationMock() {
 
         Application mockApplication = new Application();

@@ -129,7 +129,7 @@ export class ApplicationGeneralComponent implements OnInit {
     };
     data.settings.advanced = {
       skipConsent: this.skipConsent,
-      agentCardUrl: this.agentCardUrl || undefined,
+      agentCardUrl: this.agentCardUrl?.trim() ?? '',
     };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(() => {
       this.formChanged = false;

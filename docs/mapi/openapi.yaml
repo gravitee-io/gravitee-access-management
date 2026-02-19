@@ -1262,6 +1262,46 @@ paths:
                 $ref: "#/components/schemas/Application"
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/agent-card:
+    get:
+      tags:
+      - application
+      - domain
+      summary: Fetch the agent card for an application
+      description: "User must have APPLICATION[READ] permission on the specified application.\
+        \ Fetches and proxies the agent card JSON from the application's configured\
+        \ agentCardUrl."
+      operationId: getApplicationAgentCard
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Agent card JSON successfully fetched
+        "400":
+          description: No agentCardUrl configured or invalid URL
+        "404":
+          description: Application not found
+        "500":
+          description: Internal server error or upstream failure
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics:
     get:
       tags:
@@ -6620,11 +6660,10 @@ paths:
       - protected-resource
       - domain
       summary: List protected resource member's permissions
-      description: "User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the\
-        \ specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission\
-        \ on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on\
-        \ the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission\
-        \ on the specified organization"
+      description: "User must have PROTECTED_RESOURCE[READ] permission on the specified\
+        \ protected resource or PROTECTED_RESOURCE[READ] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[READ] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[READ] permission on the specified organization"
       operationId: getProtectedResourceMemberPermissions
       parameters:
       - name: organizationId
@@ -12172,7 +12211,6 @@ components:
           type: boolean
         agentCardUrl:
           type: string
-          format: uri
     ApplicationEntity:
       type: object
       properties:
@@ -12904,9 +12942,9 @@ components:
           type: array
           items:
             type: string
-        allowedScopesEnabled:
-          type: boolean
         clientTemplateEnabled:
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -13139,21 +13177,21 @@ components:
           $ref: "#/components/schemas/TokenExchangeSettings"
         certificateSettings:
           $ref: "#/components/schemas/CertificateSettings"
-        dynamicClientRegistrationEnabled:
-          type: boolean
         redirectUriStrictMatching:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
           type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
-        redirectUriExpressionLanguageEnabled:
+        dynamicClientRegistrationTemplateEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -14010,7 +14048,6 @@ components:
             type: object
         agentCardUrl:
           type: string
-          format: uri
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -14997,7 +15034,6 @@ components:
           type: boolean
         agentCardUrl:
           type: string
-          format: uri
     PatchApplicationFactorSettings:
       type: object
       properties:
@@ -17194,7 +17230,19 @@ components:
           type: boolean
         serviceAccount:
           type: boolean
+        address:
+          type: object
+          additionalProperties:
+            type: object
+        locale:
+          type: string
+        zoneInfo:
+          type: string
         lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object
@@ -17206,10 +17254,6 @@ components:
           $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -17218,18 +17262,10 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
         disabled:
           type: boolean
-        locale:
-          type: string
     UserEntity:
       type: object
       properties:
@@ -17398,7 +17434,19 @@ components:
           $ref: "#/components/schemas/ApplicationEntity"
         sourceId:
           type: string
+        address:
+          type: object
+          additionalProperties:
+            type: object
+        locale:
+          type: string
+        zoneInfo:
+          type: string
         lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object
@@ -17410,10 +17458,6 @@ components:
           $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -17422,18 +17466,10 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
         disabled:
           type: boolean
-        locale:
-          type: string
     UserId:
       type: object
       properties:
