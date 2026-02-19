@@ -38,7 +38,9 @@ interface TokenExchangeSettings {
   standalone: false,
 })
 export class TokenExchangeComponent implements OnInit {
-  readonly maxDelegationDepthLimit = 2147483647; // Java Integer.MAX_VALUE
+  readonly maxDelegationDepthLimit = 100;
+  readonly minDelegationDepth = 1;
+  readonly defaultDelegationDepth = 10;
 
   domainId: string;
   domain: any = {};
@@ -96,9 +98,8 @@ export class TokenExchangeComponent implements OnInit {
       allowDelegation: tokenExchangeSettings.allowDelegation ?? false,
     };
 
-    if (tokenExchangeSettings.maxDelegationDepth !== undefined && tokenExchangeSettings.maxDelegationDepth !== null) {
-      normalizedSettings.maxDelegationDepth = tokenExchangeSettings.maxDelegationDepth;
-    }
+    normalizedSettings.maxDelegationDepth =
+      tokenExchangeSettings.maxDelegationDepth != null ? tokenExchangeSettings.maxDelegationDepth : this.defaultDelegationDepth;
 
     this.domain.tokenExchangeSettings = normalizedSettings;
   }
@@ -111,6 +112,7 @@ export class TokenExchangeComponent implements OnInit {
       allowImpersonation: true,
       allowedActorTokenTypes: this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: false,
+      maxDelegationDepth: this.defaultDelegationDepth,
     };
   }
 
@@ -132,8 +134,13 @@ export class TokenExchangeComponent implements OnInit {
     if (settings.allowDelegation && !settings.allowedActorTokenTypes?.length) {
       errors.push('At least one Actor Token Type must be selected when Delegation is enabled.');
     }
-    if (settings.allowDelegation && settings.maxDelegationDepth > this.maxDelegationDepthLimit) {
-      errors.push(`Maximum Delegation Depth must not exceed ${this.maxDelegationDepthLimit}.`);
+    if (
+      settings.allowDelegation &&
+      (settings.maxDelegationDepth == null ||
+        settings.maxDelegationDepth < this.minDelegationDepth ||
+        settings.maxDelegationDepth > this.maxDelegationDepthLimit)
+    ) {
+      errors.push(`Maximum Delegation Depth must be between ${this.minDelegationDepth} and ${this.maxDelegationDepthLimit}.`);
     }
     return errors;
   }

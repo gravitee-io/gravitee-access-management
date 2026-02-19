@@ -134,12 +134,11 @@
                   [(ngModel)]="domain.tokenExchangeSettings.maxDelegationDepth"
                   (ngModelChange)="modelChanged()"
                   [disabled]="!editMode"
-                  min="0"
+                  [min]="minDelegationDepth"
                   [max]="maxDelegationDepthLimit"
+                  required
                 />
-                <mat-hint>
-                  Maximum depth of delegation chain (nested "act" claims). A value of 0 disables depth checks (unlimited).
-                </mat-hint>
+                <mat-hint> Maximum depth of delegation chain (nested "act" claims). Must be between 1 and 100. Default is 10. </mat-hint>
               </mat-form-field>
             </div>
           </div>

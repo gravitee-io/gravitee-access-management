@@ -860,15 +860,16 @@ public class TokenExchangeServiceImplTest {
     }
 
     @Test
-    public void shouldSucceedWithUnlimitedDelegationDepth() throws Exception {
+    public void shouldSucceedWhenDelegationDepthWithinLimit() throws Exception {
         // Per RFC 8693 Section 4.1, delegation depth is based on the subject token's "act" claim chain.
-        // Create validators: subject token with deep "act" chain, actor token without.
+        // Create validators: subject token with "act" chain at depth 4, actor token without.
+        // With maxDelegationDepth=5, resulting depth of 5 should succeed.
         TokenValidator validatorWithDeepActChain = new TokenValidator() {
             @Override
             public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
                 if ("subject-token".equals(token)) {
                     Map<String, Object> claims = new HashMap<>();
-                    // Create a deep delegation chain (depth 5) on the subject token
+                    // Create a delegation chain (depth 4) on the subject token
                     Map<String, Object> act1 = new HashMap<>();
                     act1.put(Claims.SUB, "actor-1");
                     Map<String, Object> act2 = new HashMap<>();
@@ -917,7 +918,7 @@ public class TokenExchangeServiceImplTest {
         settings.setAllowedSubjectTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
         settings.setAllowedActorTokenTypes(Collections.singletonList(TokenType.ACCESS_TOKEN));
         settings.setAllowDelegation(true);
-        settings.setMaxDelegationDepth(0); // 0 = unlimited
+        settings.setMaxDelegationDepth(5); // depth 4 + 1 new = 5, within limit
 
         Domain domain = new Domain();
         domain.setId("domain-id");
@@ -926,7 +927,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        // Should succeed even with deep delegation chain because maxDelegationDepth=0 means unlimited
+        // Should succeed because resulting depth (5) equals maxDelegationDepth (5)
         TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
         assertThat(result).isNotNull();
         assertThat(result.isDelegation()).isTrue();

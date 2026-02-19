@@ -102,7 +102,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     int resultingDepth = currentDepth + 1;
                                     int maxDepth = settings.getMaxDelegationDepth();
 
-                                    if (maxDepth > 0 && resultingDepth > maxDepth) {
+                                    if (resultingDepth > maxDepth) {
                                         return Single.error(new InvalidRequestException(
                                                 "Maximum delegation depth exceeded. Current: " + currentDepth +
                                                         ", Max allowed: " + maxDepth));
