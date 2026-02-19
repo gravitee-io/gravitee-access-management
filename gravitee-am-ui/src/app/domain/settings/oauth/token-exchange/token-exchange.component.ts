@@ -40,7 +40,7 @@ interface TokenExchangeSettings {
 export class TokenExchangeComponent implements OnInit {
   readonly maxDelegationDepthLimit = 100;
   readonly minDelegationDepth = 1;
-  readonly defaultDelegationDepth = 10;
+  readonly defaultDelegationDepth = 25;
 
   domainId: string;
   domain: any = {};
