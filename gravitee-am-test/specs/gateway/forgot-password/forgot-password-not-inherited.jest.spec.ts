@@ -84,6 +84,32 @@ afterAll(async () => {
 });
 
 describe('Gateway reset password', () => {
+  describe('when reset password succeeds with a valid password', () => {
+    it('should redirect to redirectUriAfterResetPassword with auto-login and old token remains active', async () => {
+      // Re-request forgot password to get a fresh confirmation link (the one from beforeAll may have been consumed by policy tests)
+      await clearEmails(userProps.email);
+      await requestForgotPassword(
+        {
+          domainHrid: fixture.domain.hrid,
+          clientId: fixture.clientId,
+          openIdConfiguration: fixture.openIdConfiguration,
+          user: fixture.user,
+        },
+        setting.settings,
+      );
+      const freshConfirmationLink = await retrieveEmailLinkForReset(userProps.email);
+      // Password must pass: min 5, max 24, not in dictionary, not user profile info
+      const validPassword = 'V@l1dNewP@ss99';
+      await resetPassword(
+        freshConfirmationLink,
+        validPassword,
+        setting.settings.accountSettings.redirectUriAfterResetPassword,
+        setting.settings,
+        resetPasswordContext,
+      );
+    });
+  });
+
   describe('when a Password Policy has been configured', () => {
     describe(`when a password is shorter than the minimum length of ${setting.settings.passwordSettings.minLength}`, () => {
       const minLength = 'SomeP@ssw0rd99'.substring(0, setting.settings.passwordSettings.minLength - 1);
