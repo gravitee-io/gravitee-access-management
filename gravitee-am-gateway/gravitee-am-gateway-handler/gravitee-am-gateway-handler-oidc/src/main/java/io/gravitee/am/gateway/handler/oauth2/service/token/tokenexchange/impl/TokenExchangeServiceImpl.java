@@ -93,8 +93,14 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
 
         return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
-                .flatMap(subjectToken ->
-                        validateActorToken(request.actorToken(), request.actorTokenType(), domain)
+                .flatMap(subjectToken -> {
+                    // Reject JWT actor tokens when subject is from an external trusted issuer.
+                    // This prevents transitive trust chains across external issuers.
+                    if (subjectToken.isTrustedIssuerValidated() && TokenType.JWT.equals(request.actorTokenType())) {
+                        return Single.error(new InvalidGrantException(
+                                "Actor token type JWT not allowed with external subject token"));
+                    }
+                    return validateActorToken(request.actorToken(), request.actorTokenType(), domain)
                                 .flatMap(actorToken -> {
                                     // Per RFC 8693 Section 4.1, delegation depth is based on
                                     // the subject token's "act" claim chain
@@ -110,8 +116,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
                                     ActorTokenInfo actorInfo = extractActorInfo(actorToken, subjectToken, resultingDepth);
                                     return buildDelegationResult(tokenRequest, subjectToken, actorToken, actorInfo, request, client);
-                                })
-                );
+                                });
+                });
     }
 
     private ParsedRequest parseRequest(TokenRequest tokenRequest, Domain domain) {

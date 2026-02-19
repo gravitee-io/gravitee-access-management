@@ -146,6 +146,153 @@
             </div>
           </div>
 
+          <!-- Trusted Issuers Section -->
+          <div class="gv-form-section" fxLayout="column">
+            <div class="gv-form-section-title">
+              <h5>Trusted Issuers</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-hint style="font-size: 75%; margin-bottom: 16px">
+              Configure external token issuers whose JWTs are accepted as subject or actor tokens during token exchange.
+            </mat-hint>
+
+            <div
+              *ngFor="let issuer of domain.tokenExchangeSettings.trustedIssuers; let i = index"
+              class="trusted-issuer-card"
+              fxLayout="column"
+            >
+              <div fxLayout="row" fxLayoutAlign="space-between center">
+                <h5 style="margin: 0">Issuer #{{ i + 1 }}</h5>
+                <button mat-icon-button type="button" (click)="removeTrustedIssuer(i)" [disabled]="!editMode" matTooltip="Remove issuer">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Issuer URL</mat-label>
+                <input
+                  matInput
+                  [name]="'issuerUrl_' + i"
+                  [(ngModel)]="issuer.issuer"
+                  (ngModelChange)="modelChanged()"
+                  [disabled]="!editMode"
+                  placeholder="https://external-idp.example.com"
+                />
+                <mat-hint>The expected "iss" claim value in the external JWT</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="margin-top: 16px">
+                <mat-label>Key Resolution Method</mat-label>
+                <mat-select
+                  [name]="'keyResolutionMethod_' + i"
+                  [(ngModel)]="issuer.keyResolutionMethod"
+                  (selectionChange)="modelChanged()"
+                  [disabled]="!editMode"
+                >
+                  <mat-option *ngFor="let method of KEY_RESOLUTION_METHODS" [value]="method.value">{{ method.label }}</mat-option>
+                </mat-select>
+                <mat-hint>How to obtain the public key for JWT signature verification</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field *ngIf="issuer.keyResolutionMethod === 'JWKS_URL'" appearance="outline" style="margin-top: 16px">
+                <mat-label>JWKS URL</mat-label>
+                <input
+                  matInput
+                  [name]="'jwksUri_' + i"
+                  [(ngModel)]="issuer.jwksUri"
+                  (ngModelChange)="modelChanged()"
+                  [disabled]="!editMode"
+                  placeholder="https://external-idp.example.com/.well-known/jwks.json"
+                />
+                <mat-hint>URL of the JSON Web Key Set endpoint for the issuer</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field *ngIf="issuer.keyResolutionMethod === 'PEM'" appearance="outline" style="margin-top: 16px">
+                <mat-label>PEM Certificate</mat-label>
+                <textarea
+                  matInput
+                  [name]="'certificate_' + i"
+                  [(ngModel)]="issuer.certificate"
+                  (ngModelChange)="modelChanged()"
+                  [disabled]="!editMode"
+                  rows="6"
+                  placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+                ></textarea>
+                <mat-hint>PEM-encoded X.509 certificate containing the public key</mat-hint>
+              </mat-form-field>
+
+              <!-- Scope Mappings -->
+              <div style="margin-top: 16px">
+                <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+                  <h5 style="margin: 0">Scope Mappings</h5>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="addScopeMapping(i)"
+                    [disabled]="!editMode"
+                    matTooltip="Add scope mapping"
+                  >
+                    <mat-icon>add_circle_outline</mat-icon>
+                  </button>
+                </div>
+                <mat-hint style="font-size: 75%; margin-bottom: 8px; display: block">
+                  Map external scopes from this issuer to domain scopes. Unmapped scopes will be dropped.
+                </mat-hint>
+
+                <div
+                  *ngFor="let mapping of scopeMappingEntries[i]; let j = index"
+                  fxLayout="row"
+                  fxLayoutAlign="start center"
+                  fxLayoutGap="8px"
+                  style="margin-top: 8px"
+                >
+                  <mat-form-field appearance="outline" fxFlex="40">
+                    <mat-label>External Scope</mat-label>
+                    <input
+                      matInput
+                      [name]="'extScope_' + i + '_' + j"
+                      [(ngModel)]="mapping.externalScope"
+                      (ngModelChange)="onScopeMappingChange(i)"
+                      [disabled]="!editMode"
+                    />
+                  </mat-form-field>
+                  <mat-icon style="margin-bottom: 20px">arrow_forward</mat-icon>
+                  <mat-form-field appearance="outline" fxFlex="40">
+                    <mat-label>Domain Scope</mat-label>
+                    <input
+                      matInput
+                      [name]="'domScope_' + i + '_' + j"
+                      [(ngModel)]="mapping.domainScope"
+                      (ngModelChange)="onScopeMappingChange(i)"
+                      [disabled]="!editMode"
+                    />
+                  </mat-form-field>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="removeScopeMapping(i, j)"
+                    [disabled]="!editMode"
+                    matTooltip="Remove mapping"
+                    style="margin-bottom: 20px"
+                  >
+                    <mat-icon>remove_circle_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="addTrustedIssuer()"
+              [disabled]="!editMode"
+              style="align-self: flex-start; margin-top: 8px"
+            >
+              <mat-icon>add</mat-icon>
+              Add Trusted Issuer
+            </button>
+          </div>
+
           <!-- Validation warnings -->
           <div *ngFor="let error of getValidationErrors()" class="gv-form-section validation-error">
             <mat-icon>warning</mat-icon>
@@ -184,6 +331,12 @@
           <li>No refresh tokens are issued during token exchange</li>
           <li>When requesting an ID token, it is returned in the access_token field with token_type "N_A"</li>
         </ul>
+        <h4>Trusted Issuers</h4>
+        <p>
+          Configure <strong>Trusted Issuers</strong> to accept JWTs from external identity providers as subject or actor tokens.
+          Each issuer requires a key resolution method (JWKS URL or PEM certificate) for signature verification.
+          Optional scope mappings allow translating external scopes to domain scopes.
+        </p>
         <p>
           Clients must have the <code>Token Exchange</code> grant type enabled to use token exchange.
           <br />

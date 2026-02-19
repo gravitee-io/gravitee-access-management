@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -22,6 +23,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -32,10 +34,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -54,6 +59,9 @@ public class DefaultTokenValidatorTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private TrustedIssuerResolver trustedIssuerResolver;
+
     private DefaultTokenValidator validator;
 
     private static final String TOKEN = "test.jwt.token";
@@ -63,7 +71,7 @@ public class DefaultTokenValidatorTest {
     @Before
     public void setUp() {
         when(domain.getId()).thenReturn(DOMAIN_ID);
-        validator = new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TOKEN_TYPE_URN);
+        validator = new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TOKEN_TYPE_URN, trustedIssuerResolver);
     }
 
     @Test
@@ -83,6 +91,7 @@ public class DefaultTokenValidatorTest {
             assertEquals("jti-123", validatedToken.getTokenId());
             assertEquals(TOKEN_TYPE_URN, validatedToken.getTokenType());
             assertEquals(DOMAIN_ID, validatedToken.getDomain());
+            assertFalse(validatedToken.isTrustedIssuerValidated());
             assertNotNull(validatedToken.getClaims());
             assertNotNull(validatedToken.getScopes());
             assertTrue(validatedToken.getScopes().contains("read"));
@@ -129,7 +138,7 @@ public class DefaultTokenValidatorTest {
     }
 
     @Test
-    public void testValidateInvalidToken() {
+    public void testValidateInvalidToken_noTrustedIssuers() {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new Exception("Invalid signature")));
 
@@ -139,6 +148,194 @@ public class DefaultTokenValidatorTest {
         testObserver.assertError(error ->
             error.getMessage().contains("Invalid " + TOKEN_TYPE_URN)
         );
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_untrustedIssuer() {
+        // Domain cert verification fails
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        // Trusted issuers are configured but no match
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://other-issuer.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_JWKS_URL);
+        ti.setJwksUri("https://other-issuer.example.com/jwks");
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        // Decode without verification extracts iss
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://unknown-issuer.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(error ->
+            error.getMessage().contains("Untrusted issuer: https://unknown-issuer.example.com")
+        );
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_signatureVerificationFails() throws Exception {
+        // Domain cert verification fails
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        // Trusted issuers are configured
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://external-idp.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_PEM);
+        ti.setCertificate("some-pem");
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        // Decode without verification extracts matching iss
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://external-idp.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        // Trusted issuer resolver throws (bad signature)
+        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+                .thenThrow(new Exception("Signature verification failed"));
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(error ->
+            error.getMessage().contains("Invalid JWT signature")
+        );
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_success() throws Exception {
+        // Domain cert verification fails
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        // Trusted issuer configured
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://external-idp.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_JWKS_URL);
+        ti.setJwksUri("https://external-idp.example.com/jwks");
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        // Decode without verification extracts matching iss
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://external-idp.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        // Trusted issuer resolver verifies successfully
+        long futureExp = (System.currentTimeMillis() / 1000) + 3600;
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject("external-user-123")
+                .issuer("https://external-idp.example.com")
+                .expirationTime(new Date(futureExp * 1000))
+                .claim(Claims.SCOPE, "ext:read ext:write")
+                .build();
+        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+                .thenReturn(claimsSet);
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(validatedToken -> {
+            assertEquals("external-user-123", validatedToken.getSubject());
+            assertEquals("https://external-idp.example.com", validatedToken.getIssuer());
+            assertTrue(validatedToken.isTrustedIssuerValidated());
+            assertEquals(DOMAIN_ID, validatedToken.getDomain());
+            assertTrue(validatedToken.getScopes().contains("ext:read"));
+            assertTrue(validatedToken.getScopes().contains("ext:write"));
+            return true;
+        });
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_scopeMapping() throws Exception {
+        // Domain cert verification fails
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        // Trusted issuer with scope mappings
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://external-idp.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_PEM);
+        ti.setCertificate("some-pem");
+        ti.setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        // Decode without verification
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://external-idp.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        // External JWT has scopes: ext:read, ext:write, ext:admin (ext:admin is unmapped)
+        long futureExp = (System.currentTimeMillis() / 1000) + 3600;
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject("external-user-123")
+                .issuer("https://external-idp.example.com")
+                .expirationTime(new Date(futureExp * 1000))
+                .claim(Claims.SCOPE, "ext:read ext:write ext:admin")
+                .build();
+        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+                .thenReturn(claimsSet);
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(validatedToken -> {
+            // Only mapped scopes should be present (unmapped ext:admin is dropped)
+            assertEquals(2, validatedToken.getScopes().size());
+            assertTrue(validatedToken.getScopes().contains("domain:read"));
+            assertTrue(validatedToken.getScopes().contains("domain:write"));
+            assertFalse(validatedToken.getScopes().contains("ext:admin"));
+            assertTrue(validatedToken.isTrustedIssuerValidated());
+            return true;
+        });
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_noScopeMapping_passThrough() throws Exception {
+        // Domain cert verification fails
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        // Trusted issuer without scope mappings (null)
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://external-idp.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_PEM);
+        ti.setCertificate("some-pem");
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://external-idp.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        long futureExp = (System.currentTimeMillis() / 1000) + 3600;
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject("external-user-123")
+                .issuer("https://external-idp.example.com")
+                .expirationTime(new Date(futureExp * 1000))
+                .claim(Claims.SCOPE, "read write")
+                .build();
+        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+                .thenReturn(claimsSet);
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(validatedToken -> {
+            // All scopes pass through when no mapping configured
+            assertTrue(validatedToken.getScopes().contains("read"));
+            assertTrue(validatedToken.getScopes().contains("write"));
+            return true;
+        });
     }
 
     @Test

@@ -18,8 +18,11 @@ package io.gravitee.am.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static io.gravitee.am.common.oauth2.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.common.oauth2.TokenType.ID_TOKEN;
@@ -99,6 +102,12 @@ public class TokenExchangeSettings {
      */
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
+    /**
+     * List of trusted external issuers whose JWTs can be accepted as subject/actor tokens.
+     * Null means no trusted issuers (only domain-issued tokens accepted).
+     */
+    private List<TrustedIssuer> trustedIssuers;
+
     public TokenExchangeSettings() {
         this.allowedSubjectTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, JWT));
         this.allowedRequestedTokenTypes = new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
@@ -147,10 +156,50 @@ public class TokenExchangeSettings {
         if (!enabled) {
             return true;
         }
-        return (allowImpersonation || allowDelegation)
-                && (allowedSubjectTokenTypes != null && !allowedSubjectTokenTypes.isEmpty())
-                && (allowedRequestedTokenTypes != null && !allowedRequestedTokenTypes.isEmpty())
-                && (!allowDelegation || (allowedActorTokenTypes != null && !allowedActorTokenTypes.isEmpty()))
-                && (!allowDelegation || (maxDelegationDepth >= MIN_MAX_DELEGATION_DEPTH && maxDelegationDepth <= MAX_MAX_DELEGATION_DEPTH));
+        if (!(allowImpersonation || allowDelegation)
+                || allowedSubjectTokenTypes == null || allowedSubjectTokenTypes.isEmpty()
+                || allowedRequestedTokenTypes == null || allowedRequestedTokenTypes.isEmpty()
+                || (allowDelegation && (allowedActorTokenTypes == null || allowedActorTokenTypes.isEmpty()))
+                || (allowDelegation && (maxDelegationDepth < MIN_MAX_DELEGATION_DEPTH || maxDelegationDepth > MAX_MAX_DELEGATION_DEPTH))) {
+                        return false;
+        }
+        return areTrustedIssuersValid();
+    }
+
+    private boolean areTrustedIssuersValid() {
+        if (trustedIssuers == null || trustedIssuers.isEmpty()) {
+            return true;
+        }
+
+        Set<String> seenIssuers = new HashSet<>();
+        for (TrustedIssuer ti : trustedIssuers) {
+            if (ti.getIssuer() == null || ti.getIssuer().isBlank()) {
+                return false;
+            }
+            if (!seenIssuers.add(ti.getIssuer())) {
+                return false; // duplicate issuer
+            }
+            String method = ti.getKeyResolutionMethod();
+            if (!TrustedIssuer.KEY_RESOLUTION_JWKS_URL.equals(method)
+                    && !TrustedIssuer.KEY_RESOLUTION_PEM.equals(method)) {
+                return false;
+            }
+            if (TrustedIssuer.KEY_RESOLUTION_JWKS_URL.equals(method)) {
+                if (ti.getJwksUri() == null || ti.getJwksUri().isBlank()) {
+                    return false;
+                }
+                try {
+                    URI.create(ti.getJwksUri()).toURL();
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+            if (TrustedIssuer.KEY_RESOLUTION_PEM.equals(method)) {
+                if (ti.getCertificate() == null || ti.getCertificate().isBlank()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

@@ -39,7 +39,9 @@ import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.certificate.api.X509CertUtils;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -269,6 +271,9 @@ public class DomainServiceImpl implements DomainService {
     @With(AccessLevel.PACKAGE) // to make test setup less painful
     @Value("${domains.identities.default.enabled:true}")
     private boolean createDefaultIdentityProvider = true;
+
+    @Value("${domain.tokenExchange.trustedIssuers.maxCount:5}")
+    private int trustedIssuersMaxCount = 5;
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;
     @Autowired
@@ -841,6 +846,11 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("Token Exchange settings are invalid"));
         }
 
+        Completable trustedIssuerValidation = validateTrustedIssuers(domain);
+        if (trustedIssuerValidation != null) {
+            return trustedIssuerValidation;
+        }
+
         if (domain.getWebAuthnSettings() != null) {
             final String origin = domain.getWebAuthnSettings().getOrigin();
             if (origin == null || origin.isBlank()) {
@@ -869,6 +879,36 @@ public class DomainServiceImpl implements DomainService {
                                 .flatMapCompletable(environment -> validateDomain(domain, environment));
                     }
                 });
+    }
+
+    /**
+     * Validate trusted issuer configuration: max count and PEM certificate format.
+     * Returns null if validation passes, or a Completable error if it fails.
+     */
+    private Completable validateTrustedIssuers(Domain domain) {
+        if (domain.getTokenExchangeSettings() == null
+                || domain.getTokenExchangeSettings().getTrustedIssuers() == null
+                || domain.getTokenExchangeSettings().getTrustedIssuers().isEmpty()) {
+            return null;
+        }
+
+        var trustedIssuers = domain.getTokenExchangeSettings().getTrustedIssuers();
+
+        if (trustedIssuers.size() > trustedIssuersMaxCount) {
+            return Completable.error(new InvalidDomainException(
+                    "Maximum number of trusted issuers exceeded (max: " + trustedIssuersMaxCount + ")"));
+        }
+
+        for (TrustedIssuer ti : trustedIssuers) {
+            if (TrustedIssuer.KEY_RESOLUTION_PEM.equals(ti.getKeyResolutionMethod())) {
+                if (X509CertUtils.parse(ti.getCertificate()) == null) {
+                    return Completable.error(new InvalidDomainException(
+                            "Invalid PEM certificate for trusted issuer: " + ti.getIssuer()));
+                }
+            }
+        }
+
+        return null;
     }
 
     private boolean hasIncorrectOrigins(Domain domain) {

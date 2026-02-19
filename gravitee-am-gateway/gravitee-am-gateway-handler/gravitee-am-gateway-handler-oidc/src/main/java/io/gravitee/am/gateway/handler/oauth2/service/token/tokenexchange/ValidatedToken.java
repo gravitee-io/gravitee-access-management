@@ -97,6 +97,13 @@ public class ValidatedToken {
     private final String domain;
 
     /**
+     * Whether this token was validated against a trusted external issuer (true)
+     * or against the domain's own certificate (false).
+     */
+    @Builder.Default
+    private final boolean trustedIssuerValidated = false;
+
+    /**
      * Get a specific claim by name.
      *
      * @param claimName the name of the claim
