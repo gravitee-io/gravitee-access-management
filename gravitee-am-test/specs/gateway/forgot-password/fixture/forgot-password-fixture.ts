@@ -114,7 +114,7 @@ export const setupFixture = async (setting: DomainTestSettings, userProps: User)
     await createUser(domain.id, accessToken, {
       firstName: 'second',
       lastName: 'user',
-      email: 'test@mail.com',
+      email: userProps.email,
       username: 'anotherUser',
       password: 'r@Nd0mP@55w0rd!',
     });
@@ -124,7 +124,7 @@ export const setupFixture = async (setting: DomainTestSettings, userProps: User)
   const response = await performPost(
     openIdConfiguration.token_endpoint,
     '',
-    'grant_type=password&username=test123&password=SomeP@ssw0rd01&scope=openid',
+    `grant_type=password&username=${encodeURIComponent(userProps.username)}&password=${encodeURIComponent(userProps.password)}&scope=openid`,
     {
       'Content-type': 'application/x-www-form-urlencoded',
       Authorization: 'Basic ' + applicationBase64Token(application),
