@@ -21,9 +21,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeServi
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -49,11 +48,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
 
     @Lazy
     @Autowired
-    private AccessTokenRepository accessTokenRepository;
-
-    @Lazy
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private TokenRepository tokenRepository;
 
     private final AuthorizationCodeGenerator codeGenerator = new AuthorizationCodeGenerator();
 
@@ -86,11 +81,11 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
         // If an authorization code is used more than once, the authorization server MUST deny the request and SHOULD
         // revoke (when possible) all tokens previously issued based on that authorization code.
         // https://tools.ietf.org/html/rfc6749#section-4.1.2
-        return accessTokenRepository.findByAuthorizationCode(code)
+        return tokenRepository.findAccessTokenByAuthorizationCode(code)
                 .flatMapCompletable(accessToken -> {
-                    Completable deleteAccessTokenAction = accessTokenRepository.delete(accessToken.getToken());
+                    Completable deleteAccessTokenAction = tokenRepository.deleteByJti(accessToken.getToken());
                     if (accessToken.getRefreshToken() != null) {
-                        return deleteAccessTokenAction.andThen(refreshTokenRepository.delete(accessToken.getRefreshToken()));
+                        return deleteAccessTokenAction.andThen(tokenRepository.deleteByJti(accessToken.getRefreshToken()));
                     }
                     return deleteAccessTokenAction;
                 })

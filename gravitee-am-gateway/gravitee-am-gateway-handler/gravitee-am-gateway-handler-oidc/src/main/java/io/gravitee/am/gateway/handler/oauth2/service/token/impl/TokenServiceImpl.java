@@ -48,8 +48,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.model.uma.PermissionRequest;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
@@ -96,10 +95,7 @@ public class TokenServiceImpl implements TokenService {
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
 
     @Autowired
-    private AccessTokenRepository accessTokenRepository;
-
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private TokenRepository tokenRepository;
 
     @Autowired
     private TokenEnhancer tokenEnhancer;
@@ -141,7 +137,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> accessTokenRepository.findByToken(jwt.getJti()).map(accessToken -> convertAccessToken(jwt, null)));
+                .flatMapMaybe(jwt -> tokenRepository.findAccessTokenByJti(jwt.getJti()).map(accessToken -> convertAccessToken(jwt, null)));
     }
 
     @Override
@@ -153,7 +149,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> refreshTokenRepository.findByToken(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt, null)));
+                .flatMapMaybe(jwt -> tokenRepository.findRefreshTokenByJti(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt, null)));
     }
 
     @Override
@@ -312,7 +308,7 @@ public class TokenServiceImpl implements TokenService {
                     }
 
                     // else, refresh token is used only once
-                    return refreshTokenRepository.delete(refreshToken1.getValue())
+                    return tokenRepository.deleteByJti(refreshToken1.getValue())
                             .andThen(Single.just(refreshToken1));
                 })
                 .doOnEvent((token, error) -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
@@ -324,12 +320,12 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Completable deleteAccessToken(String accessToken) {
-        return accessTokenRepository.delete(accessToken);
+        return tokenRepository.deleteByJti(accessToken);
     }
 
     @Override
     public Completable deleteRefreshToken(String refreshToken) {
-        return refreshTokenRepository.delete(refreshToken);
+        return tokenRepository.deleteByJti(refreshToken);
     }
 
     private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
