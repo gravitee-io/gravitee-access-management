@@ -20,9 +20,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.code.impl.AuthorizationCode
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import java.util.Set;
@@ -39,9 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
@@ -60,10 +57,7 @@ public class AuthorizationCodeServiceTest {
     private AuthorizationCodeRepository authorizationCodeRepository;
 
     @Mock
-    private AccessTokenRepository accessTokenRepository;
-
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+    private TokenRepository tokenRepository;
 
     @Test
     public void shouldCreate_noExistingCode() {
@@ -119,15 +113,14 @@ public class AuthorizationCodeServiceTest {
         authorizationCode.setClientId("my-client-id");
 
         when(authorizationCodeRepository.findAndRemoveByCodeAndClientId(authorizationCode.getCode(), "my-client-id")).thenReturn(Maybe.just(authorizationCode));
-        when(accessTokenRepository.findByAuthorizationCode(authorizationCode.getCode())).thenReturn(Observable.empty());
+        when(tokenRepository.findAccessTokenByAuthorizationCode(authorizationCode.getCode())).thenReturn(Observable.empty());
 
         TestObserver<AuthorizationCode> testObserver = authorizationCodeService.remove(authorizationCode.getCode(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(accessTokenRepository, times(1)).findByAuthorizationCode(anyString());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, times(1)).findAccessTokenByAuthorizationCode(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
     }
 
     @Test
@@ -153,16 +146,15 @@ public class AuthorizationCodeServiceTest {
         List<AccessToken> tokens = Arrays.asList(accessToken, accessToken2);
 
         when(authorizationCodeRepository.findAndRemoveByCodeAndClientId(any(), any())).thenReturn(Maybe.empty());
-        when(accessTokenRepository.findByAuthorizationCode(anyString())).thenReturn(Observable.fromIterable(tokens));
-        when(accessTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(tokenRepository.findAccessTokenByAuthorizationCode(anyString())).thenReturn(Observable.fromIterable(tokens));
+        when(tokenRepository.deleteByJti(anyString())).thenReturn(Completable.complete());
 
         TestObserver<AuthorizationCode> testObserver = authorizationCodeService.remove(authorizationCode.getCode(), client).test();
         testObserver.assertError(InvalidGrantException.class);
 
-        verify(accessTokenRepository, times(1)).findByAuthorizationCode(anyString());
-        verify(accessTokenRepository, times(2)).delete(anyString());
+        verify(tokenRepository, times(1)).findAccessTokenByAuthorizationCode(anyString());
+        verify(tokenRepository, times(2)).deleteByJti(anyString());
         verify(authorizationCodeRepository, never()).delete(any());
-        verify(refreshTokenRepository, never()).delete(anyString());
     }
 
     @Test
@@ -190,16 +182,15 @@ public class AuthorizationCodeServiceTest {
         List<AccessToken> tokens = Arrays.asList(accessToken, accessToken2);
 
         when(authorizationCodeRepository.findAndRemoveByCodeAndClientId(any(), any())).thenReturn(Maybe.empty());
-        when(accessTokenRepository.findByAuthorizationCode(anyString())).thenReturn(Observable.fromIterable(tokens));
-        when(accessTokenRepository.delete(anyString())).thenReturn(Completable.complete());
-        when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(tokenRepository.findAccessTokenByAuthorizationCode(anyString())).thenReturn(Observable.fromIterable(tokens));
+        when(tokenRepository.deleteByJti(anyString())).thenReturn(Completable.complete());
 
         TestObserver<AuthorizationCode> testObserver = authorizationCodeService.remove(authorizationCode.getCode(), client).test();
         testObserver.assertError(InvalidGrantException.class);
 
-        verify(accessTokenRepository, times(1)).findByAuthorizationCode(anyString());
-        verify(accessTokenRepository, times(2)).delete(anyString());
-        verify(refreshTokenRepository, times(2)).delete(anyString());
+        verify(tokenRepository, times(1)).findAccessTokenByAuthorizationCode(anyString());
+        verify(tokenRepository, times(4)).deleteByJti(anyString());
         verify(authorizationCodeRepository, never()).delete(any());
     }
+
 }

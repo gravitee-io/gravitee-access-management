@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.api.spring;
 
-import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAccessToken;
+import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcToken;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
@@ -26,17 +25,15 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Repository
-public interface SpringAccessTokenRepository extends RxJava3CrudRepository<JdbcAccessToken, String> {
+public interface SpringTokenRepository extends RxJava3CrudRepository<JdbcToken, String> {
+    @Query("select * from tokens a where a.token = :jti and a.type = 'ACCESS_TOKEN' and (a.expire_at > :now or a.expire_at is null)")
+    Maybe<JdbcToken> findNotExpiredAccessTokenByJti(@Param("jti") String jti, @Param("now")LocalDateTime now);
 
-    @Query("select * from access_tokens a where a.token = :token and (a.expire_at > :now or a.expire_at is null)")
-    Maybe<JdbcAccessToken> findByToken(@Param("token") String token, @Param("now")LocalDateTime now);
+    @Query("select * from tokens a where a.token = :jti and a.type = 'REFRESH_TOKEN' and (a.expire_at > :now or a.expire_at is null)")
+    Maybe<JdbcToken> findNotExpiredRefreshTokenByJti(@Param("jti") String jti, @Param("now")LocalDateTime now);
 
-    @Query("select * from access_tokens a where a.authorization_code = :auth and (a.expire_at > :now or a.expire_at is null)")
-    Flowable<JdbcAccessToken> findByAuthorizationCode(@Param("auth") String code, @Param("now")LocalDateTime now);
+    @Query("select * from tokens a where a.authorization_code = :auth and a.type = 'ACCESS_TOKEN' and (a.expire_at > :now or a.expire_at is null)")
+    Flowable<JdbcToken> findNotExpiredAccessTokenByAuthorizationCode(@Param("auth") String code, @Param("now")LocalDateTime now);
 
 }

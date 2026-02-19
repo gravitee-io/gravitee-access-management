@@ -111,8 +111,6 @@ export const initFixture = async (): Promise<SessionManagementGatewayFixture> =>
     session: { persistent: false },
   });
 
-  // Single sync + start after all apps are created
-  await waitForDomainSync(domain.id, accessToken);
 
   const started = await waitForDomainStart(domain);
   domain = started.domain;
@@ -141,6 +139,9 @@ export const initFixture = async (): Promise<SessionManagementGatewayFixture> =>
     }
     await safeDeleteDomain(domain?.id, accessToken);
   };
+
+  // Single sync + start after all apps are created
+  await waitForDomainSync(domain.id, accessToken);
 
   return {
     accessToken,

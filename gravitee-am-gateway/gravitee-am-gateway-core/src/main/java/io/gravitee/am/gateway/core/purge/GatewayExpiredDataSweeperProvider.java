@@ -19,10 +19,7 @@ import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneProvider;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
-import io.gravitee.am.repository.oauth2.api.PushedAuthorizationRequestRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.*;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +36,10 @@ public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProv
     @Lazy
     @Autowired
     protected RefreshTokenRepository refreshTokenRepository;
+
+    @Lazy
+    @Autowired
+    protected TokenRepository tokenRepository;
 
     @Lazy
     @Autowired
@@ -74,6 +75,7 @@ public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProv
             case auth_flow_ctx -> authenticationFlowContextRepository;
             case pushed_authorization_requests -> pushedAuthRequestRepository;
             case ciba_auth_requests -> cibaAuthRequestRepository;
+            case tokens -> tokenRepository;
 
             case scope_approvals -> singleDataPlaneProvider.get().getScopeApprovalRepository();
             case login_attempts -> singleDataPlaneProvider.get().getLoginAttemptRepository();

@@ -22,5 +22,5 @@ import org.springframework.data.relational.core.mapping.Table;
  * @author GraviteeSource Team
  */
 @Table("refresh_tokens")
-public class JdbcRefreshToken extends JdbcToken {
+public class JdbcRefreshToken extends JdbcBaseToken {
 }
