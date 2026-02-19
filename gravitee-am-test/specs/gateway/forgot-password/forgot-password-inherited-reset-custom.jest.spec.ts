@@ -20,14 +20,15 @@ import { ForgotPasswordContext, requestForgotPassword, retrieveEmailLinkForReset
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
 import { setup } from '../../test-fixture';
+import { uniqueName } from '@utils-commands/misc';
 
 const resetPasswordFailed = 'error=reset_password_failed';
 const invalidPasswordValue = 'invalid_password_value';
 const userProps = {
   firstName: 'firstName',
   lastName: 'lastName',
-  email: 'test@mail.com',
-  username: `test123`,
+  email: uniqueName('fp-irc', true) + '@mail.com',
+  username: uniqueName('fp-irc', true),
   password: 'SomeP@ssw0rd01',
 };
 
@@ -71,7 +72,6 @@ const setting: DomainTestSettings = {
 let resetPasswordContext: ResetPasswordContext;
 let forgotPasswordContext: ForgotPasswordContext;
 let fixture: ForgotPasswordFixture;
-let confirmationLink: string;
 
 beforeAll(async () => {
   fixture = await setupFixture(setting, userProps);
@@ -89,10 +89,6 @@ beforeAll(async () => {
     resetPasswordFailed,
     invalidPasswordValue,
   };
-  // Clear emails for this specific recipient at the start to avoid interference from other tests
-  await clearEmails(userProps.email);
-  await requestForgotPassword(forgotPasswordContext, setting.settings);
-  confirmationLink = await retrieveEmailLinkForReset(userProps.email);
 });
 
 afterAll(async () => {
@@ -127,25 +123,19 @@ describe('Gateway reset password', () => {
 
   describe(`when password history is enabled for ${setting.passwordPolicy.oldPasswords} passwords`, () => {
     passwordHistoryTests.forEach(({ password, expectedMsg }) => {
-      describe(`when resetting password with ${password}`, () => {
-        it('should redirect to forgot password form', async () => {
-          await requestForgotPassword(forgotPasswordContext, setting.settings);
-        });
-
-        it('should receive an email with a link to the reset password form', async () => {
-          confirmationLink = await retrieveEmailLinkForReset(userProps.email);
-        });
-
-        it(`${password} should return ${expectedMsg}`, async () => {
-          await resetPassword(confirmationLink, password, expectedMsg, setting.settings, resetPasswordContext);
-        });
+      it(`resetting with ${password} should return ${expectedMsg}`, async () => {
+        await clearEmails(userProps.email);
+        await requestForgotPassword(forgotPasswordContext, setting.settings);
+        const link = await retrieveEmailLinkForReset(userProps.email);
+        await resetPassword(link, password, expectedMsg, setting.settings, resetPasswordContext);
       });
     });
   });
 
   describe('when a Password Policy has been configured', () => {
+    let confirmationLink: string;
+
     beforeAll(async () => {
-      // Clear emails for this specific recipient at the start to avoid interference from other tests
       await clearEmails(userProps.email);
       await requestForgotPassword(forgotPasswordContext, setting.settings);
       confirmationLink = await retrieveEmailLinkForReset(userProps.email);
