@@ -135,11 +135,10 @@
                   (ngModelChange)="modelChanged()"
                   [disabled]="!editMode"
                   min="0"
-                  max="10"
+                  [max]="maxDelegationDepthLimit"
                 />
                 <mat-hint>
-                  Maximum depth of delegation chain (nested "act" claims). Leave empty to keep the default unlimited limit. A value of 0
-                  disables depth checks (unlimited).
+                  Maximum depth of delegation chain (nested "act" claims). A value of 0 disables depth checks (unlimited).
                 </mat-hint>
               </mat-form-field>
             </div>
