@@ -121,6 +121,74 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
+    public void shouldDeleteRecursivelyByParentJti() {
+        AccessToken rootToken = new AccessToken();
+        rootToken.setId(RandomString.generate());
+        rootToken.setToken("root-token");
+
+        AccessToken childTokenA = new AccessToken();
+        childTokenA.setId(RandomString.generate());
+        childTokenA.setToken("child-token-a");
+        childTokenA.setParentJti(rootToken.getToken());
+
+        AccessToken childTokenB = new AccessToken();
+        childTokenB.setId(RandomString.generate());
+        childTokenB.setToken("child-token-b");
+        childTokenB.setParentJti(rootToken.getToken());
+
+        AccessToken childTokenC = new AccessToken();
+        childTokenC.setId(RandomString.generate());
+        childTokenC.setToken("child-token-c");
+        childTokenC.setParentJti(rootToken.getToken());
+
+        RefreshToken grandChildTokenA1 = new RefreshToken();
+        grandChildTokenA1.setId(RandomString.generate());
+        grandChildTokenA1.setToken("grand-child-token-a1");
+        grandChildTokenA1.setParentJti(childTokenA.getToken());
+
+        AccessToken grandChildTokenA2 = new AccessToken();
+        grandChildTokenA2.setId(RandomString.generate());
+        grandChildTokenA2.setToken("grand-child-token-a2");
+        grandChildTokenA2.setParentJti(childTokenA.getToken());
+
+        RefreshToken grandChildTokenB1 = new RefreshToken();
+        grandChildTokenB1.setId(RandomString.generate());
+        grandChildTokenB1.setToken("grand-child-token-b1");
+        grandChildTokenB1.setParentJti(childTokenB.getToken());
+
+        AccessToken grandChildTokenC1 = new AccessToken();
+        grandChildTokenC1.setId(RandomString.generate());
+        grandChildTokenC1.setToken("grand-child-token-c1");
+        grandChildTokenC1.setParentJti(childTokenC.getToken());
+
+        AccessToken otherToken = new AccessToken();
+        otherToken.setId(RandomString.generate());
+        otherToken.setToken("other-token");
+
+        tokenRepository.create(rootToken).ignoreElement()
+                .andThen(tokenRepository.create(childTokenA).ignoreElement())
+                .andThen(tokenRepository.create(childTokenB).ignoreElement())
+                .andThen(tokenRepository.create(childTokenC).ignoreElement())
+                .andThen(tokenRepository.create(grandChildTokenA1).ignoreElement())
+                .andThen(tokenRepository.create(grandChildTokenA2).ignoreElement())
+                .andThen(tokenRepository.create(grandChildTokenB1).ignoreElement())
+                .andThen(tokenRepository.create(grandChildTokenC1).ignoreElement())
+                .andThen(tokenRepository.create(otherToken).ignoreElement())
+                .andThen(tokenRepository.deleteRecursivelyByParentJti(rootToken.getToken()))
+                .blockingAwait();
+
+        assertNull(tokenRepository.findAccessTokenByJti(rootToken.getToken()).blockingGet());
+        assertNull(tokenRepository.findAccessTokenByJti(childTokenA.getToken()).blockingGet());
+        assertNull(tokenRepository.findAccessTokenByJti(childTokenB.getToken()).blockingGet());
+        assertNull(tokenRepository.findAccessTokenByJti(childTokenC.getToken()).blockingGet());
+        assertNull(tokenRepository.findRefreshTokenByJti(grandChildTokenA1.getToken()).blockingGet());
+        assertNull(tokenRepository.findAccessTokenByJti(grandChildTokenA2.getToken()).blockingGet());
+        assertNull(tokenRepository.findRefreshTokenByJti(grandChildTokenB1.getToken()).blockingGet());
+        assertNull(tokenRepository.findAccessTokenByJti(grandChildTokenC1.getToken()).blockingGet());
+        assertNotNull(tokenRepository.findAccessTokenByJti(otherToken.getToken()).blockingGet());
+    }
+
+    @Test
     public void shouldDeleteByUserId() {
         AccessToken accessToken = new AccessToken();
         accessToken.setId(RandomString.generate());

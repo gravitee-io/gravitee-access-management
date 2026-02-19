@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.1-add-tokens-parent-jti
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: tokens
+                columnName: parent_jti
+      changes:
+        - addColumn:
+            tableName: tokens
+            columns:
+              - column: { name: parent_jti, type: nvarchar(64), constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: parent_jti
+            indexName: idx_tokens_parent_jti
+            tableName: tokens
+            unique: false

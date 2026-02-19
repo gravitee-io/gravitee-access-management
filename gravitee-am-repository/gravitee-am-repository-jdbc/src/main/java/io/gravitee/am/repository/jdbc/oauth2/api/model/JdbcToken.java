@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.api.model;
 
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository.TokenType;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.relational.core.mapping.Column;
@@ -35,4 +33,7 @@ public class JdbcToken extends JdbcBaseToken {
 
     @Column("type")
     private String type;
+
+    @Column("parent_jti")
+    private String parentJti;
 }
