@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { getApplication, patchApplication } from '@management-commands/application-management-commands';
+import { getApplication, patchApplication, getApplicationAgentCard } from '@management-commands/application-management-commands';
 import { Application } from '@management-models/Application';
 import { uniqueName } from '@utils-commands/misc';
 import { AgentApplicationFixture, setupAgentApplicationFixture } from './fixtures/agent-application-fixture';
@@ -198,5 +198,37 @@ describe('AGENT application - AgentCard URL', () => {
 
     const fetched = await getApplication(fixture.domain.id, fixture.accessToken, app.id);
     expect(fetched.settings?.advanced?.agentCardUrl).toEqual(newUrl);
+  });
+
+  it('should patch application to clear agentCardUrl', async () => {
+    const app = await fixture.createAgentApp(uniqueName('agent-agentcard-clear', true), {
+      agentCardUrl: validAgentCardUrl,
+    });
+    expect(app.settings?.advanced?.agentCardUrl).toEqual(validAgentCardUrl);
+
+    const patched = await patchApplication(
+      fixture.domain.id,
+      fixture.accessToken,
+      { settings: { advanced: { agentCardUrl: '' } } },
+      app.id,
+    );
+    expect(patched.settings?.advanced?.agentCardUrl).toBe('');
+
+    const fetched = await getApplication(fixture.domain.id, fixture.accessToken, app.id);
+    expect(fetched.settings?.advanced?.agentCardUrl).toBe('');
+  });
+});
+
+describe('AGENT application - agent card endpoint', () => {
+  it('should return 400 when no agentCardUrl is configured', async () => {
+    const app = await fixture.createAgentApp(uniqueName('agent-card-nourl', true));
+    await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('should return an error when agentCardUrl is unreachable', async () => {
+    const app = await fixture.createAgentApp(uniqueName('agent-card-unreachable', true), {
+      agentCardUrl: 'https://this-url-definitely-does-not-exist.invalid/card.json',
+    });
+    await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toHaveProperty('response.status');
   });
 });

@@ -54,4 +54,9 @@ public class WebClientsConfiguration {
         final String newsletterURL =  configuration.getProperty("newsletter.url", "https://newsletter.gravitee.io");
         return webClientBuilder.createWebClient(vertx, URI.create(newsletterURL).toURL());
     }
+
+    @Bean("agentCardWebClient")
+    protected WebClient agentCardWebClient(Vertx vertx, WebClientBuilder webClientBuilder) {
+        return webClientBuilder.createWebClient(vertx);
+    }
 }

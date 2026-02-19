@@ -46,6 +46,7 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.ManagementUserService;
+import io.gravitee.am.management.service.AgentCardService;
 import io.gravitee.am.management.service.NewsletterService;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.PermissionService;
@@ -285,6 +286,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected NewsletterService newsletterService;
+
+    @Autowired
+    protected AgentCardService agentCardService;
 
     @Autowired
     protected ProtectedResourceService protectedResourceService;
@@ -658,6 +662,11 @@ public abstract class JerseySpringTest {
         @Bean
         public NewsletterService newsletterService() {
             return mock(NewsletterService.class);
+        }
+
+        @Bean
+        public AgentCardService agentCardService() {
+            return mock(AgentCardService.class);
         }
 
         @Bean
