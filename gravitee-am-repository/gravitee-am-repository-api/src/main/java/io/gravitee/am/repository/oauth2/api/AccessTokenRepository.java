@@ -62,13 +62,6 @@ public interface AccessTokenRepository extends ExpiredDataSweeper {
      */
     Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject);
 
-    /**
-     * Retrieve access tokens stored against the provided client id.
-     *
-     * @param clientId the client id to search
-     * @return a collection of access tokens
-     */
-    Observable<AccessToken> findByClientId(String clientId);
 
     /**
      * Retrieve access tokens stored against the provided authorization code.
