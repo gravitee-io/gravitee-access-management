@@ -30,6 +30,7 @@ public class TokenMongo {
     public static final String FIELD_TYPE = "type";
     public static final String FIELD_EXPIRE_AT = "expire_at";
     public static final String FIELD_SUBJECT = "subject";
+    public static final String FIELD_PARENT_JTI = "parent_jti";
     public static final String FIELD_AUTHORIZATION_CODE = "authorization_code";
 
     @BsonId
@@ -62,6 +63,8 @@ public class TokenMongo {
     @BsonProperty(FIELD_EXPIRE_AT)
     private Date expireAt;
 
+    @BsonProperty(FIELD_PARENT_JTI)
+    private String parentJti;
 
     @Override
     public boolean equals(Object o) {

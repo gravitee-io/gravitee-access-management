@@ -105,6 +105,43 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     }
 
     @Override
+    public Completable deleteRecursivelyByParentJti(String jti) {
+        LOGGER.debug("deleteRecursivelyByParentJti({})", jti);
+        String postgresQuery = "WITH RECURSIVE token_tree AS ("
+                + "SELECT token FROM tokens WHERE token = :jti OR parent_jti = :jti "
+                + "UNION ALL "
+                + "SELECT t.token FROM tokens t "
+                + "JOIN token_tree tt ON t.parent_jti = tt.token"
+                + ") DELETE FROM tokens WHERE token IN (SELECT token FROM token_tree)";
+//        String mysqlQuery = "WITH RECURSIVE token_tree AS ("
+//                + "SELECT token FROM tokens WHERE token = :jti OR parent_jti = :jti "
+//                + "UNION ALL "
+//                + "SELECT t.token FROM tokens t "
+//                + "JOIN token_tree tt ON t.parent_jti = tt.token"
+//                + ") DELETE FROM tokens WHERE token IN (SELECT token FROM token_tree)";
+//        String mariaDbQuery = "WITH RECURSIVE token_tree AS ("
+//                + "SELECT token FROM tokens WHERE token = :jti OR parent_jti = :jti "
+//                + "UNION ALL "
+//                + "SELECT t.token FROM tokens t "
+//                + "JOIN token_tree tt ON t.parent_jti = tt.token"
+//                + ") DELETE FROM tokens WHERE token IN (SELECT token FROM token_tree)";
+//        String mssqlQuery = ";WITH token_tree AS ("
+//                + "SELECT token FROM tokens WHERE token = :jti OR parent_jti = :jti "
+//                + "UNION ALL "
+//                + "SELECT t.token FROM tokens t "
+//                + "JOIN token_tree tt ON t.parent_jti = tt.token"
+//                + ") DELETE t FROM tokens t JOIN token_tree tt ON t.token = tt.token";
+        String query = postgresQuery;
+
+        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+                .bind("jti", jti)
+                .fetch()
+                .rowsUpdated())
+                .doOnError(error -> LOGGER.error("Unable to delete tokens with parent jti {}", jti, error))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
         return monoToCompletable(getTemplate().delete(JdbcToken.class)
@@ -173,6 +210,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
+        result.setParentJti(entity.getParentJti());
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
         }
@@ -189,6 +227,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
+        result.setParentJti(entity.getParentJti());
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
         }
@@ -207,6 +246,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(token.getClient());
         result.setDomain(token.getDomain());
         result.setSubject(token.getSubject());
+        result.setParentJti(token.getParentJti());
         if (token.getCreatedAt() != null) {
             result.setCreatedAt(LocalDateTime.ofInstant(token.getCreatedAt().toInstant(), UTC));
         }
