@@ -25,7 +25,6 @@ import { ThemeService } from '../../../services/theme.service';
 import { DialogService } from '../../../services/dialog.service';
 import { FormService } from '../../../services/form.service';
 import { FormTemplateFactoryService } from '../../../services/form.template.factory.service';
-import { PlatformCapabilitiesService } from '../../../services/platform-capabilities.service';
 
 @Component({
   selector: 'app-theme',
@@ -167,7 +166,6 @@ export class DomainSettingsThemeComponent implements OnInit {
   private originalTemplateContent: string;
   private selectedForm: any;
   private preview: ElementRef;
-  private magicLinkDeployed = false;
 
   @ViewChild('preview') set content(content: ElementRef) {
     if (content) {
@@ -189,7 +187,6 @@ export class DomainSettingsThemeComponent implements OnInit {
     private dialogService: DialogService,
     private formService: FormService,
     private formTemplateFactoryService: FormTemplateFactoryService,
-    private platformCapabilitiesService: PlatformCapabilitiesService,
   ) {}
 
   ngOnInit() {
@@ -198,17 +195,13 @@ export class DomainSettingsThemeComponent implements OnInit {
     this.themes = this.route.snapshot.data['themes'] || [];
     this.theme = this.themes[0] || {};
 
-    this.platformCapabilitiesService.get().subscribe((caps) => {
-      this.magicLinkDeployed = !!caps?.magicLinkAuthenticatorDeployed;
-
-      this.forms = this.formTemplateFactoryService
-        .findAll()
-        .filter((form) => form.template !== 'MAGIC_LINK_LOGIN' || this.allowMagicLink())
-        .map((form) => {
-          form.enabled = true;
-          return form;
-        });
-    });
+    this.forms = this.formTemplateFactoryService
+      .findAll()
+      .filter((form) => form.template !== 'MAGIC_LINK_LOGIN' || this.allowMagicLink())
+      .map((form) => {
+        form.enabled = true;
+        return form;
+      });
 
     if (this.theme.id && this.theme.primaryButtonColorHex) {
       const filteredObj = find(this.colorPalettes, { primaryButtonColorHex: this.theme.primaryButtonColorHex });
@@ -332,7 +325,7 @@ export class DomainSettingsThemeComponent implements OnInit {
   }
 
   private allowMagicLink(): boolean {
-    return this.magicLinkDeployed;
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 
   private createThemeToPublish() {

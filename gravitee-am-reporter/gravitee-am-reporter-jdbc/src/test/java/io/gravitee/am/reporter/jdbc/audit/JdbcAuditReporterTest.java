@@ -218,23 +218,27 @@ public class JdbcAuditReporterTest {
                     reportable.getActor().setAlternativeId(MY_USER);
                     userLogin++;
                 } else {
-                    if (random.nextBoolean()) {
-                        reportable.setType(USER_WEBAUTHN_LOGIN);
-                        reportable.getTarget().setAlternativeId(MY_USER);
-                        reportable.getOutcome().setStatus(Status.FAILURE);
-                        webauthnLogin++;
-                    } else if(random.nextBoolean()) {
-                        reportable.setType(USER_CBA_LOGIN);
-                        reportable.getTarget().setAlternativeId(MY_USER);
-                        reportable.getOutcome().setStatus(Status.FAILURE);
-                        cbaLogin++;
-                    } else {
-                        reportable.setType(USER_MAGIC_LINK_LOGIN);
-                        reportable.getTarget().setAlternativeId(MY_USER);
-                        reportable.getOutcome().setStatus(Status.FAILURE);
-                        magicLinkLogin++;
+                    var intValue = random.nextInt(1000) % 3;
+                    switch (intValue) {
+                        case 0:
+                            reportable.setType(USER_WEBAUTHN_LOGIN);
+                            reportable.getTarget().setAlternativeId(MY_USER);
+                            reportable.getOutcome().setStatus(Status.FAILURE);
+                            webauthnLogin++;
+                            break;
+                        case 1:
+                            reportable.setType(USER_CBA_LOGIN);
+                            reportable.getTarget().setAlternativeId(MY_USER);
+                            reportable.getOutcome().setStatus(Status.FAILURE);
+                            cbaLogin++;
+                            break;
+                        default:
+                            reportable.setType(USER_MAGIC_LINK_LOGIN);
+                            reportable.getTarget().setAlternativeId(MY_USER);
+                            reportable.getOutcome().setStatus(Status.FAILURE);
+                            magicLinkLogin++;
+                            break;
                     }
-
                 }
             }
             auditReporter.report(reportable);
