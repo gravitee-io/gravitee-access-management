@@ -19,14 +19,21 @@ import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.jdbc.common.AbstractRepositoryConfiguration;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.gravitee.am.repository.jdbc.oauth2.api.JdbcAccessTokenRepository;
+import io.gravitee.am.repository.jdbc.oauth2.api.JdbcRefreshTokenRepository;
+import io.gravitee.am.repository.jdbc.oauth2.api.JdbcTokenRepository;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
@@ -95,5 +102,19 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
     public void afterPropertiesSet() throws Exception {
         initializeDatabaseSchema(getOauth2Pool(), environment, Scope.OAUTH2.getRepositoryPropertyKey() + ".jdbc.", LIQUIBASE_FILE);
     }
+
+    @Bean
+    public TokenRepository tokenRepository(JdbcTokenRepository tokenRepository,
+                                           JdbcAccessTokenRepository accessTokenRepository,
+                                           JdbcRefreshTokenRepository refreshTokenRepository,
+                                           @Value("${legacy.repositories.useLegacyTokenRepositories:true}") boolean useLegacyTokenRepositories) {
+        return new BackwardCompatibleTokenRepository(
+                tokenRepository,
+                accessTokenRepository,
+                refreshTokenRepository,
+                useLegacyTokenRepositories);
+    }
+
+
 
 }

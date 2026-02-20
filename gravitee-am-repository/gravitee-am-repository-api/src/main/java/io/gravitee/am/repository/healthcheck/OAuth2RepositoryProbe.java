@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.repository.healthcheck;
 
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ public class OAuth2RepositoryProbe implements Probe {
 
     @Lazy
     @Autowired
-    private AccessTokenRepository accessTokenRepository;
+    private TokenRepository tokenRepository;
 
     @Override
     public String id() {
@@ -45,7 +45,7 @@ public class OAuth2RepositoryProbe implements Probe {
         // Search for an oauth 2.0 token to check repository connection
         final CompletableFuture<Result> future = new CompletableFuture<>();
 
-        accessTokenRepository.findByToken(TOKEN)
+        tokenRepository.findAccessTokenByJti(TOKEN)
                 .subscribe(
                         domain -> future.complete(Result.healthy()),
                         error -> future.complete(Result.unhealthy(error)),

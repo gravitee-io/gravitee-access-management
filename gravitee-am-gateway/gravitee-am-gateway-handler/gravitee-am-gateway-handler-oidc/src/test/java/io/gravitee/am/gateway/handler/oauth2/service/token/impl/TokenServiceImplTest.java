@@ -36,8 +36,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
@@ -76,10 +75,7 @@ public class TokenServiceImplTest {
     IntrospectionTokenFacade introspectionTokenFacade;
 
     @Mock
-    private AccessTokenRepository accessTokenRepository;
-
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+    private TokenRepository tokenRepository;
 
     @Mock
     private TokenEnhancer tokenEnhancer;

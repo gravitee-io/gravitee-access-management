@@ -115,28 +115,6 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject) {
-        LOGGER.debug("findByClientIdAndSubject({}, {})", clientId, subject);
-        return accessTokenRepository.findByClientIdAndSubject(clientId, subject, LocalDateTime.now(UTC))
-                .map(this::toEntity)
-                .toObservable()
-                .doOnError(error -> LOGGER.error("Unable to retrieve access tokens with client {} and subject {}",
-                        clientId, subject, error))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Observable<AccessToken> findByClientId(String clientId) {
-        LOGGER.debug("findByClientId({})", clientId);
-        return accessTokenRepository.findByClientId(clientId, LocalDateTime.now(UTC))
-                .map(this::toEntity)
-                .toObservable()
-                .doOnError(error -> LOGGER.error("Unable to retrieve access tokens with client {}",
-                        clientId, error))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
     public Observable<AccessToken> findByAuthorizationCode(String authorizationCode) {
         LOGGER.debug("findByAuthorizationCode({})", authorizationCode);
         return accessTokenRepository.findByAuthorizationCode(authorizationCode, LocalDateTime.now(UTC))
@@ -144,12 +122,6 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                 .toObservable()
                 .doOnError(error -> LOGGER.error("Unable to retrieve access tokens with authorization code {}",
                         authorizationCode, error))
-                .observeOn(Schedulers.computation());
-    }
-
-    @Override
-    public Single<Long> countByClientId(String clientId) {
-        return accessTokenRepository.countByClientId(clientId, LocalDateTime.now(UTC))
                 .observeOn(Schedulers.computation());
     }
 

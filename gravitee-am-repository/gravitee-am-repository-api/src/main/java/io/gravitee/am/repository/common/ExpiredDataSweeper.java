@@ -37,6 +37,7 @@ public interface ExpiredDataSweeper {
         user_activities,
         devices,
         events,
-        audits
+        audits,
+        tokens
     }
 }

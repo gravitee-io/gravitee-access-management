@@ -54,37 +54,12 @@ public interface AccessTokenRepository extends ExpiredDataSweeper {
     Completable delete(String token);
 
     /**
-     * Retrieve access tokens stored against the provided client id.
-     *
-     * @param clientId the client id to search
-     * @param subject  the end-user technical identifier
-     * @return a collection of access tokens
-     */
-    Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject);
-
-    /**
-     * Retrieve access tokens stored against the provided client id.
-     *
-     * @param clientId the client id to search
-     * @return a collection of access tokens
-     */
-    Observable<AccessToken> findByClientId(String clientId);
-
-    /**
      * Retrieve access tokens stored against the provided authorization code.
      *
      * @param authorizationCode the authorization code to search
      * @return a collection of access tokens
      */
     Observable<AccessToken> findByAuthorizationCode(String authorizationCode);
-
-    /**
-     * Count access tokens stored against the provided client id.
-     *
-     * @param clientId the client id to search
-     * @return the number of access tokens
-     */
-    Single<Long> countByClientId(String clientId);
 
     /**
      * Delete access tokens by user id

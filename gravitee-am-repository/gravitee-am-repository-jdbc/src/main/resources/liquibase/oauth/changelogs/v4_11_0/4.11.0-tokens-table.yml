@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.0-tokens-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: tokens
+      changes:
+        - createTable:
+            tableName: tokens
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: client, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: subject, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: token, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: authorization_code, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: refresh_token, type: clob, constraints: { nullable: true } }
+              - column: { name: type, type: nvarchar(32), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_tokens
+            columnNames: id
+            tableName: tokens
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_tokens_expire
+            tableName: tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: token
+            indexName: idx_tokens_token
+            tableName: tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: authorization_code
+            indexName: idx_tokens_auth_code
+            tableName: tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: subject
+            indexName: idx_tokens_subject
+            tableName: tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: subject
+            indexName: idx_tokens_domain_client_subject
+            tableName: tokens
+            unique: false
+
