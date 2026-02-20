@@ -109,9 +109,6 @@ public class ClientServiceImpl implements ClientService {
         }
 
         /* GRAVITEE.IO custom fields */
-        client.setAccessTokenValiditySeconds(Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
-        client.setRefreshTokenValiditySeconds(Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
-        client.setIdTokenValiditySeconds(Client.DEFAULT_ID_TOKEN_VALIDITY_SECONDS);
         client.setEnabled(true);
 
         client.setCreatedAt(new Date());
