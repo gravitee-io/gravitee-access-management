@@ -225,13 +225,7 @@
               <div style="margin-top: 16px">
                 <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
                   <h5 style="margin: 0">Scope Mappings</h5>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    (click)="addScopeMapping(i)"
-                    [disabled]="!editMode"
-                    matTooltip="Add scope mapping"
-                  >
+                  <button mat-icon-button type="button" (click)="addScopeMapping(i)" [disabled]="!editMode" matTooltip="Add scope mapping">
                     <mat-icon>add_circle_outline</mat-icon>
                   </button>
                 </div>
@@ -333,9 +327,9 @@
         </ul>
         <h4>Trusted Issuers</h4>
         <p>
-          Configure <strong>Trusted Issuers</strong> to accept JWTs from external identity providers as subject or actor tokens.
-          Each issuer requires a key resolution method (JWKS URL or PEM certificate) for signature verification.
-          Optional scope mappings allow translating external scopes to domain scopes.
+          Configure <strong>Trusted Issuers</strong> to accept JWTs from external identity providers as subject or actor tokens. Each issuer
+          requires a key resolution method (JWKS URL or PEM certificate) for signature verification. Optional scope mappings allow
+          translating external scopes to domain scopes.
         </p>
         <p>
           Clients must have the <code>Token Exchange</code> grant type enabled to use token exchange.
