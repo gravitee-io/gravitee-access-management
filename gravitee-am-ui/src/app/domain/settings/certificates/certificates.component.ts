@@ -171,7 +171,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     const dialogRef = this.dialog.open(CertificateSettingsDialogComponent, {
       width: '500px',
       data: {
-        certificates: this.certificates.filter((cert) => !cert.system),
+        certificates: this.certificates,
         selectedCertificateId: this.domain?.certificateSettings?.fallbackCertificate || null,
       },
     });

@@ -21,6 +21,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -48,11 +50,22 @@ public interface CertificateManager extends io.gravitee.am.certificate.api.Certi
         return get(client.getCertificate())
                 .switchIfEmpty(Maybe.defer(() ->
                         fallbackCertificateProvider()
-                                .switchIfEmpty(Maybe.defer(() ->
+                                .doOnSuccess(fallback -> {
+                                    Logger logger = LoggerFactory.getLogger(this.getClass());
+                                    String fallbackCertificateId = fallback.getCertificateInfo().certificateId();
+                                    logger.warn("Certificate: {} not loaded, using: {} as fallback", client.getCertificate(), fallbackCertificateId);
+                                })
+                                .switchIfEmpty(
+                                    Maybe.defer(() ->
                                         fallbackToHmacSignature
                                                 ? Maybe.just(defaultCertificateProvider())
                                                 : Maybe.empty()
-                                ))
+                                    ).doOnSuccess(defaultCertificateProvider -> {
+                                        Logger logger = LoggerFactory.getLogger(this.getClass());
+                                        logger.warn("Certificate: {} not loaded, using default certificate as fallback", client.getCertificate());
+                                    })
+                                )
+
                 ))
                 .switchIfEmpty(Single.error(new TemporarilyUnavailableException("The certificate cannot be loaded")));
     }
