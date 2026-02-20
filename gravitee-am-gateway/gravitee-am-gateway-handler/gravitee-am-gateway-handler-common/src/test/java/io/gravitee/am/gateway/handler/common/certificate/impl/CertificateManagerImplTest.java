@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.CertificateEvent;
 import io.gravitee.am.common.event.DomainCertificateSettingsEvent;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
+import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.CertificateSettings;
@@ -113,6 +114,7 @@ public class CertificateManagerImplTest {
         lenient().when(defaultProvider.getDomain()).thenReturn(DOMAIN_ID);
 
         certificateManager.defaultCertificateProvider = defaultProvider;
+        lenient().when(defaultProvider.getCertificateInfo()).thenReturn(new CertificateInfo("defaultCert", "defaultCert"));
     }
 
     @Test
@@ -203,6 +205,7 @@ public class CertificateManagerImplTest {
 
         var fallbackProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
         when(fallbackProvider.getDomain()).thenReturn(DOMAIN_ID);
+        when(fallbackProvider.getCertificateInfo()).thenReturn(new CertificateInfo("fallbackCert", "fallbackCert"));
         when(certificateProviderManager.get(fallbackCertificateId)).thenReturn(fallbackProvider);
 
         ReflectionTestUtils.invokeMethod(certificateManager, "initCertificateSettings");
