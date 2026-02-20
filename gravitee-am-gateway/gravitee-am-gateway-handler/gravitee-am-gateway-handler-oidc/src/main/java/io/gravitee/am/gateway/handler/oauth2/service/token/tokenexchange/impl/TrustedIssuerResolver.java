@@ -45,11 +45,16 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Resolves and caches JWT processors for trusted external issuers.
  *
- * Supports two key resolution methods:
- * - JWKS_URL: Fetches keys from a remote JWKS endpoint (with outage tolerance and retrying).
- * - PEM: Uses a static PEM-encoded X.509 certificate.
+ * <p>Supports two key resolution methods:
+ * <ul>
+ *   <li>JWKS_URL: Fetches keys from a remote JWKS endpoint (with outage tolerance and retrying).</li>
+ *   <li>PEM: Uses a static PEM-encoded X.509 certificate.</li>
+ * </ul>
  *
- * Processors are cached per issuer URL for the lifetime of the domain reactor.
+ * <p><b>Cache lifecycle:</b> This bean is created per domain reactor via {@code OAuth2Configuration}.
+ * When a domain configuration changes, the gateway stops the old reactor and starts a new one,
+ * which creates a fresh {@code TrustedIssuerResolver} with an empty cache. This means the
+ * processor cache is naturally invalidated on config changes — no explicit cache clearing is needed.
  *
  * @author GraviteeSource Team
  */
@@ -141,10 +146,4 @@ public class TrustedIssuerResolver {
         }
     }
 
-    /**
-     * Clear the processor cache. Called when the domain configuration changes.
-     */
-    public void clearCache() {
-        processorCache.clear();
-    }
 }

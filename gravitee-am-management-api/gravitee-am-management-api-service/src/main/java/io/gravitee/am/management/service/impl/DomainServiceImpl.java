@@ -846,9 +846,10 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("Token Exchange settings are invalid"));
         }
 
-        Completable trustedIssuerValidation = validateTrustedIssuers(domain);
-        if (trustedIssuerValidation != null) {
-            return trustedIssuerValidation;
+        try {
+            validateTrustedIssuers(domain);
+        } catch (InvalidDomainException e) {
+            return Completable.error(e);
         }
 
         if (domain.getWebAuthnSettings() != null) {
@@ -883,32 +884,30 @@ public class DomainServiceImpl implements DomainService {
 
     /**
      * Validate trusted issuer configuration: max count and PEM certificate format.
-     * Returns null if validation passes, or a Completable error if it fails.
+     * @throws InvalidDomainException if validation fails
      */
-    private Completable validateTrustedIssuers(Domain domain) {
+    private void validateTrustedIssuers(Domain domain) {
         if (domain.getTokenExchangeSettings() == null
                 || domain.getTokenExchangeSettings().getTrustedIssuers() == null
                 || domain.getTokenExchangeSettings().getTrustedIssuers().isEmpty()) {
-            return null;
+            return;
         }
 
         var trustedIssuers = domain.getTokenExchangeSettings().getTrustedIssuers();
 
         if (trustedIssuers.size() > trustedIssuersMaxCount) {
-            return Completable.error(new InvalidDomainException(
-                    "Maximum number of trusted issuers exceeded (max: " + trustedIssuersMaxCount + ")"));
+            throw new InvalidDomainException(
+                    "Maximum number of trusted issuers exceeded (max: " + trustedIssuersMaxCount + ")");
         }
 
         for (TrustedIssuer ti : trustedIssuers) {
             if (TrustedIssuer.KEY_RESOLUTION_PEM.equals(ti.getKeyResolutionMethod())) {
                 if (X509CertUtils.parse(ti.getCertificate()) == null) {
-                    return Completable.error(new InvalidDomainException(
-                            "Invalid PEM certificate for trusted issuer: " + ti.getIssuer()));
+                    throw new InvalidDomainException(
+                            "Invalid PEM certificate for trusted issuer: " + ti.getIssuer());
                 }
             }
         }
-
-        return null;
     }
 
     private boolean hasIncorrectOrigins(Domain domain) {

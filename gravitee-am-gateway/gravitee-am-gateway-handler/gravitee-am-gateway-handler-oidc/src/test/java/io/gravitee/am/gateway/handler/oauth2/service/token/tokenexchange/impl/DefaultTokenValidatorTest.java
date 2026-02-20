@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
@@ -198,7 +199,7 @@ public class DefaultTokenValidatorTest {
 
         // Trusted issuer resolver throws (bad signature)
         when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
-                .thenThrow(new Exception("Signature verification failed"));
+                .thenThrow(new JOSEException("Signature verification failed"));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
 

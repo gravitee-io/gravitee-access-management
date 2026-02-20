@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.BadJWTException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -28,6 +30,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -106,7 +109,7 @@ public class DefaultTokenValidator implements TokenValidator {
                         try {
                             JWTClaimsSet claimsSet = trustedIssuerResolver.verify(token, matchingIssuer);
                             return buildValidatedTokenFromClaims(claimsSet, domain, matchingIssuer);
-                        } catch (Exception e) {
+                        } catch (JOSEException | ParseException | BadJWTException e) {
                             LOGGER.debug("Trusted issuer JWT signature verification failed for issuer {}: {}", issuer, e.getMessage());
                             throw new InvalidGrantException("Invalid JWT signature");
                         }
@@ -121,17 +124,19 @@ public class DefaultTokenValidator implements TokenValidator {
                 });
     }
 
-    private ValidatedToken buildValidatedToken(io.gravitee.am.common.jwt.JWT jwt, Domain domain,
-                                                boolean trustedIssuerValidated, TrustedIssuer matchingIssuer) {
+    private void validateTemporalClaims(long exp, long nbf) {
         long currentTime = System.currentTimeMillis() / 1000;
-
-        if (jwt.getExp() > 0 && jwt.getExp() < currentTime) {
+        if (exp > 0 && exp < currentTime) {
             throw new InvalidGrantException(supportedTokenType + " has expired");
         }
-
-        if (jwt.getNbf() > 0 && jwt.getNbf() > currentTime) {
+        if (nbf > 0 && nbf > currentTime) {
             throw new InvalidGrantException(supportedTokenType + " is not yet valid");
         }
+    }
+
+    private ValidatedToken buildValidatedToken(io.gravitee.am.common.jwt.JWT jwt, Domain domain,
+                                                boolean trustedIssuerValidated, TrustedIssuer matchingIssuer) {
+        validateTemporalClaims(jwt.getExp(), jwt.getNbf());
 
         Map<String, Object> claims = new HashMap<>();
         jwt.keySet().forEach(key -> claims.put(key, jwt.get(key)));
@@ -162,18 +167,11 @@ public class DefaultTokenValidator implements TokenValidator {
 
     private ValidatedToken buildValidatedTokenFromClaims(JWTClaimsSet claimsSet, Domain domain,
                                                           TrustedIssuer matchingIssuer) {
-        long currentTime = System.currentTimeMillis() / 1000;
         long exp = claimsSet.getExpirationTime() != null ? claimsSet.getExpirationTime().getTime() / 1000 : 0;
         long nbf = claimsSet.getNotBeforeTime() != null ? claimsSet.getNotBeforeTime().getTime() / 1000 : 0;
         long iat = claimsSet.getIssueTime() != null ? claimsSet.getIssueTime().getTime() / 1000 : 0;
 
-        if (exp > 0 && exp < currentTime) {
-            throw new InvalidGrantException(supportedTokenType + " has expired");
-        }
-
-        if (nbf > 0 && nbf > currentTime) {
-            throw new InvalidGrantException(supportedTokenType + " is not yet valid");
-        }
+        validateTemporalClaims(exp, nbf);
 
         Map<String, Object> claims = new HashMap<>(claimsSet.getClaims());
 
