@@ -17,7 +17,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { FormTemplateFactoryService } from '../../../services/form.template.factory.service';
-import { PlatformCapabilitiesService } from '../../../services/platform-capabilities.service';
 
 @Component({
   selector: 'app-domain-forms',
@@ -28,13 +27,11 @@ import { PlatformCapabilitiesService } from '../../../services/platform-capabili
 export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];
   domain: any;
-  private magicLinkDeployed = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private formTemplateFactoryService: FormTemplateFactoryService,
-    private platformCapabilitiesService: PlatformCapabilitiesService,
   ) {}
 
   ngOnInit() {
@@ -42,10 +39,7 @@ export class DomainSettingsFormsComponent implements OnInit {
       this.forms = this.getOrganizationForms();
     } else {
       this.domain = this.route.snapshot.data['domain'];
-      this.platformCapabilitiesService.get().subscribe((caps) => {
-        this.magicLinkDeployed = !!caps?.magicLinkAuthenticatorDeployed;
-        this.forms = this.getForms();
-      });
+      this.forms = this.getForms();
     }
   }
 
@@ -70,6 +64,6 @@ export class DomainSettingsFormsComponent implements OnInit {
   }
 
   private allowMagicLink(): boolean {
-    return this.magicLinkDeployed;
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 }

@@ -17,7 +17,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { EmailTemplateFactoryService } from '../../../services/email.template.factory.service';
-import { PlatformCapabilitiesService } from '../../../services/platform-capabilities.service';
 
 @Component({
   selector: 'app-domain-emails',
@@ -29,21 +28,15 @@ export class DomainSettingsEmailsComponent implements OnInit {
   domain: any;
   private emailTemplateFactoryService: EmailTemplateFactoryService;
 
-  private magicLinkDeployed = true;
-
   constructor(
     private route: ActivatedRoute,
     emailTemplateFactoryService: EmailTemplateFactoryService,
-    private platformCapabilitiesService: PlatformCapabilitiesService,
   ) {
     this.emailTemplateFactoryService = emailTemplateFactoryService;
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.platformCapabilitiesService.get().subscribe((caps) => {
-      this.magicLinkDeployed = !!caps?.magicLinkAuthenticatorDeployed;
-    });
   }
 
   getEmails() {
@@ -64,7 +57,7 @@ export class DomainSettingsEmailsComponent implements OnInit {
   }
 
   private allowMagicLink(): boolean {
-    return this.magicLinkDeployed;
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 
   private allowResetPassword(): boolean {
