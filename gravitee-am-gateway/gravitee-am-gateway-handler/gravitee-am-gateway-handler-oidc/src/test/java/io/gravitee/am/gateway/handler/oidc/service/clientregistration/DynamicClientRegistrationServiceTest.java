@@ -984,6 +984,9 @@ public class DynamicClientRegistrationServiceTest {
         template.setSectorIdentifierUri("shouldBeRemoved");
         template.setJwks(new JWKSet());
         template.setTemplate(true);
+        template.setAccessTokenValiditySeconds(3600);
+        template.setRefreshTokenValiditySeconds(1800);
+        template.setIdTokenValiditySeconds(900);
         template.setMfaSettings(new MFASettings());
         template.setRiskAssessment(new RiskAssessmentSettings());
         template.setPasswordSettings(new PasswordSettings());
@@ -1021,7 +1024,10 @@ public class DynamicClientRegistrationServiceTest {
                         client.getMfaSettings() != null &&
                         client.getPasswordSettings() != null &&
                         client.getCookieSettings() != null &&
-                        client.getRiskAssessment() != null
+                        client.getRiskAssessment() != null &&
+                        client.getAccessTokenValiditySeconds() == 3600 &&
+                        client.getRefreshTokenValiditySeconds() == 1800 &&
+                        client.getIdTokenValiditySeconds() == 900
         );
         verify(clientService, times(1)).create(any(), argThat(duplicateClient -> duplicateClient.getClientSecrets().isEmpty() && duplicateClient.getSecretSettings().isEmpty()));
     }
