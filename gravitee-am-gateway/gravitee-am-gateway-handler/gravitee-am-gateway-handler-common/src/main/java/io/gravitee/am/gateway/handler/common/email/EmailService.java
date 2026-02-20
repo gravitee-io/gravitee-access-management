@@ -39,6 +39,8 @@ public interface EmailService {
 
     void send(Template template, User user, Client client, MultiMap queryParams);
 
+    void asyncSend(Template template, User user, Client client, MultiMap queryParams);
+
     void send(Email email);
 
     List<EmailContainer> batch(List<EmailContainer> containers, int maxAttempt);

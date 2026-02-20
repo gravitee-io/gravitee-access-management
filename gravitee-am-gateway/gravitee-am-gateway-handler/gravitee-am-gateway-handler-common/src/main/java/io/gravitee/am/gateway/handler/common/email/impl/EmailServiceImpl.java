@@ -52,6 +52,8 @@ import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.vertx.rxjava3.core.MultiMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -68,6 +70,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
@@ -79,7 +84,7 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  * @author GraviteeSource Team
  */
 @Slf4j
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements EmailService, InitializingBean, DisposableBean {
 
     private final boolean enabled;
     private final String resetPasswordSubject;
@@ -97,6 +102,8 @@ public class EmailServiceImpl implements EmailService {
     private final int userMagicLinkLoginExpiresAfter;
 
     private final EmailDroppedException droppedException = new EmailDroppedException("Email not delivered due to staging persistence issue");
+
+    private final String EMAIL_TOKEN_SESSION_ID_QUERY_PARAM = "session_id";
 
     @Autowired
     private EmailManager emailManager;
@@ -123,6 +130,8 @@ public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private GraviteeMessageResolver graviteeMessageResolver;
+
+    private ExecutorService executorService;
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
@@ -168,6 +177,11 @@ public class EmailServiceImpl implements EmailService {
             // send email
             sendEmail(email, user, client);
         }
+    }
+
+    @Override
+    public void asyncSend(io.gravitee.am.model.Template template, User user, Client client, MultiMap queryParams) {
+        executorService.execute(() -> send(template, user, client, queryParams));
     }
 
     @Override
@@ -379,8 +393,9 @@ public class EmailServiceImpl implements EmailService {
         if (client != null) {
             claims.put(Claims.AUD, client.getId());
         }
-        if(queryParams != null && queryParams.contains(Parameters.SESSION_ID) ) {
-            claims.put(Claims.SESSION_ID, queryParams.get(Parameters.SESSION_ID));
+        if(queryParams != null && queryParams.contains(EMAIL_TOKEN_SESSION_ID_QUERY_PARAM) ) {
+            claims.put(Claims.SESSION_ID, queryParams.get(EMAIL_TOKEN_SESSION_ID_QUERY_PARAM));
+            queryParams.remove(EMAIL_TOKEN_SESSION_ID_QUERY_PARAM);
         }
 
         if (client != null && !queryParams.contains(CLIENT_ID)) {
@@ -510,5 +525,17 @@ public class EmailServiceImpl implements EmailService {
                 .user(user)
                 .email(email)
                 .throwable(droppedException));
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (executorService != null) {
+            executorService.shutdown();
+        }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        executorService = Executors.newCachedThreadPool();
     }
 }
