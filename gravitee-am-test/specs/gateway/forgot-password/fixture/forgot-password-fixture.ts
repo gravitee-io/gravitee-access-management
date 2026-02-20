@@ -33,6 +33,8 @@ import { createPasswordPolicy } from '@management-commands/password-policy-manag
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 import { DomainTestSettings } from './settings-utils';
+import { ForgotPasswordContext } from './forgot-password-flow-utils';
+import { ResetPasswordContext } from './reset-password-flow-utils';
 import { User } from '@management-models/User';
 
 export interface ForgotPasswordFixture extends Fixture {
@@ -42,6 +44,8 @@ export interface ForgotPasswordFixture extends Fixture {
   user: User;
   clientId: string;
   userSessionToken: string;
+  forgotPasswordContext: () => ForgotPasswordContext;
+  resetPasswordContext: () => ResetPasswordContext;
 }
 
 export const setupFixture = async (setting: DomainTestSettings, userProps: User): Promise<ForgotPasswordFixture> => {
@@ -134,6 +138,22 @@ export const setupFixture = async (setting: DomainTestSettings, userProps: User)
     ).expect(200);
     const userSessionToken = response.body.access_token;
 
+    const forgotPasswordContext = (): ForgotPasswordContext => ({
+      domainHrid: domain.hrid,
+      clientId,
+      openIdConfiguration,
+      user,
+    });
+
+    const resetPasswordContext = (): ResetPasswordContext => ({
+      openIdConfiguration,
+      application,
+      userSessionToken,
+      user,
+      resetPasswordFailed: 'error=reset_password_failed',
+      invalidPasswordValue: 'invalid_password_value',
+    });
+
     return {
       accessToken,
       domain,
@@ -142,6 +162,8 @@ export const setupFixture = async (setting: DomainTestSettings, userProps: User)
       user,
       clientId,
       userSessionToken,
+      forgotPasswordContext,
+      resetPasswordContext,
       cleanUp: async () => {
         if (domain?.id && accessToken) {
           await safeDeleteDomain(domain.id, accessToken);

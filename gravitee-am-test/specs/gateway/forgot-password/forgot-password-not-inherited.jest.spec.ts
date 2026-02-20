@@ -15,14 +15,13 @@
  */
 import { afterAll, beforeAll } from '@jest/globals';
 import { ForgotPasswordFixture, setupFixture } from './fixture/forgot-password-fixture';
-import { resetPassword, ResetPasswordContext } from './fixture/reset-password-flow-utils';
+import { resetPassword } from './fixture/reset-password-flow-utils';
 import { requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forgot-password-flow-utils';
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
 import { setup } from '../../test-fixture';
 import { uniqueName } from '@utils-commands/misc';
 
-const resetPasswordFailed = 'error=reset_password_failed';
 const invalidPasswordValue = 'invalid_password_value';
 const userProps = {
   firstName: 'firstName',
@@ -52,29 +51,13 @@ const setting: DomainTestSettings = {
   },
 };
 
-let resetPasswordContext: ResetPasswordContext;
 let fixture: ForgotPasswordFixture;
 let confirmationLink: string;
 
 beforeAll(async () => {
   fixture = await setupFixture(setting, userProps);
-  const forgotPasswordContext = {
-    domainHrid: fixture.domain.hrid,
-    clientId: fixture.clientId,
-    openIdConfiguration: fixture.openIdConfiguration,
-    user: fixture.user,
-  };
-  resetPasswordContext = {
-    openIdConfiguration: fixture.openIdConfiguration,
-    application: fixture.application,
-    userSessionToken: fixture.userSessionToken,
-    user: fixture.user,
-    resetPasswordFailed,
-    invalidPasswordValue,
-  };
-  // Clear emails for this specific recipient at the start to avoid interference from other tests
   await clearEmails(userProps.email);
-  await requestForgotPassword(forgotPasswordContext, setting.settings);
+  await requestForgotPassword(fixture.forgotPasswordContext(), setting.settings);
   confirmationLink = await retrieveEmailLinkForReset(userProps.email);
 });
 
@@ -89,7 +72,7 @@ describe('Gateway reset password', () => {
     describe(`when a password is shorter than the minimum length of ${setting.settings.passwordSettings.minLength}`, () => {
       const minLength = 'SomeP@ssw0rd99'.substring(0, setting.settings.passwordSettings.minLength - 1);
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-        await resetPassword(confirmationLink, minLength, invalidPasswordValue, setting.settings, resetPasswordContext);
+        await resetPassword(confirmationLink, minLength, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
 
@@ -99,14 +82,14 @@ describe('Gateway reset password', () => {
         maxLength += maxLength;
       }
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-        await resetPassword(confirmationLink, maxLength, invalidPasswordValue, setting.settings, resetPasswordContext);
+        await resetPassword(confirmationLink, maxLength, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
 
     ['password', 'passw0rd', 'pass123', 'passwd', 'gravity'].forEach((password) => {
       describe(`when 'excludePasswordsInDictionary' is enabled and '${password}' from the dictionary is used`, () => {
         it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-          await resetPassword(confirmationLink, password, invalidPasswordValue, setting.settings, resetPasswordContext);
+          await resetPassword(confirmationLink, password, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
         });
       });
     });
@@ -116,7 +99,7 @@ describe('Gateway reset password', () => {
       .forEach(([propName, value]) => {
         describe(`when 'excludeUserProfileInfoInPassword' is enabled and a user's '${propName}' is used`, () => {
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-            await resetPassword(confirmationLink, value, invalidPasswordValue, setting.settings, resetPasswordContext);
+            await resetPassword(confirmationLink, value, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
           });
         });
       });

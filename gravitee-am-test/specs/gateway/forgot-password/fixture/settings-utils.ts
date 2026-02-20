@@ -26,21 +26,3 @@ export interface DomainTestSettings {
   };
   passwordPolicy?: NewPasswordPolicy;
 }
-
-export const expectedMsg = (setting: DomainTestSettings) => {
-  return setting.settings.accountSettings.autoLoginAfterResetPassword
-    ? setting.settings.accountSettings.redirectUriAfterResetPassword
-    : 'success=reset_password_completed';
-};
-
-export const getPasswordSettingsAttribute = (setting: DomainTestSettings, attrName) => {
-  if (!setting.inherited) {
-    return setting.settings.passwordSettings[attrName];
-  }
-
-  if (setting.passwordPolicy) {
-    return setting.passwordPolicy[attrName];
-  }
-
-  return null;
-};

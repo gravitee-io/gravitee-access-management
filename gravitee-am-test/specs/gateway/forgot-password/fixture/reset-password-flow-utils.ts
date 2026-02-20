@@ -18,13 +18,14 @@ import cheerio from 'cheerio';
 import { performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { waitFor } from '@management-commands/domain-management-commands';
+import { Application } from '@management-models/Application';
 import { User } from '@management-models/User';
 
 export interface ResetPasswordContext {
   openIdConfiguration: {
     introspection_endpoint: string;
   };
-  application: any;
+  application: Application;
   userSessionToken: string;
   user: User;
   resetPasswordFailed: string;
@@ -34,14 +35,14 @@ export interface ResetPasswordContext {
 const getResetPasswordForm = async (confirmationLink: string) => {
   const confirmationLinkResponse = await performGet(confirmationLink);
   const headers = confirmationLinkResponse.headers['set-cookie'];
-  expect(headers).toBeDefined();
+  expect(headers).toEqual(expect.arrayContaining([expect.stringContaining('=')]));
   const dom = cheerio.load(confirmationLinkResponse.text);
   const action = dom('form').attr('action');
   const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
   const resetPwdToken = dom('[name=token]').val();
-  expect(action).toBeTruthy();
-  expect(xsrfToken).toBeTruthy();
-  expect(resetPwdToken).toBeTruthy();
+  expect(action).toEqual(expect.stringMatching(/^https?:\/\//));
+  expect(xsrfToken).toEqual(expect.stringMatching(/.+/));
+  expect(resetPwdToken).toEqual(expect.stringMatching(/.+/));
   return { headers, action, xsrfToken, resetPwdToken };
 };
 
@@ -74,7 +75,8 @@ export const resetPassword = async (
       const decoded = JSON.parse(atob(sessionJwt));
       expect(decoded.userId).toEqual(context.user.id);
     }
-    // Allow gateway time to finalize password change before checking token or starting next reset
+    // Wait for the gateway to fully commit the password change before verifying tokens
+    // or starting the next reset cycle. No pollable endpoint exists for this state transition.
     await waitFor(2000);
     const expectedActive = !setting.accountSettings.resetPasswordInvalidateTokens;
     const introspect = async () => {
