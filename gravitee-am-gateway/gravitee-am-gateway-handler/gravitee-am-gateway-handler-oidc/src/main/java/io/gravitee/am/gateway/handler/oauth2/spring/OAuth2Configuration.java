@@ -55,6 +55,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsiste
 import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceConsistencyValidationServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,8 +83,9 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public TokenExchangeService tokenExchangeService(List<TokenValidator> validators,
                                                      SubjectManager subjectManager,
-                                                     ProtectedResourceManager protectedResourceManager) {
-        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager);
+                                                     ProtectedResourceManager protectedResourceManager,
+                                                     UserGatewayService userGatewayService) {
+        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager, userGatewayService);
     }
 
     @Bean

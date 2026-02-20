@@ -281,6 +281,124 @@ describe('Trusted Issuers - Token Exchange', () => {
   });
 });
 
+describe('Trusted Issuers - User Binding', () => {
+  // Helper to build the trusted issuer config with user binding settings
+  const buildTrustedIssuerConfig = (userBindingEnabled: boolean, userBindingMappings?: Record<string, string>) => ({
+    tokenExchangeSettings: {
+      enabled: true,
+      allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+      allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+      allowImpersonation: true,
+      allowDelegation: true,
+      allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+      maxDelegationDepth: 3,
+      trustedIssuers: [
+        {
+          issuer: fixture.externalIssuer,
+          keyResolutionMethod: 'PEM',
+          certificate: fixture.trustedKey.certificatePem,
+          scopeMappings: { 'external:read': 'openid', 'external:profile': 'profile' },
+          userBindingEnabled,
+          ...(userBindingMappings && { userBindingMappings }),
+        },
+      ],
+    },
+  });
+
+  it('should use domain user when user binding is enabled and email matches', async () => {
+    const { domain, accessToken, oidc, basicAuth, externalIssuer, user } = fixture;
+
+    // Patch domain to enable user binding with email -> email mapping
+    await waitForSyncAfter(domain.id, () =>
+      patchDomainRaw(domain.id, accessToken, buildTrustedIssuerConfig(true, { email: 'email' })).expect(200),
+    );
+
+    // Sign external JWT with matching email (from fixture user created by buildCreateAndTestUser)
+    const externalJwt = fixture.signExternalJwt({
+      sub: 'external-user-bound',
+      email: user.email,
+      scope: 'external:read external:profile',
+      iss: externalIssuer,
+    });
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${externalJwt}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    expect(response.body.access_token).toBeDefined();
+
+    // The minted token should use the domain user's subject, not the external JWT's sub
+    const decoded = parseJwt(response.body.access_token);
+    expect(decoded.payload['sub']).toBeDefined();
+    expect(decoded.payload['sub']).not.toBe('external-user-bound');
+  });
+
+  it('should reject when user binding is enabled but no matching domain user found', async () => {
+    const { oidc, basicAuth, externalIssuer } = fixture;
+
+    // Domain is already patched with user binding enabled from the previous test
+    const externalJwt = fixture.signExternalJwt({
+      sub: 'external-user-no-match',
+      email: 'nonexistent@example.com',
+      scope: 'external:read external:profile',
+      iss: externalIssuer,
+    });
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${externalJwt}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(400);
+
+    expect(response.body.error).toBe('invalid_grant');
+  });
+
+  it('should use synthetic user when user binding is disabled', async () => {
+    const { domain, accessToken, oidc, basicAuth, externalIssuer } = fixture;
+
+    // Restore config with user binding disabled
+    await waitForSyncAfter(domain.id, () =>
+      patchDomainRaw(domain.id, accessToken, buildTrustedIssuerConfig(false)).expect(200),
+    );
+
+    const externalJwt = fixture.signExternalJwt({
+      sub: 'external-user-synthetic',
+      email: 'nonexistent@example.com',
+      scope: 'external:read external:profile',
+      iss: externalIssuer,
+    });
+
+    // With binding disabled, any external JWT should succeed (synthetic user, no domain lookup)
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${externalJwt}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    expect(response.body.access_token).toBeDefined();
+  });
+});
+
 describe('Trusted Issuers - Management API Validation', () => {
   // NOTE: These tests use patchDomainRaw (raw supertest) because the generated SDK
   // model for TokenExchangeSettings does not include `trustedIssuers` yet.
@@ -351,6 +469,52 @@ describe('Trusted Issuers - Management API Validation', () => {
         trustedIssuers: issuers,
       },
     }).expect(400);
+  });
+
+  it('should reject user binding enabled with empty mappings', async () => {
+    const { domain, accessToken, trustedKey } = fixture;
+
+    await patchDomainRaw(domain.id, accessToken, {
+      tokenExchangeSettings: {
+        enabled: true,
+        allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+        allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+        allowImpersonation: true,
+        allowDelegation: false,
+        trustedIssuers: [
+          {
+            issuer: 'https://binding-test-issuer.example.com',
+            keyResolutionMethod: 'PEM',
+            certificate: trustedKey.certificatePem,
+            userBindingEnabled: true,
+            userBindingMappings: {},
+          },
+        ],
+      },
+    }).expect(400);
+  });
+
+  it('should accept user binding enabled with valid mappings', async () => {
+    const { domain, accessToken, trustedKey } = fixture;
+
+    await patchDomainRaw(domain.id, accessToken, {
+      tokenExchangeSettings: {
+        enabled: true,
+        allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+        allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+        allowImpersonation: true,
+        allowDelegation: false,
+        trustedIssuers: [
+          {
+            issuer: 'https://binding-valid-issuer.example.com',
+            keyResolutionMethod: 'PEM',
+            certificate: trustedKey.certificatePem,
+            userBindingEnabled: true,
+            userBindingMappings: { email: 'email' },
+          },
+        ],
+      },
+    }).expect(200);
   });
 
   it('should persist trusted issuer configuration after save and reload', async () => {

@@ -27,6 +27,13 @@ interface TrustedIssuer {
   jwksUri?: string;
   certificate?: string;
   scopeMappings?: { [key: string]: string };
+  userBindingEnabled?: boolean;
+  userBindingMappings?: { [key: string]: string };
+}
+
+interface UserBindingMappingEntry {
+  userAttribute: string;
+  claimExpression: string;
 }
 
 interface ScopeMappingEntry {
@@ -87,8 +94,16 @@ export class TokenExchangeComponent implements OnInit {
   // Legacy alias for backward compatibility in template
   readonly TOKEN_TYPES = this.SUBJECT_TOKEN_TYPES;
 
+  readonly USER_BINDING_ATTRIBUTES = [
+    { value: 'email', label: 'Email' },
+    { value: 'username', label: 'Username' },
+  ];
+
   // Scope mapping entries per issuer index (for UI two-way binding)
   scopeMappingEntries: ScopeMappingEntry[][] = [];
+
+  // User binding mapping entries per issuer index (for UI two-way binding)
+  userBindingMappingEntries: UserBindingMappingEntry[][] = [];
 
   constructor(
     private domainService: DomainService,
@@ -171,6 +186,12 @@ export class TokenExchangeComponent implements OnInit {
         if (ti.keyResolutionMethod === 'PEM' && !ti.certificate?.trim()) {
           errors.push(`Trusted Issuer #${i + 1}: PEM Certificate is required.`);
         }
+        if (ti.userBindingEnabled) {
+          const mappings = ti.userBindingMappings;
+          if (!mappings || Object.keys(mappings).length === 0) {
+            errors.push(`Trusted Issuer #${i + 1}: At least one user binding mapping is required when user binding is enabled.`);
+          }
+        }
       }
       const issuers = settings.trustedIssuers.map((ti) => ti.issuer).filter((iss) => iss?.trim());
       if (new Set(issuers).size !== issuers.length) {
@@ -225,14 +246,18 @@ export class TokenExchangeComponent implements OnInit {
       jwksUri: '',
       certificate: '',
       scopeMappings: {},
+      userBindingEnabled: false,
+      userBindingMappings: {},
     });
     this.scopeMappingEntries.push([]);
+    this.userBindingMappingEntries.push([]);
     this.formChanged = true;
   }
 
   removeTrustedIssuer(index: number): void {
     this.domain.tokenExchangeSettings.trustedIssuers.splice(index, 1);
     this.scopeMappingEntries.splice(index, 1);
+    this.userBindingMappingEntries.splice(index, 1);
     this.formChanged = true;
   }
 
@@ -264,6 +289,34 @@ export class TokenExchangeComponent implements OnInit {
     this.domain.tokenExchangeSettings.trustedIssuers[issuerIndex].scopeMappings = mappings;
   }
 
+  addUserBindingMapping(issuerIndex: number): void {
+    this.userBindingMappingEntries[issuerIndex].push({ userAttribute: '', claimExpression: '' });
+    this.syncUserBindingMappingsToModel(issuerIndex);
+    this.formChanged = true;
+  }
+
+  removeUserBindingMapping(issuerIndex: number, mappingIndex: number): void {
+    this.userBindingMappingEntries[issuerIndex].splice(mappingIndex, 1);
+    this.syncUserBindingMappingsToModel(issuerIndex);
+    this.formChanged = true;
+  }
+
+  onUserBindingMappingChange(issuerIndex: number): void {
+    this.syncUserBindingMappingsToModel(issuerIndex);
+    this.formChanged = true;
+  }
+
+  private syncUserBindingMappingsToModel(issuerIndex: number): void {
+    const entries = this.userBindingMappingEntries[issuerIndex];
+    const mappings: { [key: string]: string } = {};
+    for (const entry of entries) {
+      if (entry.userAttribute && entry.claimExpression) {
+        mappings[entry.userAttribute] = entry.claimExpression;
+      }
+    }
+    this.domain.tokenExchangeSettings.trustedIssuers[issuerIndex].userBindingMappings = mappings;
+  }
+
   private initScopeMappingEntries(): void {
     this.scopeMappingEntries = (this.domain.tokenExchangeSettings.trustedIssuers || []).map((issuer: TrustedIssuer) => {
       if (!issuer.scopeMappings) {
@@ -272,6 +325,19 @@ export class TokenExchangeComponent implements OnInit {
       return Object.entries(issuer.scopeMappings).map(([externalScope, domainScope]) => ({
         externalScope,
         domainScope,
+      }));
+    });
+    this.initUserBindingMappingEntries();
+  }
+
+  private initUserBindingMappingEntries(): void {
+    this.userBindingMappingEntries = (this.domain.tokenExchangeSettings.trustedIssuers || []).map((issuer: TrustedIssuer) => {
+      if (!issuer.userBindingMappings) {
+        return [];
+      }
+      return Object.entries(issuer.userBindingMappings).map(([userAttribute, claimExpression]) => ({
+        userAttribute,
+        claimExpression,
       }));
     });
   }

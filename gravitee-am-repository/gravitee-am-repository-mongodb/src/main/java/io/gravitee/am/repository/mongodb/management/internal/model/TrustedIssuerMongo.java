@@ -31,6 +31,8 @@ public class TrustedIssuerMongo {
     private String jwksUri;
     private String certificate;
     private Map<String, String> scopeMappings;
+    private boolean userBindingEnabled;
+    private Map<String, String> userBindingMappings;
 
     public String getIssuer() {
         return issuer;
@@ -72,6 +74,22 @@ public class TrustedIssuerMongo {
         this.scopeMappings = scopeMappings;
     }
 
+    public boolean isUserBindingEnabled() {
+        return userBindingEnabled;
+    }
+
+    public void setUserBindingEnabled(boolean userBindingEnabled) {
+        this.userBindingEnabled = userBindingEnabled;
+    }
+
+    public Map<String, String> getUserBindingMappings() {
+        return userBindingMappings;
+    }
+
+    public void setUserBindingMappings(Map<String, String> userBindingMappings) {
+        this.userBindingMappings = userBindingMappings;
+    }
+
     public TrustedIssuer convert() {
         TrustedIssuer trustedIssuer = new TrustedIssuer();
         trustedIssuer.setIssuer(getIssuer());
@@ -79,6 +97,8 @@ public class TrustedIssuerMongo {
         trustedIssuer.setJwksUri(getJwksUri());
         trustedIssuer.setCertificate(getCertificate());
         trustedIssuer.setScopeMappings(getScopeMappings());
+        trustedIssuer.setUserBindingEnabled(isUserBindingEnabled());
+        trustedIssuer.setUserBindingMappings(getUserBindingMappings());
         return trustedIssuer;
     }
 
@@ -92,6 +112,8 @@ public class TrustedIssuerMongo {
         mongo.setJwksUri(trustedIssuer.getJwksUri());
         mongo.setCertificate(trustedIssuer.getCertificate());
         mongo.setScopeMappings(trustedIssuer.getScopeMappings());
+        mongo.setUserBindingEnabled(trustedIssuer.isUserBindingEnabled());
+        mongo.setUserBindingMappings(trustedIssuer.getUserBindingMappings());
         return mongo;
     }
 }

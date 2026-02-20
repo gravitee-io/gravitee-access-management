@@ -23,15 +23,18 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Single;
@@ -39,6 +42,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -54,7 +58,10 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,6 +73,9 @@ public class TokenExchangeServiceImplTest {
     @Mock
     private ProtectedResourceManager protectedResourceManager;
 
+    @Mock
+    private UserGatewayService userGatewayService;
+
     private TokenExchangeServiceImpl service;
 
     @BeforeEach
@@ -74,7 +84,7 @@ public class TokenExchangeServiceImplTest {
     }
 
     private TokenExchangeServiceImpl createService(List<TokenValidator> validators) {
-        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager);
+        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager, userGatewayService);
     }
 
     @Test
@@ -1427,6 +1437,291 @@ public class TokenExchangeServiceImplTest {
 
         assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
                 .isInstanceOf(InvalidScopeException.class);
+    }
+
+    // ==================== User Binding Tests ====================
+
+    @Test
+    public void shouldUseDomainUserWhenUserBindingEnabledAndUserFound() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+        String userEmail = "john@example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", userEmail));
+        service = createService(List.of(trustedValidator));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setUsername("john.doe");
+        domainUser.setEmail(userEmail);
+        domainUser.setAdditionalInformation(new HashMap<>());
+
+        when(userGatewayService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(any(User.class))).thenReturn(Single.just(domainUser));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, Map.of("email", "email"));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+        assertThat(result.user().getUsername()).isEqualTo("john.doe");
+        assertThat(result.user().getAdditionalInformation().get("token_exchange")).isEqualTo(true);
+        assertThat(result.user().getAdditionalInformation().get(Claims.CLIENT_ID)).isEqualTo("client-id");
+        verify(userGatewayService).enhance(any(User.class));
+    }
+
+    @Test
+    public void shouldFailWhenUserBindingEnabledAndNoUserFound() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "unknown@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        when(userGatewayService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, Map.of("email", "email"));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidGrantException.class)
+                .hasMessageContaining("No matching domain user found");
+    }
+
+    @Test
+    public void shouldFailWhenUserBindingEnabledAndMultipleUsersFound() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "shared@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        User user1 = new User();
+        user1.setId("user1");
+        User user2 = new User();
+        user2.setId("user2");
+        when(userGatewayService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(List.of(user1, user2)));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, Map.of("email", "email"));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidGrantException.class)
+                .hasMessageContaining("Multiple domain users match");
+    }
+
+    @Test
+    public void shouldUseSyntheticUserWhenUserBindingDisabled() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        // Trusted issuer without user binding enabled
+        Domain domain = domainWithTrustedIssuer(externalIssuer, false);
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        // Should use synthetic user (subject from token claims)
+        assertThat(result.user().getId()).isEqualTo("external-subject");
+        verify(userGatewayService, never()).findByCriteria(any(FilterCriteria.class));
+    }
+
+    @Test
+    public void shouldUseSyntheticUserWhenNotTrustedIssuerValidated() throws Exception {
+        // Default validator (not trusted issuer validated)
+        service = createService(List.of(new FixedSubjectTokenValidator()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("subject");
+        verify(userGatewayService, never()).findByCriteria(any(FilterCriteria.class));
+    }
+
+    @Test
+    public void shouldEvaluateElExpressionInMapping() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        // Token has claim 'mail' but binding maps email -> {#token['mail']}
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("mail", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setUsername("john.doe");
+        domainUser.setAdditionalInformation(new HashMap<>());
+
+        when(userGatewayService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(any(User.class))).thenReturn(Single.just(domainUser));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        // Use EL expression in mapping value
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, Map.of("email", "{#token['mail']}"));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+
+        // Verify the filter criteria was built with the resolved value
+        ArgumentCaptor<FilterCriteria> criteriaCaptor = ArgumentCaptor.forClass(FilterCriteria.class);
+        verify(userGatewayService).findByCriteria(criteriaCaptor.capture());
+        FilterCriteria criteria = criteriaCaptor.getValue();
+        assertThat(criteria.getFilterName()).isEqualTo("email");
+        assertThat(criteria.getFilterValue()).isEqualTo("john@example.com");
+    }
+
+    @Test
+    public void shouldUseSimpleClaimLookupInMapping() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setUsername("john.doe");
+        domainUser.setAdditionalInformation(new HashMap<>());
+
+        when(userGatewayService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(any(User.class))).thenReturn(Single.just(domainUser));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        // Direct claim name mapping (no EL)
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, Map.of("email", "email"));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+
+        ArgumentCaptor<FilterCriteria> criteriaCaptor = ArgumentCaptor.forClass(FilterCriteria.class);
+        verify(userGatewayService).findByCriteria(criteriaCaptor.capture());
+        FilterCriteria criteria = criteriaCaptor.getValue();
+        assertThat(criteria.getFilterName()).isEqualTo("email");
+        assertThat(criteria.getFilterValue()).isEqualTo("john@example.com");
+        assertThat(criteria.getOperator()).isEqualTo("eq");
+        assertThat(criteria.isQuoteFilterValue()).isTrue();
+    }
+
+    @Test
+    public void shouldFailWhenBindingClaimResolvesToNull() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        // Token has 'email' claim but mapping references 'nonexistent_claim'
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        // Mapping value references a claim that doesn't exist in the token
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, Map.of("email", "nonexistent_claim"));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+                .isInstanceOf(InvalidGrantException.class)
+                .hasMessageContaining("resolved to empty value");
+    }
+
+    private TokenValidator trustedIssuerValidator(String issuer, Map<String, Object> additionalClaims) {
+        return new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                Map<String, Object> claims = new HashMap<>(additionalClaims);
+                return Single.just(ValidatedToken.builder()
+                        .subject("external-subject")
+                        .issuer(issuer)
+                        .claims(claims)
+                        .scopes(Set.of("openid"))
+                        .expiration(Date.from(Instant.now().plusSeconds(60)))
+                        .tokenType(TokenType.JWT)
+                        .trustedIssuerValidated(true)
+                        .build());
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.JWT;
+            }
+        };
+    }
+
+    private Domain domainWithTrustedIssuerBinding(String issuerUrl, Map<String, String> bindingMappings) {
+        TrustedIssuer trustedIssuer = new TrustedIssuer();
+        trustedIssuer.setIssuer(issuerUrl);
+        trustedIssuer.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_JWKS_URL);
+        trustedIssuer.setJwksUri(issuerUrl + "/.well-known/jwks.json");
+        trustedIssuer.setUserBindingEnabled(true);
+        trustedIssuer.setUserBindingMappings(bindingMappings);
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(List.of(TokenType.JWT, TokenType.ACCESS_TOKEN));
+        settings.setTrustedIssuers(List.of(trustedIssuer));
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+        return domain;
+    }
+
+    private Domain domainWithTrustedIssuer(String issuerUrl, boolean bindingEnabled) {
+        TrustedIssuer trustedIssuer = new TrustedIssuer();
+        trustedIssuer.setIssuer(issuerUrl);
+        trustedIssuer.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_JWKS_URL);
+        trustedIssuer.setJwksUri(issuerUrl + "/.well-known/jwks.json");
+        trustedIssuer.setUserBindingEnabled(bindingEnabled);
+        if (bindingEnabled) {
+            trustedIssuer.setUserBindingMappings(Map.of("email", "email"));
+        }
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(List.of(TokenType.JWT, TokenType.ACCESS_TOKEN));
+        settings.setTrustedIssuers(List.of(trustedIssuer));
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+        return domain;
     }
 
     private static List<ApplicationScopeSettings> clientScopeSettings(String... scopes) {

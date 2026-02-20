@@ -907,6 +907,23 @@ public class DomainServiceImpl implements DomainService {
                             "Invalid PEM certificate for trusted issuer: " + ti.getIssuer());
                 }
             }
+            if (ti.isUserBindingEnabled()) {
+                if (ti.getUserBindingMappings() == null || ti.getUserBindingMappings().isEmpty()) {
+                    throw new InvalidDomainException(
+                            "User binding is enabled but no mappings configured for trusted issuer: " + ti.getIssuer());
+                }
+                for (var entry : ti.getUserBindingMappings().entrySet()) {
+                    if (entry.getKey() == null || entry.getKey().isBlank()) {
+                        throw new InvalidDomainException(
+                                "User binding mapping has blank attribute key for trusted issuer: " + ti.getIssuer());
+                    }
+                    if (entry.getValue() == null || entry.getValue().isBlank()) {
+                        throw new InvalidDomainException(
+                                "User binding mapping has blank value for attribute '" + entry.getKey()
+                                        + "' for trusted issuer: " + ti.getIssuer());
+                    }
+                }
+            }
         }
     }
 

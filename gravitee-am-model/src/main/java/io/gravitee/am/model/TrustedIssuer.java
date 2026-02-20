@@ -63,4 +63,19 @@ public class TrustedIssuer {
      * Null or empty means pass through all scopes unchanged.
      */
     private Map<String, String> scopeMappings;
+
+    /**
+     * Whether to look up a domain user matching the external JWT claims.
+     * When enabled, the minted token will carry the domain user's roles, groups, and profile data.
+     * When disabled (default), a synthetic user is built from token claims.
+     */
+    private boolean userBindingEnabled;
+
+    /**
+     * Mappings for user binding lookup.
+     * Key = user attribute to search by (e.g., "email", "username").
+     * Value = claim name or EL expression (e.g., "email" or "{#token['email']}").
+     * Required when userBindingEnabled is true.
+     */
+    private Map<String, String> userBindingMappings;
 }

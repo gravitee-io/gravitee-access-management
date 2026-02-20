@@ -273,6 +273,82 @@
                   </button>
                 </div>
               </div>
+
+              <!-- User Binding -->
+              <div style="margin-top: 16px">
+                <mat-slide-toggle
+                  [name]="'userBindingEnabled_' + i"
+                  [(ngModel)]="issuer.userBindingEnabled"
+                  (change)="modelChanged()"
+                  [disabled]="!editMode"
+                >
+                  Enable User Binding
+                </mat-slide-toggle>
+                <mat-hint style="font-size: 75%; margin-bottom: 8px; display: block">
+                  When enabled, the minted token will carry the domain user's roles, groups, and profile data instead of a synthetic user.
+                </mat-hint>
+
+                <div *ngIf="issuer.userBindingEnabled" style="margin-top: 8px">
+                  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+                    <h5 style="margin: 0">User Binding Mappings</h5>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      (click)="addUserBindingMapping(i)"
+                      [disabled]="!editMode"
+                      matTooltip="Add user binding mapping"
+                    >
+                      <mat-icon>add_circle_outline</mat-icon>
+                    </button>
+                  </div>
+                  <mat-hint style="font-size: 75%; margin-bottom: 8px; display: block">
+                    Map user attributes to JWT claims for domain user lookup. Use claim names (e.g., "email") or EL expressions (e.g.,
+                    "&#123;#token['email']&#125;").
+                  </mat-hint>
+
+                  <div
+                    *ngFor="let mapping of userBindingMappingEntries[i]; let k = index"
+                    fxLayout="row"
+                    fxLayoutAlign="start center"
+                    fxLayoutGap="8px"
+                    style="margin-top: 8px"
+                  >
+                    <mat-form-field appearance="outline" fxFlex="35">
+                      <mat-label>User Attribute</mat-label>
+                      <mat-select
+                        [name]="'ubAttr_' + i + '_' + k"
+                        [(ngModel)]="mapping.userAttribute"
+                        (selectionChange)="onUserBindingMappingChange(i)"
+                        [disabled]="!editMode"
+                      >
+                        <mat-option *ngFor="let attr of USER_BINDING_ATTRIBUTES" [value]="attr.value">{{ attr.label }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-icon style="margin-bottom: 20px">arrow_forward</mat-icon>
+                    <mat-form-field appearance="outline" fxFlex="45">
+                      <mat-label>Claim / Expression</mat-label>
+                      <input
+                        matInput
+                        [name]="'ubClaim_' + i + '_' + k"
+                        [(ngModel)]="mapping.claimExpression"
+                        (ngModelChange)="onUserBindingMappingChange(i)"
+                        [disabled]="!editMode"
+                        placeholder="email or {#token['email']}"
+                      />
+                    </mat-form-field>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      (click)="removeUserBindingMapping(i, k)"
+                      [disabled]="!editMode"
+                      matTooltip="Remove mapping"
+                      style="margin-bottom: 20px"
+                    >
+                      <mat-icon>remove_circle_outline</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <button
@@ -330,6 +406,12 @@
           Configure <strong>Trusted Issuers</strong> to accept JWTs from external identity providers as subject or actor tokens. Each issuer
           requires a key resolution method (JWKS URL or PEM certificate) for signature verification. Optional scope mappings allow
           translating external scopes to domain scopes.
+        </p>
+        <h4>User Binding</h4>
+        <p>
+          Enable <strong>User Binding</strong> on a trusted issuer to look up a domain user matching the external JWT claims. When a
+          matching user is found, the minted token carries the domain user's roles, groups, and profile data. If no match is found, the
+          exchange is rejected (fail-closed). Mappings define which user attribute to match against which JWT claim or EL expression.
         </p>
         <p>
           Clients must have the <code>Token Exchange</code> grant type enabled to use token exchange.

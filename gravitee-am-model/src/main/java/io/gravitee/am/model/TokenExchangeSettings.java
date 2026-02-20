@@ -199,6 +199,28 @@ public class TokenExchangeSettings {
                     return false;
                 }
             }
+            if (!isUserBindingValid(ti)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isUserBindingValid(TrustedIssuer ti) {
+        if (!ti.isUserBindingEnabled()) {
+            return true;
+        }
+        var mappings = ti.getUserBindingMappings();
+        if (mappings == null || mappings.isEmpty()) {
+            return false;
+        }
+        for (var entry : mappings.entrySet()) {
+            if (entry.getKey() == null || entry.getKey().isBlank()) {
+                return false;
+            }
+            if (entry.getValue() == null || entry.getValue().isBlank()) {
+                return false;
+            }
         }
         return true;
     }
