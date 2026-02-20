@@ -15,7 +15,7 @@
  */
 import { afterAll, beforeAll } from '@jest/globals';
 import { ForgotPasswordFixture, setupFixture } from './fixture/forgot-password-fixture';
-import { resetPassword, ResetPasswordContext } from './fixture/reset-password-flow-utils';
+import { resetPassword } from './fixture/reset-password-flow-utils';
 import { requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forgot-password-flow-utils';
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
@@ -49,19 +49,10 @@ const setting: DomainTestSettings = {
   },
 };
 
-let resetPasswordContext: ResetPasswordContext;
 let fixture: ForgotPasswordFixture;
 
 beforeAll(async () => {
   fixture = await setupFixture(setting, userProps);
-  resetPasswordContext = {
-    openIdConfiguration: fixture.openIdConfiguration,
-    application: fixture.application,
-    userSessionToken: fixture.userSessionToken,
-    user: fixture.user,
-    resetPasswordFailed: 'error=reset_password_failed',
-    invalidPasswordValue: 'invalid_password_value',
-  };
 });
 
 afterAll(async () => {
@@ -73,15 +64,7 @@ afterAll(async () => {
 describe('Gateway reset password with token invalidation (non-inherited)', () => {
   it('should auto-login with redirect and invalidate old token after successful reset', async () => {
     await clearEmails(userProps.email);
-    await requestForgotPassword(
-      {
-        domainHrid: fixture.domain.hrid,
-        clientId: fixture.clientId,
-        openIdConfiguration: fixture.openIdConfiguration,
-        user: fixture.user,
-      },
-      setting.settings,
-    );
+    await requestForgotPassword(fixture.forgotPasswordContext(), setting.settings);
     const freshConfirmationLink = await retrieveEmailLinkForReset(userProps.email);
     const validPassword = 'V@l1dNewP@ss99';
     await resetPassword(
@@ -89,7 +72,7 @@ describe('Gateway reset password with token invalidation (non-inherited)', () =>
       validPassword,
       setting.settings.accountSettings.redirectUriAfterResetPassword,
       setting.settings,
-      resetPasswordContext,
+      fixture.resetPasswordContext(),
     );
   });
 });

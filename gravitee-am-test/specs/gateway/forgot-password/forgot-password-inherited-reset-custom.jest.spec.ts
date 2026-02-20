@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll } from '@jest/globals';
+import { afterAll, beforeAll, beforeEach } from '@jest/globals';
 import { ForgotPasswordFixture, setupFixture } from './fixture/forgot-password-fixture';
-import { resetPassword, ResetPasswordContext } from './fixture/reset-password-flow-utils';
-import { ForgotPasswordContext, requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forgot-password-flow-utils';
+import { resetPassword } from './fixture/reset-password-flow-utils';
+import { requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forgot-password-flow-utils';
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
 import { setup } from '../../test-fixture';
@@ -69,26 +69,10 @@ const setting: DomainTestSettings = {
   },
 };
 
-let resetPasswordContext: ResetPasswordContext;
-let forgotPasswordContext: ForgotPasswordContext;
 let fixture: ForgotPasswordFixture;
 
 beforeAll(async () => {
   fixture = await setupFixture(setting, userProps);
-  forgotPasswordContext = {
-    domainHrid: fixture.domain.hrid,
-    clientId: fixture.clientId,
-    openIdConfiguration: fixture.openIdConfiguration,
-    user: fixture.user,
-  };
-  resetPasswordContext = {
-    openIdConfiguration: fixture.openIdConfiguration,
-    application: fixture.application,
-    userSessionToken: fixture.userSessionToken,
-    user: fixture.user,
-    resetPasswordFailed,
-    invalidPasswordValue,
-  };
 });
 
 afterAll(async () => {
@@ -125,9 +109,9 @@ describe('Gateway reset password', () => {
     passwordHistoryTests.forEach(({ password, expectedMsg }) => {
       it(`resetting with ${password} should return ${expectedMsg}`, async () => {
         await clearEmails(userProps.email);
-        await requestForgotPassword(forgotPasswordContext, setting.settings);
+        await requestForgotPassword(fixture.forgotPasswordContext(), setting.settings);
         const link = await retrieveEmailLinkForReset(userProps.email);
-        await resetPassword(link, password, expectedMsg, setting.settings, resetPasswordContext);
+        await resetPassword(link, password, expectedMsg, setting.settings, fixture.resetPasswordContext());
       });
     });
   });
@@ -135,16 +119,16 @@ describe('Gateway reset password', () => {
   describe('when a Password Policy has been configured', () => {
     let confirmationLink: string;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
       await clearEmails(userProps.email);
-      await requestForgotPassword(forgotPasswordContext, setting.settings);
+      await requestForgotPassword(fixture.forgotPasswordContext(), setting.settings);
       confirmationLink = await retrieveEmailLinkForReset(userProps.email);
     });
 
     describe(`when a password is shorter than the minimum length of ${setting.passwordPolicy.minLength}`, () => {
       const minLength = 'SomeP@ssw0rd99'.substring(0, setting.passwordPolicy.minLength - 1);
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-        await resetPassword(confirmationLink, minLength, invalidPasswordValue, setting.settings, resetPasswordContext);
+        await resetPassword(confirmationLink, minLength, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
 
@@ -154,27 +138,27 @@ describe('Gateway reset password', () => {
         maxLength += maxLength;
       }
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-        await resetPassword(confirmationLink, maxLength, invalidPasswordValue, setting.settings, resetPasswordContext);
+        await resetPassword(confirmationLink, maxLength, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
 
     describe("when 'includeNumbers' is enabled and a password does not contain numbers", () => {
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-        await resetPassword(confirmationLink, 'SomeP@ssword', invalidPasswordValue, setting.settings, resetPasswordContext);
+        await resetPassword(confirmationLink, 'SomeP@ssword', invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
 
     describe("when 'includeSpecialCharacters' is enabled and a password does not contain special characters", () => {
       if (setting.passwordPolicy.includeSpecialCharacters) {
         it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-          await resetPassword(confirmationLink, 'SomePassw0rd99', invalidPasswordValue, setting.settings, resetPasswordContext);
+          await resetPassword(confirmationLink, 'SomePassw0rd99', invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
         });
       }
     });
 
     describe("when 'lettersInMixedCase' is enabled and a password is not mixed case", () => {
       it(`reset password should fail with ${invalidPasswordValue}`, async () => {
-        await resetPassword(confirmationLink, 'somepassw0rd99', invalidPasswordValue, setting.settings, resetPasswordContext);
+        await resetPassword(confirmationLink, 'somepassw0rd99', invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
 
@@ -185,7 +169,7 @@ describe('Gateway reset password', () => {
           letters += 'a';
         }
         let maxConsecutiveLetters = 'SomeP@ssw0rd99' + letters;
-        await resetPassword(confirmationLink, maxConsecutiveLetters, invalidPasswordValue, setting.settings, resetPasswordContext);
+        await resetPassword(confirmationLink, maxConsecutiveLetters, invalidPasswordValue, setting.settings, fixture.resetPasswordContext());
       });
     });
   });
