@@ -45,6 +45,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.CertificateAliasAlreadyExistsException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
@@ -214,7 +215,14 @@ public class CertificateServiceImpl implements CertificateService {
                         var certificate = schema.getFileKey()
                                 .map(fileKey -> createCertificateWithEmbeddedKeys(domain.getId(), newCertificate, isSystem, fileKey))
                                 .orElseGet(() -> createCertificate(domain.getId(), newCertificate, isSystem));
-                        return certificateRepository.create(validate(certificate));
+                        var validated = validate(certificate);
+                        if (!isSystem) {
+                            return extractAlias(validated.getConfiguration())
+                                    .map(alias -> checkAliasUniqueness(domain.getId(), alias, null)
+                                            .andThen(Single.defer(() -> certificateRepository.create(validated))))
+                                    .orElseGet(() -> certificateRepository.create(validated));
+                        }
+                        return certificateRepository.create(validated);
                     } catch (CertificateException ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(ex);
@@ -291,19 +299,33 @@ public class CertificateServiceImpl implements CertificateService {
                     }
                 })
                 .flatMap(oldCertificate -> {
-                    try {
-                        var certificate = getCertificateToUpdate(updateCertificate, oldCertificate);
-                        // for update validate config against schema here instead of the resource
-                        // as certificate may be system certificate so on the UI config is empty.
-                        validationService.validate(certificate.getType(), certificate.getConfiguration());
-                        return certificateRepository.update(validate(certificate));
-                    } catch (IOException | CertificateException ex) {
-                        log.error("An error occurs while trying to update certificate binaries", ex);
-                        return Single.error(ex);
-                    } catch (Exception ex) {
-                        log.error("An error occurs while trying to update certificate configuration", ex);
-                        return Single.error(ex);
+                    var certificate = getCertificateToUpdate(updateCertificate, oldCertificate);
+
+                    Optional<String> newAlias = extractAlias(certificate.getConfiguration());
+                    Optional<String> oldAlias = extractAlias(oldCertificate.certificate().getConfiguration());
+                    boolean aliasChanged = newAlias.isPresent() && !newAlias.equals(oldAlias);
+
+                    Single<Certificate> validateAndUpdate = Single.defer(() -> {
+                        try {
+                            // for update validate config against schema here instead of the resource
+                            // as certificate may be system certificate so on the UI config is empty.
+                            validationService.validate(certificate.getType(), certificate.getConfiguration());
+                            var validated = validate(certificate);
+                            return certificateRepository.update(validated);
+                        } catch (CertificateException ex) {
+                            log.error("An error occurs while trying to update certificate binaries", ex);
+                            return Single.error(ex);
+                        } catch (Exception ex) {
+                            log.error("An error occurs while trying to update certificate configuration", ex);
+                            return Single.error(ex);
+                        }
+                    });
+
+                    if (aliasChanged) {
+                        return checkAliasUniqueness(certificate.getDomain(), newAlias.get(), certificate.getId())
+                                .andThen(validateAndUpdate);
                     }
+                    return validateAndUpdate;
                 })
                 // create event for sync process
                 .flatMap(certificate1 -> {
@@ -567,6 +589,39 @@ public class CertificateServiceImpl implements CertificateService {
         certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints);
 
         return new JcaX509CertificateConverter().setProvider(BouncyCastleProviderSingleton.getInstance()).getCertificate(certBuilder.build(contentSigner));
+    }
+
+    private Optional<String> extractAlias(String configuration) {
+        if (configuration == null) {
+            return Optional.empty();
+        }
+        try {
+            JsonNode configNode = objectMapper.readTree(configuration);
+            JsonNode aliasNode = configNode.get(ALIAS);
+            if (aliasNode != null && !aliasNode.isNull() && aliasNode.isTextual()) {
+                String alias = aliasNode.asText();
+                return alias.isBlank() ? Optional.empty() : Optional.of(alias);
+            }
+            return Optional.empty();
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse certificate configuration for alias extraction", e);
+            return Optional.empty();
+        }
+    }
+
+    private Completable checkAliasUniqueness(String domainId, String alias, String excludeCertId) {
+        return certificateRepository.findByDomain(domainId)
+                .filter(existingCert -> {
+                    if (excludeCertId != null && excludeCertId.equals(existingCert.getId())) {
+                        return false;
+                    }
+                    return extractAlias(existingCert.getConfiguration())
+                            .map(existingAlias -> existingAlias.equals(alias))
+                            .orElse(false);
+                })
+                .firstElement()
+                .flatMapCompletable(conflicting -> Completable.error(
+                        new CertificateAliasAlreadyExistsException(alias)));
     }
 
     private Certificate validate(Certificate certificate) throws CertificateException {
