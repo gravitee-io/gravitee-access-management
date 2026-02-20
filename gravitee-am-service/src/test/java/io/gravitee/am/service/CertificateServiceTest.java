@@ -29,6 +29,7 @@ import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.service.exception.CertificateAliasAlreadyExistsException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithProtectedResourceException;
@@ -608,5 +609,206 @@ public class CertificateServiceTest {
                 && !cert.getConfiguration().contains("RS256")
         ));
         verify(taskManager, never()).schedule(any());
+    }
+
+    // --- Alias uniqueness tests ---
+
+    @Test
+    public void shouldNotCreateCertificateWithDuplicateAlias() throws JsonProcessingException {
+        when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
+                .thenReturn(Maybe.just(certificateSchemaDefinition));
+
+        var existingCert = new Certificate();
+        existingCert.setId("existing-cert-id");
+        existingCert.setDomain(DOMAIN.getId());
+        existingCert.setConfiguration("{\"alias\":\"am-server\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingCert));
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+
+        var certificateNode = objectMapper.createObjectNode();
+        var contentNode = objectMapper.createObjectNode();
+        contentNode.put("content", Base64.getEncoder().encode("file-content".getBytes(StandardCharsets.UTF_8)));
+        contentNode.put("name", "test.p12");
+        certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
+        certificateNode.put("alias", "am-server");
+        certificateNode.put("storepass", "pass");
+        certificateNode.put("keypass", "pass");
+
+        var newCertificate = new NewCertificate();
+        newCertificate.setName("duplicate-alias-cert");
+        newCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
+        newCertificate.setConfiguration(certificateNode.toString());
+
+        TestObserver<Certificate> testObserver = certificateService
+                .create(DOMAIN, newCertificate, mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(CertificateAliasAlreadyExistsException.class);
+
+        verify(certificateRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldCreateCertificateWithUniqueAlias() throws JsonProcessingException {
+        when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
+                .thenReturn(Maybe.just(certificateSchemaDefinition));
+
+        var existingCert = new Certificate();
+        existingCert.setId("existing-cert-id");
+        existingCert.setDomain(DOMAIN.getId());
+        existingCert.setConfiguration("{\"alias\":\"other-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingCert));
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+        when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        var certificateNode = objectMapper.createObjectNode();
+        var contentNode = objectMapper.createObjectNode();
+        contentNode.put("content", Base64.getEncoder().encode("file-content".getBytes(StandardCharsets.UTF_8)));
+        contentNode.put("name", "test.p12");
+        certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
+        certificateNode.put("alias", "am-server");
+        certificateNode.put("storepass", "pass");
+        certificateNode.put("keypass", "pass");
+
+        var newCertificate = new NewCertificate();
+        newCertificate.setName("unique-alias-cert");
+        newCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
+        newCertificate.setConfiguration(certificateNode.toString());
+
+        TestObserver<Certificate> testObserver = certificateService
+                .create(DOMAIN, newCertificate, mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateRepository, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldCreateCertificateWithNoAlias() {
+        var type = "aws-am-certificate";
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateAwsSchemaDefinition));
+        var certificateNode = objectMapper.createObjectNode();
+        certificateNode.put("secretname", "aws-secret-name");
+        var newCertificate = new NewCertificate();
+        newCertificate.setType(type);
+        newCertificate.setConfiguration(certificateNode.toString());
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+        when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Certificate> testObserver = certificateService
+                .create(DOMAIN, newCertificate, mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateRepository, times(1)).create(any());
+        verify(certificateRepository, never()).findByDomain(any());
+    }
+
+    @Test
+    public void shouldNotUpdateCertificateWithDuplicateAlias() {
+        var id = "cert-to-update";
+        var type = DEFAULT_CERTIFICATE_PLUGIN;
+
+        var existingCert = new Certificate();
+        existingCert.setId(id);
+        existingCert.setDomain(DOMAIN.getId());
+        existingCert.setType(type);
+        existingCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"old-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+        existingCert.setMetadata(new HashMap<>());
+
+        var otherCert = new Certificate();
+        otherCert.setId("other-cert-id");
+        otherCert.setDomain(DOMAIN.getId());
+        otherCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"taken-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        when(certificateRepository.findById(id)).thenReturn(Maybe.just(existingCert));
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingCert, otherCert));
+
+        var updateCert = new UpdateCertificate();
+        updateCert.setName("updated-cert");
+        updateCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"taken-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+
+        TestObserver<Certificate> testObserver = certificateService
+                .update(DOMAIN, id, updateCert, mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(CertificateAliasAlreadyExistsException.class);
+
+        verify(certificateRepository, never()).update(any());
+        verify(certificatePluginManager, never()).validate(any());
+    }
+
+    @Test
+    public void shouldUpdateCertificateKeepingSameAlias() {
+        var id = "cert-to-update";
+        var type = DEFAULT_CERTIFICATE_PLUGIN;
+
+        var existingCert = new Certificate();
+        existingCert.setId(id);
+        existingCert.setDomain(DOMAIN.getId());
+        existingCert.setType(type);
+        existingCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"my-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+        existingCert.setMetadata(new HashMap<>());
+
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        when(certificateRepository.findById(id)).thenReturn(Maybe.just(existingCert));
+        when(certificateRepository.update(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+
+        var updateCert = new UpdateCertificate();
+        updateCert.setName("updated-cert");
+        updateCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"my-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+
+        TestObserver<Certificate> testObserver = certificateService
+                .update(DOMAIN, id, updateCert, mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateRepository, times(1)).update(any());
+        verify(certificateRepository, never()).findByDomain(any());
+    }
+
+    @Test
+    public void shouldUpdateCertificateWithNewUniqueAlias() {
+        var id = "cert-to-update";
+        var type = DEFAULT_CERTIFICATE_PLUGIN;
+
+        var existingCert = new Certificate();
+        existingCert.setId(id);
+        existingCert.setDomain(DOMAIN.getId());
+        existingCert.setType(type);
+        existingCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"old-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+        existingCert.setMetadata(new HashMap<>());
+
+        var otherCert = new Certificate();
+        otherCert.setId("other-cert-id");
+        otherCert.setDomain(DOMAIN.getId());
+        otherCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"other-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        when(certificateRepository.findById(id)).thenReturn(Maybe.just(existingCert));
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingCert, otherCert));
+        when(certificateRepository.update(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+
+        var updateCert = new UpdateCertificate();
+        updateCert.setName("updated-cert");
+        updateCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"brand-new-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+
+        TestObserver<Certificate> testObserver = certificateService
+                .update(DOMAIN, id, updateCert, mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(certificateRepository, times(1)).update(any());
     }
 }
