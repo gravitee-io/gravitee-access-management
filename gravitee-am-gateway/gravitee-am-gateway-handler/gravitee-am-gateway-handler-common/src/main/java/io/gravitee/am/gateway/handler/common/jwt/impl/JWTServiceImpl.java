@@ -200,28 +200,22 @@ public class JWTServiceImpl implements JWTService {
 
     private Single<EncodedJWT> encodeJwtWithFallback(JWT jwt, CertificateProvider certificateProvider) {
         return encodeJwt(jwt, certificateProvider)
-                .onErrorResumeNext(error -> {
-                    logger.warn("Failed to sign JWT with certificate {}, attempting fallback",
-                            certificateProvider.getCertificateInfo().certificateId(), error);
-                    return certificateManager.fallbackCertificateProvider()
-                            .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
-                                    certificateProvider.getCertificateInfo().certificateId()))
-                            .flatMapSingle(fallback -> encodeJwt(jwt, fallback))
-                            .switchIfEmpty(Single.error(error));
-                });
+                .onErrorResumeNext(error -> certificateManager.fallbackCertificateProvider()
+                        .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
+                                certificateProvider.getCertificateInfo().certificateId()))
+                        .doOnSuccess(fallback -> onFallbackUsed(certificateProvider, fallback))
+                        .flatMapSingle(fallback -> encodeJwt(jwt, fallback))
+                        .switchIfEmpty(Single.error(error)));
     }
 
     private Single<String> encodeWithFallback(JWT jwt, CertificateProvider certificateProvider) {
         return encode(jwt, certificateProvider)
-                .onErrorResumeNext(error -> {
-                    logger.warn("Failed to sign JWT with certificate {}, attempting fallback",
-                            certificateProvider.getCertificateInfo().certificateId(), error);
-                    return certificateManager.fallbackCertificateProvider()
-                            .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
-                                    certificateProvider.getCertificateInfo().certificateId()))
-                            .flatMapSingle(fallback -> encode(jwt, fallback))
-                            .switchIfEmpty(Single.error(error));
-                });
+                .onErrorResumeNext(error -> certificateManager.fallbackCertificateProvider()
+                        .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
+                                certificateProvider.getCertificateInfo().certificateId()))
+                        .doOnSuccess(fallback -> onFallbackUsed(certificateProvider, fallback))
+                        .flatMapSingle(fallback -> encode(jwt, fallback))
+                        .switchIfEmpty(Single.error(error)));
     }
 
     private Single<EncodedJWT> signWithCertificateInfo(CertificateProvider certificateProvider, JWT jwt) {
@@ -278,5 +272,11 @@ public class JWTServiceImpl implements JWTService {
             logger.debug("Unable to parse JWT header to extract {}", parameterName, e);
             return Optional.empty();
         }
+    }
+
+    private static void onFallbackUsed(CertificateProvider originalCertificateProvider, CertificateProvider fallback) {
+        logger.warn("Failed to sign JWT with certificate: {}, attempting fallback using: {}",
+                originalCertificateProvider.getCertificateInfo().certificateId(),
+                fallback.getCertificateInfo().certificateId());
     }
 }

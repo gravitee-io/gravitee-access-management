@@ -236,8 +236,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Override
     public Maybe<CertificateProvider> fallbackCertificateProvider() {
-        return Optional.ofNullable(certificateSettings)
-                .map(AtomicReference::get)
+        return Optional.ofNullable(certificateSettings.get())
                 .map(CertificateSettings::getFallbackCertificate)
                 .filter(StringUtils::isNotEmpty)
                 .map(this::get)
