@@ -16,8 +16,9 @@
 
 -->
 <div class="gv-page-container">
-  <div>
-    <div fxFlex="70">
+  <h1>Token Exchange</h1>
+  <div class="gv-page-content">
+    <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="save()">
         <div class="gv-form-section" fxLayout="column">
           <mat-slide-toggle (change)="enableTokenExchange($event)" [checked]="isTokenExchangeEnabled()" [disabled]="!editMode">
@@ -223,15 +224,45 @@
 
               <!-- Scope Mappings -->
               <div style="margin-top: 16px">
-                <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-                  <h5 style="margin: 0">Scope Mappings</h5>
-                  <button mat-icon-button type="button" (click)="addScopeMapping(i)" [disabled]="!editMode" matTooltip="Add scope mapping">
-                    <mat-icon>add_circle_outline</mat-icon>
-                  </button>
-                </div>
+                <h5 style="margin: 0">Scope Mappings</h5>
                 <mat-hint style="font-size: 75%; margin-bottom: 8px; display: block">
                   Map external scopes from this issuer to domain scopes. Unmapped scopes will be dropped.
                 </mat-hint>
+
+                <div
+                  fxLayout="row"
+                  fxLayoutAlign="start center"
+                  fxLayoutGap="10px"
+                  style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px"
+                >
+                  <mat-form-field appearance="outline" fxFlex>
+                    <mat-label>External Scope</mat-label>
+                    <input
+                      matInput
+                      [name]="'newExtScope_' + i"
+                      [(ngModel)]="newScopeMapping[i].externalScope"
+                      [disabled]="!editMode"
+                      placeholder="External scope name"
+                    />
+                  </mat-form-field>
+                  <span class="mapping-separator">&mdash;</span>
+                  <mat-form-field appearance="outline" fxFlex>
+                    <mat-label>Domain Scope</mat-label>
+                    <mat-select [name]="'newDomScope_' + i" [(ngModel)]="newScopeMapping[i].domainScope" [disabled]="!editMode">
+                      <mat-option *ngFor="let scope of domainScopes" [value]="scope.key">
+                        <span>{{ scope.name }}</span> | <small>{{ scope.description }}</small>
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="addScopeMapping(i)"
+                    [disabled]="!editMode || !newScopeMapping[i]?.externalScope || !newScopeMapping[i]?.domainScope"
+                  >
+                    <mat-icon svgIcon="gio:plus"></mat-icon>ADD
+                  </button>
+                </div>
 
                 <div
                   *ngFor="let mapping of scopeMappingEntries[i]; let j = index"
@@ -240,36 +271,11 @@
                   fxLayoutGap="8px"
                   style="margin-top: 8px"
                 >
-                  <mat-form-field appearance="outline" fxFlex="40">
-                    <mat-label>External Scope</mat-label>
-                    <input
-                      matInput
-                      [name]="'extScope_' + i + '_' + j"
-                      [(ngModel)]="mapping.externalScope"
-                      (ngModelChange)="onScopeMappingChange(i)"
-                      [disabled]="!editMode"
-                    />
-                  </mat-form-field>
-                  <mat-icon style="margin-bottom: 20px">arrow_forward</mat-icon>
-                  <mat-form-field appearance="outline" fxFlex="40">
-                    <mat-label>Domain Scope</mat-label>
-                    <input
-                      matInput
-                      [name]="'domScope_' + i + '_' + j"
-                      [(ngModel)]="mapping.domainScope"
-                      (ngModelChange)="onScopeMappingChange(i)"
-                      [disabled]="!editMode"
-                    />
-                  </mat-form-field>
-                  <button
-                    mat-icon-button
-                    type="button"
-                    (click)="removeScopeMapping(i, j)"
-                    [disabled]="!editMode"
-                    matTooltip="Remove mapping"
-                    style="margin-bottom: 20px"
-                  >
-                    <mat-icon>remove_circle_outline</mat-icon>
+                  <span fxFlex>{{ mapping.externalScope }}</span>
+                  <span class="mapping-separator">&mdash;</span>
+                  <span fxFlex>{{ mapping.domainScope }}</span>
+                  <button mat-icon-button type="button" (click)="removeScopeMapping(i, j)" [disabled]="!editMode">
+                    <mat-icon>close</mat-icon>
                   </button>
                 </div>
               </div>
@@ -289,22 +295,48 @@
                 </mat-hint>
 
                 <div *ngIf="issuer.userBindingEnabled" style="margin-top: 8px">
-                  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-                    <h5 style="margin: 0">User Binding Mappings</h5>
-                    <button
-                      mat-icon-button
-                      type="button"
-                      (click)="addUserBindingMapping(i)"
-                      [disabled]="!editMode"
-                      matTooltip="Add user binding mapping"
-                    >
-                      <mat-icon>add_circle_outline</mat-icon>
-                    </button>
-                  </div>
+                  <h5 style="margin: 0">User Binding Mappings</h5>
                   <mat-hint style="font-size: 75%; margin-bottom: 8px; display: block">
                     Map user attributes to JWT claims for domain user lookup. Use claim names (e.g., "email") or EL expressions (e.g.,
                     "&#123;#token['email']&#125;").
                   </mat-hint>
+
+                  <div
+                    fxLayout="row"
+                    fxLayoutAlign="start center"
+                    fxLayoutGap="10px"
+                    style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px"
+                  >
+                    <mat-form-field appearance="outline" fxFlex>
+                      <mat-label>User Attribute</mat-label>
+                      <input
+                        matInput
+                        [name]="'newUbAttr_' + i"
+                        [(ngModel)]="newUserBindingMapping[i].userAttribute"
+                        [disabled]="!editMode"
+                        placeholder="User profile attribute"
+                      />
+                    </mat-form-field>
+                    <span class="mapping-separator">&mdash;</span>
+                    <mat-form-field appearance="outline" fxFlex>
+                      <mat-label>Claim / Expression</mat-label>
+                      <input
+                        matInput
+                        [name]="'newUbClaim_' + i"
+                        [(ngModel)]="newUserBindingMapping[i].claimExpression"
+                        [disabled]="!editMode"
+                        placeholder="email or {#token['email']}"
+                      />
+                    </mat-form-field>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="addUserBindingMapping(i)"
+                      [disabled]="!editMode || !newUserBindingMapping[i]?.userAttribute || !newUserBindingMapping[i]?.claimExpression"
+                    >
+                      <mat-icon svgIcon="gio:plus"></mat-icon>ADD
+                    </button>
+                  </div>
 
                   <div
                     *ngFor="let mapping of userBindingMappingEntries[i]; let k = index"
@@ -313,38 +345,11 @@
                     fxLayoutGap="8px"
                     style="margin-top: 8px"
                   >
-                    <mat-form-field appearance="outline" fxFlex="35">
-                      <mat-label>User Attribute</mat-label>
-                      <mat-select
-                        [name]="'ubAttr_' + i + '_' + k"
-                        [(ngModel)]="mapping.userAttribute"
-                        (selectionChange)="onUserBindingMappingChange(i)"
-                        [disabled]="!editMode"
-                      >
-                        <mat-option *ngFor="let attr of USER_BINDING_ATTRIBUTES" [value]="attr.value">{{ attr.label }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                    <mat-icon style="margin-bottom: 20px">arrow_forward</mat-icon>
-                    <mat-form-field appearance="outline" fxFlex="45">
-                      <mat-label>Claim / Expression</mat-label>
-                      <input
-                        matInput
-                        [name]="'ubClaim_' + i + '_' + k"
-                        [(ngModel)]="mapping.claimExpression"
-                        (ngModelChange)="onUserBindingMappingChange(i)"
-                        [disabled]="!editMode"
-                        placeholder="email or {#token['email']}"
-                      />
-                    </mat-form-field>
-                    <button
-                      mat-icon-button
-                      type="button"
-                      (click)="removeUserBindingMapping(i, k)"
-                      [disabled]="!editMode"
-                      matTooltip="Remove mapping"
-                      style="margin-bottom: 20px"
-                    >
-                      <mat-icon>remove_circle_outline</mat-icon>
+                    <span fxFlex>{{ mapping.userAttribute }}</span>
+                    <span class="mapping-separator">&mdash;</span>
+                    <span fxFlex>{{ mapping.claimExpression }}</span>
+                    <button mat-icon-button type="button" (click)="removeUserBindingMapping(i, k)" [disabled]="!editMode">
+                      <mat-icon>close</mat-icon>
                     </button>
                   </div>
                 </div>
@@ -358,8 +363,7 @@
               [disabled]="!editMode"
               style="align-self: flex-start; margin-top: 8px"
             >
-              <mat-icon>add</mat-icon>
-              Add Trusted Issuer
+              <mat-icon svgIcon="gio:plus"></mat-icon>ADD TRUSTED ISSUER
             </button>
           </div>
 

@@ -18,6 +18,7 @@ import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { AuthService } from '../../../../services/auth.service';
 import { DomainService } from '../../../../services/domain.service';
+import { ScopeService } from '../../../../services/scope.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DomainStoreService } from '../../../../stores/domain.store';
 
@@ -94,19 +95,21 @@ export class TokenExchangeComponent implements OnInit {
   // Legacy alias for backward compatibility in template
   readonly TOKEN_TYPES = this.SUBJECT_TOKEN_TYPES;
 
-  readonly USER_BINDING_ATTRIBUTES = [
-    { value: 'email', label: 'Email' },
-    { value: 'username', label: 'Username' },
-  ];
+  domainScopes: any[] = [];
 
-  // Scope mapping entries per issuer index (for UI two-way binding)
+  // Scope mapping entries per issuer index
   scopeMappingEntries: ScopeMappingEntry[][] = [];
 
-  // User binding mapping entries per issuer index (for UI two-way binding)
+  // User binding mapping entries per issuer index
   userBindingMappingEntries: UserBindingMappingEntry[][] = [];
+
+  // Staging area for new entries (one per issuer)
+  newScopeMapping: ScopeMappingEntry[] = [];
+  newUserBindingMapping: UserBindingMappingEntry[] = [];
 
   constructor(
     private domainService: DomainService,
+    private scopeService: ScopeService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private domainStore: DomainStoreService,
@@ -117,6 +120,7 @@ export class TokenExchangeComponent implements OnInit {
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
     this.initializeSettings();
+    this.scopeService.findAllByDomain(this.domainId).subscribe((scopes) => (this.domainScopes = scopes));
   }
 
   private initializeSettings() {
@@ -251,6 +255,8 @@ export class TokenExchangeComponent implements OnInit {
     });
     this.scopeMappingEntries.push([]);
     this.userBindingMappingEntries.push([]);
+    this.newScopeMapping.push({ externalScope: '', domainScope: '' });
+    this.newUserBindingMapping.push({ userAttribute: '', claimExpression: '' });
     this.formChanged = true;
   }
 
@@ -258,22 +264,23 @@ export class TokenExchangeComponent implements OnInit {
     this.domain.tokenExchangeSettings.trustedIssuers.splice(index, 1);
     this.scopeMappingEntries.splice(index, 1);
     this.userBindingMappingEntries.splice(index, 1);
+    this.newScopeMapping.splice(index, 1);
+    this.newUserBindingMapping.splice(index, 1);
     this.formChanged = true;
   }
 
   addScopeMapping(issuerIndex: number): void {
-    this.scopeMappingEntries[issuerIndex].push({ externalScope: '', domainScope: '' });
-    this.syncScopeMappingsToModel(issuerIndex);
-    this.formChanged = true;
+    const staged = this.newScopeMapping[issuerIndex];
+    if (staged.externalScope && staged.domainScope) {
+      this.scopeMappingEntries[issuerIndex].push({ ...staged });
+      this.newScopeMapping[issuerIndex] = { externalScope: '', domainScope: '' };
+      this.syncScopeMappingsToModel(issuerIndex);
+      this.formChanged = true;
+    }
   }
 
   removeScopeMapping(issuerIndex: number, mappingIndex: number): void {
     this.scopeMappingEntries[issuerIndex].splice(mappingIndex, 1);
-    this.syncScopeMappingsToModel(issuerIndex);
-    this.formChanged = true;
-  }
-
-  onScopeMappingChange(issuerIndex: number): void {
     this.syncScopeMappingsToModel(issuerIndex);
     this.formChanged = true;
   }
@@ -290,18 +297,17 @@ export class TokenExchangeComponent implements OnInit {
   }
 
   addUserBindingMapping(issuerIndex: number): void {
-    this.userBindingMappingEntries[issuerIndex].push({ userAttribute: '', claimExpression: '' });
-    this.syncUserBindingMappingsToModel(issuerIndex);
-    this.formChanged = true;
+    const staged = this.newUserBindingMapping[issuerIndex];
+    if (staged.userAttribute && staged.claimExpression) {
+      this.userBindingMappingEntries[issuerIndex].push({ ...staged });
+      this.newUserBindingMapping[issuerIndex] = { userAttribute: '', claimExpression: '' };
+      this.syncUserBindingMappingsToModel(issuerIndex);
+      this.formChanged = true;
+    }
   }
 
   removeUserBindingMapping(issuerIndex: number, mappingIndex: number): void {
     this.userBindingMappingEntries[issuerIndex].splice(mappingIndex, 1);
-    this.syncUserBindingMappingsToModel(issuerIndex);
-    this.formChanged = true;
-  }
-
-  onUserBindingMappingChange(issuerIndex: number): void {
     this.syncUserBindingMappingsToModel(issuerIndex);
     this.formChanged = true;
   }
@@ -318,7 +324,8 @@ export class TokenExchangeComponent implements OnInit {
   }
 
   private initScopeMappingEntries(): void {
-    this.scopeMappingEntries = (this.domain.tokenExchangeSettings.trustedIssuers || []).map((issuer: TrustedIssuer) => {
+    const issuers = this.domain.tokenExchangeSettings.trustedIssuers || [];
+    this.scopeMappingEntries = issuers.map((issuer: TrustedIssuer) => {
       if (!issuer.scopeMappings) {
         return [];
       }
@@ -327,11 +334,13 @@ export class TokenExchangeComponent implements OnInit {
         domainScope,
       }));
     });
+    this.newScopeMapping = issuers.map(() => ({ externalScope: '', domainScope: '' }));
     this.initUserBindingMappingEntries();
   }
 
   private initUserBindingMappingEntries(): void {
-    this.userBindingMappingEntries = (this.domain.tokenExchangeSettings.trustedIssuers || []).map((issuer: TrustedIssuer) => {
+    const issuers = this.domain.tokenExchangeSettings.trustedIssuers || [];
+    this.userBindingMappingEntries = issuers.map((issuer: TrustedIssuer) => {
       if (!issuer.userBindingMappings) {
         return [];
       }
@@ -340,5 +349,6 @@ export class TokenExchangeComponent implements OnInit {
         claimExpression,
       }));
     });
+    this.newUserBindingMapping = issuers.map(() => ({ userAttribute: '', claimExpression: '' }));
   }
 }
