@@ -24,14 +24,14 @@
     <parent>
         <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
-        <version>4.10.3</version>
+        <version>4.10.4-SNAPSHOT</version>
     </parent>
 
     <groupId>io.gravitee.am.extensiongrant</groupId>
     <artifactId>gravitee-am-extensiongrant</artifactId>
     <packaging>pom</packaging>
 
-    <version>4.10.3</version>
+    <version>4.10.4-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Extension Grant</name>
 
     <modules>
