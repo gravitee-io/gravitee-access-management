@@ -52,6 +52,7 @@ export const setupFixture = async (): Promise<VerifyEmailFixture> => {
 
     const idpSet = await getAllIdps(domain.id, accessToken);
     const defaultIdp = idpSet.values().next().value;
+    if (!defaultIdp) throw new Error('No default identity provider found for domain');
 
     const appVerifyOnly = await createApp(domain.id, accessToken, {
       settings: {
@@ -120,7 +121,7 @@ export const setupFixture = async (): Promise<VerifyEmailFixture> => {
   }
 };
 
-const createApp = async (domainId: string, accessToken: string, settings: any): Promise<Application> => {
+const createApp = async (domainId: string, accessToken: string, settings: Record<string, any>): Promise<Application> => {
   const appName = uniqueName('verify-app', true);
   const app = await createApplication(domainId, accessToken, {
     name: appName,
