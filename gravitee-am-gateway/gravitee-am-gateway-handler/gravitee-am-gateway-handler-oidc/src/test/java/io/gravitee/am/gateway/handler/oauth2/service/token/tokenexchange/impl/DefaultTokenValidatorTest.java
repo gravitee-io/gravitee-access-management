@@ -21,6 +21,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
@@ -198,7 +199,7 @@ public class DefaultTokenValidatorTest {
                 .thenReturn(Single.just(decodedJwt));
 
         // Trusted issuer resolver throws (bad signature)
-        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+        when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenThrow(new JOSEException("Signature verification failed"));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
@@ -236,7 +237,7 @@ public class DefaultTokenValidatorTest {
                 .expirationTime(new Date(futureExp * 1000))
                 .claim(Claims.SCOPE, "ext:read ext:write")
                 .build();
-        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+        when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
@@ -282,7 +283,7 @@ public class DefaultTokenValidatorTest {
                 .expirationTime(new Date(futureExp * 1000))
                 .claim(Claims.SCOPE, "ext:read ext:write ext:admin")
                 .build();
-        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+        when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
@@ -325,7 +326,7 @@ public class DefaultTokenValidatorTest {
                 .expirationTime(new Date(futureExp * 1000))
                 .claim(Claims.SCOPE, "read write")
                 .build();
-        when(trustedIssuerResolver.verify(eq(TOKEN), eq(ti)))
+        when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();

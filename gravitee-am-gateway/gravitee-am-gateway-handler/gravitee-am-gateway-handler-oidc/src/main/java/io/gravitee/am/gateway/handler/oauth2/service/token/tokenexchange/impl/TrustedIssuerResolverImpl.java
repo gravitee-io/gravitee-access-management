@@ -25,16 +25,18 @@ import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.certificate.api.X509CertUtils;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.model.TrustedIssuer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.text.ParseException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,29 +55,20 @@ import java.util.concurrent.ConcurrentMap;
  *
  * <p><b>Cache lifecycle:</b> This bean is created per domain reactor via {@code OAuth2Configuration}.
  * When a domain configuration changes, the gateway stops the old reactor and starts a new one,
- * which creates a fresh {@code TrustedIssuerResolver} with an empty cache. This means the
+ * which creates a fresh {@code TrustedIssuerResolverImpl} with an empty cache. This means the
  * processor cache is naturally invalidated on config changes — no explicit cache clearing is needed.
  *
  * @author GraviteeSource Team
  */
-public class TrustedIssuerResolver {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrustedIssuerResolver.class);
+public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
 
     private static final int JWKS_CONNECT_TIMEOUT_MS = 5000;
     private static final int JWKS_READ_TIMEOUT_MS = 5000;
 
     private final ConcurrentMap<String, JWTProcessor<SecurityContext>> processorCache = new ConcurrentHashMap<>();
 
-    /**
-     * Verify a JWT against a trusted issuer's key material.
-     *
-     * @param rawToken the raw JWT string
-     * @param trustedIssuer the trusted issuer configuration
-     * @return the verified JWT claims set
-     * @throws Exception if verification fails
-     */
-    public JWTClaimsSet verify(String rawToken, TrustedIssuer trustedIssuer) throws Exception {
+    @Override
+    public JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer) throws BadJOSEException, JOSEException, ParseException {
         JWTProcessor<SecurityContext> processor = processorCache.computeIfAbsent(
                 trustedIssuer.getIssuer(),
                 key -> buildProcessor(trustedIssuer)
@@ -86,7 +79,7 @@ public class TrustedIssuerResolver {
     private JWTProcessor<SecurityContext> buildProcessor(TrustedIssuer trustedIssuer) {
         JWKSource<SecurityContext> jwkSource = buildJwkSource(trustedIssuer);
 
-        // Accept all standard JWS algorithms (RS256, RS384, RS512, ES256, etc.)
+        // Asymmetric algorithms only; HMAC not supported for external trust
         JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(
                 new HashSet<>(List.of(
                         JWSAlgorithm.RS256, JWSAlgorithm.RS384, JWSAlgorithm.RS512,
@@ -106,7 +99,6 @@ public class TrustedIssuerResolver {
         return processor;
     }
 
-    @SuppressWarnings("unchecked")
     private JWKSource<SecurityContext> buildJwkSource(TrustedIssuer trustedIssuer) {
         String method = trustedIssuer.getKeyResolutionMethod();
 
@@ -145,5 +137,4 @@ public class TrustedIssuerResolver {
             throw new IllegalArgumentException("Failed to convert certificate to JWK", e);
         }
     }
-
 }

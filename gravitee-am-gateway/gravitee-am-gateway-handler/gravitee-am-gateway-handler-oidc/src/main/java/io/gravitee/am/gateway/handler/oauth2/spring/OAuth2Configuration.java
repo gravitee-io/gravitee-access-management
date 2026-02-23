@@ -48,7 +48,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenVa
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.DefaultTokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenExchangeServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TrustedIssuerResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TrustedIssuerResolverImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceValidationServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
@@ -90,7 +91,7 @@ public class OAuth2Configuration implements ProtocolConfiguration {
 
     @Bean
     public TrustedIssuerResolver trustedIssuerResolver() {
-        return new TrustedIssuerResolver();
+        return new TrustedIssuerResolverImpl();
     }
 
     @Bean

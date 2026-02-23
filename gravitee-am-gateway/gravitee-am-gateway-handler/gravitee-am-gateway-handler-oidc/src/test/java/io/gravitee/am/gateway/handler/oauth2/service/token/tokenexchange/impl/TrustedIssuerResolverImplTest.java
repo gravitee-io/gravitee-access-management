@@ -36,10 +36,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Unit tests for {@link TrustedIssuerResolver}.
+ * Unit tests for {@link TrustedIssuerResolverImpl}.
  * Tests PEM-based verification with pre-generated RSA keys and certificates.
  */
-public class TrustedIssuerResolverTest {
+public class TrustedIssuerResolverImplTest {
 
     // Pre-generated RSA certificate and private key pair (trusted)
     private static final String TRUSTED_CERT_PEM =
@@ -118,11 +118,11 @@ public class TrustedIssuerResolverTest {
             "ruCmaj85hmAJ1hjOFIGfIcCqci3TSE3ZmWTNU3bQjDtfFy8VuDp0TVUQylBvEPHM\n" +
             "r2ayOMqoLpAf7GOYAbk4/T/m";
 
-    private TrustedIssuerResolver resolver;
+    private TrustedIssuerResolverImpl resolver;
 
     @Before
     public void setUp() {
-        resolver = new TrustedIssuerResolver();
+        resolver = new TrustedIssuerResolverImpl();
     }
 
     @Test
@@ -131,7 +131,7 @@ public class TrustedIssuerResolverTest {
 
         String jwt = signJwt(TRUSTED_PRIVATE_KEY_PEM, "https://trusted.example.com", "user-123");
 
-        JWTClaimsSet claims = resolver.verify(jwt, issuer);
+        JWTClaimsSet claims = resolver.resolve(jwt, issuer);
 
         assertNotNull(claims);
         assertEquals("user-123", claims.getSubject());
@@ -145,7 +145,7 @@ public class TrustedIssuerResolverTest {
         // Sign with untrusted key but claim trusted issuer
         String jwt = signJwt(UNTRUSTED_PRIVATE_KEY_PEM, "https://trusted.example.com", "user-123");
 
-        resolver.verify(jwt, issuer);
+        resolver.resolve(jwt, issuer);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -154,7 +154,7 @@ public class TrustedIssuerResolverTest {
 
         String jwt = signJwt(TRUSTED_PRIVATE_KEY_PEM, "https://bad.example.com", "user-123");
 
-        resolver.verify(jwt, issuer);
+        resolver.resolve(jwt, issuer);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -165,7 +165,7 @@ public class TrustedIssuerResolverTest {
 
         String jwt = signJwt(TRUSTED_PRIVATE_KEY_PEM, "https://unsupported.example.com", "user-123");
 
-        resolver.verify(jwt, issuer);
+        resolver.resolve(jwt, issuer);
     }
 
     @Test
@@ -175,8 +175,8 @@ public class TrustedIssuerResolverTest {
         String jwt1 = signJwt(TRUSTED_PRIVATE_KEY_PEM, "https://cached.example.com", "user-1");
         String jwt2 = signJwt(TRUSTED_PRIVATE_KEY_PEM, "https://cached.example.com", "user-2");
 
-        JWTClaimsSet claims1 = resolver.verify(jwt1, issuer);
-        JWTClaimsSet claims2 = resolver.verify(jwt2, issuer);
+        JWTClaimsSet claims1 = resolver.resolve(jwt1, issuer);
+        JWTClaimsSet claims2 = resolver.resolve(jwt2, issuer);
 
         assertEquals("user-1", claims1.getSubject());
         assertEquals("user-2", claims2.getSubject());

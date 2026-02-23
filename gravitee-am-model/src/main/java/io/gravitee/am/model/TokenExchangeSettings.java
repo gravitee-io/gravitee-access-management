@@ -136,18 +136,6 @@ public class TokenExchangeSettings {
     }
 
     /**
-     * Validate the settings consistency.
-     * When token exchange is enabled, at least one of impersonation or delegation must be enabled.
-     *
-     * @throws IllegalStateException if the settings are invalid
-     */
-    public void validate() {
-        if (enabled && !allowImpersonation && !allowDelegation) {
-            throw new IllegalStateException("Token exchange is enabled but neither impersonation nor delegation is allowed. At least one must be enabled.");
-        }
-    }
-
-    /**
      * Check if the settings are valid without throwing an exception.
      *
      * @return true if settings are valid, false otherwise

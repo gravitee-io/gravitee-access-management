@@ -16,12 +16,13 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.proc.BadJWTException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
@@ -107,9 +108,9 @@ public class DefaultTokenValidator implements TokenValidator {
 
                     return Single.fromCallable(() -> {
                         try {
-                            JWTClaimsSet claimsSet = trustedIssuerResolver.verify(token, matchingIssuer);
+                            JWTClaimsSet claimsSet = trustedIssuerResolver.resolve(token, matchingIssuer);
                             return buildValidatedTokenFromClaims(claimsSet, domain, matchingIssuer);
-                        } catch (JOSEException | ParseException | BadJWTException e) {
+                        } catch (BadJOSEException | JOSEException | ParseException e) {
                             LOGGER.debug("Trusted issuer JWT signature verification failed for issuer {}: {}", issuer, e.getMessage());
                             throw new InvalidGrantException("Invalid JWT signature");
                         }
@@ -227,11 +228,12 @@ public class DefaultTokenValidator implements TokenValidator {
                 .orElse(null);
     }
 
+    @SuppressWarnings("unchecked")
     private Set<String> parseScopes(Object scopeClaim) {
         return switch (scopeClaim) {
             case null -> Collections.emptySet();
             case String s -> new HashSet<>(Arrays.asList(s.split("\\s+")));
-            case List list -> new HashSet<>((List<String>) scopeClaim);
+            case List<?> list -> new HashSet<>((List<String>) list);
             default -> Collections.emptySet();
         };
     }
@@ -241,7 +243,7 @@ public class DefaultTokenValidator implements TokenValidator {
         return switch (audClaim) {
             case null -> Collections.emptyList();
             case String s -> Collections.singletonList(s);
-            case List list -> (List<String>) audClaim;
+            case List<?> list -> (List<String>) list;
             default -> Collections.emptyList();
         };
     }
