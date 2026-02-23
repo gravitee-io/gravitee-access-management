@@ -33,4 +33,10 @@ public class JdbcToken extends JdbcBaseToken {
 
     @Column("type")
     private String type;
+
+    @Column("parent_subject_jti")
+    private String parentSubjectJti;
+
+    @Column("parent_actor_jti")
+    private String parentActorJti;
 }

@@ -243,3 +243,17 @@ export async function requestClientCredentialsToken(
   expect(response.body.access_token).toBeDefined();
   return response.body.access_token;
 }
+
+export const introspectToken = async (introspectionEndpoint: string, token: string, basicAuth: string) => {
+  const response = await performPost(
+    introspectionEndpoint,
+    '',
+    `token=${token}`,
+    {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${basicAuth}`,
+    },
+  ).expect(200);
+
+  return response.body;
+};

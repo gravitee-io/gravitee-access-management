@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -69,7 +70,7 @@ public class UserConsentsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User consents successfully fetched",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ScopeApprovalEntity.class))),
+                            array = @ArraySchema(schema = @Schema(implementation = ScopeApprovalEntity.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,

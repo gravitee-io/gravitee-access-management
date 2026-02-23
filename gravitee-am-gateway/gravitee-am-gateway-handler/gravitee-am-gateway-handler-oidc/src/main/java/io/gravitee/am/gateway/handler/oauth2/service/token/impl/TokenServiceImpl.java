@@ -333,7 +333,7 @@ public class TokenServiceImpl implements TokenService {
         final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request, user));
         // store refresh token (if exists)
         if (refreshToken != null) {
-            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request.getClientId())));
+            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request)));
         }
         return persistAccessToken;
     }
@@ -344,11 +344,20 @@ public class TokenServiceImpl implements TokenService {
         accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
         accessToken.setRefreshToken(refreshToken != null ? refreshToken.getJti() : null);
+        accessToken.setParentSubjectJti(oAuth2Request.getSubjectTokenId());
+        if (oAuth2Request.isDelegation() && oAuth2Request.getActorTokenId() != null) {
+            accessToken.setParentActorJti(oAuth2Request.getActorTokenId());
+        }
         return accessToken;
     }
 
-    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user, String clientId) {
-        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, clientId);
+    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user, OAuth2Request request) {
+        io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken =  convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, request.getClientId());
+        refreshToken.setParentSubjectJti(request.getSubjectTokenId());
+        if (request.isDelegation() && request.getActorTokenId() != null) {
+            refreshToken.setParentActorJti(request.getActorTokenId());
+        }
+        return refreshToken;
     }
 
     private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user, String clientId) {

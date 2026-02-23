@@ -170,6 +170,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 .flatMapSingle(this::updateAuthenticationProvider)
                 .subscribe(
                         identityProvider -> {
+
                             logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
                         },
                         error -> {

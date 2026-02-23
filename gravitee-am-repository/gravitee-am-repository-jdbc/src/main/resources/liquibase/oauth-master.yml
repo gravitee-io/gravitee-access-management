@@ -15,3 +15,5 @@ databaseChangeLog:
       - file: liquibase/oauth/changelogs/v4_10_0/4.10.0-update-authorization-codes-table.yml
   - include:
       - file: liquibase/oauth/changelogs/v4_11_0/4.11.0-tokens-table.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_11_0/4.11.1-add-tokens-parent-jti.yml

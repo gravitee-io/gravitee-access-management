@@ -104,4 +104,6 @@ public interface DatabaseDialectHelper {
     }
 
     enum ScimRepository {GROUPS, ORGANIZATION_USERS, USERS}
+
+    String recursiveTokenDeleteQuery(String whereClause);
 }

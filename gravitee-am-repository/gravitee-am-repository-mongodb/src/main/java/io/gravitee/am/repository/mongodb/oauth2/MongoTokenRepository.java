@@ -28,11 +28,16 @@ import io.reactivex.rxjava3.core.*;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Filters.gt;
@@ -40,11 +45,12 @@ import static io.gravitee.am.repository.mongodb.oauth2.internal.model.TokenMongo
 
 @Component
 public class MongoTokenRepository extends AbstractOAuth2MongoRepository implements TokenRepository {
+    private static final String COLLECTION_NAME = "tokens";
     private MongoCollection<TokenMongo> tokenCollection;
 
     @PostConstruct
     public void init() {
-        tokenCollection = mongoOperations.getCollection("tokens", TokenMongo.class);
+        tokenCollection = mongoOperations.getCollection(COLLECTION_NAME, TokenMongo.class);
         super.init(tokenCollection);
 
         final var indexes = new HashMap<Document, IndexOptions>();
@@ -52,6 +58,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         indexes.put(new Document(FIELD_CLIENT, 1), new IndexOptions().name("c1"));
         indexes.put(new Document(FIELD_AUTHORIZATION_CODE, 1), new IndexOptions().name("ac1"));
         indexes.put(new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
+        indexes.put(new Document(FIELD_PARENT_JTIS, 1), new IndexOptions().name("pj1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
         // expire after index
         indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
@@ -114,34 +121,64 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
                 .observeOn(Schedulers.computation());
     }
 
+    private Completable deleteRecursivelyWithGraphLookup(Document matcher) {
+        var pipeline = List.<Bson>of(
+                matcher,
+                new Document("$graphLookup", new Document("from", COLLECTION_NAME)
+                        .append("startWith", "$" + FIELD_JTI)
+                        .append("connectFromField", FIELD_JTI)
+                        .append("connectToField", FIELD_PARENT_JTIS)
+                        .append("as", "descendants")));
+
+        return Observable.fromPublisher(tokenCollection.aggregate(pipeline, Document.class))
+                .collect(() -> new HashSet<>(),
+                        (Set<String> jtis, Document result) -> {
+                    String rootJti = result.getString(FIELD_JTI);
+                    if (rootJti != null) {
+                        jtis.add(rootJti);
+                    }
+
+                    var descendants = result.getList("descendants", Document.class, List.of());
+                    for (Document descendant : descendants) {
+                        String descendantJti = descendant.getString(FIELD_JTI);
+                        if (descendantJti != null) {
+                            jtis.add(descendantJti);
+                        }
+                    }
+                })
+                .flatMapCompletable(jtis -> {
+                    if (jtis.isEmpty()) {
+                        return Completable.complete();
+                    }
+
+                    return Completable.fromPublisher(tokenCollection.deleteMany(in(FIELD_JTI, jtis)));
+                })
+                .observeOn(Schedulers.computation());
+    }
+
     @Override
     public Completable deleteByJti(String jti) {
-        return Completable.fromPublisher(tokenCollection.findOneAndDelete(eq(FIELD_JTI, jti)))
-                .observeOn(Schedulers.computation());
+        return deleteRecursivelyWithGraphLookup(new Document("$match", eq(FIELD_JTI, jti)));
     }
 
     @Override
     public Completable deleteByUserId(String userId) {
-        return Completable.fromPublisher(tokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)))
-                .observeOn(Schedulers.computation());
+        return deleteRecursivelyWithGraphLookup(new Document("$match", eq(FIELD_SUBJECT, userId)));
     }
 
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
-        return Completable.fromPublisher(tokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))))
-                .observeOn(Schedulers.computation());
+        return deleteRecursivelyWithGraphLookup(new Document("$match", and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))));
     }
 
     @Override
     public Completable deleteByDomainIdAndClientId(String domainId, String clientId) {
-        return Completable.fromPublisher(tokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))))
-                .observeOn(Schedulers.computation());
+        return deleteRecursivelyWithGraphLookup(new Document("$match", and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))));
     }
 
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
-        return Completable.fromPublisher(tokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))))
-                .observeOn(Schedulers.computation());
+        return deleteRecursivelyWithGraphLookup(new Document("$match", and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))));
     }
 
     private TokenMongo convert(AccessToken token) {
@@ -160,39 +197,46 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         return convert(token, TokenType.REFRESH_TOKEN);
     }
 
-    private TokenMongo convert(Token refreshToken, TokenType tokenType) {
-        if (refreshToken == null) {
+    private TokenMongo convert(Token token, TokenType tokenType) {
+        if (token == null) {
             return null;
         }
 
         TokenMongo tokenMongo = new TokenMongo();
         tokenMongo.setType(tokenType);
-        tokenMongo.setId(refreshToken.getId());
-        tokenMongo.setJti(refreshToken.getToken());
-        tokenMongo.setDomainId(refreshToken.getDomain());
-        tokenMongo.setClientId(refreshToken.getClient());
-        tokenMongo.setSubject(refreshToken.getSubject());
-        tokenMongo.setCreatedAt(refreshToken.getCreatedAt());
-        tokenMongo.setExpireAt(refreshToken.getExpireAt());
-
+        tokenMongo.setId(token.getId());
+        tokenMongo.setJti(token.getToken());
+        tokenMongo.setDomainId(token.getDomain());
+        tokenMongo.setClientId(token.getClient());
+        tokenMongo.setSubject(token.getSubject());
+        tokenMongo.setCreatedAt(token.getCreatedAt());
+        tokenMongo.setExpireAt(token.getExpireAt());
+        tokenMongo.setParentSubjectJti(token.getParentSubjectJti());
+        tokenMongo.setParentActorJti(token.getParentActorJti());
+        tokenMongo.setParentJtis(Stream.of(token.getParentSubjectJti(), token.getParentActorJti())
+                .filter(parentJti -> parentJti != null && !parentJti.isBlank())
+                .distinct()
+                .toList());
         return tokenMongo;
     }
 
-    private AccessToken convertToAccessToken(TokenMongo accessTokenMongo) {
-        if (accessTokenMongo == null) {
+    private AccessToken convertToAccessToken(TokenMongo tokenMongo) {
+        if (tokenMongo == null) {
             return null;
         }
 
         AccessToken accessToken = new AccessToken();
-        accessToken.setId(accessTokenMongo.getId());
-        accessToken.setToken(accessTokenMongo.getJti());
-        accessToken.setDomain(accessTokenMongo.getDomainId());
-        accessToken.setClient(accessTokenMongo.getClientId());
-        accessToken.setSubject(accessTokenMongo.getSubject());
-        accessToken.setAuthorizationCode(accessTokenMongo.getAuthorizationCode());
-        accessToken.setRefreshToken(accessTokenMongo.getRefreshTokenJti());
-        accessToken.setCreatedAt(accessTokenMongo.getCreatedAt());
-        accessToken.setExpireAt(accessTokenMongo.getExpireAt());
+        accessToken.setId(tokenMongo.getId());
+        accessToken.setToken(tokenMongo.getJti());
+        accessToken.setDomain(tokenMongo.getDomainId());
+        accessToken.setClient(tokenMongo.getClientId());
+        accessToken.setSubject(tokenMongo.getSubject());
+        accessToken.setAuthorizationCode(tokenMongo.getAuthorizationCode());
+        accessToken.setRefreshToken(tokenMongo.getRefreshTokenJti());
+        accessToken.setCreatedAt(tokenMongo.getCreatedAt());
+        accessToken.setExpireAt(tokenMongo.getExpireAt());
+        accessToken.setParentSubjectJti(tokenMongo.getParentSubjectJti());
+        accessToken.setParentActorJti(tokenMongo.getParentActorJti());
 
         return accessToken;
     }
@@ -210,6 +254,8 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         refreshToken.setSubject(tokenMongo.getSubject());
         refreshToken.setCreatedAt(tokenMongo.getCreatedAt());
         refreshToken.setExpireAt(tokenMongo.getExpireAt());
+        refreshToken.setParentSubjectJti(tokenMongo.getParentSubjectJti());
+        refreshToken.setParentActorJti(tokenMongo.getParentActorJti());
 
         return refreshToken;
     }
