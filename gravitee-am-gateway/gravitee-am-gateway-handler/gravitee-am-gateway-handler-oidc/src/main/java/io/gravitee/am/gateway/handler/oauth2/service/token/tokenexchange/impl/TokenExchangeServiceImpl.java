@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
@@ -34,18 +35,14 @@ import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
-import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.el.TemplateEngine;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,26 +59,26 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     private final List<TokenValidator> validators;
     private final SubjectManager subjectManager;
     private final ProtectedResourceManager protectedResourceManager;
-    private final UserGatewayService userGatewayService;
+    private final TokenExchangeUserResolver userResolver;
 
     public TokenExchangeServiceImpl(List<TokenValidator> validators,
                                     SubjectManager subjectManager,
                                     ProtectedResourceManager protectedResourceManager,
-                                    UserGatewayService userGatewayService) {
+                                    TokenExchangeUserResolver userResolver) {
         this.validators = validators;
         this.subjectManager = subjectManager;
         this.protectedResourceManager = protectedResourceManager;
-        this.userGatewayService = userGatewayService;
+        this.userResolver = userResolver;
     }
 
     @Override
-    public Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain) {
+    public Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain, UserGatewayService userGatewayService) {
         return Single.fromCallable(() -> parseRequest(tokenRequest, domain))
                 .flatMap(request -> {
                     if (request.isDelegation()) {
-                        return processDelegation(tokenRequest, request, client, domain);
+                        return processDelegation(tokenRequest, request, client, domain, userGatewayService);
                     } else {
-                        return processImpersonation(tokenRequest, request, client, domain);
+                        return processImpersonation(tokenRequest, request, client, domain, userGatewayService);
                     }
                 });
     }
@@ -89,15 +86,18 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     private Single<TokenExchangeResult> processImpersonation(TokenRequest tokenRequest,
                                                               ParsedRequest request,
                                                               Client client,
-                                                              Domain domain) {
+                                                              Domain domain,
+                                                              UserGatewayService userGatewayService) {
         return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
-                .flatMap(subjectToken -> buildImpersonationResult(tokenRequest, subjectToken, request, client));
+                .flatMap(subjectToken -> resolveUserForExchange(subjectToken, userGatewayService)
+                        .flatMap(resolvedUser -> buildImpersonationResult(tokenRequest, subjectToken, request, client, resolvedUser)));
     }
 
     private Single<TokenExchangeResult> processDelegation(TokenRequest tokenRequest,
                                                            ParsedRequest request,
                                                            Client client,
-                                                           Domain domain) {
+                                                           Domain domain,
+                                                           UserGatewayService userGatewayService) {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
 
         return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
@@ -109,22 +109,23 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                 "Actor token type JWT not allowed with external subject token"));
                     }
                     return validateActorToken(request.actorToken(), request.actorTokenType(), domain)
-                                .flatMap(actorToken -> {
-                                    // Per RFC 8693 Section 4.1, delegation depth is based on
-                                    // the subject token's "act" claim chain
-                                    int currentDepth = calculateDelegationDepth(subjectToken);
-                                    int resultingDepth = currentDepth + 1;
-                                    int maxDepth = settings.getMaxDelegationDepth();
+                            .flatMap(actorToken -> resolveUserForExchange(subjectToken, userGatewayService)
+                                    .flatMap(resolvedUser -> {
+                                        // Per RFC 8693 Section 4.1, delegation depth is based on
+                                        // the subject token's "act" claim chain
+                                        int currentDepth = calculateDelegationDepth(subjectToken);
+                                        int resultingDepth = currentDepth + 1;
+                                        int maxDepth = settings.getMaxDelegationDepth();
 
-                                    if (resultingDepth > maxDepth) {
-                                        return Single.error(new InvalidRequestException(
-                                                "Maximum delegation depth exceeded. Current: " + currentDepth +
-                                                        ", Max allowed: " + maxDepth));
-                                    }
+                                        if (resultingDepth > maxDepth) {
+                                            return Single.<TokenExchangeResult>error(new InvalidRequestException(
+                                                    "Maximum delegation depth exceeded. Current: " + currentDepth +
+                                                            ", Max allowed: " + maxDepth));
+                                        }
 
-                                    ActorTokenInfo actorInfo = extractActorInfo(actorToken, subjectToken, resultingDepth);
-                                    return buildDelegationResult(tokenRequest, subjectToken, actorToken, actorInfo, request, client);
-                                });
+                                        ActorTokenInfo actorInfo = extractActorInfo(actorToken, subjectToken, resultingDepth);
+                                        return buildDelegationResult(tokenRequest, subjectToken, actorToken, actorInfo, request, client, resolvedUser);
+                                    }));
                 });
     }
 
@@ -175,8 +176,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                 scope,
                 requestedTokenType,
                 tokenRequest.getClientId(),
-                isDelegation,
-                domain
+                isDelegation
         );
     }
 
@@ -361,21 +361,22 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     private Single<TokenExchangeResult> buildImpersonationResult(TokenRequest tokenRequest,
                                                                   ValidatedToken subjectToken,
                                                                   ParsedRequest parsedRequest,
-                                                                  Client client) {
-        Domain domain = parsedRequest.domain();
+                                                                  Client client,
+                                                                  Optional<User> resolvedUser) {
         Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
         Set<String> baseAllowed = Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet());
         return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client)
-                .flatMap(grantedScopes -> resolveUser(subjectToken, grantedScopes, client.getClientId(), false, domain)
-                        .map(user -> {
-                            tokenRequest.setScopes(grantedScopes);
-                            return TokenExchangeResult.forImpersonation(
-                                    user,
-                                    parsedRequest.requestedTokenType(),
-                                    subjectToken.getExpiration(),
-                                    subjectToken.getTokenId(),
-                                    parsedRequest.subjectTokenType());
-                        }));
+                .flatMap(grantedScopes -> Single.fromCallable(() -> {
+                    User user = resolvedUser.orElseGet(() -> createUser(subjectToken, grantedScopes, client.getClientId(), false));
+                    tokenRequest.setScopes(grantedScopes);
+
+                    return TokenExchangeResult.forImpersonation(
+                            user,
+                            parsedRequest.requestedTokenType(),
+                            subjectToken.getExpiration(),
+                            subjectToken.getTokenId(),
+                            parsedRequest.subjectTokenType());
+                }));
     }
 
     private Single<TokenExchangeResult> buildDelegationResult(TokenRequest tokenRequest,
@@ -383,156 +384,39 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                                ValidatedToken actorToken,
                                                                ActorTokenInfo actorInfo,
                                                                ParsedRequest parsedRequest,
-                                                               Client client) {
-        Domain domain = parsedRequest.domain();
+                                                               Client client,
+                                                               Optional<User> resolvedUser) {
         Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
         Set<String> baseAllowed = new HashSet<>(Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet()));
         baseAllowed.retainAll(Optional.ofNullable(actorToken.getScopes()).orElse(Collections.emptySet()));
         return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client)
-                .flatMap(grantedScopes -> resolveUser(subjectToken, grantedScopes, client.getClientId(), true, domain)
-                        .map(user -> {
-                            tokenRequest.setScopes(grantedScopes);
-                            return TokenExchangeResult.forDelegation(
-                                    user,
-                                    parsedRequest.requestedTokenType(),
-                                    subjectToken.getExpiration(),
-                                    subjectToken.getTokenId(),
-                                    parsedRequest.subjectTokenType(),
-                                    actorToken.getTokenId(),
-                                    parsedRequest.actorTokenType(),
-                                    actorInfo);
-                        }));
+                .flatMap(grantedScopes -> Single.fromCallable(() -> {
+                    User user = resolvedUser.orElseGet(() -> createUser(subjectToken, grantedScopes, client.getClientId(), true));
+                    tokenRequest.setScopes(grantedScopes);
+
+                    return TokenExchangeResult.forDelegation(
+                            user,
+                            parsedRequest.requestedTokenType(),
+                            subjectToken.getExpiration(),
+                            subjectToken.getTokenId(),
+                            parsedRequest.subjectTokenType(),
+                            actorToken.getTokenId(),
+                            parsedRequest.actorTokenType(),
+                            actorInfo);
+                }));
     }
 
     /**
-     * Resolve the user for the minted token. When user binding is enabled for a trusted issuer,
-     * look up the corresponding domain user. Otherwise, build a synthetic user from token claims.
+     * Resolve to a domain user when trusted issuer has user binding enabled; otherwise virtual user (empty).
      */
-    private Single<User> resolveUser(ValidatedToken subjectToken,
-                                     Set<String> grantedScopes,
-                                     String clientId,
-                                     boolean isDelegation,
-                                     Domain domain) {
-        if (!subjectToken.isTrustedIssuerValidated()) {
-            return Single.fromCallable(() -> createSyntheticUser(subjectToken, grantedScopes, clientId, isDelegation));
+    private Single<Optional<User>> resolveUserForExchange(ValidatedToken subjectToken, UserGatewayService userGatewayService) {
+        if (subjectToken.getTrustedIssuer() == null) {
+            return Single.just(Optional.empty());
         }
-
-        TrustedIssuer matchingIssuer = findMatchingTrustedIssuer(subjectToken.getIssuer(), domain);
-        if (matchingIssuer == null || !matchingIssuer.isUserBindingEnabled()) {
-            return Single.fromCallable(() -> createSyntheticUser(subjectToken, grantedScopes, clientId, isDelegation));
-        }
-
-        Map<String, Object> claims = subjectToken.getClaims() != null ? subjectToken.getClaims() : Collections.emptyMap();
-        FilterCriteria criteria = buildFilterCriteria(matchingIssuer.getUserBindingMappings(), claims, matchingIssuer.getIssuer());
-
-        return userGatewayService.findByCriteria(criteria)
-                .flatMap(users -> {
-                    if (users.isEmpty()) {
-                        return Single.error(new InvalidGrantException(
-                                "No matching domain user found for trusted issuer: " + matchingIssuer.getIssuer()));
-                    }
-                    if (users.size() > 1) {
-                        return Single.error(new InvalidGrantException(
-                                "Multiple domain users match trusted issuer binding criteria"));
-                    }
-                    return userGatewayService.enhance(users.getFirst());
-                })
-                .map(user -> {
-                    applyTokenExchangeMetadata(user, subjectToken, grantedScopes, clientId, isDelegation);
-                    return user;
-                });
+        return userResolver.resolve(subjectToken, subjectToken.getTrustedIssuer(), userGatewayService);
     }
 
-    private TrustedIssuer findMatchingTrustedIssuer(String issuer, Domain domain) {
-        TokenExchangeSettings settings = domain.getTokenExchangeSettings();
-        if (settings == null || settings.getTrustedIssuers() == null || issuer == null) {
-            return null;
-        }
-        return settings.getTrustedIssuers().stream()
-                .filter(ti -> issuer.equals(ti.getIssuer()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
-     * Evaluate a mapping value against token claims.
-     * If value starts with '{' and ends with '}', evaluate as EL expression.
-     * Otherwise, treat as a direct claim name lookup.
-     * Following the pattern from DefaultIdentityProviderMapper.
-     */
-    private String evaluateMapping(String expression, Map<String, Object> claims) {
-        String trimmed = expression.trim();
-        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-            TemplateEngine templateEngine = TemplateEngine.templateEngine();
-            templateEngine.getTemplateContext().setVariable("token", claims);
-            try {
-                Object result = templateEngine.getValue(trimmed, Object.class);
-                return result != null ? result.toString() : null;
-            } catch (Exception e) {
-                LOGGER.warn("Failed to evaluate user binding expression: {}", trimmed, e);
-                return null;
-            }
-        }
-        Object value = claims.get(trimmed);
-        return value != null ? value.toString() : null;
-    }
-
-    /**
-     * Build FilterCriteria from user binding mappings and token claims.
-     * Following the CIBA pattern from CibaAuthenticationRequestResolver.
-     */
-    private FilterCriteria buildFilterCriteria(Map<String, String> mappings, Map<String, Object> claims, String issuer) {
-        List<FilterCriteria> criteriaList = new ArrayList<>();
-        for (var entry : mappings.entrySet()) {
-            String userAttribute = entry.getKey();
-            String claimExpression = entry.getValue();
-            String resolvedValue = evaluateMapping(claimExpression, claims);
-
-            if (resolvedValue == null || resolvedValue.isBlank()) {
-                throw new InvalidGrantException(
-                        "User binding claim '" + claimExpression + "' resolved to empty value for trusted issuer: " + issuer);
-            }
-
-            FilterCriteria criteria = new FilterCriteria();
-            criteria.setOperator("eq");
-            criteria.setFilterName(userAttribute);
-            criteria.setFilterValue(resolvedValue);
-            criteria.setQuoteFilterValue(true);
-            criteriaList.add(criteria);
-        }
-
-        if (criteriaList.size() == 1) {
-            return criteriaList.getFirst();
-        }
-
-        FilterCriteria andCriteria = new FilterCriteria();
-        andCriteria.setOperator("and");
-        andCriteria.setFilterComponents(criteriaList);
-        return andCriteria;
-    }
-
-    private void applyTokenExchangeMetadata(User user, ValidatedToken subjectToken,
-                                             Set<String> grantedScopes, String clientId, boolean isDelegation) {
-        Map<String, Object> additionalInformation = user.getAdditionalInformation();
-        if (additionalInformation == null) {
-            additionalInformation = new HashMap<>();
-            user.setAdditionalInformation(additionalInformation);
-        }
-
-        if (grantedScopes != null && !grantedScopes.isEmpty()) {
-            additionalInformation.put(Claims.SCOPE, String.join(" ", grantedScopes));
-        }
-
-        additionalInformation.put(Claims.CLIENT_ID, clientId);
-        additionalInformation.put("token_exchange", true);
-        additionalInformation.put("delegation", isDelegation);
-
-        if (subjectToken.getTokenId() != null) {
-            additionalInformation.put("subject_token_id", subjectToken.getTokenId());
-        }
-    }
-
-    private User createSyntheticUser(ValidatedToken subjectToken,
+    private User createUser(ValidatedToken subjectToken,
                                      Set<String> grantedScopes,
                                      String clientId,
                                      boolean isDelegation) {
@@ -586,7 +470,6 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             String scope,
             String requestedTokenType,
             String clientId,
-            boolean isDelegation,
-            Domain domain
+            boolean isDelegation
     ) {}
 }

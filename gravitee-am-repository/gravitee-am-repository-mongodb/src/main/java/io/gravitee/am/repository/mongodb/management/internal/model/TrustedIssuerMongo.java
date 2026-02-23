@@ -19,6 +19,7 @@ import io.gravitee.am.model.TrustedIssuer;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,33 +36,33 @@ public class TrustedIssuerMongo {
     private String jwksUri;
     private String certificate;
     private Map<String, String> scopeMappings;
-    private boolean userBindingEnabled;
-    private Map<String, String> userBindingMappings;
+    private Boolean userBindingEnabled;
+    private List<UserBindingCriterionMongo> userBindingCriteria;
 
     public TrustedIssuer convert() {
-        TrustedIssuer trustedIssuer = new TrustedIssuer();
-        trustedIssuer.setIssuer(issuer);
-        trustedIssuer.setKeyResolutionMethod(keyResolutionMethod);
-        trustedIssuer.setJwksUri(jwksUri);
-        trustedIssuer.setCertificate(certificate);
-        trustedIssuer.setScopeMappings(scopeMappings);
-        trustedIssuer.setUserBindingEnabled(userBindingEnabled);
-        trustedIssuer.setUserBindingMappings(userBindingMappings);
-        return trustedIssuer;
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer(getIssuer());
+        ti.setKeyResolutionMethod(getKeyResolutionMethod());
+        ti.setJwksUri(getJwksUri());
+        ti.setCertificate(getCertificate());
+        ti.setScopeMappings(getScopeMappings());
+        ti.setUserBindingEnabled(Boolean.TRUE.equals(getUserBindingEnabled()));
+        ti.setUserBindingCriteria(UserBindingCriterionMongo.toModelList(getUserBindingCriteria()));
+        return ti;
     }
 
-    public static TrustedIssuerMongo convert(TrustedIssuer trustedIssuer) {
-        if (trustedIssuer == null) {
+    public static TrustedIssuerMongo convert(TrustedIssuer ti) {
+        if (ti == null) {
             return null;
         }
         TrustedIssuerMongo mongo = new TrustedIssuerMongo();
-        mongo.setIssuer(trustedIssuer.getIssuer());
-        mongo.setKeyResolutionMethod(trustedIssuer.getKeyResolutionMethod());
-        mongo.setJwksUri(trustedIssuer.getJwksUri());
-        mongo.setCertificate(trustedIssuer.getCertificate());
-        mongo.setScopeMappings(trustedIssuer.getScopeMappings());
-        mongo.setUserBindingEnabled(trustedIssuer.isUserBindingEnabled());
-        mongo.setUserBindingMappings(trustedIssuer.getUserBindingMappings());
+        mongo.setIssuer(ti.getIssuer());
+        mongo.setKeyResolutionMethod(ti.getKeyResolutionMethod());
+        mongo.setJwksUri(ti.getJwksUri());
+        mongo.setCertificate(ti.getCertificate());
+        mongo.setScopeMappings(ti.getScopeMappings());
+        mongo.setUserBindingEnabled(ti.isUserBindingEnabled());
+        mongo.setUserBindingCriteria(UserBindingCriterionMongo.fromModelList(ti.getUserBindingCriteria()));
         return mongo;
     }
 }

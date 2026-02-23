@@ -14,86 +14,22 @@
  * limitations under the License.
  */
 
-import { patchDomain } from '@management-commands/domain-management-commands';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { TrustedIssuer } from '@management-models/TrustedIssuer';
-import { PatchDomain } from '@management-models/PatchDomain';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
-import forge from 'node-forge';
 import {
   setupTokenExchangeFixture,
   TokenExchangeFixture,
   TokenExchangeFixtureConfig,
   TOKEN_EXCHANGE_TEST,
 } from './token-exchange-fixture';
+import {
+  createTrustedIssuerKeyMaterial,
+  signJwtForTrustedIssuer,
+  TrustedIssuerKeyMaterial,
+} from './trusted-issuer-jwt-helper';
 
-// -- Crypto helpers --
-
-export interface KeyAndCertificate {
-  privateKey: string;
-  publicKeyPem: string;
-  certificatePem: string;
-}
-
-/**
- * Generate an RSA keypair and a self-signed X.509 certificate.
- */
-export function generateKeyAndCertificate(): KeyAndCertificate {
-  const keys = forge.pki.rsa.generateKeyPair(2048);
-  const cert = forge.pki.createCertificate();
-  cert.publicKey = keys.publicKey;
-  cert.serialNumber = '01';
-  cert.validity.notBefore = new Date();
-  cert.validity.notAfter = new Date();
-  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
-
-  const attrs = [{ name: 'commonName', value: 'Trusted Issuer Test' }];
-  cert.setSubject(attrs);
-  cert.setIssuer(attrs);
-  cert.sign(keys.privateKey, forge.md.sha256.create());
-
-  return {
-    privateKey: forge.pki.privateKeyToPem(keys.privateKey),
-    publicKeyPem: forge.pki.publicKeyToPem(keys.publicKey),
-    certificatePem: forge.pki.certificateToPem(cert),
-  };
-}
-
-/**
- * Sign a JWT with the given private key.
- */
-export function signExternalJwt(
-  payload: Record<string, unknown>,
-  privateKey: string,
-  options: jwt.SignOptions = {},
-): string {
-  return jwt.sign(payload, privateKey, {
-    algorithm: 'RS256',
-    expiresIn: '1h',
-    ...options,
-  });
-}
-
-// -- Fixture --
-
-/**
- * Extended fixture for trusted issuer tests.
- */
-export interface TrustedIssuerFixture extends TokenExchangeFixture {
-  trustedKey: KeyAndCertificate;
-  untrustedKey: KeyAndCertificate;
-  externalIssuer: string;
-  /** Convenience: sign a JWT using the trusted key. */
-  signExternalJwt: (payload: Record<string, unknown>, options?: jwt.SignOptions) => string;
-}
-
-export interface TrustedIssuerFixtureConfig extends Omit<TokenExchangeFixtureConfig, 'allowDelegation'> {
-  externalIssuer?: string;
-  scopeMappings?: Record<string, string>;
-  maxDelegationDepth?: number;
-}
+export type KeyAndCertificate = TrustedIssuerKeyMaterial;
 
 const DEFAULT_EXTERNAL_ISSUER = 'https://external-idp.example.com';
 const DEFAULT_SCOPE_MAPPINGS: Record<string, string> = {
@@ -102,14 +38,14 @@ const DEFAULT_SCOPE_MAPPINGS: Record<string, string> = {
 };
 
 /**
- * Patch domain via raw supertest. Use this only for error-path assertions
- * (e.g. `.expect(400)`) where the SDK's `patchDomain()` would throw.
- * For success-path patches, prefer the SDK's `patchDomain()`.
+ * Patch domain via raw supertest. Use this when the request body includes fields
+ * not present on the generated SDK model (e.g. tokenExchangeSettings.trustedIssuers),
+ * which would otherwise be stripped during serialisation.
  */
 export function patchDomainRaw(
   domainId: string,
   accessToken: string,
-  body: PatchDomain,
+  body: Record<string, unknown>,
 ): request.Test {
   return request(getDomainManagerUrl(domainId))
     .patch('')
@@ -119,11 +55,24 @@ export function patchDomainRaw(
 }
 
 /**
- * Setup a token exchange fixture pre-configured with a trusted issuer (PEM).
- *
- * Pattern: follows `setupTokenExchangeMcpFixture` — builds on top of
- * `setupTokenExchangeFixture`, then patches the domain with trusted issuer config.
+ * Extended fixture for trusted-issuer tests: base token exchange + delegation enabled,
+ * then patch with a trusted issuer (PEM + scope mappings). Uses waitForSyncAfter
+ * so the gateway sees the new config before tests run.
  */
+export interface TrustedIssuerFixture extends TokenExchangeFixture {
+  trustedKey: KeyAndCertificate;
+  untrustedKey: KeyAndCertificate;
+  externalIssuer: string;
+  /** Sign a JWT with the trusted key; payload may include iss, sub, scope, email, etc. */
+  signExternalJwt: (payload: Record<string, unknown>, options?: { expiresInSeconds?: number }) => string;
+}
+
+export interface TrustedIssuerFixtureConfig extends Omit<TokenExchangeFixtureConfig, 'allowDelegation'> {
+  externalIssuer?: string;
+  scopeMappings?: Record<string, string>;
+  maxDelegationDepth?: number;
+}
+
 export const setupTrustedIssuerFixture = async (
   config: TrustedIssuerFixtureConfig = {},
 ): Promise<TrustedIssuerFixture> => {
@@ -134,7 +83,6 @@ export const setupTrustedIssuerFixture = async (
     ...baseConfig
   } = config;
 
-  // 1. Setup base token exchange fixture with delegation enabled and jwt in allowed types
   const base = await setupTokenExchangeFixture({
     domainNamePrefix: 'trusted-issuers',
     allowDelegation: true,
@@ -144,23 +92,11 @@ export const setupTrustedIssuerFixture = async (
   });
 
   try {
-    // 2. Generate two RSA keypairs: trusted (configured) and untrusted (not configured)
-    const trustedKey = generateKeyAndCertificate();
-    const untrustedKey = generateKeyAndCertificate();
+    const trustedKey = createTrustedIssuerKeyMaterial();
+    const untrustedKey = createTrustedIssuerKeyMaterial();
 
-    // 3. Patch domain with trusted issuer config and wait for gateway sync.
-    //    Uses waitForSyncAfter to capture lastSync before the mutation and poll
-    //    until it advances — waitForDomainSync alone returns immediately because
-    //    the domain is already DEPLOYED from the base fixture.
-    const trustedIssuer: TrustedIssuer = {
-      issuer: externalIssuer,
-      keyResolutionMethod: 'PEM',
-      certificate: trustedKey.certificatePem,
-      scopeMappings,
-    };
-
-    await waitForSyncAfter(base.domain.id, () =>
-      patchDomain(base.domain.id, base.accessToken, {
+    await waitForSyncAfter(base.domain.id, async () => {
+      await patchDomainRaw(base.domain.id, base.accessToken, {
         tokenExchangeSettings: {
           enabled: true,
           allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
@@ -169,17 +105,31 @@ export const setupTrustedIssuerFixture = async (
           allowDelegation: true,
           allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
           maxDelegationDepth,
-          trustedIssuers: [trustedIssuer],
+          trustedIssuers: [
+            {
+              issuer: externalIssuer,
+              keyResolutionMethod: 'PEM',
+              certificate: trustedKey.certificatePem,
+              scopeMappings,
+            },
+          ],
         },
-      }),
-    );
+      }).expect(200);
+    });
 
     return {
       ...base,
       trustedKey,
       untrustedKey,
       externalIssuer,
-      signExternalJwt: (payload, options?) => signExternalJwt(payload, trustedKey.privateKey, options),
+      signExternalJwt: (payload: Record<string, unknown>, options?: { expiresInSeconds?: number }) =>
+        signJwtForTrustedIssuer({
+          issuer: (payload.iss as string) ?? externalIssuer,
+          privateKeyPem: trustedKey.privateKeyPem,
+          subject: (payload.sub as string) ?? 'external-subject',
+          payload,
+          expiresInSeconds: options?.expiresInSeconds,
+        }),
     };
   } catch (error) {
     await base.cleanup();

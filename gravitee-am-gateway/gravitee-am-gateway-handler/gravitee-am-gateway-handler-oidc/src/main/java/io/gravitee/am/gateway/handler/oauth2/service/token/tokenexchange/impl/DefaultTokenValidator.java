@@ -164,7 +164,7 @@ public class DefaultTokenValidator implements TokenValidator {
                 .clientId(clientId != null ? clientId.toString() : null)
                 .tokenType(supportedTokenType)
                 .domain(domain.getId())
-                .trustedIssuerValidated(matchingIssuer != null)
+                .trustedIssuer(matchingIssuer)
                 .build();
     }
 

@@ -22,25 +22,7 @@ import { ScopeService } from '../../../../services/scope.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DomainStoreService } from '../../../../stores/domain.store';
 
-interface TrustedIssuer {
-  issuer: string;
-  keyResolutionMethod: 'JWKS_URL' | 'PEM';
-  jwksUri?: string;
-  certificate?: string;
-  scopeMappings?: { [key: string]: string };
-  userBindingEnabled?: boolean;
-  userBindingMappings?: { [key: string]: string };
-}
-
-interface UserBindingMappingEntry {
-  userAttribute: string;
-  claimExpression: string;
-}
-
-interface ScopeMappingEntry {
-  externalScope: string;
-  domainScope: string;
-}
+import { KEY_RESOLUTION_JWKS_URL, KEY_RESOLUTION_PEM, TrustedIssuer } from './token-exchange.types';
 
 interface TokenExchangeSettings {
   enabled: boolean;
@@ -63,11 +45,13 @@ export class TokenExchangeComponent implements OnInit {
   readonly maxDelegationDepthLimit = 100;
   readonly minDelegationDepth = 1;
   readonly defaultDelegationDepth = 25;
+  readonly maxTrustedIssuersCount = 5;
 
   domainId: string;
   domain: any = {};
   formChanged = false;
   editMode: boolean;
+  domainScopes: any[] = [];
 
   readonly SUBJECT_TOKEN_TYPES = [
     { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
@@ -87,25 +71,8 @@ export class TokenExchangeComponent implements OnInit {
     { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
   ];
 
-  readonly KEY_RESOLUTION_METHODS = [
-    { value: 'JWKS_URL', label: 'JWKS URL' },
-    { value: 'PEM', label: 'PEM Certificate' },
-  ];
-
   // Legacy alias for backward compatibility in template
   readonly TOKEN_TYPES = this.SUBJECT_TOKEN_TYPES;
-
-  domainScopes: any[] = [];
-
-  // Scope mapping entries per issuer index
-  scopeMappingEntries: ScopeMappingEntry[][] = [];
-
-  // User binding mapping entries per issuer index
-  userBindingMappingEntries: UserBindingMappingEntry[][] = [];
-
-  // Staging area for new entries (one per issuer)
-  newScopeMapping: ScopeMappingEntry[] = [];
-  newUserBindingMapping: UserBindingMappingEntry[] = [];
 
   constructor(
     private domainService: DomainService,
@@ -120,7 +87,7 @@ export class TokenExchangeComponent implements OnInit {
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
     this.initializeSettings();
-    this.scopeService.findAllByDomain(this.domainId).subscribe((scopes) => (this.domainScopes = scopes));
+    this.scopeService.findAllByDomain(this.domainId).subscribe((scopes) => (this.domainScopes = scopes || []));
   }
 
   private initializeSettings() {
@@ -137,15 +104,33 @@ export class TokenExchangeComponent implements OnInit {
       allowImpersonation: tokenExchangeSettings.allowImpersonation ?? true,
       allowedActorTokenTypes: tokenExchangeSettings.allowedActorTokenTypes ?? this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: tokenExchangeSettings.allowDelegation ?? false,
+      trustedIssuers: this.normalizeTrustedIssuers(tokenExchangeSettings.trustedIssuers),
     };
 
     normalizedSettings.maxDelegationDepth =
       tokenExchangeSettings.maxDelegationDepth != null ? tokenExchangeSettings.maxDelegationDepth : this.defaultDelegationDepth;
 
-    normalizedSettings.trustedIssuers = tokenExchangeSettings.trustedIssuers ?? [];
-
     this.domain.tokenExchangeSettings = normalizedSettings;
-    this.initScopeMappingEntries();
+  }
+
+  private normalizeTrustedIssuers(trustedIssuers: TrustedIssuer[] | undefined): TrustedIssuer[] {
+    if (!trustedIssuers?.length) {
+      return [];
+    }
+    return trustedIssuers.map((ti) => {
+      const criteria = ti.userBindingCriteria ?? [];
+      return {
+        issuer: ti.issuer ?? '',
+        keyResolutionMethod: ti.keyResolutionMethod ?? KEY_RESOLUTION_JWKS_URL,
+        jwksUri: ti.jwksUri,
+        certificate: ti.certificate,
+        scopeMappings: ti.scopeMappings ?? {},
+        _scopeMappingRows: Object.entries(ti.scopeMappings ?? {}).map(([key, value]) => ({ key, value })),
+        userBindingEnabled: ti.userBindingEnabled ?? false,
+        userBindingCriteria: criteria,
+        _userBindingRows: criteria.length ? criteria.map((c) => ({ attribute: c.attribute ?? '', expression: c.expression ?? '' })) : [],
+      };
+    });
   }
 
   private getDefaultSettings(): TokenExchangeSettings {
@@ -157,7 +142,12 @@ export class TokenExchangeComponent implements OnInit {
       allowedActorTokenTypes: this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: false,
       maxDelegationDepth: this.defaultDelegationDepth,
+      trustedIssuers: [],
     };
+  }
+
+  onTrustedIssuersChange(): void {
+    this.modelChanged();
   }
 
   getValidationErrors(): string[] {
@@ -178,30 +168,6 @@ export class TokenExchangeComponent implements OnInit {
     if (settings.allowDelegation && !settings.allowedActorTokenTypes?.length) {
       errors.push('At least one Actor Token Type must be selected when Delegation is enabled.');
     }
-    if (settings.trustedIssuers) {
-      for (let i = 0; i < settings.trustedIssuers.length; i++) {
-        const ti = settings.trustedIssuers[i];
-        if (!ti.issuer?.trim()) {
-          errors.push(`Trusted Issuer #${i + 1}: Issuer URL is required.`);
-        }
-        if (ti.keyResolutionMethod === 'JWKS_URL' && !ti.jwksUri?.trim()) {
-          errors.push(`Trusted Issuer #${i + 1}: JWKS URL is required.`);
-        }
-        if (ti.keyResolutionMethod === 'PEM' && !ti.certificate?.trim()) {
-          errors.push(`Trusted Issuer #${i + 1}: PEM Certificate is required.`);
-        }
-        if (ti.userBindingEnabled) {
-          const mappings = ti.userBindingMappings;
-          if (!mappings || Object.keys(mappings).length === 0) {
-            errors.push(`Trusted Issuer #${i + 1}: At least one user binding mapping is required when user binding is enabled.`);
-          }
-        }
-      }
-      const issuers = settings.trustedIssuers.map((ti) => ti.issuer).filter((iss) => iss?.trim());
-      if (new Set(issuers).size !== issuers.length) {
-        errors.push('Duplicate issuer URLs are not allowed.');
-      }
-    }
     if (
       settings.allowDelegation &&
       (settings.maxDelegationDepth == null ||
@@ -209,6 +175,40 @@ export class TokenExchangeComponent implements OnInit {
         settings.maxDelegationDepth > this.maxDelegationDepthLimit)
     ) {
       errors.push(`Maximum Delegation Depth must be between ${this.minDelegationDepth} and ${this.maxDelegationDepthLimit}.`);
+    }
+    const trustedIssuers = settings.trustedIssuers ?? [];
+    if (trustedIssuers.length > this.maxTrustedIssuersCount) {
+      errors.push(`Maximum number of trusted issuers exceeded (max: ${this.maxTrustedIssuersCount}).`);
+    }
+    const seenIssuers = new Set<string>();
+    for (let i = 0; i < trustedIssuers.length; i++) {
+      const ti = trustedIssuers[i];
+      const iss = (ti.issuer ?? '').trim();
+      if (!iss) {
+        errors.push(`Trusted issuer #${i + 1}: Issuer URL is required.`);
+      } else if (seenIssuers.has(iss)) {
+        errors.push(`Trusted issuer #${i + 1}: Duplicate issuer "${iss}".`);
+      } else {
+        seenIssuers.add(iss);
+      }
+      if (ti.keyResolutionMethod === KEY_RESOLUTION_JWKS_URL) {
+        if (!(ti.jwksUri ?? '').trim()) {
+          errors.push(`Trusted issuer #${i + 1}: JWKS URL is required when key method is JWKS URL.`);
+        }
+      } else if (ti.keyResolutionMethod === KEY_RESOLUTION_PEM) {
+        if (!(ti.certificate ?? '').trim()) {
+          errors.push(`Trusted issuer #${i + 1}: PEM certificate is required when key method is PEM.`);
+        }
+      }
+      if (ti.userBindingEnabled) {
+        const rows = ti._userBindingRows ?? [];
+        const validCriteria = rows.filter((r) => (r.attribute ?? '').trim() && (r.expression ?? '').trim());
+        if (validCriteria.length === 0) {
+          errors.push(
+            `Trusted issuer #${i + 1}: At least one user binding criterion (attribute and expression) is required when user binding is enabled.`,
+          );
+        }
+      }
     }
     return errors;
   }
@@ -218,13 +218,49 @@ export class TokenExchangeComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchTokenExchangeSettings(this.domainId, this.domain).subscribe((data) => {
+    const payload = this.buildTokenExchangePayload();
+    this.domainService.patchTokenExchangeSettings(this.domainId, payload).subscribe((data) => {
       this.domainStore.set(data);
       this.domain = deepClone(data);
       this.initializeSettings();
       this.formChanged = false;
       this.snackbarService.open('Token Exchange settings updated');
     });
+  }
+
+  private buildTokenExchangePayload(): any {
+    const settings = this.domain.tokenExchangeSettings;
+    const trustedIssuers = (settings.trustedIssuers ?? []).map((ti: TrustedIssuer) => {
+      const scopeMappings: Record<string, string> = {};
+      (ti._scopeMappingRows ?? []).forEach((row) => {
+        const k = (row.key ?? '').trim();
+        if (k) {
+          scopeMappings[k] = (row.value ?? '').trim();
+        }
+      });
+      const userBindingCriteria = (ti._userBindingRows ?? [])
+        .map((row) => ({
+          attribute: (row.attribute ?? '').trim(),
+          expression: (row.expression ?? '').trim(),
+        }))
+        .filter((c) => c.attribute && c.expression);
+      return {
+        issuer: (ti.issuer ?? '').trim(),
+        keyResolutionMethod: ti.keyResolutionMethod ?? KEY_RESOLUTION_JWKS_URL,
+        jwksUri: ti.keyResolutionMethod === KEY_RESOLUTION_JWKS_URL ? (ti.jwksUri ?? '').trim() : undefined,
+        certificate: ti.keyResolutionMethod === KEY_RESOLUTION_PEM ? (ti.certificate ?? '').trim() : undefined,
+        scopeMappings: Object.keys(scopeMappings).length ? scopeMappings : undefined,
+        userBindingEnabled: ti.userBindingEnabled ?? false,
+        userBindingCriteria: (ti.userBindingEnabled && userBindingCriteria.length) > 0 ? userBindingCriteria : undefined,
+      };
+    });
+    return {
+      ...this.domain,
+      tokenExchangeSettings: {
+        ...settings,
+        trustedIssuers,
+      },
+    };
   }
 
   enableTokenExchange(event) {
@@ -238,117 +274,5 @@ export class TokenExchangeComponent implements OnInit {
 
   modelChanged(): void {
     this.formChanged = true;
-  }
-
-  addTrustedIssuer(): void {
-    if (!this.domain.tokenExchangeSettings.trustedIssuers) {
-      this.domain.tokenExchangeSettings.trustedIssuers = [];
-    }
-    this.domain.tokenExchangeSettings.trustedIssuers.push({
-      issuer: '',
-      keyResolutionMethod: 'JWKS_URL',
-      jwksUri: '',
-      certificate: '',
-      scopeMappings: {},
-      userBindingEnabled: false,
-      userBindingMappings: {},
-    });
-    this.scopeMappingEntries.push([]);
-    this.userBindingMappingEntries.push([]);
-    this.newScopeMapping.push({ externalScope: '', domainScope: '' });
-    this.newUserBindingMapping.push({ userAttribute: '', claimExpression: '' });
-    this.formChanged = true;
-  }
-
-  removeTrustedIssuer(index: number): void {
-    this.domain.tokenExchangeSettings.trustedIssuers.splice(index, 1);
-    this.scopeMappingEntries.splice(index, 1);
-    this.userBindingMappingEntries.splice(index, 1);
-    this.newScopeMapping.splice(index, 1);
-    this.newUserBindingMapping.splice(index, 1);
-    this.formChanged = true;
-  }
-
-  addScopeMapping(issuerIndex: number): void {
-    const staged = this.newScopeMapping[issuerIndex];
-    if (staged.externalScope && staged.domainScope) {
-      this.scopeMappingEntries[issuerIndex].push({ ...staged });
-      this.newScopeMapping[issuerIndex] = { externalScope: '', domainScope: '' };
-      this.syncScopeMappingsToModel(issuerIndex);
-      this.formChanged = true;
-    }
-  }
-
-  removeScopeMapping(issuerIndex: number, mappingIndex: number): void {
-    this.scopeMappingEntries[issuerIndex].splice(mappingIndex, 1);
-    this.syncScopeMappingsToModel(issuerIndex);
-    this.formChanged = true;
-  }
-
-  private syncScopeMappingsToModel(issuerIndex: number): void {
-    const entries = this.scopeMappingEntries[issuerIndex];
-    const mappings: { [key: string]: string } = {};
-    for (const entry of entries) {
-      if (entry.externalScope && entry.domainScope) {
-        mappings[entry.externalScope] = entry.domainScope;
-      }
-    }
-    this.domain.tokenExchangeSettings.trustedIssuers[issuerIndex].scopeMappings = mappings;
-  }
-
-  addUserBindingMapping(issuerIndex: number): void {
-    const staged = this.newUserBindingMapping[issuerIndex];
-    if (staged.userAttribute && staged.claimExpression) {
-      this.userBindingMappingEntries[issuerIndex].push({ ...staged });
-      this.newUserBindingMapping[issuerIndex] = { userAttribute: '', claimExpression: '' };
-      this.syncUserBindingMappingsToModel(issuerIndex);
-      this.formChanged = true;
-    }
-  }
-
-  removeUserBindingMapping(issuerIndex: number, mappingIndex: number): void {
-    this.userBindingMappingEntries[issuerIndex].splice(mappingIndex, 1);
-    this.syncUserBindingMappingsToModel(issuerIndex);
-    this.formChanged = true;
-  }
-
-  private syncUserBindingMappingsToModel(issuerIndex: number): void {
-    const entries = this.userBindingMappingEntries[issuerIndex];
-    const mappings: { [key: string]: string } = {};
-    for (const entry of entries) {
-      if (entry.userAttribute && entry.claimExpression) {
-        mappings[entry.userAttribute] = entry.claimExpression;
-      }
-    }
-    this.domain.tokenExchangeSettings.trustedIssuers[issuerIndex].userBindingMappings = mappings;
-  }
-
-  private initScopeMappingEntries(): void {
-    const issuers = this.domain.tokenExchangeSettings.trustedIssuers || [];
-    this.scopeMappingEntries = issuers.map((issuer: TrustedIssuer) => {
-      if (!issuer.scopeMappings) {
-        return [];
-      }
-      return Object.entries(issuer.scopeMappings).map(([externalScope, domainScope]) => ({
-        externalScope,
-        domainScope,
-      }));
-    });
-    this.newScopeMapping = issuers.map(() => ({ externalScope: '', domainScope: '' }));
-    this.initUserBindingMappingEntries();
-  }
-
-  private initUserBindingMappingEntries(): void {
-    const issuers = this.domain.tokenExchangeSettings.trustedIssuers || [];
-    this.userBindingMappingEntries = issuers.map((issuer: TrustedIssuer) => {
-      if (!issuer.userBindingMappings) {
-        return [];
-      }
-      return Object.entries(issuer.userBindingMappings).map(([userAttribute, claimExpression]) => ({
-        userAttribute,
-        claimExpression,
-      }));
-    });
-    this.newUserBindingMapping = issuers.map(() => ({ userAttribute: '', claimExpression: '' }));
   }
 }

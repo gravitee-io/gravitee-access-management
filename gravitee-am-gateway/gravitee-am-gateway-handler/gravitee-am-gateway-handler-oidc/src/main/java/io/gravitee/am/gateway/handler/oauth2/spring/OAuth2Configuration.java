@@ -46,10 +46,13 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.DefaultTokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenExchangeServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenExchangeUserResolverImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TrustedIssuerResolverImpl;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceValidationServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
@@ -82,11 +85,21 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
+    public TemplateEngine tokenExchangeTemplateEngine() {
+        return TemplateEngine.templateEngine();
+    }
+
+    @Bean
+    public TokenExchangeUserResolver tokenExchangeUserResolver(TemplateEngine tokenExchangeTemplateEngine) {
+        return new TokenExchangeUserResolverImpl(tokenExchangeTemplateEngine);
+    }
+
+    @Bean
     public TokenExchangeService tokenExchangeService(List<TokenValidator> validators,
                                                      SubjectManager subjectManager,
                                                      ProtectedResourceManager protectedResourceManager,
-                                                     UserGatewayService userGatewayService) {
-        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager, userGatewayService);
+                                                     TokenExchangeUserResolver tokenExchangeUserResolver) {
+        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager, tokenExchangeUserResolver);
     }
 
     @Bean

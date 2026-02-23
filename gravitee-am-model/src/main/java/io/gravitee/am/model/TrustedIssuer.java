@@ -18,15 +18,16 @@ package io.gravitee.am.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Map;
 
 /**
- * Represents a trusted external issuer for RFC 8693 Token Exchange.
+ * Trusted issuer configuration for RFC 8693 token exchange.
+ * Defines an external issuer whose JWTs can be accepted as subject/actor tokens
+ * when validated with the configured key material (JWKS URL or PEM certificate).
  *
- * When configured, external JWTs from this issuer can be accepted as subject or actor tokens
- * during token exchange. The JWT signature is validated against the issuer's key material
- * (JWKS URL or PEM certificate).
- *
+ * @see TokenExchangeSettings#getTrustedIssuers()
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693 - OAuth 2.0 Token Exchange</a>
  * @author GraviteeSource Team
  */
 @Getter
@@ -42,7 +43,7 @@ public class TrustedIssuer {
     private String issuer;
 
     /**
-     * Key resolution method: "JWKS_URL" or "PEM".
+     * Key resolution method: {@link #KEY_RESOLUTION_JWKS_URL} or {@link #KEY_RESOLUTION_PEM}.
      */
     private String keyResolutionMethod;
 
@@ -57,25 +58,21 @@ public class TrustedIssuer {
     private String certificate;
 
     /**
-     * External scope to domain scope mappings.
-     * Key = external scope from the JWT, Value = domain scope to map to.
-     * Unmapped scopes are dropped (fail-closed).
-     * Null or empty means pass through all scopes unchanged.
+     * Optional 1-to-1 scope mapping: external scope → domain scope.
+     * Unmapped issuer scopes are dropped (fail-closed).
      */
     private Map<String, String> scopeMappings;
 
     /**
-     * Whether to look up a domain user matching the external JWT claims.
-     * When enabled, the minted token will carry the domain user's roles, groups, and profile data.
-     * When disabled (default), a synthetic user is built from token claims.
+     * When true, resolve the external JWT subject to exactly one domain user using
+     * {@link #userBindingCriteria}. When false, a virtual user is built from token claims only.
      */
-    private boolean userBindingEnabled;
+    private boolean userBindingEnabled = false;
 
     /**
-     * Mappings for user binding lookup.
-     * Key = user attribute to search by (e.g., "email", "username").
-     * Value = claim name or EL expression (e.g., "email" or "{#token['email']}").
-     * Required when userBindingEnabled is true.
+     * List of (attribute, EL expression) pairs used to search for a domain user when
+     * {@link #userBindingEnabled} is true. Required when user binding is enabled; all criteria
+     * are ANDed. Attribute names must match repository search (e.g. {@code userName}, {@code emails.value}).
      */
-    private Map<String, String> userBindingMappings;
+    private List<UserBindingCriterion> userBindingCriteria;
 }

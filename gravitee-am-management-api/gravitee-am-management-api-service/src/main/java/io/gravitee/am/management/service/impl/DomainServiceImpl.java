@@ -40,6 +40,7 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.certificate.api.X509CertUtils;
 import io.gravitee.am.model.account.AccountSettings;
@@ -908,19 +909,15 @@ public class DomainServiceImpl implements DomainService {
                 }
             }
             if (ti.isUserBindingEnabled()) {
-                if (ti.getUserBindingMappings() == null || ti.getUserBindingMappings().isEmpty()) {
+                if (ti.getUserBindingCriteria() == null || ti.getUserBindingCriteria().isEmpty()) {
                     throw new InvalidDomainException(
-                            "User binding is enabled but no mappings configured for trusted issuer: " + ti.getIssuer());
+                            "User binding is enabled for trusted issuer " + ti.getIssuer() + " but no criteria are defined");
                 }
-                for (var entry : ti.getUserBindingMappings().entrySet()) {
-                    if (entry.getKey() == null || entry.getKey().isBlank()) {
+                for (UserBindingCriterion c : ti.getUserBindingCriteria()) {
+                    if (c.getAttribute() == null || c.getAttribute().isBlank()
+                            || c.getExpression() == null || c.getExpression().isBlank()) {
                         throw new InvalidDomainException(
-                                "User binding mapping has blank attribute key for trusted issuer: " + ti.getIssuer());
-                    }
-                    if (entry.getValue() == null || entry.getValue().isBlank()) {
-                        throw new InvalidDomainException(
-                                "User binding mapping has blank value for attribute '" + entry.getKey()
-                                        + "' for trusted issuer: " + ti.getIssuer());
+                                "User binding criteria for trusted issuer " + ti.getIssuer() + " must have non-empty attribute and expression");
                     }
                 }
             }

@@ -273,71 +273,73 @@ class TokenExchangeSettingsTest {
     // --- User Binding validation tests ---
 
     @Test
-    void isValid_userBindingEnabledWithMappingsIsValid() {
+    void isValid_userBindingEnabledWithCriteriaIsValid() {
         var settings = enabledSettings();
         var issuer = jwksIssuer("https://external-idp.example.com", "https://external-idp.example.com/.well-known/jwks.json");
         issuer.setUserBindingEnabled(true);
-        issuer.setUserBindingMappings(Map.of("email", "email"));
+        issuer.setUserBindingCriteria(List.of(criterion("email", "email")));
         settings.setTrustedIssuers(List.of(issuer));
         assertTrue(settings.isValid());
     }
 
     @Test
-    void isValid_userBindingEnabledWithMultipleMappingsIsValid() {
+    void isValid_userBindingEnabledWithMultipleCriteriaIsValid() {
         var settings = enabledSettings();
         var issuer = jwksIssuer("https://external-idp.example.com", "https://external-idp.example.com/.well-known/jwks.json");
         issuer.setUserBindingEnabled(true);
-        issuer.setUserBindingMappings(Map.of("email", "{#token['email']}", "username", "preferred_username"));
+        issuer.setUserBindingCriteria(List.of(
+                criterion("email", "{#token['email']}"),
+                criterion("username", "preferred_username")));
         settings.setTrustedIssuers(List.of(issuer));
         assertTrue(settings.isValid());
     }
 
     @Test
-    void isValid_userBindingEnabledWithNullMappingsIsInvalid() {
+    void isValid_userBindingEnabledWithNullCriteriaIsInvalid() {
         var settings = enabledSettings();
         var issuer = jwksIssuer("https://external-idp.example.com", "https://external-idp.example.com/.well-known/jwks.json");
         issuer.setUserBindingEnabled(true);
-        issuer.setUserBindingMappings(null);
+        issuer.setUserBindingCriteria(null);
         settings.setTrustedIssuers(List.of(issuer));
         assertFalse(settings.isValid());
     }
 
     @Test
-    void isValid_userBindingEnabledWithEmptyMappingsIsInvalid() {
+    void isValid_userBindingEnabledWithEmptyCriteriaIsInvalid() {
         var settings = enabledSettings();
         var issuer = jwksIssuer("https://external-idp.example.com", "https://external-idp.example.com/.well-known/jwks.json");
         issuer.setUserBindingEnabled(true);
-        issuer.setUserBindingMappings(Collections.emptyMap());
+        issuer.setUserBindingCriteria(Collections.emptyList());
         settings.setTrustedIssuers(List.of(issuer));
         assertFalse(settings.isValid());
     }
 
     @Test
-    void isValid_userBindingEnabledWithBlankKeyIsInvalid() {
+    void isValid_userBindingEnabledWithBlankAttributeIsInvalid() {
         var settings = enabledSettings();
         var issuer = jwksIssuer("https://external-idp.example.com", "https://external-idp.example.com/.well-known/jwks.json");
         issuer.setUserBindingEnabled(true);
-        issuer.setUserBindingMappings(Map.of("", "email"));
+        issuer.setUserBindingCriteria(List.of(criterion("", "email")));
         settings.setTrustedIssuers(List.of(issuer));
         assertFalse(settings.isValid());
     }
 
     @Test
-    void isValid_userBindingEnabledWithBlankValueIsInvalid() {
+    void isValid_userBindingEnabledWithBlankExpressionIsInvalid() {
         var settings = enabledSettings();
         var issuer = jwksIssuer("https://external-idp.example.com", "https://external-idp.example.com/.well-known/jwks.json");
         issuer.setUserBindingEnabled(true);
-        issuer.setUserBindingMappings(Map.of("email", "  "));
+        issuer.setUserBindingCriteria(List.of(criterion("email", "  ")));
         settings.setTrustedIssuers(List.of(issuer));
         assertFalse(settings.isValid());
     }
 
     @Test
-    void isValid_userBindingDisabledWithNoMappingsIsValid() {
+    void isValid_userBindingDisabledWithNoCriteriaIsValid() {
         var settings = enabledSettings();
         var issuer = jwksIssuer("https://external-idp.example.com", "https://external-idp.example.com/.well-known/jwks.json");
         issuer.setUserBindingEnabled(false);
-        issuer.setUserBindingMappings(null);
+        issuer.setUserBindingCriteria(null);
         settings.setTrustedIssuers(List.of(issuer));
         assertTrue(settings.isValid());
     }
@@ -362,5 +364,12 @@ class TokenExchangeSettingsTest {
         ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_PEM);
         ti.setCertificate(certificate);
         return ti;
+    }
+
+    private static UserBindingCriterion criterion(String attribute, String expression) {
+        var c = new UserBindingCriterion();
+        c.setAttribute(attribute);
+        c.setExpression(expression);
+        return c;
     }
 }

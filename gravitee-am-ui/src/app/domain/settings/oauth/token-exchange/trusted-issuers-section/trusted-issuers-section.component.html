@@ -1,0 +1,273 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-form-section" fxLayout="column">
+  <div class="gv-form-section-title">
+    <h5>Trusted Issuers</h5>
+    <mat-divider></mat-divider>
+  </div>
+  <mat-hint class="trusted-issuer-section-hint">
+    Configure external token issuers whose JWTs are accepted as subject or actor tokens during token exchange.
+  </mat-hint>
+
+  <ng-container *ngIf="trustedIssuers?.length">
+    <div *ngFor="let trustedIssuer of trustedIssuers; let i = index" fxLayout="column">
+      <mat-card appearance="outlined" class="trusted-issuer-card">
+        <mat-card-content>
+          <div class="trusted-issuer-header" fxLayout="row" fxLayoutAlign="space-between center">
+            <span class="mat-body-2">Issuer #{{ i + 1 }}</span>
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="removeTrustedIssuer(i)"
+              [disabled]="!editMode"
+              type="button"
+              aria-label="Remove issuer"
+              matTooltip="Remove issuer"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+
+          <mat-form-field appearance="outline" class="trusted-issuer-field">
+            <mat-label>Issuer URL</mat-label>
+            <input
+              matInput
+              [name]="'issuer_' + i"
+              [(ngModel)]="trustedIssuer.issuer"
+              (ngModelChange)="onFieldChange()"
+              [disabled]="!editMode"
+              placeholder="https://external-idp.example.com"
+            />
+            <mat-hint>The expected "iss" claim value in the external JWT</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="trusted-issuer-field">
+            <mat-label>Key Resolution Method</mat-label>
+            <mat-select
+              [name]="'keyResolution_' + i"
+              [(ngModel)]="trustedIssuer.keyResolutionMethod"
+              (selectionChange)="onFieldChange()"
+              [disabled]="!editMode"
+            >
+              <mat-option *ngFor="let opt of KEY_RESOLUTION_OPTIONS" [value]="opt.value">{{ opt.label }}</mat-option>
+            </mat-select>
+            <mat-hint>How to obtain the public key for JWT signature verification</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field
+            *ngIf="trustedIssuer.keyResolutionMethod === KEY_RESOLUTION_JWKS_URL"
+            appearance="outline"
+            class="trusted-issuer-field"
+          >
+            <mat-label>JWKS URL</mat-label>
+            <input
+              matInput
+              [name]="'jwksUri_' + i"
+              [(ngModel)]="trustedIssuer.jwksUri"
+              (ngModelChange)="onFieldChange()"
+              [disabled]="!editMode"
+              placeholder="https://external-idp.example.com/.well-known/jwks.json"
+            />
+            <mat-hint>URL of the JSON Web Key Set endpoint for the issuer</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field
+            *ngIf="trustedIssuer.keyResolutionMethod === KEY_RESOLUTION_PEM"
+            appearance="outline"
+            class="trusted-issuer-field"
+          >
+            <mat-label>PEM Certificate</mat-label>
+            <textarea
+              matInput
+              [name]="'certificate_' + i"
+              [(ngModel)]="trustedIssuer.certificate"
+              (ngModelChange)="onFieldChange()"
+              [disabled]="!editMode"
+              rows="4"
+              placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+            ></textarea>
+            <mat-hint>PEM-encoded X.509 certificate containing the public key</mat-hint>
+          </mat-form-field>
+
+          <!-- Scope Mappings -->
+          <div class="trusted-issuer-block-spacer">
+            <h5 class="trusted-issuer-subtitle">Scope Mappings</h5>
+            <mat-hint class="trusted-issuer-hint">
+              Map external scopes from this issuer to domain scopes. Unmapped scopes will be dropped.
+            </mat-hint>
+            <div class="trusted-issuer-staging-row">
+              <mat-form-field appearance="outline" class="trusted-issuer-staging-field">
+                <mat-label>External Scope</mat-label>
+                <input
+                  matInput
+                  [name]="'newExtScope_' + i"
+                  [(ngModel)]="newScopeStaging[i].key"
+                  (ngModelChange)="onFieldChange()"
+                  [disabled]="!editMode"
+                  placeholder="External scope name"
+                />
+              </mat-form-field>
+              <span class="mapping-separator">&mdash;</span>
+              <mat-form-field *ngIf="domainScopes?.length" appearance="outline" class="trusted-issuer-staging-field">
+                <mat-label>Domain Scope</mat-label>
+                <mat-select
+                  [name]="'newDomScope_' + i"
+                  [(ngModel)]="newScopeStaging[i].value"
+                  (selectionChange)="onFieldChange()"
+                  [disabled]="!editMode"
+                >
+                  <mat-option *ngFor="let scope of domainScopes" [value]="scope.key">
+                    <span>{{ scope.name || scope.key }}</span>
+                    <small *ngIf="scope.description"> | {{ scope.description }}</small>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field *ngIf="!domainScopes?.length" appearance="outline" class="trusted-issuer-staging-field">
+                <mat-label>Domain Scope</mat-label>
+                <input
+                  matInput
+                  [name]="'newDomScopeText_' + i"
+                  [(ngModel)]="newScopeStaging[i].value"
+                  (ngModelChange)="onFieldChange()"
+                  [disabled]="!editMode"
+                  placeholder="Domain scope"
+                />
+              </mat-form-field>
+              <button mat-stroked-button type="button" (click)="addScopeMapping(i)" [disabled]="!editMode || !canAddScopeMapping(i)">
+                <mat-icon>add</mat-icon> ADD
+              </button>
+            </div>
+            <div
+              *ngFor="let row of trustedIssuer._scopeMappingRows; let j = index"
+              class="trusted-issuer-mapping-row"
+              fxLayout="row"
+              fxLayoutAlign="start center"
+              fxLayoutGap="8px"
+            >
+              <span fxFlex>{{ row.key }}</span>
+              <span class="mapping-separator">&mdash;</span>
+              <span fxFlex>{{ domainScopes?.length ? getDomainScopeLabel(row.value) : row.value }}</span>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeScopeMapping(i, j)"
+                [disabled]="!editMode"
+                type="button"
+                aria-label="Remove mapping"
+                matTooltip="Remove mapping"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- User Binding -->
+          <div class="trusted-issuer-block-spacer">
+            <mat-slide-toggle
+              [name]="'userBindingEnabled_' + i"
+              [(ngModel)]="trustedIssuer.userBindingEnabled"
+              (ngModelChange)="onFieldChange()"
+              [disabled]="!editMode"
+            >
+              Enable User Binding
+            </mat-slide-toggle>
+            <mat-hint class="trusted-issuer-hint">
+              When enabled, the minted token will carry the domain user's roles, groups, and profile data instead of a synthetic user.
+            </mat-hint>
+
+            <div *ngIf="trustedIssuer.userBindingEnabled" class="trusted-issuer-user-binding-content">
+              <h5 class="trusted-issuer-subtitle">User Binding Mappings</h5>
+              <mat-hint class="trusted-issuer-hint">
+                Map user attributes to JWT claims for domain user lookup. Use claim names (e.g., "email") or EL expressions (e.g.,
+                &#123;#token['email']&#125;).
+              </mat-hint>
+              <div class="trusted-issuer-staging-row">
+                <mat-form-field appearance="outline" class="trusted-issuer-staging-field">
+                  <mat-label>User Attribute</mat-label>
+                  <input
+                    matInput
+                    [name]="'newUbAttr_' + i"
+                    [(ngModel)]="newUserBindingStaging[i].attribute"
+                    (ngModelChange)="onFieldChange()"
+                    [disabled]="!editMode"
+                    placeholder="e.g. userName, emails.value"
+                  />
+                </mat-form-field>
+                <span class="mapping-separator">&mdash;</span>
+                <mat-form-field appearance="outline" class="trusted-issuer-staging-field">
+                  <mat-label>Claim / Expression</mat-label>
+                  <input
+                    matInput
+                    [name]="'newUbClaim_' + i"
+                    [(ngModel)]="newUserBindingStaging[i].expression"
+                    (ngModelChange)="onFieldChange()"
+                    [disabled]="!editMode"
+                    placeholder="email or {#token['email']}"
+                  />
+                </mat-form-field>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="addUserBindingCriterion(i)"
+                  [disabled]="!editMode || !canAddUserBindingCriterion(i)"
+                >
+                  <mat-icon>add</mat-icon> ADD
+                </button>
+              </div>
+              <div
+                *ngFor="let row of trustedIssuer._userBindingRows ?? []; let j = index"
+                class="trusted-issuer-mapping-row"
+                fxLayout="row"
+                fxLayoutAlign="start center"
+                fxLayoutGap="8px"
+              >
+                <span fxFlex>{{ row.attribute }}</span>
+                <span class="mapping-separator">&mdash;</span>
+                <span fxFlex>{{ row.expression }}</span>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="removeUserBindingCriterion(i, j)"
+                  [disabled]="!editMode"
+                  type="button"
+                  aria-label="Remove criterion"
+                  matTooltip="Remove criterion"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+
+  <button
+    mat-stroked-button
+    (click)="addTrustedIssuer()"
+    [disabled]="!editMode || (trustedIssuers?.length ?? 0) >= maxTrustedIssuersCount"
+    type="button"
+    class="trusted-issuer-add-button"
+  >
+    <mat-icon>add</mat-icon> ADD TRUSTED ISSUER
+  </button>
+  <mat-hint *ngIf="(trustedIssuers?.length ?? 0) >= maxTrustedIssuersCount" class="trusted-issuer-hint">
+    Maximum number of trusted issuers ({{ maxTrustedIssuersCount }}) reached.
+  </mat-hint>
+</div>

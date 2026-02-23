@@ -218,6 +218,7 @@ export * from './ThemeEntity';
 export * from './TokenClaim';
 export * from './TokenExchangeSettings';
 export * from './TrustedIssuer';
+export * from './UserBindingCriterion';
 export * from './UMASettings';
 export * from './UpdateAuthenticationDeviceNotifier';
 export * from './UpdateAuthorizationEngine';

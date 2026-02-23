@@ -16586,12 +16586,21 @@ components:
         userBindingEnabled:
           type: boolean
           description: Whether to look up a domain user matching the external JWT claims.
-        userBindingMappings:
-          type: object
-          additionalProperties:
-            type: string
-          description: Mappings for user binding lookup. Key is user attribute, value
-            is claim name or EL expression.
+        userBindingCriteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBindingCriterion'
+          description: List of (attribute, expression) pairs for user binding lookup.
+            Required when userBindingEnabled is true.
+    UserBindingCriterion:
+      type: object
+      properties:
+        attribute:
+          type: string
+          description: Domain user attribute for lookup (e.g. userName, emails.value).
+        expression:
+          type: string
+          description: EL expression evaluated with token claims (e.g. "{#token['email']}").
     UMASettings:
       type: object
       properties:

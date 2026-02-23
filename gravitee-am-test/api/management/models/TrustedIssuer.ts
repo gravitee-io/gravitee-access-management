@@ -26,6 +26,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { UserBindingCriterion } from './UserBindingCriterion';
+import { UserBindingCriterionFromJSON, UserBindingCriterionToJSON } from './UserBindingCriterion';
 
 /**
  *
@@ -70,11 +72,11 @@ export interface TrustedIssuer {
    */
   userBindingEnabled?: boolean;
   /**
-   * Mappings for user binding lookup. Key is user attribute, value is claim name or EL expression.
-   * @type {{ [key: string]: string; }}
+   * List of (attribute, expression) pairs for user binding lookup.
+   * @type {Array<UserBindingCriterion>}
    * @memberof TrustedIssuer
    */
-  userBindingMappings?: { [key: string]: string };
+  userBindingCriteria?: Array<UserBindingCriterion>;
 }
 
 /**
@@ -99,7 +101,7 @@ export function TrustedIssuerFromJSONTyped(json: any, ignoreDiscriminator: boole
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     scopeMappings: json['scopeMappings'] == null ? undefined : json['scopeMappings'],
     userBindingEnabled: json['userBindingEnabled'] == null ? undefined : json['userBindingEnabled'],
-    userBindingMappings: json['userBindingMappings'] == null ? undefined : json['userBindingMappings'],
+    userBindingCriteria: json['userBindingCriteria'] == null ? undefined : (json['userBindingCriteria'] as Array<any>).map(UserBindingCriterionFromJSON),
   };
 }
 
@@ -119,6 +121,6 @@ export function TrustedIssuerToJSONTyped(value?: TrustedIssuer | null, ignoreDis
     certificate: value['certificate'],
     scopeMappings: value['scopeMappings'],
     userBindingEnabled: value['userBindingEnabled'],
-    userBindingMappings: value['userBindingMappings'],
+    userBindingCriteria: value['userBindingCriteria'] == null ? undefined : (value['userBindingCriteria'] as Array<any>).map(UserBindingCriterionToJSON),
   };
 }

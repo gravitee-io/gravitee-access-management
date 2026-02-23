@@ -198,15 +198,15 @@ public class TokenExchangeSettings {
         if (!ti.isUserBindingEnabled()) {
             return true;
         }
-        var mappings = ti.getUserBindingMappings();
-        if (mappings == null || mappings.isEmpty()) {
+        var criteria = ti.getUserBindingCriteria();
+        if (criteria == null || criteria.isEmpty()) {
             return false;
         }
-        for (var entry : mappings.entrySet()) {
-            if (entry.getKey() == null || entry.getKey().isBlank()) {
+        for (UserBindingCriterion c : criteria) {
+            if (c.getAttribute() == null || c.getAttribute().isBlank()) {
                 return false;
             }
-            if (entry.getValue() == null || entry.getValue().isBlank()) {
+            if (c.getExpression() == null || c.getExpression().isBlank()) {
                 return false;
             }
         }
