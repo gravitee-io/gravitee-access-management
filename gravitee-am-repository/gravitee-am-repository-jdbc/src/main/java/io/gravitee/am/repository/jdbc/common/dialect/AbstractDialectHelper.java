@@ -440,6 +440,18 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 .toString();
     }
 
+    @Override
+    public String recursiveTokenDeleteQuery(String whereClause) {
+        return """
+                WITH RECURSIVE token_tree AS (
+                SELECT token FROM tokens WHERE %s
+                UNION ALL
+                SELECT t.token FROM tokens t
+                JOIN token_tree tt ON (t.parent_subject_jti = tt.token OR t.parent_actor_jti = tt.token)
+                ) DELETE FROM tokens WHERE token IN (SELECT token FROM token_tree)
+                """.formatted(whereClause);
+    }
+
     protected StringBuilder buildSearchRole(boolean wildcard, StringBuilder builder) {
         return builder.append("r.reference_id = :refId")
                 .append(" AND r.reference_type = :refType")

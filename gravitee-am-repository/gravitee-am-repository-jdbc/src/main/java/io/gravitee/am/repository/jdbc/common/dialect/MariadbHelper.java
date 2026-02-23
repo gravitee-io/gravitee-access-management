@@ -35,4 +35,18 @@ public class MariadbHelper extends MySqlHelper {
     public String buildAuthorizationCodeDeleteAndReturnQuery() {
         throw new UnsupportedOperationException("MariaDB doesn't support returning deleted");
     }
+
+    @Override
+    public String recursiveTokenDeleteQuery(String whereClause) {
+        return """
+                DELETE FROM tokens WHERE token IN (
+                WITH RECURSIVE token_tree AS (
+                SELECT token FROM tokens WHERE %s
+                UNION ALL
+                SELECT t.token FROM tokens t
+                JOIN token_tree tt ON (t.parent_subject_jti = tt.token OR t.parent_actor_jti = tt.token)
+                ) SELECT token FROM token_tree
+                )
+                """.formatted(whereClause);
+    }
 }

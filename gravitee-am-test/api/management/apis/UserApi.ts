@@ -2175,7 +2175,7 @@ export class UserApi extends runtime.BaseAPI {
   async listUserConsentsRaw(
     requestParameters: ListUserConsentsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ScopeApprovalEntity>> {
+  ): Promise<runtime.ApiResponse<Array<ScopeApprovalEntity>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -2234,7 +2234,7 @@ export class UserApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => ScopeApprovalEntityFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ScopeApprovalEntityFromJSON));
   }
 
   /**
@@ -2244,7 +2244,7 @@ export class UserApi extends runtime.BaseAPI {
   async listUserConsents(
     requestParameters: ListUserConsentsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ScopeApprovalEntity> {
+  ): Promise<Array<ScopeApprovalEntity>> {
     const response = await this.listUserConsentsRaw(requestParameters, initOverrides);
     return await response.value();
   }
