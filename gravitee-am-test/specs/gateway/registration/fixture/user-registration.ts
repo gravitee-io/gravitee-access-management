@@ -41,6 +41,10 @@ export interface UserRegistrationFixture extends Fixture {
   application: Application;
   applicationWithCustomIdp: Application;
   applicationWithCustomIdpAndRedirect: Application;
+  /** App with registerEnabled=false */
+  applicationRegistrationDisabled: Application;
+  /** App with inherited login+account settings (falls back to domain-level) */
+  applicationInherited: Application;
   defaultIdp: IdentityProvider;
   customIdp: IdentityProvider;
 }
@@ -112,6 +116,39 @@ export const setupFixture = async (): Promise<UserRegistrationFixture> => {
     ],
   });
 
+  const applicationRegistrationDisabled = await createApp(domain.id, accessToken, {
+    settings: {
+      oauth: {
+        redirectUris: ['https://callback'],
+        grantTypes: ['authorization_code'],
+      },
+      login: {
+        inherited: false,
+        registerEnabled: false,
+      },
+    },
+    identityProviders: [{ identity: defaultIdp.id, priority: -1 }],
+  });
+
+  const applicationInherited = await createApp(domain.id, accessToken, {
+    settings: {
+      oauth: {
+        redirectUris: ['https://callback'],
+        grantTypes: ['authorization_code'],
+      },
+      login: {
+        inherited: true,
+      },
+      account: {
+        inherited: true,
+      },
+    },
+    identityProviders: [
+      { identity: defaultIdp.id, priority: -1 },
+      { identity: customIdp.id, priority: -1 },
+    ],
+  });
+
   await startDomain(domain.id, accessToken);
   const domainWithOidc = await waitForDomainStart(domain);
 
@@ -122,6 +159,8 @@ export const setupFixture = async (): Promise<UserRegistrationFixture> => {
     application: application,
     applicationWithCustomIdp: applicationWithCustomIdp,
     applicationWithCustomIdpAndRedirect: applicationWithCustomIdpAndRedirect,
+    applicationRegistrationDisabled: applicationRegistrationDisabled,
+    applicationInherited: applicationInherited,
     customIdp: customIdp,
     defaultIdp: defaultIdp,
     cleanUp: async () => {
