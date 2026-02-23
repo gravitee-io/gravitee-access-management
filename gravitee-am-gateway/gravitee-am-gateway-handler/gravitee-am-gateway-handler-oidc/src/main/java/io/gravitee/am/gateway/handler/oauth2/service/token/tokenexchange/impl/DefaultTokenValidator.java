@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -31,7 +30,6 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -80,7 +78,7 @@ public class DefaultTokenValidator implements TokenValidator {
     public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
         // Stage 1: Try domain certificate validation (existing path for domain-issued tokens)
         return jwtService.decodeAndVerify(token, () -> null, jwtTokenType)
-                .map(jwt -> buildValidatedToken(jwt, domain, false, null))
+                .map(jwt -> buildValidatedToken(jwt, domain, null))
                 .onErrorResumeNext(domainError -> {
                     // Stage 2: If trusted issuers are configured, try trusted issuer validation
                     if (hasTrustedIssuers(settings)) {
@@ -107,13 +105,8 @@ public class DefaultTokenValidator implements TokenValidator {
                     }
 
                     return Single.fromCallable(() -> {
-                        try {
-                            JWTClaimsSet claimsSet = trustedIssuerResolver.resolve(token, matchingIssuer);
-                            return buildValidatedTokenFromClaims(claimsSet, domain, matchingIssuer);
-                        } catch (BadJOSEException | JOSEException | ParseException e) {
-                            LOGGER.debug("Trusted issuer JWT signature verification failed for issuer {}: {}", issuer, e.getMessage());
-                            throw new InvalidGrantException("Invalid JWT signature");
-                        }
+                        JWTClaimsSet claimsSet = trustedIssuerResolver.resolve(token, matchingIssuer);
+                        return buildValidatedTokenFromClaims(claimsSet, domain, matchingIssuer);
                     });
                 })
                 .onErrorResumeNext(error -> {
@@ -135,67 +128,43 @@ public class DefaultTokenValidator implements TokenValidator {
         }
     }
 
-    private ValidatedToken buildValidatedToken(io.gravitee.am.common.jwt.JWT jwt, Domain domain,
-                                                boolean trustedIssuerValidated, TrustedIssuer matchingIssuer) {
-        validateTemporalClaims(jwt.getExp(), jwt.getNbf());
-
-        Map<String, Object> claims = new HashMap<>();
-        jwt.keySet().forEach(key -> claims.put(key, jwt.get(key)));
-
-        Set<String> scopes = parseScopes(jwt.get(Claims.SCOPE));
-        if (trustedIssuerValidated && matchingIssuer != null) {
-            scopes = applyScopeMapping(scopes, matchingIssuer);
-        }
-
-        List<String> audience = parseAudience(jwt.getAud());
-
-        return ValidatedToken.builder()
-                .subject(jwt.getSub())
-                .issuer(jwt.getIss())
-                .claims(claims)
-                .scopes(scopes)
-                .expiration(jwt.getExp() > 0 ? new Date(jwt.getExp() * 1000) : null)
-                .issuedAt(jwt.getIat() > 0 ? new Date(jwt.getIat() * 1000) : null)
-                .notBefore(jwt.getNbf() > 0 ? new Date(jwt.getNbf() * 1000) : null)
-                .tokenId(jwt.getJti())
-                .audience(audience)
-                .clientId(jwt.get(Claims.CLIENT_ID) != null ? jwt.get(Claims.CLIENT_ID).toString() : null)
-                .tokenType(supportedTokenType)
-                .domain(domain.getId())
-                .trustedIssuerValidated(trustedIssuerValidated)
-                .build();
+    private ValidatedToken buildValidatedToken(JWT jwt, Domain domain,
+                                                TrustedIssuer matchingIssuer) {
+        return buildValidatedToken(new HashMap<>(jwt), jwt.getExp(), jwt.getIat(), jwt.getNbf(),
+                domain, matchingIssuer);
     }
 
     private ValidatedToken buildValidatedTokenFromClaims(JWTClaimsSet claimsSet, Domain domain,
                                                           TrustedIssuer matchingIssuer) {
         long exp = claimsSet.getExpirationTime() != null ? claimsSet.getExpirationTime().getTime() / 1000 : 0;
-        long nbf = claimsSet.getNotBeforeTime() != null ? claimsSet.getNotBeforeTime().getTime() / 1000 : 0;
         long iat = claimsSet.getIssueTime() != null ? claimsSet.getIssueTime().getTime() / 1000 : 0;
+        long nbf = claimsSet.getNotBeforeTime() != null ? claimsSet.getNotBeforeTime().getTime() / 1000 : 0;
+        return buildValidatedToken(new HashMap<>(claimsSet.getClaims()), exp, iat, nbf,
+                domain, matchingIssuer);
+    }
 
+    private ValidatedToken buildValidatedToken(Map<String, Object> claims, long exp, long iat, long nbf,
+                                                Domain domain, TrustedIssuer matchingIssuer) {
         validateTemporalClaims(exp, nbf);
 
-        Map<String, Object> claims = new HashMap<>(claimsSet.getClaims());
-
-        Object scopeClaim = claimsSet.getClaim(Claims.SCOPE);
-        Set<String> scopes = applyScopeMapping(parseScopes(scopeClaim), matchingIssuer);
-
-        List<String> audience = claimsSet.getAudience() != null ? claimsSet.getAudience() : Collections.emptyList();
-        Object clientId = claimsSet.getClaim(Claims.CLIENT_ID);
+        Set<String> scopes = applyScopeMapping(parseScopes(claims.get(Claims.SCOPE)), matchingIssuer);
+        List<String> audience = parseAudience(claims.get(Claims.AUD));
+        Object clientId = claims.get(Claims.CLIENT_ID);
 
         return ValidatedToken.builder()
-                .subject(claimsSet.getSubject())
-                .issuer(claimsSet.getIssuer())
+                .subject((String) claims.get(Claims.SUB))
+                .issuer((String) claims.get(Claims.ISS))
                 .claims(claims)
                 .scopes(scopes)
                 .expiration(exp > 0 ? new Date(exp * 1000) : null)
                 .issuedAt(iat > 0 ? new Date(iat * 1000) : null)
                 .notBefore(nbf > 0 ? new Date(nbf * 1000) : null)
-                .tokenId(claimsSet.getJWTID())
+                .tokenId((String) claims.get(Claims.JTI))
                 .audience(audience)
                 .clientId(clientId != null ? clientId.toString() : null)
                 .tokenType(supportedTokenType)
                 .domain(domain.getId())
-                .trustedIssuerValidated(true)
+                .trustedIssuerValidated(matchingIssuer != null)
                 .build();
     }
 
@@ -205,6 +174,9 @@ public class DefaultTokenValidator implements TokenValidator {
      * If no scope mappings are configured, all scopes pass through unchanged.
      */
     private Set<String> applyScopeMapping(Set<String> originalScopes, TrustedIssuer issuer) {
+        if (issuer == null) {
+            return originalScopes;
+        }
         Map<String, String> mappings = issuer.getScopeMappings();
         if (mappings == null || mappings.isEmpty()) {
             return originalScopes;

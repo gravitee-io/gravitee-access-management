@@ -15,12 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.model.TrustedIssuer;
-
-import java.text.ParseException;
 
 /**
  * Resolves key material for trusted external issuers and verifies JWTs against it.
@@ -35,9 +31,8 @@ public interface TrustedIssuerResolver {
      * @param rawToken the raw JWT string
      * @param trustedIssuer the trusted issuer configuration
      * @return the verified JWT claims set
-     * @throws BadJOSEException if JWT/JWS validation fails (bad signature, expired, etc.)
-     * @throws JOSEException if crypto processing fails
-     * @throws ParseException if the JWT is malformed
+     * @throws io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException if verification fails
+     * @throws IllegalArgumentException if the issuer configuration is invalid
      */
-    JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer) throws BadJOSEException, JOSEException, ParseException;
+    JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer);
 }

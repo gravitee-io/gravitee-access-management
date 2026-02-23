@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
@@ -198,15 +197,15 @@ public class DefaultTokenValidatorTest {
         when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(decodedJwt));
 
-        // Trusted issuer resolver throws (bad signature)
+        // Trusted issuer resolver throws (bad signature — now wrapped as InvalidGrantException by resolver)
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenThrow(new JOSEException("Signature verification failed"));
+                .thenThrow(new InvalidGrantException("JWT signature verification failed for trusted issuer: https://external-idp.example.com"));
 
         TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
 
         testObserver.assertError(InvalidGrantException.class);
         testObserver.assertError(error ->
-            error.getMessage().contains("Invalid JWT signature")
+            error.getMessage().contains("JWT signature verification failed")
         );
     }
 
@@ -336,6 +335,142 @@ public class DefaultTokenValidatorTest {
             // All scopes pass through when no mapping configured
             assertTrue(validatedToken.getScopes().contains("read"));
             assertTrue(validatedToken.getScopes().contains("write"));
+            return true;
+        });
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_allFieldsCopied() throws Exception {
+        // Domain cert verification fails
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://external-idp.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_PEM);
+        ti.setCertificate("some-pem");
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://external-idp.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        long currentTime = System.currentTimeMillis() / 1000;
+        long futureExp = currentTime + 3600;
+        long pastIat = currentTime - 60;
+        long pastNbf = currentTime - 60;
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject("external-user-123")
+                .issuer("https://external-idp.example.com")
+                .jwtID("ext-jti-456")
+                .audience(Arrays.asList("aud-1", "aud-2"))
+                .expirationTime(new Date(futureExp * 1000))
+                .issueTime(new Date(pastIat * 1000))
+                .notBeforeTime(new Date(pastNbf * 1000))
+                .claim(Claims.SCOPE, "ext:read ext:write")
+                .claim(Claims.CLIENT_ID, "ext-client-789")
+                .claim("custom_claim", "custom_value")
+                .build();
+        when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
+                .thenReturn(claimsSet);
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(validatedToken -> {
+            // Standard claims
+            assertEquals("external-user-123", validatedToken.getSubject());
+            assertEquals("https://external-idp.example.com", validatedToken.getIssuer());
+            assertEquals("ext-jti-456", validatedToken.getTokenId());
+            assertEquals("ext-client-789", validatedToken.getClientId());
+            // Audience
+            assertEquals(2, validatedToken.getAudience().size());
+            assertEquals("aud-1", validatedToken.getAudience().get(0));
+            assertEquals("aud-2", validatedToken.getAudience().get(1));
+            // Temporal claims
+            assertNotNull(validatedToken.getExpiration());
+            assertNotNull(validatedToken.getIssuedAt());
+            assertNotNull(validatedToken.getNotBefore());
+            // Scopes
+            assertEquals(2, validatedToken.getScopes().size());
+            assertTrue(validatedToken.getScopes().contains("ext:read"));
+            assertTrue(validatedToken.getScopes().contains("ext:write"));
+            // Metadata
+            assertEquals(TOKEN_TYPE_URN, validatedToken.getTokenType());
+            assertEquals(DOMAIN_ID, validatedToken.getDomain());
+            assertTrue(validatedToken.isTrustedIssuerValidated());
+            // Custom claims
+            assertEquals("custom_value", validatedToken.getClaims().get("custom_claim"));
+            return true;
+        });
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_expiredToken() throws Exception {
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://external-idp.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_PEM);
+        ti.setCertificate("some-pem");
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://external-idp.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        long pastExp = (System.currentTimeMillis() / 1000) - 3600;
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject("external-user-123")
+                .issuer("https://external-idp.example.com")
+                .expirationTime(new Date(pastExp * 1000))
+                .build();
+        when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
+                .thenReturn(claimsSet);
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(error ->
+            error.getMessage().contains("has expired")
+        );
+    }
+
+    @Test
+    public void testValidateWithTrustedIssuer_nullTimestamps() throws Exception {
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.error(new Exception("Invalid signature")));
+
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer("https://external-idp.example.com");
+        ti.setKeyResolutionMethod(TrustedIssuer.KEY_RESOLUTION_PEM);
+        ti.setCertificate("some-pem");
+        when(settings.getTrustedIssuers()).thenReturn(List.of(ti));
+
+        JWT decodedJwt = new JWT();
+        decodedJwt.setIss("https://external-idp.example.com");
+        when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(decodedJwt));
+
+        // No exp, iat, or nbf set
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject("external-user-123")
+                .issuer("https://external-idp.example.com")
+                .build();
+        when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
+                .thenReturn(claimsSet);
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(validatedToken -> {
+            assertNull(validatedToken.getExpiration());
+            assertNull(validatedToken.getIssuedAt());
+            assertNull(validatedToken.getNotBefore());
             return true;
         });
     }

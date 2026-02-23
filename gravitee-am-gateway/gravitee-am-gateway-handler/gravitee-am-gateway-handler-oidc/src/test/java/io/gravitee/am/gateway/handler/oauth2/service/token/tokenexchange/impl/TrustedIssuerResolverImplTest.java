@@ -18,10 +18,10 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.proc.BadJWSException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.model.TrustedIssuer;
 import org.junit.Before;
 import org.junit.Test;
@@ -138,7 +138,7 @@ public class TrustedIssuerResolverImplTest {
         assertEquals("https://trusted.example.com", claims.getIssuer());
     }
 
-    @Test(expected = BadJWSException.class)
+    @Test(expected = InvalidGrantException.class)
     public void shouldRejectJwtSignedWithWrongKey() throws Exception {
         TrustedIssuer issuer = pemIssuer("https://trusted.example.com", TRUSTED_CERT_PEM);
 

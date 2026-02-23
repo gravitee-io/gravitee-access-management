@@ -27,11 +27,14 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.util.DefaultResourceRetriever;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.proc.BadJOSEException;
+import com.nimbusds.jose.proc.BadJWSException;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.certificate.api.X509CertUtils;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.model.TrustedIssuer;
 
@@ -68,12 +71,24 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
     private final ConcurrentMap<String, JWTProcessor<SecurityContext>> processorCache = new ConcurrentHashMap<>();
 
     @Override
-    public JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer) throws BadJOSEException, JOSEException, ParseException {
+    public JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer) {
         JWTProcessor<SecurityContext> processor = processorCache.computeIfAbsent(
                 trustedIssuer.getIssuer(),
                 key -> buildProcessor(trustedIssuer)
         );
-        return processor.process(rawToken, null);
+        try {
+            return processor.process(rawToken, null);
+        } catch (BadJWSException e) {
+            throw new InvalidGrantException("JWT signature verification failed for trusted issuer: " + trustedIssuer.getIssuer());
+        } catch (BadJWTException e) {
+            throw new InvalidGrantException("JWT claims validation failed: " + e.getMessage());
+        } catch (BadJOSEException e) {
+            throw new InvalidGrantException("JWT processing failed: " + e.getMessage());
+        } catch (JOSEException e) {
+            throw new InvalidGrantException("JWT cryptographic error: " + e.getMessage());
+        } catch (ParseException e) {
+            throw new InvalidGrantException("Malformed JWT from trusted issuer: " + trustedIssuer.getIssuer());
+        }
     }
 
     private JWTProcessor<SecurityContext> buildProcessor(TrustedIssuer trustedIssuer) {
