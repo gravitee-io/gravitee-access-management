@@ -79,10 +79,8 @@ describe('User Registration - Email Verification (sendVerifyRegistrationAccountE
       await clearEmails(email);
 
       const response = await performGet(verifyLink);
-      // The verify endpoint renders the registration_verify page or redirects
-      // On success with no auto-login, user lands on a page with registration_completed
-      expect(response.status).toBeGreaterThanOrEqual(200);
-      expect(response.status).toBeLessThan(400);
+      // On success with no auto-login, the verify endpoint renders the registration_completed page
+      expect(response.status).toEqual(200);
 
       // Check user is now enabled
       const foundUser = await listUsers(fixture.domain.id, fixture.accessToken, user.username);
@@ -136,7 +134,7 @@ describe('User Registration - Email Verification (sendVerifyRegistrationAccountE
       const sessionCookie = sessionCookies[0];
       const jwtValue = sessionCookie.substring(sessionCookie.indexOf('=') + 1, sessionCookie.indexOf(';'));
       const jwt = decodeJwt(jwtValue);
-      expect(jwt.userId).toBeDefined();
+      expect(jwt.userId).toBeTruthy();
 
       // Check user is now enabled
       const foundUser = await listUsers(fixture.domain.id, fixture.accessToken, user.username);
