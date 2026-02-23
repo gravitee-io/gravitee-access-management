@@ -22,6 +22,7 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,6 +31,9 @@ public class TokenMongo {
     public static final String FIELD_TYPE = "type";
     public static final String FIELD_EXPIRE_AT = "expire_at";
     public static final String FIELD_SUBJECT = "subject";
+    public static final String FIELD_PARENT_SUBJECT_JTI = "parent_subject_jti";
+    public static final String FIELD_PARENT_ACTOR_JTI = "parent_actor_jti";
+    public static final String FIELD_PARENT_JTIS = "parent_jtis";
     public static final String FIELD_AUTHORIZATION_CODE = "authorization_code";
 
     @BsonId
@@ -62,6 +66,14 @@ public class TokenMongo {
     @BsonProperty(FIELD_EXPIRE_AT)
     private Date expireAt;
 
+    @BsonProperty(FIELD_PARENT_SUBJECT_JTI)
+    private String parentSubjectJti;
+
+    @BsonProperty(FIELD_PARENT_ACTOR_JTI)
+    private String parentActorJti;
+
+    @BsonProperty(FIELD_PARENT_JTIS)
+    private List<String> parentJtis;
 
     @Override
     public boolean equals(Object o) {

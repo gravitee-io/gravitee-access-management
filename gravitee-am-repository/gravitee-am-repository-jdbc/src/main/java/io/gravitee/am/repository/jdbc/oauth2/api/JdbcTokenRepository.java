@@ -89,9 +89,13 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     @Override
     public Completable deleteByJti(String jti) {
         LOGGER.debug("deleteByJti({})", jti);
-        return monoToCompletable(getTemplate().delete(JdbcToken.class)
-                .matching(Query.query(where("token").is(jti)))
-                .all());
+        String query = databaseDialectHelper.recursiveTokenDeleteQuery("token = :jti");
+        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+                .bind("jti", jti)
+                .fetch()
+                .rowsUpdated())
+                .doOnError(error -> LOGGER.error("Unable to delete tokens with parent jti {}", jti, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -105,39 +109,43 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
                 .observeOn(Schedulers.computation());
     }
 
+
     @Override
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
-        return monoToCompletable(getTemplate().delete(JdbcToken.class)
-                .matching(Query.query(where(SUBJECT).is(userId)))
-                .all())
-                .doOnError(error -> LOGGER.error("Unable to delete access tokens with subject {}",
-                        userId, error))
+        String query = databaseDialectHelper.recursiveTokenDeleteQuery(SUBJECT + " = :userId");
+        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+                .bind("userId", userId)
+                .fetch()
+                .rowsUpdated())
+                .doOnError(error -> LOGGER.error("Unable to delete tokens with subject {}", userId, error))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
-        return monoToCompletable(getTemplate().delete(JdbcToken.class)
-                .matching(Query.query(
-                        where(SUBJECT).is(userId.id())
-                                .and(where("domain").is(domainId))
-                                .and(where("client").is(clientId))))
-                .all())
+        String query = databaseDialectHelper.recursiveTokenDeleteQuery("domain = :domainId AND client = :clientId AND " + SUBJECT + " = :userId");
+        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+                .bind("domainId", domainId)
+                .bind("clientId", clientId)
+                .bind("userId", userId.id())
+                .fetch()
+                .rowsUpdated())
                 .doOnError(error -> LOGGER.error("Unable to delete access token with domain {}, client {} and subject {}",
-                        domainId, clientId, userId, error))
+                                domainId, clientId, userId, error))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
-        return monoToCompletable(getTemplate().delete(JdbcToken.class)
-                .matching(Query.query(
-                        where(SUBJECT).is(userId.id())
-                                .and(where("domain").is(domainId))))
-                .all())
+        String query = databaseDialectHelper.recursiveTokenDeleteQuery("domain = :domainId AND " + SUBJECT + " = :userId");
+        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+                .bind("domainId", domainId)
+                .bind("userId", userId.id())
+                .fetch()
+                .rowsUpdated())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with domain {} and subject {}",
                         domainId, userId, error))
                 .observeOn(Schedulers.computation());
@@ -146,10 +154,12 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     @Override
     public Completable deleteByDomainIdAndClientId(String domainId, String clientId) {
         LOGGER.debug("deleteByDomainIdClientId({},{})", domainId, clientId);
-        return monoToCompletable(getTemplate().delete(JdbcToken.class)
-                .matching(Query.query(where("domain").is(domainId)
-                        .and(where("client").is(clientId))))
-                .all())
+        String query = databaseDialectHelper.recursiveTokenDeleteQuery("domain = :domainId AND client = :clientId");
+        return monoToCompletable(getTemplate().getDatabaseClient().sql(query)
+                .bind("domainId", domainId)
+                .bind("clientId", clientId)
+                .fetch()
+                .rowsUpdated())
                 .doOnError(error -> LOGGER.error("Unable to delete access token with domain {}, client {}",
                         domainId, clientId, error))
                 .observeOn(Schedulers.computation());
@@ -174,6 +184,8 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
+        result.setParentSubjectJti(entity.getParentSubjectJti());
+        result.setParentActorJti(entity.getParentActorJti());
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
         }
@@ -190,6 +202,8 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
+        result.setParentSubjectJti(entity.getParentSubjectJti());
+        result.setParentActorJti(entity.getParentActorJti());
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
         }
@@ -208,6 +222,8 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(token.getClient());
         result.setDomain(token.getDomain());
         result.setSubject(token.getSubject());
+        result.setParentSubjectJti(token.getParentSubjectJti());
+        result.setParentActorJti(token.getParentActorJti());
         if (token.getCreatedAt() != null) {
             result.setCreatedAt(LocalDateTime.ofInstant(token.getCreatedAt().toInstant(), UTC));
         }

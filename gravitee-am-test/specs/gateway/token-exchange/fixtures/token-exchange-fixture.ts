@@ -15,12 +15,18 @@
  */
 
 import { expect } from '@jest/globals';
-import { createDomain, safeDeleteDomain, startDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  safeDeleteDomain,
+  startDomain,
+  waitFor,
+  waitForOidcReady
+} from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { introspectToken as introspectOidcToken, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
@@ -80,6 +86,19 @@ export interface TokenExchangeFixture {
 
   // Helper method to obtain actor tokens (alias for obtainSubjectToken for readability)
   obtainActorToken: (scope?: string) => Promise<SubjectTokens>;
+
+  // Helper method to introspect token
+  introspectToken: (token: string) => Promise<any>;
+
+  // Helper method to revoke token and wait for introspection consistency window
+  revokeToken: (token: string, tokenTypeHint: 'access_token' | 'refresh_token') => Promise<void>;
+
+  // Helper method to exchange token (impersonation/delegation)
+  exchangeToken: (
+    subjectToken: string,
+    subjectTokenType: 'access_token' | 'refresh_token',
+    actorToken?: string,
+  ) => Promise<string>;
 }
 
 /**
@@ -286,6 +305,49 @@ export const setupTokenExchangeFixture = async (
       };
     };
 
+    const introspectToken = (token: string): Promise<any> => introspectOidcToken(oidc.introspection_endpoint, token, basicAuth);
+
+    const revokeToken = async (token: string, tokenTypeHint: 'access_token' | 'refresh_token'): Promise<void> => {
+      await performPost(
+        oidc.revocation_endpoint,
+        '',
+        `token=${token}&token_type_hint=${tokenTypeHint}`,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${basicAuth}`,
+        },
+      ).expect(200);
+
+      await waitFor(11000); // because of OFFLINE_VERIFICATION_TIMER_SECONDS = 10 seconds
+    };
+
+    const exchangeToken = async (
+      subjectToken: string,
+      subjectTokenType: 'access_token' | 'refresh_token',
+      actorToken?: string,
+    ): Promise<string> => {
+      const actorParams = actorToken
+        ? `&actor_token=${actorToken}&actor_token_type=urn:ietf:params:oauth:token-type:access_token`
+        : '';
+
+      const response = await performPost(
+        oidc.token_endpoint,
+        '',
+        `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${subjectToken}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:${subjectTokenType}` +
+        actorParams,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${basicAuth}`,
+        },
+      ).expect(200);
+
+      const exchangedToken = response.body.access_token;
+      expect(exchangedToken).toBeDefined();
+      return exchangedToken;
+    };
+
     // Cleanup function
     const cleanup = async () => {
       if (domain?.id && accessToken) {
@@ -303,6 +365,9 @@ export const setupTokenExchangeFixture = async (
       accessToken,
       obtainSubjectToken,
       obtainActorToken: obtainSubjectToken,
+      introspectToken,
+      revokeToken,
+      exchangeToken,
       cleanup,
     };
   } catch (error) {

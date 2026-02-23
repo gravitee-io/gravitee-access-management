@@ -152,6 +152,33 @@ export const deleteUser = (domainId, accessToken, userId) =>
     user: userId,
   });
 
+export const revokeUserConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+  getUserApi(accessToken).revokeUserConsents({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    clientId,
+  });
+
+export const listUserConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+  getUserApi(accessToken).listUserConsents({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    clientId,
+  });
+
+export const revokeUserConsent = (domainId: string, accessToken: string, userId: string, consentId: string) =>
+  getUserApi(accessToken).revokeUserConsent({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    consent: consentId,
+  });
+
 export function buildTestUser(
   i: number,
   options: { preRegistration?: boolean; password?: string; serviceAccount?: boolean; lastPasswordReset?: Date } = {},

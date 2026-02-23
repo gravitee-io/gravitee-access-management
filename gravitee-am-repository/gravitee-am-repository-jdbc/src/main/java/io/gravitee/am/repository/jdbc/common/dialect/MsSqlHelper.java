@@ -136,4 +136,15 @@ public class MsSqlHelper extends AbstractDialectHelper {
         return " ESCAPE '\\' ";
     }
 
+    @Override
+    public String recursiveTokenDeleteQuery(String whereClause) {
+        return """
+                ;WITH token_tree AS (
+                SELECT token FROM tokens WHERE %s
+                UNION ALL
+                SELECT t.token FROM tokens t
+                JOIN token_tree tt ON (t.parent_subject_jti = tt.token OR t.parent_actor_jti = tt.token)
+                ) DELETE t FROM tokens t JOIN token_tree tt ON t.token = tt.token
+                """.formatted(whereClause);
+    }
 }
