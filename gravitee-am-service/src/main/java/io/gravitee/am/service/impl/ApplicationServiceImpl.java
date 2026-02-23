@@ -241,6 +241,62 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Single<Page<Application>> findByDomain(String domain, int page, int size, List<ApplicationType> types) {
+        LOGGER.debug("Find applications by domain {} with types {}", domain, types);
+        if (types == null || types.isEmpty()) {
+            return findByDomain(domain, page, size);
+        }
+        return applicationRepository.findByDomain(domain, page, size, types)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find applications by domain {} with types {}", domain, types, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find applications by domain %s with types", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size, List<ApplicationType> types) {
+        LOGGER.debug("Find applications by domain {} and appIds with types {}", domain, types);
+        if (types == null || types.isEmpty()) {
+            return findByDomain(domain, applicationIds, page, size);
+        }
+        return applicationRepository.findByDomain(domain, applicationIds, page, size, types)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find applications by domain {} with types {}", domain, types, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find applications by domain %s with types", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, String query, int page, int size, List<ApplicationType> types) {
+        LOGGER.debug("Search applications with query {} for domain {} with types {}", query, domain, types);
+        if (types == null || types.isEmpty()) {
+            return search(domain, query, page, size);
+        }
+        return applicationRepository.search(domain, query, page, size, types)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search applications with query {} for domain {} with types {}", query, domain, types, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to search applications with query %s by domain %s with types", query, domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size, List<ApplicationType> types) {
+        LOGGER.debug("Search applications with query {} for domain {} and appIds with types {}", query, domain, types);
+        if (types == null || types.isEmpty()) {
+            return search(domain, applicationIds, query, page, size);
+        }
+        return applicationRepository.search(domain, applicationIds, query, page, size, types)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search applications with query {} for domain {} with types {}", query, domain, types, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to search applications with query %s by domain %s with types", query, domain), ex));
+                });
+    }
+
+    @Override
     public Flowable<Application> findByCertificate(String certificate) {
         LOGGER.debug("Find applications by certificate : {}", certificate);
         return applicationRepository.findByCertificate(certificate)

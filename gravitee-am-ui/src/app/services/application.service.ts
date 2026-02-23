@@ -32,12 +32,20 @@ export class ApplicationService {
     private authService: AuthService,
   ) {}
 
-  findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size);
+  findByDomain(domainId, page, size, types?: string[]): Observable<any> {
+    let url = this.appsURL + domainId + '/applications?page=' + page + '&size=' + size;
+    if (types && types.length > 0) {
+      url += types.map(t => '&type=' + t).join('');
+    }
+    return this.http.get<any>(url);
   }
 
-  search(domainId, searchTerm): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm);
+  search(domainId, searchTerm, types?: string[]): Observable<any> {
+    let url = this.appsURL + domainId + '/applications?q=' + searchTerm;
+    if (types && types.length > 0) {
+      url += types.map(t => '&type=' + t).join('');
+    }
+    return this.http.get<any>(url);
   }
 
   get(domainId, id): Observable<any> {

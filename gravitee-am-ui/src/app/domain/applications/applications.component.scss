@@ -1,13 +1,23 @@
 .applications-search {
   text-align: center;
-
-  mat-form-field {
-    width: 70%;
-  }
+  padding: 0 5%;
 
   mat-icon {
     padding-bottom: 4px;
     vertical-align: middle;
+  }
+
+  .clear-filters-btn {
+    white-space: nowrap;
+    height: 48px;
+
+    span {
+      margin-left: 4px;
+    }
+
+    &[disabled] {
+      opacity: 0.4;
+    }
   }
 }
 
