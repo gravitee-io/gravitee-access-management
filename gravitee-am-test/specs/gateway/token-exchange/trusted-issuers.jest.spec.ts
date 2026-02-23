@@ -15,8 +15,11 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { patchDomain } from '@management-commands/domain-management-commands';
 import { parseJwt } from '@api-fixtures/jwt';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { TrustedIssuer } from '@management-models/TrustedIssuer';
+import { PatchDomain } from '@management-models/PatchDomain';
 import { setup } from '../../test-fixture';
 import { TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
 import { patchDomainRaw, setupTrustedIssuerFixture, signExternalJwt, TrustedIssuerFixture } from './fixtures/trusted-issuer-fixture';
@@ -283,34 +286,35 @@ describe('Trusted Issuers - Token Exchange', () => {
 
 describe('Trusted Issuers - User Binding', () => {
   // Helper to build the trusted issuer config with user binding settings
-  const buildTrustedIssuerConfig = (userBindingEnabled: boolean, userBindingMappings?: Record<string, string>) => ({
-    tokenExchangeSettings: {
-      enabled: true,
-      allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
-      allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
-      allowImpersonation: true,
-      allowDelegation: true,
-      allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
-      maxDelegationDepth: 3,
-      trustedIssuers: [
-        {
-          issuer: fixture.externalIssuer,
-          keyResolutionMethod: 'PEM',
-          certificate: fixture.trustedKey.certificatePem,
-          scopeMappings: { 'external:read': 'openid', 'external:profile': 'profile' },
-          userBindingEnabled,
-          ...(userBindingMappings && { userBindingMappings }),
-        },
-      ],
-    },
-  });
+  const buildTrustedIssuerConfig = (userBindingEnabled: boolean, userBindingMappings?: Record<string, string>): PatchDomain => {
+    const trustedIssuer: TrustedIssuer = {
+      issuer: fixture.externalIssuer,
+      keyResolutionMethod: 'PEM',
+      certificate: fixture.trustedKey.certificatePem,
+      scopeMappings: { 'external:read': 'openid', 'external:profile': 'profile' },
+      userBindingEnabled,
+      ...(userBindingMappings && { userBindingMappings }),
+    };
+    return {
+      tokenExchangeSettings: {
+        enabled: true,
+        allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+        allowedRequestedTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+        allowImpersonation: true,
+        allowDelegation: true,
+        allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+        maxDelegationDepth: 3,
+        trustedIssuers: [trustedIssuer],
+      },
+    };
+  };
 
   it('should use domain user when user binding is enabled and email matches', async () => {
     const { domain, accessToken, oidc, basicAuth, externalIssuer, user } = fixture;
 
     // Patch domain to enable user binding with email -> email mapping
     await waitForSyncAfter(domain.id, () =>
-      patchDomainRaw(domain.id, accessToken, buildTrustedIssuerConfig(true, { email: 'email' })).expect(200),
+      patchDomain(domain.id, accessToken, buildTrustedIssuerConfig(true, { email: 'email' })),
     );
 
     // Sign external JWT with matching email (from fixture user created by buildCreateAndTestUser)
@@ -372,7 +376,7 @@ describe('Trusted Issuers - User Binding', () => {
 
     // Restore config with user binding disabled
     await waitForSyncAfter(domain.id, () =>
-      patchDomainRaw(domain.id, accessToken, buildTrustedIssuerConfig(false)).expect(200),
+      patchDomain(domain.id, accessToken, buildTrustedIssuerConfig(false)),
     );
 
     const externalJwt = fixture.signExternalJwt({
@@ -400,9 +404,8 @@ describe('Trusted Issuers - User Binding', () => {
 });
 
 describe('Trusted Issuers - Management API Validation', () => {
-  // NOTE: These tests use patchDomainRaw (raw supertest) because the generated SDK
-  // model for TokenExchangeSettings does not include `trustedIssuers` yet.
-  // patchDomain() silently strips the field during serialization.
+  // These tests use patchDomainRaw (raw supertest) to assert non-2xx status codes.
+  // The SDK's patchDomain() throws on error responses, so raw supertest is needed here.
 
   it('should reject invalid PEM certificate', async () => {
     const { domain, accessToken } = fixture;
@@ -497,7 +500,7 @@ describe('Trusted Issuers - Management API Validation', () => {
   it('should accept user binding enabled with valid mappings', async () => {
     const { domain, accessToken, trustedKey } = fixture;
 
-    await patchDomainRaw(domain.id, accessToken, {
+    await patchDomain(domain.id, accessToken, {
       tokenExchangeSettings: {
         enabled: true,
         allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
@@ -514,15 +517,25 @@ describe('Trusted Issuers - Management API Validation', () => {
           },
         ],
       },
-    }).expect(200);
+    });
   });
 
   it('should persist trusted issuer configuration after save and reload', async () => {
     const { domain, accessToken, trustedKey, externalIssuer } = fixture;
 
+    const trustedIssuer: TrustedIssuer = {
+      issuer: externalIssuer,
+      keyResolutionMethod: 'PEM',
+      certificate: trustedKey.certificatePem,
+      scopeMappings: {
+        'external:read': 'openid',
+        'external:profile': 'profile',
+      },
+    };
+
     // Re-apply the original trusted issuer config and wait for sync
-    const patchResponse = await waitForSyncAfter(domain.id, () =>
-      patchDomainRaw(domain.id, accessToken, {
+    const updatedDomain = await waitForSyncAfter(domain.id, () =>
+      patchDomain(domain.id, accessToken, {
         tokenExchangeSettings: {
           enabled: true,
           allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
@@ -531,28 +544,17 @@ describe('Trusted Issuers - Management API Validation', () => {
           allowDelegation: true,
           allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
           maxDelegationDepth: 3,
-          trustedIssuers: [
-            {
-              issuer: externalIssuer,
-              keyResolutionMethod: 'PEM',
-              certificate: trustedKey.certificatePem,
-              scopeMappings: {
-                'external:read': 'openid',
-                'external:profile': 'profile',
-              },
-            },
-          ],
+          trustedIssuers: [trustedIssuer],
         },
-      }).expect(200),
+      }),
     );
 
     // Verify persisted values
-    const body = patchResponse.body;
-    expect(body.tokenExchangeSettings).toBeDefined();
-    expect(body.tokenExchangeSettings.trustedIssuers).toHaveLength(1);
-    expect(body.tokenExchangeSettings.trustedIssuers[0].issuer).toBe(externalIssuer);
-    expect(body.tokenExchangeSettings.trustedIssuers[0].keyResolutionMethod).toBe('PEM');
-    expect(body.tokenExchangeSettings.trustedIssuers[0].scopeMappings).toEqual({
+    expect(updatedDomain.tokenExchangeSettings).toBeDefined();
+    expect(updatedDomain.tokenExchangeSettings.trustedIssuers).toHaveLength(1);
+    expect(updatedDomain.tokenExchangeSettings.trustedIssuers[0].issuer).toBe(externalIssuer);
+    expect(updatedDomain.tokenExchangeSettings.trustedIssuers[0].keyResolutionMethod).toBe('PEM');
+    expect(updatedDomain.tokenExchangeSettings.trustedIssuers[0].scopeMappings).toEqual({
       'external:read': 'openid',
       'external:profile': 'profile',
     });

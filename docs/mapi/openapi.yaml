@@ -16555,8 +16555,43 @@ components:
         maxDelegationDepth:
           type: integer
           format: int32
+        trustedIssuers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustedIssuer"
         valid:
           type: boolean
+    TrustedIssuer:
+      type: object
+      properties:
+        issuer:
+          type: string
+          description: The expected "iss" claim value in the external JWT.
+        keyResolutionMethod:
+          type: string
+          description: "Key resolution method: JWKS_URL or PEM."
+        jwksUri:
+          type: string
+          description: JWKS endpoint URL. Required when keyResolutionMethod is JWKS_URL.
+        certificate:
+          type: string
+          description: PEM-encoded X.509 certificate. Required when keyResolutionMethod
+            is PEM.
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+          description: External scope to domain scope mappings. Unmapped scopes are
+            dropped.
+        userBindingEnabled:
+          type: boolean
+          description: Whether to look up a domain user matching the external JWT claims.
+        userBindingMappings:
+          type: object
+          additionalProperties:
+            type: string
+          description: Mappings for user binding lookup. Key is user attribute, value
+            is claim name or EL expression.
     UMASettings:
       type: object
       properties:

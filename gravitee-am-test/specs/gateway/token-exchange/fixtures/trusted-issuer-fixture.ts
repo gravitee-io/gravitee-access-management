@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { expect } from '@jest/globals';
+import { patchDomain } from '@management-commands/domain-management-commands';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { TrustedIssuer } from '@management-models/TrustedIssuer';
+import { PatchDomain } from '@management-models/PatchDomain';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import forge from 'node-forge';
@@ -100,14 +102,14 @@ const DEFAULT_SCOPE_MAPPINGS: Record<string, string> = {
 };
 
 /**
- * Patch domain via raw supertest. Required because the generated SDK model
- * for TokenExchangeSettings does not yet include `trustedIssuers`, so
- * `patchDomain()` silently strips the field during serialization.
+ * Patch domain via raw supertest. Use this only for error-path assertions
+ * (e.g. `.expect(400)`) where the SDK's `patchDomain()` would throw.
+ * For success-path patches, prefer the SDK's `patchDomain()`.
  */
 export function patchDomainRaw(
   domainId: string,
   accessToken: string,
-  body: Record<string, unknown>,
+  body: PatchDomain,
 ): request.Test {
   return request(getDomainManagerUrl(domainId))
     .patch('')
@@ -150,9 +152,15 @@ export const setupTrustedIssuerFixture = async (
     //    Uses waitForSyncAfter to capture lastSync before the mutation and poll
     //    until it advances — waitForDomainSync alone returns immediately because
     //    the domain is already DEPLOYED from the base fixture.
-    //    Uses raw supertest because the SDK model does not yet include trustedIssuers.
-    await waitForSyncAfter(base.domain.id, async () => {
-      await patchDomainRaw(base.domain.id, base.accessToken, {
+    const trustedIssuer: TrustedIssuer = {
+      issuer: externalIssuer,
+      keyResolutionMethod: 'PEM',
+      certificate: trustedKey.certificatePem,
+      scopeMappings,
+    };
+
+    await waitForSyncAfter(base.domain.id, () =>
+      patchDomain(base.domain.id, base.accessToken, {
         tokenExchangeSettings: {
           enabled: true,
           allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
@@ -161,17 +169,10 @@ export const setupTrustedIssuerFixture = async (
           allowDelegation: true,
           allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
           maxDelegationDepth,
-          trustedIssuers: [
-            {
-              issuer: externalIssuer,
-              keyResolutionMethod: 'PEM',
-              certificate: trustedKey.certificatePem,
-              scopeMappings,
-            },
-          ],
+          trustedIssuers: [trustedIssuer],
         },
-      }).expect(200);
-    });
+      }),
+    );
 
     return {
       ...base,
