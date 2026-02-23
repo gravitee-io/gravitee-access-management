@@ -22,14 +22,14 @@
     <parent>
         <artifactId>gravitee-am-certificate</artifactId>
         <groupId>io.gravitee.am.certificate</groupId>
-        <version>4.7.30</version>
+        <version>4.7.31-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-certificate-pkcs12</artifactId>
     <packaging>jar</packaging>
 
-    <version>4.7.30</version>
+    <version>4.7.31-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Certificate - PKCS12</name>
 
     <dependencies>
