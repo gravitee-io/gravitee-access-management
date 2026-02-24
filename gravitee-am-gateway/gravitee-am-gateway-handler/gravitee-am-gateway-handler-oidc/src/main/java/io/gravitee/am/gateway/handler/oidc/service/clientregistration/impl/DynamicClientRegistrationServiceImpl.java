@@ -528,17 +528,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     /**
      * On update/patch, preserve the existing client's application_type in the request if not explicitly set.
-     * Changing application_type after creation is not allowed.
+     * This ensures agent constraints are still enforced when application_type is omitted from the request.
      */
     private Single<DynamicClientRegistrationRequest> preserveApplicationType(Client existingClient, DynamicClientRegistrationRequest request) {
         String existingType = existingClient.getApplicationType();
-        if (request.getApplicationType() != null && request.getApplicationType().isPresent()) {
-            // Request explicitly sets application_type — reject if it differs from existing
-            String requestedType = request.getApplicationType().get();
-            if (existingType != null && !existingType.equals(requestedType)) {
-                return Single.error(new InvalidClientMetadataException("application_type cannot be changed after registration"));
-            }
-        } else if (existingType != null) {
+        if ((request.getApplicationType() == null || request.getApplicationType().isEmpty()) && existingType != null) {
             // Request omits application_type — carry forward existing value so constraints apply
             request.setApplicationType(Optional.of(existingType));
         }

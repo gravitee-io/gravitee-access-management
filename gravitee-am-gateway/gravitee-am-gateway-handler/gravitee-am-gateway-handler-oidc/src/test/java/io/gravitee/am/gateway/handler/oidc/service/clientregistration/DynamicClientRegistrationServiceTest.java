@@ -1826,7 +1826,7 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
-    public void patch_rejectsApplicationTypeChange() {
+    public void patch_allowsApplicationTypeChange() {
         Client existingClient = new Client();
         existingClient.setApplicationType("web");
         existingClient.setRedirectUris(Arrays.asList("https://example.com/callback"));
@@ -1835,13 +1835,13 @@ public class DynamicClientRegistrationServiceTest {
         request.setApplicationType(Optional.of("agent"));
 
         TestObserver<Client> testObserver = dcrService.patch(existingClient, request, BASE_PATH).test();
-        testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertError(throwable -> throwable.getMessage().contains("application_type cannot be changed"));
-        testObserver.assertNotComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> "agent".equals(client.getApplicationType()));
     }
 
     @Test
-    public void update_rejectsApplicationTypeChange() {
+    public void update_allowsApplicationTypeChange() {
         Client existingClient = new Client();
         existingClient.setApplicationType("agent");
 
@@ -1850,9 +1850,9 @@ public class DynamicClientRegistrationServiceTest {
         request.setApplicationType(Optional.of("web"));
 
         TestObserver<Client> testObserver = dcrService.update(existingClient, request, BASE_PATH).test();
-        testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertError(throwable -> throwable.getMessage().contains("application_type cannot be changed"));
-        testObserver.assertNotComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> "web".equals(client.getApplicationType()));
     }
 
     private RSAKey generateRSAKey() throws Exception {
