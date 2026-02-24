@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.healthcheck;
 
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
@@ -33,7 +34,7 @@ public class OAuth2RepositoryProbe implements Probe {
 
     @Lazy
     @Autowired
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Override
     public String id() {

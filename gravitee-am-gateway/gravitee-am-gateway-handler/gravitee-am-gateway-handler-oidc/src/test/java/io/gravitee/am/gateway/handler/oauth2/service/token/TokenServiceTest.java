@@ -43,6 +43,7 @@ import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.am.service.AuditService;
@@ -104,7 +105,7 @@ public class TokenServiceTest {
     private TokenServiceImpl tokenService = new TokenServiceImpl();
 
     @Mock
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Mock
     private TokenEnhancer tokenEnhancer;

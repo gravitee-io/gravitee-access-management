@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationReques
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
@@ -57,7 +58,7 @@ public class AuthorizationCodeServiceTest {
     private AuthorizationCodeRepository authorizationCodeRepository;
 
     @Mock
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Test
     public void shouldCreate_noExistingCode() {

@@ -23,6 +23,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Completable;
@@ -53,7 +54,7 @@ public class RevokeTokenGatewayServiceTest {
     private RevokeTokenGatewayService tokenService = new RevokeTokenGatewayServiceImpl();
 
     @Mock
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Mock
     private AuditService auditService;

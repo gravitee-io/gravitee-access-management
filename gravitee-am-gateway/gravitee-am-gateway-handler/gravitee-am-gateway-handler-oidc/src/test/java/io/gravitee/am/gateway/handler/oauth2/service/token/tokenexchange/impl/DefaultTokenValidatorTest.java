@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -62,7 +63,6 @@ public class DefaultTokenValidatorTest {
 
     @Before
     public void setUp() {
-        when(domain.getId()).thenReturn(DOMAIN_ID);
         validator = new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TOKEN_TYPE_URN);
     }
 
@@ -319,6 +319,7 @@ public class DefaultTokenValidatorTest {
 
         jwt.put(Claims.SCOPE, "read write");
         jwt.put(Claims.CLIENT_ID, "client-123");
+        jwt.put(Claims.DOMAIN, DOMAIN_ID);
 
         return jwt;
     }

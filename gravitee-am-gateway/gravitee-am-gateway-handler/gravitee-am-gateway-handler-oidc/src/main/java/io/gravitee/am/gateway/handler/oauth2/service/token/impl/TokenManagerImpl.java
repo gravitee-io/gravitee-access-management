@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
@@ -32,7 +33,7 @@ public class TokenManagerImpl extends AbstractService implements TokenManager {
 
     @Lazy
     @Autowired
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Override
     protected void doStart() throws Exception {

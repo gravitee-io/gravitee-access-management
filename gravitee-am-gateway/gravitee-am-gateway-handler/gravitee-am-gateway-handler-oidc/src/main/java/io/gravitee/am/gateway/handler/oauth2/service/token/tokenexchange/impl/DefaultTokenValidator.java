@@ -22,6 +22,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenVa
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
+import io.gravitee.am.repository.oauth2.model.Token;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +99,7 @@ public class DefaultTokenValidator implements TokenValidator {
                             .audience(audience)
                             .clientId(jwt.get(Claims.CLIENT_ID) != null ? jwt.get(Claims.CLIENT_ID).toString() : null)
                             .tokenType(supportedTokenType)
-                            .domain(domain.getId())
+                            .domain((String) jwt.get(Claims.DOMAIN))
                             .build();
                 })
                 .onErrorResumeNext(error -> {
@@ -123,4 +126,5 @@ public class DefaultTokenValidator implements TokenValidator {
             default -> Collections.emptyList();
         };
     }
+
 }

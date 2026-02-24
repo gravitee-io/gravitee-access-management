@@ -39,7 +39,7 @@ public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProv
 
     @Lazy
     @Autowired
-    protected TokenRepository tokenRepository;
+    protected BackwardCompatibleTokenRepository tokenRepository;
 
     @Lazy
     @Autowired

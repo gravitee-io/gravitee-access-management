@@ -15,8 +15,9 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { setup } from '../../test-fixture';
-import { setupTokenExchangeFixture, TokenExchangeFixture } from './fixtures/token-exchange-fixture';
+import { setupTokenExchangeFixture, TokenExchangeFixture, TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
 
 setup(200000);
 
@@ -29,6 +30,7 @@ beforeAll(async () => {
     clientName: 'token-exchange-revoke-delegation-client',
     allowImpersonation: true,
     allowDelegation: true,
+    allowedActorTokenTypes: [...TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES, 'urn:ietf:params:oauth:token-type:refresh_token'],
   });
 });
 
@@ -40,6 +42,78 @@ afterAll(async () => {
 
 describe('Token Exchange revoke delegation', () => {
   describe('Delegation token revocation', () => {
+    const assertTokenExchangeRejected = async (
+      subjectToken: string,
+      subjectTokenType: 'access_token' | 'refresh_token',
+      actorToken?: string,
+      actorTokenType?: 'access_token' | 'refresh_token',
+    ) => {
+      const { oidc, basicAuth } = delegationFixture;
+      const actorParams = actorToken && actorTokenType
+        ? `&actor_token=${actorToken}&actor_token_type=urn:ietf:params:oauth:token-type:${actorTokenType}`
+        : '';
+
+      const response = await performPost(
+        oidc.token_endpoint,
+        '',
+        `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${subjectToken}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:${subjectTokenType}` +
+        actorParams,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${basicAuth}`,
+        },
+      ).expect(400);
+
+      expect(response.body.error).toBe('invalid_grant');
+      expect(response.body.error_description).toBeDefined();
+    };
+
+    it('should reject token exchange when subject access token is revoked', async () => {
+      const { obtainSubjectToken, introspectToken, revokeToken } = delegationFixture;
+      const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+
+      await revokeToken(subjectAccessToken, 'access_token');
+      expect((await introspectToken(subjectAccessToken)).active).toBe(false);
+
+      await assertTokenExchangeRejected(subjectAccessToken, 'access_token');
+    });
+
+    it('should reject token exchange when subject refresh token is revoked', async () => {
+      const { obtainSubjectToken, introspectToken, revokeToken } = delegationFixture;
+      const { refreshToken: subjectRefreshToken } = await obtainSubjectToken();
+      expect(subjectRefreshToken).toBeDefined();
+
+      await revokeToken(subjectRefreshToken!, 'refresh_token');
+      expect((await introspectToken(subjectRefreshToken!)).active).toBe(false);
+
+      await assertTokenExchangeRejected(subjectRefreshToken!, 'refresh_token');
+    });
+
+    it('should reject token exchange when actor access token is revoked', async () => {
+      const { obtainSubjectToken, obtainActorToken, introspectToken, revokeToken } = delegationFixture;
+      const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+      const { accessToken: actorAccessToken } = await obtainActorToken();
+
+      await revokeToken(actorAccessToken, 'access_token');
+      expect((await introspectToken(actorAccessToken)).active).toBe(false);
+
+      await assertTokenExchangeRejected(subjectAccessToken, 'access_token', actorAccessToken, 'access_token');
+    });
+
+    it('should reject token exchange when actor refresh token is revoked', async () => {
+      const { obtainSubjectToken, obtainActorToken, introspectToken, revokeToken } = delegationFixture;
+      const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+      const { refreshToken: actorRefreshToken } = await obtainActorToken();
+      expect(actorRefreshToken).toBeDefined();
+
+      await revokeToken(actorRefreshToken!, 'refresh_token');
+      expect((await introspectToken(actorRefreshToken!)).active).toBe(false);
+
+      await assertTokenExchangeRejected(subjectAccessToken, 'access_token', actorRefreshToken!, 'refresh_token');
+    });
+
     it('should revoke delegated descendants when actor token is revoked', async () => {
       const { obtainSubjectToken, obtainActorToken, introspectToken, revokeToken, exchangeToken } = delegationFixture;
 
