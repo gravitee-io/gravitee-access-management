@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationReques
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -48,7 +49,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
 
     @Lazy
     @Autowired
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     private final AuthorizationCodeGenerator codeGenerator = new AuthorizationCodeGenerator();
 

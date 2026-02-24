@@ -88,6 +88,7 @@ final class TokenValidationUtils {
                 .clientId(Objects.toString(claims.get(Claims.CLIENT_ID), null))
                 .tokenType(tokenType)
                 .domain(domain.getId())
+                .domain(Objects.toString(claims.get(Claims.DOMAIN), null))
                 .trustedIssuer(trustedIssuer)
                 .build();
     }

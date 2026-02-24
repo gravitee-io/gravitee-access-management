@@ -130,8 +130,7 @@ export const TOKEN_EXCHANGE_TEST = {
     'urn:ietf:params:oauth:token-type:id_token',
     'urn:ietf:params:oauth:token-type:jwt',
   ],
-  // 0 = unlimited (no depth check)
-  DEFAULT_MAX_DELEGATION_DEPTH: 0,
+  DEFAULT_MAX_DELEGATION_DEPTH: 1,
   REDIRECT_URI: 'https://gravitee.io/callback',
 };
 

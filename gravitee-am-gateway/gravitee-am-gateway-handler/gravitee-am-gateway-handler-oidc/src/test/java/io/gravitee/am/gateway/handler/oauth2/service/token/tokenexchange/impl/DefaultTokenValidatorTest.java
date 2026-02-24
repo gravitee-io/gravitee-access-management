@@ -63,7 +63,6 @@ public class DefaultTokenValidatorTest {
 
     @Before
     public void setUp() {
-        when(domain.getId()).thenReturn(DOMAIN_ID);
         validator = new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TOKEN_TYPE_URN);
     }
 
@@ -172,7 +171,9 @@ public class DefaultTokenValidatorTest {
 
         jwt.put(Claims.SCOPE, "read write");
         jwt.put(Claims.CLIENT_ID, "client-123");
+        jwt.put(Claims.DOMAIN, DOMAIN_ID);
 
         return jwt;
     }
+
 }
