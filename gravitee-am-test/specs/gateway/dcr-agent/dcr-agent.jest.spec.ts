@@ -111,6 +111,65 @@ describe('DCR Agent - Response Type Constraints', () => {
   });
 });
 
+describe('DCR Agent - Update Constraints (PATCH)', () => {
+  it('should strip forbidden grant types and response types on PATCH even when application_type is omitted', async () => {
+    const regResponse = await fixture.registerAgent({
+      redirect_uris: [DCR_AGENT_TEST.REDIRECT_URI],
+      client_name: 'Agent For Patch Test',
+      application_type: 'agent',
+      grant_types: ['authorization_code', 'client_credentials'],
+      response_types: ['code'],
+    });
+    expect(regResponse.status).toBe(201);
+
+    const response = await fixture.patchAgent(regResponse.body.client_id, regResponse.body.registration_access_token, {
+      grant_types: ['authorization_code', 'client_credentials', 'implicit', 'password', 'refresh_token'],
+      response_types: ['code', 'token', 'id_token', 'id_token token'],
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.grant_types).toContain('authorization_code');
+    expect(response.body.grant_types).toContain('client_credentials');
+    expect(response.body.grant_types).not.toContain('implicit');
+    expect(response.body.grant_types).not.toContain('password');
+    expect(response.body.grant_types).not.toContain('refresh_token');
+    expect(response.body.response_types).toContain('code');
+    expect(response.body.response_types).not.toContain('token');
+    expect(response.body.response_types).not.toContain('id_token');
+    expect(response.body.response_types).not.toContain('id_token token');
+  });
+});
+
+describe('DCR Agent - Update Constraints (PUT)', () => {
+  it('should strip forbidden grant types and response types on PUT even when application_type is omitted', async () => {
+    const regResponse = await fixture.registerAgent({
+      redirect_uris: [DCR_AGENT_TEST.REDIRECT_URI],
+      client_name: 'Agent For Put Test',
+      application_type: 'agent',
+      grant_types: ['authorization_code', 'client_credentials'],
+      response_types: ['code'],
+    });
+    expect(regResponse.status).toBe(201);
+
+    const response = await fixture.putAgent(regResponse.body.client_id, regResponse.body.registration_access_token, {
+      redirect_uris: [DCR_AGENT_TEST.REDIRECT_URI],
+      grant_types: ['authorization_code', 'client_credentials', 'implicit', 'password', 'refresh_token'],
+      response_types: ['code', 'token', 'id_token', 'id_token token'],
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.grant_types).toContain('authorization_code');
+    expect(response.body.grant_types).toContain('client_credentials');
+    expect(response.body.grant_types).not.toContain('implicit');
+    expect(response.body.grant_types).not.toContain('password');
+    expect(response.body.grant_types).not.toContain('refresh_token');
+    expect(response.body.response_types).toContain('code');
+    expect(response.body.response_types).not.toContain('token');
+    expect(response.body.response_types).not.toContain('id_token');
+    expect(response.body.response_types).not.toContain('id_token token');
+  });
+});
+
 describe('DCR Agent - Token Flow', () => {
   it('should obtain a token via client_credentials for a DCR-registered agent', async () => {
     const regResponse = await fixture.registerAgent({

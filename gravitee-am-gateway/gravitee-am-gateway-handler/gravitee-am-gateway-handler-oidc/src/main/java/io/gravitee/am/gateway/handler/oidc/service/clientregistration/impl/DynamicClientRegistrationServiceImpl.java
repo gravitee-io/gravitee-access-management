@@ -152,7 +152,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> patch(Client toPatch, DynamicClientRegistrationRequest request, String basePath) {
-        return this.validateClientPatchRequest(request)
+        return this.preserveApplicationType(toPatch, request)
+                .flatMap(this::validateClientPatchRequest)
                 .map(req -> req.patch(toPatch))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::update)
@@ -161,7 +162,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> update(Client toUpdate, DynamicClientRegistrationRequest request, String basePath) {
-        return this.validateClientRegistrationRequest(request)
+        return this.preserveApplicationType(toUpdate, request)
+                .flatMap(this::validateClientRegistrationRequest)
                 .map(req -> req.patch(toUpdate))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::update)
@@ -520,6 +522,25 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 !GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().orElse(Collections.emptyList()))) {
             return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
 
+        }
+        return Single.just(request);
+    }
+
+    /**
+     * On update/patch, preserve the existing client's application_type in the request if not explicitly set.
+     * Changing application_type after creation is not allowed.
+     */
+    private Single<DynamicClientRegistrationRequest> preserveApplicationType(Client existingClient, DynamicClientRegistrationRequest request) {
+        String existingType = existingClient.getApplicationType();
+        if (request.getApplicationType() != null && request.getApplicationType().isPresent()) {
+            // Request explicitly sets application_type — reject if it differs from existing
+            String requestedType = request.getApplicationType().get();
+            if (existingType != null && !existingType.equals(requestedType)) {
+                return Single.error(new InvalidClientMetadataException("application_type cannot be changed after registration"));
+            }
+        } else if (existingType != null) {
+            // Request omits application_type — carry forward existing value so constraints apply
+            request.setApplicationType(Optional.of(existingType));
         }
         return Single.just(request);
     }

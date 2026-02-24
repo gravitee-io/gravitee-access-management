@@ -918,12 +918,12 @@ public class DynamicClientRegistrationServiceTest {
     public void update() {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList()));
-        request.setApplicationType(Optional.of("something"));
+        request.setApplicationType(Optional.of("web"));
 
         TestObserver<Client> testObserver = dcrService.update(new Client(), request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> client.getApplicationType().equals("something") && client.getRedirectUris().isEmpty());
+        testObserver.assertValue(client -> client.getApplicationType().equals("web") && client.getRedirectUris().isEmpty());
         verify(clientService, times(1)).update(any());
     }
 
@@ -1751,6 +1751,108 @@ public class DynamicClientRegistrationServiceTest {
                         client.getAuthorizedGrantTypes().contains(GrantType.AUTHORIZATION_CODE) &&
                         client.getResponseTypes().contains("code")
         );
+    }
+
+    @Test
+    public void patch_agentType_stripsForbiddenGrantTypesWhenApplicationTypeOmitted() {
+        Client existingClient = new Client();
+        existingClient.setApplicationType("agent");
+        existingClient.setRedirectUris(Arrays.asList("https://example.com/callback"));
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        // application_type NOT set in the request — simulates a typical PATCH
+        request.setGrantTypes(Optional.of(Arrays.asList(
+                GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS,
+                GrantType.IMPLICIT, GrantType.PASSWORD, GrantType.REFRESH_TOKEN
+        )));
+        request.setResponseTypes(Optional.of(Arrays.asList("code")));
+
+        TestObserver<Client> testObserver = dcrService.patch(existingClient, request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client ->
+                client.getAuthorizedGrantTypes().contains(GrantType.AUTHORIZATION_CODE) &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
+                        !client.getAuthorizedGrantTypes().contains(GrantType.IMPLICIT) &&
+                        !client.getAuthorizedGrantTypes().contains(GrantType.PASSWORD) &&
+                        !client.getAuthorizedGrantTypes().contains(GrantType.REFRESH_TOKEN)
+        );
+    }
+
+    @Test
+    public void patch_agentType_stripsForbiddenResponseTypesWhenApplicationTypeOmitted() {
+        Client existingClient = new Client();
+        existingClient.setApplicationType("agent");
+        existingClient.setRedirectUris(Arrays.asList("https://example.com/callback"));
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setGrantTypes(Optional.of(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
+        request.setResponseTypes(Optional.of(Arrays.asList("code", "token", "id_token", "id_token token")));
+
+        TestObserver<Client> testObserver = dcrService.patch(existingClient, request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client ->
+                client.getResponseTypes().contains("code") &&
+                        !client.getResponseTypes().contains("token") &&
+                        !client.getResponseTypes().contains("id_token") &&
+                        !client.getResponseTypes().contains("id_token token")
+        );
+    }
+
+    @Test
+    public void update_agentType_stripsForbiddenGrantTypesWhenApplicationTypeOmitted() {
+        Client existingClient = new Client();
+        existingClient.setApplicationType("agent");
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
+        request.setGrantTypes(Optional.of(Arrays.asList(
+                GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS,
+                GrantType.IMPLICIT, GrantType.PASSWORD, GrantType.REFRESH_TOKEN
+        )));
+        request.setResponseTypes(Optional.of(Arrays.asList("code")));
+
+        TestObserver<Client> testObserver = dcrService.update(existingClient, request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client ->
+                client.getAuthorizedGrantTypes().contains(GrantType.AUTHORIZATION_CODE) &&
+                        client.getAuthorizedGrantTypes().contains(GrantType.CLIENT_CREDENTIALS) &&
+                        !client.getAuthorizedGrantTypes().contains(GrantType.IMPLICIT) &&
+                        !client.getAuthorizedGrantTypes().contains(GrantType.PASSWORD) &&
+                        !client.getAuthorizedGrantTypes().contains(GrantType.REFRESH_TOKEN)
+        );
+    }
+
+    @Test
+    public void patch_rejectsApplicationTypeChange() {
+        Client existingClient = new Client();
+        existingClient.setApplicationType("web");
+        existingClient.setRedirectUris(Arrays.asList("https://example.com/callback"));
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setApplicationType(Optional.of("agent"));
+
+        TestObserver<Client> testObserver = dcrService.patch(existingClient, request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertError(throwable -> throwable.getMessage().contains("application_type cannot be changed"));
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void update_rejectsApplicationTypeChange() {
+        Client existingClient = new Client();
+        existingClient.setApplicationType("agent");
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
+        request.setApplicationType(Optional.of("web"));
+
+        TestObserver<Client> testObserver = dcrService.update(existingClient, request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertError(throwable -> throwable.getMessage().contains("application_type cannot be changed"));
+        testObserver.assertNotComplete();
     }
 
     private RSAKey generateRSAKey() throws Exception {
