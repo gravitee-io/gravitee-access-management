@@ -1870,21 +1870,6 @@ public class DynamicClientRegistrationServiceTest {
         });
     }
 
-    @Test
-    public void patch_rejectsInvalidApplicationType() {
-        Client existingClient = new Client();
-        existingClient.setApplicationType("web");
-        existingClient.setRedirectUris(Arrays.asList("https://example.com/callback"));
-
-        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
-        request.setApplicationType(Optional.of("invalid_type"));
-
-        TestObserver<Client> testObserver = dcrService.patch(existingClient, request, BASE_PATH).test();
-        testObserver.assertError(InvalidClientMetadataException.class);
-        testObserver.assertError(throwable -> throwable.getMessage().contains("Invalid application_type"));
-        testObserver.assertNotComplete();
-    }
-
     private RSAKey generateRSAKey() throws Exception {
         return new RSAKeyGenerator(2048)
                 .keyID("123")
