@@ -22,6 +22,7 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.AgentApplicationConstraints;
+import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
@@ -384,6 +385,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateScopes)
                 .flatMap(this::validateGrantType)
                 .flatMap(this::validateResponseType)
+                .flatMap(this::validateApplicationType)
                 .flatMap(this::validateAgentConstraints)
                 .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
@@ -526,9 +528,23 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         return Single.just(request);
     }
 
+    private static final Set<String> VALID_APPLICATION_TYPES = Set.of(
+            ApplicationType.WEB, ApplicationType.NATIVE, ApplicationType.BROWSER, ApplicationType.AGENT);
+
+    private Single<DynamicClientRegistrationRequest> validateApplicationType(DynamicClientRegistrationRequest request) {
+        if (request.getApplicationType() != null && request.getApplicationType().isPresent()) {
+            String type = request.getApplicationType().get();
+            if (!VALID_APPLICATION_TYPES.contains(type)) {
+                return Single.error(new InvalidClientMetadataException("Invalid application_type: " + type));
+            }
+        }
+        return Single.just(request);
+    }
+
     /**
      * On update/patch, preserve the existing client's application_type in the request if not explicitly set.
-     * This ensures agent constraints are still enforced when application_type is omitted from the request.
+     * If application_type is explicitly provided in the request, it will be used (allowing type changes).
+     * If omitted, the existing type is preserved to ensure constraints are still enforced.
      */
     private Single<DynamicClientRegistrationRequest> preserveApplicationType(Client existingClient, DynamicClientRegistrationRequest request) {
         String existingType = existingClient.getApplicationType();

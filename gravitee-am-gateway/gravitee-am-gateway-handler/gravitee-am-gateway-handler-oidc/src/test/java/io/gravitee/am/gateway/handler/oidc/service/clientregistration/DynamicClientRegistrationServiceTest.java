@@ -1837,7 +1837,15 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.patch(existingClient, request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> "agent".equals(client.getApplicationType()));
+        testObserver.assertValue(client -> {
+            assertEquals("agent", client.getApplicationType());
+            // When changing to 'agent' type, constraints are applied:
+            // defaults grant_types, response_types, and token_endpoint_auth_method
+            assertEquals(List.of(GrantType.AUTHORIZATION_CODE), client.getAuthorizedGrantTypes());
+            assertEquals(List.of("code"), client.getResponseTypes());
+            assertEquals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, client.getTokenEndpointAuthMethod());
+            return true;
+        });
     }
 
     @Test
@@ -1848,11 +1856,33 @@ public class DynamicClientRegistrationServiceTest {
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.of(Arrays.asList("https://example.com/callback")));
         request.setApplicationType(Optional.of("web"));
+        request.setGrantTypes(Optional.of(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT)));
+        request.setResponseTypes(Optional.of(Arrays.asList("code", "token")));
 
         TestObserver<Client> testObserver = dcrService.update(existingClient, request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> "web".equals(client.getApplicationType()));
+        testObserver.assertValue(client -> {
+            assertEquals("web", client.getApplicationType());
+            // After switching from agent to web, previously-forbidden grant types are allowed
+            assertTrue(client.getAuthorizedGrantTypes().contains(GrantType.IMPLICIT));
+            return true;
+        });
+    }
+
+    @Test
+    public void patch_rejectsInvalidApplicationType() {
+        Client existingClient = new Client();
+        existingClient.setApplicationType("web");
+        existingClient.setRedirectUris(Arrays.asList("https://example.com/callback"));
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setApplicationType(Optional.of("invalid_type"));
+
+        TestObserver<Client> testObserver = dcrService.patch(existingClient, request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertError(throwable -> throwable.getMessage().contains("Invalid application_type"));
+        testObserver.assertNotComplete();
     }
 
     private RSAKey generateRSAKey() throws Exception {
