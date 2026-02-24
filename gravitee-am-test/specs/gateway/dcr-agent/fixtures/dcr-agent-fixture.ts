@@ -17,7 +17,7 @@ import { expect } from '@jest/globals';
 import { Domain } from '@management-models/Domain';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, patchDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performPatch, performPost, performPut } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import faker from 'faker';
@@ -28,6 +28,8 @@ export interface DcrAgentFixture extends Fixture {
   accessToken: string;
   cleanUp: () => Promise<void>;
   registerAgent: (body: Record<string, any>) => Promise<any>;
+  patchAgent: (clientId: string, registrationAccessToken: string, body: Record<string, any>) => Promise<any>;
+  putAgent: (clientId: string, registrationAccessToken: string, body: Record<string, any>) => Promise<any>;
   getTokenWithClientCredentials: (clientId: string, clientSecret: string) => Promise<any>;
 }
 
@@ -75,6 +77,20 @@ export const setupDcrAgentFixture = async (): Promise<DcrAgentFixture> => {
       });
     };
 
+    const patchAgent = async (clientId: string, registrationAccessToken: string, body: Record<string, any>) => {
+      return performPatch(`${gatewayUrl}/${domainHrid}/oidc/register/${clientId}`, '', body, {
+        'Content-type': 'application/json',
+        Authorization: `Bearer ${registrationAccessToken}`,
+      });
+    };
+
+    const putAgent = async (clientId: string, registrationAccessToken: string, body: Record<string, any>) => {
+      return performPut(`${gatewayUrl}/${domainHrid}/oidc/register/${clientId}`, '', body, {
+        'Content-type': 'application/json',
+        Authorization: `Bearer ${registrationAccessToken}`,
+      });
+    };
+
     const getTokenWithClientCredentials = async (clientId: string, clientSecret: string) => {
       return performPost(
         `${gatewayUrl}/${domainHrid}/oauth/token`,
@@ -98,6 +114,8 @@ export const setupDcrAgentFixture = async (): Promise<DcrAgentFixture> => {
       accessToken,
       cleanUp,
       registerAgent,
+      patchAgent,
+      putAgent,
       getTokenWithClientCredentials,
     };
   } catch (error) {
