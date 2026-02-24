@@ -221,6 +221,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .issuer("https://external-idp.example.com")
                 .expirationTime(new Date(futureExp * 1000))
                 .claim(Claims.SCOPE, "ext:read ext:write")
+                .claim(Claims.DOMAIN, DOMAIN_ID)
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
@@ -361,6 +362,7 @@ public class TrustedIssuerTokenValidatorTest {
                 .notBeforeTime(new Date((currentTime - 60) * 1000))
                 .claim(Claims.SCOPE, "ext:read ext:write")
                 .claim(Claims.CLIENT_ID, "ext-client-789")
+                .claim(Claims.DOMAIN, DOMAIN_ID)
                 .claim("custom_claim", "custom_value")
                 .build();
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))

@@ -157,13 +157,13 @@ public class TokenValidationUtilsTest {
     @Test
     public void buildValidatedToken_allFields() {
         Domain domain = mock(Domain.class);
-        when(domain.getId()).thenReturn("domain-1");
 
         Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.SUB, "user-1");
         claims.put(Claims.ISS, "https://issuer.example.com");
         claims.put(Claims.JTI, "jti-1");
         claims.put(Claims.CLIENT_ID, "client-1");
+        claims.put(Claims.DOMAIN, "domain-1");
         claims.put("custom", "value");
 
         long exp = (System.currentTimeMillis() / 1000) + 3600;
@@ -192,7 +192,6 @@ public class TokenValidationUtilsTest {
     @Test
     public void buildValidatedToken_withTrustedIssuer() {
         Domain domain = mock(Domain.class);
-        when(domain.getId()).thenReturn("domain-1");
 
         TrustedIssuer ti = new TrustedIssuer();
         ti.setIssuer("https://external.example.com");
@@ -212,7 +211,6 @@ public class TokenValidationUtilsTest {
     @Test
     public void buildValidatedToken_zeroTimestamps_nullDates() {
         Domain domain = mock(Domain.class);
-        when(domain.getId()).thenReturn("domain-1");
 
         ValidatedToken result = TokenValidationUtils.buildValidatedToken(
                 new HashMap<>(), 0, 0, 0,
@@ -227,7 +225,6 @@ public class TokenValidationUtilsTest {
     @Test
     public void buildValidatedToken_nullClaimValues_nullFields() {
         Domain domain = mock(Domain.class);
-        when(domain.getId()).thenReturn("domain-1");
 
         ValidatedToken result = TokenValidationUtils.buildValidatedToken(
                 new HashMap<>(), 0, 0, 0,

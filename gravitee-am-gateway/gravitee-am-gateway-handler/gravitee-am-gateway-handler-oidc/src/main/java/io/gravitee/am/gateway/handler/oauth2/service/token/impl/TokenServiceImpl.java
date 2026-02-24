@@ -48,6 +48,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.model.uma.PermissionRequest;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -95,7 +96,7 @@ public class TokenServiceImpl implements TokenService {
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
 
     @Autowired
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Autowired
     private TokenEnhancer tokenEnhancer;

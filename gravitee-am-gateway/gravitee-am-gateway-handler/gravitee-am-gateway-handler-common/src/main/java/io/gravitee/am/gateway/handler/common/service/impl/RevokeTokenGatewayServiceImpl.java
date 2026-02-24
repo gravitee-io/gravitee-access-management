@@ -26,6 +26,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -47,7 +48,7 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
 
     @Lazy
     @Autowired
-    private TokenRepository tokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Autowired
     private EventManager eventManager;
