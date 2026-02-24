@@ -529,7 +529,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private static final Set<String> VALID_APPLICATION_TYPES = Set.of(
-            ApplicationType.WEB, ApplicationType.NATIVE, ApplicationType.BROWSER, ApplicationType.AGENT);
+            ApplicationType.WEB, ApplicationType.NATIVE, ApplicationType.BROWSER, ApplicationType.AGENT, ApplicationType.SERVER);
 
     private Single<DynamicClientRegistrationRequest> validateApplicationType(DynamicClientRegistrationRequest request) {
         if (request.getApplicationType() != null && request.getApplicationType().isPresent()) {
