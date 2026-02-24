@@ -385,7 +385,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateScopes)
                 .flatMap(this::validateGrantType)
                 .flatMap(this::validateResponseType)
-                .flatMap(this::validateApplicationType)
                 .flatMap(this::validateAgentConstraints)
                 .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
@@ -524,19 +523,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 !GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().orElse(Collections.emptyList()))) {
             return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
 
-        }
-        return Single.just(request);
-    }
-
-    private static final Set<String> VALID_APPLICATION_TYPES = Set.of(
-            ApplicationType.WEB, ApplicationType.NATIVE, ApplicationType.BROWSER, ApplicationType.AGENT, ApplicationType.SERVER);
-
-    private Single<DynamicClientRegistrationRequest> validateApplicationType(DynamicClientRegistrationRequest request) {
-        if (request.getApplicationType() != null && request.getApplicationType().isPresent()) {
-            String type = request.getApplicationType().get();
-            if (!VALID_APPLICATION_TYPES.contains(type)) {
-                return Single.error(new InvalidClientMetadataException("Invalid application_type: " + type));
-            }
         }
         return Single.just(request);
     }
