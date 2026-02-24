@@ -29,4 +29,5 @@ public interface ApplicationType {
     String NATIVE = "native";
     String BROWSER = "browser";
     String AGENT = "agent";
+    String SERVER = "server";
 }
