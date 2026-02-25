@@ -99,6 +99,12 @@ public class TokenExchangeSettings {
      */
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
+    /**
+     * List of trusted external issuers whose JWTs can be accepted as subject/actor tokens.
+     * Null means no trusted issuers (only domain-issued tokens accepted).
+     */
+    private List<TrustedIssuer> trustedIssuers;
+
     public TokenExchangeSettings() {
         this.allowedSubjectTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, JWT));
         this.allowedRequestedTokenTypes = new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
@@ -126,31 +132,4 @@ public class TokenExchangeSettings {
         this.maxDelegationDepth = Math.max(MIN_MAX_DELEGATION_DEPTH, Math.min(MAX_MAX_DELEGATION_DEPTH, maxDelegationDepth));
     }
 
-    /**
-     * Validate the settings consistency.
-     * When token exchange is enabled, at least one of impersonation or delegation must be enabled.
-     *
-     * @throws IllegalStateException if the settings are invalid
-     */
-    public void validate() {
-        if (enabled && !allowImpersonation && !allowDelegation) {
-            throw new IllegalStateException("Token exchange is enabled but neither impersonation nor delegation is allowed. At least one must be enabled.");
-        }
-    }
-
-    /**
-     * Check if the settings are valid without throwing an exception.
-     *
-     * @return true if settings are valid, false otherwise
-     */
-    public boolean isValid() {
-        if (!enabled) {
-            return true;
-        }
-        return (allowImpersonation || allowDelegation)
-                && (allowedSubjectTokenTypes != null && !allowedSubjectTokenTypes.isEmpty())
-                && (allowedRequestedTokenTypes != null && !allowedRequestedTokenTypes.isEmpty())
-                && (!allowDelegation || (allowedActorTokenTypes != null && !allowedActorTokenTypes.isEmpty()))
-                && (!allowDelegation || (maxDelegationDepth >= MIN_MAX_DELEGATION_DEPTH && maxDelegationDepth <= MAX_MAX_DELEGATION_DEPTH));
-    }
 }

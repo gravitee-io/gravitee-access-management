@@ -23,8 +23,8 @@ import {
   safeDeleteDomain,
   startDomain,
   waitForDomainStart,
-  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';
@@ -111,8 +111,10 @@ export const initFixture = async (): Promise<SessionManagementGatewayFixture> =>
     session: { persistent: false },
   });
 
-  // Single sync + start after all apps are created
-  await waitForDomainSync(domain.id, accessToken);
+  // Wait for a NEW sync cycle so the gateway picks up all newly created apps.
+  // waitForDomainReady/waitForDomainSync return immediately if the domain is already
+  // deployed — which it is, since we started it before creating apps.
+  await waitForNextSync(domain.id);
 
   const started = await waitForDomainStart(domain);
   domain = started.domain;

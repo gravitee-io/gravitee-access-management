@@ -16555,8 +16555,34 @@ components:
         maxDelegationDepth:
           type: integer
           format: int32
-        valid:
+        trustedIssuers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustedIssuer"
+    TrustedIssuer:
+      type: object
+      properties:
+        issuer:
+          type: string
+        keyResolutionMethod:
+          type: string
+          enum:
+          - JWKS_URL
+          - PEM
+        jwksUri:
+          type: string
+        certificate:
+          type: string
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+        userBindingEnabled:
           type: boolean
+        userBindingCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
     UMASettings:
       type: object
       properties:
@@ -17238,20 +17264,6 @@ components:
           type: string
         zoneInfo:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        indefinitelyLocked:
-          type: boolean
-        temporarilyLocked:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         inactive:
@@ -17266,6 +17278,27 @@ components:
           type: string
         disabled:
           type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        indefinitelyLocked:
+          type: boolean
+        temporarilyLocked:
+          type: boolean
+    UserBindingCriterion:
+      type: object
+      properties:
+        attribute:
+          type: string
+        expression:
+          type: string
     UserEntity:
       type: object
       properties:
@@ -17442,20 +17475,6 @@ components:
           type: string
         zoneInfo:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        indefinitelyLocked:
-          type: boolean
-        temporarilyLocked:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         inactive:
@@ -17469,6 +17488,20 @@ components:
         phoneNumber:
           type: string
         disabled:
+          type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        indefinitelyLocked:
+          type: boolean
+        temporarilyLocked:
           type: boolean
     UserId:
       type: object

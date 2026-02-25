@@ -146,6 +146,15 @@
             </div>
           </div>
 
+          <!-- Trusted Issuers Section -->
+          <app-trusted-issuers-section
+            [trustedIssuers]="domain.tokenExchangeSettings.trustedIssuers"
+            [domainScopes]="domainScopes"
+            [editMode]="editMode"
+            [formValid]="isFormValid()"
+            (trustedIssuersChange)="onTrustedIssuersChange()"
+          ></app-trusted-issuers-section>
+
           <!-- Validation warnings -->
           <div *ngFor="let error of getValidationErrors()" class="gv-form-section validation-error">
             <mat-icon>warning</mat-icon>
@@ -184,6 +193,18 @@
           <li>No refresh tokens are issued during token exchange</li>
           <li>When requesting an ID token, it is returned in the access_token field with token_type "N_A"</li>
         </ul>
+        <h4>Trusted Issuers</h4>
+        <p>
+          Configure <strong>Trusted Issuers</strong> to accept JWTs from external identity providers as subject or actor tokens. Each issuer
+          requires a key resolution method (JWKS URL or PEM certificate) for signature verification. Optional scope mappings allow
+          translating external scopes to domain scopes.
+        </p>
+        <h4>User Binding</h4>
+        <p>
+          Enable <strong>User Binding</strong> on a trusted issuer to look up a domain user matching the external JWT claims. When a
+          matching user is found, the minted token carries the domain user's roles, groups, and profile data. If no match is found, the
+          exchange is rejected (fail-closed). Mappings define which user attribute to match against which JWT claim or EL expression.
+        </p>
         <p>
           Clients must have the <code>Token Exchange</code> grant type enabled to use token exchange.
           <br />
