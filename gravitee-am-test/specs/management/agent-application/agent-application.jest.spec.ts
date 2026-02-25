@@ -225,10 +225,52 @@ describe('AGENT application - agent card endpoint', () => {
     await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toMatchObject({ response: { status: 400 } });
   });
 
-  it('should return an error when agentCardUrl is unreachable', async () => {
+  it('should return 200 with valid agent card JSON', async () => {
+    const agentCard = JSON.stringify({ name: 'Test Agent', version: '1.0', url: 'https://example.com' });
+    const path = `/agent-card-valid-${Date.now()}`;
+    await fixture.createWiremockStub(path, 200, agentCard);
+
+    const app = await fixture.createAgentApp(uniqueName('agent-card-ok', true), {
+      agentCardUrl: `${fixture.internalWiremockUrl}${path}`,
+    });
+    const result = await getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id);
+    expect(result).toMatchObject({ name: 'Test Agent', version: '1.0' });
+  });
+
+  it('should return 404 when agentCardUrl is unreachable', async () => {
     const app = await fixture.createAgentApp(uniqueName('agent-card-unreachable', true), {
       agentCardUrl: 'https://this-url-definitely-does-not-exist.invalid/card.json',
     });
-    await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toHaveProperty('response.status');
+    await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toMatchObject({ response: { status: 404 } });
+  });
+
+  it('should return 404 when remote returns 404', async () => {
+    const path = `/agent-card-not-found-${Date.now()}`;
+    await fixture.createWiremockStub(path, 404, '{"error":"not found"}');
+
+    const app = await fixture.createAgentApp(uniqueName('agent-card-remote-404', true), {
+      agentCardUrl: `${fixture.internalWiremockUrl}${path}`,
+    });
+    await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toMatchObject({ response: { status: 404 } });
+  });
+
+  it('should return 404 when remote returns 500', async () => {
+    const path = `/agent-card-remote-500-${Date.now()}`;
+    await fixture.createWiremockStub(path, 500, '{"error":"server error"}');
+
+    const app = await fixture.createAgentApp(uniqueName('agent-card-remote-500', true), {
+      agentCardUrl: `${fixture.internalWiremockUrl}${path}`,
+    });
+    await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toMatchObject({ response: { status: 404 } });
+  });
+
+  it('should return 404 when remote returns invalid JSON', async () => {
+    const path = `/agent-card-bad-json-${Date.now()}`;
+    await fixture.createWiremockStub(path, 200, 'this is not valid json{{{', 'text/plain');
+
+    const app = await fixture.createAgentApp(uniqueName('agent-card-badjson', true), {
+      agentCardUrl: `${fixture.internalWiremockUrl}${path}`,
+    });
+    await expect(getApplicationAgentCard(fixture.domain.id, fixture.accessToken, app.id)).rejects.toMatchObject({ response: { status: 404 } });
   });
 });
