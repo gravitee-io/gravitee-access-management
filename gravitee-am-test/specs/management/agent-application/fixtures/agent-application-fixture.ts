@@ -45,6 +45,9 @@ export const setupAgentApplicationFixture = async (): Promise<AgentApplicationFi
   let accessToken: string | null = null;
   const wiremockUrl = process.env.SFR_URL;
   const internalWiremockUrl = process.env.INTERNAL_SFR_URL;
+  if (!wiremockUrl || !internalWiremockUrl) {
+    throw new Error('SFR_URL and INTERNAL_SFR_URL environment variables must be set for agent card tests');
+  }
   const stubIds: string[] = [];
 
   try {
