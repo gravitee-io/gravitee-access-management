@@ -104,6 +104,7 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -188,6 +189,9 @@ public class DomainServiceTest {
 
     @Mock
     private AccountSettingsValidator accountSettingsValidator;
+
+    @Mock
+    private TokenExchangeSettingsValidator tokenExchangeSettingsValidator;
 
     @Mock
     private Domain domain;
@@ -613,6 +617,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -663,6 +668,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
                 .test()
@@ -710,6 +716,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
                 .test()
@@ -753,6 +760,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
                 .test()
@@ -791,6 +799,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -858,6 +867,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(otherDomain));
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
                 .test()
@@ -930,6 +940,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
                 .test()
@@ -1003,6 +1014,7 @@ public class DomainServiceTest {
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.update(DOMAIN_ID, updateDomain)
                 .test()
@@ -1257,6 +1269,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
@@ -1288,6 +1301,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
@@ -1317,6 +1331,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
@@ -1340,7 +1355,6 @@ public class DomainServiceTest {
 
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
-        doReturn(true).when(accountSettingsValidator).validate(any());
 
         domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertFailure(InvalidDomainException.class);
@@ -1415,6 +1429,7 @@ public class DomainServiceTest {
         when(environmentService.findById(any())).thenReturn(Single.just(new Environment()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
         when(domainReadService.listAll()).thenReturn(Flowable.just(domain));
 
         domainService.update("any-id", domain).test().assertComplete().assertNoErrors();

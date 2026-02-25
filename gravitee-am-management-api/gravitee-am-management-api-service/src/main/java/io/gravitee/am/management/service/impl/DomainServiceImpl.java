@@ -97,6 +97,7 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
@@ -177,6 +178,9 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private AccountSettingsValidator accountSettingsValidator;
+
+    @Autowired
+    private TokenExchangeSettingsValidator tokenExchangeSettingsValidator;
 
     @Autowired
     private ApplicationService applicationService;
@@ -269,6 +273,7 @@ public class DomainServiceImpl implements DomainService {
     @With(AccessLevel.PACKAGE) // to make test setup less painful
     @Value("${domains.identities.default.enabled:true}")
     private boolean createDefaultIdentityProvider = true;
+
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;
     @Autowired
@@ -837,9 +842,7 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("CORS settings are invalid"));
         }
 
-        if (domain.getTokenExchangeSettings() != null && !domain.getTokenExchangeSettings().isValid()) {
-            return Completable.error(new InvalidDomainException("Token Exchange settings are invalid"));
-        }
+        Completable tokenExchangeValidation = tokenExchangeSettingsValidator.validate(domain.getTokenExchangeSettings());
 
         if (domain.getWebAuthnSettings() != null) {
             final String origin = domain.getWebAuthnSettings().getOrigin();
@@ -857,18 +860,19 @@ public class DomainServiceImpl implements DomainService {
         }
 
         // check the uniqueness of the domain
-        return domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMapCompletable(optDomain -> {
-                    if (optDomain.isPresent() && !optDomain.get().getId().equals(domain.getId())) {
-                        return Completable.error(new DomainAlreadyExistsException(domain.getName()));
-                    } else {
-                        // Get environment domain restrictions and validate all data are correctly defined.
-                        return environmentService.findById(domain.getReferenceId())
-                                .flatMapCompletable(environment -> validateDomain(domain, environment));
-                    }
-                });
+        return tokenExchangeValidation
+                .andThen(domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
+                        .map(Optional::of)
+                        .defaultIfEmpty(Optional.empty())
+                        .flatMapCompletable(optDomain -> {
+                            if (optDomain.isPresent() && !optDomain.get().getId().equals(domain.getId())) {
+                                return Completable.error(new DomainAlreadyExistsException(domain.getName()));
+                            } else {
+                                // Get environment domain restrictions and validate all data are correctly defined.
+                                return environmentService.findById(domain.getReferenceId())
+                                        .flatMapCompletable(environment -> validateDomain(domain, environment));
+                            }
+                        }));
     }
 
     private boolean hasIncorrectOrigins(Domain domain) {

@@ -231,6 +231,7 @@ models/Theme.ts
 models/ThemeEntity.ts
 models/TokenClaim.ts
 models/TokenExchangeSettings.ts
+models/TrustedIssuer.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts
 models/UpdateAuthorizationEngine.ts
@@ -257,6 +258,7 @@ models/UpdateTag.ts
 models/UpdateUser.ts
 models/UpdateUserWithId.ts
 models/User.ts
+models/UserBindingCriterion.ts
 models/UserEntity.ts
 models/UserId.ts
 models/UserIdentity.ts

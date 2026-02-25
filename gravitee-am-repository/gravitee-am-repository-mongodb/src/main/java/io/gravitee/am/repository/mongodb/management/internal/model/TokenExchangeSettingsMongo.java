@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import io.gravitee.am.model.TokenExchangeSettings;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * MongoDB representation of TokenExchangeSettings.
@@ -33,6 +34,7 @@ public class TokenExchangeSettingsMongo {
     private List<String> allowedActorTokenTypes;
     private boolean allowDelegation;
     private Integer maxDelegationDepth;
+    private List<TrustedIssuerMongo> trustedIssuers;
 
     public boolean isEnabled() {
         return enabled;
@@ -90,6 +92,14 @@ public class TokenExchangeSettingsMongo {
         this.maxDelegationDepth = maxDelegationDepth;
     }
 
+    public List<TrustedIssuerMongo> getTrustedIssuers() {
+        return trustedIssuers;
+    }
+
+    public void setTrustedIssuers(List<TrustedIssuerMongo> trustedIssuers) {
+        this.trustedIssuers = trustedIssuers;
+    }
+
     /**
      * Convert MongoDB representation to domain model.
      * When maxDelegationDepth is null (old data), the domain model default applies.
@@ -104,6 +114,12 @@ public class TokenExchangeSettingsMongo {
         settings.setAllowDelegation(isAllowDelegation());
         if (maxDelegationDepth != null) {
             settings.setMaxDelegationDepth(maxDelegationDepth);
+        }
+        if (trustedIssuers != null) {
+            settings.setTrustedIssuers(trustedIssuers.stream()
+                    .map(TrustedIssuerMongo::convert)
+                    .filter(Objects::nonNull)
+                    .toList());
         }
         return settings;
     }
@@ -123,6 +139,11 @@ public class TokenExchangeSettingsMongo {
         mongo.setAllowedActorTokenTypes(settings.getAllowedActorTokenTypes());
         mongo.setAllowDelegation(settings.isAllowDelegation());
         mongo.setMaxDelegationDepth(settings.getMaxDelegationDepth());
+        if (settings.getTrustedIssuers() != null) {
+            mongo.setTrustedIssuers(settings.getTrustedIssuers().stream()
+                    .map(TrustedIssuerMongo::convert)
+                    .toList());
+        }
         return mongo;
     }
 }

@@ -24,6 +24,7 @@ import {
   startDomain,
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';

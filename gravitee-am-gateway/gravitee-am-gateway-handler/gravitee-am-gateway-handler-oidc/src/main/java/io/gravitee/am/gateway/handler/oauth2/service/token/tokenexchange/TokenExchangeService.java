@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -43,7 +44,8 @@ public interface TokenExchangeService {
      * @param tokenRequest the token request containing exchange parameters (will be modified with scopes)
      * @param client the client performing the exchange
      * @param domain the domain context
+     * @param userGatewayService the user service for the domain (for user binding resolution)
      * @return exchange result with user and token metadata
      */
-    Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain);
+    Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain, UserGatewayService userGatewayService);
 }
