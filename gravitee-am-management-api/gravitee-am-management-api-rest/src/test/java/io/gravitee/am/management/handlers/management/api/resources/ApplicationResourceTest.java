@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.service.exception.AgentCardFetchException;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
@@ -363,6 +364,30 @@ public class ApplicationResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
         doReturn(Maybe.empty()).when(applicationService).findById(appId);
+
+        final Response response = target("domains").path(domainId).path("applications").path(appId).path("agent-card").request().get();
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetAgentCard_fetchFails_returns404() {
+        final String domainId = "domain-id";
+        final String appId = "app-id";
+        final String agentCardUrl = "https://thisdomaindoesnotexist.com/.well-known/agent.json";
+
+        final Application mockApp = new Application();
+        mockApp.setId(appId);
+        mockApp.setDomain(domainId);
+        final ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();
+        advancedSettings.setAgentCardUrl(agentCardUrl);
+        final ApplicationSettings settings = new ApplicationSettings();
+        settings.setAdvanced(advancedSettings);
+        mockApp.setSettings(settings);
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Maybe.just(mockApp)).when(applicationService).findById(appId);
+        doReturn(Single.error(new AgentCardFetchException(agentCardUrl, "URL may be unreachable or returned invalid data")))
+                .when(agentCardService).fetchAgentCard(agentCardUrl);
 
         final Response response = target("domains").path(domainId).path("applications").path(appId).path("agent-card").request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

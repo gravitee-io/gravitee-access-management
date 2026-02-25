@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.management.service.AgentCardService;
+import io.gravitee.am.service.exception.AgentCardFetchException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -29,7 +30,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
 /**
@@ -86,22 +86,29 @@ public class AgentCardServiceImpl implements AgentCardService {
                 .flatMap(response -> {
                     if (response.statusCode() != 200) {
                         LOGGER.warn("Agent card fetch returned non-200 status: {} for URL: {}", response.statusCode(), agentCardUrl);
-                        return Single.error(new IllegalStateException("Agent card URL returned status " + response.statusCode()));
+                        return Single.error(new AgentCardFetchException(agentCardUrl, "URL returned status " + response.statusCode()));
                     }
                     String body = response.bodyAsString();
                     if (body == null) {
-                        return Single.error(new IllegalStateException("Agent card response body is null"));
+                        return Single.error(new AgentCardFetchException(agentCardUrl, "response body is empty"));
                     }
                     if (body.length() > MAX_BODY_SIZE) {
-                        return Single.error(new IllegalStateException("Agent card response exceeds maximum allowed size"));
+                        return Single.error(new AgentCardFetchException(agentCardUrl, "response exceeds maximum allowed size"));
                     }
                     try {
                         objectMapper.readTree(body);
                     } catch (JacksonException e) {
                         LOGGER.warn("Agent card response is not valid JSON for URL: {}", agentCardUrl);
-                        return Single.error(new IllegalStateException("Agent card response is not valid JSON"));
+                        return Single.error(new AgentCardFetchException(agentCardUrl, "response is not valid JSON"));
                     }
                     return Single.just(body);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AgentCardFetchException || ex instanceof IllegalArgumentException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.warn("Failed to fetch agent card from URL: {}", agentCardUrl, ex);
+                    return Single.error(new AgentCardFetchException(agentCardUrl, "URL may be unreachable or returned invalid data"));
                 });
     }
 }
