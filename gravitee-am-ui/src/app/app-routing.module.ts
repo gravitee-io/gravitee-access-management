@@ -231,15 +231,11 @@ import { AuthorizationEnginesResolver } from './resolvers/authorization-engines.
 import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-engine-plugins.resolver';
 import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
 import { DomainAuthorizationComponent } from './domain/authorization/authorization.component';
-import { AuthorizationPoliciesComponent } from './domain/authorization/policies/authorization-policies.component';
-import { AuthorizationPolicyCreationComponent } from './domain/authorization/policies/creation/authorization-policy-creation.component';
-import { AuthorizationPolicyComponent } from './domain/authorization/policies/policy/authorization-policy.component';
-import { AuthorizationDataComponent } from './domain/authorization/data/authorization-data.component';
-import { AuthorizationSchemaComponent } from './domain/authorization/schema/authorization-schema.component';
-import { AuthorizationPoliciesResolver } from './resolvers/authorization-policies.resolver';
-import { AuthorizationPolicyResolver } from './resolvers/authorization-policy.resolver';
-import { AuthorizationDataResolver } from './resolvers/authorization-data.resolver';
-import { AuthorizationSchemaResolver } from './resolvers/authorization-schema.resolver';
+import { AuthorizationBundlesComponent } from './domain/authorization/bundles/authorization-bundles.component';
+import { AuthorizationBundleCreationComponent } from './domain/authorization/bundles/creation/authorization-bundle-creation.component';
+import { AuthorizationBundleComponent } from './domain/authorization/bundles/bundle/authorization-bundle.component';
+import { AuthorizationBundlesResolver } from './resolvers/authorization-bundles.resolver';
+import { AuthorizationBundleResolver } from './resolvers/authorization-bundle.resolver';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
@@ -1663,94 +1659,58 @@ export const routes: Routes = [
                     children: [
                       {
                         path: '',
-                        redirectTo: 'policies',
+                        redirectTo: 'bundles',
                         pathMatch: 'full',
                       },
                       {
-                        path: 'policies',
+                        path: 'bundles',
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
-                            label: 'Policies',
+                            label: 'Bundles',
                             section: 'Authorization',
                             level: 'level2',
                           },
                           perms: {
-                            only: ['domain_authorization_policy_list'],
+                            only: ['domain_authorization_bundle_list'],
                           },
                         },
                         children: [
                           {
                             path: '',
                             pathMatch: 'full',
-                            component: AuthorizationPoliciesComponent,
+                            component: AuthorizationBundlesComponent,
                             resolve: {
-                              policies: AuthorizationPoliciesResolver,
+                              bundles: AuthorizationBundlesResolver,
                             },
                           },
                           {
                             path: 'new',
-                            component: AuthorizationPolicyCreationComponent,
+                            component: AuthorizationBundleCreationComponent,
                             canActivate: [AuthGuard],
                             data: {
                               perms: {
-                                only: ['domain_authorization_policy_create'],
+                                only: ['domain_authorization_bundle_create'],
                               },
                             },
                           },
                           {
-                            path: ':policyId',
-                            component: AuthorizationPolicyComponent,
+                            path: ':bundleId',
+                            component: AuthorizationBundleComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              policy: AuthorizationPolicyResolver,
+                              bundle: AuthorizationBundleResolver,
                             },
                             data: {
                               breadcrumb: {
-                                label: 'policy.name',
+                                label: 'bundle.name',
                               },
                               perms: {
-                                only: ['domain_authorization_policy_read'],
+                                only: ['domain_authorization_bundle_read'],
                               },
                             },
                           },
                         ],
-                      },
-                      {
-                        path: 'data',
-                        component: AuthorizationDataComponent,
-                        canActivate: [AuthGuard],
-                        resolve: {
-                          authorizationData: AuthorizationDataResolver,
-                        },
-                        data: {
-                          menu: {
-                            label: 'Data',
-                            section: 'Authorization',
-                            level: 'level2',
-                          },
-                          perms: {
-                            only: ['domain_authorization_data_read'],
-                          },
-                        },
-                      },
-                      {
-                        path: 'schema',
-                        component: AuthorizationSchemaComponent,
-                        canActivate: [AuthGuard],
-                        resolve: {
-                          authorizationSchema: AuthorizationSchemaResolver,
-                        },
-                        data: {
-                          menu: {
-                            label: 'Schema',
-                            section: 'Authorization',
-                            level: 'level2',
-                          },
-                          perms: {
-                            only: ['domain_authorization_schema_read'],
-                          },
-                        },
                       },
                       {
                         path: 'engines',

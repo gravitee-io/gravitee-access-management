@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-add-authorization-bundles-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_bundles
+      changes:
+        - createTable:
+            tableName: authorization_bundles
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: engine_type, type: nvarchar(32), constraints: { nullable: false } }
+              - column: { name: schema, type: clob, constraints: { nullable: true } }
+              - column: { name: policies, type: clob, constraints: { nullable: false } }
+              - column: { name: entities, type: clob, constraints: { nullable: true } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_bundles
+            columnNames: id
+            tableName: authorization_bundles
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+            indexName: idx_authorization_bundles_domain
+            tableName: authorization_bundles
+            unique: false

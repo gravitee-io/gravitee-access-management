@@ -208,14 +208,6 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_11_0/4.11.0-update-domains-certificate-settings.yml
   - include:
-      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-policies-table.yml
+      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-bundles-table.yml
   - include:
-      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-policy-versions-table.yml
-  - include:
-      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-data-table.yml
-  - include:
-      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-data-versions-table.yml
-  - include:
-      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-schemas-table.yml
-  - include:
-      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-schema-versions-table.yml
+      - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-bundle-versions-table.yml

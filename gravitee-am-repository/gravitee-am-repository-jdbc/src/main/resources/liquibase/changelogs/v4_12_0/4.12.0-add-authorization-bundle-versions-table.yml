@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-add-authorization-bundle-versions-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_bundle_versions
+      changes:
+        - createTable:
+            tableName: authorization_bundle_versions
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: bundle_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: schema, type: clob, constraints: { nullable: true } }
+              - column: { name: policies, type: clob, constraints: { nullable: false } }
+              - column: { name: entities, type: clob, constraints: { nullable: true } }
+              - column: { name: comment, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: created_by, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_bundle_versions
+            columnNames: id
+            tableName: authorization_bundle_versions
+
+        - createIndex:
+            columns:
+              - column:
+                  name: bundle_id
+              - column:
+                  name: version
+                  descending: true
+            indexName: idx_auth_bun_ver_bundle_version
+            tableName: authorization_bundle_versions
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+            indexName: idx_auth_bun_ver_domain
+            tableName: authorization_bundle_versions
+            unique: false

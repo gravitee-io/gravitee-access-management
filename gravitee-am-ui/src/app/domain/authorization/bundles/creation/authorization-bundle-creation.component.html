@@ -1,0 +1,89 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>Create Authorization Bundle</h1>
+  <div class="gv-page-content">
+    <form (ngSubmit)="create()" #bundleForm="ngForm">
+      <div class="gv-form-section">
+        <div fxLayout="column">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Bundle name" name="name" [(ngModel)]="bundle.name" required />
+            <mat-hint>A name for this authorization bundle.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Description</mat-label>
+            <input matInput type="text" placeholder="Bundle description" name="description" [(ngModel)]="bundle.description" />
+            <mat-hint>An optional description.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Engine Type</mat-label>
+            <mat-select name="engineType" [(ngModel)]="bundle.engineType" required>
+              <mat-option value="cedar">Cedar</mat-option>
+            </mat-select>
+            <mat-hint>The authorization engine type for this bundle.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Policies</mat-label>
+            <textarea
+              matInput
+              name="policies"
+              [(ngModel)]="bundle.policies"
+              required
+              rows="15"
+              placeholder="Enter your authorization policies here..."
+            ></textarea>
+            <mat-hint>The policies content in the engine-specific format (e.g., Cedar policy syntax).</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Schema</mat-label>
+            <textarea
+              matInput
+              name="schema"
+              [(ngModel)]="bundle.schema"
+              rows="10"
+              placeholder="Enter the schema definition (optional)..."
+            ></textarea>
+            <mat-hint>The schema definition for this bundle (optional).</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Entities</mat-label>
+            <textarea
+              matInput
+              name="entities"
+              [(ngModel)]="bundle.entities"
+              rows="10"
+              placeholder="Enter the entities definition (optional)..."
+            ></textarea>
+            <mat-hint>The entities definition for this bundle (optional).</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div fxLayout="row">
+        <button mat-raised-button [routerLink]="['..']">Cancel</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="!bundleForm.valid">Create</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -16,30 +16,25 @@
 package io.gravitee.am.gateway.handler.common.authorizationengine.impl;
 
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
-import io.gravitee.am.common.event.AuthorizationDataEvent;
+import io.gravitee.am.common.event.AuthorizationBundleEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
-import io.gravitee.am.common.event.AuthorizationPolicyEvent;
-import io.gravitee.am.common.event.AuthorizationSchemaEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.authorizationengine.AuthorizationEngineManager;
-import io.gravitee.am.model.AuthorizationData;
 import io.gravitee.am.model.AuthorizationEngine;
-import io.gravitee.am.model.AuthorizationPolicy;
-import io.gravitee.am.model.AuthorizationSchema;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
-import io.gravitee.am.repository.management.api.AuthorizationDataRepository;
+import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
-import io.gravitee.am.repository.management.api.AuthorizationPolicyRepository;
-import io.gravitee.am.repository.management.api.AuthorizationSchemaRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -70,27 +65,18 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     private EventManager eventManager;
 
     @Autowired
-    private AuthorizationPolicyRepository authorizationPolicyRepository;
-
-    @Autowired
-    private AuthorizationDataRepository authorizationDataRepository;
-
-    @Autowired
-    private AuthorizationSchemaRepository authorizationSchemaRepository;
+    private AuthorizationBundleRepository authorizationBundleRepository;
 
     @Autowired
     private DomainReadinessService domainReadinessService;
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, String> engineBundleBindings = new ConcurrentHashMap<>();
 
-    private final EventListener<AuthorizationPolicyEvent, Payload> policyEventListener =
-            event -> handleConfigChangeEvent(event, "policy");
-
-    private final EventListener<AuthorizationDataEvent, Payload> dataEventListener =
-            event -> handleConfigChangeEvent(event, "data");
-
-    private final EventListener<AuthorizationSchemaEvent, Payload> schemaEventListener =
-            event -> handleConfigChangeEvent(event, "schema");
+    private final EventListener<AuthorizationBundleEvent, Payload> bundleEventListener =
+            event -> handleBundleEvent(event);
 
     @Override
     public Maybe<AuthorizationEngineProvider> get(String id) {
@@ -142,10 +128,8 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         logger.info("Register event listener for authorization engine events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, AuthorizationEngineEvent.class, domain.getId());
 
-        logger.info("Register event listeners for authorization policy/data/schema events for domain {}", domain.getName());
-        eventManager.subscribeForEvents(policyEventListener, AuthorizationPolicyEvent.class, domain.getId());
-        eventManager.subscribeForEvents(dataEventListener, AuthorizationDataEvent.class, domain.getId());
-        eventManager.subscribeForEvents(schemaEventListener, AuthorizationSchemaEvent.class, domain.getId());
+        logger.info("Register event listener for authorization bundle events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(bundleEventListener, AuthorizationBundleEvent.class, domain.getId());
     }
 
     @Override
@@ -154,9 +138,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
         logger.info("Dispose event listener for authorization engine events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, AuthorizationEngineEvent.class, domain.getId());
-        eventManager.unsubscribeForEvents(policyEventListener, AuthorizationPolicyEvent.class, domain.getId());
-        eventManager.unsubscribeForEvents(dataEventListener, AuthorizationDataEvent.class, domain.getId());
-        eventManager.unsubscribeForEvents(schemaEventListener, AuthorizationSchemaEvent.class, domain.getId());
+        eventManager.unsubscribeForEvents(bundleEventListener, AuthorizationBundleEvent.class, domain.getId());
         clearProviders();
     }
 
@@ -212,8 +194,18 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
             if (provider != null) {
                 providers.put(authorizationEngine.getId(), provider);
 
+                String bundleId = extractBundleId(authorizationEngine.getConfiguration());
+                if (bundleId != null && !bundleId.isBlank()) {
+                    engineBundleBindings.put(authorizationEngine.getId(), bundleId);
+                } else {
+                    engineBundleBindings.remove(authorizationEngine.getId());
+                }
+
                 logger.info("Authorization engine {} deployed for domain {}", authorizationEngine.getId(), domain.getName());
                 domainReadinessService.pluginLoaded(domain.getId(), authorizationEngine.getId());
+
+                pushBundleToProvider(authorizationEngine, provider);
+
                 return Single.just(authorizationEngine);
             } else {
                 String errorMsg = "Failed to create authorization engine provider";
@@ -235,6 +227,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
     private void clearProvider(String authorizationEngineId) {
         AuthorizationEngineProvider provider = providers.remove(authorizationEngineId);
+        engineBundleBindings.remove(authorizationEngineId);
 
         if (provider != null) {
             try {
@@ -248,59 +241,114 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     /**
-     * Handle policy, data, or schema change events. Triggers hot-reload on all
-     * running providers in this domain.
+     * Extract bundleId from the engine's plugin configuration JSON and push
+     * the bundle's content to the provider. Fire-and-forget — errors are logged.
      */
-    private <T extends Enum<T>> void handleConfigChangeEvent(Event<T, Payload> event, String configType) {
-        Payload payload = event.content();
-        if (payload.getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(payload.getReferenceId())) {
-            logger.info("Authorization {} change detected for domain {}", configType, domain.getName());
-            hotReloadProviders();
+    private void pushBundleToProvider(AuthorizationEngine authorizationEngine, AuthorizationEngineProvider provider) {
+        String bundleId = extractBundleId(authorizationEngine.getConfiguration());
+        if (bundleId == null || bundleId.isBlank()) {
+            logger.debug("No bundleId configured for engine {}, skipping initial bundle push", authorizationEngine.getId());
+            return;
+        }
+
+        logger.info("Pushing bundle {} to engine {} for domain {}", bundleId, authorizationEngine.getId(), domain.getName());
+        authorizationBundleRepository.findById(bundleId)
+                .subscribe(
+                        bundle -> {
+                            try {
+                                provider.updateConfig(bundle.getPolicies(), bundle.getEntities(), bundle.getSchema());
+                                logger.info("Bundle {} (v{}) pushed to engine {} for domain {}",
+                                        bundleId, bundle.getVersion(), authorizationEngine.getId(), domain.getName());
+                            } catch (Exception e) {
+                                logger.error("Failed to push bundle {} to engine {} for domain {}",
+                                        bundleId, authorizationEngine.getId(), domain.getName(), e);
+                            }
+                        },
+                        error -> logger.error("Error fetching bundle {} for engine {} in domain {}",
+                                bundleId, authorizationEngine.getId(), domain.getName(), error),
+                        () -> logger.warn("Bundle {} not found for engine {} in domain {}",
+                                bundleId, authorizationEngine.getId(), domain.getName())
+                );
+    }
+
+    private String extractBundleId(String configuration) {
+        if (configuration == null || configuration.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(configuration);
+            JsonNode bundleIdNode = node.get("bundleId");
+            return (bundleIdNode != null && !bundleIdNode.isNull()) ? bundleIdNode.asText() : null;
+        } catch (Exception e) {
+            logger.warn("Failed to parse engine configuration for bundleId", e);
+            return null;
         }
     }
 
     /**
-     * Fetch the latest policy, data, and schema content for this domain and push
-     * it to all running providers via hot-reload (zero-downtime update).
+     * Handle authorization bundle events (create/update/delete).
+     * Fetches the bundle by ID and pushes its content atomically to all providers.
      */
-    private void hotReloadProviders() {
+    private void handleBundleEvent(Event<AuthorizationBundleEvent, Payload> event) {
+        Payload payload = event.content();
+        if (payload.getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(payload.getReferenceId())) {
+            switch (event.type()) {
+                case DEPLOY, UPDATE -> hotReloadFromBundle(payload.getId());
+                case UNDEPLOY -> {
+                    String removedBundleId = payload.getId();
+                    logger.info("Authorization bundle {} undeployed for domain {}", removedBundleId, domain.getName());
+                    engineBundleBindings.forEach((engineId, bId) -> {
+                        if (removedBundleId.equals(bId)) {
+                            AuthorizationEngineProvider provider = providers.get(engineId);
+                            if (provider != null) {
+                                try {
+                                    provider.updateConfig(null, null, null);
+                                } catch (Exception e) {
+                                    logger.error("Failed to clear config for engine {} in domain {}", engineId, domain.getName(), e);
+                                }
+                            }
+                        }
+                    });
+                }
+                default -> {
+                    // No action needed
+                }
+            }
+        }
+    }
+
+    /**
+     * Fetch a specific authorization bundle and push its content
+     * to providers that are bound to this bundle via their configuration.
+     */
+    private void hotReloadFromBundle(String bundleId) {
         if (providers.isEmpty()) {
             logger.debug("No running providers to hot-reload for domain {}", domain.getName());
             return;
         }
 
-        // Fetch latest policy content (first policy in the domain)
-        Single<String> policySingle = authorizationPolicyRepository.findByDomain(domain.getId())
-                .firstElement()
-                .map(AuthorizationPolicy::getContent)
-                .defaultIfEmpty("");
-
-        // Fetch latest data content (singleton per domain)
-        Single<String> dataSingle = authorizationDataRepository.findByDomain(domain.getId())
-                .map(AuthorizationData::getContent)
-                .defaultIfEmpty("");
-
-        // Fetch latest schema content (singleton per domain)
-        Single<String> schemaSingle = authorizationSchemaRepository.findByDomain(domain.getId())
-                .map(AuthorizationSchema::getContent)
-                .defaultIfEmpty("");
-
-        Single.zip(policySingle, dataSingle, schemaSingle, (policy, data, schema) -> {
-            String policyValue = policy.isEmpty() ? null : policy;
-            String dataValue = data.isEmpty() ? null : data;
-            String schemaValue = schema.isEmpty() ? null : schema;
-
-            providers.values().forEach(provider -> {
-                try {
-                    provider.updateConfig(policyValue, dataValue, schemaValue);
-                } catch (Exception e) {
-                    logger.error("Failed to hot-reload config for provider in domain {}", domain.getName(), e);
-                }
-            });
-            return true;
-        }).subscribe(
-                __ -> logger.info("Config hot-reload completed for domain {}", domain.getName()),
-                error -> logger.error("Error during config hot-reload for domain {}", domain.getName(), error)
-        );
+        authorizationBundleRepository.findById(bundleId)
+                .subscribe(
+                        bundle -> {
+                            logger.info("Hot-reloading bundle {} (v{}) for domain {}",
+                                    bundle.getId(), bundle.getVersion(), domain.getName());
+                            engineBundleBindings.forEach((engineId, bId) -> {
+                                if (bundleId.equals(bId)) {
+                                    AuthorizationEngineProvider provider = providers.get(engineId);
+                                    if (provider != null) {
+                                        try {
+                                            provider.updateConfig(bundle.getPolicies(), bundle.getEntities(), bundle.getSchema());
+                                        } catch (Exception e) {
+                                            logger.error("Failed to hot-reload bundle for engine {} in domain {}", engineId, domain.getName(), e);
+                                        }
+                                    }
+                                }
+                            });
+                        },
+                        error -> logger.error("Error fetching bundle {} for hot-reload in domain {}",
+                                bundleId, domain.getName(), error),
+                        () -> logger.warn("Bundle {} not found for hot-reload in domain {}",
+                                bundleId, domain.getName())
+                );
     }
 }

@@ -16,8 +16,10 @@
 package io.gravitee.am.gateway.handler.common.authorizationengine.impl;
 
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
+import io.gravitee.am.common.event.AuthorizationBundleEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.model.AuthorizationBundle;
 import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -25,6 +27,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
 import io.gravitee.common.event.Event;
 import io.reactivex.rxjava3.core.Flowable;
@@ -67,6 +70,9 @@ class AuthorizationEngineManagerImplTest {
 
     @Mock
     private AuthorizationEngineRepository authorizationEngineRepository;
+
+    @Mock
+    private AuthorizationBundleRepository authorizationBundleRepository;
 
     @Mock
     private EventManager eventManager;
@@ -494,8 +500,123 @@ class AuthorizationEngineManagerImplTest {
 
         // then - should throw IllegalStateException
         observer.assertError(IllegalStateException.class);
-        observer.assertError(throwable -> 
-            throwable instanceof IllegalStateException && 
+        observer.assertError(throwable ->
+            throwable instanceof IllegalStateException &&
             throwable.getMessage().equals("Multiple authorization engine providers found. Only one provider is allowed per domain."));
+    }
+
+    // --- Authorization Bundle event tests ---
+
+    @Test
+    void shouldHotReloadFromBundleOnDeployEvent() throws Exception {
+        // given - deploy an engine provider with bundleId in its config
+        testEngine.setConfiguration("{\"connectionUri\":\"http://localhost:8080\",\"bundleId\":\"bundle-1\"}");
+
+        AuthorizationBundle bundle = new AuthorizationBundle();
+        bundle.setId("bundle-1");
+        bundle.setDomainId("domain-id");
+        bundle.setPolicies("permit(principal, action, resource);");
+        bundle.setEntities("[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]");
+        bundle.setSchema("{\"entityTypes\":{}}");
+        bundle.setVersion(1);
+
+        when(authorizationBundleRepository.findById("bundle-1"))
+                .thenReturn(Maybe.just(bundle));
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
+                .thenReturn(mockProvider);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+        manager.afterPropertiesSet();
+
+        // when - simulate bundle DEPLOY event via the bundleEventListener
+        Payload payload = new Payload("bundle-1", ReferenceType.DOMAIN, "domain-id", io.gravitee.am.common.event.Action.CREATE);
+        Event<AuthorizationBundleEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(AuthorizationBundleEvent.DEPLOY);
+        when(event.content()).thenReturn(payload);
+
+        manager.doStart();
+
+        // Capture the bundle event listener that was registered
+        ArgumentCaptor<io.gravitee.common.event.EventListener> listenerCaptor = ArgumentCaptor.forClass(io.gravitee.common.event.EventListener.class);
+        verify(eventManager).subscribeForEvents(listenerCaptor.capture(), eq(AuthorizationBundleEvent.class), eq("domain-id"));
+
+        // Fire the event through captured listener
+        io.gravitee.common.event.EventListener<AuthorizationBundleEvent, Payload> capturedListener = listenerCaptor.getValue();
+        capturedListener.onEvent(event);
+
+        // then - called during initial deploy push AND hot-reload
+        verify(authorizationBundleRepository, timeout(1000).atLeast(2)).findById("bundle-1");
+        verify(mockProvider, timeout(1000).atLeast(2)).updateConfig(
+                "permit(principal, action, resource);",
+                "[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]",
+                "{\"entityTypes\":{}}"
+        );
+    }
+
+    @Test
+    void shouldClearConfigOnBundleUndeployEvent() throws Exception {
+        // given - deploy an engine provider with bundleId in its config
+        testEngine.setConfiguration("{\"connectionUri\":\"http://localhost:8080\",\"bundleId\":\"bundle-1\"}");
+
+        // Mock bundle for the initial push during deploy
+        AuthorizationBundle bundle = new AuthorizationBundle();
+        bundle.setId("bundle-1");
+        bundle.setDomainId("domain-id");
+        bundle.setPolicies("permit(principal, action, resource);");
+        bundle.setEntities("[]");
+        bundle.setSchema("{}");
+        bundle.setVersion(1);
+
+        when(authorizationBundleRepository.findById("bundle-1"))
+                .thenReturn(Maybe.just(bundle));
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
+                .thenReturn(mockProvider);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+        manager.afterPropertiesSet();
+
+        // when - simulate bundle UNDEPLOY event
+        Payload payload = new Payload("bundle-1", ReferenceType.DOMAIN, "domain-id", io.gravitee.am.common.event.Action.DELETE);
+        Event<AuthorizationBundleEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(AuthorizationBundleEvent.UNDEPLOY);
+        when(event.content()).thenReturn(payload);
+
+        manager.doStart();
+
+        ArgumentCaptor<io.gravitee.common.event.EventListener> listenerCaptor = ArgumentCaptor.forClass(io.gravitee.common.event.EventListener.class);
+        verify(eventManager).subscribeForEvents(listenerCaptor.capture(), eq(AuthorizationBundleEvent.class), eq("domain-id"));
+
+        io.gravitee.common.event.EventListener<AuthorizationBundleEvent, Payload> capturedListener = listenerCaptor.getValue();
+        capturedListener.onEvent(event);
+
+        // then - should push null config to clear engine state
+        verify(mockProvider, timeout(1000)).updateConfig(null, null, null);
+    }
+
+    @Test
+    void shouldIgnoreBundleEventForDifferentDomain() throws Exception {
+        // given
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+
+        Payload payload = new Payload("bundle-1", ReferenceType.DOMAIN, "other-domain-id", io.gravitee.am.common.event.Action.CREATE);
+        Event<AuthorizationBundleEvent, Payload> event = mock(Event.class);
+        when(event.content()).thenReturn(payload);
+
+        manager.doStart();
+
+        ArgumentCaptor<io.gravitee.common.event.EventListener> listenerCaptor = ArgumentCaptor.forClass(io.gravitee.common.event.EventListener.class);
+        verify(eventManager).subscribeForEvents(listenerCaptor.capture(), eq(AuthorizationBundleEvent.class), eq("domain-id"));
+
+        io.gravitee.common.event.EventListener<AuthorizationBundleEvent, Payload> capturedListener = listenerCaptor.getValue();
+        capturedListener.onEvent(event);
+
+        // then - should not fetch any bundle
+        verify(authorizationBundleRepository, never()).findById(any());
+        verify(mockProvider, never()).updateConfig(any(), any(), any());
     }
 }

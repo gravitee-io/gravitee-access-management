@@ -1,0 +1,62 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1 *ngIf="!isEmpty">Authorization Bundles</h1>
+  <div class="gv-page-content" *ngIf="!isEmpty">
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="50" [rowHeight]="50" [rows]="bundles">
+      <ngx-datatable-column name="Name" [flexGrow]="3">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <a [routerLink]="[row.id]">{{ row.name }}</a>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Engine" [flexGrow]="2">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.engineType }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Version" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template> v{{ row.version }} </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <a mat-button [routerLink]="[row.id]" *hasPermission="['domain_authorization_bundle_read']">
+              <mat-icon>settings</mat-icon>
+            </a>
+            <button *hasPermission="['domain_authorization_bundle_delete']" mat-button (click)="delete(row.id, $event)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Authorization bundles will appear here'"
+    [subMessage]="'Start creating an authorization bundle'"
+    [icon]="'shield'"
+  ></app-emptystate>
+
+  <div *hasPermission="['domain_authorization_bundle_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
+    <a mat-fab color="primary" [routerLink]="['new']">
+      <mat-icon>add</mat-icon>
+    </a>
+  </div>
+</div>

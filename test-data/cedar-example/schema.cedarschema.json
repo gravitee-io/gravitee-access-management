@@ -1,0 +1,53 @@
+{
+  "": {
+    "entityTypes": {
+      "User": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "department": { "type": "String" },
+            "role": { "type": "String" }
+          }
+        },
+        "memberOfTypes": ["Team"]
+      },
+      "Team": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "name": { "type": "String" }
+          }
+        }
+      },
+      "Document": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "classification": { "type": "String" },
+            "owner": { "type": "Entity", "name": "User" }
+          }
+        }
+      }
+    },
+    "actions": {
+      "read": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document"]
+        }
+      },
+      "write": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document"]
+        }
+      },
+      "delete": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document"]
+        }
+      }
+    }
+  }
+}

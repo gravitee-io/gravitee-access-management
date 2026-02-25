@@ -48,9 +48,7 @@ public enum Type {
     THEME,
     PASSWORD_POLICY,
     AUTHORIZATION_ENGINE,
-    AUTHORIZATION_POLICY,
-    AUTHORIZATION_DATA,
-    AUTHORIZATION_SCHEMA,
+    AUTHORIZATION_BUNDLE,
     UNKNOWN, // used during unmarshalling to avoid Exception which will block the sync process
     REVOKE_TOKEN,
     PROTECTED_RESOURCE,

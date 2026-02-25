@@ -1,0 +1,58 @@
+[
+  {
+    "uid": { "type": "User", "id": "alice" },
+    "attrs": {
+      "department": "engineering",
+      "role": "developer"
+    },
+    "parents": [
+      { "type": "Team", "id": "engineering" }
+    ]
+  },
+  {
+    "uid": { "type": "User", "id": "bob" },
+    "attrs": {
+      "department": "engineering",
+      "role": "manager"
+    },
+    "parents": [
+      { "type": "Team", "id": "engineering" }
+    ]
+  },
+  {
+    "uid": { "type": "User", "id": "carol" },
+    "attrs": {
+      "department": "security",
+      "role": "analyst"
+    },
+    "parents": [
+      { "type": "Team", "id": "security" }
+    ]
+  },
+  {
+    "uid": { "type": "Team", "id": "engineering" },
+    "attrs": { "name": "Engineering" },
+    "parents": []
+  },
+  {
+    "uid": { "type": "Team", "id": "security" },
+    "attrs": { "name": "Security" },
+    "parents": []
+  },
+  {
+    "uid": { "type": "Document", "id": "doc-public" },
+    "attrs": {
+      "classification": "public",
+      "owner": { "type": "User", "id": "alice" }
+    },
+    "parents": []
+  },
+  {
+    "uid": { "type": "Document", "id": "doc-confidential" },
+    "attrs": {
+      "classification": "confidential",
+      "owner": { "type": "User", "id": "bob" }
+    },
+    "parents": []
+  }
+]

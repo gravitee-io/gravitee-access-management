@@ -234,19 +234,13 @@ import { OpenFGAService } from './services/openfga.service';
 import { AuthorizationEnginesResolver } from './resolvers/authorization-engines.resolver';
 import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-engine-plugins.resolver';
 import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
-import { AuthorizationPolicyService } from './services/authorization-policy.service';
-import { AuthorizationDataService } from './services/authorization-data.service';
-import { AuthorizationSchemaService } from './services/authorization-schema.service';
-import { AuthorizationPoliciesResolver } from './resolvers/authorization-policies.resolver';
-import { AuthorizationPolicyResolver } from './resolvers/authorization-policy.resolver';
-import { AuthorizationDataResolver } from './resolvers/authorization-data.resolver';
-import { AuthorizationSchemaResolver } from './resolvers/authorization-schema.resolver';
 import { DomainAuthorizationComponent } from './domain/authorization/authorization.component';
-import { AuthorizationPoliciesComponent } from './domain/authorization/policies/authorization-policies.component';
-import { AuthorizationPolicyCreationComponent } from './domain/authorization/policies/creation/authorization-policy-creation.component';
-import { AuthorizationPolicyComponent } from './domain/authorization/policies/policy/authorization-policy.component';
-import { AuthorizationDataComponent } from './domain/authorization/data/authorization-data.component';
-import { AuthorizationSchemaComponent } from './domain/authorization/schema/authorization-schema.component';
+import { AuthorizationBundlesComponent } from './domain/authorization/bundles/authorization-bundles.component';
+import { AuthorizationBundleCreationComponent } from './domain/authorization/bundles/creation/authorization-bundle-creation.component';
+import { AuthorizationBundleComponent } from './domain/authorization/bundles/bundle/authorization-bundle.component';
+import { AuthorizationBundleService } from './services/authorization-bundle.service';
+import { AuthorizationBundlesResolver } from './resolvers/authorization-bundles.resolver';
+import { AuthorizationBundleResolver } from './resolvers/authorization-bundle.resolver';
 import { AuditsComponent } from './domain/settings/audits/audits.component';
 import { AuditComponent } from './domain/settings/audits/audit/audit.component';
 import { AuditsSettingsComponent } from './domain/settings/audits/settings/settings.component';
@@ -778,11 +772,9 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AuthorizationEngineCreationStep2Component,
     OpenFGAComponent,
     DomainAuthorizationComponent,
-    AuthorizationPoliciesComponent,
-    AuthorizationPolicyCreationComponent,
-    AuthorizationPolicyComponent,
-    AuthorizationDataComponent,
-    AuthorizationSchemaComponent,
+    AuthorizationBundlesComponent,
+    AuthorizationBundleCreationComponent,
+    AuthorizationBundleComponent,
     McpToolsTableComponent,
     GrantFlowsComponent,
     ScopesComponent,
@@ -863,9 +855,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     SnackbarService,
     OrganizationService,
     AuthorizationEngineService,
-    AuthorizationPolicyService,
-    AuthorizationDataService,
-    AuthorizationSchemaService,
+    AuthorizationBundleService,
     OpenFGAService,
     EnvironmentService,
     AuthService,
@@ -921,10 +911,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AuthorizationEnginePluginsResolver,
     AuthorizationEnginesResolver,
     AuthorizationEngineResolver,
-    AuthorizationPoliciesResolver,
-    AuthorizationPolicyResolver,
-    AuthorizationDataResolver,
-    AuthorizationSchemaResolver,
+    AuthorizationBundlesResolver,
+    AuthorizationBundleResolver,
     AuditService,
     AuditsResolver,
     AuditResolver,
