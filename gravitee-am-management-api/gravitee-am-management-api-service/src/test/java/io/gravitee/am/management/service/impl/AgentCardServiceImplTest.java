@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.exception.AgentCardFetchException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
@@ -30,10 +31,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -82,21 +85,24 @@ public class AgentCardServiceImplTest {
     public void shouldRejectLocalhost() throws InterruptedException {
         TestObserver<String> observer = agentCardService.fetchAgentCard("http://localhost/card.json").test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(IllegalArgumentException.class);
+        observer.assertError(e ->
+                e instanceof InvalidParameterException && e.getMessage().contains("localhost"));
     }
 
     @Test
     public void shouldRejectPrivateIp_10x() throws InterruptedException {
         TestObserver<String> observer = agentCardService.fetchAgentCard("http://10.0.0.1/card").test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(IllegalArgumentException.class);
+        observer.assertError(e ->
+                e instanceof InvalidParameterException && e.getMessage().contains("private IP"));
     }
 
     @Test
     public void shouldRejectPrivateIp_192168() throws InterruptedException {
         TestObserver<String> observer = agentCardService.fetchAgentCard("http://192.168.1.1/card").test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(IllegalArgumentException.class);
+        observer.assertError(e ->
+                e instanceof InvalidParameterException && e.getMessage().contains("private IP"));
     }
 
     @Test
@@ -112,7 +118,8 @@ public class AgentCardServiceImplTest {
 
         TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(AgentCardFetchException.class);
+        observer.assertError(e ->
+                e instanceof AgentCardFetchException && e.getMessage().contains("maximum allowed size"));
     }
 
     @Test
@@ -127,7 +134,8 @@ public class AgentCardServiceImplTest {
 
         TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(AgentCardFetchException.class);
+        observer.assertError(e ->
+                e instanceof AgentCardFetchException && e.getMessage().contains("not valid JSON"));
     }
 
     @Test
@@ -141,6 +149,41 @@ public class AgentCardServiceImplTest {
 
         TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(AgentCardFetchException.class);
+        observer.assertError(e ->
+                e instanceof AgentCardFetchException && e.getMessage().contains("status 500"));
+    }
+
+    @Test
+    public void shouldRejectNullBody() throws InterruptedException {
+        final String url = "https://example.com/card.json";
+
+        when(client.getAbs(url)).thenReturn(httpRequest);
+        when(httpRequest.timeout(anyLong())).thenReturn(httpRequest);
+        when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
+        when(httpResponse.statusCode()).thenReturn(200);
+        when(httpResponse.bodyAsString()).thenReturn(null);
+
+        TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
+        observer.await(2, TimeUnit.SECONDS);
+        observer.assertError(e ->
+                e instanceof AgentCardFetchException && e.getMessage().contains("response body is empty"));
+    }
+
+    @Test
+    public void shouldWrapNetworkErrorAsAgentCardFetchException() throws InterruptedException {
+        final String url = "https://example.com/card.json";
+
+        when(client.getAbs(url)).thenReturn(httpRequest);
+        when(httpRequest.timeout(anyLong())).thenReturn(httpRequest);
+        when(httpRequest.rxSend()).thenReturn(Single.error(new ConnectException("Connection refused")));
+
+        TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
+        observer.await(2, TimeUnit.SECONDS);
+        observer.assertError(e -> {
+            assertInstanceOf(AgentCardFetchException.class, e);
+            assertTrue(e.getMessage().contains("unreachable"));
+            assertInstanceOf(ConnectException.class, e.getCause());
+            return true;
+        });
     }
 }

@@ -370,7 +370,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldGetAgentCard_fetchFails_returns404() {
+    public void shouldGetAgentCard_fetchFails_returns502() {
         final String domainId = "domain-id";
         final String appId = "app-id";
         final String agentCardUrl = "https://thisdomaindoesnotexist.com/.well-known/agent.json";
@@ -390,7 +390,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
                 .when(agentCardService).fetchAgentCard(agentCardUrl);
 
         final Response response = target("domains").path(domainId).path("applications").path(appId).path("agent-card").request().get();
-        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+        assertEquals(HttpStatusCode.BAD_GATEWAY_502, response.getStatus());
     }
 
     @Test

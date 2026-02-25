@@ -282,7 +282,8 @@ public class ApplicationResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Agent card JSON successfully fetched"),
             @ApiResponse(responseCode = "400", description = "No agentCardUrl configured or invalid URL"),
-            @ApiResponse(responseCode = "404", description = "Application not found or agent card not found at configured URL"),
+            @ApiResponse(responseCode = "404", description = "Application not found"),
+            @ApiResponse(responseCode = "502", description = "Agent card fetch failed (upstream unreachable, invalid response, or non-200 status)"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void getAgentCard(
             @PathParam("organizationId") String organizationId,
