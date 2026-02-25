@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import { Domain } from '@management-models/Domain';
-import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { DomainOidcConfig, createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { Application } from '@management-models/Application';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 
 export interface ConfirmPreRegistrationFixture {
   domain: Domain;
@@ -33,14 +32,14 @@ export interface ConfirmPreRegistrationFixture {
 
 export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const { domain, oidcConfig } = await setupDomainForTest(uniqueName('pre-registration', true), {
-    accessToken,
-    waitForStart: true,
-  });
+
+  // Create domain without starting it
+  const domain = await createDomain(accessToken, uniqueName('pre-registration', true), 'pre-registration tests');
 
   const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
 
+  // Create and configure application BEFORE starting domain — initial sync picks up everything
   const appClientId = uniqueName('preregapp', true);
   const app = await createApplication(domain.id, accessToken, {
     name: appClientId,
@@ -48,34 +47,35 @@ export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => 
     clientId: appClientId,
     redirectUris: ['https://callback'],
   });
-  const updatedApp = await waitForSyncAfter(
+  const updatedApp = await updateApplication(
     domain.id,
-    () => updateApplication(
-      domain.id,
-      accessToken,
-      {
-        settings: {
-          oauth: {
-            redirectUris: ['https://callback'],
-            grantTypes: ['authorization_code'],
-          },
-          login: {
-            inherited: false,
-            forgotPasswordEnabled: true,
-          },
+    accessToken,
+    {
+      settings: {
+        oauth: {
+          redirectUris: ['https://callback'],
+          grantTypes: ['authorization_code'],
         },
-        identityProviders: [{ identity: defaultIdp.id, priority: -1 }],
+        login: {
+          inherited: false,
+          forgotPasswordEnabled: true,
+        },
       },
-      app.id,
-    ),
+      identityProviders: [{ identity: defaultIdp.id, priority: -1 }],
+    },
+    app.id,
   );
   // restore the clientSecret coming from the create order
   updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
   const application = updatedApp;
 
+  // Start domain after all resources are created
+  await startDomain(domain.id, accessToken);
+  const started = await waitForDomainStart(domain);
+
   return {
-    domain: domain,
-    oidc: oidcConfig,
+    domain: started.domain,
+    oidc: started.oidcConfig,
     accessToken: accessToken,
     application: application,
     clientId: application.settings.oauth.clientId,
