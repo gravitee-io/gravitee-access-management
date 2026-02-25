@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
@@ -57,13 +58,14 @@ public class ProtocolPluginManager extends
         logger.debug("Looking for an protocol provider for [{}]", providerConfig.getType());
         var protocol = get(providerConfig.getType());
         if (protocol != null) {
+            AnnotationConfigApplicationContext context = null;
             try {
                 var protocolProvider = createInstance(protocol.provider());
 
                 final ApplicationContext parentContext = providerConfig.getApplicationContext();
                 final Environment environment = parentContext.getEnvironment();
 
-                AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+                context = new AnnotationConfigApplicationContext();
                 context.setParent(parentContext);
                 context.setClassLoader(pluginClassLoaderFactory.getOrCreateClassLoader(protocol));
                 context.setEnvironment((ConfigurableEnvironment) environment);
@@ -78,12 +80,18 @@ public class ProtocolPluginManager extends
                 context.refresh();
 
                 context.getAutowireCapableBeanFactory().autowireBean(protocolProvider);
+                if (protocolProvider instanceof AbstractService<?> service) {
+                    service.setApplicationContext(context);
+                }
 
                 if (protocolProvider instanceof InitializingBean bean) {
                     bean.afterPropertiesSet();
                 }
                 return protocolProvider;
             } catch (Exception ex) {
+                if (context != null) {
+                    context.close();
+                }
                 logger.error("An unexpected error occurs while loading protocol", ex);
             }
         } else {
