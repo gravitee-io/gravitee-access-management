@@ -81,7 +81,7 @@
         <gravitee-bom.version>8.3.46</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
-        <gravitee-node.version>7.18.2</gravitee-node.version>
+        <gravitee-node.version>7.23.0</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>4.2.0</gravitee-expression-language.version>
