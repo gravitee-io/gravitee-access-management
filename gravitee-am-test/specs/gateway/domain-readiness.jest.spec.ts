@@ -16,7 +16,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { getDomainState, getAllDomainStates, isDomainReady, waitForDomainReady } from '@gateway-commands/monitoring-commands';
 import { setup } from '../test-fixture';
 import { uniqueName } from '@utils-commands/misc';
@@ -30,6 +30,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   domain = await createDomain(accessToken, uniqueName('readiness', true), 'Domain readiness test');
   await startDomain(domain.id, accessToken);
+  await waitForDomainStart(domain);
 });
 
 afterAll(async () => {
@@ -40,12 +41,11 @@ describe('Domain readiness endpoint', () => {
   it('should return domain state after domain is started', async () => {
     const state = await waitForDomainReady(domain.id, { timeoutMillis: 30000 });
 
-    expect(state).toBeDefined();
     expect(state.stable).toBe(true);
     expect(state.synchronized).toBe(true);
     expect(state.status).toBe('DEPLOYED');
-    expect(state.creationState).toBeDefined();
-    expect(state.syncState).toBeDefined();
+    expect(state.creationState).toEqual(expect.any(Object));
+    expect(state.syncState).toEqual(expect.any(Object));
   });
 
   it('should report domain as ready via isDomainReady', async () => {
@@ -58,17 +58,16 @@ describe('Domain readiness endpoint', () => {
     expect(ready).toBe(false);
   });
 
-  it('should return all domain states', async () => {
+  it('should include this domain in all domain states', async () => {
     const states = await getAllDomainStates();
-    expect(states).toBeDefined();
-    expect(states[domain.id]).toBeDefined();
-    expect(states[domain.id].stable).toBe(true);
+    expect(states[domain.id]).toEqual(
+      expect.objectContaining({ status: 'DEPLOYED' }),
+    );
   });
 
   it('should return domain state with plugin details via getDomainState', async () => {
     const state = await getDomainState(domain.id);
 
-    expect(state).toBeDefined();
     expect(state.status).toBe('DEPLOYED');
     expect(typeof state.lastSync).toBe('number');
     expect(typeof state.stable).toBe('boolean');

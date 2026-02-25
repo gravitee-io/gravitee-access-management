@@ -37,7 +37,6 @@ import { ProtectedResourceApi } from '@management-apis/ProtectedResourceApi';
 import { DefaultApi } from '@management-apis/DefaultApi';
 import { AlertsApi } from '@management-apis/AlertsApi';
 import { NotifierApi } from '@management-apis/NotifierApi';
-import { MonitoringApi } from '@gateway-apis/MonitoringApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, accessToken: accessToken });
@@ -140,15 +139,6 @@ export function getNotifierApi(accessToken) {
   return new NotifierApi(createAccessTokenConfig(accessToken));
 }
 
-export function getMonitoringApi() {
-  return new MonitoringApi(
-    new Configuration({
-      basePath: process.env.AM_GATEWAY_NODE_MONITORING_URL,
-      username: process.env.AM_ADMIN_USERNAME,
-      password: process.env.AM_ADMIN_PASSWORD,
-    }),
-  );
-}
 
 export function createRandomString(length: number) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

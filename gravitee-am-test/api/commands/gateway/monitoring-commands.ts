@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { getMonitoringApi } from '@management-commands/service/utils';
 import { DomainState } from '@gateway-apis/MonitoringApi';
-import { ResponseError } from '../../management/runtime';
 import { retryUntil } from '@utils-commands/retry';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -24,18 +22,29 @@ const DEFAULT_INTERVAL_MS = 500;
 
 type PollOptions = { timeoutMillis?: number; intervalMillis?: number };
 
-let cachedApi: ReturnType<typeof getMonitoringApi> | null = null;
+const basePath = process.env.AM_GATEWAY_NODE_MONITORING_URL;
+const username = process.env.AM_ADMIN_USERNAME;
+const password = process.env.AM_ADMIN_PASSWORD;
 
-function createApi() {
-  if (!cachedApi) {
-    cachedApi = getMonitoringApi();
+function authHeader(): Record<string, string> {
+  if (username && password) {
+    return { Authorization: 'Basic ' + btoa(`${username}:${password}`) };
   }
-  return cachedApi;
+  return {};
+}
+
+/** Fetch from the /_node/domains endpoint. Callers handle status codes. */
+async function fetchDomains(queryParams: Record<string, string>): Promise<Response> {
+  const qs = new URLSearchParams({ ...queryParams, output: 'json' }).toString();
+  return fetch(`${basePath}/domains?${qs}`, {
+    method: 'GET',
+    headers: authHeader(),
+  });
 }
 
 const isReady = (state: DomainState | null): boolean => state !== null && state.stable && state.synchronized;
 
-/** Fetch domain state, returning null on transient errors instead of throwing. */
+/** Fetch domain state, returning null on transient errors or 404 instead of throwing. */
 function fetchStateSafe(domainId: string): Promise<DomainState | null> {
   return getDomainState(domainId).catch((error) => {
     console.debug(`Error fetching domain state for ${domainId}: ${error instanceof Error ? error.message : error}`);
@@ -44,21 +53,33 @@ function fetchStateSafe(domainId: string): Promise<DomainState | null> {
 }
 
 export const getDomainState = async (domainId: string): Promise<DomainState> => {
-  return createApi().getDomainState({ domainId });
+  const response = await fetchDomains({ domainId });
+  if (response.status === 404) {
+    throw new Error(`Domain ${domainId} not found`);
+  }
+  if (response.status !== 200 && response.status !== 503) {
+    throw new Error(`Unexpected response from /_node/domains: status=${response.status}`);
+  }
+  return response.json();
 };
 
 export const getAllDomainStates = async (): Promise<Record<string, DomainState>> => {
-  return createApi().getAllDomainStates();
+  const response = await fetchDomains({});
+  if (response.status !== 200 && response.status !== 503) {
+    throw new Error(`Unexpected response from /_node/domains: status=${response.status}`);
+  }
+  return response.json();
 };
 
 export const isDomainReady = async (domainId: string): Promise<boolean> => {
   try {
-    return isReady(await getDomainState(domainId));
-  } catch (error) {
-    if (error instanceof ResponseError && error.response.status === 404) {
+    const response = await fetchDomains({ domainId });
+    if (response.status === 404) {
       return false;
     }
-    throw error;
+    return isReady(await response.json());
+  } catch {
+    return false;
   }
 };
 
