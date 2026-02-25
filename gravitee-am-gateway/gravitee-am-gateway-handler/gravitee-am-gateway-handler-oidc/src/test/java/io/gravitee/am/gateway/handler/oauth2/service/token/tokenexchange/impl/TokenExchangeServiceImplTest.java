@@ -23,13 +23,18 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -48,13 +53,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,6 +75,12 @@ public class TokenExchangeServiceImplTest {
     @Mock
     private ProtectedResourceManager protectedResourceManager;
 
+    @Mock
+    private UserGatewayService userGatewayService;
+
+    @Mock
+    private TokenExchangeUserResolver userResolver;
+
     private TokenExchangeServiceImpl service;
 
     @BeforeEach
@@ -74,7 +89,7 @@ public class TokenExchangeServiceImplTest {
     }
 
     private TokenExchangeServiceImpl createService(List<TokenValidator> validators) {
-        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager);
+        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager, userResolver);
     }
 
     @Test
@@ -90,7 +105,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Token exchange is not enabled");
     }
@@ -111,7 +126,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Token exchange is not enabled");
     }
@@ -129,7 +144,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("subject_token");
     }
@@ -147,7 +162,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("subject_token_type");
     }
@@ -162,7 +177,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Unsupported subject_token_type");
     }
@@ -177,7 +192,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Unsupported requested_token_type");
     }
@@ -193,7 +208,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("requested_token_type not allowed");
     }
@@ -209,7 +224,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        service.exchange(tokenRequest, client, domain)
+        service.exchange(tokenRequest, client, domain, userGatewayService)
                 .test()
                 .assertValue(result -> result.user() != null && result.issuedTokenType().equals(TokenType.ID_TOKEN));
     }
@@ -230,7 +245,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("requested_token_type is required when access_token is not allowed");
     }
@@ -245,7 +260,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        service.exchange(tokenRequest, client, domain)
+        service.exchange(tokenRequest, client, domain, userGatewayService)
                 .test()
                 .assertValue(result -> result.user() != null && result.issuedTokenType().equals(TokenType.ACCESS_TOKEN));
     }
@@ -265,7 +280,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result.issuedTokenType()).isEqualTo(TokenType.ACCESS_TOKEN);
     }
@@ -280,7 +295,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
 
         assertThat(user.getId()).isEqualTo("subject");
@@ -322,7 +337,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
 
         assertThat(user.getId()).isEqualTo("user-id-123");
@@ -339,7 +354,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("my-client");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
 
         assertThat(user.getAdditionalInformation().get(Claims.CLIENT_ID)).isEqualTo("my-client");
@@ -355,7 +370,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
         Map<String, Object> additionalInfo = user.getAdditionalInformation();
 
@@ -394,7 +409,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         assertThat(result.subjectTokenType()).isEqualTo(TokenType.JWT);
     }
 
@@ -436,7 +451,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
 
         assertThat(user.getSource()).isEqualTo("source-id");
@@ -454,7 +469,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("openid"));
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         // Scopes are now set on the tokenRequest
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("openid");
@@ -471,7 +486,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("openid"));
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
 
         assertThat(user.getAdditionalInformation().get(Claims.SCOPE)).isEqualTo("openid");
@@ -487,7 +502,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result.exchangeExpiration()).isNotNull();
         assertThat(result.exchangeExpiration()).isAfter(new Date());
@@ -524,7 +539,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
 
         assertThat(user.getAdditionalInformation().get("subject_token_id")).isEqualTo("token-jti-123");
@@ -555,7 +570,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidGrantException.class)
                 .hasMessageContaining("No validator found");
     }
@@ -585,7 +600,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidGrantException.class)
                 .hasMessageContaining("Token validation failed");
     }
@@ -620,7 +635,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).isEmpty();
         // scope claim should not be in additional info when empty
@@ -645,7 +660,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Impersonation is not allowed");
     }
@@ -670,7 +685,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Impersonation is not allowed");
     }
@@ -690,7 +705,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("actor_token_type must not be provided when actor_token is not provided");
     }
@@ -710,7 +725,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result).isNotNull();
         assertThat(result.isDelegation()).isTrue();
@@ -739,7 +754,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Delegation is not allowed");
     }
@@ -769,7 +784,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Unsupported actor_token_type");
     }
@@ -790,7 +805,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("actor_token_type");
     }
@@ -854,7 +869,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Maximum delegation depth exceeded");
     }
@@ -928,7 +943,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
 
         // Should succeed because resulting depth (5) equals maxDelegationDepth (5)
-        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         assertThat(result).isNotNull();
         assertThat(result.isDelegation()).isTrue();
         assertThat(result.actorInfo()).isNotNull();
@@ -980,7 +995,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result.isDelegation()).isTrue();
         assertThat(result.actorInfo()).isNotNull();
@@ -1002,7 +1017,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result.isDelegation()).isTrue();
         assertThat(result.actorInfo()).isNotNull();
@@ -1060,7 +1075,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result.isDelegation()).isTrue();
         assertThat(result.actorInfo()).isNotNull();
@@ -1124,7 +1139,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result.isDelegation()).isTrue();
         assertThat(result.actorInfo()).isNotNull();
@@ -1152,7 +1167,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        TokenExchangeResult result = service.exchange(tokenRequest, client, domain).blockingGet();
+        TokenExchangeResult result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(result.isDelegation()).isTrue();
         assertThat(result.actorInfo()).isNotNull();
@@ -1174,7 +1189,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).isEmpty();
     }
@@ -1192,7 +1207,7 @@ public class TokenExchangeServiceImplTest {
         Client client = new Client();
         client.setClientId("client-id");
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidScopeException.class);
     }
 
@@ -1211,7 +1226,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B", "C"));
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B", "C");
     }
@@ -1230,7 +1245,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B", "C"));
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidScopeException.class);
     }
 
@@ -1251,7 +1266,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("B", "C"));
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B", "C");
     }
@@ -1272,7 +1287,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("B", "C"));
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B");
     }
@@ -1292,7 +1307,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B", "D"));
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B");
     }
@@ -1316,7 +1331,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B", "C"));
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("C");
     }
@@ -1340,7 +1355,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B"));
 
-        service.exchange(tokenRequest, client, domain).blockingGet();
+        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B", "C");
     }
@@ -1363,7 +1378,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B", "C"));
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidScopeException.class);
     }
 
@@ -1381,7 +1396,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B"));
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidScopeException.class);
     }
 
@@ -1403,7 +1418,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B"));
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidScopeException.class);
     }
 
@@ -1425,8 +1440,275 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
         client.setScopeSettings(clientScopeSettings("A", "B"));
 
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain).blockingGet())
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
                 .isInstanceOf(InvalidScopeException.class);
+    }
+
+    // ==================== User Binding Tests ====================
+
+    @Test
+    public void shouldUseDomainUserWhenUserBindingEnabledAndUserFound() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+        String userEmail = "john@example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", userEmail));
+        service = createService(List.of(trustedValidator));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setUsername("john.doe");
+        domainUser.setEmail(userEmail);
+        domainUser.setAdditionalInformation(new HashMap<>());
+
+        when(userResolver.resolve(any(), any(), any())).thenReturn(Single.just(Optional.of(domainUser)));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, List.of(criterion("email", "email")));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+        assertThat(result.user().getUsername()).isEqualTo("john.doe");
+        verify(userResolver).resolve(any(), any(), any());
+    }
+
+    @Test
+    public void shouldFailWhenUserBindingEnabledAndNoUserFound() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "unknown@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        when(userResolver.resolve(any(), any(), any()))
+                .thenReturn(Single.error(new InvalidGrantException("No domain user found for token binding")));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, List.of(criterion("email", "email")));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
+                .isInstanceOf(InvalidGrantException.class)
+                .hasMessageContaining("No domain user found");
+    }
+
+    @Test
+    public void shouldFailWhenUserBindingEnabledAndMultipleUsersFound() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "shared@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        when(userResolver.resolve(any(), any(), any()))
+                .thenReturn(Single.error(new InvalidGrantException("Multiple domain users match token binding")));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, List.of(criterion("email", "email")));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
+                .isInstanceOf(InvalidGrantException.class)
+                .hasMessageContaining("Multiple domain users match");
+    }
+
+    @Test
+    public void shouldUseSyntheticUserWhenUserBindingDisabled() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        when(userResolver.resolve(any(), any(), any())).thenReturn(Single.just(Optional.empty()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        // Trusted issuer without user binding enabled
+        Domain domain = domainWithTrustedIssuer(externalIssuer, false);
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+        // Should use synthetic user (subject from token claims)
+        assertThat(result.user().getId()).isEqualTo("external-subject");
+        verify(userResolver).resolve(any(), any(), any());
+    }
+
+    @Test
+    public void shouldUseSyntheticUserWhenNotTrustedIssuerValidated() throws Exception {
+        // Default validator (not trusted issuer validated)
+        service = createService(List.of(new FixedSubjectTokenValidator()));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTokenExchange();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("subject");
+        verify(userResolver, never()).resolve(any(), any(), any());
+    }
+
+    @Test
+    public void shouldDelegateToUserResolverForElExpressionMapping() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("mail", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setUsername("john.doe");
+        domainUser.setAdditionalInformation(new HashMap<>());
+
+        when(userResolver.resolve(any(), any(), any())).thenReturn(Single.just(Optional.of(domainUser)));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, List.of(criterion("email", "{#token['mail']}")));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+        verify(userResolver).resolve(any(), any(), any());
+    }
+
+    @Test
+    public void shouldDelegateToUserResolverForSimpleClaimMapping() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setUsername("john.doe");
+        domainUser.setAdditionalInformation(new HashMap<>());
+
+        when(userResolver.resolve(any(), any(), any())).thenReturn(Single.just(Optional.of(domainUser)));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, List.of(criterion("email", "email")));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+        verify(userResolver).resolve(any(), any(), any());
+    }
+
+    @Test
+    public void shouldPropagateResolverErrorForFailedBinding() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", "john@example.com"));
+        service = createService(List.of(trustedValidator));
+
+        when(userResolver.resolve(any(), any(), any()))
+                .thenReturn(Single.error(new InvalidGrantException("Token binding: expression evaluation failed")));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTrustedIssuerBinding(externalIssuer, List.of(criterion("email", "nonexistent_claim")));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
+                .isInstanceOf(InvalidGrantException.class)
+                .hasMessageContaining("expression evaluation failed");
+    }
+
+    private TokenValidator trustedIssuerValidator(String issuer, Map<String, Object> additionalClaims) {
+        TrustedIssuer ti = new TrustedIssuer();
+        ti.setIssuer(issuer);
+        return new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                Map<String, Object> claims = new HashMap<>(additionalClaims);
+                return Single.just(ValidatedToken.builder()
+                        .subject("external-subject")
+                        .issuer(issuer)
+                        .claims(claims)
+                        .scopes(Set.of("openid"))
+                        .expiration(Date.from(Instant.now().plusSeconds(60)))
+                        .tokenType(TokenType.JWT)
+                        .trustedIssuer(ti)
+                        .build());
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.JWT;
+            }
+        };
+    }
+
+    private Domain domainWithTrustedIssuerBinding(String issuerUrl, List<UserBindingCriterion> bindingCriteria) {
+        TrustedIssuer trustedIssuer = new TrustedIssuer();
+        trustedIssuer.setIssuer(issuerUrl);
+        trustedIssuer.setKeyResolutionMethod(KeyResolutionMethod.JWKS_URL);
+        trustedIssuer.setJwksUri(issuerUrl + "/.well-known/jwks.json");
+        trustedIssuer.setUserBindingEnabled(true);
+        trustedIssuer.setUserBindingCriteria(bindingCriteria);
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(List.of(TokenType.JWT, TokenType.ACCESS_TOKEN));
+        settings.setTrustedIssuers(List.of(trustedIssuer));
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+        return domain;
+    }
+
+    private Domain domainWithTrustedIssuer(String issuerUrl, boolean bindingEnabled) {
+        TrustedIssuer trustedIssuer = new TrustedIssuer();
+        trustedIssuer.setIssuer(issuerUrl);
+        trustedIssuer.setKeyResolutionMethod(KeyResolutionMethod.JWKS_URL);
+        trustedIssuer.setJwksUri(issuerUrl + "/.well-known/jwks.json");
+        trustedIssuer.setUserBindingEnabled(bindingEnabled);
+        if (bindingEnabled) {
+            trustedIssuer.setUserBindingCriteria(List.of(criterion("email", "email")));
+        }
+
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedSubjectTokenTypes(List.of(TokenType.JWT, TokenType.ACCESS_TOKEN));
+        settings.setTrustedIssuers(List.of(trustedIssuer));
+
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        domain.setTokenExchangeSettings(settings);
+        return domain;
     }
 
     private static List<ApplicationScopeSettings> clientScopeSettings(String... scopes) {
@@ -1561,5 +1843,12 @@ public class TokenExchangeServiceImplTest {
         public String getSupportedTokenType() {
             return TokenType.ACCESS_TOKEN;
         }
+    }
+
+    private static UserBindingCriterion criterion(String attribute, String expression) {
+        var c = new UserBindingCriterion();
+        c.setAttribute(attribute);
+        c.setExpression(expression);
+        return c;
     }
 }

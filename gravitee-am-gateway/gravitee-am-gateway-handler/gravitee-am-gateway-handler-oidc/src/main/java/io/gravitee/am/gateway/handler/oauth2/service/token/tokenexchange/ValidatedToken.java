@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
+import io.gravitee.am.model.TrustedIssuer;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -95,6 +96,20 @@ public class ValidatedToken {
      * The domain/realm the token was issued for.
      */
     private final String domain;
+
+    /**
+     * The trusted issuer config used to validate this token when it was validated via an external issuer.
+     * Null when validated with the domain certificate. Used for scope mapping and user binding (EL context and criteria).
+     */
+    private final TrustedIssuer trustedIssuer;
+
+    /**
+     * Whether this token was validated via a trusted external issuer (not the domain certificate).
+     * Derived from {@link #trustedIssuer} for convenience.
+     */
+    public boolean isTrustedIssuerValidated() {
+        return trustedIssuer != null;
+    }
 
     /**
      * Get a specific claim by name.

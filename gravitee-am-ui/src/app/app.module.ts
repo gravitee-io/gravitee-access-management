@@ -488,6 +488,7 @@ import { CreateClaimComponent } from './domain/components/oauth2-settings/claims
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
+import { TrustedIssuersSectionComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-section/trusted-issuers-section.component';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
 
 @NgModule({
@@ -770,6 +771,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AddScopeComponent,
     TokensComponent,
     TokenExchangeComponent,
+    TrustedIssuersSectionComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],

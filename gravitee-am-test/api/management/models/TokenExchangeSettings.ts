@@ -26,6 +26,9 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { TrustedIssuer } from './TrustedIssuer';
+import { TrustedIssuerFromJSON, TrustedIssuerFromJSONTyped, TrustedIssuerToJSON, TrustedIssuerToJSONTyped } from './TrustedIssuer';
+
 /**
  *
  * @export
@@ -76,10 +79,10 @@ export interface TokenExchangeSettings {
   maxDelegationDepth?: number;
   /**
    *
-   * @type {boolean}
+   * @type {Array<TrustedIssuer>}
    * @memberof TokenExchangeSettings
    */
-  valid?: boolean;
+  trustedIssuers?: Array<TrustedIssuer>;
 }
 
 /**
@@ -105,7 +108,7 @@ export function TokenExchangeSettingsFromJSONTyped(json: any, ignoreDiscriminato
     allowedActorTokenTypes: json['allowedActorTokenTypes'] == null ? undefined : json['allowedActorTokenTypes'],
     allowDelegation: json['allowDelegation'] == null ? undefined : json['allowDelegation'],
     maxDelegationDepth: json['maxDelegationDepth'] == null ? undefined : json['maxDelegationDepth'],
-    valid: json['valid'] == null ? undefined : json['valid'],
+    trustedIssuers: json['trustedIssuers'] == null ? undefined : (json['trustedIssuers'] as Array<any>).map(TrustedIssuerFromJSON),
   };
 }
 
@@ -126,6 +129,6 @@ export function TokenExchangeSettingsToJSONTyped(value?: TokenExchangeSettings |
     allowedActorTokenTypes: value['allowedActorTokenTypes'],
     allowDelegation: value['allowDelegation'],
     maxDelegationDepth: value['maxDelegationDepth'],
-    valid: value['valid'],
+    trustedIssuers: value['trustedIssuers'] == null ? undefined : (value['trustedIssuers'] as Array<any>).map(TrustedIssuerToJSON),
   };
 }
