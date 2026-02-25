@@ -42,8 +42,4 @@ public class AgentCardFetchException extends AbstractManagementException {
         return HttpStatusCode.BAD_GATEWAY_502;
     }
 
-    @Override
-    public String getMessage() {
-        return "Failed to fetch agent card from [" + agentCardUrl + "]: " + reason;
-    }
 }
