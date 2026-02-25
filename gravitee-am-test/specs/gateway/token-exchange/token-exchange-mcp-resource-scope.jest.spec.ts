@@ -30,10 +30,10 @@ let fixture: TokenExchangeMcpFixture;
 
 beforeAll(async () => {
   fixture = await setupTokenExchangeMcpFixture({
-    domainNamePrefix: 'token-exchange-mcp-resource-scope',
+    domainNamePrefix: 'te-mcp-res-scope',
     domainDescription: 'Token exchange MCP resource scope validation',
-    appClientName: 'token-exchange-mcp-resource-scope-app',
-    mcpServerName: 'token-exchange-mcp-resource-scope-server',
+    appClientName: 'te-mcp-res-scope-app',
+    mcpServerName: 'te-mcp-res-scope-server',
     mcpToolScopes: ['openid', 'profile'],
     mcpClientScopes: [
       { scope: 'openid', defaultScope: true },
