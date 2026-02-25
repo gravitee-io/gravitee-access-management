@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.service.exception.AgentCardFetchException;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
@@ -111,7 +112,7 @@ public class AgentCardServiceImplTest {
 
         TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(IllegalStateException.class);
+        observer.assertError(AgentCardFetchException.class);
     }
 
     @Test
@@ -126,7 +127,7 @@ public class AgentCardServiceImplTest {
 
         TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(IllegalStateException.class);
+        observer.assertError(AgentCardFetchException.class);
     }
 
     @Test
@@ -140,6 +141,6 @@ public class AgentCardServiceImplTest {
 
         TestObserver<String> observer = agentCardService.fetchAgentCard(url).test();
         observer.await(2, TimeUnit.SECONDS);
-        observer.assertError(IllegalStateException.class);
+        observer.assertError(AgentCardFetchException.class);
     }
 }
