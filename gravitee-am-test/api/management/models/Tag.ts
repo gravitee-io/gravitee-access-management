@@ -34,6 +34,18 @@ import { mapValues } from '../runtime';
 export interface Tag {
   /**
    *
+   * @type {Date}
+   * @memberof Tag
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Tag
+   */
+  description?: string;
+  /**
+   *
    * @type {string}
    * @memberof Tag
    */
@@ -49,19 +61,7 @@ export interface Tag {
    * @type {string}
    * @memberof Tag
    */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Tag
-   */
   organizationId?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof Tag
-   */
-  createdAt?: Date;
   /**
    *
    * @type {Date}
@@ -86,11 +86,11 @@ export function TagFromJSONTyped(json: any, ignoreDiscriminator: boolean): Tag {
     return json;
   }
   return {
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
     organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -105,11 +105,11 @@ export function TagToJSONTyped(value?: Tag | null, ignoreDiscriminator: boolean 
   }
 
   return {
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    description: value['description'],
     id: value['id'],
     name: value['name'],
-    description: value['description'],
     organizationId: value['organizationId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

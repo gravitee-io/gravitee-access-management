@@ -37,6 +37,12 @@ export interface UpdateAuthenticationDeviceNotifier {
    * @type {string}
    * @memberof UpdateAuthenticationDeviceNotifier
    */
+  configuration: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateAuthenticationDeviceNotifier
+   */
   name: string;
   /**
    *
@@ -44,21 +50,15 @@ export interface UpdateAuthenticationDeviceNotifier {
    * @memberof UpdateAuthenticationDeviceNotifier
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateAuthenticationDeviceNotifier
-   */
-  configuration: string;
 }
 
 /**
  * Check if a given object implements the UpdateAuthenticationDeviceNotifier interface.
  */
 export function instanceOfUpdateAuthenticationDeviceNotifier(value: object): value is UpdateAuthenticationDeviceNotifier {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -74,9 +74,9 @@ export function UpdateAuthenticationDeviceNotifierFromJSONTyped(
     return json;
   }
   return {
+    configuration: json['configuration'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
   };
 }
 
@@ -93,8 +93,8 @@ export function UpdateAuthenticationDeviceNotifierToJSONTyped(
   }
 
   return {
+    configuration: value['configuration'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
   };
 }

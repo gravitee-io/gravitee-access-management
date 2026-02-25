@@ -37,24 +37,6 @@ export interface NewIdentityProvider {
    * @type {string}
    * @memberof NewIdentityProvider
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewIdentityProvider
-   */
-  type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewIdentityProvider
-   */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewIdentityProvider
-   */
   configuration: string;
   /**
    *
@@ -68,15 +50,33 @@ export interface NewIdentityProvider {
    * @memberof NewIdentityProvider
    */
   external?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof NewIdentityProvider
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewIdentityProvider
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewIdentityProvider
+   */
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewIdentityProvider interface.
  */
 export function instanceOfNewIdentityProvider(value: object): value is NewIdentityProvider {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -89,12 +89,12 @@ export function NewIdentityProviderFromJSONTyped(json: any, ignoreDiscriminator:
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'],
-    name: json['name'],
     configuration: json['configuration'],
     domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
     external: json['external'] == null ? undefined : json['external'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -108,11 +108,11 @@ export function NewIdentityProviderToJSONTyped(value?: NewIdentityProvider | nul
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    name: value['name'],
     configuration: value['configuration'],
     domainWhitelist: value['domainWhitelist'],
     external: value['external'],
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
   };
 }

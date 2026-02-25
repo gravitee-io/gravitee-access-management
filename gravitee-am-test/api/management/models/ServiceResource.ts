@@ -37,19 +37,19 @@ export interface ServiceResource {
    * @type {string}
    * @memberof ServiceResource
    */
+  configuration?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof ServiceResource
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof ServiceResource
+   */
   id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ServiceResource
-   */
-  referenceType?: ServiceResourceReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof ServiceResource
-   */
-  referenceId?: string;
   /**
    *
    * @type {string}
@@ -61,19 +61,19 @@ export interface ServiceResource {
    * @type {string}
    * @memberof ServiceResource
    */
-  type?: string;
+  referenceId?: string;
   /**
    *
    * @type {string}
    * @memberof ServiceResource
    */
-  configuration?: string;
+  referenceType?: ServiceResourceReferenceTypeEnum;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof ServiceResource
    */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
@@ -93,7 +93,7 @@ export const ServiceResourceReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type ServiceResourceReferenceTypeEnum = typeof ServiceResourceReferenceTypeEnum[keyof typeof ServiceResourceReferenceTypeEnum];
+export type ServiceResourceReferenceTypeEnum = (typeof ServiceResourceReferenceTypeEnum)[keyof typeof ServiceResourceReferenceTypeEnum];
 
 /**
  * Check if a given object implements the ServiceResource interface.
@@ -111,13 +111,13 @@ export function ServiceResourceFromJSONTyped(json: any, ignoreDiscriminator: boo
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
     configuration: json['configuration'] == null ? undefined : json['configuration'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -132,13 +132,13 @@ export function ServiceResourceToJSONTyped(value?: ServiceResource | null, ignor
   }
 
   return {
-    id: value['id'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    name: value['name'],
-    type: value['type'],
     configuration: value['configuration'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    id: value['id'],
+    name: value['name'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

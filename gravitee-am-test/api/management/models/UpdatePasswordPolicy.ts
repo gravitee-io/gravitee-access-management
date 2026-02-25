@@ -34,22 +34,28 @@ import { mapValues } from '../runtime';
 export interface UpdatePasswordPolicy {
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof UpdatePasswordPolicy
    */
-  name: string;
+  defaultPolicy?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatePasswordPolicy
+   */
+  excludePasswordsInDictionary?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatePasswordPolicy
+   */
+  excludeUserProfileInfoInPassword?: boolean;
   /**
    *
    * @type {number}
    * @memberof UpdatePasswordPolicy
    */
-  minLength?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof UpdatePasswordPolicy
-   */
-  maxLength?: number;
+  expiryDuration?: number;
   /**
    *
    * @type {boolean}
@@ -76,28 +82,22 @@ export interface UpdatePasswordPolicy {
   maxConsecutiveLetters?: number;
   /**
    *
-   * @type {boolean}
+   * @type {number}
    * @memberof UpdatePasswordPolicy
    */
-  excludePasswordsInDictionary?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof UpdatePasswordPolicy
-   */
-  excludeUserProfileInfoInPassword?: boolean;
+  maxLength?: number;
   /**
    *
    * @type {number}
    * @memberof UpdatePasswordPolicy
    */
-  expiryDuration?: number;
+  minLength?: number;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof UpdatePasswordPolicy
    */
-  passwordHistoryEnabled?: boolean;
+  name: string;
   /**
    *
    * @type {number}
@@ -109,7 +109,7 @@ export interface UpdatePasswordPolicy {
    * @type {boolean}
    * @memberof UpdatePasswordPolicy
    */
-  defaultPolicy?: boolean;
+  passwordHistoryEnabled?: boolean;
 }
 
 /**
@@ -129,20 +129,20 @@ export function UpdatePasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator
     return json;
   }
   return {
-    name: json['name'],
-    minLength: json['minLength'] == null ? undefined : json['minLength'],
-    maxLength: json['maxLength'] == null ? undefined : json['maxLength'],
-    includeNumbers: json['includeNumbers'] == null ? undefined : json['includeNumbers'],
-    includeSpecialCharacters: json['includeSpecialCharacters'] == null ? undefined : json['includeSpecialCharacters'],
-    lettersInMixedCase: json['lettersInMixedCase'] == null ? undefined : json['lettersInMixedCase'],
-    maxConsecutiveLetters: json['maxConsecutiveLetters'] == null ? undefined : json['maxConsecutiveLetters'],
+    defaultPolicy: json['defaultPolicy'] == null ? undefined : json['defaultPolicy'],
     excludePasswordsInDictionary: json['excludePasswordsInDictionary'] == null ? undefined : json['excludePasswordsInDictionary'],
     excludeUserProfileInfoInPassword:
       json['excludeUserProfileInfoInPassword'] == null ? undefined : json['excludeUserProfileInfoInPassword'],
     expiryDuration: json['expiryDuration'] == null ? undefined : json['expiryDuration'],
-    passwordHistoryEnabled: json['passwordHistoryEnabled'] == null ? undefined : json['passwordHistoryEnabled'],
+    includeNumbers: json['includeNumbers'] == null ? undefined : json['includeNumbers'],
+    includeSpecialCharacters: json['includeSpecialCharacters'] == null ? undefined : json['includeSpecialCharacters'],
+    lettersInMixedCase: json['lettersInMixedCase'] == null ? undefined : json['lettersInMixedCase'],
+    maxConsecutiveLetters: json['maxConsecutiveLetters'] == null ? undefined : json['maxConsecutiveLetters'],
+    maxLength: json['maxLength'] == null ? undefined : json['maxLength'],
+    minLength: json['minLength'] == null ? undefined : json['minLength'],
+    name: json['name'],
     oldPasswords: json['oldPasswords'] == null ? undefined : json['oldPasswords'],
-    defaultPolicy: json['defaultPolicy'] == null ? undefined : json['defaultPolicy'],
+    passwordHistoryEnabled: json['passwordHistoryEnabled'] == null ? undefined : json['passwordHistoryEnabled'],
   };
 }
 
@@ -156,18 +156,18 @@ export function UpdatePasswordPolicyToJSONTyped(value?: UpdatePasswordPolicy | n
   }
 
   return {
-    name: value['name'],
-    minLength: value['minLength'],
-    maxLength: value['maxLength'],
+    defaultPolicy: value['defaultPolicy'],
+    excludePasswordsInDictionary: value['excludePasswordsInDictionary'],
+    excludeUserProfileInfoInPassword: value['excludeUserProfileInfoInPassword'],
+    expiryDuration: value['expiryDuration'],
     includeNumbers: value['includeNumbers'],
     includeSpecialCharacters: value['includeSpecialCharacters'],
     lettersInMixedCase: value['lettersInMixedCase'],
     maxConsecutiveLetters: value['maxConsecutiveLetters'],
-    excludePasswordsInDictionary: value['excludePasswordsInDictionary'],
-    excludeUserProfileInfoInPassword: value['excludeUserProfileInfoInPassword'],
-    expiryDuration: value['expiryDuration'],
-    passwordHistoryEnabled: value['passwordHistoryEnabled'],
+    maxLength: value['maxLength'],
+    minLength: value['minLength'],
+    name: value['name'],
     oldPasswords: value['oldPasswords'],
-    defaultPolicy: value['defaultPolicy'],
+    passwordHistoryEnabled: value['passwordHistoryEnabled'],
   };
 }

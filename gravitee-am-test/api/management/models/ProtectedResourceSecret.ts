@@ -37,18 +37,6 @@ export interface ProtectedResourceSecret {
    * @type {string}
    * @memberof ProtectedResourceSecret
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ProtectedResourceSecret
-   */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ProtectedResourceSecret
-   */
   clientId?: string;
   /**
    *
@@ -56,6 +44,18 @@ export interface ProtectedResourceSecret {
    * @memberof ProtectedResourceSecret
    */
   clientSecret?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProtectedResourceSecret
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProtectedResourceSecret
+   */
+  name?: string;
 }
 
 /**
@@ -74,10 +74,10 @@ export function ProtectedResourceSecretFromJSONTyped(json: any, ignoreDiscrimina
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
   };
 }
 
@@ -91,9 +91,9 @@ export function ProtectedResourceSecretToJSONTyped(value?: ProtectedResourceSecr
   }
 
   return {
-    id: value['id'],
-    name: value['name'],
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
+    id: value['id'],
+    name: value['name'],
   };
 }

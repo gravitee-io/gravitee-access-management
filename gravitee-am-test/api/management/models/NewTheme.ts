@@ -37,6 +37,18 @@ export interface NewTheme {
    * @type {string}
    * @memberof NewTheme
    */
+  css?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewTheme
+   */
+  faviconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewTheme
+   */
   logoUrl?: string;
   /**
    *
@@ -49,19 +61,7 @@ export interface NewTheme {
    * @type {string}
    * @memberof NewTheme
    */
-  faviconUrl?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewTheme
-   */
   primaryButtonColorHex?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewTheme
-   */
-  secondaryButtonColorHex?: string;
   /**
    *
    * @type {string}
@@ -73,13 +73,13 @@ export interface NewTheme {
    * @type {string}
    * @memberof NewTheme
    */
-  secondaryTextColorHex?: string;
+  secondaryButtonColorHex?: string;
   /**
    *
    * @type {string}
    * @memberof NewTheme
    */
-  css?: string;
+  secondaryTextColorHex?: string;
 }
 
 /**
@@ -98,14 +98,14 @@ export function NewThemeFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
+    css: json['css'] == null ? undefined : json['css'],
+    faviconUrl: json['faviconUrl'] == null ? undefined : json['faviconUrl'],
     logoUrl: json['logoUrl'] == null ? undefined : json['logoUrl'],
     logoWidth: json['logoWidth'] == null ? undefined : json['logoWidth'],
-    faviconUrl: json['faviconUrl'] == null ? undefined : json['faviconUrl'],
     primaryButtonColorHex: json['primaryButtonColorHex'] == null ? undefined : json['primaryButtonColorHex'],
-    secondaryButtonColorHex: json['secondaryButtonColorHex'] == null ? undefined : json['secondaryButtonColorHex'],
     primaryTextColorHex: json['primaryTextColorHex'] == null ? undefined : json['primaryTextColorHex'],
+    secondaryButtonColorHex: json['secondaryButtonColorHex'] == null ? undefined : json['secondaryButtonColorHex'],
     secondaryTextColorHex: json['secondaryTextColorHex'] == null ? undefined : json['secondaryTextColorHex'],
-    css: json['css'] == null ? undefined : json['css'],
   };
 }
 
@@ -119,13 +119,13 @@ export function NewThemeToJSONTyped(value?: NewTheme | null, ignoreDiscriminator
   }
 
   return {
+    css: value['css'],
+    faviconUrl: value['faviconUrl'],
     logoUrl: value['logoUrl'],
     logoWidth: value['logoWidth'],
-    faviconUrl: value['faviconUrl'],
     primaryButtonColorHex: value['primaryButtonColorHex'],
-    secondaryButtonColorHex: value['secondaryButtonColorHex'],
     primaryTextColorHex: value['primaryTextColorHex'],
+    secondaryButtonColorHex: value['secondaryButtonColorHex'],
     secondaryTextColorHex: value['secondaryTextColorHex'],
-    css: value['css'],
   };
 }

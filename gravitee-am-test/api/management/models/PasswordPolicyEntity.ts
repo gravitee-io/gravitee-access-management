@@ -40,10 +40,10 @@ export interface PasswordPolicyEntity {
   id?: string;
   /**
    *
-   * @type {string}
+   * @type {Array<string>}
    * @memberof PasswordPolicyEntity
    */
-  name?: string;
+  idpsNames?: Array<string>;
   /**
    *
    * @type {boolean}
@@ -52,10 +52,10 @@ export interface PasswordPolicyEntity {
   isDefault?: boolean;
   /**
    *
-   * @type {Array<string>}
+   * @type {string}
    * @memberof PasswordPolicyEntity
    */
-  idpsNames?: Array<string>;
+  name?: string;
 }
 
 /**
@@ -75,9 +75,9 @@ export function PasswordPolicyEntityFromJSONTyped(json: any, ignoreDiscriminator
   }
   return {
     id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    isDefault: json['isDefault'] == null ? undefined : json['isDefault'],
     idpsNames: json['idpsNames'] == null ? undefined : json['idpsNames'],
+    isDefault: json['isDefault'] == null ? undefined : json['isDefault'],
+    name: json['name'] == null ? undefined : json['name'],
   };
 }
 
@@ -92,8 +92,8 @@ export function PasswordPolicyEntityToJSONTyped(value?: PasswordPolicyEntity | n
 
   return {
     id: value['id'],
-    name: value['name'],
-    isDefault: value['isDefault'],
     idpsNames: value['idpsNames'],
+    isDefault: value['isDefault'],
+    name: value['name'],
   };
 }

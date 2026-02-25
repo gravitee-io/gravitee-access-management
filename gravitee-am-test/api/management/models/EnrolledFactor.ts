@@ -52,25 +52,7 @@ export interface EnrolledFactor {
    * @type {string}
    * @memberof EnrolledFactor
    */
-  factorId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof EnrolledFactor
-   */
   appId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof EnrolledFactor
-   */
-  status?: EnrolledFactorStatusEnum;
-  /**
-   *
-   * @type {EnrolledFactorSecurity}
-   * @memberof EnrolledFactor
-   */
-  security?: EnrolledFactorSecurity;
   /**
    *
    * @type {EnrolledFactorChannel}
@@ -79,16 +61,34 @@ export interface EnrolledFactor {
   channel?: EnrolledFactorChannel;
   /**
    *
+   * @type {Date}
+   * @memberof EnrolledFactor
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof EnrolledFactor
+   */
+  factorId?: string;
+  /**
+   *
    * @type {boolean}
    * @memberof EnrolledFactor
    */
   primary?: boolean;
   /**
    *
-   * @type {Date}
+   * @type {EnrolledFactorSecurity}
    * @memberof EnrolledFactor
    */
-  createdAt?: Date;
+  security?: EnrolledFactorSecurity;
+  /**
+   *
+   * @type {string}
+   * @memberof EnrolledFactor
+   */
+  status?: EnrolledFactorStatusEnum;
   /**
    *
    * @type {Date}
@@ -106,7 +106,7 @@ export const EnrolledFactorStatusEnum = {
   Revoked: 'REVOKED',
   Null: 'NULL',
 } as const;
-export type EnrolledFactorStatusEnum = typeof EnrolledFactorStatusEnum[keyof typeof EnrolledFactorStatusEnum];
+export type EnrolledFactorStatusEnum = (typeof EnrolledFactorStatusEnum)[keyof typeof EnrolledFactorStatusEnum];
 
 /**
  * Check if a given object implements the EnrolledFactor interface.
@@ -124,13 +124,13 @@ export function EnrolledFactorFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    factorId: json['factorId'] == null ? undefined : json['factorId'],
     appId: json['appId'] == null ? undefined : json['appId'],
-    status: json['status'] == null ? undefined : json['status'],
-    security: json['security'] == null ? undefined : EnrolledFactorSecurityFromJSON(json['security']),
     channel: json['channel'] == null ? undefined : EnrolledFactorChannelFromJSON(json['channel']),
-    primary: json['primary'] == null ? undefined : json['primary'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    factorId: json['factorId'] == null ? undefined : json['factorId'],
+    primary: json['primary'] == null ? undefined : json['primary'],
+    security: json['security'] == null ? undefined : EnrolledFactorSecurityFromJSON(json['security']),
+    status: json['status'] == null ? undefined : json['status'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -145,13 +145,13 @@ export function EnrolledFactorToJSONTyped(value?: EnrolledFactor | null, ignoreD
   }
 
   return {
-    factorId: value['factorId'],
     appId: value['appId'],
-    status: value['status'],
-    security: EnrolledFactorSecurityToJSON(value['security']),
     channel: EnrolledFactorChannelToJSON(value['channel']),
-    primary: value['primary'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    factorId: value['factorId'],
+    primary: value['primary'],
+    security: EnrolledFactorSecurityToJSON(value['security']),
+    status: value['status'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

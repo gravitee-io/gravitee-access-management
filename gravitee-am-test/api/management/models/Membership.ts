@@ -34,16 +34,28 @@ import { mapValues } from '../runtime';
 export interface Membership {
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof Membership
    */
-  id?: string;
+  createdAt?: Date;
   /**
    *
    * @type {string}
    * @memberof Membership
    */
   domain?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Membership
+   */
+  fromRoleMapper?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof Membership
+   */
+  id?: string;
   /**
    *
    * @type {string}
@@ -79,19 +91,7 @@ export interface Membership {
    * @type {Date}
    * @memberof Membership
    */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof Membership
-   */
   updatedAt?: Date;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Membership
-   */
-  fromRoleMapper?: boolean;
 }
 
 /**
@@ -101,7 +101,7 @@ export const MembershipMemberTypeEnum = {
   User: 'USER',
   Group: 'GROUP',
 } as const;
-export type MembershipMemberTypeEnum = typeof MembershipMemberTypeEnum[keyof typeof MembershipMemberTypeEnum];
+export type MembershipMemberTypeEnum = (typeof MembershipMemberTypeEnum)[keyof typeof MembershipMemberTypeEnum];
 
 /**
  * @export
@@ -114,7 +114,7 @@ export const MembershipReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type MembershipReferenceTypeEnum = typeof MembershipReferenceTypeEnum[keyof typeof MembershipReferenceTypeEnum];
+export type MembershipReferenceTypeEnum = (typeof MembershipReferenceTypeEnum)[keyof typeof MembershipReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Membership interface.
@@ -132,16 +132,16 @@ export function MembershipFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     domain: json['domain'] == null ? undefined : json['domain'],
+    fromRoleMapper: json['fromRoleMapper'] == null ? undefined : json['fromRoleMapper'],
+    id: json['id'] == null ? undefined : json['id'],
     memberId: json['memberId'] == null ? undefined : json['memberId'],
     memberType: json['memberType'] == null ? undefined : json['memberType'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     roleId: json['roleId'] == null ? undefined : json['roleId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    fromRoleMapper: json['fromRoleMapper'] == null ? undefined : json['fromRoleMapper'],
   };
 }
 
@@ -155,15 +155,15 @@ export function MembershipToJSONTyped(value?: Membership | null, ignoreDiscrimin
   }
 
   return {
-    id: value['id'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     domain: value['domain'],
+    fromRoleMapper: value['fromRoleMapper'],
+    id: value['id'],
     memberId: value['memberId'],
     memberType: value['memberType'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     roleId: value['roleId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    fromRoleMapper: value['fromRoleMapper'],
   };
 }

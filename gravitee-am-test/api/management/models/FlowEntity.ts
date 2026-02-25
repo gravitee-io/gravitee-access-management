@@ -40,6 +40,30 @@ export interface FlowEntity {
    * @type {string}
    * @memberof FlowEntity
    */
+  condition?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof FlowEntity
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof FlowEntity
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof FlowEntity
+   */
+  icon?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FlowEntity
+   */
   id?: string;
   /**
    *
@@ -52,43 +76,19 @@ export interface FlowEntity {
    * @type {Array<Step>}
    * @memberof FlowEntity
    */
-  pre?: Array<Step>;
+  post?: Array<Step>;
   /**
    *
    * @type {Array<Step>}
    * @memberof FlowEntity
    */
-  post?: Array<Step>;
-  /**
-   *
-   * @type {boolean}
-   * @memberof FlowEntity
-   */
-  enabled?: boolean;
+  pre?: Array<Step>;
   /**
    *
    * @type {string}
    * @memberof FlowEntity
    */
   type?: FlowEntityTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof FlowEntity
-   */
-  condition?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof FlowEntity
-   */
-  icon?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof FlowEntity
-   */
-  createdAt?: Date;
   /**
    *
    * @type {Date}
@@ -114,7 +114,7 @@ export const FlowEntityTypeEnum = {
   MfaChallenge: 'MFA_CHALLENGE',
   MfaEnrollment: 'MFA_ENROLLMENT',
 } as const;
-export type FlowEntityTypeEnum = typeof FlowEntityTypeEnum[keyof typeof FlowEntityTypeEnum];
+export type FlowEntityTypeEnum = (typeof FlowEntityTypeEnum)[keyof typeof FlowEntityTypeEnum];
 
 /**
  * Check if a given object implements the FlowEntity interface.
@@ -132,15 +132,15 @@ export function FlowEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
+    condition: json['condition'] == null ? undefined : json['condition'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    icon: json['icon'] == null ? undefined : json['icon'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    pre: json['pre'] == null ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
     post: json['post'] == null ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    pre: json['pre'] == null ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
     type: json['type'] == null ? undefined : json['type'],
-    condition: json['condition'] == null ? undefined : json['condition'],
-    icon: json['icon'] == null ? undefined : json['icon'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -155,15 +155,15 @@ export function FlowEntityToJSONTyped(value?: FlowEntity | null, ignoreDiscrimin
   }
 
   return {
+    condition: value['condition'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    enabled: value['enabled'],
+    icon: value['icon'],
     id: value['id'],
     name: value['name'],
-    pre: value['pre'] == null ? undefined : (value['pre'] as Array<any>).map(StepToJSON),
     post: value['post'] == null ? undefined : (value['post'] as Array<any>).map(StepToJSON),
-    enabled: value['enabled'],
+    pre: value['pre'] == null ? undefined : (value['pre'] as Array<any>).map(StepToJSON),
     type: value['type'],
-    condition: value['condition'],
-    icon: value['icon'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

@@ -37,6 +37,12 @@ export interface ScopeEntity {
    * @type {string}
    * @memberof ScopeEntity
    */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScopeEntity
+   */
   id?: string;
   /**
    *
@@ -50,12 +56,6 @@ export interface ScopeEntity {
    * @memberof ScopeEntity
    */
   name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ScopeEntity
-   */
-  description?: string;
 }
 
 /**
@@ -74,10 +74,10 @@ export function ScopeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
+    description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     key: json['key'] == null ? undefined : json['key'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
   };
 }
 
@@ -91,9 +91,9 @@ export function ScopeEntityToJSONTyped(value?: ScopeEntity | null, ignoreDiscrim
   }
 
   return {
+    description: value['description'],
     id: value['id'],
     key: value['key'],
     name: value['name'],
-    description: value['description'],
   };
 }

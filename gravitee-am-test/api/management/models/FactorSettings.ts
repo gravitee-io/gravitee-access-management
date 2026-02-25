@@ -42,16 +42,16 @@ import {
 export interface FactorSettings {
   /**
    *
-   * @type {string}
-   * @memberof FactorSettings
-   */
-  defaultFactorId?: string;
-  /**
-   *
    * @type {Array<ApplicationFactorSettings>}
    * @memberof FactorSettings
    */
   applicationFactors?: Array<ApplicationFactorSettings>;
+  /**
+   *
+   * @type {string}
+   * @memberof FactorSettings
+   */
+  defaultFactorId?: string;
 }
 
 /**
@@ -70,9 +70,9 @@ export function FactorSettingsFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    defaultFactorId: json['defaultFactorId'] == null ? undefined : json['defaultFactorId'],
     applicationFactors:
       json['applicationFactors'] == null ? undefined : (json['applicationFactors'] as Array<any>).map(ApplicationFactorSettingsFromJSON),
+    defaultFactorId: json['defaultFactorId'] == null ? undefined : json['defaultFactorId'],
   };
 }
 
@@ -86,8 +86,8 @@ export function FactorSettingsToJSONTyped(value?: FactorSettings | null, ignoreD
   }
 
   return {
-    defaultFactorId: value['defaultFactorId'],
     applicationFactors:
       value['applicationFactors'] == null ? undefined : (value['applicationFactors'] as Array<any>).map(ApplicationFactorSettingsToJSON),
+    defaultFactorId: value['defaultFactorId'],
   };
 }

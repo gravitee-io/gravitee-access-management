@@ -37,7 +37,79 @@ export interface Credential {
    * @type {string}
    * @memberof Credential
    */
+  aaguid?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof Credential
+   */
+  accessedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
+  attestationStatement?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
+  attestationStatementFormat?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof Credential
+   */
+  counter?: number;
+  /**
+   *
+   * @type {Date}
+   * @memberof Credential
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
+  credentialId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
+  deviceName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
   id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
+  ipAddress?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof Credential
+   */
+  lastCheckedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
+  publicKey?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Credential
+   */
+  referenceId?: string;
   /**
    *
    * @type {string}
@@ -46,10 +118,16 @@ export interface Credential {
   referenceType?: CredentialReferenceTypeEnum;
   /**
    *
+   * @type {Date}
+   * @memberof Credential
+   */
+  updatedAt?: Date;
+  /**
+   *
    * @type {string}
    * @memberof Credential
    */
-  referenceId?: string;
+  userAgent?: string;
   /**
    *
    * @type {string}
@@ -62,84 +140,6 @@ export interface Credential {
    * @memberof Credential
    */
   username?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  credentialId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  publicKey?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof Credential
-   */
-  counter?: number;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  aaguid?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  attestationStatementFormat?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  attestationStatement?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  ipAddress?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  userAgent?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Credential
-   */
-  deviceName?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof Credential
-   */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof Credential
-   */
-  updatedAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof Credential
-   */
-  accessedAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof Credential
-   */
-  lastCheckedAt?: Date;
 }
 
 /**
@@ -153,7 +153,7 @@ export const CredentialReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type CredentialReferenceTypeEnum = typeof CredentialReferenceTypeEnum[keyof typeof CredentialReferenceTypeEnum];
+export type CredentialReferenceTypeEnum = (typeof CredentialReferenceTypeEnum)[keyof typeof CredentialReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Credential interface.
@@ -171,24 +171,24 @@ export function CredentialFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
+    aaguid: json['aaguid'] == null ? undefined : json['aaguid'],
+    accessedAt: json['accessedAt'] == null ? undefined : new Date(json['accessedAt']),
+    attestationStatement: json['attestationStatement'] == null ? undefined : json['attestationStatement'],
+    attestationStatementFormat: json['attestationStatementFormat'] == null ? undefined : json['attestationStatementFormat'],
+    counter: json['counter'] == null ? undefined : json['counter'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    credentialId: json['credentialId'] == null ? undefined : json['credentialId'],
+    deviceName: json['deviceName'] == null ? undefined : json['deviceName'],
     id: json['id'] == null ? undefined : json['id'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
+    lastCheckedAt: json['lastCheckedAt'] == null ? undefined : new Date(json['lastCheckedAt']),
+    publicKey: json['publicKey'] == null ? undefined : json['publicKey'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
     userId: json['userId'] == null ? undefined : json['userId'],
     username: json['username'] == null ? undefined : json['username'],
-    credentialId: json['credentialId'] == null ? undefined : json['credentialId'],
-    publicKey: json['publicKey'] == null ? undefined : json['publicKey'],
-    counter: json['counter'] == null ? undefined : json['counter'],
-    aaguid: json['aaguid'] == null ? undefined : json['aaguid'],
-    attestationStatementFormat: json['attestationStatementFormat'] == null ? undefined : json['attestationStatementFormat'],
-    attestationStatement: json['attestationStatement'] == null ? undefined : json['attestationStatement'],
-    ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
-    userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
-    deviceName: json['deviceName'] == null ? undefined : json['deviceName'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    accessedAt: json['accessedAt'] == null ? undefined : new Date(json['accessedAt']),
-    lastCheckedAt: json['lastCheckedAt'] == null ? undefined : new Date(json['lastCheckedAt']),
   };
 }
 
@@ -202,23 +202,23 @@ export function CredentialToJSONTyped(value?: Credential | null, ignoreDiscrimin
   }
 
   return {
+    aaguid: value['aaguid'],
+    accessedAt: value['accessedAt'] == null ? value['accessedAt'] : value['accessedAt'].toISOString(),
+    attestationStatement: value['attestationStatement'],
+    attestationStatementFormat: value['attestationStatementFormat'],
+    counter: value['counter'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    credentialId: value['credentialId'],
+    deviceName: value['deviceName'],
     id: value['id'],
-    referenceType: value['referenceType'],
+    ipAddress: value['ipAddress'],
+    lastCheckedAt: value['lastCheckedAt'] == null ? value['lastCheckedAt'] : value['lastCheckedAt'].toISOString(),
+    publicKey: value['publicKey'],
     referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    userAgent: value['userAgent'],
     userId: value['userId'],
     username: value['username'],
-    credentialId: value['credentialId'],
-    publicKey: value['publicKey'],
-    counter: value['counter'],
-    aaguid: value['aaguid'],
-    attestationStatementFormat: value['attestationStatementFormat'],
-    attestationStatement: value['attestationStatement'],
-    ipAddress: value['ipAddress'],
-    userAgent: value['userAgent'],
-    deviceName: value['deviceName'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    accessedAt: value['accessedAt'] == null ? value['accessedAt'] : value['accessedAt'].toISOString(),
-    lastCheckedAt: value['lastCheckedAt'] == null ? value['lastCheckedAt'] : value['lastCheckedAt'].toISOString(),
   };
 }

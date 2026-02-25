@@ -34,10 +34,10 @@ import { mapValues } from '../runtime';
 export interface Attribute {
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof Attribute
    */
-  value?: string;
+  primary?: boolean;
   /**
    *
    * @type {string}
@@ -46,10 +46,10 @@ export interface Attribute {
   type?: string;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof Attribute
    */
-  primary?: boolean;
+  value?: string;
 }
 
 /**
@@ -68,9 +68,9 @@ export function AttributeFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return json;
   }
   return {
-    value: json['value'] == null ? undefined : json['value'],
-    type: json['type'] == null ? undefined : json['type'],
     primary: json['primary'] == null ? undefined : json['primary'],
+    type: json['type'] == null ? undefined : json['type'],
+    value: json['value'] == null ? undefined : json['value'],
   };
 }
 
@@ -84,8 +84,8 @@ export function AttributeToJSONTyped(value?: Attribute | null, ignoreDiscriminat
   }
 
   return {
-    value: value['value'],
-    type: value['type'],
     primary: value['primary'],
+    type: value['type'],
+    value: value['value'],
   };
 }

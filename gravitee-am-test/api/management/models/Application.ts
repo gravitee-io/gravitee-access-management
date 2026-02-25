@@ -68,19 +68,13 @@ export interface Application {
    * @type {string}
    * @memberof Application
    */
-  id?: string;
+  certificate?: string;
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof Application
    */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Application
-   */
-  type?: ApplicationTypeEnum;
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -101,12 +95,6 @@ export interface Application {
   enabled?: boolean;
   /**
    *
-   * @type {boolean}
-   * @memberof Application
-   */
-  template?: boolean;
-  /**
-   *
    * @type {Set<string>}
    * @memberof Application
    */
@@ -116,19 +104,7 @@ export interface Application {
    * @type {string}
    * @memberof Application
    */
-  certificate?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof Application
-   */
-  metadata?: { [key: string]: any };
-  /**
-   *
-   * @type {ApplicationSettings}
-   * @memberof Application
-   */
-  settings?: ApplicationSettings;
+  id?: string;
   /**
    *
    * @type {Set<ApplicationIdentityProvider>}
@@ -137,16 +113,22 @@ export interface Application {
   identityProviders?: Set<ApplicationIdentityProvider>;
   /**
    *
-   * @type {Date}
+   * @type {{ [key: string]: any; }}
    * @memberof Application
    */
-  createdAt?: Date;
+  metadata?: { [key: string]: any };
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof Application
    */
-  updatedAt?: Date;
+  name?: string;
+  /**
+   *
+   * @type {PasswordSettings}
+   * @memberof Application
+   */
+  passwordSettings?: PasswordSettings;
   /**
    *
    * @type {Array<ApplicationSecretSettings>}
@@ -161,10 +143,28 @@ export interface Application {
   secrets?: Array<ClientSecret>;
   /**
    *
-   * @type {PasswordSettings}
+   * @type {ApplicationSettings}
    * @memberof Application
    */
-  passwordSettings?: PasswordSettings;
+  settings?: ApplicationSettings;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Application
+   */
+  template?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof Application
+   */
+  type?: ApplicationTypeEnum;
+  /**
+   *
+   * @type {Date}
+   * @memberof Application
+   */
+  updatedAt?: Date;
 }
 
 /**
@@ -178,7 +178,7 @@ export const ApplicationTypeEnum = {
   ResourceServer: 'RESOURCE_SERVER',
   Agent: 'AGENT',
 } as const;
-export type ApplicationTypeEnum = typeof ApplicationTypeEnum[keyof typeof ApplicationTypeEnum];
+export type ApplicationTypeEnum = (typeof ApplicationTypeEnum)[keyof typeof ApplicationTypeEnum];
 
 /**
  * Check if a given object implements the Application interface.
@@ -196,27 +196,27 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     description: json['description'] == null ? undefined : json['description'],
     domain: json['domain'] == null ? undefined : json['domain'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
-    template: json['template'] == null ? undefined : json['template'],
     factors: json['factors'] == null ? undefined : new Set(json['factors']),
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
-    metadata: json['metadata'] == null ? undefined : json['metadata'],
-    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    id: json['id'] == null ? undefined : json['id'],
     identityProviders:
       json['identityProviders'] == null
         ? undefined
         : new Set((json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON)),
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    metadata: json['metadata'] == null ? undefined : json['metadata'],
+    name: json['name'] == null ? undefined : json['name'],
+    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
     secretSettings:
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     secrets: json['secrets'] == null ? undefined : (json['secrets'] as Array<any>).map(ClientSecretFromJSON),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
+    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    template: json['template'] == null ? undefined : json['template'],
+    type: json['type'] == null ? undefined : json['type'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
@@ -230,26 +230,26 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
   }
 
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
+    certificate: value['certificate'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     description: value['description'],
     domain: value['domain'],
     enabled: value['enabled'],
-    template: value['template'],
     factors: value['factors'] == null ? undefined : Array.from(value['factors'] as Set<any>),
-    certificate: value['certificate'],
-    metadata: value['metadata'],
-    settings: ApplicationSettingsToJSON(value['settings']),
+    id: value['id'],
     identityProviders:
       value['identityProviders'] == null
         ? undefined
         : Array.from(value['identityProviders'] as Set<any>).map(ApplicationIdentityProviderToJSON),
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    metadata: value['metadata'],
+    name: value['name'],
+    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
     secretSettings:
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     secrets: value['secrets'] == null ? undefined : (value['secrets'] as Array<any>).map(ClientSecretToJSON),
-    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
+    settings: ApplicationSettingsToJSON(value['settings']),
+    template: value['template'],
+    type: value['type'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

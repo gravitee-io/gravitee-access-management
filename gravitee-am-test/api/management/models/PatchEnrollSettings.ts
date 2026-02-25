@@ -40,18 +40,6 @@ export interface PatchEnrollSettings {
   active?: boolean;
   /**
    *
-   * @type {boolean}
-   * @memberof PatchEnrollSettings
-   */
-  forceEnrollment?: boolean;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchEnrollSettings
-   */
-  skipTimeSeconds?: number;
-  /**
-   *
    * @type {string}
    * @memberof PatchEnrollSettings
    */
@@ -70,6 +58,18 @@ export interface PatchEnrollSettings {
   enrollmentSkipRule?: string;
   /**
    *
+   * @type {boolean}
+   * @memberof PatchEnrollSettings
+   */
+  forceEnrollment?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchEnrollSettings
+   */
+  skipTimeSeconds?: number;
+  /**
+   *
    * @type {string}
    * @memberof PatchEnrollSettings
    */
@@ -84,7 +84,7 @@ export const PatchEnrollSettingsTypeEnum = {
   Required: 'REQUIRED',
   Conditional: 'CONDITIONAL',
 } as const;
-export type PatchEnrollSettingsTypeEnum = typeof PatchEnrollSettingsTypeEnum[keyof typeof PatchEnrollSettingsTypeEnum];
+export type PatchEnrollSettingsTypeEnum = (typeof PatchEnrollSettingsTypeEnum)[keyof typeof PatchEnrollSettingsTypeEnum];
 
 /**
  * Check if a given object implements the PatchEnrollSettings interface.
@@ -103,11 +103,11 @@ export function PatchEnrollSettingsFromJSONTyped(json: any, ignoreDiscriminator:
   }
   return {
     active: json['active'] == null ? undefined : json['active'],
-    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
-    skipTimeSeconds: json['skipTimeSeconds'] == null ? undefined : json['skipTimeSeconds'],
     enrollmentRule: json['enrollmentRule'] == null ? undefined : json['enrollmentRule'],
     enrollmentSkipActive: json['enrollmentSkipActive'] == null ? undefined : json['enrollmentSkipActive'],
     enrollmentSkipRule: json['enrollmentSkipRule'] == null ? undefined : json['enrollmentSkipRule'],
+    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
+    skipTimeSeconds: json['skipTimeSeconds'] == null ? undefined : json['skipTimeSeconds'],
     type: json['type'] == null ? undefined : json['type'],
   };
 }
@@ -123,11 +123,11 @@ export function PatchEnrollSettingsToJSONTyped(value?: PatchEnrollSettings | nul
 
   return {
     active: value['active'],
-    forceEnrollment: value['forceEnrollment'],
-    skipTimeSeconds: value['skipTimeSeconds'],
     enrollmentRule: value['enrollmentRule'],
     enrollmentSkipActive: value['enrollmentSkipActive'],
     enrollmentSkipRule: value['enrollmentSkipRule'],
+    forceEnrollment: value['forceEnrollment'],
+    skipTimeSeconds: value['skipTimeSeconds'],
     type: value['type'],
   };
 }

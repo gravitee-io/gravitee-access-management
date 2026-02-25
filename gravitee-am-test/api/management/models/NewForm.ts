@@ -34,6 +34,18 @@ import { mapValues } from '../runtime';
 export interface NewForm {
   /**
    *
+   * @type {string}
+   * @memberof NewForm
+   */
+  assets?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewForm
+   */
+  content: string;
+  /**
+   *
    * @type {boolean}
    * @memberof NewForm
    */
@@ -44,18 +56,6 @@ export interface NewForm {
    * @memberof NewForm
    */
   template: NewFormTemplateEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof NewForm
-   */
-  content: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewForm
-   */
-  assets?: string;
 }
 
 /**
@@ -85,14 +85,14 @@ export const NewFormTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type NewFormTemplateEnum = typeof NewFormTemplateEnum[keyof typeof NewFormTemplateEnum];
+export type NewFormTemplateEnum = (typeof NewFormTemplateEnum)[keyof typeof NewFormTemplateEnum];
 
 /**
  * Check if a given object implements the NewForm interface.
  */
 export function instanceOfNewForm(value: object): value is NewForm {
-  if (!('template' in value) || value['template'] === undefined) return false;
   if (!('content' in value) || value['content'] === undefined) return false;
+  if (!('template' in value) || value['template'] === undefined) return false;
   return true;
 }
 
@@ -105,10 +105,10 @@ export function NewFormFromJSONTyped(json: any, ignoreDiscriminator: boolean): N
     return json;
   }
   return {
+    assets: json['assets'] == null ? undefined : json['assets'],
+    content: json['content'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     template: json['template'],
-    content: json['content'],
-    assets: json['assets'] == null ? undefined : json['assets'],
   };
 }
 
@@ -122,9 +122,9 @@ export function NewFormToJSONTyped(value?: NewForm | null, ignoreDiscriminator: 
   }
 
   return {
+    assets: value['assets'],
+    content: value['content'],
     enabled: value['enabled'],
     template: value['template'],
-    content: value['content'],
-    assets: value['assets'],
   };
 }

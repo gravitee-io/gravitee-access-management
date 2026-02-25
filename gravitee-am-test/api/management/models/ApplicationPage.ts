@@ -42,16 +42,16 @@ import {
 export interface ApplicationPage {
   /**
    *
-   * @type {Array<FilteredApplication>}
-   * @memberof ApplicationPage
-   */
-  data?: Array<FilteredApplication>;
-  /**
-   *
    * @type {number}
    * @memberof ApplicationPage
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<FilteredApplication>}
+   * @memberof ApplicationPage
+   */
+  data?: Array<FilteredApplication>;
   /**
    *
    * @type {number}
@@ -76,8 +76,8 @@ export function ApplicationPageFromJSONTyped(json: any, ignoreDiscriminator: boo
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(FilteredApplicationFromJSON),
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(FilteredApplicationFromJSON),
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -92,8 +92,8 @@ export function ApplicationPageToJSONTyped(value?: ApplicationPage | null, ignor
   }
 
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(FilteredApplicationToJSON),
     currentPage: value['currentPage'],
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(FilteredApplicationToJSON),
     totalCount: value['totalCount'],
   };
 }

@@ -37,13 +37,19 @@ export interface Role {
    * @type {string}
    * @memberof Role
    */
-  id?: string;
+  assignableType?: RoleAssignableTypeEnum;
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof Role
    */
-  name?: string;
+  createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Role
+   */
+  defaultRole?: boolean;
   /**
    *
    * @type {string}
@@ -55,7 +61,31 @@ export interface Role {
    * @type {string}
    * @memberof Role
    */
-  referenceType?: RoleReferenceTypeEnum;
+  id?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Role
+   */
+  internalOnly?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof Role
+   */
+  name?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof Role
+   */
+  oauthScopes?: Array<string>;
+  /**
+   *
+   * @type {{ [key: string]: Set<string>; }}
+   * @memberof Role
+   */
+  permissionAcls?: { [key: string]: Set<InnerEnum> };
   /**
    *
    * @type {string}
@@ -67,7 +97,7 @@ export interface Role {
    * @type {string}
    * @memberof Role
    */
-  assignableType?: RoleAssignableTypeEnum;
+  referenceType?: RoleReferenceTypeEnum;
   /**
    *
    * @type {boolean}
@@ -76,54 +106,11 @@ export interface Role {
   system?: boolean;
   /**
    *
-   * @type {boolean}
-   * @memberof Role
-   */
-  defaultRole?: boolean;
-  /**
-   *
-   * @type {{ [key: string]: Set<string>; }}
-   * @memberof Role
-   */
-  permissionAcls?: { [key: string]: Set<InnerEnum> };
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof Role
-   */
-  oauthScopes?: Array<string>;
-  /**
-   *
-   * @type {Date}
-   * @memberof Role
-   */
-  createdAt?: Date;
-  /**
-   *
    * @type {Date}
    * @memberof Role
    */
   updatedAt?: Date;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Role
-   */
-  internalOnly?: boolean;
 }
-
-/**
- * @export
- */
-export const RoleReferenceTypeEnum = {
-  Platform: 'PLATFORM',
-  Domain: 'DOMAIN',
-  Application: 'APPLICATION',
-  Organization: 'ORGANIZATION',
-  Environment: 'ENVIRONMENT',
-  ProtectedResource: 'PROTECTED_RESOURCE',
-} as const;
-export type RoleReferenceTypeEnum = typeof RoleReferenceTypeEnum[keyof typeof RoleReferenceTypeEnum];
 
 /**
  * @export
@@ -136,7 +123,7 @@ export const RoleAssignableTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type RoleAssignableTypeEnum = typeof RoleAssignableTypeEnum[keyof typeof RoleAssignableTypeEnum];
+export type RoleAssignableTypeEnum = (typeof RoleAssignableTypeEnum)[keyof typeof RoleAssignableTypeEnum];
 
 /**
  * @export
@@ -148,7 +135,20 @@ export const RolePermissionAclsEnum = {
   Update: 'UPDATE',
   Delete: 'DELETE',
 } as const;
-export type RolePermissionAclsEnum = typeof RolePermissionAclsEnum[keyof typeof RolePermissionAclsEnum];
+export type RolePermissionAclsEnum = (typeof RolePermissionAclsEnum)[keyof typeof RolePermissionAclsEnum];
+
+/**
+ * @export
+ */
+export const RoleReferenceTypeEnum = {
+  Platform: 'PLATFORM',
+  Domain: 'DOMAIN',
+  Application: 'APPLICATION',
+  Organization: 'ORGANIZATION',
+  Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
+} as const;
+export type RoleReferenceTypeEnum = (typeof RoleReferenceTypeEnum)[keyof typeof RoleReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Role interface.
@@ -166,19 +166,19 @@ export function RoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): Role
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
-    system: json['system'] == null ? undefined : json['system'],
-    defaultRole: json['defaultRole'] == null ? undefined : json['defaultRole'],
-    permissionAcls: json['permissionAcls'] == null ? undefined : json['permissionAcls'],
-    oauthScopes: json['oauthScopes'] == null ? undefined : json['oauthScopes'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    defaultRole: json['defaultRole'] == null ? undefined : json['defaultRole'],
+    description: json['description'] == null ? undefined : json['description'],
+    id: json['id'] == null ? undefined : json['id'],
     internalOnly: json['internalOnly'] == null ? undefined : json['internalOnly'],
+    name: json['name'] == null ? undefined : json['name'],
+    oauthScopes: json['oauthScopes'] == null ? undefined : json['oauthScopes'],
+    permissionAcls: json['permissionAcls'] == null ? undefined : json['permissionAcls'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    system: json['system'] == null ? undefined : json['system'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
@@ -192,18 +192,18 @@ export function RoleToJSONTyped(value?: Role | null, ignoreDiscriminator: boolea
   }
 
   return {
-    id: value['id'],
-    name: value['name'],
-    description: value['description'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
     assignableType: value['assignableType'],
-    system: value['system'],
-    defaultRole: value['defaultRole'],
-    permissionAcls: value['permissionAcls'],
-    oauthScopes: value['oauthScopes'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    defaultRole: value['defaultRole'],
+    description: value['description'],
+    id: value['id'],
     internalOnly: value['internalOnly'],
+    name: value['name'],
+    oauthScopes: value['oauthScopes'],
+    permissionAcls: value['permissionAcls'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    system: value['system'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

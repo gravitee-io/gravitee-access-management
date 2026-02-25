@@ -60,7 +60,7 @@ export const ChallengeSettingsTypeEnum = {
   Conditional: 'CONDITIONAL',
   RiskBased: 'RISK_BASED',
 } as const;
-export type ChallengeSettingsTypeEnum = typeof ChallengeSettingsTypeEnum[keyof typeof ChallengeSettingsTypeEnum];
+export type ChallengeSettingsTypeEnum = (typeof ChallengeSettingsTypeEnum)[keyof typeof ChallengeSettingsTypeEnum];
 
 /**
  * Check if a given object implements the ChallengeSettings interface.

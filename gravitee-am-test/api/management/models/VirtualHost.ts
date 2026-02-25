@@ -40,16 +40,16 @@ export interface VirtualHost {
   host?: string;
   /**
    *
-   * @type {string}
-   * @memberof VirtualHost
-   */
-  path?: string;
-  /**
-   *
    * @type {boolean}
    * @memberof VirtualHost
    */
   overrideEntrypoint?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof VirtualHost
+   */
+  path?: string;
 }
 
 /**
@@ -69,8 +69,8 @@ export function VirtualHostFromJSONTyped(json: any, ignoreDiscriminator: boolean
   }
   return {
     host: json['host'] == null ? undefined : json['host'],
-    path: json['path'] == null ? undefined : json['path'],
     overrideEntrypoint: json['overrideEntrypoint'] == null ? undefined : json['overrideEntrypoint'],
+    path: json['path'] == null ? undefined : json['path'],
   };
 }
 
@@ -85,7 +85,7 @@ export function VirtualHostToJSONTyped(value?: VirtualHost | null, ignoreDiscrim
 
   return {
     host: value['host'],
-    path: value['path'],
     overrideEntrypoint: value['overrideEntrypoint'],
+    path: value['path'],
   };
 }

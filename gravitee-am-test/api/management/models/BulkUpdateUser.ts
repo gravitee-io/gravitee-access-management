@@ -68,7 +68,7 @@ export const BulkUpdateUserActionEnum = {
   Update: 'UPDATE',
   Delete: 'DELETE',
 } as const;
-export type BulkUpdateUserActionEnum = typeof BulkUpdateUserActionEnum[keyof typeof BulkUpdateUserActionEnum];
+export type BulkUpdateUserActionEnum = (typeof BulkUpdateUserActionEnum)[keyof typeof BulkUpdateUserActionEnum];
 
 /**
  * Check if a given object implements the BulkUpdateUser interface.

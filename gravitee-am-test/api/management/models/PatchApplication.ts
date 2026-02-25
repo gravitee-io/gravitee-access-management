@@ -52,7 +52,7 @@ export interface PatchApplication {
    * @type {string}
    * @memberof PatchApplication
    */
-  name?: string;
+  certificate?: string;
   /**
    *
    * @type {string}
@@ -67,10 +67,10 @@ export interface PatchApplication {
   enabled?: boolean;
   /**
    *
-   * @type {boolean}
+   * @type {Set<string>}
    * @memberof PatchApplication
    */
-  template?: boolean;
+  factors?: Set<string>;
   /**
    *
    * @type {Set<PatchApplicationIdentityProvider>}
@@ -79,22 +79,22 @@ export interface PatchApplication {
   identityProviders?: Set<PatchApplicationIdentityProvider>;
   /**
    *
-   * @type {Set<string>}
+   * @type {{ [key: string]: any; }}
    * @memberof PatchApplication
    */
-  factors?: Set<string>;
+  metadata?: { [key: string]: any };
   /**
    *
    * @type {string}
    * @memberof PatchApplication
    */
-  certificate?: string;
+  name?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {Set<string>}
    * @memberof PatchApplication
    */
-  metadata?: { [key: string]: any };
+  requiredPermissions?: Set<PatchApplicationRequiredPermissionsEnum>;
   /**
    *
    * @type {PatchApplicationSettings}
@@ -103,10 +103,10 @@ export interface PatchApplication {
   settings?: PatchApplicationSettings;
   /**
    *
-   * @type {Set<string>}
+   * @type {boolean}
    * @memberof PatchApplication
    */
-  requiredPermissions?: Set<PatchApplicationRequiredPermissionsEnum>;
+  template?: boolean;
 }
 
 /**
@@ -183,7 +183,7 @@ export const PatchApplicationRequiredPermissionsEnum = {
   Installation: 'INSTALLATION',
 } as const;
 export type PatchApplicationRequiredPermissionsEnum =
-  typeof PatchApplicationRequiredPermissionsEnum[keyof typeof PatchApplicationRequiredPermissionsEnum];
+  (typeof PatchApplicationRequiredPermissionsEnum)[keyof typeof PatchApplicationRequiredPermissionsEnum];
 
 /**
  * Check if a given object implements the PatchApplication interface.
@@ -201,19 +201,19 @@ export function PatchApplicationFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
     description: json['description'] == null ? undefined : json['description'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
-    template: json['template'] == null ? undefined : json['template'],
+    factors: json['factors'] == null ? undefined : new Set(json['factors']),
     identityProviders:
       json['identityProviders'] == null
         ? undefined
         : new Set((json['identityProviders'] as Array<any>).map(PatchApplicationIdentityProviderFromJSON)),
-    factors: json['factors'] == null ? undefined : new Set(json['factors']),
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
-    settings: json['settings'] == null ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
+    name: json['name'] == null ? undefined : json['name'],
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    settings: json['settings'] == null ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
+    template: json['template'] == null ? undefined : json['template'],
   };
 }
 
@@ -227,18 +227,18 @@ export function PatchApplicationToJSONTyped(value?: PatchApplication | null, ign
   }
 
   return {
-    name: value['name'],
+    certificate: value['certificate'],
     description: value['description'],
     enabled: value['enabled'],
-    template: value['template'],
+    factors: value['factors'] == null ? undefined : Array.from(value['factors'] as Set<any>),
     identityProviders:
       value['identityProviders'] == null
         ? undefined
         : Array.from(value['identityProviders'] as Set<any>).map(PatchApplicationIdentityProviderToJSON),
-    factors: value['factors'] == null ? undefined : Array.from(value['factors'] as Set<any>),
-    certificate: value['certificate'],
     metadata: value['metadata'],
-    settings: PatchApplicationSettingsToJSON(value['settings']),
+    name: value['name'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    settings: PatchApplicationSettingsToJSON(value['settings']),
+    template: value['template'],
   };
 }

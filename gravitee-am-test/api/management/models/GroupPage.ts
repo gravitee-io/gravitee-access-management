@@ -37,16 +37,16 @@ import { GroupFromJSON, GroupFromJSONTyped, GroupToJSON, GroupToJSONTyped } from
 export interface GroupPage {
   /**
    *
-   * @type {Array<Group>}
-   * @memberof GroupPage
-   */
-  data?: Array<Group>;
-  /**
-   *
    * @type {number}
    * @memberof GroupPage
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<Group>}
+   * @memberof GroupPage
+   */
+  data?: Array<Group>;
   /**
    *
    * @type {number}
@@ -71,8 +71,8 @@ export function GroupPageFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(GroupFromJSON),
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(GroupFromJSON),
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -87,8 +87,8 @@ export function GroupPageToJSONTyped(value?: GroupPage | null, ignoreDiscriminat
   }
 
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(GroupToJSON),
     currentPage: value['currentPage'],
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(GroupToJSON),
     totalCount: value['totalCount'],
   };
 }

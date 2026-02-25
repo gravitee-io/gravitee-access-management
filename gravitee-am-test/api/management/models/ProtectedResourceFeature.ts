@@ -36,10 +36,10 @@ import { type McpTool, McpToolFromJSONTyped, McpToolToJSON, McpToolToJSONTyped }
 export interface ProtectedResourceFeature {
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof ProtectedResourceFeature
    */
-  key?: string;
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -51,13 +51,13 @@ export interface ProtectedResourceFeature {
    * @type {string}
    * @memberof ProtectedResourceFeature
    */
-  type?: ProtectedResourceFeatureTypeEnum;
+  key?: string;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof ProtectedResourceFeature
    */
-  createdAt?: Date;
+  type?: ProtectedResourceFeatureTypeEnum;
   /**
    *
    * @type {Date}
@@ -72,7 +72,7 @@ export interface ProtectedResourceFeature {
 export const ProtectedResourceFeatureTypeEnum = {
   McpTool: 'MCP_TOOL',
 } as const;
-export type ProtectedResourceFeatureTypeEnum = typeof ProtectedResourceFeatureTypeEnum[keyof typeof ProtectedResourceFeatureTypeEnum];
+export type ProtectedResourceFeatureTypeEnum = (typeof ProtectedResourceFeatureTypeEnum)[keyof typeof ProtectedResourceFeatureTypeEnum];
 
 /**
  * Check if a given object implements the ProtectedResourceFeature interface.
@@ -95,10 +95,10 @@ export function ProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscrimin
     }
   }
   return {
-    key: json['key'] == null ? undefined : json['key'],
-    description: json['description'] == null ? undefined : json['description'],
-    type: json['type'] == null ? undefined : json['type'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    description: json['description'] == null ? undefined : json['description'],
+    key: json['key'] == null ? undefined : json['key'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -123,10 +123,10 @@ export function ProtectedResourceFeatureToJSONTyped(value?: ProtectedResourceFea
   }
 
   return {
-    key: value['key'],
-    description: value['description'],
-    type: value['type'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    description: value['description'],
+    key: value['key'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

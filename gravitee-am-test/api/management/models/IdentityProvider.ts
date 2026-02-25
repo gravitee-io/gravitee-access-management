@@ -37,43 +37,31 @@ export interface IdentityProvider {
    * @type {string}
    * @memberof IdentityProvider
    */
-  id?: string;
+  configuration?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof IdentityProvider
+   */
+  createdAt?: Date;
   /**
    *
    * @type {string}
    * @memberof IdentityProvider
    */
-  name?: string;
+  dataPlaneId?: string;
   /**
    *
-   * @type {string}
+   * @type {Array<string>}
    * @memberof IdentityProvider
    */
-  type?: string;
+  domainWhitelist?: Array<string>;
   /**
    *
    * @type {boolean}
    * @memberof IdentityProvider
    */
-  system?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof IdentityProvider
-   */
-  configuration?: string;
-  /**
-   *
-   * @type {{ [key: string]: string; }}
-   * @memberof IdentityProvider
-   */
-  mappers?: { [key: string]: string };
-  /**
-   *
-   * @type {{ [key: string]: Array<string>; }}
-   * @memberof IdentityProvider
-   */
-  roleMapper?: { [key: string]: Array<string> };
+  external?: boolean;
   /**
    *
    * @type {{ [key: string]: Array<string>; }}
@@ -85,37 +73,19 @@ export interface IdentityProvider {
    * @type {string}
    * @memberof IdentityProvider
    */
-  referenceType?: IdentityProviderReferenceTypeEnum;
+  id?: string;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof IdentityProvider
+   */
+  mappers?: { [key: string]: string };
   /**
    *
    * @type {string}
    * @memberof IdentityProvider
    */
-  referenceId?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof IdentityProvider
-   */
-  external?: boolean;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof IdentityProvider
-   */
-  domainWhitelist?: Array<string>;
-  /**
-   *
-   * @type {Date}
-   * @memberof IdentityProvider
-   */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof IdentityProvider
-   */
-  updatedAt?: Date;
+  name?: string;
   /**
    *
    * @type {string}
@@ -127,7 +97,37 @@ export interface IdentityProvider {
    * @type {string}
    * @memberof IdentityProvider
    */
-  dataPlaneId?: string;
+  referenceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentityProvider
+   */
+  referenceType?: IdentityProviderReferenceTypeEnum;
+  /**
+   *
+   * @type {{ [key: string]: Array<string>; }}
+   * @memberof IdentityProvider
+   */
+  roleMapper?: { [key: string]: Array<string> };
+  /**
+   *
+   * @type {boolean}
+   * @memberof IdentityProvider
+   */
+  system?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentityProvider
+   */
+  type?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof IdentityProvider
+   */
+  updatedAt?: Date;
 }
 
 /**
@@ -141,7 +141,7 @@ export const IdentityProviderReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type IdentityProviderReferenceTypeEnum = typeof IdentityProviderReferenceTypeEnum[keyof typeof IdentityProviderReferenceTypeEnum];
+export type IdentityProviderReferenceTypeEnum = (typeof IdentityProviderReferenceTypeEnum)[keyof typeof IdentityProviderReferenceTypeEnum];
 
 /**
  * Check if a given object implements the IdentityProvider interface.
@@ -159,22 +159,22 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    system: json['system'] == null ? undefined : json['system'],
     configuration: json['configuration'] == null ? undefined : json['configuration'],
-    mappers: json['mappers'] == null ? undefined : json['mappers'],
-    roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
-    groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    external: json['external'] == null ? undefined : json['external'],
-    domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
+    domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
+    external: json['external'] == null ? undefined : json['external'],
+    groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
+    id: json['id'] == null ? undefined : json['id'],
+    mappers: json['mappers'] == null ? undefined : json['mappers'],
+    name: json['name'] == null ? undefined : json['name'],
+    passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
+    system: json['system'] == null ? undefined : json['system'],
+    type: json['type'] == null ? undefined : json['type'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
@@ -188,21 +188,21 @@ export function IdentityProviderToJSONTyped(value?: IdentityProvider | null, ign
   }
 
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
-    system: value['system'],
     configuration: value['configuration'],
-    mappers: value['mappers'],
-    roleMapper: value['roleMapper'],
-    groupMapper: value['groupMapper'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    external: value['external'],
-    domainWhitelist: value['domainWhitelist'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    passwordPolicy: value['passwordPolicy'],
     dataPlaneId: value['dataPlaneId'],
+    domainWhitelist: value['domainWhitelist'],
+    external: value['external'],
+    groupMapper: value['groupMapper'],
+    id: value['id'],
+    mappers: value['mappers'],
+    name: value['name'],
+    passwordPolicy: value['passwordPolicy'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    roleMapper: value['roleMapper'],
+    system: value['system'],
+    type: value['type'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

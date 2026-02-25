@@ -34,36 +34,6 @@ import { mapValues } from '../runtime';
 export interface UpdateUser {
   /**
    *
-   * @type {string}
-   * @memberof UpdateUser
-   */
-  email?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUser
-   */
-  firstName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUser
-   */
-  lastName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUser
-   */
-  displayName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUser
-   */
-  externalId?: string;
-  /**
-   *
    * @type {boolean}
    * @memberof UpdateUser
    */
@@ -76,10 +46,40 @@ export interface UpdateUser {
   accountNonLocked?: boolean;
   /**
    *
+   * @type {{ [key: string]: any; }}
+   * @memberof UpdateUser
+   */
+  additionalInformation?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUser
+   */
+  client?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof UpdateUser
+   */
+  createdAt?: Date;
+  /**
+   *
    * @type {boolean}
    * @memberof UpdateUser
    */
   credentialsNonExpired?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUser
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUser
+   */
+  email?: string;
   /**
    *
    * @type {boolean}
@@ -88,10 +88,52 @@ export interface UpdateUser {
   enabled?: boolean;
   /**
    *
+   * @type {string}
+   * @memberof UpdateUser
+   */
+  externalId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUser
+   */
+  firstName?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdateUser
+   */
+  forceResetPassword?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUser
+   */
+  lastName?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof UpdateUser
+   */
+  loggedAt?: Date;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateUser
+   */
+  loginsCount?: number;
+  /**
+   *
    * @type {boolean}
    * @memberof UpdateUser
    */
   preRegistration?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUser
+   */
+  preferredLanguage?: string;
   /**
    *
    * @type {boolean}
@@ -106,52 +148,10 @@ export interface UpdateUser {
   source?: string;
   /**
    *
-   * @type {string}
-   * @memberof UpdateUser
-   */
-  client?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof UpdateUser
-   */
-  loginsCount?: number;
-  /**
-   *
-   * @type {Date}
-   * @memberof UpdateUser
-   */
-  loggedAt?: Date;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUser
-   */
-  preferredLanguage?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UpdateUser
-   */
-  additionalInformation?: { [key: string]: any };
-  /**
-   *
-   * @type {Date}
-   * @memberof UpdateUser
-   */
-  createdAt?: Date;
-  /**
-   *
    * @type {Date}
    * @memberof UpdateUser
    */
   updatedAt?: Date;
-  /**
-   *
-   * @type {boolean}
-   * @memberof UpdateUser
-   */
-  forceResetPassword?: boolean;
 }
 
 /**
@@ -170,26 +170,26 @@ export function UpdateUserFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    email: json['email'] == null ? undefined : json['email'],
-    firstName: json['firstName'] == null ? undefined : json['firstName'],
-    lastName: json['lastName'] == null ? undefined : json['lastName'],
-    displayName: json['displayName'] == null ? undefined : json['displayName'],
-    externalId: json['externalId'] == null ? undefined : json['externalId'],
     accountNonExpired: json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
     accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
+    additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
+    client: json['client'] == null ? undefined : json['client'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    email: json['email'] == null ? undefined : json['email'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    externalId: json['externalId'] == null ? undefined : json['externalId'],
+    firstName: json['firstName'] == null ? undefined : json['firstName'],
+    forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
+    lastName: json['lastName'] == null ? undefined : json['lastName'],
+    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
     preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
+    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
     registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
     source: json['source'] == null ? undefined : json['source'],
-    client: json['client'] == null ? undefined : json['client'],
-    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
-    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
-    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
-    additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
   };
 }
 
@@ -203,25 +203,25 @@ export function UpdateUserToJSONTyped(value?: UpdateUser | null, ignoreDiscrimin
   }
 
   return {
-    email: value['email'],
-    firstName: value['firstName'],
-    lastName: value['lastName'],
-    displayName: value['displayName'],
-    externalId: value['externalId'],
     accountNonExpired: value['accountNonExpired'],
     accountNonLocked: value['accountNonLocked'],
+    additionalInformation: value['additionalInformation'],
+    client: value['client'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     credentialsNonExpired: value['credentialsNonExpired'],
+    displayName: value['displayName'],
+    email: value['email'],
     enabled: value['enabled'],
+    externalId: value['externalId'],
+    firstName: value['firstName'],
+    forceResetPassword: value['forceResetPassword'],
+    lastName: value['lastName'],
+    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    loginsCount: value['loginsCount'],
     preRegistration: value['preRegistration'],
+    preferredLanguage: value['preferredLanguage'],
     registrationCompleted: value['registrationCompleted'],
     source: value['source'],
-    client: value['client'],
-    loginsCount: value['loginsCount'],
-    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
-    preferredLanguage: value['preferredLanguage'],
-    additionalInformation: value['additionalInformation'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    forceResetPassword: value['forceResetPassword'],
   };
 }

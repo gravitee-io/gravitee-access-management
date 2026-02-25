@@ -34,12 +34,6 @@ import { mapValues } from '../runtime';
 export interface InstallationEntity {
   /**
    *
-   * @type {string}
-   * @memberof InstallationEntity
-   */
-  id?: string;
-  /**
-   *
    * @type {{ [key: string]: string; }}
    * @memberof InstallationEntity
    */
@@ -50,6 +44,12 @@ export interface InstallationEntity {
    * @memberof InstallationEntity
    */
   createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof InstallationEntity
+   */
+  id?: string;
   /**
    *
    * @type {Date}
@@ -74,9 +74,9 @@ export function InstallationEntityFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    id: json['id'] == null ? undefined : json['id'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -91,9 +91,9 @@ export function InstallationEntityToJSONTyped(value?: InstallationEntity | null,
   }
 
   return {
-    id: value['id'],
     additionalInformation: value['additionalInformation'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    id: value['id'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

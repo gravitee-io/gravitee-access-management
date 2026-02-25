@@ -37,25 +37,7 @@ export interface Form {
    * @type {string}
    * @memberof Form
    */
-  id?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Form
-   */
-  enabled?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof Form
-   */
-  referenceType?: FormReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof Form
-   */
-  referenceId?: string;
+  assets?: string;
   /**
    *
    * @type {string}
@@ -67,25 +49,43 @@ export interface Form {
    * @type {string}
    * @memberof Form
    */
-  template?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Form
-   */
   content?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Form
-   */
-  assets?: string;
   /**
    *
    * @type {Date}
    * @memberof Form
    */
   createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Form
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof Form
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Form
+   */
+  referenceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Form
+   */
+  referenceType?: FormReferenceTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof Form
+   */
+  template?: string;
   /**
    *
    * @type {Date}
@@ -105,7 +105,7 @@ export const FormReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type FormReferenceTypeEnum = typeof FormReferenceTypeEnum[keyof typeof FormReferenceTypeEnum];
+export type FormReferenceTypeEnum = (typeof FormReferenceTypeEnum)[keyof typeof FormReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Form interface.
@@ -123,15 +123,15 @@ export function FormFromJSONTyped(json: any, ignoreDiscriminator: boolean): Form
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    client: json['client'] == null ? undefined : json['client'],
-    template: json['template'] == null ? undefined : json['template'],
-    content: json['content'] == null ? undefined : json['content'],
     assets: json['assets'] == null ? undefined : json['assets'],
+    client: json['client'] == null ? undefined : json['client'],
+    content: json['content'] == null ? undefined : json['content'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    id: json['id'] == null ? undefined : json['id'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    template: json['template'] == null ? undefined : json['template'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -146,15 +146,15 @@ export function FormToJSONTyped(value?: Form | null, ignoreDiscriminator: boolea
   }
 
   return {
-    id: value['id'],
-    enabled: value['enabled'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    client: value['client'],
-    template: value['template'],
-    content: value['content'],
     assets: value['assets'],
+    client: value['client'],
+    content: value['content'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    enabled: value['enabled'],
+    id: value['id'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    template: value['template'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

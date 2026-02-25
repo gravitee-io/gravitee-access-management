@@ -40,13 +40,19 @@ export interface Reporter {
    * @type {string}
    * @memberof Reporter
    */
-  id?: string;
+  configuration?: string;
   /**
    *
-   * @type {Reference}
+   * @type {Date}
    * @memberof Reporter
    */
-  reference?: Reference;
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Reporter
+   */
+  dataType?: string;
   /**
    *
    * @type {boolean}
@@ -58,13 +64,25 @@ export interface Reporter {
    * @type {string}
    * @memberof Reporter
    */
-  type?: string;
+  id?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Reporter
+   */
+  inherited?: boolean;
   /**
    *
    * @type {string}
    * @memberof Reporter
    */
   name?: string;
+  /**
+   *
+   * @type {Reference}
+   * @memberof Reporter
+   */
+  reference?: Reference;
   /**
    *
    * @type {boolean}
@@ -76,31 +94,13 @@ export interface Reporter {
    * @type {string}
    * @memberof Reporter
    */
-  dataType?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Reporter
-   */
-  configuration?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof Reporter
-   */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
    * @memberof Reporter
    */
   updatedAt?: Date;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Reporter
-   */
-  inherited?: boolean;
 }
 
 /**
@@ -119,17 +119,17 @@ export function ReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    type: json['type'] == null ? undefined : json['type'],
-    name: json['name'] == null ? undefined : json['name'],
-    system: json['system'] == null ? undefined : json['system'],
-    dataType: json['dataType'] == null ? undefined : json['dataType'],
     configuration: json['configuration'] == null ? undefined : json['configuration'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    dataType: json['dataType'] == null ? undefined : json['dataType'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    id: json['id'] == null ? undefined : json['id'],
     inherited: json['inherited'] == null ? undefined : json['inherited'],
+    name: json['name'] == null ? undefined : json['name'],
+    reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
+    system: json['system'] == null ? undefined : json['system'],
+    type: json['type'] == null ? undefined : json['type'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
@@ -143,16 +143,16 @@ export function ReporterToJSONTyped(value?: Reporter | null, ignoreDiscriminator
   }
 
   return {
-    id: value['id'],
-    reference: ReferenceToJSON(value['reference']),
-    enabled: value['enabled'],
-    type: value['type'],
-    name: value['name'],
-    system: value['system'],
-    dataType: value['dataType'],
     configuration: value['configuration'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    dataType: value['dataType'],
+    enabled: value['enabled'],
+    id: value['id'],
     inherited: value['inherited'],
+    name: value['name'],
+    reference: ReferenceToJSON(value['reference']),
+    system: value['system'],
+    type: value['type'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

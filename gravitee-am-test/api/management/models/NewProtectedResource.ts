@@ -52,24 +52,6 @@ export interface NewProtectedResource {
    * @type {string}
    * @memberof NewProtectedResource
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewProtectedResource
-   */
-  description?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof NewProtectedResource
-   */
-  resourceIdentifiers: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof NewProtectedResource
-   */
   clientId?: string;
   /**
    *
@@ -82,7 +64,7 @@ export interface NewProtectedResource {
    * @type {string}
    * @memberof NewProtectedResource
    */
-  type: string;
+  description?: string;
   /**
    *
    * @type {Array<NewProtectedResourceFeature>}
@@ -91,10 +73,28 @@ export interface NewProtectedResource {
   features?: Array<NewProtectedResourceFeature>;
   /**
    *
+   * @type {string}
+   * @memberof NewProtectedResource
+   */
+  name: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof NewProtectedResource
+   */
+  resourceIdentifiers: Array<string>;
+  /**
+   *
    * @type {ApplicationSettings}
    * @memberof NewProtectedResource
    */
   settings?: ApplicationSettings;
+  /**
+   *
+   * @type {string}
+   * @memberof NewProtectedResource
+   */
+  type: string;
 }
 
 /**
@@ -116,14 +116,14 @@ export function NewProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator
     return json;
   }
   return {
-    name: json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    resourceIdentifiers: json['resourceIdentifiers'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
-    type: json['type'],
+    description: json['description'] == null ? undefined : json['description'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(NewProtectedResourceFeatureFromJSON),
+    name: json['name'],
+    resourceIdentifiers: json['resourceIdentifiers'],
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    type: json['type'],
   };
 }
 
@@ -137,13 +137,13 @@ export function NewProtectedResourceToJSONTyped(value?: NewProtectedResource | n
   }
 
   return {
-    name: value['name'],
-    description: value['description'],
-    resourceIdentifiers: value['resourceIdentifiers'],
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
-    type: value['type'],
+    description: value['description'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(NewProtectedResourceFeatureToJSON),
+    name: value['name'],
+    resourceIdentifiers: value['resourceIdentifiers'],
     settings: ApplicationSettingsToJSON(value['settings']),
+    type: value['type'],
   };
 }

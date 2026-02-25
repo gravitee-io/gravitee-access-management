@@ -34,22 +34,10 @@ import { mapValues } from '../runtime';
 export interface Environment {
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof Environment
    */
-  id?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof Environment
-   */
-  hrids?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof Environment
-   */
-  name?: string;
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -64,16 +52,28 @@ export interface Environment {
   domainRestrictions?: Array<string>;
   /**
    *
+   * @type {Array<string>}
+   * @memberof Environment
+   */
+  hrids?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof Environment
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Environment
+   */
+  name?: string;
+  /**
+   *
    * @type {string}
    * @memberof Environment
    */
   organizationId?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof Environment
-   */
-  createdAt?: Date;
   /**
    *
    * @type {Date}
@@ -98,13 +98,13 @@ export function EnvironmentFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    hrids: json['hrids'] == null ? undefined : json['hrids'],
-    name: json['name'] == null ? undefined : json['name'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     description: json['description'] == null ? undefined : json['description'],
     domainRestrictions: json['domainRestrictions'] == null ? undefined : json['domainRestrictions'],
+    hrids: json['hrids'] == null ? undefined : json['hrids'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
     organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -119,13 +119,13 @@ export function EnvironmentToJSONTyped(value?: Environment | null, ignoreDiscrim
   }
 
   return {
-    id: value['id'],
-    hrids: value['hrids'],
-    name: value['name'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     description: value['description'],
     domainRestrictions: value['domainRestrictions'],
+    hrids: value['hrids'],
+    id: value['id'],
+    name: value['name'],
     organizationId: value['organizationId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

@@ -1157,7 +1157,7 @@ export const FindApplicationFormTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindApplicationFormTemplateEnum = typeof FindApplicationFormTemplateEnum[keyof typeof FindApplicationFormTemplateEnum];
+export type FindApplicationFormTemplateEnum = (typeof FindApplicationFormTemplateEnum)[keyof typeof FindApplicationFormTemplateEnum];
 /**
  * @export
  */
@@ -1185,7 +1185,7 @@ export const FindFormTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindFormTemplateEnum = typeof FindFormTemplateEnum[keyof typeof FindFormTemplateEnum];
+export type FindFormTemplateEnum = (typeof FindFormTemplateEnum)[keyof typeof FindFormTemplateEnum];
 /**
  * @export
  */
@@ -1214,4 +1214,4 @@ export const FindOrganizationFormTemplateTemplateEnum = {
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type FindOrganizationFormTemplateTemplateEnum =
-  typeof FindOrganizationFormTemplateTemplateEnum[keyof typeof FindOrganizationFormTemplateTemplateEnum];
+  (typeof FindOrganizationFormTemplateTemplateEnum)[keyof typeof FindOrganizationFormTemplateTemplateEnum];

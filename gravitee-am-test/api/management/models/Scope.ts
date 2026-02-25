@@ -34,6 +34,48 @@ import { mapValues } from '../runtime';
 export interface Scope {
   /**
    *
+   * @type {Array<string>}
+   * @memberof Scope
+   */
+  claims?: Array<string>;
+  /**
+   *
+   * @type {Date}
+   * @memberof Scope
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Scope
+   */
+  description?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Scope
+   */
+  discovery?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof Scope
+   */
+  domain?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof Scope
+   */
+  expiresIn?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof Scope
+   */
+  iconUri?: string;
+  /**
+   *
    * @type {string}
    * @memberof Scope
    */
@@ -52,34 +94,10 @@ export interface Scope {
   name?: string;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof Scope
    */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Scope
-   */
-  iconUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Scope
-   */
-  domain?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof Scope
-   */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof Scope
-   */
-  updatedAt?: Date;
+  parameterized?: boolean;
   /**
    *
    * @type {boolean}
@@ -88,28 +106,10 @@ export interface Scope {
   system?: boolean;
   /**
    *
-   * @type {Array<string>}
+   * @type {Date}
    * @memberof Scope
    */
-  claims?: Array<string>;
-  /**
-   *
-   * @type {number}
-   * @memberof Scope
-   */
-  expiresIn?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Scope
-   */
-  discovery?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Scope
-   */
-  parameterized?: boolean;
+  updatedAt?: Date;
 }
 
 /**
@@ -128,19 +128,19 @@ export function ScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Sco
     return json;
   }
   return {
+    claims: json['claims'] == null ? undefined : json['claims'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    description: json['description'] == null ? undefined : json['description'],
+    discovery: json['discovery'] == null ? undefined : json['discovery'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
     id: json['id'] == null ? undefined : json['id'],
     key: json['key'] == null ? undefined : json['key'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    system: json['system'] == null ? undefined : json['system'],
-    claims: json['claims'] == null ? undefined : json['claims'],
-    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
-    discovery: json['discovery'] == null ? undefined : json['discovery'],
     parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
+    system: json['system'] == null ? undefined : json['system'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
@@ -154,18 +154,18 @@ export function ScopeToJSONTyped(value?: Scope | null, ignoreDiscriminator: bool
   }
 
   return {
+    claims: value['claims'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    description: value['description'],
+    discovery: value['discovery'],
+    domain: value['domain'],
+    expiresIn: value['expiresIn'],
+    iconUri: value['iconUri'],
     id: value['id'],
     key: value['key'],
     name: value['name'],
-    description: value['description'],
-    iconUri: value['iconUri'],
-    domain: value['domain'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    system: value['system'],
-    claims: value['claims'],
-    expiresIn: value['expiresIn'],
-    discovery: value['discovery'],
     parameterized: value['parameterized'],
+    system: value['system'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

@@ -37,13 +37,13 @@ export interface ApplicationEntity {
    * @type {string}
    * @memberof ApplicationEntity
    */
-  id?: string;
+  clientId?: string;
   /**
    *
    * @type {string}
    * @memberof ApplicationEntity
    */
-  clientId?: string;
+  id?: string;
   /**
    *
    * @type {string}
@@ -68,8 +68,8 @@ export function ApplicationEntityFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
+    id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
   };
 }
@@ -84,8 +84,8 @@ export function ApplicationEntityToJSONTyped(value?: ApplicationEntity | null, i
   }
 
   return {
-    id: value['id'],
     clientId: value['clientId'],
+    id: value['id'],
     name: value['name'],
   };
 }

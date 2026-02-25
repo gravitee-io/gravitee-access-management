@@ -37,6 +37,18 @@ export interface DeviceIdentifier {
    * @type {string}
    * @memberof DeviceIdentifier
    */
+  configuration?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof DeviceIdentifier
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof DeviceIdentifier
+   */
   id?: string;
   /**
    *
@@ -44,18 +56,6 @@ export interface DeviceIdentifier {
    * @memberof DeviceIdentifier
    */
   name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof DeviceIdentifier
-   */
-  type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof DeviceIdentifier
-   */
-  configuration?: string;
   /**
    *
    * @type {string}
@@ -70,10 +70,10 @@ export interface DeviceIdentifier {
   referenceType?: DeviceIdentifierReferenceTypeEnum;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof DeviceIdentifier
    */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
@@ -93,7 +93,7 @@ export const DeviceIdentifierReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type DeviceIdentifierReferenceTypeEnum = typeof DeviceIdentifierReferenceTypeEnum[keyof typeof DeviceIdentifierReferenceTypeEnum];
+export type DeviceIdentifierReferenceTypeEnum = (typeof DeviceIdentifierReferenceTypeEnum)[keyof typeof DeviceIdentifierReferenceTypeEnum];
 
 /**
  * Check if a given object implements the DeviceIdentifier interface.
@@ -111,13 +111,13 @@ export function DeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -132,13 +132,13 @@ export function DeviceIdentifierToJSONTyped(value?: DeviceIdentifier | null, ign
   }
 
   return {
+    configuration: value['configuration'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     id: value['id'],
     name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

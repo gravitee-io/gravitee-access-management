@@ -101,40 +101,10 @@ export interface PatchApplicationSettings {
   account?: AccountSettings;
   /**
    *
-   * @type {LoginSettings}
-   * @memberof PatchApplicationSettings
-   */
-  login?: LoginSettings;
-  /**
-   *
-   * @type {PatchApplicationOAuthSettings}
-   * @memberof PatchApplicationSettings
-   */
-  oauth?: PatchApplicationOAuthSettings;
-  /**
-   *
-   * @type {PatchApplicationSAMLSettings}
-   * @memberof PatchApplicationSettings
-   */
-  saml?: PatchApplicationSAMLSettings;
-  /**
-   *
    * @type {PatchApplicationAdvancedSettings}
    * @memberof PatchApplicationSettings
    */
   advanced?: PatchApplicationAdvancedSettings;
-  /**
-   *
-   * @type {PatchPasswordSettings}
-   * @memberof PatchApplicationSettings
-   */
-  passwordSettings?: PatchPasswordSettings;
-  /**
-   *
-   * @type {PatchMFASettings}
-   * @memberof PatchApplicationSettings
-   */
-  mfa?: PatchMFASettings;
   /**
    *
    * @type {CookieSettings}
@@ -143,22 +113,52 @@ export interface PatchApplicationSettings {
   cookieSettings?: CookieSettings;
   /**
    *
-   * @type {RiskAssessmentSettings}
+   * @type {LoginSettings}
    * @memberof PatchApplicationSettings
    */
-  riskAssessment?: RiskAssessmentSettings;
+  login?: LoginSettings;
   /**
    *
-   * @type {SecretExpirationSettings}
+   * @type {PatchMFASettings}
    * @memberof PatchApplicationSettings
    */
-  secretExpirationSettings?: SecretExpirationSettings;
+  mfa?: PatchMFASettings;
+  /**
+   *
+   * @type {PatchApplicationOAuthSettings}
+   * @memberof PatchApplicationSettings
+   */
+  oauth?: PatchApplicationOAuthSettings;
+  /**
+   *
+   * @type {PatchPasswordSettings}
+   * @memberof PatchApplicationSettings
+   */
+  passwordSettings?: PatchPasswordSettings;
   /**
    *
    * @type {Set<string>}
    * @memberof PatchApplicationSettings
    */
   requiredPermissions?: Set<PatchApplicationSettingsRequiredPermissionsEnum>;
+  /**
+   *
+   * @type {RiskAssessmentSettings}
+   * @memberof PatchApplicationSettings
+   */
+  riskAssessment?: RiskAssessmentSettings;
+  /**
+   *
+   * @type {PatchApplicationSAMLSettings}
+   * @memberof PatchApplicationSettings
+   */
+  saml?: PatchApplicationSAMLSettings;
+  /**
+   *
+   * @type {SecretExpirationSettings}
+   * @memberof PatchApplicationSettings
+   */
+  secretExpirationSettings?: SecretExpirationSettings;
 }
 
 /**
@@ -235,7 +235,7 @@ export const PatchApplicationSettingsRequiredPermissionsEnum = {
   Installation: 'INSTALLATION',
 } as const;
 export type PatchApplicationSettingsRequiredPermissionsEnum =
-  typeof PatchApplicationSettingsRequiredPermissionsEnum[keyof typeof PatchApplicationSettingsRequiredPermissionsEnum];
+  (typeof PatchApplicationSettingsRequiredPermissionsEnum)[keyof typeof PatchApplicationSettingsRequiredPermissionsEnum];
 
 /**
  * Check if a given object implements the PatchApplicationSettings interface.
@@ -254,17 +254,17 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
   }
   return {
     account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
-    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
-    oauth: json['oauth'] == null ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
-    saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
     advanced: json['advanced'] == null ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
-    mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
     cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
+    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
+    mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
+    oauth: json['oauth'] == null ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
+    passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     riskAssessment: json['riskAssessment'] == null ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
+    saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
 
@@ -279,15 +279,15 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
 
   return {
     account: AccountSettingsToJSON(value['account']),
-    login: LoginSettingsToJSON(value['login']),
-    oauth: PatchApplicationOAuthSettingsToJSON(value['oauth']),
-    saml: PatchApplicationSAMLSettingsToJSON(value['saml']),
     advanced: PatchApplicationAdvancedSettingsToJSON(value['advanced']),
-    passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
-    mfa: PatchMFASettingsToJSON(value['mfa']),
     cookieSettings: CookieSettingsToJSON(value['cookieSettings']),
-    riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
-    secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
+    login: LoginSettingsToJSON(value['login']),
+    mfa: PatchMFASettingsToJSON(value['mfa']),
+    oauth: PatchApplicationOAuthSettingsToJSON(value['oauth']),
+    passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
+    saml: PatchApplicationSAMLSettingsToJSON(value['saml']),
+    secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
   };
 }

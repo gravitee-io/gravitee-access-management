@@ -37,7 +37,25 @@ export interface Email {
    * @type {string}
    * @memberof Email
    */
-  id?: string;
+  client?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Email
+   */
+  content?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof Email
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Email
+   */
+  defaultTemplate?: boolean;
   /**
    *
    * @type {boolean}
@@ -46,34 +64,10 @@ export interface Email {
   enabled?: boolean;
   /**
    *
-   * @type {string}
+   * @type {number}
    * @memberof Email
    */
-  referenceType?: EmailReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof Email
-   */
-  referenceId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Email
-   */
-  client?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Email
-   */
-  template?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Email
-   */
-  defaultTemplate?: boolean;
+  expiresAfter?: number;
   /**
    *
    * @type {string}
@@ -91,25 +85,31 @@ export interface Email {
    * @type {string}
    * @memberof Email
    */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Email
+   */
+  referenceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Email
+   */
+  referenceType?: EmailReferenceTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof Email
+   */
   subject?: string;
   /**
    *
    * @type {string}
    * @memberof Email
    */
-  content?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof Email
-   */
-  expiresAfter?: number;
-  /**
-   *
-   * @type {Date}
-   * @memberof Email
-   */
-  createdAt?: Date;
+  template?: string;
   /**
    *
    * @type {Date}
@@ -129,7 +129,7 @@ export const EmailReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type EmailReferenceTypeEnum = typeof EmailReferenceTypeEnum[keyof typeof EmailReferenceTypeEnum];
+export type EmailReferenceTypeEnum = (typeof EmailReferenceTypeEnum)[keyof typeof EmailReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Email interface.
@@ -147,19 +147,19 @@ export function EmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ema
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     client: json['client'] == null ? undefined : json['client'],
-    template: json['template'] == null ? undefined : json['template'],
+    content: json['content'] == null ? undefined : json['content'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     defaultTemplate: json['defaultTemplate'] == null ? undefined : json['defaultTemplate'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    expiresAfter: json['expiresAfter'] == null ? undefined : json['expiresAfter'],
     from: json['from'] == null ? undefined : json['from'],
     fromName: json['fromName'] == null ? undefined : json['fromName'],
+    id: json['id'] == null ? undefined : json['id'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     subject: json['subject'] == null ? undefined : json['subject'],
-    content: json['content'] == null ? undefined : json['content'],
-    expiresAfter: json['expiresAfter'] == null ? undefined : json['expiresAfter'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    template: json['template'] == null ? undefined : json['template'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -174,19 +174,19 @@ export function EmailToJSONTyped(value?: Email | null, ignoreDiscriminator: bool
   }
 
   return {
-    id: value['id'],
-    enabled: value['enabled'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
     client: value['client'],
-    template: value['template'],
+    content: value['content'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     defaultTemplate: value['defaultTemplate'],
+    enabled: value['enabled'],
+    expiresAfter: value['expiresAfter'],
     from: value['from'],
     fromName: value['fromName'],
+    id: value['id'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
     subject: value['subject'],
-    content: value['content'],
-    expiresAfter: value['expiresAfter'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    template: value['template'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

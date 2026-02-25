@@ -34,10 +34,22 @@ import { mapValues } from '../runtime';
 export interface UserNotificationContent {
   /**
    *
+   * @type {Date}
+   * @memberof UserNotificationContent
+   */
+  createdAt?: Date;
+  /**
+   *
    * @type {string}
    * @memberof UserNotificationContent
    */
   id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserNotificationContent
+   */
+  message?: string;
   /**
    *
    * @type {string}
@@ -50,18 +62,6 @@ export interface UserNotificationContent {
    * @memberof UserNotificationContent
    */
   title?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserNotificationContent
-   */
-  message?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof UserNotificationContent
-   */
-  createdAt?: Date;
 }
 
 /**
@@ -71,7 +71,7 @@ export const UserNotificationContentStatusEnum = {
   Unread: 'UNREAD',
   Read: 'READ',
 } as const;
-export type UserNotificationContentStatusEnum = typeof UserNotificationContentStatusEnum[keyof typeof UserNotificationContentStatusEnum];
+export type UserNotificationContentStatusEnum = (typeof UserNotificationContentStatusEnum)[keyof typeof UserNotificationContentStatusEnum];
 
 /**
  * Check if a given object implements the UserNotificationContent interface.
@@ -89,11 +89,11 @@ export function UserNotificationContentFromJSONTyped(json: any, ignoreDiscrimina
     return json;
   }
   return {
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     id: json['id'] == null ? undefined : json['id'],
+    message: json['message'] == null ? undefined : json['message'],
     status: json['status'] == null ? undefined : json['status'],
     title: json['title'] == null ? undefined : json['title'],
-    message: json['message'] == null ? undefined : json['message'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
   };
 }
 
@@ -107,10 +107,10 @@ export function UserNotificationContentToJSONTyped(value?: UserNotificationConte
   }
 
   return {
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     id: value['id'],
+    message: value['message'],
     status: value['status'],
     title: value['title'],
-    message: value['message'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
   };
 }

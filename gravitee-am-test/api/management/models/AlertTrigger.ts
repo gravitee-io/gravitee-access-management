@@ -34,36 +34,6 @@ import { mapValues } from '../runtime';
 export interface AlertTrigger {
   /**
    *
-   * @type {string}
-   * @memberof AlertTrigger
-   */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AlertTrigger
-   */
-  type?: AlertTriggerTypeEnum;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AlertTrigger
-   */
-  enabled?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof AlertTrigger
-   */
-  referenceType?: AlertTriggerReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof AlertTrigger
-   */
-  referenceId?: string;
-  /**
-   *
    * @type {Array<string>}
    * @memberof AlertTrigger
    */
@@ -76,20 +46,41 @@ export interface AlertTrigger {
   createdAt?: Date;
   /**
    *
+   * @type {boolean}
+   * @memberof AlertTrigger
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof AlertTrigger
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AlertTrigger
+   */
+  referenceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AlertTrigger
+   */
+  referenceType?: AlertTriggerReferenceTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof AlertTrigger
+   */
+  type?: AlertTriggerTypeEnum;
+  /**
+   *
    * @type {Date}
    * @memberof AlertTrigger
    */
   updatedAt?: Date;
 }
-
-/**
- * @export
- */
-export const AlertTriggerTypeEnum = {
-  TooManyLoginFailures: 'TOO_MANY_LOGIN_FAILURES',
-  RiskAssessment: 'RISK_ASSESSMENT',
-} as const;
-export type AlertTriggerTypeEnum = typeof AlertTriggerTypeEnum[keyof typeof AlertTriggerTypeEnum];
 
 /**
  * @export
@@ -102,7 +93,16 @@ export const AlertTriggerReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type AlertTriggerReferenceTypeEnum = typeof AlertTriggerReferenceTypeEnum[keyof typeof AlertTriggerReferenceTypeEnum];
+export type AlertTriggerReferenceTypeEnum = (typeof AlertTriggerReferenceTypeEnum)[keyof typeof AlertTriggerReferenceTypeEnum];
+
+/**
+ * @export
+ */
+export const AlertTriggerTypeEnum = {
+  TooManyLoginFailures: 'TOO_MANY_LOGIN_FAILURES',
+  RiskAssessment: 'RISK_ASSESSMENT',
+} as const;
+export type AlertTriggerTypeEnum = (typeof AlertTriggerTypeEnum)[keyof typeof AlertTriggerTypeEnum];
 
 /**
  * Check if a given object implements the AlertTrigger interface.
@@ -120,13 +120,13 @@ export function AlertTriggerFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'] == null ? undefined : json['type'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     alertNotifiers: json['alertNotifiers'] == null ? undefined : json['alertNotifiers'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    id: json['id'] == null ? undefined : json['id'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -141,13 +141,13 @@ export function AlertTriggerToJSONTyped(value?: AlertTrigger | null, ignoreDiscr
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    enabled: value['enabled'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
     alertNotifiers: value['alertNotifiers'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    enabled: value['enabled'],
+    id: value['id'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

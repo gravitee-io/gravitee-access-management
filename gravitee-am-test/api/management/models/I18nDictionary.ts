@@ -37,10 +37,40 @@ import { ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON, ReferenceTo
 export interface I18nDictionary {
   /**
    *
+   * @type {Date}
+   * @memberof I18nDictionary
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof I18nDictionary
+   */
+  entries?: { [key: string]: string };
+  /**
+   *
    * @type {string}
    * @memberof I18nDictionary
    */
   id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof I18nDictionary
+   */
+  locale?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof I18nDictionary
+   */
+  name?: string;
+  /**
+   *
+   * @type {Reference}
+   * @memberof I18nDictionary
+   */
+  reference?: Reference;
   /**
    *
    * @type {string}
@@ -55,40 +85,10 @@ export interface I18nDictionary {
   referenceType?: I18nDictionaryReferenceTypeEnum;
   /**
    *
-   * @type {string}
-   * @memberof I18nDictionary
-   */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof I18nDictionary
-   */
-  locale?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof I18nDictionary
-   */
-  createdAt?: Date;
-  /**
-   *
    * @type {Date}
    * @memberof I18nDictionary
    */
   updatedAt?: Date;
-  /**
-   *
-   * @type {{ [key: string]: string; }}
-   * @memberof I18nDictionary
-   */
-  entries?: { [key: string]: string };
-  /**
-   *
-   * @type {Reference}
-   * @memberof I18nDictionary
-   */
-  reference?: Reference;
 }
 
 /**
@@ -102,7 +102,7 @@ export const I18nDictionaryReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type I18nDictionaryReferenceTypeEnum = typeof I18nDictionaryReferenceTypeEnum[keyof typeof I18nDictionaryReferenceTypeEnum];
+export type I18nDictionaryReferenceTypeEnum = (typeof I18nDictionaryReferenceTypeEnum)[keyof typeof I18nDictionaryReferenceTypeEnum];
 
 /**
  * Check if a given object implements the I18nDictionary interface.
@@ -120,15 +120,15 @@ export function I18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    entries: json['entries'] == null ? undefined : json['entries'],
     id: json['id'] == null ? undefined : json['id'],
+    locale: json['locale'] == null ? undefined : json['locale'],
+    name: json['name'] == null ? undefined : json['name'],
+    reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    name: json['name'] == null ? undefined : json['name'],
-    locale: json['locale'] == null ? undefined : json['locale'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    entries: json['entries'] == null ? undefined : json['entries'],
-    reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
   };
 }
 
@@ -142,14 +142,14 @@ export function I18nDictionaryToJSONTyped(value?: I18nDictionary | null, ignoreD
   }
 
   return {
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    entries: value['entries'],
     id: value['id'],
+    locale: value['locale'],
+    name: value['name'],
+    reference: ReferenceToJSON(value['reference']),
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
-    name: value['name'],
-    locale: value['locale'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    entries: value['entries'],
-    reference: ReferenceToJSON(value['reference']),
   };
 }

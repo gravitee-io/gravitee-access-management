@@ -37,19 +37,7 @@ export interface UpdateScope {
    * @type {string}
    * @memberof UpdateScope
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateScope
-   */
   description: string;
-  /**
-   *
-   * @type {number}
-   * @memberof UpdateScope
-   */
-  expiresIn?: number;
   /**
    *
    * @type {boolean}
@@ -58,24 +46,36 @@ export interface UpdateScope {
   discovery?: boolean;
   /**
    *
-   * @type {boolean}
+   * @type {number}
    * @memberof UpdateScope
    */
-  parameterized?: boolean;
+  expiresIn?: number;
   /**
    *
    * @type {string}
    * @memberof UpdateScope
    */
   iconUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScope
+   */
+  name: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdateScope
+   */
+  parameterized?: boolean;
 }
 
 /**
  * Check if a given object implements the UpdateScope interface.
  */
 export function instanceOfUpdateScope(value: object): value is UpdateScope {
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('description' in value) || value['description'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
   return true;
 }
 
@@ -88,12 +88,12 @@ export function UpdateScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'],
-    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
     discovery: json['discovery'] == null ? undefined : json['discovery'],
-    parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
+    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
     iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    name: json['name'],
+    parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
   };
 }
 
@@ -107,11 +107,11 @@ export function UpdateScopeToJSONTyped(value?: UpdateScope | null, ignoreDiscrim
   }
 
   return {
-    name: value['name'],
     description: value['description'],
-    expiresIn: value['expiresIn'],
     discovery: value['discovery'],
-    parameterized: value['parameterized'],
+    expiresIn: value['expiresIn'],
     iconUri: value['iconUri'],
+    name: value['name'],
+    parameterized: value['parameterized'],
   };
 }

@@ -51,7 +51,7 @@ export const PatchApplicationTypeTypeEnum = {
   ResourceServer: 'RESOURCE_SERVER',
   Agent: 'AGENT',
 } as const;
-export type PatchApplicationTypeTypeEnum = typeof PatchApplicationTypeTypeEnum[keyof typeof PatchApplicationTypeTypeEnum];
+export type PatchApplicationTypeTypeEnum = (typeof PatchApplicationTypeTypeEnum)[keyof typeof PatchApplicationTypeTypeEnum];
 
 /**
  * Check if a given object implements the PatchApplicationType interface.

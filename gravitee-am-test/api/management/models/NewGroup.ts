@@ -37,12 +37,6 @@ export interface NewGroup {
    * @type {string}
    * @memberof NewGroup
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewGroup
-   */
   description?: string;
   /**
    *
@@ -50,6 +44,12 @@ export interface NewGroup {
    * @memberof NewGroup
    */
   members?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof NewGroup
+   */
+  name: string;
 }
 
 /**
@@ -69,9 +69,9 @@ export function NewGroupFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'] == null ? undefined : json['description'],
     members: json['members'] == null ? undefined : json['members'],
+    name: json['name'],
   };
 }
 
@@ -85,8 +85,8 @@ export function NewGroupToJSONTyped(value?: NewGroup | null, ignoreDiscriminator
   }
 
   return {
-    name: value['name'],
     description: value['description'],
     members: value['members'],
+    name: value['name'],
   };
 }

@@ -1017,6 +1017,13 @@ export interface GetAppFlowRequest {
   flow: string;
 }
 
+export interface GetApplicationAgentCardRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  application: string;
+}
+
 export interface GetApplicationAnalyticsRequest {
   organizationId: string;
   environmentId: string;
@@ -8812,6 +8819,82 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have APPLICATION[READ] permission on the specified application. Fetches and proxies the agent card JSON from the application\'s configured agentCardUrl.
+   * Fetch the agent card for an application
+   */
+  async getApplicationAgentCardRaw(
+    requestParameters: GetApplicationAgentCardRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    if (requestParameters.application === null || requestParameters.application === undefined) {
+      throw new runtime.RequiredError(
+        'application',
+        'Required parameter requestParameters.application was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/agent-card`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'application'}}`, encodeURIComponent(String(requestParameters.application))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have APPLICATION[READ] permission on the specified application. Fetches and proxies the agent card JSON from the application\'s configured agentCardUrl.
+   * Fetch the agent card for an application
+   */
+  async getApplicationAgentCard(
+    requestParameters: GetApplicationAgentCardRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getApplicationAgentCardRaw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have APPLICATION_ANALYTICS[READ] permission on the specified application or APPLICATION_ANALYTICS[READ] permission on the specified domain or APPLICATION_ANALYTICS[READ] permission on the specified environment or APPLICATION_ANALYTICS[READ] permission on the specified organization
    * Find application analytics
    */
@@ -10540,7 +10623,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissionsRaw(
@@ -10605,7 +10688,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissions(
@@ -18705,7 +18788,7 @@ export const FindApplicationEmailTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindApplicationEmailTemplateEnum = typeof FindApplicationEmailTemplateEnum[keyof typeof FindApplicationEmailTemplateEnum];
+export type FindApplicationEmailTemplateEnum = (typeof FindApplicationEmailTemplateEnum)[keyof typeof FindApplicationEmailTemplateEnum];
 /**
  * @export
  */
@@ -18733,7 +18816,7 @@ export const FindApplicationFormTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindApplicationFormTemplateEnum = typeof FindApplicationFormTemplateEnum[keyof typeof FindApplicationFormTemplateEnum];
+export type FindApplicationFormTemplateEnum = (typeof FindApplicationFormTemplateEnum)[keyof typeof FindApplicationFormTemplateEnum];
 /**
  * @export
  */
@@ -18761,7 +18844,7 @@ export const FindEmailTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindEmailTemplateEnum = typeof FindEmailTemplateEnum[keyof typeof FindEmailTemplateEnum];
+export type FindEmailTemplateEnum = (typeof FindEmailTemplateEnum)[keyof typeof FindEmailTemplateEnum];
 /**
  * @export
  */
@@ -18789,4 +18872,4 @@ export const FindFormTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindFormTemplateEnum = typeof FindFormTemplateEnum[keyof typeof FindFormTemplateEnum];
+export type FindFormTemplateEnum = (typeof FindFormTemplateEnum)[keyof typeof FindFormTemplateEnum];

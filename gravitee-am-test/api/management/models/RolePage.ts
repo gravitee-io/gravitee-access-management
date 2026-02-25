@@ -37,16 +37,16 @@ import { RoleFromJSON, RoleFromJSONTyped, RoleToJSON, RoleToJSONTyped } from './
 export interface RolePage {
   /**
    *
-   * @type {Array<Role>}
-   * @memberof RolePage
-   */
-  data?: Array<Role>;
-  /**
-   *
    * @type {number}
    * @memberof RolePage
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<Role>}
+   * @memberof RolePage
+   */
+  data?: Array<Role>;
   /**
    *
    * @type {number}
@@ -71,8 +71,8 @@ export function RolePageFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(RoleFromJSON),
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(RoleFromJSON),
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -87,8 +87,8 @@ export function RolePageToJSONTyped(value?: RolePage | null, ignoreDiscriminator
   }
 
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(RoleToJSON),
     currentPage: value['currentPage'],
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(RoleToJSON),
     totalCount: value['totalCount'],
   };
 }

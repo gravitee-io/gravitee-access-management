@@ -34,6 +34,12 @@ import { mapValues } from '../runtime';
 export interface EnrolledFactorSecurity {
   /**
    *
+   * @type {{ [key: string]: any; }}
+   * @memberof EnrolledFactorSecurity
+   */
+  additionalData?: { [key: string]: any };
+  /**
+   *
    * @type {string}
    * @memberof EnrolledFactorSecurity
    */
@@ -44,12 +50,6 @@ export interface EnrolledFactorSecurity {
    * @memberof EnrolledFactorSecurity
    */
   value?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof EnrolledFactorSecurity
-   */
-  additionalData?: { [key: string]: any };
 }
 
 /**
@@ -68,9 +68,9 @@ export function EnrolledFactorSecurityFromJSONTyped(json: any, ignoreDiscriminat
     return json;
   }
   return {
+    additionalData: json['additionalData'] == null ? undefined : json['additionalData'],
     type: json['type'] == null ? undefined : json['type'],
     value: json['value'] == null ? undefined : json['value'],
-    additionalData: json['additionalData'] == null ? undefined : json['additionalData'],
   };
 }
 
@@ -84,8 +84,8 @@ export function EnrolledFactorSecurityToJSONTyped(value?: EnrolledFactorSecurity
   }
 
   return {
+    additionalData: value['additionalData'],
     type: value['type'],
     value: value['value'],
-    additionalData: value['additionalData'],
   };
 }

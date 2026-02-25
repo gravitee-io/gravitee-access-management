@@ -37,19 +37,13 @@ export interface PatchScope {
    * @type {string}
    * @memberof PatchScope
    */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchScope
-   */
   description?: string;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof PatchScope
    */
-  iconUri?: string;
+  discovery?: boolean;
   /**
    *
    * @type {number}
@@ -58,10 +52,16 @@ export interface PatchScope {
   expiresIn?: number;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof PatchScope
    */
-  discovery?: boolean;
+  iconUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchScope
+   */
+  name?: string;
   /**
    *
    * @type {boolean}
@@ -86,11 +86,11 @@ export function PatchScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
     description: json['description'] == null ? undefined : json['description'],
-    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
-    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
     discovery: json['discovery'] == null ? undefined : json['discovery'],
+    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    name: json['name'] == null ? undefined : json['name'],
     parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
   };
 }
@@ -105,11 +105,11 @@ export function PatchScopeToJSONTyped(value?: PatchScope | null, ignoreDiscrimin
   }
 
   return {
-    name: value['name'],
     description: value['description'],
-    iconUri: value['iconUri'],
-    expiresIn: value['expiresIn'],
     discovery: value['discovery'],
+    expiresIn: value['expiresIn'],
+    iconUri: value['iconUri'],
+    name: value['name'],
     parameterized: value['parameterized'],
   };
 }

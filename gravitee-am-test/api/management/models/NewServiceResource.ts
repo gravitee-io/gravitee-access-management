@@ -37,6 +37,12 @@ export interface NewServiceResource {
    * @type {string}
    * @memberof NewServiceResource
    */
+  configuration: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewServiceResource
+   */
   id?: string;
   /**
    *
@@ -50,21 +56,15 @@ export interface NewServiceResource {
    * @memberof NewServiceResource
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewServiceResource
-   */
-  configuration: string;
 }
 
 /**
  * Check if a given object implements the NewServiceResource interface.
  */
 export function instanceOfNewServiceResource(value: object): value is NewServiceResource {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -77,10 +77,10 @@ export function NewServiceResourceFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
+    configuration: json['configuration'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
   };
 }
 
@@ -94,9 +94,9 @@ export function NewServiceResourceToJSONTyped(value?: NewServiceResource | null,
   }
 
   return {
+    configuration: value['configuration'],
     id: value['id'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
   };
 }

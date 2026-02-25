@@ -37,13 +37,7 @@ export interface NewAlertNotifier {
    * @type {string}
    * @memberof NewAlertNotifier
    */
-  type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewAlertNotifier
-   */
-  name?: string;
+  configuration: string;
   /**
    *
    * @type {boolean}
@@ -55,15 +49,21 @@ export interface NewAlertNotifier {
    * @type {string}
    * @memberof NewAlertNotifier
    */
-  configuration: string;
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewAlertNotifier
+   */
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewAlertNotifier interface.
  */
 export function instanceOfNewAlertNotifier(value: object): value is NewAlertNotifier {
-  if (!('type' in value) || value['type'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -76,10 +76,10 @@ export function NewAlertNotifierFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
-    type: json['type'],
-    name: json['name'] == null ? undefined : json['name'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     configuration: json['configuration'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'],
   };
 }
 
@@ -93,9 +93,9 @@ export function NewAlertNotifierToJSONTyped(value?: NewAlertNotifier | null, ign
   }
 
   return {
-    type: value['type'],
-    name: value['name'],
-    enabled: value['enabled'],
     configuration: value['configuration'],
+    enabled: value['enabled'],
+    name: value['name'],
+    type: value['type'],
   };
 }

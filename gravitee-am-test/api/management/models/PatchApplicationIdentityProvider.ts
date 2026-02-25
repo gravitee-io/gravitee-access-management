@@ -40,16 +40,16 @@ export interface PatchApplicationIdentityProvider {
   identity?: string;
   /**
    *
-   * @type {string}
-   * @memberof PatchApplicationIdentityProvider
-   */
-  selectionRule?: string;
-  /**
-   *
    * @type {number}
    * @memberof PatchApplicationIdentityProvider
    */
   priority?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationIdentityProvider
+   */
+  selectionRule?: string;
 }
 
 /**
@@ -69,8 +69,8 @@ export function PatchApplicationIdentityProviderFromJSONTyped(json: any, ignoreD
   }
   return {
     identity: json['identity'] == null ? undefined : json['identity'],
-    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
     priority: json['priority'] == null ? undefined : json['priority'],
+    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
   };
 }
 
@@ -88,7 +88,7 @@ export function PatchApplicationIdentityProviderToJSONTyped(
 
   return {
     identity: value['identity'],
-    selectionRule: value['selectionRule'],
     priority: value['priority'],
+    selectionRule: value['selectionRule'],
   };
 }

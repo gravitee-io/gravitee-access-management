@@ -59,7 +59,7 @@ export interface PatchProtectedResource {
    * @type {string}
    * @memberof PatchProtectedResource
    */
-  name?: string;
+  certificate?: string;
   /**
    *
    * @type {string}
@@ -68,22 +68,22 @@ export interface PatchProtectedResource {
   description?: string;
   /**
    *
+   * @type {Array<UpdateProtectedResourceFeature>}
+   * @memberof PatchProtectedResource
+   */
+  features?: Array<UpdateProtectedResourceFeature>;
+  /**
+   *
    * @type {string}
    * @memberof PatchProtectedResource
    */
-  certificate?: string;
+  name?: string;
   /**
    *
    * @type {Array<string>}
    * @memberof PatchProtectedResource
    */
   resourceIdentifiers?: Array<string>;
-  /**
-   *
-   * @type {Array<UpdateProtectedResourceFeature>}
-   * @memberof PatchProtectedResource
-   */
-  features?: Array<UpdateProtectedResourceFeature>;
   /**
    *
    * @type {Array<ApplicationSecretSettings>}
@@ -114,11 +114,11 @@ export function PatchProtectedResourceFromJSONTyped(json: any, ignoreDiscriminat
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
-    resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
+    description: json['description'] == null ? undefined : json['description'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON),
+    name: json['name'] == null ? undefined : json['name'],
+    resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
     secretSettings:
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
@@ -135,11 +135,11 @@ export function PatchProtectedResourceToJSONTyped(value?: PatchProtectedResource
   }
 
   return {
-    name: value['name'],
-    description: value['description'],
     certificate: value['certificate'],
-    resourceIdentifiers: value['resourceIdentifiers'],
+    description: value['description'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(UpdateProtectedResourceFeatureToJSON),
+    name: value['name'],
+    resourceIdentifiers: value['resourceIdentifiers'],
     secretSettings:
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
     settings: ApplicationSettingsToJSON(value['settings']),

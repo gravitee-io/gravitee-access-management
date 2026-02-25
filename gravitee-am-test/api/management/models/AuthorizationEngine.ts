@@ -37,6 +37,18 @@ export interface AuthorizationEngine {
    * @type {string}
    * @memberof AuthorizationEngine
    */
+  configuration?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof AuthorizationEngine
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof AuthorizationEngine
+   */
   id?: string;
   /**
    *
@@ -49,13 +61,7 @@ export interface AuthorizationEngine {
    * @type {string}
    * @memberof AuthorizationEngine
    */
-  type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AuthorizationEngine
-   */
-  configuration?: string;
+  referenceId?: string;
   /**
    *
    * @type {string}
@@ -67,13 +73,7 @@ export interface AuthorizationEngine {
    * @type {string}
    * @memberof AuthorizationEngine
    */
-  referenceId?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof AuthorizationEngine
-   */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
@@ -94,7 +94,7 @@ export const AuthorizationEngineReferenceTypeEnum = {
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AuthorizationEngineReferenceTypeEnum =
-  typeof AuthorizationEngineReferenceTypeEnum[keyof typeof AuthorizationEngineReferenceTypeEnum];
+  (typeof AuthorizationEngineReferenceTypeEnum)[keyof typeof AuthorizationEngineReferenceTypeEnum];
 
 /**
  * Check if a given object implements the AuthorizationEngine interface.
@@ -112,13 +112,13 @@ export function AuthorizationEngineFromJSONTyped(json: any, ignoreDiscriminator:
     return json;
   }
   return {
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -133,13 +133,13 @@ export function AuthorizationEngineToJSONTyped(value?: AuthorizationEngine | nul
   }
 
   return {
+    configuration: value['configuration'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     id: value['id'],
     name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
-    referenceType: value['referenceType'],
     referenceId: value['referenceId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    referenceType: value['referenceType'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

@@ -37,13 +37,13 @@ export interface NewAuthorizationEngine {
    * @type {string}
    * @memberof NewAuthorizationEngine
    */
-  id?: string;
+  configuration: string;
   /**
    *
    * @type {string}
    * @memberof NewAuthorizationEngine
    */
-  type: string;
+  id?: string;
   /**
    *
    * @type {string}
@@ -55,16 +55,16 @@ export interface NewAuthorizationEngine {
    * @type {string}
    * @memberof NewAuthorizationEngine
    */
-  configuration: string;
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewAuthorizationEngine interface.
  */
 export function instanceOfNewAuthorizationEngine(value: object): value is NewAuthorizationEngine {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -77,10 +77,10 @@ export function NewAuthorizationEngineFromJSONTyped(json: any, ignoreDiscriminat
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'],
-    name: json['name'],
     configuration: json['configuration'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -94,9 +94,9 @@ export function NewAuthorizationEngineToJSONTyped(value?: NewAuthorizationEngine
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    name: value['name'],
     configuration: value['configuration'],
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
   };
 }

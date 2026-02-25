@@ -37,13 +37,13 @@ export interface Resource {
    * @type {string}
    * @memberof Resource
    */
-  id?: string;
+  clientId?: string;
   /**
    *
-   * @type {Array<string>}
+   * @type {Date}
    * @memberof Resource
    */
-  resourceScopes?: Array<string>;
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -55,7 +55,19 @@ export interface Resource {
    * @type {string}
    * @memberof Resource
    */
+  domain?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Resource
+   */
   iconUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Resource
+   */
+  id?: string;
   /**
    *
    * @type {string}
@@ -64,40 +76,28 @@ export interface Resource {
   name?: string;
   /**
    *
+   * @type {Array<string>}
+   * @memberof Resource
+   */
+  resourceScopes?: Array<string>;
+  /**
+   *
    * @type {string}
    * @memberof Resource
    */
   type?: string;
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof Resource
    */
-  domain?: string;
+  updatedAt?: Date;
   /**
    *
    * @type {string}
    * @memberof Resource
    */
   userId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Resource
-   */
-  clientId?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof Resource
-   */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof Resource
-   */
-  updatedAt?: Date;
 }
 
 /**
@@ -116,17 +116,17 @@ export function ResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    resourceScopes: json['resourceScopes'] == null ? undefined : json['resourceScopes'],
-    description: json['description'] == null ? undefined : json['description'],
-    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    userId: json['userId'] == null ? undefined : json['userId'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    description: json['description'] == null ? undefined : json['description'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    resourceScopes: json['resourceScopes'] == null ? undefined : json['resourceScopes'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    userId: json['userId'] == null ? undefined : json['userId'],
   };
 }
 
@@ -140,16 +140,16 @@ export function ResourceToJSONTyped(value?: Resource | null, ignoreDiscriminator
   }
 
   return {
-    id: value['id'],
-    resourceScopes: value['resourceScopes'],
-    description: value['description'],
-    iconUri: value['iconUri'],
-    name: value['name'],
-    type: value['type'],
-    domain: value['domain'],
-    userId: value['userId'],
     clientId: value['clientId'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    description: value['description'],
+    domain: value['domain'],
+    iconUri: value['iconUri'],
+    id: value['id'],
+    name: value['name'],
+    resourceScopes: value['resourceScopes'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    userId: value['userId'],
   };
 }

@@ -799,7 +799,7 @@ export const FindApplicationEmailTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindApplicationEmailTemplateEnum = typeof FindApplicationEmailTemplateEnum[keyof typeof FindApplicationEmailTemplateEnum];
+export type FindApplicationEmailTemplateEnum = (typeof FindApplicationEmailTemplateEnum)[keyof typeof FindApplicationEmailTemplateEnum];
 /**
  * @export
  */
@@ -827,4 +827,4 @@ export const FindEmailTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindEmailTemplateEnum = typeof FindEmailTemplateEnum[keyof typeof FindEmailTemplateEnum];
+export type FindEmailTemplateEnum = (typeof FindEmailTemplateEnum)[keyof typeof FindEmailTemplateEnum];

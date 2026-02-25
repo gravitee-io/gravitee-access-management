@@ -40,6 +40,18 @@ export interface Flow {
    * @type {string}
    * @memberof Flow
    */
+  condition?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Flow
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof Flow
+   */
   id?: string;
   /**
    *
@@ -52,31 +64,19 @@ export interface Flow {
    * @type {Array<Step>}
    * @memberof Flow
    */
-  pre?: Array<Step>;
+  post?: Array<Step>;
   /**
    *
    * @type {Array<Step>}
    * @memberof Flow
    */
-  post?: Array<Step>;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Flow
-   */
-  enabled?: boolean;
+  pre?: Array<Step>;
   /**
    *
    * @type {string}
    * @memberof Flow
    */
   type: FlowTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof Flow
-   */
-  condition?: string;
 }
 
 /**
@@ -96,7 +96,7 @@ export const FlowTypeEnum = {
   MfaChallenge: 'MFA_CHALLENGE',
   MfaEnrollment: 'MFA_ENROLLMENT',
 } as const;
-export type FlowTypeEnum = typeof FlowTypeEnum[keyof typeof FlowTypeEnum];
+export type FlowTypeEnum = (typeof FlowTypeEnum)[keyof typeof FlowTypeEnum];
 
 /**
  * Check if a given object implements the Flow interface.
@@ -116,13 +116,13 @@ export function FlowFromJSONTyped(json: any, ignoreDiscriminator: boolean): Flow
     return json;
   }
   return {
+    condition: json['condition'] == null ? undefined : json['condition'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'],
-    pre: json['pre'] == null ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
     post: json['post'] == null ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    pre: json['pre'] == null ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
     type: json['type'],
-    condition: json['condition'] == null ? undefined : json['condition'],
   };
 }
 
@@ -136,12 +136,12 @@ export function FlowToJSONTyped(value?: Flow | null, ignoreDiscriminator: boolea
   }
 
   return {
+    condition: value['condition'],
+    enabled: value['enabled'],
     id: value['id'],
     name: value['name'],
-    pre: value['pre'] == null ? undefined : (value['pre'] as Array<any>).map(StepToJSON),
     post: value['post'] == null ? undefined : (value['post'] as Array<any>).map(StepToJSON),
-    enabled: value['enabled'],
+    pre: value['pre'] == null ? undefined : (value['pre'] as Array<any>).map(StepToJSON),
     type: value['type'],
-    condition: value['condition'],
   };
 }

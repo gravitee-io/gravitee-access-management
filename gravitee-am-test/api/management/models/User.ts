@@ -49,168 +49,6 @@ import { CertificateFromJSON, CertificateFromJSONTyped, CertificateToJSON, Certi
 export interface User {
   /**
    *
-   * @type {string}
-   * @memberof User
-   */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  externalId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  username?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  password?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  email?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  displayName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  nickName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  firstName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  lastName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  title?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  preferredLanguage?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  picture?: string;
-  /**
-   *
-   * @type {Array<Attribute>}
-   * @memberof User
-   */
-  emails?: Array<Attribute>;
-  /**
-   *
-   * @type {Array<Attribute>}
-   * @memberof User
-   */
-  phoneNumbers?: Array<Attribute>;
-  /**
-   *
-   * @type {Array<Attribute>}
-   * @memberof User
-   */
-  ims?: Array<Attribute>;
-  /**
-   *
-   * @type {Array<Attribute>}
-   * @memberof User
-   */
-  photos?: Array<Attribute>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof User
-   */
-  entitlements?: Array<string>;
-  /**
-   *
-   * @type {Array<Address>}
-   * @memberof User
-   */
-  addresses?: Array<Address>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof User
-   */
-  roles?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof User
-   */
-  dynamicRoles?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof User
-   */
-  dynamicGroups?: Array<string>;
-  /**
-   *
-   * @type {Set<Role>}
-   * @memberof User
-   */
-  rolesPermissions?: Set<Role>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof User
-   */
-  groups?: Array<string>;
-  /**
-   *
-   * @type {Array<Certificate>}
-   * @memberof User
-   */
-  x509Certificates?: Array<Certificate>;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  accountNonExpired?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  accountNonLocked?: boolean;
-  /**
-   *
    * @type {Date}
    * @memberof User
    */
@@ -226,97 +64,13 @@ export interface User {
    * @type {boolean}
    * @memberof User
    */
-  credentialsNonExpired?: boolean;
+  accountNonExpired?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof User
    */
-  enabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  internal?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  preRegistration?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  registrationCompleted?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  newsletter?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  registrationUserUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  registrationAccessToken?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  referenceType?: UserReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  referenceId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  source?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  client?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof User
-   */
-  loginsCount?: number;
-  /**
-   *
-   * @type {Array<EnrolledFactor>}
-   * @memberof User
-   */
-  factors?: Array<EnrolledFactor>;
-  /**
-   *
-   * @type {Array<UserIdentity>}
-   * @memberof User
-   */
-  identities?: Array<UserIdentity>;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  lastIdentityUsed?: string;
+  accountNonLocked?: boolean;
   /**
    *
    * @type {{ [key: string]: any; }}
@@ -325,16 +79,196 @@ export interface User {
   additionalInformation?: { [key: string]: any };
   /**
    *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  address?: { [key: string]: any };
+  /**
+   *
+   * @type {Array<Address>}
+   * @memberof User
+   */
+  addresses?: Array<Address>;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  birthdate?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  client?: string;
+  /**
+   *
    * @type {Date}
    * @memberof User
    */
-  loggedAt?: Date;
+  createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  credentialsNonExpired?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  disabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof User
+   */
+  dynamicGroups?: Array<string>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof User
+   */
+  dynamicRoles?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  email?: string;
+  /**
+   *
+   * @type {Array<Attribute>}
+   * @memberof User
+   */
+  emails?: Array<Attribute>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof User
+   */
+  entitlements?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  externalId?: string;
+  /**
+   *
+   * @type {Array<EnrolledFactor>}
+   * @memberof User
+   */
+  factors?: Array<EnrolledFactor>;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  firstName?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  forceResetPassword?: boolean;
+  /**
+   *
+   * @type {UserId}
+   * @memberof User
+   */
+  fullId?: UserId;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof User
+   */
+  groups?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  id?: string;
+  /**
+   *
+   * @type {Array<UserIdentity>}
+   * @memberof User
+   */
+  identities?: Array<UserIdentity>;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {Array<Attribute>}
+   * @memberof User
+   */
+  ims?: Array<Attribute>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  inactive?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  indefinitelyLocked?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  internal?: boolean;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  lastIdentityInformation?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  lastIdentityUsed?: string;
   /**
    *
    * @type {Date}
    * @memberof User
    */
   lastLoginWithCredentials?: Date;
+  /**
+   *
+   * @type {Date}
+   * @memberof User
+   */
+  lastLogoutAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  lastName?: string;
   /**
    *
    * @type {Date}
@@ -349,10 +283,22 @@ export interface User {
   lastUsernameReset?: Date;
   /**
    *
+   * @type {string}
+   * @memberof User
+   */
+  locale?: string;
+  /**
+   *
    * @type {Date}
    * @memberof User
    */
-  lastLogoutAt?: Date;
+  loggedAt?: Date;
+  /**
+   *
+   * @type {number}
+   * @memberof User
+   */
+  loginsCount?: number;
   /**
    *
    * @type {Date}
@@ -361,46 +307,64 @@ export interface User {
   mfaEnrollmentSkippedAt?: Date;
   /**
    *
-   * @type {Date}
-   * @memberof User
-   */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof User
-   */
-  updatedAt?: Date;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  forceResetPassword?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof User
-   */
-  serviceAccount?: boolean;
-  /**
-   *
    * @type {string}
    * @memberof User
    */
   middleName?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {boolean}
    * @memberof User
    */
-  identitiesAsMap?: { [key: string]: any };
+  newsletter?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  nickName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  password?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  phoneNumber?: string;
+  /**
+   *
+   * @type {Array<Attribute>}
+   * @memberof User
+   */
+  phoneNumbers?: Array<Attribute>;
+  /**
+   *
+   * @type {Array<Attribute>}
+   * @memberof User
+   */
+  photos?: Array<Attribute>;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  picture?: string;
   /**
    *
    * @type {boolean}
    * @memberof User
    */
-  inactive?: boolean;
+  preRegistration?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  preferredLanguage?: string;
   /**
    *
    * @type {string}
@@ -412,49 +376,55 @@ export interface User {
    * @type {string}
    * @memberof User
    */
-  website?: string;
+  referenceId?: string;
   /**
    *
    * @type {string}
    * @memberof User
    */
-  birthdate?: string;
+  referenceType?: UserReferenceTypeEnum;
   /**
    *
    * @type {string}
    * @memberof User
    */
-  zoneInfo?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  phoneNumber?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  address?: { [key: string]: any };
+  registrationAccessToken?: string;
   /**
    *
    * @type {boolean}
    * @memberof User
    */
-  disabled?: boolean;
+  registrationCompleted?: boolean;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {string}
    * @memberof User
    */
-  lastIdentityInformation?: { [key: string]: any };
+  registrationUserUri?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof User
+   */
+  roles?: Array<string>;
+  /**
+   *
+   * @type {Set<Role>}
+   * @memberof User
+   */
+  rolesPermissions?: Set<Role>;
   /**
    *
    * @type {boolean}
    * @memberof User
    */
-  indefinitelyLocked?: boolean;
+  serviceAccount?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  source?: string;
   /**
    *
    * @type {boolean}
@@ -463,16 +433,46 @@ export interface User {
   temporarilyLocked?: boolean;
   /**
    *
-   * @type {UserId}
+   * @type {string}
    * @memberof User
    */
-  fullId?: UserId;
+  title?: string;
   /**
    *
    * @type {string}
    * @memberof User
    */
-  locale?: string;
+  type?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof User
+   */
+  updatedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  username?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  website?: string;
+  /**
+   *
+   * @type {Array<Certificate>}
+   * @memberof User
+   */
+  x509Certificates?: Array<Certificate>;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  zoneInfo?: string;
 }
 
 /**
@@ -486,7 +486,7 @@ export const UserReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type UserReferenceTypeEnum = typeof UserReferenceTypeEnum[keyof typeof UserReferenceTypeEnum];
+export type UserReferenceTypeEnum = (typeof UserReferenceTypeEnum)[keyof typeof UserReferenceTypeEnum];
 
 /**
  * Check if a given object implements the User interface.
@@ -504,77 +504,77 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    externalId: json['externalId'] == null ? undefined : json['externalId'],
-    username: json['username'] == null ? undefined : json['username'],
-    password: json['password'] == null ? undefined : json['password'],
-    email: json['email'] == null ? undefined : json['email'],
-    displayName: json['displayName'] == null ? undefined : json['displayName'],
-    nickName: json['nickName'] == null ? undefined : json['nickName'],
-    firstName: json['firstName'] == null ? undefined : json['firstName'],
-    lastName: json['lastName'] == null ? undefined : json['lastName'],
-    title: json['title'] == null ? undefined : json['title'],
-    type: json['type'] == null ? undefined : json['type'],
-    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
-    picture: json['picture'] == null ? undefined : json['picture'],
-    emails: json['emails'] == null ? undefined : (json['emails'] as Array<any>).map(AttributeFromJSON),
-    phoneNumbers: json['phoneNumbers'] == null ? undefined : (json['phoneNumbers'] as Array<any>).map(AttributeFromJSON),
-    ims: json['ims'] == null ? undefined : (json['ims'] as Array<any>).map(AttributeFromJSON),
-    photos: json['photos'] == null ? undefined : (json['photos'] as Array<any>).map(AttributeFromJSON),
-    entitlements: json['entitlements'] == null ? undefined : json['entitlements'],
-    addresses: json['addresses'] == null ? undefined : (json['addresses'] as Array<any>).map(AddressFromJSON),
-    roles: json['roles'] == null ? undefined : json['roles'],
-    dynamicRoles: json['dynamicRoles'] == null ? undefined : json['dynamicRoles'],
-    dynamicGroups: json['dynamicGroups'] == null ? undefined : json['dynamicGroups'],
-    rolesPermissions: json['rolesPermissions'] == null ? undefined : new Set((json['rolesPermissions'] as Array<any>).map(RoleFromJSON)),
-    groups: json['groups'] == null ? undefined : json['groups'],
-    x509Certificates: json['x509Certificates'] == null ? undefined : (json['x509Certificates'] as Array<any>).map(CertificateFromJSON),
-    accountNonExpired: json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
-    accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
     accountLockedAt: json['accountLockedAt'] == null ? undefined : new Date(json['accountLockedAt']),
     accountLockedUntil: json['accountLockedUntil'] == null ? undefined : new Date(json['accountLockedUntil']),
-    credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    internal: json['internal'] == null ? undefined : json['internal'],
-    preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
-    registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
-    newsletter: json['newsletter'] == null ? undefined : json['newsletter'],
-    registrationUserUri: json['registrationUserUri'] == null ? undefined : json['registrationUserUri'],
-    registrationAccessToken: json['registrationAccessToken'] == null ? undefined : json['registrationAccessToken'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    source: json['source'] == null ? undefined : json['source'],
-    client: json['client'] == null ? undefined : json['client'],
-    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
-    factors: json['factors'] == null ? undefined : (json['factors'] as Array<any>).map(EnrolledFactorFromJSON),
-    identities: json['identities'] == null ? undefined : (json['identities'] as Array<any>).map(UserIdentityFromJSON),
-    lastIdentityUsed: json['lastIdentityUsed'] == null ? undefined : json['lastIdentityUsed'],
+    accountNonExpired: json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
+    accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
-    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    address: json['address'] == null ? undefined : json['address'],
+    addresses: json['addresses'] == null ? undefined : (json['addresses'] as Array<any>).map(AddressFromJSON),
+    birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
+    client: json['client'] == null ? undefined : json['client'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
+    disabled: json['disabled'] == null ? undefined : json['disabled'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    dynamicGroups: json['dynamicGroups'] == null ? undefined : json['dynamicGroups'],
+    dynamicRoles: json['dynamicRoles'] == null ? undefined : json['dynamicRoles'],
+    email: json['email'] == null ? undefined : json['email'],
+    emails: json['emails'] == null ? undefined : (json['emails'] as Array<any>).map(AttributeFromJSON),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    entitlements: json['entitlements'] == null ? undefined : json['entitlements'],
+    externalId: json['externalId'] == null ? undefined : json['externalId'],
+    factors: json['factors'] == null ? undefined : (json['factors'] as Array<any>).map(EnrolledFactorFromJSON),
+    firstName: json['firstName'] == null ? undefined : json['firstName'],
+    forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    groups: json['groups'] == null ? undefined : json['groups'],
+    id: json['id'] == null ? undefined : json['id'],
+    identities: json['identities'] == null ? undefined : (json['identities'] as Array<any>).map(UserIdentityFromJSON),
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    ims: json['ims'] == null ? undefined : (json['ims'] as Array<any>).map(AttributeFromJSON),
+    inactive: json['inactive'] == null ? undefined : json['inactive'],
+    indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
+    internal: json['internal'] == null ? undefined : json['internal'],
+    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
+    lastIdentityUsed: json['lastIdentityUsed'] == null ? undefined : json['lastIdentityUsed'],
     lastLoginWithCredentials: json['lastLoginWithCredentials'] == null ? undefined : new Date(json['lastLoginWithCredentials']),
+    lastLogoutAt: json['lastLogoutAt'] == null ? undefined : new Date(json['lastLogoutAt']),
+    lastName: json['lastName'] == null ? undefined : json['lastName'],
     lastPasswordReset: json['lastPasswordReset'] == null ? undefined : new Date(json['lastPasswordReset']),
     lastUsernameReset: json['lastUsernameReset'] == null ? undefined : new Date(json['lastUsernameReset']),
-    lastLogoutAt: json['lastLogoutAt'] == null ? undefined : new Date(json['lastLogoutAt']),
-    mfaEnrollmentSkippedAt: json['mfaEnrollmentSkippedAt'] == null ? undefined : new Date(json['mfaEnrollmentSkippedAt']),
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
-    serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
-    middleName: json['middleName'] == null ? undefined : json['middleName'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
-    inactive: json['inactive'] == null ? undefined : json['inactive'],
-    profile: json['profile'] == null ? undefined : json['profile'],
-    website: json['website'] == null ? undefined : json['website'],
-    birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
-    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
-    address: json['address'] == null ? undefined : json['address'],
-    disabled: json['disabled'] == null ? undefined : json['disabled'],
-    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
-    indefinitelyLocked: json['indefinitelyLocked'] == null ? undefined : json['indefinitelyLocked'],
-    temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     locale: json['locale'] == null ? undefined : json['locale'],
+    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
+    mfaEnrollmentSkippedAt: json['mfaEnrollmentSkippedAt'] == null ? undefined : new Date(json['mfaEnrollmentSkippedAt']),
+    middleName: json['middleName'] == null ? undefined : json['middleName'],
+    newsletter: json['newsletter'] == null ? undefined : json['newsletter'],
+    nickName: json['nickName'] == null ? undefined : json['nickName'],
+    password: json['password'] == null ? undefined : json['password'],
+    phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
+    phoneNumbers: json['phoneNumbers'] == null ? undefined : (json['phoneNumbers'] as Array<any>).map(AttributeFromJSON),
+    photos: json['photos'] == null ? undefined : (json['photos'] as Array<any>).map(AttributeFromJSON),
+    picture: json['picture'] == null ? undefined : json['picture'],
+    preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
+    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
+    profile: json['profile'] == null ? undefined : json['profile'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    registrationAccessToken: json['registrationAccessToken'] == null ? undefined : json['registrationAccessToken'],
+    registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
+    registrationUserUri: json['registrationUserUri'] == null ? undefined : json['registrationUserUri'],
+    roles: json['roles'] == null ? undefined : json['roles'],
+    rolesPermissions: json['rolesPermissions'] == null ? undefined : new Set((json['rolesPermissions'] as Array<any>).map(RoleFromJSON)),
+    serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
+    source: json['source'] == null ? undefined : json['source'],
+    temporarilyLocked: json['temporarilyLocked'] == null ? undefined : json['temporarilyLocked'],
+    title: json['title'] == null ? undefined : json['title'],
+    type: json['type'] == null ? undefined : json['type'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    username: json['username'] == null ? undefined : json['username'],
+    website: json['website'] == null ? undefined : json['website'],
+    x509Certificates: json['x509Certificates'] == null ? undefined : (json['x509Certificates'] as Array<any>).map(CertificateFromJSON),
+    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
   };
 }
 
@@ -588,78 +588,78 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
   }
 
   return {
-    id: value['id'],
-    externalId: value['externalId'],
-    username: value['username'],
-    password: value['password'],
-    email: value['email'],
-    displayName: value['displayName'],
-    nickName: value['nickName'],
-    firstName: value['firstName'],
-    lastName: value['lastName'],
-    title: value['title'],
-    type: value['type'],
-    preferredLanguage: value['preferredLanguage'],
-    picture: value['picture'],
-    emails: value['emails'] == null ? undefined : (value['emails'] as Array<any>).map(AttributeToJSON),
-    phoneNumbers: value['phoneNumbers'] == null ? undefined : (value['phoneNumbers'] as Array<any>).map(AttributeToJSON),
-    ims: value['ims'] == null ? undefined : (value['ims'] as Array<any>).map(AttributeToJSON),
-    photos: value['photos'] == null ? undefined : (value['photos'] as Array<any>).map(AttributeToJSON),
-    entitlements: value['entitlements'],
-    addresses: value['addresses'] == null ? undefined : (value['addresses'] as Array<any>).map(AddressToJSON),
-    roles: value['roles'],
-    dynamicRoles: value['dynamicRoles'],
-    dynamicGroups: value['dynamicGroups'],
-    rolesPermissions: value['rolesPermissions'] == null ? undefined : Array.from(value['rolesPermissions'] as Set<any>).map(RoleToJSON),
-    groups: value['groups'],
-    x509Certificates: value['x509Certificates'] == null ? undefined : (value['x509Certificates'] as Array<any>).map(CertificateToJSON),
-    accountNonExpired: value['accountNonExpired'],
-    accountNonLocked: value['accountNonLocked'],
     accountLockedAt: value['accountLockedAt'] == null ? value['accountLockedAt'] : value['accountLockedAt'].toISOString(),
     accountLockedUntil: value['accountLockedUntil'] == null ? value['accountLockedUntil'] : value['accountLockedUntil'].toISOString(),
-    credentialsNonExpired: value['credentialsNonExpired'],
-    enabled: value['enabled'],
-    internal: value['internal'],
-    preRegistration: value['preRegistration'],
-    registrationCompleted: value['registrationCompleted'],
-    newsletter: value['newsletter'],
-    registrationUserUri: value['registrationUserUri'],
-    registrationAccessToken: value['registrationAccessToken'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    source: value['source'],
-    client: value['client'],
-    loginsCount: value['loginsCount'],
-    factors: value['factors'] == null ? undefined : (value['factors'] as Array<any>).map(EnrolledFactorToJSON),
-    identities: value['identities'] == null ? undefined : (value['identities'] as Array<any>).map(UserIdentityToJSON),
-    lastIdentityUsed: value['lastIdentityUsed'],
+    accountNonExpired: value['accountNonExpired'],
+    accountNonLocked: value['accountNonLocked'],
     additionalInformation: value['additionalInformation'],
-    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    address: value['address'],
+    addresses: value['addresses'] == null ? undefined : (value['addresses'] as Array<any>).map(AddressToJSON),
+    birthdate: value['birthdate'],
+    client: value['client'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    credentialsNonExpired: value['credentialsNonExpired'],
+    disabled: value['disabled'],
+    displayName: value['displayName'],
+    dynamicGroups: value['dynamicGroups'],
+    dynamicRoles: value['dynamicRoles'],
+    email: value['email'],
+    emails: value['emails'] == null ? undefined : (value['emails'] as Array<any>).map(AttributeToJSON),
+    enabled: value['enabled'],
+    entitlements: value['entitlements'],
+    externalId: value['externalId'],
+    factors: value['factors'] == null ? undefined : (value['factors'] as Array<any>).map(EnrolledFactorToJSON),
+    firstName: value['firstName'],
+    forceResetPassword: value['forceResetPassword'],
+    fullId: UserIdToJSON(value['fullId']),
+    groups: value['groups'],
+    id: value['id'],
+    identities: value['identities'] == null ? undefined : (value['identities'] as Array<any>).map(UserIdentityToJSON),
+    identitiesAsMap: value['identitiesAsMap'],
+    ims: value['ims'] == null ? undefined : (value['ims'] as Array<any>).map(AttributeToJSON),
+    inactive: value['inactive'],
+    indefinitelyLocked: value['indefinitelyLocked'],
+    internal: value['internal'],
+    lastIdentityInformation: value['lastIdentityInformation'],
+    lastIdentityUsed: value['lastIdentityUsed'],
     lastLoginWithCredentials:
       value['lastLoginWithCredentials'] == null ? value['lastLoginWithCredentials'] : value['lastLoginWithCredentials'].toISOString(),
+    lastLogoutAt: value['lastLogoutAt'] == null ? value['lastLogoutAt'] : value['lastLogoutAt'].toISOString(),
+    lastName: value['lastName'],
     lastPasswordReset: value['lastPasswordReset'] == null ? value['lastPasswordReset'] : value['lastPasswordReset'].toISOString(),
     lastUsernameReset: value['lastUsernameReset'] == null ? value['lastUsernameReset'] : value['lastUsernameReset'].toISOString(),
-    lastLogoutAt: value['lastLogoutAt'] == null ? value['lastLogoutAt'] : value['lastLogoutAt'].toISOString(),
+    locale: value['locale'],
+    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    loginsCount: value['loginsCount'],
     mfaEnrollmentSkippedAt:
       value['mfaEnrollmentSkippedAt'] == null ? value['mfaEnrollmentSkippedAt'] : value['mfaEnrollmentSkippedAt'].toISOString(),
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    forceResetPassword: value['forceResetPassword'],
-    serviceAccount: value['serviceAccount'],
     middleName: value['middleName'],
-    identitiesAsMap: value['identitiesAsMap'],
-    inactive: value['inactive'],
-    profile: value['profile'],
-    website: value['website'],
-    birthdate: value['birthdate'],
-    zoneInfo: value['zoneInfo'],
+    newsletter: value['newsletter'],
+    nickName: value['nickName'],
+    password: value['password'],
     phoneNumber: value['phoneNumber'],
-    address: value['address'],
-    disabled: value['disabled'],
-    lastIdentityInformation: value['lastIdentityInformation'],
-    indefinitelyLocked: value['indefinitelyLocked'],
+    phoneNumbers: value['phoneNumbers'] == null ? undefined : (value['phoneNumbers'] as Array<any>).map(AttributeToJSON),
+    photos: value['photos'] == null ? undefined : (value['photos'] as Array<any>).map(AttributeToJSON),
+    picture: value['picture'],
+    preRegistration: value['preRegistration'],
+    preferredLanguage: value['preferredLanguage'],
+    profile: value['profile'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    registrationAccessToken: value['registrationAccessToken'],
+    registrationCompleted: value['registrationCompleted'],
+    registrationUserUri: value['registrationUserUri'],
+    roles: value['roles'],
+    rolesPermissions: value['rolesPermissions'] == null ? undefined : Array.from(value['rolesPermissions'] as Set<any>).map(RoleToJSON),
+    serviceAccount: value['serviceAccount'],
+    source: value['source'],
     temporarilyLocked: value['temporarilyLocked'],
-    fullId: UserIdToJSON(value['fullId']),
-    locale: value['locale'],
+    title: value['title'],
+    type: value['type'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    username: value['username'],
+    website: value['website'],
+    x509Certificates: value['x509Certificates'] == null ? undefined : (value['x509Certificates'] as Array<any>).map(CertificateToJSON),
+    zoneInfo: value['zoneInfo'],
   };
 }

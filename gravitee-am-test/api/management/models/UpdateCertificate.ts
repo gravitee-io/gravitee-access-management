@@ -37,6 +37,12 @@ export interface UpdateCertificate {
    * @type {string}
    * @memberof UpdateCertificate
    */
+  configuration: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateCertificate
+   */
   name: string;
   /**
    *
@@ -44,21 +50,15 @@ export interface UpdateCertificate {
    * @memberof UpdateCertificate
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateCertificate
-   */
-  configuration: string;
 }
 
 /**
  * Check if a given object implements the UpdateCertificate interface.
  */
 export function instanceOfUpdateCertificate(value: object): value is UpdateCertificate {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -71,9 +71,9 @@ export function UpdateCertificateFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
+    configuration: json['configuration'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
   };
 }
 
@@ -87,8 +87,8 @@ export function UpdateCertificateToJSONTyped(value?: UpdateCertificate | null, i
   }
 
   return {
+    configuration: value['configuration'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
   };
 }

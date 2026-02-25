@@ -34,10 +34,22 @@ import { mapValues } from '../runtime';
 export interface NewEmail {
   /**
    *
+   * @type {string}
+   * @memberof NewEmail
+   */
+  content: string;
+  /**
+   *
    * @type {boolean}
    * @memberof NewEmail
    */
   enabled?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof NewEmail
+   */
+  expiresAfter: number;
   /**
    *
    * @type {string}
@@ -56,18 +68,6 @@ export interface NewEmail {
    * @memberof NewEmail
    */
   subject: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewEmail
-   */
-  content: string;
-  /**
-   *
-   * @type {number}
-   * @memberof NewEmail
-   */
-  expiresAfter: number;
   /**
    *
    * @type {string}
@@ -103,16 +103,16 @@ export const NewEmailTemplateEnum = {
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type NewEmailTemplateEnum = typeof NewEmailTemplateEnum[keyof typeof NewEmailTemplateEnum];
+export type NewEmailTemplateEnum = (typeof NewEmailTemplateEnum)[keyof typeof NewEmailTemplateEnum];
 
 /**
  * Check if a given object implements the NewEmail interface.
  */
 export function instanceOfNewEmail(value: object): value is NewEmail {
-  if (!('from' in value) || value['from'] === undefined) return false;
-  if (!('subject' in value) || value['subject'] === undefined) return false;
   if (!('content' in value) || value['content'] === undefined) return false;
   if (!('expiresAfter' in value) || value['expiresAfter'] === undefined) return false;
+  if (!('from' in value) || value['from'] === undefined) return false;
+  if (!('subject' in value) || value['subject'] === undefined) return false;
   if (!('template' in value) || value['template'] === undefined) return false;
   return true;
 }
@@ -126,12 +126,12 @@ export function NewEmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
+    content: json['content'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    expiresAfter: json['expiresAfter'],
     from: json['from'],
     fromName: json['fromName'] == null ? undefined : json['fromName'],
     subject: json['subject'],
-    content: json['content'],
-    expiresAfter: json['expiresAfter'],
     template: json['template'],
   };
 }
@@ -146,12 +146,12 @@ export function NewEmailToJSONTyped(value?: NewEmail | null, ignoreDiscriminator
   }
 
   return {
+    content: value['content'],
     enabled: value['enabled'],
+    expiresAfter: value['expiresAfter'],
     from: value['from'],
     fromName: value['fromName'],
     subject: value['subject'],
-    content: value['content'],
-    expiresAfter: value['expiresAfter'],
     template: value['template'],
   };
 }

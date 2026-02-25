@@ -42,22 +42,10 @@ import {
 export interface PatchCIBASettings {
   /**
    *
-   * @type {boolean}
-   * @memberof PatchCIBASettings
-   */
-  enabled?: boolean;
-  /**
-   *
    * @type {number}
    * @memberof PatchCIBASettings
    */
   authReqExpiry?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchCIBASettings
-   */
-  tokenReqInterval?: number;
   /**
    *
    * @type {number}
@@ -70,6 +58,18 @@ export interface PatchCIBASettings {
    * @memberof PatchCIBASettings
    */
   deviceNotifiers?: Array<CIBASettingNotifier>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchCIBASettings
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchCIBASettings
+   */
+  tokenReqInterval?: number;
 }
 
 /**
@@ -88,11 +88,11 @@ export function PatchCIBASettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     authReqExpiry: json['authReqExpiry'] == null ? undefined : json['authReqExpiry'],
-    tokenReqInterval: json['tokenReqInterval'] == null ? undefined : json['tokenReqInterval'],
     bindingMessageLength: json['bindingMessageLength'] == null ? undefined : json['bindingMessageLength'],
     deviceNotifiers: json['deviceNotifiers'] == null ? undefined : (json['deviceNotifiers'] as Array<any>).map(CIBASettingNotifierFromJSON),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    tokenReqInterval: json['tokenReqInterval'] == null ? undefined : json['tokenReqInterval'],
   };
 }
 
@@ -106,10 +106,10 @@ export function PatchCIBASettingsToJSONTyped(value?: PatchCIBASettings | null, i
   }
 
   return {
-    enabled: value['enabled'],
     authReqExpiry: value['authReqExpiry'],
-    tokenReqInterval: value['tokenReqInterval'],
     bindingMessageLength: value['bindingMessageLength'],
     deviceNotifiers: value['deviceNotifiers'] == null ? undefined : (value['deviceNotifiers'] as Array<any>).map(CIBASettingNotifierToJSON),
+    enabled: value['enabled'],
+    tokenReqInterval: value['tokenReqInterval'],
   };
 }

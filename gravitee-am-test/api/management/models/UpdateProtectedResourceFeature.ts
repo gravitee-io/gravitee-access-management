@@ -39,13 +39,13 @@ export interface UpdateProtectedResourceFeature {
    * @type {string}
    * @memberof UpdateProtectedResourceFeature
    */
-  key: string;
+  description?: string;
   /**
    *
    * @type {string}
    * @memberof UpdateProtectedResourceFeature
    */
-  description?: string;
+  key: string;
   /**
    *
    * @type {string}
@@ -77,8 +77,8 @@ export function UpdateProtectedResourceFeatureFromJSONTyped(json: any, ignoreDis
     }
   }
   return {
-    key: json['key'],
     description: json['description'] == null ? undefined : json['description'],
+    key: json['key'],
     type: json['type'],
   };
 }
@@ -105,8 +105,8 @@ export function UpdateProtectedResourceFeatureToJSONTyped(
   }
 
   return {
-    key: value['key'],
     description: value['description'],
+    key: value['key'],
     type: value['type'],
   };
 }

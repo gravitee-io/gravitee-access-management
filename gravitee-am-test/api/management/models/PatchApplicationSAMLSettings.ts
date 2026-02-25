@@ -37,19 +37,7 @@ export interface PatchApplicationSAMLSettings {
    * @type {string}
    * @memberof PatchApplicationSAMLSettings
    */
-  entityId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationSAMLSettings
-   */
   attributeConsumeServiceUrl?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationSAMLSettings
-   */
-  singleLogoutServiceUrl?: string;
   /**
    *
    * @type {string}
@@ -58,10 +46,22 @@ export interface PatchApplicationSAMLSettings {
   certificate?: string;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof PatchApplicationSAMLSettings
    */
-  wantResponseSigned?: boolean;
+  entityId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationSAMLSettings
+   */
+  responseBinding?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationSAMLSettings
+   */
+  singleLogoutServiceUrl?: string;
   /**
    *
    * @type {boolean}
@@ -70,10 +70,10 @@ export interface PatchApplicationSAMLSettings {
   wantAssertionsSigned?: boolean;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof PatchApplicationSAMLSettings
    */
-  responseBinding?: string;
+  wantResponseSigned?: boolean;
 }
 
 /**
@@ -92,13 +92,13 @@ export function PatchApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscr
     return json;
   }
   return {
-    entityId: json['entityId'] == null ? undefined : json['entityId'],
     attributeConsumeServiceUrl: json['attributeConsumeServiceUrl'] == null ? undefined : json['attributeConsumeServiceUrl'],
-    singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
-    wantResponseSigned: json['wantResponseSigned'] == null ? undefined : json['wantResponseSigned'],
-    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
+    entityId: json['entityId'] == null ? undefined : json['entityId'],
     responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
+    singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
+    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
+    wantResponseSigned: json['wantResponseSigned'] == null ? undefined : json['wantResponseSigned'],
   };
 }
 
@@ -115,12 +115,12 @@ export function PatchApplicationSAMLSettingsToJSONTyped(
   }
 
   return {
-    entityId: value['entityId'],
     attributeConsumeServiceUrl: value['attributeConsumeServiceUrl'],
-    singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
     certificate: value['certificate'],
-    wantResponseSigned: value['wantResponseSigned'],
-    wantAssertionsSigned: value['wantAssertionsSigned'],
+    entityId: value['entityId'],
     responseBinding: value['responseBinding'],
+    singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
+    wantAssertionsSigned: value['wantAssertionsSigned'],
+    wantResponseSigned: value['wantResponseSigned'],
   };
 }

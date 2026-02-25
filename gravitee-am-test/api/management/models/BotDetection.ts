@@ -37,19 +37,13 @@ export interface BotDetection {
    * @type {string}
    * @memberof BotDetection
    */
-  id?: string;
+  configuration?: string;
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof BotDetection
    */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof BotDetection
-   */
-  type?: string;
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -61,7 +55,13 @@ export interface BotDetection {
    * @type {string}
    * @memberof BotDetection
    */
-  configuration?: string;
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof BotDetection
+   */
+  name?: string;
   /**
    *
    * @type {string}
@@ -76,10 +76,10 @@ export interface BotDetection {
   referenceType?: BotDetectionReferenceTypeEnum;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof BotDetection
    */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
@@ -99,7 +99,7 @@ export const BotDetectionReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type BotDetectionReferenceTypeEnum = typeof BotDetectionReferenceTypeEnum[keyof typeof BotDetectionReferenceTypeEnum];
+export type BotDetectionReferenceTypeEnum = (typeof BotDetectionReferenceTypeEnum)[keyof typeof BotDetectionReferenceTypeEnum];
 
 /**
  * Check if a given object implements the BotDetection interface.
@@ -117,14 +117,14 @@ export function BotDetectionFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    detectionType: json['detectionType'] == null ? undefined : json['detectionType'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    detectionType: json['detectionType'] == null ? undefined : json['detectionType'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -139,14 +139,14 @@ export function BotDetectionToJSONTyped(value?: BotDetection | null, ignoreDiscr
   }
 
   return {
+    configuration: value['configuration'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    detectionType: value['detectionType'],
     id: value['id'],
     name: value['name'],
-    type: value['type'],
-    detectionType: value['detectionType'],
-    configuration: value['configuration'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

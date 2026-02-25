@@ -37,6 +37,24 @@ export interface AlertNotifier {
    * @type {string}
    * @memberof AlertNotifier
    */
+  configuration?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof AlertNotifier
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AlertNotifier
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof AlertNotifier
+   */
   id?: string;
   /**
    *
@@ -49,19 +67,7 @@ export interface AlertNotifier {
    * @type {string}
    * @memberof AlertNotifier
    */
-  type?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AlertNotifier
-   */
-  enabled?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof AlertNotifier
-   */
-  configuration?: string;
+  referenceId?: string;
   /**
    *
    * @type {string}
@@ -73,13 +79,7 @@ export interface AlertNotifier {
    * @type {string}
    * @memberof AlertNotifier
    */
-  referenceId?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof AlertNotifier
-   */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
@@ -99,7 +99,7 @@ export const AlertNotifierReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type AlertNotifierReferenceTypeEnum = typeof AlertNotifierReferenceTypeEnum[keyof typeof AlertNotifierReferenceTypeEnum];
+export type AlertNotifierReferenceTypeEnum = (typeof AlertNotifierReferenceTypeEnum)[keyof typeof AlertNotifierReferenceTypeEnum];
 
 /**
  * Check if a given object implements the AlertNotifier interface.
@@ -117,14 +117,14 @@ export function AlertNotifierFromJSONTyped(json: any, ignoreDiscriminator: boole
     return json;
   }
   return {
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -139,14 +139,14 @@ export function AlertNotifierToJSONTyped(value?: AlertNotifier | null, ignoreDis
   }
 
   return {
+    configuration: value['configuration'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    enabled: value['enabled'],
     id: value['id'],
     name: value['name'],
-    type: value['type'],
-    enabled: value['enabled'],
-    configuration: value['configuration'],
-    referenceType: value['referenceType'],
     referenceId: value['referenceId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    referenceType: value['referenceType'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

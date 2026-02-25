@@ -37,13 +37,13 @@ export interface NewAuthenticationDeviceNotifier {
    * @type {string}
    * @memberof NewAuthenticationDeviceNotifier
    */
-  id?: string;
+  configuration: string;
   /**
    *
    * @type {string}
    * @memberof NewAuthenticationDeviceNotifier
    */
-  type: string;
+  id?: string;
   /**
    *
    * @type {string}
@@ -55,16 +55,16 @@ export interface NewAuthenticationDeviceNotifier {
    * @type {string}
    * @memberof NewAuthenticationDeviceNotifier
    */
-  configuration: string;
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewAuthenticationDeviceNotifier interface.
  */
 export function instanceOfNewAuthenticationDeviceNotifier(value: object): value is NewAuthenticationDeviceNotifier {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -77,10 +77,10 @@ export function NewAuthenticationDeviceNotifierFromJSONTyped(json: any, ignoreDi
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'],
-    name: json['name'],
     configuration: json['configuration'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -97,9 +97,9 @@ export function NewAuthenticationDeviceNotifierToJSONTyped(
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    name: value['name'],
     configuration: value['configuration'],
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
   };
 }

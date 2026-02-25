@@ -46,340 +46,16 @@ import {
 export interface ApplicationOAuthSettings {
   /**
    *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  clientId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  clientSecret?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  clientType?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  redirectUris?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  responseTypes?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  grantTypes?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  applicationType?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  contacts?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  clientName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  logoUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  clientUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  policyUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  tosUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  jwksUri?: string;
-  /**
-   *
-   * @type {JWKSet}
-   * @memberof ApplicationOAuthSettings
-   */
-  jwks?: JWKSet;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  sectorIdentifierUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  subjectType?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  idTokenSignedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  idTokenEncryptedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  idTokenEncryptedResponseEnc?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  userinfoSignedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  userinfoEncryptedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  userinfoEncryptedResponseEnc?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  requestObjectSigningAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  requestObjectEncryptionAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  requestObjectEncryptionEnc?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  tokenEndpointAuthMethod?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  tokenEndpointAuthSigningAlg?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof ApplicationOAuthSettings
-   */
-  defaultMaxAge?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ApplicationOAuthSettings
-   */
-  requireAuthTime?: boolean;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  defaultACRvalues?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  initiateLoginUri?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  requestUris?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  softwareId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  softwareVersion?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  softwareStatement?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  registrationAccessToken?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  registrationClientUri?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof ApplicationOAuthSettings
-   */
-  clientIdIssuedAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof ApplicationOAuthSettings
-   */
-  clientSecretExpiresAt?: Date;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  scopes?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ApplicationOAuthSettings
-   */
-  defaultScopes?: Array<string>;
-  /**
-   *
-   * @type {{ [key: string]: number; }}
-   * @memberof ApplicationOAuthSettings
-   */
-  scopeApprovals?: { [key: string]: number };
-  /**
-   *
-   * @type {Array<ApplicationScopeSettings>}
-   * @memberof ApplicationOAuthSettings
-   */
-  scopeSettings?: Array<ApplicationScopeSettings>;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ApplicationOAuthSettings
-   */
-  enhanceScopesWithUserPermissions?: boolean;
-  /**
-   *
    * @type {number}
    * @memberof ApplicationOAuthSettings
    */
   accessTokenValiditySeconds?: number;
   /**
    *
-   * @type {number}
-   * @memberof ApplicationOAuthSettings
-   */
-  refreshTokenValiditySeconds?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof ApplicationOAuthSettings
-   */
-  idTokenValiditySeconds?: number;
-  /**
-   *
-   * @type {Array<TokenClaim>}
-   * @memberof ApplicationOAuthSettings
-   */
-  tokenCustomClaims?: Array<TokenClaim>;
-  /**
-   *
    * @type {string}
    * @memberof ApplicationOAuthSettings
    */
-  tlsClientAuthSubjectDn?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  tlsClientAuthSanDns?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  tlsClientAuthSanUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  tlsClientAuthSanIp?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  tlsClientAuthSanEmail?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ApplicationOAuthSettings
-   */
-  tlsClientCertificateBoundAccessTokens?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof ApplicationOAuthSettings
-   */
-  authorizationSignedResponseAlg?: string;
+  applicationType?: string;
   /**
    *
    * @type {string}
@@ -392,6 +68,114 @@ export interface ApplicationOAuthSettings {
    * @memberof ApplicationOAuthSettings
    */
   authorizationEncryptedResponseEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  authorizationSignedResponseAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  backchannelAuthRequestSignAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  backchannelClientNotificationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  backchannelTokenDeliveryMode?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ApplicationOAuthSettings
+   */
+  backchannelUserCodeParameter?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof ApplicationOAuthSettings
+   */
+  clientIdIssuedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  clientName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  clientSecret?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof ApplicationOAuthSettings
+   */
+  clientSecretExpiresAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  clientType?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  clientUri?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
+  contacts?: Array<string>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
+  defaultACRvalues?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationOAuthSettings
+   */
+  defaultMaxAge?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
+  defaultScopes?: Array<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ApplicationOAuthSettings
+   */
+  disableRefreshTokenRotation?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ApplicationOAuthSettings
+   */
+  enhanceScopesWithUserPermissions?: boolean;
   /**
    *
    * @type {boolean}
@@ -409,13 +193,157 @@ export interface ApplicationOAuthSettings {
    * @type {Array<string>}
    * @memberof ApplicationOAuthSettings
    */
+  grantTypes?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  idTokenEncryptedResponseAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  idTokenEncryptedResponseEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  idTokenSignedResponseAlg?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationOAuthSettings
+   */
+  idTokenValiditySeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  initiateLoginUri?: string;
+  /**
+   *
+   * @type {JWKSet}
+   * @memberof ApplicationOAuthSettings
+   */
+  jwks?: JWKSet;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  jwksUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  logoUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  policyUri?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
   postLogoutRedirectUris?: Array<string>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
+  redirectUris?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationOAuthSettings
+   */
+  refreshTokenValiditySeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  registrationAccessToken?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  registrationClientUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  requestObjectEncryptionAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  requestObjectEncryptionEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  requestObjectSigningAlg?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
+  requestUris?: Array<string>;
   /**
    *
    * @type {boolean}
    * @memberof ApplicationOAuthSettings
    */
-  singleSignOut?: boolean;
+  requireAuthTime?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ApplicationOAuthSettings
+   */
+  requireParRequest?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
+  responseTypes?: Array<string>;
+  /**
+   *
+   * @type {{ [key: string]: number; }}
+   * @memberof ApplicationOAuthSettings
+   */
+  scopeApprovals?: { [key: string]: number };
+  /**
+   *
+   * @type {Array<ApplicationScopeSettings>}
+   * @memberof ApplicationOAuthSettings
+   */
+  scopeSettings?: Array<ApplicationScopeSettings>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationOAuthSettings
+   */
+  scopes?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  sectorIdentifierUri?: string;
   /**
    *
    * @type {boolean}
@@ -427,37 +355,109 @@ export interface ApplicationOAuthSettings {
    * @type {boolean}
    * @memberof ApplicationOAuthSettings
    */
-  requireParRequest?: boolean;
+  singleSignOut?: boolean;
   /**
    *
    * @type {string}
    * @memberof ApplicationOAuthSettings
    */
-  backchannelTokenDeliveryMode?: string;
+  softwareId?: string;
   /**
    *
    * @type {string}
    * @memberof ApplicationOAuthSettings
    */
-  backchannelClientNotificationEndpoint?: string;
+  softwareStatement?: string;
   /**
    *
    * @type {string}
    * @memberof ApplicationOAuthSettings
    */
-  backchannelAuthRequestSignAlg?: string;
+  softwareVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  subjectType?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tlsClientAuthSanDns?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tlsClientAuthSanEmail?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tlsClientAuthSanIp?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tlsClientAuthSanUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tlsClientAuthSubjectDn?: string;
   /**
    *
    * @type {boolean}
    * @memberof ApplicationOAuthSettings
    */
-  backchannelUserCodeParameter?: boolean;
+  tlsClientCertificateBoundAccessTokens?: boolean;
   /**
    *
-   * @type {boolean}
+   * @type {Array<TokenClaim>}
    * @memberof ApplicationOAuthSettings
    */
-  disableRefreshTokenRotation?: boolean;
+  tokenCustomClaims?: Array<TokenClaim>;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tokenEndpointAuthMethod?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tokenEndpointAuthSigningAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  tosUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  userinfoEncryptedResponseAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  userinfoEncryptedResponseEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationOAuthSettings
+   */
+  userinfoSignedResponseAlg?: string;
 }
 
 /**
@@ -476,80 +476,80 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     return json;
   }
   return {
-    clientId: json['clientId'] == null ? undefined : json['clientId'],
-    clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
-    clientType: json['clientType'] == null ? undefined : json['clientType'],
-    redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
-    responseTypes: json['responseTypes'] == null ? undefined : json['responseTypes'],
-    grantTypes: json['grantTypes'] == null ? undefined : json['grantTypes'],
-    applicationType: json['applicationType'] == null ? undefined : json['applicationType'],
-    contacts: json['contacts'] == null ? undefined : json['contacts'],
-    clientName: json['clientName'] == null ? undefined : json['clientName'],
-    logoUri: json['logoUri'] == null ? undefined : json['logoUri'],
-    clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
-    policyUri: json['policyUri'] == null ? undefined : json['policyUri'],
-    tosUri: json['tosUri'] == null ? undefined : json['tosUri'],
-    jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
-    jwks: json['jwks'] == null ? undefined : JWKSetFromJSON(json['jwks']),
-    sectorIdentifierUri: json['sectorIdentifierUri'] == null ? undefined : json['sectorIdentifierUri'],
-    subjectType: json['subjectType'] == null ? undefined : json['subjectType'],
-    idTokenSignedResponseAlg: json['idTokenSignedResponseAlg'] == null ? undefined : json['idTokenSignedResponseAlg'],
-    idTokenEncryptedResponseAlg: json['idTokenEncryptedResponseAlg'] == null ? undefined : json['idTokenEncryptedResponseAlg'],
-    idTokenEncryptedResponseEnc: json['idTokenEncryptedResponseEnc'] == null ? undefined : json['idTokenEncryptedResponseEnc'],
-    userinfoSignedResponseAlg: json['userinfoSignedResponseAlg'] == null ? undefined : json['userinfoSignedResponseAlg'],
-    userinfoEncryptedResponseAlg: json['userinfoEncryptedResponseAlg'] == null ? undefined : json['userinfoEncryptedResponseAlg'],
-    userinfoEncryptedResponseEnc: json['userinfoEncryptedResponseEnc'] == null ? undefined : json['userinfoEncryptedResponseEnc'],
-    requestObjectSigningAlg: json['requestObjectSigningAlg'] == null ? undefined : json['requestObjectSigningAlg'],
-    requestObjectEncryptionAlg: json['requestObjectEncryptionAlg'] == null ? undefined : json['requestObjectEncryptionAlg'],
-    requestObjectEncryptionEnc: json['requestObjectEncryptionEnc'] == null ? undefined : json['requestObjectEncryptionEnc'],
-    tokenEndpointAuthMethod: json['tokenEndpointAuthMethod'] == null ? undefined : json['tokenEndpointAuthMethod'],
-    tokenEndpointAuthSigningAlg: json['tokenEndpointAuthSigningAlg'] == null ? undefined : json['tokenEndpointAuthSigningAlg'],
-    defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
-    requireAuthTime: json['requireAuthTime'] == null ? undefined : json['requireAuthTime'],
-    defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
-    initiateLoginUri: json['initiateLoginUri'] == null ? undefined : json['initiateLoginUri'],
-    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
-    softwareId: json['softwareId'] == null ? undefined : json['softwareId'],
-    softwareVersion: json['softwareVersion'] == null ? undefined : json['softwareVersion'],
-    softwareStatement: json['softwareStatement'] == null ? undefined : json['softwareStatement'],
-    registrationAccessToken: json['registrationAccessToken'] == null ? undefined : json['registrationAccessToken'],
-    registrationClientUri: json['registrationClientUri'] == null ? undefined : json['registrationClientUri'],
-    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : new Date(json['clientIdIssuedAt']),
-    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : new Date(json['clientSecretExpiresAt']),
-    scopes: json['scopes'] == null ? undefined : json['scopes'],
-    defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
-    scopeApprovals: json['scopeApprovals'] == null ? undefined : json['scopeApprovals'],
-    scopeSettings: json['scopeSettings'] == null ? undefined : (json['scopeSettings'] as Array<any>).map(ApplicationScopeSettingsFromJSON),
-    enhanceScopesWithUserPermissions:
-      json['enhanceScopesWithUserPermissions'] == null ? undefined : json['enhanceScopesWithUserPermissions'],
     accessTokenValiditySeconds: json['accessTokenValiditySeconds'] == null ? undefined : json['accessTokenValiditySeconds'],
-    refreshTokenValiditySeconds: json['refreshTokenValiditySeconds'] == null ? undefined : json['refreshTokenValiditySeconds'],
-    idTokenValiditySeconds: json['idTokenValiditySeconds'] == null ? undefined : json['idTokenValiditySeconds'],
-    tokenCustomClaims: json['tokenCustomClaims'] == null ? undefined : (json['tokenCustomClaims'] as Array<any>).map(TokenClaimFromJSON),
-    tlsClientAuthSubjectDn: json['tlsClientAuthSubjectDn'] == null ? undefined : json['tlsClientAuthSubjectDn'],
-    tlsClientAuthSanDns: json['tlsClientAuthSanDns'] == null ? undefined : json['tlsClientAuthSanDns'],
-    tlsClientAuthSanUri: json['tlsClientAuthSanUri'] == null ? undefined : json['tlsClientAuthSanUri'],
-    tlsClientAuthSanIp: json['tlsClientAuthSanIp'] == null ? undefined : json['tlsClientAuthSanIp'],
-    tlsClientAuthSanEmail: json['tlsClientAuthSanEmail'] == null ? undefined : json['tlsClientAuthSanEmail'],
-    tlsClientCertificateBoundAccessTokens:
-      json['tlsClientCertificateBoundAccessTokens'] == null ? undefined : json['tlsClientCertificateBoundAccessTokens'],
-    authorizationSignedResponseAlg: json['authorizationSignedResponseAlg'] == null ? undefined : json['authorizationSignedResponseAlg'],
+    applicationType: json['applicationType'] == null ? undefined : json['applicationType'],
     authorizationEncryptedResponseAlg:
       json['authorizationEncryptedResponseAlg'] == null ? undefined : json['authorizationEncryptedResponseAlg'],
     authorizationEncryptedResponseEnc:
       json['authorizationEncryptedResponseEnc'] == null ? undefined : json['authorizationEncryptedResponseEnc'],
-    forcePKCE: json['forcePKCE'] == null ? undefined : json['forcePKCE'],
-    forceS256CodeChallengeMethod: json['forceS256CodeChallengeMethod'] == null ? undefined : json['forceS256CodeChallengeMethod'],
-    postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
-    singleSignOut: json['singleSignOut'] == null ? undefined : json['singleSignOut'],
-    silentReAuthentication: json['silentReAuthentication'] == null ? undefined : json['silentReAuthentication'],
-    requireParRequest: json['requireParRequest'] == null ? undefined : json['requireParRequest'],
-    backchannelTokenDeliveryMode: json['backchannelTokenDeliveryMode'] == null ? undefined : json['backchannelTokenDeliveryMode'],
+    authorizationSignedResponseAlg: json['authorizationSignedResponseAlg'] == null ? undefined : json['authorizationSignedResponseAlg'],
+    backchannelAuthRequestSignAlg: json['backchannelAuthRequestSignAlg'] == null ? undefined : json['backchannelAuthRequestSignAlg'],
     backchannelClientNotificationEndpoint:
       json['backchannelClientNotificationEndpoint'] == null ? undefined : json['backchannelClientNotificationEndpoint'],
-    backchannelAuthRequestSignAlg: json['backchannelAuthRequestSignAlg'] == null ? undefined : json['backchannelAuthRequestSignAlg'],
+    backchannelTokenDeliveryMode: json['backchannelTokenDeliveryMode'] == null ? undefined : json['backchannelTokenDeliveryMode'],
     backchannelUserCodeParameter: json['backchannelUserCodeParameter'] == null ? undefined : json['backchannelUserCodeParameter'],
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : new Date(json['clientIdIssuedAt']),
+    clientName: json['clientName'] == null ? undefined : json['clientName'],
+    clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
+    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : new Date(json['clientSecretExpiresAt']),
+    clientType: json['clientType'] == null ? undefined : json['clientType'],
+    clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
+    contacts: json['contacts'] == null ? undefined : json['contacts'],
+    defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
+    defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
+    defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
+    enhanceScopesWithUserPermissions:
+      json['enhanceScopesWithUserPermissions'] == null ? undefined : json['enhanceScopesWithUserPermissions'],
+    forcePKCE: json['forcePKCE'] == null ? undefined : json['forcePKCE'],
+    forceS256CodeChallengeMethod: json['forceS256CodeChallengeMethod'] == null ? undefined : json['forceS256CodeChallengeMethod'],
+    grantTypes: json['grantTypes'] == null ? undefined : json['grantTypes'],
+    idTokenEncryptedResponseAlg: json['idTokenEncryptedResponseAlg'] == null ? undefined : json['idTokenEncryptedResponseAlg'],
+    idTokenEncryptedResponseEnc: json['idTokenEncryptedResponseEnc'] == null ? undefined : json['idTokenEncryptedResponseEnc'],
+    idTokenSignedResponseAlg: json['idTokenSignedResponseAlg'] == null ? undefined : json['idTokenSignedResponseAlg'],
+    idTokenValiditySeconds: json['idTokenValiditySeconds'] == null ? undefined : json['idTokenValiditySeconds'],
+    initiateLoginUri: json['initiateLoginUri'] == null ? undefined : json['initiateLoginUri'],
+    jwks: json['jwks'] == null ? undefined : JWKSetFromJSON(json['jwks']),
+    jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
+    logoUri: json['logoUri'] == null ? undefined : json['logoUri'],
+    policyUri: json['policyUri'] == null ? undefined : json['policyUri'],
+    postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
+    redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
+    refreshTokenValiditySeconds: json['refreshTokenValiditySeconds'] == null ? undefined : json['refreshTokenValiditySeconds'],
+    registrationAccessToken: json['registrationAccessToken'] == null ? undefined : json['registrationAccessToken'],
+    registrationClientUri: json['registrationClientUri'] == null ? undefined : json['registrationClientUri'],
+    requestObjectEncryptionAlg: json['requestObjectEncryptionAlg'] == null ? undefined : json['requestObjectEncryptionAlg'],
+    requestObjectEncryptionEnc: json['requestObjectEncryptionEnc'] == null ? undefined : json['requestObjectEncryptionEnc'],
+    requestObjectSigningAlg: json['requestObjectSigningAlg'] == null ? undefined : json['requestObjectSigningAlg'],
+    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
+    requireAuthTime: json['requireAuthTime'] == null ? undefined : json['requireAuthTime'],
+    requireParRequest: json['requireParRequest'] == null ? undefined : json['requireParRequest'],
+    responseTypes: json['responseTypes'] == null ? undefined : json['responseTypes'],
+    scopeApprovals: json['scopeApprovals'] == null ? undefined : json['scopeApprovals'],
+    scopeSettings: json['scopeSettings'] == null ? undefined : (json['scopeSettings'] as Array<any>).map(ApplicationScopeSettingsFromJSON),
+    scopes: json['scopes'] == null ? undefined : json['scopes'],
+    sectorIdentifierUri: json['sectorIdentifierUri'] == null ? undefined : json['sectorIdentifierUri'],
+    silentReAuthentication: json['silentReAuthentication'] == null ? undefined : json['silentReAuthentication'],
+    singleSignOut: json['singleSignOut'] == null ? undefined : json['singleSignOut'],
+    softwareId: json['softwareId'] == null ? undefined : json['softwareId'],
+    softwareStatement: json['softwareStatement'] == null ? undefined : json['softwareStatement'],
+    softwareVersion: json['softwareVersion'] == null ? undefined : json['softwareVersion'],
+    subjectType: json['subjectType'] == null ? undefined : json['subjectType'],
+    tlsClientAuthSanDns: json['tlsClientAuthSanDns'] == null ? undefined : json['tlsClientAuthSanDns'],
+    tlsClientAuthSanEmail: json['tlsClientAuthSanEmail'] == null ? undefined : json['tlsClientAuthSanEmail'],
+    tlsClientAuthSanIp: json['tlsClientAuthSanIp'] == null ? undefined : json['tlsClientAuthSanIp'],
+    tlsClientAuthSanUri: json['tlsClientAuthSanUri'] == null ? undefined : json['tlsClientAuthSanUri'],
+    tlsClientAuthSubjectDn: json['tlsClientAuthSubjectDn'] == null ? undefined : json['tlsClientAuthSubjectDn'],
+    tlsClientCertificateBoundAccessTokens:
+      json['tlsClientCertificateBoundAccessTokens'] == null ? undefined : json['tlsClientCertificateBoundAccessTokens'],
+    tokenCustomClaims: json['tokenCustomClaims'] == null ? undefined : (json['tokenCustomClaims'] as Array<any>).map(TokenClaimFromJSON),
+    tokenEndpointAuthMethod: json['tokenEndpointAuthMethod'] == null ? undefined : json['tokenEndpointAuthMethod'],
+    tokenEndpointAuthSigningAlg: json['tokenEndpointAuthSigningAlg'] == null ? undefined : json['tokenEndpointAuthSigningAlg'],
+    tosUri: json['tosUri'] == null ? undefined : json['tosUri'],
+    userinfoEncryptedResponseAlg: json['userinfoEncryptedResponseAlg'] == null ? undefined : json['userinfoEncryptedResponseAlg'],
+    userinfoEncryptedResponseEnc: json['userinfoEncryptedResponseEnc'] == null ? undefined : json['userinfoEncryptedResponseEnc'],
+    userinfoSignedResponseAlg: json['userinfoSignedResponseAlg'] == null ? undefined : json['userinfoSignedResponseAlg'],
   };
 }
 
@@ -563,75 +563,75 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
   }
 
   return {
-    clientId: value['clientId'],
-    clientSecret: value['clientSecret'],
-    clientType: value['clientType'],
-    redirectUris: value['redirectUris'],
-    responseTypes: value['responseTypes'],
-    grantTypes: value['grantTypes'],
-    applicationType: value['applicationType'],
-    contacts: value['contacts'],
-    clientName: value['clientName'],
-    logoUri: value['logoUri'],
-    clientUri: value['clientUri'],
-    policyUri: value['policyUri'],
-    tosUri: value['tosUri'],
-    jwksUri: value['jwksUri'],
-    jwks: JWKSetToJSON(value['jwks']),
-    sectorIdentifierUri: value['sectorIdentifierUri'],
-    subjectType: value['subjectType'],
-    idTokenSignedResponseAlg: value['idTokenSignedResponseAlg'],
-    idTokenEncryptedResponseAlg: value['idTokenEncryptedResponseAlg'],
-    idTokenEncryptedResponseEnc: value['idTokenEncryptedResponseEnc'],
-    userinfoSignedResponseAlg: value['userinfoSignedResponseAlg'],
-    userinfoEncryptedResponseAlg: value['userinfoEncryptedResponseAlg'],
-    userinfoEncryptedResponseEnc: value['userinfoEncryptedResponseEnc'],
-    requestObjectSigningAlg: value['requestObjectSigningAlg'],
-    requestObjectEncryptionAlg: value['requestObjectEncryptionAlg'],
-    requestObjectEncryptionEnc: value['requestObjectEncryptionEnc'],
-    tokenEndpointAuthMethod: value['tokenEndpointAuthMethod'],
-    tokenEndpointAuthSigningAlg: value['tokenEndpointAuthSigningAlg'],
-    defaultMaxAge: value['defaultMaxAge'],
-    requireAuthTime: value['requireAuthTime'],
-    defaultACRvalues: value['defaultACRvalues'],
-    initiateLoginUri: value['initiateLoginUri'],
-    requestUris: value['requestUris'],
-    softwareId: value['softwareId'],
-    softwareVersion: value['softwareVersion'],
-    softwareStatement: value['softwareStatement'],
-    registrationAccessToken: value['registrationAccessToken'],
-    registrationClientUri: value['registrationClientUri'],
-    clientIdIssuedAt: value['clientIdIssuedAt'] == null ? value['clientIdIssuedAt'] : value['clientIdIssuedAt'].toISOString(),
-    clientSecretExpiresAt:
-      value['clientSecretExpiresAt'] == null ? value['clientSecretExpiresAt'] : value['clientSecretExpiresAt'].toISOString(),
-    scopes: value['scopes'],
-    defaultScopes: value['defaultScopes'],
-    scopeApprovals: value['scopeApprovals'],
-    scopeSettings: value['scopeSettings'] == null ? undefined : (value['scopeSettings'] as Array<any>).map(ApplicationScopeSettingsToJSON),
-    enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],
     accessTokenValiditySeconds: value['accessTokenValiditySeconds'],
-    refreshTokenValiditySeconds: value['refreshTokenValiditySeconds'],
-    idTokenValiditySeconds: value['idTokenValiditySeconds'],
-    tokenCustomClaims: value['tokenCustomClaims'] == null ? undefined : (value['tokenCustomClaims'] as Array<any>).map(TokenClaimToJSON),
-    tlsClientAuthSubjectDn: value['tlsClientAuthSubjectDn'],
-    tlsClientAuthSanDns: value['tlsClientAuthSanDns'],
-    tlsClientAuthSanUri: value['tlsClientAuthSanUri'],
-    tlsClientAuthSanIp: value['tlsClientAuthSanIp'],
-    tlsClientAuthSanEmail: value['tlsClientAuthSanEmail'],
-    tlsClientCertificateBoundAccessTokens: value['tlsClientCertificateBoundAccessTokens'],
-    authorizationSignedResponseAlg: value['authorizationSignedResponseAlg'],
+    applicationType: value['applicationType'],
     authorizationEncryptedResponseAlg: value['authorizationEncryptedResponseAlg'],
     authorizationEncryptedResponseEnc: value['authorizationEncryptedResponseEnc'],
+    authorizationSignedResponseAlg: value['authorizationSignedResponseAlg'],
+    backchannelAuthRequestSignAlg: value['backchannelAuthRequestSignAlg'],
+    backchannelClientNotificationEndpoint: value['backchannelClientNotificationEndpoint'],
+    backchannelTokenDeliveryMode: value['backchannelTokenDeliveryMode'],
+    backchannelUserCodeParameter: value['backchannelUserCodeParameter'],
+    clientId: value['clientId'],
+    clientIdIssuedAt: value['clientIdIssuedAt'] == null ? value['clientIdIssuedAt'] : value['clientIdIssuedAt'].toISOString(),
+    clientName: value['clientName'],
+    clientSecret: value['clientSecret'],
+    clientSecretExpiresAt:
+      value['clientSecretExpiresAt'] == null ? value['clientSecretExpiresAt'] : value['clientSecretExpiresAt'].toISOString(),
+    clientType: value['clientType'],
+    clientUri: value['clientUri'],
+    contacts: value['contacts'],
+    defaultACRvalues: value['defaultACRvalues'],
+    defaultMaxAge: value['defaultMaxAge'],
+    defaultScopes: value['defaultScopes'],
+    disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
+    enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],
     forcePKCE: value['forcePKCE'],
     forceS256CodeChallengeMethod: value['forceS256CodeChallengeMethod'],
+    grantTypes: value['grantTypes'],
+    idTokenEncryptedResponseAlg: value['idTokenEncryptedResponseAlg'],
+    idTokenEncryptedResponseEnc: value['idTokenEncryptedResponseEnc'],
+    idTokenSignedResponseAlg: value['idTokenSignedResponseAlg'],
+    idTokenValiditySeconds: value['idTokenValiditySeconds'],
+    initiateLoginUri: value['initiateLoginUri'],
+    jwks: JWKSetToJSON(value['jwks']),
+    jwksUri: value['jwksUri'],
+    logoUri: value['logoUri'],
+    policyUri: value['policyUri'],
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
-    singleSignOut: value['singleSignOut'],
-    silentReAuthentication: value['silentReAuthentication'],
+    redirectUris: value['redirectUris'],
+    refreshTokenValiditySeconds: value['refreshTokenValiditySeconds'],
+    registrationAccessToken: value['registrationAccessToken'],
+    registrationClientUri: value['registrationClientUri'],
+    requestObjectEncryptionAlg: value['requestObjectEncryptionAlg'],
+    requestObjectEncryptionEnc: value['requestObjectEncryptionEnc'],
+    requestObjectSigningAlg: value['requestObjectSigningAlg'],
+    requestUris: value['requestUris'],
+    requireAuthTime: value['requireAuthTime'],
     requireParRequest: value['requireParRequest'],
-    backchannelTokenDeliveryMode: value['backchannelTokenDeliveryMode'],
-    backchannelClientNotificationEndpoint: value['backchannelClientNotificationEndpoint'],
-    backchannelAuthRequestSignAlg: value['backchannelAuthRequestSignAlg'],
-    backchannelUserCodeParameter: value['backchannelUserCodeParameter'],
-    disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
+    responseTypes: value['responseTypes'],
+    scopeApprovals: value['scopeApprovals'],
+    scopeSettings: value['scopeSettings'] == null ? undefined : (value['scopeSettings'] as Array<any>).map(ApplicationScopeSettingsToJSON),
+    scopes: value['scopes'],
+    sectorIdentifierUri: value['sectorIdentifierUri'],
+    silentReAuthentication: value['silentReAuthentication'],
+    singleSignOut: value['singleSignOut'],
+    softwareId: value['softwareId'],
+    softwareStatement: value['softwareStatement'],
+    softwareVersion: value['softwareVersion'],
+    subjectType: value['subjectType'],
+    tlsClientAuthSanDns: value['tlsClientAuthSanDns'],
+    tlsClientAuthSanEmail: value['tlsClientAuthSanEmail'],
+    tlsClientAuthSanIp: value['tlsClientAuthSanIp'],
+    tlsClientAuthSanUri: value['tlsClientAuthSanUri'],
+    tlsClientAuthSubjectDn: value['tlsClientAuthSubjectDn'],
+    tlsClientCertificateBoundAccessTokens: value['tlsClientCertificateBoundAccessTokens'],
+    tokenCustomClaims: value['tokenCustomClaims'] == null ? undefined : (value['tokenCustomClaims'] as Array<any>).map(TokenClaimToJSON),
+    tokenEndpointAuthMethod: value['tokenEndpointAuthMethod'],
+    tokenEndpointAuthSigningAlg: value['tokenEndpointAuthSigningAlg'],
+    tosUri: value['tosUri'],
+    userinfoEncryptedResponseAlg: value['userinfoEncryptedResponseAlg'],
+    userinfoEncryptedResponseEnc: value['userinfoEncryptedResponseEnc'],
+    userinfoSignedResponseAlg: value['userinfoSignedResponseAlg'],
   };
 }

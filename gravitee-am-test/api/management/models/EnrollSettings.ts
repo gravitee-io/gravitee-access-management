@@ -40,12 +40,6 @@ export interface EnrollSettings {
   active?: boolean;
   /**
    *
-   * @type {boolean}
-   * @memberof EnrollSettings
-   */
-  forceEnrollment?: boolean;
-  /**
-   *
    * @type {string}
    * @memberof EnrollSettings
    */
@@ -62,6 +56,12 @@ export interface EnrollSettings {
    * @memberof EnrollSettings
    */
   enrollmentSkipRule?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof EnrollSettings
+   */
+  forceEnrollment?: boolean;
   /**
    *
    * @type {number}
@@ -84,7 +84,7 @@ export const EnrollSettingsTypeEnum = {
   Required: 'REQUIRED',
   Conditional: 'CONDITIONAL',
 } as const;
-export type EnrollSettingsTypeEnum = typeof EnrollSettingsTypeEnum[keyof typeof EnrollSettingsTypeEnum];
+export type EnrollSettingsTypeEnum = (typeof EnrollSettingsTypeEnum)[keyof typeof EnrollSettingsTypeEnum];
 
 /**
  * Check if a given object implements the EnrollSettings interface.
@@ -103,10 +103,10 @@ export function EnrollSettingsFromJSONTyped(json: any, ignoreDiscriminator: bool
   }
   return {
     active: json['active'] == null ? undefined : json['active'],
-    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
     enrollmentRule: json['enrollmentRule'] == null ? undefined : json['enrollmentRule'],
     enrollmentSkipActive: json['enrollmentSkipActive'] == null ? undefined : json['enrollmentSkipActive'],
     enrollmentSkipRule: json['enrollmentSkipRule'] == null ? undefined : json['enrollmentSkipRule'],
+    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
     skipTimeSeconds: json['skipTimeSeconds'] == null ? undefined : json['skipTimeSeconds'],
     type: json['type'] == null ? undefined : json['type'],
   };
@@ -123,10 +123,10 @@ export function EnrollSettingsToJSONTyped(value?: EnrollSettings | null, ignoreD
 
   return {
     active: value['active'],
-    forceEnrollment: value['forceEnrollment'],
     enrollmentRule: value['enrollmentRule'],
     enrollmentSkipActive: value['enrollmentSkipActive'],
     enrollmentSkipRule: value['enrollmentSkipRule'],
+    forceEnrollment: value['forceEnrollment'],
     skipTimeSeconds: value['skipTimeSeconds'],
     type: value['type'],
   };

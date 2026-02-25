@@ -42,16 +42,16 @@ import {
 export interface PatchFactorSettings {
   /**
    *
-   * @type {string}
-   * @memberof PatchFactorSettings
-   */
-  defaultFactorId?: string;
-  /**
-   *
    * @type {Array<PatchApplicationFactorSettings>}
    * @memberof PatchFactorSettings
    */
   applicationFactors?: Array<PatchApplicationFactorSettings>;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchFactorSettings
+   */
+  defaultFactorId?: string;
 }
 
 /**
@@ -70,11 +70,11 @@ export function PatchFactorSettingsFromJSONTyped(json: any, ignoreDiscriminator:
     return json;
   }
   return {
-    defaultFactorId: json['defaultFactorId'] == null ? undefined : json['defaultFactorId'],
     applicationFactors:
       json['applicationFactors'] == null
         ? undefined
         : (json['applicationFactors'] as Array<any>).map(PatchApplicationFactorSettingsFromJSON),
+    defaultFactorId: json['defaultFactorId'] == null ? undefined : json['defaultFactorId'],
   };
 }
 
@@ -88,10 +88,10 @@ export function PatchFactorSettingsToJSONTyped(value?: PatchFactorSettings | nul
   }
 
   return {
-    defaultFactorId: value['defaultFactorId'],
     applicationFactors:
       value['applicationFactors'] == null
         ? undefined
         : (value['applicationFactors'] as Array<any>).map(PatchApplicationFactorSettingsToJSON),
+    defaultFactorId: value['defaultFactorId'],
   };
 }

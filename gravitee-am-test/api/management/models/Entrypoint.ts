@@ -34,6 +34,24 @@ import { mapValues } from '../runtime';
 export interface Entrypoint {
   /**
    *
+   * @type {Date}
+   * @memberof Entrypoint
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Entrypoint
+   */
+  defaultEntrypoint?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof Entrypoint
+   */
+  description?: string;
+  /**
+   *
    * @type {string}
    * @memberof Entrypoint
    */
@@ -49,13 +67,7 @@ export interface Entrypoint {
    * @type {string}
    * @memberof Entrypoint
    */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Entrypoint
-   */
-  url?: string;
+  organizationId?: string;
   /**
    *
    * @type {Array<string>}
@@ -64,28 +76,16 @@ export interface Entrypoint {
   tags?: Array<string>;
   /**
    *
-   * @type {string}
-   * @memberof Entrypoint
-   */
-  organizationId?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Entrypoint
-   */
-  defaultEntrypoint?: boolean;
-  /**
-   *
-   * @type {Date}
-   * @memberof Entrypoint
-   */
-  createdAt?: Date;
-  /**
-   *
    * @type {Date}
    * @memberof Entrypoint
    */
   updatedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Entrypoint
+   */
+  url?: string;
 }
 
 /**
@@ -104,15 +104,15 @@ export function EntrypointFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    defaultEntrypoint: json['defaultEntrypoint'] == null ? undefined : json['defaultEntrypoint'],
+    description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    url: json['url'] == null ? undefined : json['url'],
-    tags: json['tags'] == null ? undefined : json['tags'],
     organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
-    defaultEntrypoint: json['defaultEntrypoint'] == null ? undefined : json['defaultEntrypoint'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    tags: json['tags'] == null ? undefined : json['tags'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    url: json['url'] == null ? undefined : json['url'],
   };
 }
 
@@ -126,14 +126,14 @@ export function EntrypointToJSONTyped(value?: Entrypoint | null, ignoreDiscrimin
   }
 
   return {
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    defaultEntrypoint: value['defaultEntrypoint'],
+    description: value['description'],
     id: value['id'],
     name: value['name'],
-    description: value['description'],
-    url: value['url'],
-    tags: value['tags'],
     organizationId: value['organizationId'],
-    defaultEntrypoint: value['defaultEntrypoint'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    tags: value['tags'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    url: value['url'],
   };
 }

@@ -37,13 +37,13 @@ export interface NewDeviceIdentifier {
    * @type {string}
    * @memberof NewDeviceIdentifier
    */
-  id?: string;
+  configuration: string;
   /**
    *
    * @type {string}
    * @memberof NewDeviceIdentifier
    */
-  type: string;
+  id?: string;
   /**
    *
    * @type {string}
@@ -55,16 +55,16 @@ export interface NewDeviceIdentifier {
    * @type {string}
    * @memberof NewDeviceIdentifier
    */
-  configuration: string;
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewDeviceIdentifier interface.
  */
 export function instanceOfNewDeviceIdentifier(value: object): value is NewDeviceIdentifier {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -77,10 +77,10 @@ export function NewDeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminator:
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'],
-    name: json['name'],
     configuration: json['configuration'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -94,9 +94,9 @@ export function NewDeviceIdentifierToJSONTyped(value?: NewDeviceIdentifier | nul
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    name: value['name'],
     configuration: value['configuration'],
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
   };
 }
