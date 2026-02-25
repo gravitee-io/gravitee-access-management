@@ -58,6 +58,7 @@ describe('Environment Management - Error Handling', () => {
     });
 
     expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Full authentication is required to access this resource');
   });
 
   it('should deny access with wrong organization ID', async () => {
