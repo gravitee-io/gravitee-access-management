@@ -39,6 +39,19 @@ public interface AuthorizationEngineProvider extends Service<AuthorizationEngine
     Single<AuthorizationEngineResponse> check(AuthorizationEngineRequest request);
 
     /**
+     * Hot-reload policy, data, and schema configuration without restarting the provider.
+     * Implementations that support zero-downtime updates (e.g., sidecar-based engines)
+     * override this method to push new configuration to the running engine.
+     *
+     * @param policy Engine-specific policy text (e.g., Cedar policy syntax)
+     * @param data   Engine-specific data payload (JSON string, e.g., entity definitions)
+     * @param schema Optional schema definition (JSON string)
+     */
+    default void updateConfig(String policy, String data, String schema) {
+        // No-op by default; providers supporting hot-reload override this
+    }
+
+    /**
      * Get the JAX-RS management resource instance for Management API.
      * The plugin can return a JAX-RS resource object with @Path annotations
      * to expose custom REST endpoints for managing the authorization engine.

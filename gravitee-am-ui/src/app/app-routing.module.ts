@@ -230,6 +230,16 @@ import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga
 import { AuthorizationEnginesResolver } from './resolvers/authorization-engines.resolver';
 import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-engine-plugins.resolver';
 import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
+import { DomainAuthorizationComponent } from './domain/authorization/authorization.component';
+import { AuthorizationPoliciesComponent } from './domain/authorization/policies/authorization-policies.component';
+import { AuthorizationPolicyCreationComponent } from './domain/authorization/policies/creation/authorization-policy-creation.component';
+import { AuthorizationPolicyComponent } from './domain/authorization/policies/policy/authorization-policy.component';
+import { AuthorizationDataComponent } from './domain/authorization/data/authorization-data.component';
+import { AuthorizationSchemaComponent } from './domain/authorization/schema/authorization-schema.component';
+import { AuthorizationPoliciesResolver } from './resolvers/authorization-policies.resolver';
+import { AuthorizationPolicyResolver } from './resolvers/authorization-policy.resolver';
+import { AuthorizationDataResolver } from './resolvers/authorization-data.resolver';
+import { AuthorizationSchemaResolver } from './resolvers/authorization-schema.resolver';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
@@ -1637,7 +1647,8 @@ export const routes: Routes = [
                     ],
                   },
                   {
-                    path: 'authorization-engines',
+                    path: 'authorization',
+                    component: DomainAuthorizationComponent,
                     canActivate: [AuthGuard],
                     data: {
                       menu: {
@@ -1652,43 +1663,150 @@ export const routes: Routes = [
                     children: [
                       {
                         path: '',
+                        redirectTo: 'policies',
                         pathMatch: 'full',
-                        component: DomainSettingsAuthorizationEnginesComponent,
+                      },
+                      {
+                        path: 'policies',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Policies',
+                            section: 'Authorization',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_authorization_policy_list'],
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: AuthorizationPoliciesComponent,
+                            resolve: {
+                              policies: AuthorizationPoliciesResolver,
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: AuthorizationPolicyCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_authorization_policy_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':policyId',
+                            component: AuthorizationPolicyComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              policy: AuthorizationPolicyResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'policy.name',
+                              },
+                              perms: {
+                                only: ['domain_authorization_policy_read'],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        path: 'data',
+                        component: AuthorizationDataComponent,
+                        canActivate: [AuthGuard],
                         resolve: {
-                          authorizationEngines: AuthorizationEnginesResolver,
-                          authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                          authorizationData: AuthorizationDataResolver,
+                        },
+                        data: {
+                          menu: {
+                            label: 'Data',
+                            section: 'Authorization',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_authorization_data_read'],
+                          },
                         },
                       },
                       {
-                        path: 'new',
-                        component: AuthorizationEngineCreationComponent,
+                        path: 'schema',
+                        component: AuthorizationSchemaComponent,
                         canActivate: [AuthGuard],
                         resolve: {
-                          authorizationEngines: AuthorizationEnginesResolver,
-                          authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                          authorizationSchema: AuthorizationSchemaResolver,
                         },
                         data: {
+                          menu: {
+                            label: 'Schema',
+                            section: 'Authorization',
+                            level: 'level2',
+                          },
                           perms: {
-                            only: ['domain_authorization_engine_create'],
+                            only: ['domain_authorization_schema_read'],
                           },
                         },
                       },
                       {
-                        path: ':engineId/openfga',
-                        component: OpenFGAComponent,
+                        path: 'engines',
                         canActivate: [AuthGuard],
-                        resolve: {
-                          engine: AuthorizationEngineResolver,
-                          authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
-                        },
                         data: {
-                          breadcrumb: {
-                            label: 'OpenFGA Management',
+                          menu: {
+                            label: 'Engines',
+                            section: 'Authorization',
+                            level: 'level2',
                           },
                           perms: {
-                            only: ['domain_authorization_engine_read'],
+                            only: ['domain_authorization_engine_list'],
                           },
                         },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: DomainSettingsAuthorizationEnginesComponent,
+                            resolve: {
+                              authorizationEngines: AuthorizationEnginesResolver,
+                              authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: AuthorizationEngineCreationComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              authorizationEngines: AuthorizationEnginesResolver,
+                              authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                            },
+                            data: {
+                              perms: {
+                                only: ['domain_authorization_engine_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':engineId/openfga',
+                            component: OpenFGAComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              engine: AuthorizationEngineResolver,
+                              authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'OpenFGA Management',
+                              },
+                              perms: {
+                                only: ['domain_authorization_engine_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                     ],
                   },

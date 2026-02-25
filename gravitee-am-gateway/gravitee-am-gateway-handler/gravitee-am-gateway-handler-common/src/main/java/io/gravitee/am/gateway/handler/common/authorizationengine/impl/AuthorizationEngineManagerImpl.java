@@ -16,18 +16,27 @@
 package io.gravitee.am.gateway.handler.common.authorizationengine.impl;
 
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
+import io.gravitee.am.common.event.AuthorizationDataEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
+import io.gravitee.am.common.event.AuthorizationPolicyEvent;
+import io.gravitee.am.common.event.AuthorizationSchemaEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.authorizationengine.AuthorizationEngineManager;
+import io.gravitee.am.model.AuthorizationData;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.AuthorizationPolicy;
+import io.gravitee.am.model.AuthorizationSchema;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.am.repository.management.api.AuthorizationDataRepository;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
+import io.gravitee.am.repository.management.api.AuthorizationPolicyRepository;
+import io.gravitee.am.repository.management.api.AuthorizationSchemaRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -61,9 +70,27 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     private EventManager eventManager;
 
     @Autowired
+    private AuthorizationPolicyRepository authorizationPolicyRepository;
+
+    @Autowired
+    private AuthorizationDataRepository authorizationDataRepository;
+
+    @Autowired
+    private AuthorizationSchemaRepository authorizationSchemaRepository;
+
+    @Autowired
     private DomainReadinessService domainReadinessService;
 
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
+
+    private final EventListener<AuthorizationPolicyEvent, Payload> policyEventListener =
+            event -> handleConfigChangeEvent(event, "policy");
+
+    private final EventListener<AuthorizationDataEvent, Payload> dataEventListener =
+            event -> handleConfigChangeEvent(event, "data");
+
+    private final EventListener<AuthorizationSchemaEvent, Payload> schemaEventListener =
+            event -> handleConfigChangeEvent(event, "schema");
 
     @Override
     public Maybe<AuthorizationEngineProvider> get(String id) {
@@ -114,6 +141,11 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
         logger.info("Register event listener for authorization engine events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, AuthorizationEngineEvent.class, domain.getId());
+
+        logger.info("Register event listeners for authorization policy/data/schema events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(policyEventListener, AuthorizationPolicyEvent.class, domain.getId());
+        eventManager.subscribeForEvents(dataEventListener, AuthorizationDataEvent.class, domain.getId());
+        eventManager.subscribeForEvents(schemaEventListener, AuthorizationSchemaEvent.class, domain.getId());
     }
 
     @Override
@@ -122,6 +154,9 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
         logger.info("Dispose event listener for authorization engine events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, AuthorizationEngineEvent.class, domain.getId());
+        eventManager.unsubscribeForEvents(policyEventListener, AuthorizationPolicyEvent.class, domain.getId());
+        eventManager.unsubscribeForEvents(dataEventListener, AuthorizationDataEvent.class, domain.getId());
+        eventManager.unsubscribeForEvents(schemaEventListener, AuthorizationSchemaEvent.class, domain.getId());
         clearProviders();
     }
 
@@ -210,5 +245,62 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 logger.error("An error has occurred while stopping the authorization engine provider: {}", authorizationEngineId, e);
             }
         }
+    }
+
+    /**
+     * Handle policy, data, or schema change events. Triggers hot-reload on all
+     * running providers in this domain.
+     */
+    private <T extends Enum<T>> void handleConfigChangeEvent(Event<T, Payload> event, String configType) {
+        Payload payload = event.content();
+        if (payload.getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(payload.getReferenceId())) {
+            logger.info("Authorization {} change detected for domain {}", configType, domain.getName());
+            hotReloadProviders();
+        }
+    }
+
+    /**
+     * Fetch the latest policy, data, and schema content for this domain and push
+     * it to all running providers via hot-reload (zero-downtime update).
+     */
+    private void hotReloadProviders() {
+        if (providers.isEmpty()) {
+            logger.debug("No running providers to hot-reload for domain {}", domain.getName());
+            return;
+        }
+
+        // Fetch latest policy content (first policy in the domain)
+        Single<String> policySingle = authorizationPolicyRepository.findByDomain(domain.getId())
+                .firstElement()
+                .map(AuthorizationPolicy::getContent)
+                .defaultIfEmpty("");
+
+        // Fetch latest data content (singleton per domain)
+        Single<String> dataSingle = authorizationDataRepository.findByDomain(domain.getId())
+                .map(AuthorizationData::getContent)
+                .defaultIfEmpty("");
+
+        // Fetch latest schema content (singleton per domain)
+        Single<String> schemaSingle = authorizationSchemaRepository.findByDomain(domain.getId())
+                .map(AuthorizationSchema::getContent)
+                .defaultIfEmpty("");
+
+        Single.zip(policySingle, dataSingle, schemaSingle, (policy, data, schema) -> {
+            String policyValue = policy.isEmpty() ? null : policy;
+            String dataValue = data.isEmpty() ? null : data;
+            String schemaValue = schema.isEmpty() ? null : schema;
+
+            providers.values().forEach(provider -> {
+                try {
+                    provider.updateConfig(policyValue, dataValue, schemaValue);
+                } catch (Exception e) {
+                    logger.error("Failed to hot-reload config for provider in domain {}", domain.getName(), e);
+                }
+            });
+            return true;
+        }).subscribe(
+                __ -> logger.info("Config hot-reload completed for domain {}", domain.getName()),
+                error -> logger.error("Error during config hot-reload for domain {}", domain.getName(), error)
+        );
     }
 }

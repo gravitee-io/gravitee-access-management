@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-add-authorization-policies-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_policies
+      changes:
+        - createTable:
+            tableName: authorization_policies
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: engine_type, type: nvarchar(32), constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: false } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_policies
+            columnNames: id
+            tableName: authorization_policies
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+            indexName: idx_authorization_policies_domain
+            tableName: authorization_policies
+            unique: false

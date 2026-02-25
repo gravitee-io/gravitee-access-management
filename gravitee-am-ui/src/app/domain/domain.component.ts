@@ -48,12 +48,12 @@ export class DomainComponent implements OnInit {
       this.router.url.indexOf('applications') === -1 &&
       this.router.url.indexOf('settings') === -1 &&
       this.router.url.indexOf('mcp-servers') === -1 &&
-      this.router.url.indexOf('authorization-engines') === -1
+      this.router.url.indexOf('authorization') === -1
     ) {
       if (this.canNavigate(['domain_analytics_read'])) {
         this.router.navigate(['dashboard'], { relativeTo: this.route });
       } else if (this.canNavigate(['domain_authorization_engine_list'])) {
-        this.router.navigate(['authorization-engines'], { relativeTo: this.route });
+        this.router.navigate(['authorization'], { relativeTo: this.route });
       } else if (this.canNavigate(['application_list'])) {
         this.router.navigate(['applications'], { relativeTo: this.route });
       } else if (this.canNavigate(['protected_resource_list'])) {

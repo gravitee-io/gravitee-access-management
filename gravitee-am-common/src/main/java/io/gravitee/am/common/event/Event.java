@@ -55,6 +55,9 @@ public abstract class Event {
             case REVOKE_TOKEN -> RevokeTokenEvent.actionOf(action);
             case USER -> UserEvent.actionOf(action);
             case AUTHORIZATION_ENGINE ->  AuthorizationEngineEvent.actionOf(action);
+            case AUTHORIZATION_POLICY -> AuthorizationPolicyEvent.actionOf(action);
+            case AUTHORIZATION_DATA -> AuthorizationDataEvent.actionOf(action);
+            case AUTHORIZATION_SCHEMA -> AuthorizationSchemaEvent.actionOf(action);
             case PROTECTED_RESOURCE -> ProtectedResourceEvent.actionOf(action);
             case PROTECTED_RESOURCE_SECRET -> ProtectedResourceSecretEvent.actionOf(action);
             case DOMAIN_CERTIFICATE_SETTINGS -> DomainCertificateSettingsEvent.actionOf(action);

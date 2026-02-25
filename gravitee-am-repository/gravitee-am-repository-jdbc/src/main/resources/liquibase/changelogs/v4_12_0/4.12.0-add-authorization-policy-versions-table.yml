@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-add-authorization-policy-versions-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_policy_versions
+      changes:
+        - createTable:
+            tableName: authorization_policy_versions
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: policy_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: false } }
+              - column: { name: comment, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: created_by, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_policy_versions
+            columnNames: id
+            tableName: authorization_policy_versions
+
+        - createIndex:
+            columns:
+              - column:
+                  name: policy_id
+              - column:
+                  name: version
+                  descending: true
+            indexName: idx_auth_pol_ver_policy_version
+            tableName: authorization_policy_versions
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+            indexName: idx_auth_pol_ver_domain
+            tableName: authorization_policy_versions
+            unique: false
