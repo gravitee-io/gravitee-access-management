@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.management.service.AgentCardService;
 import io.gravitee.am.service.exception.AgentCardFetchException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -64,20 +65,20 @@ public class AgentCardServiceImpl implements AgentCardService {
             URI uri = URI.create(agentCardUrl);
             String scheme = uri.getScheme();
             if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
-                return Single.error(new IllegalArgumentException("Only http/https schemes are allowed for agentCardUrl"));
+                return Single.error(new InvalidParameterException("Only http/https schemes are allowed for agentCardUrl"));
             }
             String host = uri.getHost();
             if (host == null || host.isBlank()) {
-                return Single.error(new IllegalArgumentException("Invalid agentCardUrl: missing host"));
+                return Single.error(new InvalidParameterException("Invalid agentCardUrl: missing host"));
             }
             if (UriBuilder.isLocalhost(host)) {
-                return Single.error(new IllegalArgumentException("SSRF protection: localhost target is not allowed"));
+                return Single.error(new InvalidParameterException("SSRF protection: localhost target is not allowed"));
             }
             if (PRIVATE_IP_PATTERN.matcher(host).matches()) {
-                return Single.error(new IllegalArgumentException("SSRF protection: private IP target is not allowed"));
+                return Single.error(new InvalidParameterException("SSRF protection: private IP target is not allowed"));
             }
         } catch (IllegalArgumentException | NullPointerException | UnsupportedOperationException e) {
-            return Single.error(new IllegalArgumentException("Invalid agentCardUrl: " + e.getMessage()));
+            return Single.error(new InvalidParameterException("Invalid agentCardUrl: " + e.getMessage()));
         }
 
         return client.getAbs(agentCardUrl)
@@ -104,11 +105,11 @@ public class AgentCardServiceImpl implements AgentCardService {
                     return Single.just(body);
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AgentCardFetchException || ex instanceof IllegalArgumentException) {
+                    if (ex instanceof Error || ex instanceof AgentCardFetchException || ex instanceof InvalidParameterException) {
                         return Single.error(ex);
                     }
                     LOGGER.warn("Failed to fetch agent card from URL: {}", agentCardUrl, ex);
-                    return Single.error(new AgentCardFetchException(agentCardUrl, "URL may be unreachable or returned invalid data"));
+                    return Single.error(new AgentCardFetchException(agentCardUrl, "URL may be unreachable or returned invalid data", ex));
                 });
     }
 }

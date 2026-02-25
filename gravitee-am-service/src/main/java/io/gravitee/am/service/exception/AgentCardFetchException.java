@@ -17,6 +17,8 @@ package io.gravitee.am.service.exception;
 
 import io.gravitee.common.http.HttpStatusCode;
 
+import java.util.Objects;
+
 /**
  * @author GraviteeSource Team
  */
@@ -26,13 +28,18 @@ public class AgentCardFetchException extends AbstractManagementException {
     private final String reason;
 
     public AgentCardFetchException(String agentCardUrl, String reason) {
-        this.agentCardUrl = agentCardUrl;
-        this.reason = reason;
+        this(agentCardUrl, reason, null);
+    }
+
+    public AgentCardFetchException(String agentCardUrl, String reason, Throwable cause) {
+        super("Failed to fetch agent card from [" + agentCardUrl + "]: " + reason, cause);
+        this.agentCardUrl = Objects.requireNonNull(agentCardUrl, "agentCardUrl");
+        this.reason = Objects.requireNonNull(reason, "reason");
     }
 
     @Override
     public int getHttpStatusCode() {
-        return HttpStatusCode.NOT_FOUND_404;
+        return HttpStatusCode.BAD_GATEWAY_502;
     }
 
     @Override
