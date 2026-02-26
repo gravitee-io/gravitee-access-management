@@ -1,6 +1,6 @@
 {
   "name": "gravitee-am-webui",
-  "version": "4.8.23",
+  "version": "4.8.24",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
