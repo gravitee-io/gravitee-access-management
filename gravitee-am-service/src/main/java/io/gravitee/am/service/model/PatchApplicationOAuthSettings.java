@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -93,6 +94,8 @@ public class PatchApplicationOAuthSettings {
     private Optional<List<ApplicationScopeSettings>> scopeSettings;
 
     private Optional<Boolean> disableRefreshTokenRotation;
+
+    private Optional<TokenExchangeOAuthSettings> tokenExchangeOAuthSettings;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -558,6 +561,14 @@ public class PatchApplicationOAuthSettings {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
     }
 
+    public Optional<TokenExchangeOAuthSettings> getTokenExchangeOAuthSettings() {
+        return tokenExchangeOAuthSettings;
+    }
+
+    public void setTokenExchangeOAuthSettings(Optional<TokenExchangeOAuthSettings> tokenExchangeOAuthSettings) {
+        this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -621,6 +632,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
         SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());
         SetterUtils.safeSet(toPatch::setDisableRefreshTokenRotation, this.getDisableRefreshTokenRotation());
+        SetterUtils.safeSet(toPatch::setTokenExchangeOAuthSettings, this.getTokenExchangeOAuthSettings());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }

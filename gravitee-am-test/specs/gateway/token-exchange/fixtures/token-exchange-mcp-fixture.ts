@@ -199,6 +199,8 @@ export interface TokenExchangeMcpFixtureConfig {
   allowDelegation?: boolean;
   allowedActorTokenTypes?: string[];
   maxDelegationDepth?: number;
+  /** Scope handling settings for the MCP Server. When set, inherited is false. Defaults to domain-inherited DOWNSCOPING. */
+  tokenExchangeOAuthSettings?: { inherited?: boolean; scopeHandling?: string };
 }
 
 /**
@@ -226,6 +228,7 @@ export const setupTokenExchangeMcpFixture = async (
       allowDelegation = false,
       allowedActorTokenTypes = TOKEN_EXCHANGE_MCP_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
       maxDelegationDepth = 1,
+      tokenExchangeOAuthSettings,
     } = config;
 
     accessToken = await requestAdminAccessToken();
@@ -267,6 +270,7 @@ export const setupTokenExchangeMcpFixture = async (
         oauth: {
           grantTypes: TOKEN_EXCHANGE_MCP_TEST.MCP_GRANT_TYPES,
           ...(mcpClientScopes != null && mcpClientScopes.length > 0 && { scopeSettings: mcpClientScopes }),
+          ...(tokenExchangeOAuthSettings != null && { tokenExchangeOAuthSettings }),
         },
       },
     };

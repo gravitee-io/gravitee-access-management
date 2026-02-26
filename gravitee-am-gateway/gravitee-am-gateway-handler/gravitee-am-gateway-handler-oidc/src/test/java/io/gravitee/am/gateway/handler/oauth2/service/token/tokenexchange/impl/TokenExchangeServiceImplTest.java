@@ -36,12 +36,15 @@ import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
+import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Single;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -1175,7 +1178,7 @@ public class TokenExchangeServiceImplTest {
         assertThat(result.actorInfo().actorTokenActClaim()).isNull();
     }
 
-    /** Client has no scope settings: fail closed, grant no scopes (no scope param → empty granted). */
+    /** No client scope settings and no scope in request → empty pool → granted = empty (both modes). */
     @Test
     public void shouldGrantNoScopesWhenClientHasNoScopeSettingsAndNoRequestScope() throws Exception {
         TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
@@ -1211,7 +1214,7 @@ public class TokenExchangeServiceImplTest {
                 .isInstanceOf(InvalidScopeException.class);
     }
 
-    /** Requested scope ⊆ allowed: grant requested and set on tokenRequest (response includes narrowed scope). */
+    /** Requested scope ⊆ allowed pool: granted (both modes — subject = client here so modes agree). */
     @Test
     public void shouldGrantRequestedScopeWhenSubsetOfAllowed() throws Exception {
         TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
@@ -1249,70 +1252,7 @@ public class TokenExchangeServiceImplTest {
                 .isInstanceOf(InvalidScopeException.class);
     }
 
-    /** Delegation: allowed = subject ∩ actor; both sets have differing elements to prove intersection. */
-    @Test
-    public void shouldGrantIntersectionWhenDelegationAndNoRequestScope() throws Exception {
-        TokenValidator subjectABCactorBCE = delegationScopeValidator(
-                Set.of("A", "B", "C"),
-                Set.of("B", "C", "E"));
-        service = createService(List.of(subjectABCactorBCE));
-
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setClientId("client-id");
-        tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
-
-        Domain domain = domainWithDelegation();
-        Client client = new Client();
-        client.setClientId("client-id");
-        client.setScopeSettings(clientScopeSettings("B", "C"));
-
-        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
-
-        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B", "C");
-    }
-
-    @Test
-    public void shouldGrantRequestedScopeWhenDelegationAndRequestedSubsetOfIntersection() throws Exception {
-        TokenValidator subjectABCactorBCD = delegationScopeValidator(
-                Set.of("A", "B", "C"),
-                Set.of("B", "C", "D"));
-        service = createService(List.of(subjectABCactorBCD));
-
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setClientId("client-id");
-        tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "B"));
-
-        Domain domain = domainWithDelegation();
-        Client client = new Client();
-        client.setClientId("client-id");
-        client.setScopeSettings(clientScopeSettings("B", "C"));
-
-        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
-
-        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B");
-    }
-
-    /** No resource, no scope param: granted = subject ∩ client. */
-    @Test
-    public void shouldNarrowGrantedScopesToClientWhenNoResourceAndClientHasSubsetOfSubjectScopes() throws Exception {
-        TokenValidator validator = scopeValidator(Set.of("A", "B", "C"));
-        service = createService(List.of(validator));
-
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setClientId("client-id");
-        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
-
-        Domain domain = domainWithTokenExchange();
-        Client client = new Client();
-        client.setClientId("client-id");
-        client.setScopeSettings(clientScopeSettings("A", "B", "D"));
-
-        service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
-
-        assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B");
-    }
-
-    /** Resource present; requested scope in client but not in resource still allowed (scopePool = client ∪ resource). */
+    /** Resource present; scope in client but not in resource is still allowed (pool = client ∪ resource). Applies to both modes. */
     @Test
     public void shouldAllowRequestedScopeFromClientWhenNotInResourceScopes() throws Exception {
         TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
@@ -1336,7 +1276,7 @@ public class TokenExchangeServiceImplTest {
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("C");
     }
 
-    /** With resource present, allowed = base ∩ (client ∪ resource); scope C can come from resource even if client has only A,B. */
+    /** Resource present; scope C comes from resource even though client only has A,B. Applies to both modes. */
     @Test
     public void shouldAllowResourceScopeWhenClientDoesNotHaveItAndResourceHasIt() throws Exception {
         TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
@@ -1360,46 +1300,7 @@ public class TokenExchangeServiceImplTest {
         assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B", "C");
     }
 
-    @Test
-    public void shouldFailWithInvalidScopeWhenRequestedScopeNotInSubjectWithResourcePresent() throws Exception {
-        TokenValidator validatorAB = scopeValidator(Set.of("A", "B"));
-        service = createService(List.of(validatorAB));
-
-        Set<String> resourceUris = Set.of("https://mcp.example.com");
-        when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A", "B", "C"));
-
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setClientId("client-id");
-        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
-        tokenRequest.setResources(resourceUris);
-
-        Domain domain = domainWithTokenExchange();
-        Client client = new Client();
-        client.setClientId("client-id");
-        client.setScopeSettings(clientScopeSettings("A", "B", "C"));
-
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidScopeException.class);
-    }
-
-    @Test
-    public void shouldFailWithInvalidScopeWhenRequestedScopeNotAllowedByClientAndNoResource() throws Exception {
-        TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
-        service = createService(List.of(validatorABC));
-
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setClientId("client-id");
-        tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
-
-        Domain domain = domainWithTokenExchange();
-        Client client = new Client();
-        client.setClientId("client-id");
-        client.setScopeSettings(clientScopeSettings("A", "B"));
-
-        assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidScopeException.class);
-    }
-
+    /** Scope absent from client and resource is rejected regardless of mode. */
     @Test
     public void shouldFailWithInvalidScopeWhenRequestedScopeNotInClientOrResourceWithResourcePresent() throws Exception {
         TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
@@ -1422,6 +1323,7 @@ public class TokenExchangeServiceImplTest {
                 .isInstanceOf(InvalidScopeException.class);
     }
 
+    /** Scope absent from client and resource (which returns empty) is rejected regardless of mode. */
     @Test
     public void shouldFailWithInvalidScopeWhenResourcePresentButReturnsNoScopesAndRequestedScopeNotInClient() throws Exception {
         TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
@@ -1646,6 +1548,526 @@ public class TokenExchangeServiceImplTest {
                 .hasMessageContaining("expression evaluation failed");
     }
 
+    @Nested
+    class DownscopingScopeHandling {
+
+        private Client downscopingClient(String... scopes) {
+            Client client = new Client();
+            client.setClientId("client-id");
+            // tokenExchangeScopeHandling null → DOWNSCOPING (default)
+            client.setScopeSettings(clientScopeSettings(scopes));
+            return client;
+        }
+
+        /** No scope in request: granted = subject ∩ client (subject acts as an upper bound). */
+        @Test
+        public void shouldNarrowGrantedScopesToIntersectionOfSubjectAndClientScopes() throws Exception {
+            // Subject {A,B,C}; client {A,B,D} → intersection {A,B}.
+            TokenValidator validator = scopeValidator(Set.of("A", "B", "C"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = downscopingClient("A", "B", "D");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B");
+        }
+
+        /** Requested scope ⊆ subject ∩ client: granted. */
+        @Test
+        public void shouldGrantRequestedScopeWhenSubsetOfSubjectAndClientScopes() throws Exception {
+            // Subject {A,B,C}; client {A,B,C}; request {B,C}.
+            TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+            service = createService(List.of(validatorABC));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "B C"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = downscopingClient("A", "B", "C");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B", "C");
+        }
+
+        /** Scope present in subject but absent from client is rejected. */
+        @Test
+        public void shouldRejectScopeInSubjectButAbsentFromClientWithNoResource() throws Exception {
+            // Subject {A,B,C}; client {A,B}; request C → C ∉ (subject ∩ client) → reject.
+            TokenValidator validatorABC = scopeValidator(Set.of("A", "B", "C"));
+            service = createService(List.of(validatorABC));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = downscopingClient("A", "B");
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        /** Subject token acts as a ceiling: scope in resource but absent from subject is rejected. */
+        @Test
+        public void shouldRejectScopeInResourceButAbsentFromSubjectToken() throws Exception {
+            // Subject {A,B}; resource {A,B,C}; client {A,B,C}; request C → C ∉ subject → reject.
+            TokenValidator validatorAB = scopeValidator(Set.of("A", "B"));
+            service = createService(List.of(validatorAB));
+
+            Set<String> resourceUris = Set.of("https://mcp.example.com");
+            when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A", "B", "C"));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "C"));
+            tokenRequest.setResources(resourceUris);
+
+            Domain domain = domainWithTokenExchange();
+            Client client = downscopingClient("A", "B", "C");
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        /** Disjoint subject and client scopes → no scope in request → granted = empty. */
+        @Test
+        public void shouldGrantEmptyScopesWhenSubjectAndClientScopesAreDisjoint() throws Exception {
+            // Subject {A,B}; client {C,D} → intersection = {}.
+            TokenValidator validatorAB = scopeValidator(Set.of("A", "B"));
+            service = createService(List.of(validatorAB));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = downscopingClient("C", "D");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).isEmpty();
+        }
+
+        /** Delegation: no scope in request → granted = (subject ∩ actor) ∩ client. */
+        @Test
+        public void shouldGrantSubjectActorIntersectionWhenDelegationAndNoScopeRequested() throws Exception {
+            // Subject {A,B,C}; actor {B,C,E} → intersection {B,C}; client {B,C}.
+            TokenValidator subjectABCactorBCE = delegationScopeValidator(Set.of("A", "B", "C"), Set.of("B", "C", "E"));
+            service = createService(List.of(subjectABCactorBCE));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithDelegation();
+            Client client = downscopingClient("B", "C");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B", "C");
+        }
+
+        /** Delegation: requested scope ⊆ subject ∩ actor ∩ client → granted. */
+        @Test
+        public void shouldGrantRequestedScopeWhenSubsetOfSubjectActorIntersection() throws Exception {
+            // Subject {A,B,C}; actor {B,C,D}; intersection {B,C}; client {B,C}; request B.
+            TokenValidator subjectABCactorBCD = delegationScopeValidator(Set.of("A", "B", "C"), Set.of("B", "C", "D"));
+            service = createService(List.of(subjectABCactorBCD));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "B"));
+
+            Domain domain = domainWithDelegation();
+            Client client = downscopingClient("B", "C");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B");
+        }
+
+        /** Delegation: subject ∩ actor is empty → no scope in request → granted = empty. */
+        @Test
+        public void shouldGrantEmptyScopesWhenSubjectActorIntersectionIsEmpty() throws Exception {
+            // Subject {A,B}; actor {C,D} → intersection = {}; client has all.
+            TokenValidator disjointDelegation = delegationScopeValidator(Set.of("A", "B"), Set.of("C", "D"));
+            service = createService(List.of(disjointDelegation));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithDelegation();
+            Client client = downscopingClient("A", "B", "C", "D");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).isEmpty();
+        }
+    }
+
+    @Nested
+    class PermissiveScopeHandling {
+
+        private Client permissiveClient(String... scopes) {
+            Client client = new Client();
+            client.setClientId("client-id");
+            TokenExchangeOAuthSettings teSettings = new TokenExchangeOAuthSettings();
+            teSettings.setInherited(false);
+            teSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+            client.setTokenExchangeOAuthSettings(teSettings);
+            client.setScopeSettings(clientScopeSettings(scopes));
+            return client;
+        }
+
+        /** no request scope, no resource: granted = all client scopes regardless of subject scopes. */
+        @Test
+        public void shouldGrantAllClientScopesWhenNoScopeRequested() throws Exception {
+            // Subject has only {X} — completely disjoint from client. Permissive ignores subject scopes.
+            TokenValidator narrowSubject = scopeValidator(Set.of("X"));
+            service = createService(List.of(narrowSubject));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = permissiveClient("A", "B", "C");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B", "C");
+        }
+
+        /** requested scope in client but NOT in subject token → granted (downscoping would reject). */
+        @Test
+        public void shouldGrantRequestedScopeFromClientEvenIfAbsentFromSubjectToken() throws Exception {
+            // Subject has {openid}; client has {openid, profile}; request profile.
+            TokenValidator narrowSubject = scopeValidator(Set.of("openid"));
+            service = createService(List.of(narrowSubject));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "profile"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = permissiveClient("openid", "profile");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("profile");
+        }
+
+        /** no request scope, resource present: granted = client ∪ resource (regardless of subject scopes). */
+        @Test
+        public void shouldGrantClientAndResourceScopesWhenNoScopeRequestedAndResourcePresent() throws Exception {
+            // Subject has {X}; client has {A, B}; resource has {B, C}.
+            TokenValidator narrowSubject = scopeValidator(Set.of("X"));
+            service = createService(List.of(narrowSubject));
+
+            Set<String> resourceUris = Set.of("https://mcp.example.com");
+            when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("B", "C"));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+            tokenRequest.setResources(resourceUris);
+
+            Domain domain = domainWithTokenExchange();
+            Client client = permissiveClient("A", "B");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            // Granted = {A, B} ∪ {B, C} = {A, B, C}
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B", "C");
+        }
+
+        /** requested scope from resource even if subject token lacks it. */
+        @Test
+        public void shouldGrantRequestedScopeFromResourceEvenIfAbsentFromSubjectToken() throws Exception {
+            // Subject has {A}; client has {A}; resource has {A, B}; request B.
+            TokenValidator narrowSubject = scopeValidator(Set.of("A"));
+            service = createService(List.of(narrowSubject));
+
+            Set<String> resourceUris = Set.of("https://mcp.example.com");
+            when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A", "B"));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "B"));
+            tokenRequest.setResources(resourceUris);
+
+            Domain domain = domainWithTokenExchange();
+            Client client = permissiveClient("A");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B");
+        }
+
+        /** scope absent from both client and resource is still rejected (400). */
+        @Test
+        public void shouldRejectScopeAbsentFromBothClientAndResource() throws Exception {
+            // Subject has {A, B, Z}; client has {A, B}; resource has {A}; request Z.
+            TokenValidator subjectWithZ = scopeValidator(Set.of("A", "B", "Z"));
+            service = createService(List.of(subjectWithZ));
+
+            Set<String> resourceUris = Set.of("https://mcp.example.com");
+            when(protectedResourceManager.getScopesForResources(resourceUris)).thenReturn(Set.of("A"));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "Z"));
+            tokenRequest.setResources(resourceUris);
+
+            Domain domain = domainWithTokenExchange();
+            Client client = permissiveClient("A", "B");
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        /** no client scopes, no resource: granted = empty (no scope requested). */
+        @Test
+        public void shouldGrantEmptyScopesWhenClientHasNoScopeSettingsAndNoScopeRequested() throws Exception {
+            TokenValidator subjectABC = scopeValidator(Set.of("A", "B", "C"));
+            service = createService(List.of(subjectABC));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            TokenExchangeOAuthSettings teSettings1 = new TokenExchangeOAuthSettings();
+            teSettings1.setInherited(false);
+            teSettings1.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+            client.setTokenExchangeOAuthSettings(teSettings1);
+            // No scope settings
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).isEmpty();
+        }
+
+        /** no client scopes, no resource, scope requested → rejected (pool is empty). */
+        @Test
+        public void shouldRejectScopeWhenClientHasNoScopeSettingsAndScopeRequested() throws Exception {
+            TokenValidator subjectABC = scopeValidator(Set.of("A", "B", "C"));
+            service = createService(List.of(subjectABC));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "A"));
+
+            Domain domain = domainWithTokenExchange();
+            Client client = new Client();
+            client.setClientId("client-id");
+            TokenExchangeOAuthSettings teSettings2 = new TokenExchangeOAuthSettings();
+            teSettings2.setInherited(false);
+            teSettings2.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+            client.setTokenExchangeOAuthSettings(teSettings2);
+
+            assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class);
+        }
+
+        /** delegation: subject ∩ actor is empty but client has scopes → still grants client scopes. */
+        @Test
+        public void shouldGrantAllClientScopesInDelegationRegardlessOfSubjectActorIntersection() throws Exception {
+            // Subject has {A, B}; actor has {C, D} → intersection = {}; client has {A, B, C, D}.
+            // Permissive ignores subject/actor scopes entirely.
+            TokenValidator disjointDelegation = delegationScopeValidator(Set.of("A", "B"), Set.of("C", "D"));
+            service = createService(List.of(disjointDelegation));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithDelegation();
+            Client client = permissiveClient("A", "B", "C", "D");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B", "C", "D");
+        }
+
+        /** delegation: requested scope outside subject ∩ actor but inside client → granted. */
+        @Test
+        public void shouldGrantRequestedScopeInDelegationEvenIfOutsideSubjectActorIntersection() throws Exception {
+            // Subject has {A, B}; actor has {A}; intersection = {A}; client has {A, B}.
+            // Request B — B is in client, but NOT in actor → downscoping would reject; permissive grants it.
+            TokenValidator validator = delegationScopeValidator(Set.of("A", "B"), Set.of("A"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildDelegationParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, "B"));
+
+            Domain domain = domainWithDelegation();
+            Client client = permissiveClient("A", "B");
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("B");
+        }
+    }
+
+    @Nested
+    class DomainInheritanceScopeHandling {
+
+        /** App with inherited=true uses domain's PERMISSIVE scope handling. */
+        @Test
+        public void shouldUseDomainPermissiveScopeHandlingWhenAppInherits() throws Exception {
+            // Subject has {X} only; client has {A, B, C}. Domain is PERMISSIVE → grants all client scopes.
+            TokenValidator narrowSubject = scopeValidator(Set.of("X"));
+            service = createService(List.of(narrowSubject));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            TokenExchangeSettings domainSettings = new TokenExchangeSettings();
+            domainSettings.setEnabled(true);
+            domainSettings.setAllowedSubjectTokenTypes(List.of(TokenType.ACCESS_TOKEN));
+            domainSettings.setAllowedRequestedTokenTypes(List.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+            TokenExchangeOAuthSettings domainTeSettings = new TokenExchangeOAuthSettings();
+            domainTeSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+            domainSettings.setTokenExchangeOAuthSettings(domainTeSettings);
+
+            Domain domain = new Domain();
+            domain.setId("domain-id");
+            domain.setTokenExchangeSettings(domainSettings);
+
+            // App has inherited=true (default), so it should use domain settings
+            Client client = new Client();
+            client.setClientId("client-id");
+            TokenExchangeOAuthSettings inherited = new TokenExchangeOAuthSettings();
+            inherited.setInherited(true);
+            client.setTokenExchangeOAuthSettings(inherited);
+            client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B", "C");
+        }
+
+        /** App with inherited=false and DOWNSCOPING overrides domain's PERMISSIVE setting. */
+        @Test
+        public void shouldUseAppDownscopingWhenNotInheritedEvenIfDomainIsPermissive() throws Exception {
+            // Subject has {X} only; client has {A, B, C}. Domain is PERMISSIVE, but app is DOWNSCOPING.
+            // Downscoping: allowed = {X} ∩ {A,B,C} = {} → granted = {}
+            TokenValidator narrowSubject = scopeValidator(Set.of("X"));
+            service = createService(List.of(narrowSubject));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            TokenExchangeSettings domainSettings = new TokenExchangeSettings();
+            domainSettings.setEnabled(true);
+            domainSettings.setAllowedSubjectTokenTypes(List.of(TokenType.ACCESS_TOKEN));
+            domainSettings.setAllowedRequestedTokenTypes(List.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+            TokenExchangeOAuthSettings domainTeSettings = new TokenExchangeOAuthSettings();
+            domainTeSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+            domainSettings.setTokenExchangeOAuthSettings(domainTeSettings);
+
+            Domain domain = new Domain();
+            domain.setId("domain-id");
+            domain.setTokenExchangeSettings(domainSettings);
+
+            // App explicitly sets DOWNSCOPING, not inherited
+            Client client = new Client();
+            client.setClientId("client-id");
+            TokenExchangeOAuthSettings appSettings = new TokenExchangeOAuthSettings();
+            appSettings.setInherited(false);
+            appSettings.setScopeHandling(TokenExchangeScopeHandling.DOWNSCOPING);
+            client.setTokenExchangeOAuthSettings(appSettings);
+            client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            // Downscoping: {X} ∩ {A,B,C} = {} → no scopes granted
+            assertThat(tokenRequest.getScopes()).isEmpty();
+        }
+
+        /** App with null settings uses system default (DOWNSCOPING). */
+        @Test
+        public void shouldFallbackToDownscopingWhenAppHasNoSettingsAndDomainHasNoSettings() throws Exception {
+            // Subject {A, B}; client {A, B, C}. No overrides → default DOWNSCOPING.
+            TokenValidator validator = scopeValidator(Set.of("A", "B"));
+            service = createService(List.of(validator));
+
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(buildParametersWithScope(TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN, null));
+
+            Domain domain = domainWithTokenExchange();
+
+            Client client = new Client();
+            client.setClientId("client-id");
+            // No tokenExchangeOAuthSettings → defaults to inherited=true
+            client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+
+            service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
+
+            // Downscoping: {A,B} ∩ {A,B,C} = {A,B}
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("A", "B");
+        }
+    }
+
+    private static List<ApplicationScopeSettings> clientScopeSettings(String... scopes) {
+        return Stream.of(scopes).map(ApplicationScopeSettings::new).collect(Collectors.toList());
+    }
+
+    private static TokenValidator scopeValidator(Set<String> scopes) {
+        return new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                return Single.just(ValidatedToken.builder()
+                        .subject("subject")
+                        .scopes(scopes)
+                        .expiration(Date.from(Instant.now().plusSeconds(60)))
+                        .tokenType(TokenType.ACCESS_TOKEN)
+                        .build());
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+    }
+
+    private static TokenValidator delegationScopeValidator(Set<String> subjectScopes, Set<String> actorScopes) {
+        return new TokenValidator() {
+            @Override
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+                Set<String> scopes = "subject-token".equals(token) ? subjectScopes : actorScopes;
+                return Single.just(ValidatedToken.builder()
+                        .subject("subject")
+                        .scopes(scopes)
+                        .expiration(Date.from(Instant.now().plusSeconds(60)))
+                        .tokenType(TokenType.ACCESS_TOKEN)
+                        .build());
+            }
+
+            @Override
+            public String getSupportedTokenType() {
+                return TokenType.ACCESS_TOKEN;
+            }
+        };
+    }
+
     private TokenValidator trustedIssuerValidator(String issuer, Map<String, Object> additionalClaims) {
         TrustedIssuer ti = new TrustedIssuer();
         ti.setIssuer(issuer);
@@ -1709,49 +2131,6 @@ public class TokenExchangeServiceImplTest {
         domain.setId("domain-id");
         domain.setTokenExchangeSettings(settings);
         return domain;
-    }
-
-    private static List<ApplicationScopeSettings> clientScopeSettings(String... scopes) {
-        return Stream.of(scopes).map(ApplicationScopeSettings::new).collect(Collectors.toList());
-    }
-
-    private static TokenValidator scopeValidator(Set<String> scopes) {
-        return new TokenValidator() {
-            @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
-                return Single.just(ValidatedToken.builder()
-                        .subject("subject")
-                        .scopes(scopes)
-                        .expiration(Date.from(Instant.now().plusSeconds(60)))
-                        .tokenType(TokenType.ACCESS_TOKEN)
-                        .build());
-            }
-
-            @Override
-            public String getSupportedTokenType() {
-                return TokenType.ACCESS_TOKEN;
-            }
-        };
-    }
-
-    private static TokenValidator delegationScopeValidator(Set<String> subjectScopes, Set<String> actorScopes) {
-        return new TokenValidator() {
-            @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
-                Set<String> scopes = "subject-token".equals(token) ? subjectScopes : actorScopes;
-                return Single.just(ValidatedToken.builder()
-                        .subject("subject")
-                        .scopes(scopes)
-                        .expiration(Date.from(Instant.now().plusSeconds(60)))
-                        .tokenType(TokenType.ACCESS_TOKEN)
-                        .build());
-            }
-
-            @Override
-            public String getSupportedTokenType() {
-                return TokenType.ACCESS_TOKEN;
-            }
-        };
     }
 
     private Domain domainWithTokenExchange() {

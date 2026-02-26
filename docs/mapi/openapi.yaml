@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.11.0-SNAPSHOT
+  version: 4.11.0-alpha.2-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -1433,6 +1433,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -1829,6 +1831,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -3900,6 +3904,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -4689,6 +4695,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -8611,7 +8619,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ScopeApprovalEntity"
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScopeApprovalEntity"
         "500":
           description: Internal server error
     delete:
@@ -9558,6 +9568,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -12404,6 +12416,8 @@ components:
           type: string
         tokenEndpointAuthSigningAlg:
           type: string
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         tosUri:
           type: string
         userinfoEncryptedResponseAlg:
@@ -13870,6 +13884,8 @@ components:
           type: boolean
         inherited:
           type: boolean
+        magicLinkAuthEnabled:
+          type: boolean
         passwordlessDeviceNamingEnabled:
           type: boolean
         passwordlessEnabled:
@@ -14216,6 +14232,8 @@ components:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -14318,6 +14336,8 @@ components:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -15189,6 +15209,8 @@ components:
           type: string
         tokenEndpointAuthSigningAlg:
           type: string
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         tosUri:
           type: string
         userinfoEncryptedResponseAlg:
@@ -16534,6 +16556,16 @@ components:
           - ACCESS_TOKEN
           - REFRESH_TOKEN
           - ID_TOKEN
+    TokenExchangeOAuthSettings:
+      type: object
+      properties:
+        inherited:
+          type: boolean
+        scopeHandling:
+          type: string
+          enum:
+          - DOWNSCOPING
+          - PERMISSIVE
     TokenExchangeSettings:
       type: object
       properties:
@@ -16558,6 +16590,8 @@ components:
         maxDelegationDepth:
           type: integer
           format: int32
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         trustedIssuers:
           type: array
           items:

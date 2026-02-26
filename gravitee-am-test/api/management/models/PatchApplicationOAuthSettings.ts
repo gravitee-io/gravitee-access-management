@@ -37,6 +37,13 @@ import {
   ApplicationScopeSettingsToJSON,
   ApplicationScopeSettingsToJSONTyped,
 } from './ApplicationScopeSettings';
+import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
+import {
+  TokenExchangeOAuthSettingsFromJSON,
+  TokenExchangeOAuthSettingsFromJSONTyped,
+  TokenExchangeOAuthSettingsToJSON,
+  TokenExchangeOAuthSettingsToJSONTyped,
+} from './TokenExchangeOAuthSettings';
 
 /**
  *
@@ -370,6 +377,12 @@ export interface PatchApplicationOAuthSettings {
   tokenEndpointAuthSigningAlg?: string;
   /**
    *
+   * @type {TokenExchangeOAuthSettings}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
+  /**
+   *
    * @type {string}
    * @memberof PatchApplicationOAuthSettings
    */
@@ -468,6 +481,8 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
     tokenCustomClaims: json['tokenCustomClaims'] == null ? undefined : (json['tokenCustomClaims'] as Array<any>).map(TokenClaimFromJSON),
     tokenEndpointAuthMethod: json['tokenEndpointAuthMethod'] == null ? undefined : json['tokenEndpointAuthMethod'],
     tokenEndpointAuthSigningAlg: json['tokenEndpointAuthSigningAlg'] == null ? undefined : json['tokenEndpointAuthSigningAlg'],
+    tokenExchangeOAuthSettings:
+      json['tokenExchangeOAuthSettings'] == null ? undefined : TokenExchangeOAuthSettingsFromJSON(json['tokenExchangeOAuthSettings']),
     tosUri: json['tosUri'] == null ? undefined : json['tosUri'],
     userinfoEncryptedResponseAlg: json['userinfoEncryptedResponseAlg'] == null ? undefined : json['userinfoEncryptedResponseAlg'],
     userinfoEncryptedResponseEnc: json['userinfoEncryptedResponseEnc'] == null ? undefined : json['userinfoEncryptedResponseEnc'],
@@ -543,6 +558,7 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
     tokenCustomClaims: value['tokenCustomClaims'] == null ? undefined : (value['tokenCustomClaims'] as Array<any>).map(TokenClaimToJSON),
     tokenEndpointAuthMethod: value['tokenEndpointAuthMethod'],
     tokenEndpointAuthSigningAlg: value['tokenEndpointAuthSigningAlg'],
+    tokenExchangeOAuthSettings: TokenExchangeOAuthSettingsToJSON(value['tokenExchangeOAuthSettings']),
     tosUri: value['tosUri'],
     userinfoEncryptedResponseAlg: value['userinfoEncryptedResponseAlg'],
     userinfoEncryptedResponseEnc: value['userinfoEncryptedResponseEnc'],

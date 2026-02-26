@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -104,6 +105,13 @@ public class TokenExchangeSettings {
      * Null means no trusted issuers (only domain-issued tokens accepted).
      */
     private List<TrustedIssuer> trustedIssuers;
+
+    /**
+     * Domain-level default token exchange OAuth settings (e.g. scope handling).
+     * Applications can inherit these or override them per-application.
+     * Null means use system defaults (DOWNSCOPING).
+     */
+    private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     public TokenExchangeSettings() {
         this.allowedSubjectTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, JWT));

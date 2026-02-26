@@ -37,6 +37,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
+import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
@@ -90,7 +92,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                               UserGatewayService userGatewayService) {
         return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
                 .flatMap(subjectToken -> resolveUserForExchange(subjectToken, userGatewayService)
-                        .flatMap(resolvedUser -> buildImpersonationResult(tokenRequest, subjectToken, request, client, resolvedUser)));
+                        .flatMap(resolvedUser -> buildImpersonationResult(tokenRequest, subjectToken, request, client, domain, resolvedUser)));
     }
 
     private Single<TokenExchangeResult> processDelegation(TokenRequest tokenRequest,
@@ -124,7 +126,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                         }
 
                                         ActorTokenInfo actorInfo = extractActorInfo(actorToken, subjectToken, resultingDepth);
-                                        return buildDelegationResult(tokenRequest, subjectToken, actorToken, actorInfo, request, client, resolvedUser);
+                                        return buildDelegationResult(tokenRequest, subjectToken, actorToken, actorInfo, request, client, domain, resolvedUser);
                                     }));
                 });
     }
@@ -314,22 +316,34 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     }
 
     /**
-     * Allowed = base ∩ scopePool; scopePool = client ∪ resource (when resource present), else client only.
-     * When client has no scope settings and no resource scopes, scopePool stays empty: fail closed, grant no scopes.
+     * DOWNSCOPING: allowed = base ∩ (client ∪ resource); subject/actor token scopes cap what can be granted.
      */
-    private Set<String> computeAllowedScopesWithResource(Set<String> requestedResourceUris,
+    private Set<String> computeDownscopingAllowedScopes(Set<String> requestedResourceUris,
             Set<String> baseAllowedScopes,
             Set<String> clientScopes) {
         if (baseAllowedScopes.isEmpty()) {
             return Collections.emptySet();
         }
-        Set<String> scopePool = new HashSet<>(clientScopes);
-        if (requestedResourceUris != null && !requestedResourceUris.isEmpty()) {
-            scopePool.addAll(protectedResourceManager.getScopesForResources(requestedResourceUris));
-        }
+        Set<String> scopePool = buildScopePool(requestedResourceUris, clientScopes);
         Set<String> allowedScopes = new HashSet<>(baseAllowedScopes);
         allowedScopes.retainAll(scopePool);
         return allowedScopes;
+    }
+
+    /**
+     * PERMISSIVE: allowed = client ∪ resource; subject/actor token scopes impose no restriction.
+     */
+    private Set<String> computePermissiveAllowedScopes(Set<String> requestedResourceUris, Set<String> clientScopes) {
+        return buildScopePool(requestedResourceUris, clientScopes);
+    }
+
+    /** Returns client ∪ resource scopes (or just client when no resource). */
+    private Set<String> buildScopePool(Set<String> requestedResourceUris, Set<String> clientScopes) {
+        Set<String> pool = new HashSet<>(clientScopes);
+        if (requestedResourceUris != null && !requestedResourceUris.isEmpty()) {
+            pool.addAll(protectedResourceManager.getScopesForResources(requestedResourceUris));
+        }
+        return pool;
     }
 
     private static Set<String> getClientScopes(Client client) {
@@ -342,13 +356,21 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     }
 
     /**
-     * Resolves allowed scopes from base (subject or subject∩actor), client and resource, then granted from requested.
-     * Requested ⊆ allowed; if omitted grant full allowed. Throws InvalidScopeException if not allowed.
+     * Resolves allowed scopes then grants from requested.
+     * <ul>
+     *   <li>DOWNSCOPING: allowed = base ∩ (client ∪ resource); subject/actor scopes cap what can be granted.</li>
+     *   <li>PERMISSIVE: allowed = client ∪ resource; subject/actor scopes are irrelevant.</li>
+     * </ul>
+     * Requested ⊆ allowed; if omitted grant full allowed. Throws InvalidScopeException if not a subset.
      */
     private Single<Set<String>> computeGrantedScopes(Set<String> requestedScopes, Set<String> baseAllowedScopes,
-                                                      TokenRequest tokenRequest, Client client) {
+                                                      TokenRequest tokenRequest, Client client, Domain domain) {
         Set<String> clientScopes = getClientScopes(client);
-        Set<String> allowedScopes = computeAllowedScopesWithResource(tokenRequest.getResources(), baseAllowedScopes, clientScopes);
+        TokenExchangeOAuthSettings teSettings = TokenExchangeOAuthSettings.getInstance(domain, client);
+        boolean isPermissive = teSettings.getScopeHandling() == TokenExchangeScopeHandling.PERMISSIVE;
+        Set<String> allowedScopes = isPermissive
+                ? computePermissiveAllowedScopes(tokenRequest.getResources(), clientScopes)
+                : computeDownscopingAllowedScopes(tokenRequest.getResources(), baseAllowedScopes, clientScopes);
         if (requestedScopes == null || requestedScopes.isEmpty()) {
             return Single.just(allowedScopes);
         }
@@ -362,10 +384,11 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                                   ValidatedToken subjectToken,
                                                                   ParsedRequest parsedRequest,
                                                                   Client client,
+                                                                  Domain domain,
                                                                   Optional<User> resolvedUser) {
         Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
         Set<String> baseAllowed = Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet());
-        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client)
+        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client, domain)
                 .flatMap(grantedScopes -> Single.fromCallable(() -> {
                     User user = resolvedUser.orElseGet(() -> createUser(subjectToken, grantedScopes, client.getClientId(), false));
                     tokenRequest.setScopes(grantedScopes);
@@ -385,11 +408,12 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                                ActorTokenInfo actorInfo,
                                                                ParsedRequest parsedRequest,
                                                                Client client,
+                                                               Domain domain,
                                                                Optional<User> resolvedUser) {
         Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
         Set<String> baseAllowed = new HashSet<>(Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet()));
         baseAllowed.retainAll(Optional.ofNullable(actorToken.getScopes()).orElse(Collections.emptySet()));
-        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client)
+        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client, domain)
                 .flatMap(grantedScopes -> Single.fromCallable(() -> {
                     User user = resolvedUser.orElseGet(() -> createUser(subjectToken, grantedScopes, client.getClientId(), true));
                     tokenRequest.setScopes(grantedScopes);

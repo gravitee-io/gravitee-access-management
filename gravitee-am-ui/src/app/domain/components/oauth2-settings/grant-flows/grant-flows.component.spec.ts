@@ -169,4 +169,54 @@ describe('GrantFlowsComponent', () => {
       expect(formChangedSpy).toHaveBeenCalledWith(true);
     });
   });
+
+  describe('Token Exchange scope handling', () => {
+    it('isTokenExchangeFlowSelected returns false when token exchange is not checked', () => {
+      expect(component.isTokenExchangeFlowSelected()).toBe(false);
+    });
+
+    it('isTokenExchangeFlowSelected returns true when token exchange grant is checked', () => {
+      const te = component.grantTypes.find((g) => g.value === TOKEN_EXCHANGE_GRANT_TYPE);
+      te!.checked = true;
+      expect(component.isTokenExchangeFlowSelected()).toBe(true);
+    });
+
+    it('tokenExchangeScopeHandlingChanged updates nested scopeHandling and emits', () => {
+      const emitSpy = jest.spyOn(component.settingsChange, 'emit');
+      component.tokenExchangeScopeHandlingChanged('permissive');
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.scopeHandling).toBe('permissive');
+      expect(emitSpy).toHaveBeenCalled();
+      const emitted = emitSpy.mock.calls[0][0];
+      expect(emitted.tokenExchangeOAuthSettings.scopeHandling).toBe('permissive');
+    });
+
+    it('isTokenExchangeInherited returns true by default', () => {
+      expect(component.isTokenExchangeInherited()).toBe(true);
+    });
+
+    it('enableTokenExchangeInherit sets inherited=false and emits when toggled off', () => {
+      const emitSpy = jest.spyOn(component.settingsChange, 'emit');
+      component.enableTokenExchangeInherit({ checked: false });
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.inherited).toBe(false);
+      expect(component.isTokenExchangeInherited()).toBe(false);
+      expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('enableTokenExchangeInherit sets inherited=true and emits when toggled on', () => {
+      component.oauthSettings.tokenExchangeOAuthSettings = { inherited: false, scopeHandling: 'downscoping' };
+      const emitSpy = jest.spyOn(component.settingsChange, 'emit');
+      component.enableTokenExchangeInherit({ checked: true });
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.inherited).toBe(true);
+      expect(component.isTokenExchangeInherited()).toBe(true);
+      expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('ngOnInit initialises tokenExchangeOAuthSettings when absent', () => {
+      component.oauthSettings = { grantTypes: [] };
+      component.ngOnInit();
+      expect(component.oauthSettings.tokenExchangeOAuthSettings).toBeDefined();
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.inherited).toBe(true);
+      expect(component.oauthSettings.tokenExchangeOAuthSettings.scopeHandling).toBe('downscoping');
+    });
+  });
 });
