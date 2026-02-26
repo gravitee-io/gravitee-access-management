@@ -81,7 +81,7 @@
         <gravitee-bom.version>8.3.46</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
-        <gravitee-node.version>7.18.2</gravitee-node.version>
+        <gravitee-node.version>7.23.0</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>4.2.0</gravitee-expression-language.version>
@@ -184,6 +184,7 @@
         <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.6</gravitee-am-authorizationengine-openfga.version>
         <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.7</gravitee-am-gateway-handler-authzen.version>
         <gravitee-am-authenticator-cba.version>1.0.0</gravitee-am-authenticator-cba.version>
+        <gravitee-am-authenticator-magiclink.version>1.0.0</gravitee-am-authenticator-magiclink.version>
 
         <!-- Plugins included to full-bundle -->
         <gravitee-service-geoip.version>3.0.0</gravitee-service-geoip.version>

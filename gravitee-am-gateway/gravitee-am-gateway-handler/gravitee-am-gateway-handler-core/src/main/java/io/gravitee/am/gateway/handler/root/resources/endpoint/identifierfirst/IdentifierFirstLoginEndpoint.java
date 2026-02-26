@@ -103,6 +103,7 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, optionalSettings.map(LoginSettings::isRegisterEnabled).orElse(false));
         routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_ALLOW_CBA_CONTEXT_KEY, optionalSettings.map(LoginSettings::isCertificateBasedAuthEnabled).orElse(false));
+        routingContext.put(TEMPLATE_KEY_ALLOW_MAGIC_LINK_CONTEXT_KEY, optionalSettings.map(LoginSettings::isMagicLinkAuthEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_REMEMBER_ME_KEY, accountSettingsOptionalSettings.map(AccountSettings::isRememberMe).orElse(false));
 
         // put error in context

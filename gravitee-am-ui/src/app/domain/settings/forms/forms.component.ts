@@ -45,6 +45,10 @@ export class DomainSettingsFormsComponent implements OnInit {
 
   getForms() {
     return this.formTemplateFactoryService.findAll().map((form) => {
+      if (form.template === 'MAGIC_LINK_LOGIN') {
+        form.enabled = this.allowMagicLink();
+        return form;
+      }
       form.enabled = true;
       return form;
     });
@@ -57,5 +61,9 @@ export class DomainSettingsFormsComponent implements OnInit {
         form.enabled = true;
         return form;
       });
+  }
+
+  private allowMagicLink(): boolean {
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 }

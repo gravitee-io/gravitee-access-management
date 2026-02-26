@@ -43,6 +43,10 @@ export class ApplicationFormsComponent implements OnInit {
 
   getForms() {
     return this.formTemplateFactoryService.findAll().map((form) => {
+      if (form.template === 'MAGIC_LINK_LOGIN') {
+        form.enabled = this.allowMagicLink();
+        return form;
+      }
       form.enabled = form.template === 'ERROR' || this.applicationSettingsValid();
       return form;
     });
@@ -59,5 +63,12 @@ export class ApplicationFormsComponent implements OnInit {
       );
     }
     return false;
+  }
+
+  private allowMagicLink(): boolean {
+    if (this.application.settings?.login && !this.application.settings.login.inherited) {
+      return this.application.settings.login.magicLinkAuthEnabled;
+    }
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 }

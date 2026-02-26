@@ -94,7 +94,13 @@ export interface LoginSettings {
   passwordlessEnforcePasswordEnabled?: boolean;
   /**
    *
-   * @type {number}
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  magicLinkAuthEnabled?: boolean;
+  /**
+   *
+   * @type {string}
    * @memberof LoginSettings
    */
   passwordlessEnforcePasswordMaxAge?: number;
@@ -153,10 +159,12 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
       json['passwordlessEnforcePasswordEnabled'] == null ? undefined : json['passwordlessEnforcePasswordEnabled'],
     passwordlessEnforcePasswordMaxAge:
       json['passwordlessEnforcePasswordMaxAge'] == null ? undefined : json['passwordlessEnforcePasswordMaxAge'],
-    passwordlessRememberDeviceEnabled:
-      json['passwordlessRememberDeviceEnabled'] == null ? undefined : json['passwordlessRememberDeviceEnabled'],
-    registerEnabled: json['registerEnabled'] == null ? undefined : json['registerEnabled'],
-    rememberMeEnabled: json['rememberMeEnabled'] == null ? undefined : json['rememberMeEnabled'],
+    passwordlessDeviceNamingEnabled: json['passwordlessDeviceNamingEnabled'] == null ? undefined : json['passwordlessDeviceNamingEnabled'],
+    certificateBasedAuthEnabled: json['certificateBasedAuthEnabled'] == null ? undefined : json['certificateBasedAuthEnabled'],
+    magicLinkAuthEnabled: json['magicLinkAuthEnabled'] == null ? undefined : json['magicLinkAuthEnabled'],
+    certificateBasedAuthUrl: json['certificateBasedAuthUrl'] == null ? undefined : json['certificateBasedAuthUrl'],
+    hideForm: json['hideForm'] == null ? undefined : json['hideForm'],
+    identifierFirstEnabled: json['identifierFirstEnabled'] == null ? undefined : json['identifierFirstEnabled'],
     resetPasswordOnExpiration: json['resetPasswordOnExpiration'] == null ? undefined : json['resetPasswordOnExpiration'],
   };
 }
@@ -173,8 +181,7 @@ export function LoginSettingsToJSONTyped(value?: LoginSettings | null, ignoreDis
   return {
     certificateBasedAuthEnabled: value['certificateBasedAuthEnabled'],
     certificateBasedAuthUrl: value['certificateBasedAuthUrl'],
-    enforcePasswordPolicyEnabled: value['enforcePasswordPolicyEnabled'],
-    forgotPasswordEnabled: value['forgotPasswordEnabled'],
+    magicLinkAuthEnabled: value['magicLinkAuthEnabled'],
     hideForm: value['hideForm'],
     identifierFirstEnabled: value['identifierFirstEnabled'],
     inherited: value['inherited'],

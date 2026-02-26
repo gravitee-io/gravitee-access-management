@@ -41,9 +41,23 @@ export class DomainSettingsEmailsComponent implements OnInit {
 
   getEmails() {
     return this.emailTemplateFactoryService.findAll().map((email) => {
-      email.enabled = email.template !== 'RESET_PASSWORD' || this.allowResetPassword();
+      if (email.template === 'RESET_PASSWORD') {
+        email.enabled = this.allowResetPassword();
+        return email;
+      }
+
+      if (email.template === 'MAGIC_LINK') {
+        email.enabled = this.allowMagicLink();
+        return email;
+      }
+
+      email.enabled = true;
       return email;
     });
+  }
+
+  private allowMagicLink(): boolean {
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 
   private allowResetPassword(): boolean {

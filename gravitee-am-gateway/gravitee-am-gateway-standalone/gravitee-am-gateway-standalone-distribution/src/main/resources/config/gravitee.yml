@@ -264,6 +264,7 @@ user:
 #      variation:
 #        latitude: 0.07 # default to have a geolocation randomised, 0 will give the exact position
 #        longitude: 0.07 # default to have a geolocation randomised, 0 will give the exact position
+
   email:
     # Set required: false to make email optional for internal identity providers' users.
     # WARNING: Features that rely on having an email available won't work for such users!
@@ -341,6 +342,14 @@ user:
     #maxAllowCredentials: 20 # number of credentials sent back to perform passwordless authentication. Keep in mind, Firefox handles max 20
   certificate:
     #maxCertificatesPerUser: 20 # number of certificates per user (default 20)
+  magic:
+    link:
+      login:
+        email:
+          #subject: Sign in
+        time:
+          #unit: MINUTES
+          #value: 15
 
 handlers:
   request:

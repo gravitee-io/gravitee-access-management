@@ -1219,13 +1219,20 @@
                                             <type>zip</type>
                                         </artifactItem>
 
-
                                         <artifactItem>
                                             <groupId>io.gravitee.am.authenticator</groupId>
                                             <artifactId>gravitee-am-authenticator-cba</artifactId>
                                             <version>${gravitee-am-authenticator-cba.version}</version>
                                             <type>zip</type>
                                         </artifactItem>
+
+                                        <!-- TODO uncomment when first alpha release for ML will be done-->
+                                        <!-- <artifactItem>
+                                            <groupId>io.gravitee.am.authenticator</groupId>
+                                            <artifactId>gravitee-am-authenticator-magiclink</artifactId>
+                                            <version>${gravitee-am-authenticator-magiclink.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem> -->
                                     </artifactItems>
                                 </configuration>
                             </execution>

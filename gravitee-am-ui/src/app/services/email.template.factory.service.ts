@@ -20,6 +20,7 @@ export class EmailTemplateFactoryService {
   private static readonly DEFAULT_EXPIRATION_SECONDS_10_MINUTES = 600;
   private static readonly DEFAULT_EXPIRATION_SECONDS_1_DAY = 86400;
   private static readonly DEFAULT_EXPIRATION_SECONDS_7_DAYS = 7 * EmailTemplateFactoryService.DEFAULT_EXPIRATION_SECONDS_1_DAY;
+  private static readonly DEFAULT_EXPIRATION_SECONDS_15_MINUTES = 900;
 
   private static readonly emailTemplates = {
     registration_confirmation: {
@@ -70,6 +71,13 @@ export class EmailTemplateFactoryService {
       template: 'REGISTRATION_VERIFY',
       icon: 'how_to_reg',
       defaultExpirationSeconds: EmailTemplateFactoryService.DEFAULT_EXPIRATION_SECONDS_7_DAYS,
+    },
+    magic_link: {
+      name: 'Magic link',
+      description: 'Email notification containing a magic link',
+      template: 'MAGIC_LINK',
+      icon: 'notifications',
+      defaultExpirationSeconds: EmailTemplateFactoryService.DEFAULT_EXPIRATION_SECONDS_15_MINUTES,
     },
   };
 
