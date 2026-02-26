@@ -1,0 +1,274 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <div fxFlex="70">
+    <a [routerLink]="['..']" class="gv-back-link"><small>&lt;&lt; Back to trusted issuers</small></a>
+    <h2>{{ pageTitle }}</h2>
+
+    <form (ngSubmit)="save()" *ngIf="trustedIssuer">
+      <!-- Issuer URL -->
+      <div class="gv-form-section" fxLayout="column">
+        <div class="gv-form-section-title">
+          <h5>Issuer Configuration</h5>
+          <mat-divider></mat-divider>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Issuer URL</mat-label>
+          <input
+            matInput
+            name="issuer"
+            [(ngModel)]="trustedIssuer.issuer"
+            (ngModelChange)="onFieldChange()"
+            [disabled]="!editMode"
+            placeholder="https://external-idp.example.com"
+          />
+          <mat-hint>The expected "iss" claim value in the external JWT</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="margin-top: 8px">
+          <mat-label>Key Resolution Method</mat-label>
+          <mat-select
+            name="keyResolutionMethod"
+            [(ngModel)]="trustedIssuer.keyResolutionMethod"
+            (selectionChange)="onFieldChange()"
+            [disabled]="!editMode"
+          >
+            <mat-option *ngFor="let opt of KEY_RESOLUTION_OPTIONS" [value]="opt.value">{{ opt.label }}</mat-option>
+          </mat-select>
+          <mat-hint>How to obtain the public key for JWT signature verification</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field *ngIf="trustedIssuer.keyResolutionMethod === KEY_RESOLUTION_JWKS_URL" appearance="outline" style="margin-top: 8px">
+          <mat-label>JWKS URL</mat-label>
+          <input
+            matInput
+            name="jwksUri"
+            [(ngModel)]="trustedIssuer.jwksUri"
+            (ngModelChange)="onFieldChange()"
+            [disabled]="!editMode"
+            placeholder="https://external-idp.example.com/.well-known/jwks.json"
+          />
+          <mat-hint>URL of the JSON Web Key Set endpoint for the issuer</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field *ngIf="trustedIssuer.keyResolutionMethod === KEY_RESOLUTION_PEM" appearance="outline" style="margin-top: 8px">
+          <mat-label>PEM Certificate</mat-label>
+          <textarea
+            matInput
+            name="certificate"
+            [(ngModel)]="trustedIssuer.certificate"
+            (ngModelChange)="onFieldChange()"
+            [disabled]="!editMode"
+            rows="4"
+            placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+          ></textarea>
+          <mat-hint>PEM-encoded X.509 certificate containing the public key</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Scope Mappings -->
+      <div class="gv-form-section" fxLayout="column">
+        <div class="gv-form-section-title">
+          <h5>Scope Mappings</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <mat-hint class="section-hint"> Map external scopes from this issuer to domain scopes. Unmapped scopes will be dropped. </mat-hint>
+        <div class="staging-row">
+          <mat-form-field appearance="outline" class="staging-field">
+            <mat-label>External Scope</mat-label>
+            <input
+              matInput
+              name="newExtScope"
+              [(ngModel)]="newScopeStaging.key"
+              (ngModelChange)="onFieldChange()"
+              [disabled]="!editMode"
+              placeholder="External scope name"
+            />
+          </mat-form-field>
+          <mat-form-field *ngIf="domainScopes?.length" appearance="outline" class="staging-field">
+            <mat-label>Domain Scope</mat-label>
+            <mat-select name="newDomScope" [(ngModel)]="newScopeStaging.value" (selectionChange)="onFieldChange()" [disabled]="!editMode">
+              <mat-option *ngFor="let scope of getAvailableDomainScopes()" [value]="scope.key">
+                <span>{{ scope.name || scope.key }}</span>
+                <small *ngIf="scope.description"> | {{ scope.description }}</small>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field *ngIf="!domainScopes?.length" appearance="outline" class="staging-field">
+            <mat-label>Domain Scope</mat-label>
+            <input
+              matInput
+              name="newDomScopeText"
+              [(ngModel)]="newScopeStaging.value"
+              (ngModelChange)="onFieldChange()"
+              [disabled]="!editMode"
+              placeholder="Domain scope"
+            />
+          </mat-form-field>
+          <button mat-stroked-button type="button" (click)="addScopeMapping()" [disabled]="!editMode || !canAddScopeMapping()">
+            <mat-icon>add</mat-icon> ADD
+          </button>
+        </div>
+        <ngx-datatable
+          class="material"
+          [columnMode]="'flex'"
+          [headerHeight]="40"
+          [rowHeight]="55"
+          [messages]="{ emptyMessage: 'No scope mappings configured' }"
+          [rows]="trustedIssuer._scopeMappingRows"
+        >
+          <ngx-datatable-column name="External Scope" [flexGrow]="2" [sortable]="false" [resizeable]="false" [draggable]="false">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              {{ row.key }}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Domain Scope" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              {{ domainScopes?.length ? getDomainScopeLabel(row.value) : row.value }}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+            <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+              <div fxLayout="row" class="gv-table-cell-actions">
+                <button mat-button (click)="removeScopeMapping(rowIndex)" [disabled]="!editMode">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+      </div>
+
+      <!-- User Binding -->
+      <div class="gv-form-section" fxLayout="column">
+        <div class="gv-form-section-title">
+          <h5>User Binding</h5>
+          <mat-divider></mat-divider>
+        </div>
+
+        <mat-slide-toggle
+          name="userBindingEnabled"
+          [(ngModel)]="trustedIssuer.userBindingEnabled"
+          (ngModelChange)="onFieldChange()"
+          [disabled]="!editMode"
+        >
+          Enable User Binding
+        </mat-slide-toggle>
+        <mat-hint class="section-hint">
+          When enabled, the minted token will carry the domain user's roles, groups, and profile data instead of a synthetic user.
+        </mat-hint>
+
+        <div *ngIf="trustedIssuer.userBindingEnabled" style="margin-top: 8px">
+          <h5 class="sub-section-title">User Binding Mappings</h5>
+          <mat-hint class="section-hint">
+            Map user attributes to JWT claims for domain user lookup. Use claim names (e.g., "email") or EL expressions (e.g.,
+            &#123;#token['email']&#125;).
+          </mat-hint>
+          <div class="staging-row">
+            <mat-form-field appearance="outline" class="staging-field">
+              <mat-label>User Attribute</mat-label>
+              <input
+                matInput
+                name="newUbAttr"
+                [(ngModel)]="newUserBindingStaging.attribute"
+                (ngModelChange)="onFieldChange()"
+                [disabled]="!editMode"
+                placeholder="e.g. userName, emails.value"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="staging-field">
+              <mat-label>Claim / Expression</mat-label>
+              <input
+                matInput
+                name="newUbClaim"
+                [(ngModel)]="newUserBindingStaging.expression"
+                (ngModelChange)="onFieldChange()"
+                [disabled]="!editMode"
+                placeholder="email or {#token['email']}"
+              />
+            </mat-form-field>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="addUserBindingCriterion()"
+              [disabled]="!editMode || !canAddUserBindingCriterion()"
+            >
+              <mat-icon>add</mat-icon> ADD
+            </button>
+          </div>
+          <ngx-datatable
+            class="material"
+            [columnMode]="'flex'"
+            [headerHeight]="40"
+            [rowHeight]="55"
+            [messages]="{ emptyMessage: 'No user binding criteria configured' }"
+            [rows]="trustedIssuer._userBindingRows ?? []"
+          >
+            <ngx-datatable-column name="User Attribute" [flexGrow]="2" [sortable]="false" [resizeable]="false" [draggable]="false">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                {{ row.attribute }}
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Claim / Expression" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                {{ row.expression }}
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <div fxLayout="row" class="gv-table-cell-actions">
+                  <button mat-button (click)="removeUserBindingCriterion(rowIndex)" [disabled]="!editMode">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+      </div>
+
+      <!-- Validation warnings -->
+      <div *ngFor="let error of getValidationErrors()" class="gv-form-section validation-error">
+        <mat-icon>warning</mat-icon>
+        <span style="margin-left: 8px">{{ error }}</span>
+      </div>
+
+      <div fxLayout="row" fxLayoutGap="10px" *ngIf="editMode">
+        <button mat-raised-button color="primary" [disabled]="!formChanged || !isFormValid()" type="submit">SAVE</button>
+        <button *ngIf="!createMode" mat-raised-button color="warn" type="button" (click)="deleteIssuer()">DELETE</button>
+      </div>
+    </form>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>Trusted Issuers</h3>
+    <div class="gv-page-description-content">
+      <p>
+        Configure <strong>Trusted Issuers</strong> to accept JWTs from external identity providers as subject or actor tokens. Each issuer
+        requires a key resolution method (JWKS URL or PEM certificate) for signature verification. Optional scope mappings allow translating
+        external scopes to domain scopes.
+      </p>
+      <h4>User Binding</h4>
+      <p>
+        Enable <strong>User Binding</strong> on a trusted issuer to look up a domain user matching the external JWT claims. When a matching
+        user is found, the minted token carries the domain user's roles, groups, and profile data. If no match is found, the exchange is
+        rejected (fail-closed). Mappings define which user attribute to match against which JWT claim or EL expression.
+      </p>
+    </div>
+  </div>
+</div>

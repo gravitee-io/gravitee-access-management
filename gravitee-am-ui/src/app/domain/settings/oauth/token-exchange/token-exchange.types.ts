@@ -17,6 +17,7 @@
 /** Key resolution method for a trusted issuer (lowercase matches enum serialization). */
 export const KEY_RESOLUTION_JWKS_URL = 'jwks_url';
 export const KEY_RESOLUTION_PEM = 'pem';
+export type KeyResolutionMethod = typeof KEY_RESOLUTION_JWKS_URL | typeof KEY_RESOLUTION_PEM;
 
 /** One criterion for resolving an external JWT subject to a domain user (attribute + EL expression). */
 export interface UserBindingCriterion {
@@ -26,7 +27,7 @@ export interface UserBindingCriterion {
 
 export interface TrustedIssuer {
   issuer: string;
-  keyResolutionMethod: string;
+  keyResolutionMethod: KeyResolutionMethod;
   jwksUri?: string;
   certificate?: string;
   scopeMappings?: Record<string, string>;
@@ -38,6 +39,4 @@ export interface TrustedIssuer {
   userBindingCriteria?: UserBindingCriterion[];
   /** UI-only: rows for user binding criteria form. */
   _userBindingRows?: UserBindingCriterion[];
-  /** UI-only: whether the card is collapsed. */
-  _collapsed?: boolean;
 }

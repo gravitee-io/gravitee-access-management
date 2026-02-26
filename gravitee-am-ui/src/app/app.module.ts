@@ -487,8 +487,10 @@ import { TokensComponent } from './domain/components/oauth2-settings/tokens/toke
 import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
-import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
-import { TrustedIssuersSectionComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-section/trusted-issuers-section.component';
+import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
+import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
+import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
+import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
 
 @NgModule({
@@ -770,8 +772,10 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopesComponent,
     AddScopeComponent,
     TokensComponent,
-    TokenExchangeComponent,
-    TrustedIssuersSectionComponent,
+    TokenExchangeContainerComponent,
+    TokenExchangeSettingsComponent,
+    TrustedIssuersListComponent,
+    TrustedIssuerDetailComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],
