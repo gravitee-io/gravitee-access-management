@@ -6,3 +6,11 @@
   background: #fff;
   line-height: 34px;
 }
+
+.override-form-section {
+  margin-top: 5px;
+
+  > *:first-child {
+    margin-bottom: 10px;
+  }
+}

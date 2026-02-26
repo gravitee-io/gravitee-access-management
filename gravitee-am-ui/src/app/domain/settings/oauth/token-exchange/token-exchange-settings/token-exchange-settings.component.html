@@ -145,6 +145,29 @@
           </div>
         </div>
 
+        <!-- Scope Handling Section -->
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>Scope Handling</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Scope Handling</mat-label>
+            <mat-select
+              name="tokenExchangeScopeHandling"
+              [(ngModel)]="domain.tokenExchangeSettings.tokenExchangeOAuthSettings.scopeHandling"
+              (ngModelChange)="modelChanged()"
+              [disabled]="!editMode"
+            >
+              <mat-option *ngFor="let opt of TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS" [value]="opt.value">{{ opt.label }}</mat-option>
+            </mat-select>
+            <mat-hint>
+              Scope handling for client applications using token exchange. Applications can override this by disabling inheritance.
+            </mat-hint>
+          </mat-form-field>
+        </div>
+
         <!-- Validation warnings -->
         <div *ngFor="let error of getValidationErrors()" class="gv-form-section validation-error">
           <mat-icon>warning</mat-icon>

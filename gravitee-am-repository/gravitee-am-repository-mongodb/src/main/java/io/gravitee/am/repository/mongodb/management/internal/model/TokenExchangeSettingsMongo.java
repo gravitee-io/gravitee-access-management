@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +36,7 @@ public class TokenExchangeSettingsMongo {
     private boolean allowDelegation;
     private Integer maxDelegationDepth;
     private List<TrustedIssuerMongo> trustedIssuers;
+    private TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings;
 
     public boolean isEnabled() {
         return enabled;
@@ -100,6 +102,14 @@ public class TokenExchangeSettingsMongo {
         this.trustedIssuers = trustedIssuers;
     }
 
+    public TokenExchangeOAuthSettingsMongo getTokenExchangeOAuthSettings() {
+        return tokenExchangeOAuthSettings;
+    }
+
+    public void setTokenExchangeOAuthSettings(TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings) {
+        this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
+    }
+
     /**
      * Convert MongoDB representation to domain model.
      * When maxDelegationDepth is null (old data), the domain model default applies.
@@ -120,6 +130,9 @@ public class TokenExchangeSettingsMongo {
                     .map(TrustedIssuerMongo::convert)
                     .filter(Objects::nonNull)
                     .toList());
+        }
+        if (tokenExchangeOAuthSettings != null) {
+            settings.setTokenExchangeOAuthSettings(tokenExchangeOAuthSettings.convert());
         }
         return settings;
     }
@@ -144,6 +157,7 @@ public class TokenExchangeSettingsMongo {
                     .map(TrustedIssuerMongo::convert)
                     .toList());
         }
+        mongo.setTokenExchangeOAuthSettings(TokenExchangeOAuthSettingsMongo.convert(settings.getTokenExchangeOAuthSettings()));
         return mongo;
     }
 }

@@ -74,6 +74,39 @@
         </div>
       </div>
 
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Token Exchange</h5>
+          <small>Configure settings for the Token Exchange grant flow.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableTokenExchangeInherit($event)"
+            [checked]="isTokenExchangeInherited()"
+            [disabled]="readonly || !isTokenExchangeFlowSelected()"
+          >
+            Inherit configuration
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Inherit Token Exchange settings from the security domain.</mat-hint>
+        </div>
+        <div *ngIf="!isTokenExchangeInherited()" class="override-form-section">
+          <mat-divider></mat-divider>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Scope Handling</mat-label>
+            <mat-select
+              name="tokenExchangeScopeHandling"
+              [(ngModel)]="oauthSettings.tokenExchangeOAuthSettings.scopeHandling"
+              (ngModelChange)="tokenExchangeScopeHandlingChanged($event)"
+              [disabled]="readonly || !isTokenExchangeFlowSelected()"
+            >
+              <mat-option *ngFor="let opt of TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS" [value]="opt.value">{{ opt.label }}</mat-option>
+            </mat-select>
+            <mat-hint>Controls how scopes are narrowed during token exchange.</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
       <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT">
         <div class="gv-form-section-title">
           <h5>Proof Key for Code Exchange (PKCE)</h5>

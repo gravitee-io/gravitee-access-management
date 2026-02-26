@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+/** Scope handling mode for token exchange. */
+export type TokenExchangeScopeHandling = 'downscoping' | 'permissive';
+
+/** Per-application or domain-default token exchange OAuth settings. */
+export interface TokenExchangeOAuthSettings {
+  /** When true, effective settings are resolved from the domain default. */
+  inherited: boolean;
+  scopeHandling: TokenExchangeScopeHandling;
+}
+
+export const DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING: TokenExchangeScopeHandling = 'downscoping';
+
+export const TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS: readonly { label: string; value: TokenExchangeScopeHandling }[] = [
+  { label: 'Downscoping (default)', value: 'downscoping' },
+  { label: 'Permissive', value: 'permissive' },
+];
+
 /** Key resolution method for a trusted issuer (lowercase matches enum serialization). */
 export const KEY_RESOLUTION_JWKS_URL = 'jwks_url';
 export const KEY_RESOLUTION_PEM = 'pem';

@@ -230,6 +230,7 @@ models/Tag.ts
 models/Theme.ts
 models/ThemeEntity.ts
 models/TokenClaim.ts
+models/TokenExchangeOAuthSettings.ts
 models/TokenExchangeSettings.ts
 models/TrustedIssuer.ts
 models/UMASettings.ts

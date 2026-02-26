@@ -28,6 +28,13 @@
 import { mapValues } from '../runtime';
 import type { TrustedIssuer } from './TrustedIssuer';
 import { TrustedIssuerFromJSON, TrustedIssuerFromJSONTyped, TrustedIssuerToJSON, TrustedIssuerToJSONTyped } from './TrustedIssuer';
+import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
+import {
+  TokenExchangeOAuthSettingsFromJSON,
+  TokenExchangeOAuthSettingsFromJSONTyped,
+  TokenExchangeOAuthSettingsToJSON,
+  TokenExchangeOAuthSettingsToJSONTyped,
+} from './TokenExchangeOAuthSettings';
 
 /**
  *
@@ -79,6 +86,12 @@ export interface TokenExchangeSettings {
   maxDelegationDepth?: number;
   /**
    *
+   * @type {TokenExchangeOAuthSettings}
+   * @memberof TokenExchangeSettings
+   */
+  tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
+  /**
+   *
    * @type {Array<TrustedIssuer>}
    * @memberof TokenExchangeSettings
    */
@@ -108,6 +121,8 @@ export function TokenExchangeSettingsFromJSONTyped(json: any, ignoreDiscriminato
     allowedSubjectTokenTypes: json['allowedSubjectTokenTypes'] == null ? undefined : json['allowedSubjectTokenTypes'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     maxDelegationDepth: json['maxDelegationDepth'] == null ? undefined : json['maxDelegationDepth'],
+    tokenExchangeOAuthSettings:
+      json['tokenExchangeOAuthSettings'] == null ? undefined : TokenExchangeOAuthSettingsFromJSON(json['tokenExchangeOAuthSettings']),
     trustedIssuers: json['trustedIssuers'] == null ? undefined : (json['trustedIssuers'] as Array<any>).map(TrustedIssuerFromJSON),
   };
 }
@@ -129,6 +144,7 @@ export function TokenExchangeSettingsToJSONTyped(value?: TokenExchangeSettings |
     allowedSubjectTokenTypes: value['allowedSubjectTokenTypes'],
     enabled: value['enabled'],
     maxDelegationDepth: value['maxDelegationDepth'],
+    tokenExchangeOAuthSettings: TokenExchangeOAuthSettingsToJSON(value['tokenExchangeOAuthSettings']),
     trustedIssuers: value['trustedIssuers'] == null ? undefined : (value['trustedIssuers'] as Array<any>).map(TrustedIssuerToJSON),
   };
 }

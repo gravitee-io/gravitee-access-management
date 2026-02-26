@@ -24,7 +24,7 @@ import { NewMcpTool } from '@management-models/NewMcpTool';
 import { UpdateProtectedResourceFeature } from '@management-models/UpdateProtectedResourceFeature';
 import { ProtectedResourceFeature } from '@management-models/ProtectedResourceFeature';
 import { McpTool } from '@management-models/McpTool';
-
+import { NewApplicationTypeEnum } from '@management-models/NewApplication';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -38,8 +38,7 @@ import {
   waitForProtectedResourceRemovedFromList,
 } from '@management-commands/protected-resources-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
-import { createCertificate, getAllCertificates } from '@management-commands/certificate-management-commands';
-import { createJksCertificateRequest } from './certificates/fixtures/certificates-fixture';
+import { getAllCertificates } from '@management-commands/certificate-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
@@ -264,7 +263,7 @@ describe('When creating protected resource', () => {
   it('Protected Resource must not be created with same clientId in application', async () => {
     const appRequest = {
       name: generateValidProtectedResourceName(),
-      type: 'service',
+      type: 'service' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       clientId: 'client-id4',
     };
@@ -1468,6 +1467,38 @@ describe('When updating protected resource', () => {
         response: { status: 400 },
       });
     });
+  });
+});
+
+describe('Token Exchange scope handling on protected resource', () => {
+  let protectedResource: any;
+
+  beforeAll(async () => {
+    const request = {
+      name: generateValidProtectedResourceName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://te-scope-test.com'],
+    } as NewProtectedResource;
+
+    protectedResource = await createAndSyncProtectedResource(domain.id, accessToken, request);
+  });
+
+  it('defaults to null tokenExchangeOAuthSettings (inherits domain default of downscoping)', async () => {
+    const resource = await getMcpServer(domain.id, accessToken, protectedResource.id);
+    expect(resource.settings.oauth.tokenExchangeOAuthSettings).toBeUndefined();
+  });
+
+  it('persists tokenExchangeOAuthSettings: permissive', async () => {
+    await patchProtectedResource(domain.id, accessToken, protectedResource.id, {
+      settings: {
+        oauth: {
+          tokenExchangeOAuthSettings: { inherited: false, scopeHandling: 'permissive' },
+        },
+      },
+    });
+    const fetched = await getMcpServer(domain.id, accessToken, protectedResource.id);
+    expect(fetched.settings.oauth.tokenExchangeOAuthSettings?.scopeHandling).toBe('permissive');
+    expect(fetched.settings.oauth.tokenExchangeOAuthSettings?.inherited).toBe(false);
   });
 });
 

@@ -28,6 +28,7 @@ import {
 } from '@management-commands/application-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
+import { NewApplicationTypeEnum } from '@management-models/NewApplication';
 import { uniqueName } from '@utils-commands/misc';
 import { ClientSecret } from '@management-models/ClientSecret';
 import { setup } from '../test-fixture';
@@ -260,7 +261,7 @@ describe('Entrypoints: User accounts', () => {
   it('should define the "remember me" amount of time', async () => {
     const app = {
       name: faker.commerce.productName(),
-      type: 'browser',
+      type: 'browser' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       redirectUris: ['https://callback'],
     };
@@ -294,7 +295,7 @@ describe('Redirect URI', () => {
     expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
     const app = {
       name: faker.commerce.productName(),
-      type: 'browser',
+      type: 'browser' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       redirectUris: ['https://callback/?param=test', 'https://callback/?param2=test2'],
     };
@@ -333,7 +334,7 @@ describe('Redirect URI', () => {
   it('Should create app with redirect URI with EL', async () => {
     const app = {
       name: faker.commerce.productName(),
-      type: 'browser',
+      type: 'browser' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       redirectUris: ["https://callback/?param={#context.attributes['test']}"],
     };
@@ -346,7 +347,7 @@ describe('Redirect URI', () => {
   it('Should add new redirect URI with EL', async () => {
     const app = {
       name: faker.commerce.productName(),
-      type: 'browser',
+      type: 'browser' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       redirectUris: ["https://callback/?param={#context.attributes['test']}"],
     };
@@ -373,7 +374,7 @@ describe('Redirect URI', () => {
   it('Should add new redirect URI with EL with many params', async () => {
     const app = {
       name: faker.commerce.productName(),
-      type: 'browser',
+      type: 'browser' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       redirectUris: ["https://callback/?param={#context.attributes['test']}"],
     };
@@ -403,7 +404,7 @@ describe('Redirect URI', () => {
   it('Should not add new redirect URI with EL if its the same domain and path', async () => {
     const app = {
       name: faker.commerce.productName(),
-      type: 'browser',
+      type: 'browser' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       redirectUris: ["https://callback/path?param={#context.attributes['test']}"],
     };
@@ -434,7 +435,7 @@ describe('Redirect URI', () => {
   it('Should not add new redirect with fragment', async () => {
     const app = {
       name: faker.commerce.productName(),
-      type: 'browser',
+      type: 'browser' as NewApplicationTypeEnum,
       description: faker.lorem.paragraph(),
       redirectUris: ["https://callback/path?param={#context.attributes['test']}"],
     };
@@ -466,6 +467,67 @@ describe('Redirect URI', () => {
       },
     });
     expect(primaryDomain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+  });
+});
+
+describe('Token Exchange scope handling', () => {
+  let testApp: Application;
+
+  beforeAll(async () => {
+    testApp = await createApplication(primaryDomain.id!, accessToken, {
+      name: uniqueName('te-scope-app'),
+      type: 'SERVICE',
+    });
+    recordApplicationForCleanup(testApp, primaryDomain.id!);
+  });
+
+  it('defaults to null tokenExchangeOAuthSettings when not set (inherits domain default of downscoping)', async () => {
+    const app = await getApplication(primaryDomain.id!, accessToken, testApp.id);
+    expect(app.settings.oauth.tokenExchangeOAuthSettings).toBeUndefined();
+  });
+
+  it('persists tokenExchangeOAuthSettings when patched to permissive', async () => {
+    const patched = await patchApplication(
+      primaryDomain.id!,
+      accessToken,
+      {
+        settings: {
+          oauth: {
+            tokenExchangeOAuthSettings: { inherited: false, scopeHandling: 'permissive' },
+          },
+        },
+      },
+      testApp.id,
+    );
+    expect(patched.settings.oauth.tokenExchangeOAuthSettings?.scopeHandling).toBe('permissive');
+    expect(patched.settings.oauth.tokenExchangeOAuthSettings?.inherited).toBe(false);
+  });
+
+  it('can be patched back to downscoping', async () => {
+    const patched = await patchApplication(
+      primaryDomain.id!,
+      accessToken,
+      {
+        settings: {
+          oauth: {
+            tokenExchangeOAuthSettings: { inherited: false, scopeHandling: 'downscoping' },
+          },
+        },
+      },
+      testApp.id,
+    );
+    expect(patched.settings.oauth.tokenExchangeOAuthSettings?.scopeHandling).toBe('downscoping');
+  });
+
+  it('rejects invalid tokenExchangeOAuthSettings.scopeHandling values', async () => {
+    await expect(
+      patchApplication(
+        primaryDomain.id!,
+        accessToken,
+        { settings: { oauth: { tokenExchangeOAuthSettings: { scopeHandling: 'invalid-value' } } } },
+        testApp.id,
+      ),
+    ).rejects.toMatchObject({ response: { status: 400 } });
   });
 });
 

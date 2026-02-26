@@ -33,6 +33,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
@@ -282,6 +283,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
+    private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
+
     private SecretExpirationSettings secretExpirationSettings;
 
     public Client() {
@@ -374,6 +377,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.wantAssertionsSigned = other.wantAssertionsSigned;
         this.responseBinding = other.responseBinding;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
+        this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
     }
 
@@ -1145,6 +1149,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setDisableRefreshTokenRotation(boolean disableRefreshTokenRotation) {
         this.disableRefreshTokenRotation = disableRefreshTokenRotation;
+    }
+
+    public TokenExchangeOAuthSettings getTokenExchangeOAuthSettings() {
+        return tokenExchangeOAuthSettings;
+    }
+
+    public void setTokenExchangeOAuthSettings(TokenExchangeOAuthSettings tokenExchangeOAuthSettings) {
+        this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
     }
 
     public List<ApplicationSecretSettings> getSecretSettings() {

@@ -21,7 +21,12 @@ import { AuthService } from '../../../../../services/auth.service';
 import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
-import { TrustedIssuer } from '../token-exchange.types';
+import {
+  TrustedIssuer,
+  TokenExchangeOAuthSettings,
+  DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
+  TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS,
+} from '../token-exchange.types';
 
 interface TokenExchangeSettings {
   enabled: boolean;
@@ -32,6 +37,7 @@ interface TokenExchangeSettings {
   allowDelegation: boolean;
   maxDelegationDepth?: number;
   trustedIssuers?: TrustedIssuer[];
+  tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
 }
 
 @Component({
@@ -44,6 +50,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
   readonly maxDelegationDepthLimit = 100;
   readonly minDelegationDepth = 1;
   readonly defaultDelegationDepth = 25;
+  readonly TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS = TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS;
   domainId: string;
   domain: any = {};
   formChanged = false;
@@ -107,6 +114,12 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
     normalizedSettings.maxDelegationDepth =
       tokenExchangeSettings.maxDelegationDepth != null ? tokenExchangeSettings.maxDelegationDepth : this.defaultDelegationDepth;
 
+    // force inherited false — domain-level settings are always the authoritative source
+    normalizedSettings.tokenExchangeOAuthSettings = {
+      scopeHandling: tokenExchangeSettings.tokenExchangeOAuthSettings?.scopeHandling ?? DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
+      inherited: false,
+    };
+
     this.domain.tokenExchangeSettings = normalizedSettings;
   }
 
@@ -120,6 +133,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
       allowDelegation: false,
       maxDelegationDepth: this.defaultDelegationDepth,
       trustedIssuers: [],
+      tokenExchangeOAuthSettings: { scopeHandling: DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING, inherited: false },
     };
   }
 

@@ -216,6 +216,7 @@ export * from './Tag';
 export * from './Theme';
 export * from './ThemeEntity';
 export * from './TokenClaim';
+export * from './TokenExchangeOAuthSettings';
 export * from './TokenExchangeSettings';
 export * from './TrustedIssuer';
 export * from './UMASettings';
