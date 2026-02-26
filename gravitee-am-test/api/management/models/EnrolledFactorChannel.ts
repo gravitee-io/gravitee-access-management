@@ -61,7 +61,7 @@ export const EnrolledFactorChannelTypeEnum = {
   Http: 'HTTP',
   Call: 'CALL',
 } as const;
-export type EnrolledFactorChannelTypeEnum = (typeof EnrolledFactorChannelTypeEnum)[keyof typeof EnrolledFactorChannelTypeEnum];
+export type EnrolledFactorChannelTypeEnum = typeof EnrolledFactorChannelTypeEnum[keyof typeof EnrolledFactorChannelTypeEnum];
 
 /**
  * Check if a given object implements the EnrolledFactorChannel interface.

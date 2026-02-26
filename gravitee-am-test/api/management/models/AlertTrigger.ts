@@ -93,7 +93,7 @@ export const AlertTriggerReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type AlertTriggerReferenceTypeEnum = (typeof AlertTriggerReferenceTypeEnum)[keyof typeof AlertTriggerReferenceTypeEnum];
+export type AlertTriggerReferenceTypeEnum = typeof AlertTriggerReferenceTypeEnum[keyof typeof AlertTriggerReferenceTypeEnum];
 
 /**
  * @export
@@ -102,7 +102,7 @@ export const AlertTriggerTypeEnum = {
   TooManyLoginFailures: 'TOO_MANY_LOGIN_FAILURES',
   RiskAssessment: 'RISK_ASSESSMENT',
 } as const;
-export type AlertTriggerTypeEnum = (typeof AlertTriggerTypeEnum)[keyof typeof AlertTriggerTypeEnum];
+export type AlertTriggerTypeEnum = typeof AlertTriggerTypeEnum[keyof typeof AlertTriggerTypeEnum];
 
 /**
  * Check if a given object implements the AlertTrigger interface.

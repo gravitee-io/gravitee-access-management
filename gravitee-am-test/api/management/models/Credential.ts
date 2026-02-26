@@ -153,7 +153,7 @@ export const CredentialReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type CredentialReferenceTypeEnum = (typeof CredentialReferenceTypeEnum)[keyof typeof CredentialReferenceTypeEnum];
+export type CredentialReferenceTypeEnum = typeof CredentialReferenceTypeEnum[keyof typeof CredentialReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Credential interface.

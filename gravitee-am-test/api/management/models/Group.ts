@@ -99,7 +99,7 @@ export const GroupReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type GroupReferenceTypeEnum = (typeof GroupReferenceTypeEnum)[keyof typeof GroupReferenceTypeEnum];
+export type GroupReferenceTypeEnum = typeof GroupReferenceTypeEnum[keyof typeof GroupReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Group interface.

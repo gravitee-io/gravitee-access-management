@@ -159,7 +159,7 @@ export const PasswordPolicyReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type PasswordPolicyReferenceTypeEnum = (typeof PasswordPolicyReferenceTypeEnum)[keyof typeof PasswordPolicyReferenceTypeEnum];
+export type PasswordPolicyReferenceTypeEnum = typeof PasswordPolicyReferenceTypeEnum[keyof typeof PasswordPolicyReferenceTypeEnum];
 
 /**
  * Check if a given object implements the PasswordPolicy interface.

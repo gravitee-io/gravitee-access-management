@@ -141,7 +141,7 @@ export const IdentityProviderReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type IdentityProviderReferenceTypeEnum = (typeof IdentityProviderReferenceTypeEnum)[keyof typeof IdentityProviderReferenceTypeEnum];
+export type IdentityProviderReferenceTypeEnum = typeof IdentityProviderReferenceTypeEnum[keyof typeof IdentityProviderReferenceTypeEnum];
 
 /**
  * Check if a given object implements the IdentityProvider interface.

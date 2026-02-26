@@ -129,7 +129,7 @@ export const ProtectedResourcePrimaryDataTypeEnum = {
   McpServer: 'MCP_SERVER',
 } as const;
 export type ProtectedResourcePrimaryDataTypeEnum =
-  (typeof ProtectedResourcePrimaryDataTypeEnum)[keyof typeof ProtectedResourcePrimaryDataTypeEnum];
+  typeof ProtectedResourcePrimaryDataTypeEnum[keyof typeof ProtectedResourcePrimaryDataTypeEnum];
 
 /**
  * Check if a given object implements the ProtectedResourcePrimaryData interface.

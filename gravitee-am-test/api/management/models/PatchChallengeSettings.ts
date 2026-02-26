@@ -60,7 +60,7 @@ export const PatchChallengeSettingsTypeEnum = {
   Conditional: 'CONDITIONAL',
   RiskBased: 'RISK_BASED',
 } as const;
-export type PatchChallengeSettingsTypeEnum = (typeof PatchChallengeSettingsTypeEnum)[keyof typeof PatchChallengeSettingsTypeEnum];
+export type PatchChallengeSettingsTypeEnum = typeof PatchChallengeSettingsTypeEnum[keyof typeof PatchChallengeSettingsTypeEnum];
 
 /**
  * Check if a given object implements the PatchChallengeSettings interface.

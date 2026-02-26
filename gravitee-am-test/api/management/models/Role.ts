@@ -123,7 +123,7 @@ export const RoleAssignableTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type RoleAssignableTypeEnum = (typeof RoleAssignableTypeEnum)[keyof typeof RoleAssignableTypeEnum];
+export type RoleAssignableTypeEnum = typeof RoleAssignableTypeEnum[keyof typeof RoleAssignableTypeEnum];
 
 /**
  * @export
@@ -135,7 +135,7 @@ export const RolePermissionAclsEnum = {
   Update: 'UPDATE',
   Delete: 'DELETE',
 } as const;
-export type RolePermissionAclsEnum = (typeof RolePermissionAclsEnum)[keyof typeof RolePermissionAclsEnum];
+export type RolePermissionAclsEnum = typeof RolePermissionAclsEnum[keyof typeof RolePermissionAclsEnum];
 
 /**
  * @export
@@ -148,7 +148,7 @@ export const RoleReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type RoleReferenceTypeEnum = (typeof RoleReferenceTypeEnum)[keyof typeof RoleReferenceTypeEnum];
+export type RoleReferenceTypeEnum = typeof RoleReferenceTypeEnum[keyof typeof RoleReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Role interface.

@@ -505,7 +505,7 @@ export const UserEntityReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type UserEntityReferenceTypeEnum = (typeof UserEntityReferenceTypeEnum)[keyof typeof UserEntityReferenceTypeEnum];
+export type UserEntityReferenceTypeEnum = typeof UserEntityReferenceTypeEnum[keyof typeof UserEntityReferenceTypeEnum];
 
 /**
  * Check if a given object implements the UserEntity interface.

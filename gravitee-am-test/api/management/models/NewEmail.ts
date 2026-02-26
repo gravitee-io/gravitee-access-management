@@ -97,13 +97,15 @@ export const NewEmailTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type NewEmailTemplateEnum = (typeof NewEmailTemplateEnum)[keyof typeof NewEmailTemplateEnum];
+export type NewEmailTemplateEnum = typeof NewEmailTemplateEnum[keyof typeof NewEmailTemplateEnum];
 
 /**
  * Check if a given object implements the NewEmail interface.

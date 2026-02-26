@@ -132,7 +132,7 @@ export const PatchSAMLSettingsRequiredPermissionsEnum = {
   Installation: 'INSTALLATION',
 } as const;
 export type PatchSAMLSettingsRequiredPermissionsEnum =
-  (typeof PatchSAMLSettingsRequiredPermissionsEnum)[keyof typeof PatchSAMLSettingsRequiredPermissionsEnum];
+  typeof PatchSAMLSettingsRequiredPermissionsEnum[keyof typeof PatchSAMLSettingsRequiredPermissionsEnum];
 
 /**
  * Check if a given object implements the PatchSAMLSettings interface.

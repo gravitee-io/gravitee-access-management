@@ -99,7 +99,7 @@ export const BotDetectionReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type BotDetectionReferenceTypeEnum = (typeof BotDetectionReferenceTypeEnum)[keyof typeof BotDetectionReferenceTypeEnum];
+export type BotDetectionReferenceTypeEnum = typeof BotDetectionReferenceTypeEnum[keyof typeof BotDetectionReferenceTypeEnum];
 
 /**
  * Check if a given object implements the BotDetection interface.

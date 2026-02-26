@@ -793,13 +793,15 @@ export const FindApplicationEmailTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindApplicationEmailTemplateEnum = (typeof FindApplicationEmailTemplateEnum)[keyof typeof FindApplicationEmailTemplateEnum];
+export type FindApplicationEmailTemplateEnum = typeof FindApplicationEmailTemplateEnum[keyof typeof FindApplicationEmailTemplateEnum];
 /**
  * @export
  */
@@ -821,10 +823,12 @@ export const FindEmailTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindEmailTemplateEnum = (typeof FindEmailTemplateEnum)[keyof typeof FindEmailTemplateEnum];
+export type FindEmailTemplateEnum = typeof FindEmailTemplateEnum[keyof typeof FindEmailTemplateEnum];

@@ -95,7 +95,7 @@ export const FactorFactorTypeEnum = {
   Fido2: 'FIDO2',
   Mock: 'MOCK',
 } as const;
-export type FactorFactorTypeEnum = (typeof FactorFactorTypeEnum)[keyof typeof FactorFactorTypeEnum];
+export type FactorFactorTypeEnum = typeof FactorFactorTypeEnum[keyof typeof FactorFactorTypeEnum];
 
 /**
  * Check if a given object implements the Factor interface.

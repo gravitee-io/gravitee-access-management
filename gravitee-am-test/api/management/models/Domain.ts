@@ -343,7 +343,7 @@ export const DomainReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type DomainReferenceTypeEnum = (typeof DomainReferenceTypeEnum)[keyof typeof DomainReferenceTypeEnum];
+export type DomainReferenceTypeEnum = typeof DomainReferenceTypeEnum[keyof typeof DomainReferenceTypeEnum];
 
 /**
  * @export
@@ -352,7 +352,7 @@ export const DomainVersionEnum = {
   V10: 'V1_0',
   V20: 'V2_0',
 } as const;
-export type DomainVersionEnum = (typeof DomainVersionEnum)[keyof typeof DomainVersionEnum];
+export type DomainVersionEnum = typeof DomainVersionEnum[keyof typeof DomainVersionEnum];
 
 /**
  * Check if a given object implements the Domain interface.

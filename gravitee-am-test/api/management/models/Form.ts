@@ -105,7 +105,7 @@ export const FormReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type FormReferenceTypeEnum = (typeof FormReferenceTypeEnum)[keyof typeof FormReferenceTypeEnum];
+export type FormReferenceTypeEnum = typeof FormReferenceTypeEnum[keyof typeof FormReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Form interface.

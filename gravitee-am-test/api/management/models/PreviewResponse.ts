@@ -59,7 +59,7 @@ export const PreviewResponseTypeEnum = {
   Email: 'EMAIL',
   Form: 'FORM',
 } as const;
-export type PreviewResponseTypeEnum = (typeof PreviewResponseTypeEnum)[keyof typeof PreviewResponseTypeEnum];
+export type PreviewResponseTypeEnum = typeof PreviewResponseTypeEnum[keyof typeof PreviewResponseTypeEnum];
 
 /**
  * Check if a given object implements the PreviewResponse interface.

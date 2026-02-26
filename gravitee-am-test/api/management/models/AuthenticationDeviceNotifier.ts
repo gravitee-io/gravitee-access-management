@@ -94,7 +94,7 @@ export const AuthenticationDeviceNotifierReferenceTypeEnum = {
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AuthenticationDeviceNotifierReferenceTypeEnum =
-  (typeof AuthenticationDeviceNotifierReferenceTypeEnum)[keyof typeof AuthenticationDeviceNotifierReferenceTypeEnum];
+  typeof AuthenticationDeviceNotifierReferenceTypeEnum[keyof typeof AuthenticationDeviceNotifierReferenceTypeEnum];
 
 /**
  * Check if a given object implements the AuthenticationDeviceNotifier interface.

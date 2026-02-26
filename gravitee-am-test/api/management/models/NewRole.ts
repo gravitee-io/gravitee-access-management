@@ -63,7 +63,7 @@ export const NewRoleAssignableTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type NewRoleAssignableTypeEnum = (typeof NewRoleAssignableTypeEnum)[keyof typeof NewRoleAssignableTypeEnum];
+export type NewRoleAssignableTypeEnum = typeof NewRoleAssignableTypeEnum[keyof typeof NewRoleAssignableTypeEnum];
 
 /**
  * Check if a given object implements the NewRole interface.

@@ -106,7 +106,7 @@ export const AccountAccessTokenReferenceTypeEnum = {
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AccountAccessTokenReferenceTypeEnum =
-  (typeof AccountAccessTokenReferenceTypeEnum)[keyof typeof AccountAccessTokenReferenceTypeEnum];
+  typeof AccountAccessTokenReferenceTypeEnum[keyof typeof AccountAccessTokenReferenceTypeEnum];
 
 /**
  * Check if a given object implements the AccountAccessToken interface.

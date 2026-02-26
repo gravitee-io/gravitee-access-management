@@ -101,7 +101,7 @@ export const MembershipMemberTypeEnum = {
   User: 'USER',
   Group: 'GROUP',
 } as const;
-export type MembershipMemberTypeEnum = (typeof MembershipMemberTypeEnum)[keyof typeof MembershipMemberTypeEnum];
+export type MembershipMemberTypeEnum = typeof MembershipMemberTypeEnum[keyof typeof MembershipMemberTypeEnum];
 
 /**
  * @export
@@ -114,7 +114,7 @@ export const MembershipReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type MembershipReferenceTypeEnum = (typeof MembershipReferenceTypeEnum)[keyof typeof MembershipReferenceTypeEnum];
+export type MembershipReferenceTypeEnum = typeof MembershipReferenceTypeEnum[keyof typeof MembershipReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Membership interface.

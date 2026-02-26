@@ -224,20 +224,14 @@ function isFormData(value: any): value is FormData {
 
 export class ResponseError extends Error {
   name: 'ResponseError' = 'ResponseError';
-  constructor(
-    public response: Response,
-    msg?: string,
-  ) {
+  constructor(public response: Response, msg?: string) {
     super(msg);
   }
 }
 
 export class RequiredError extends Error {
   name: 'RequiredError' = 'RequiredError';
-  constructor(
-    public field: string,
-    msg?: string,
-  ) {
+  constructor(public field: string, msg?: string) {
     super(msg);
   }
 }
@@ -363,10 +357,7 @@ export interface ResponseTransformer<T> {
 }
 
 export class JSONApiResponse<T> {
-  constructor(
-    public raw: Response,
-    private transformer: ResponseTransformer<T> = (jsonValue: any) => jsonValue,
-  ) {}
+  constructor(public raw: Response, private transformer: ResponseTransformer<T> = (jsonValue: any) => jsonValue) {}
 
   async value(): Promise<T> {
     return this.transformer(await this.raw.json());

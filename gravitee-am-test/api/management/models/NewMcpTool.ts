@@ -60,7 +60,7 @@ export interface NewMcpTool extends NewProtectedResourceFeature {
 export const NewMcpToolTypeEnum = {
   McpTool: 'MCP_TOOL',
 } as const;
-export type NewMcpToolTypeEnum = (typeof NewMcpToolTypeEnum)[keyof typeof NewMcpToolTypeEnum];
+export type NewMcpToolTypeEnum = typeof NewMcpToolTypeEnum[keyof typeof NewMcpToolTypeEnum];
 
 /**
  * Check if a given object implements the NewMcpTool interface.

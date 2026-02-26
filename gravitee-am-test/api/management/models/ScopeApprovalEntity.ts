@@ -125,7 +125,7 @@ export const ScopeApprovalEntityStatusEnum = {
   Approved: 'APPROVED',
   Denied: 'DENIED',
 } as const;
-export type ScopeApprovalEntityStatusEnum = (typeof ScopeApprovalEntityStatusEnum)[keyof typeof ScopeApprovalEntityStatusEnum];
+export type ScopeApprovalEntityStatusEnum = typeof ScopeApprovalEntityStatusEnum[keyof typeof ScopeApprovalEntityStatusEnum];
 
 /**
  * Check if a given object implements the ScopeApprovalEntity interface.

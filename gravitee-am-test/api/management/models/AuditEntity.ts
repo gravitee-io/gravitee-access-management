@@ -87,7 +87,7 @@ export const AuditEntityReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type AuditEntityReferenceTypeEnum = (typeof AuditEntityReferenceTypeEnum)[keyof typeof AuditEntityReferenceTypeEnum];
+export type AuditEntityReferenceTypeEnum = typeof AuditEntityReferenceTypeEnum[keyof typeof AuditEntityReferenceTypeEnum];
 
 /**
  * Check if a given object implements the AuditEntity interface.

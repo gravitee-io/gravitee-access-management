@@ -59,7 +59,7 @@ export const NewMembershipMemberTypeEnum = {
   User: 'USER',
   Group: 'GROUP',
 } as const;
-export type NewMembershipMemberTypeEnum = (typeof NewMembershipMemberTypeEnum)[keyof typeof NewMembershipMemberTypeEnum];
+export type NewMembershipMemberTypeEnum = typeof NewMembershipMemberTypeEnum[keyof typeof NewMembershipMemberTypeEnum];
 
 /**
  * Check if a given object implements the NewMembership interface.

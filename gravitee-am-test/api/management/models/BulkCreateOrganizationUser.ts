@@ -69,7 +69,7 @@ export const BulkCreateOrganizationUserActionEnum = {
   Delete: 'DELETE',
 } as const;
 export type BulkCreateOrganizationUserActionEnum =
-  (typeof BulkCreateOrganizationUserActionEnum)[keyof typeof BulkCreateOrganizationUserActionEnum];
+  typeof BulkCreateOrganizationUserActionEnum[keyof typeof BulkCreateOrganizationUserActionEnum];
 
 /**
  * Check if a given object implements the BulkCreateOrganizationUser interface.

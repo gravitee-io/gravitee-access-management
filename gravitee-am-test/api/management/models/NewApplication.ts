@@ -93,7 +93,7 @@ export const NewApplicationTypeEnum = {
   ResourceServer: 'RESOURCE_SERVER',
   Agent: 'AGENT',
 } as const;
-export type NewApplicationTypeEnum = (typeof NewApplicationTypeEnum)[keyof typeof NewApplicationTypeEnum];
+export type NewApplicationTypeEnum = typeof NewApplicationTypeEnum[keyof typeof NewApplicationTypeEnum];
 
 /**
  * Check if a given object implements the NewApplication interface.

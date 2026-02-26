@@ -60,7 +60,7 @@ export const TokenClaimTokenTypeEnum = {
   RefreshToken: 'REFRESH_TOKEN',
   IdToken: 'ID_TOKEN',
 } as const;
-export type TokenClaimTokenTypeEnum = (typeof TokenClaimTokenTypeEnum)[keyof typeof TokenClaimTokenTypeEnum];
+export type TokenClaimTokenTypeEnum = typeof TokenClaimTokenTypeEnum[keyof typeof TokenClaimTokenTypeEnum];
 
 /**
  * Check if a given object implements the TokenClaim interface.

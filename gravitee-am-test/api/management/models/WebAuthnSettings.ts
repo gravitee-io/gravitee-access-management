@@ -109,7 +109,7 @@ export const WebAuthnSettingsAttestationConveyancePreferenceEnum = {
   Direct: 'DIRECT',
 } as const;
 export type WebAuthnSettingsAttestationConveyancePreferenceEnum =
-  (typeof WebAuthnSettingsAttestationConveyancePreferenceEnum)[keyof typeof WebAuthnSettingsAttestationConveyancePreferenceEnum];
+  typeof WebAuthnSettingsAttestationConveyancePreferenceEnum[keyof typeof WebAuthnSettingsAttestationConveyancePreferenceEnum];
 
 /**
  * @export
@@ -119,7 +119,7 @@ export const WebAuthnSettingsAuthenticatorAttachmentEnum = {
   Platform: 'PLATFORM',
 } as const;
 export type WebAuthnSettingsAuthenticatorAttachmentEnum =
-  (typeof WebAuthnSettingsAuthenticatorAttachmentEnum)[keyof typeof WebAuthnSettingsAuthenticatorAttachmentEnum];
+  typeof WebAuthnSettingsAuthenticatorAttachmentEnum[keyof typeof WebAuthnSettingsAuthenticatorAttachmentEnum];
 
 /**
  * @export
@@ -130,7 +130,7 @@ export const WebAuthnSettingsUserVerificationEnum = {
   Discouraged: 'DISCOURAGED',
 } as const;
 export type WebAuthnSettingsUserVerificationEnum =
-  (typeof WebAuthnSettingsUserVerificationEnum)[keyof typeof WebAuthnSettingsUserVerificationEnum];
+  typeof WebAuthnSettingsUserVerificationEnum[keyof typeof WebAuthnSettingsUserVerificationEnum];
 
 /**
  * Check if a given object implements the WebAuthnSettings interface.

@@ -102,7 +102,7 @@ export const I18nDictionaryReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type I18nDictionaryReferenceTypeEnum = (typeof I18nDictionaryReferenceTypeEnum)[keyof typeof I18nDictionaryReferenceTypeEnum];
+export type I18nDictionaryReferenceTypeEnum = typeof I18nDictionaryReferenceTypeEnum[keyof typeof I18nDictionaryReferenceTypeEnum];
 
 /**
  * Check if a given object implements the I18nDictionary interface.

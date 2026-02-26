@@ -54,7 +54,7 @@ export const AnalyticsTypeParamValueEnum = {
   Count: 'COUNT',
   GroupBy: 'GROUP_BY',
 } as const;
-export type AnalyticsTypeParamValueEnum = (typeof AnalyticsTypeParamValueEnum)[keyof typeof AnalyticsTypeParamValueEnum];
+export type AnalyticsTypeParamValueEnum = typeof AnalyticsTypeParamValueEnum[keyof typeof AnalyticsTypeParamValueEnum];
 
 /**
  * Check if a given object implements the AnalyticsTypeParam interface.

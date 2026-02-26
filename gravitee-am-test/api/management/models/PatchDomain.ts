@@ -325,8 +325,7 @@ export const PatchDomainRequiredPermissionsEnum = {
   ProtectedResourceCertificate: 'PROTECTED_RESOURCE_CERTIFICATE',
   Installation: 'INSTALLATION',
 } as const;
-export type PatchDomainRequiredPermissionsEnum =
-  (typeof PatchDomainRequiredPermissionsEnum)[keyof typeof PatchDomainRequiredPermissionsEnum];
+export type PatchDomainRequiredPermissionsEnum = typeof PatchDomainRequiredPermissionsEnum[keyof typeof PatchDomainRequiredPermissionsEnum];
 
 /**
  * Check if a given object implements the PatchDomain interface.

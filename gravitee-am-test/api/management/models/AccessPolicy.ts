@@ -106,7 +106,7 @@ export interface AccessPolicy {
 export const AccessPolicyTypeEnum = {
   Groovy: 'GROOVY',
 } as const;
-export type AccessPolicyTypeEnum = (typeof AccessPolicyTypeEnum)[keyof typeof AccessPolicyTypeEnum];
+export type AccessPolicyTypeEnum = typeof AccessPolicyTypeEnum[keyof typeof AccessPolicyTypeEnum];
 
 /**
  * Check if a given object implements the AccessPolicy interface.

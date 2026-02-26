@@ -172,7 +172,7 @@ export const PatchOIDCSettingsRequiredPermissionsEnum = {
   Installation: 'INSTALLATION',
 } as const;
 export type PatchOIDCSettingsRequiredPermissionsEnum =
-  (typeof PatchOIDCSettingsRequiredPermissionsEnum)[keyof typeof PatchOIDCSettingsRequiredPermissionsEnum];
+  typeof PatchOIDCSettingsRequiredPermissionsEnum[keyof typeof PatchOIDCSettingsRequiredPermissionsEnum];
 
 /**
  * Check if a given object implements the PatchOIDCSettings interface.

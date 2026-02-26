@@ -71,7 +71,7 @@ export const UserNotificationContentStatusEnum = {
   Unread: 'UNREAD',
   Read: 'READ',
 } as const;
-export type UserNotificationContentStatusEnum = (typeof UserNotificationContentStatusEnum)[keyof typeof UserNotificationContentStatusEnum];
+export type UserNotificationContentStatusEnum = typeof UserNotificationContentStatusEnum[keyof typeof UserNotificationContentStatusEnum];
 
 /**
  * Check if a given object implements the UserNotificationContent interface.

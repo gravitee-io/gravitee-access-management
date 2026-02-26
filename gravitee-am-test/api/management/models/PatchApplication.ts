@@ -183,7 +183,7 @@ export const PatchApplicationRequiredPermissionsEnum = {
   Installation: 'INSTALLATION',
 } as const;
 export type PatchApplicationRequiredPermissionsEnum =
-  (typeof PatchApplicationRequiredPermissionsEnum)[keyof typeof PatchApplicationRequiredPermissionsEnum];
+  typeof PatchApplicationRequiredPermissionsEnum[keyof typeof PatchApplicationRequiredPermissionsEnum];
 
 /**
  * Check if a given object implements the PatchApplication interface.

@@ -93,7 +93,7 @@ export const ServiceResourceReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type ServiceResourceReferenceTypeEnum = (typeof ServiceResourceReferenceTypeEnum)[keyof typeof ServiceResourceReferenceTypeEnum];
+export type ServiceResourceReferenceTypeEnum = typeof ServiceResourceReferenceTypeEnum[keyof typeof ServiceResourceReferenceTypeEnum];
 
 /**
  * Check if a given object implements the ServiceResource interface.

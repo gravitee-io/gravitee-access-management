@@ -114,7 +114,7 @@ export const FlowEntityTypeEnum = {
   MfaChallenge: 'MFA_CHALLENGE',
   MfaEnrollment: 'MFA_ENROLLMENT',
 } as const;
-export type FlowEntityTypeEnum = (typeof FlowEntityTypeEnum)[keyof typeof FlowEntityTypeEnum];
+export type FlowEntityTypeEnum = typeof FlowEntityTypeEnum[keyof typeof FlowEntityTypeEnum];
 
 /**
  * Check if a given object implements the FlowEntity interface.

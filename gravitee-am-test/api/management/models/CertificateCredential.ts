@@ -148,7 +148,7 @@ export const CertificateCredentialReferenceTypeEnum = {
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type CertificateCredentialReferenceTypeEnum =
-  (typeof CertificateCredentialReferenceTypeEnum)[keyof typeof CertificateCredentialReferenceTypeEnum];
+  typeof CertificateCredentialReferenceTypeEnum[keyof typeof CertificateCredentialReferenceTypeEnum];
 
 /**
  * Check if a given object implements the CertificateCredential interface.

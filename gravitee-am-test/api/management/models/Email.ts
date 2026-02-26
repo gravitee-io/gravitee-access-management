@@ -129,7 +129,7 @@ export const EmailReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type EmailReferenceTypeEnum = (typeof EmailReferenceTypeEnum)[keyof typeof EmailReferenceTypeEnum];
+export type EmailReferenceTypeEnum = typeof EmailReferenceTypeEnum[keyof typeof EmailReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Email interface.

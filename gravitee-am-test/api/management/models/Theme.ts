@@ -123,7 +123,7 @@ export const ThemeReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type ThemeReferenceTypeEnum = (typeof ThemeReferenceTypeEnum)[keyof typeof ThemeReferenceTypeEnum];
+export type ThemeReferenceTypeEnum = typeof ThemeReferenceTypeEnum[keyof typeof ThemeReferenceTypeEnum];
 
 /**
  * Check if a given object implements the Theme interface.

@@ -113,7 +113,7 @@ export const CertificateEntityStatusEnum = {
   Expired: 'EXPIRED',
   Renewed: 'RENEWED',
 } as const;
-export type CertificateEntityStatusEnum = (typeof CertificateEntityStatusEnum)[keyof typeof CertificateEntityStatusEnum];
+export type CertificateEntityStatusEnum = typeof CertificateEntityStatusEnum[keyof typeof CertificateEntityStatusEnum];
 
 /**
  * Check if a given object implements the CertificateEntity interface.

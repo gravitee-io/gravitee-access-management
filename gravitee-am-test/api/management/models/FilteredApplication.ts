@@ -87,7 +87,7 @@ export const FilteredApplicationTypeEnum = {
   ResourceServer: 'RESOURCE_SERVER',
   Agent: 'AGENT',
 } as const;
-export type FilteredApplicationTypeEnum = (typeof FilteredApplicationTypeEnum)[keyof typeof FilteredApplicationTypeEnum];
+export type FilteredApplicationTypeEnum = typeof FilteredApplicationTypeEnum[keyof typeof FilteredApplicationTypeEnum];
 
 /**
  * Check if a given object implements the FilteredApplication interface.

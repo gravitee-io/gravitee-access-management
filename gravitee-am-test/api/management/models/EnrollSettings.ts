@@ -84,7 +84,7 @@ export const EnrollSettingsTypeEnum = {
   Required: 'REQUIRED',
   Conditional: 'CONDITIONAL',
 } as const;
-export type EnrollSettingsTypeEnum = (typeof EnrollSettingsTypeEnum)[keyof typeof EnrollSettingsTypeEnum];
+export type EnrollSettingsTypeEnum = typeof EnrollSettingsTypeEnum[keyof typeof EnrollSettingsTypeEnum];
 
 /**
  * Check if a given object implements the EnrollSettings interface.

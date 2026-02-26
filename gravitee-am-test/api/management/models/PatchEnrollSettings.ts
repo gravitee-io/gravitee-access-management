@@ -84,7 +84,7 @@ export const PatchEnrollSettingsTypeEnum = {
   Required: 'REQUIRED',
   Conditional: 'CONDITIONAL',
 } as const;
-export type PatchEnrollSettingsTypeEnum = (typeof PatchEnrollSettingsTypeEnum)[keyof typeof PatchEnrollSettingsTypeEnum];
+export type PatchEnrollSettingsTypeEnum = typeof PatchEnrollSettingsTypeEnum[keyof typeof PatchEnrollSettingsTypeEnum];
 
 /**
  * Check if a given object implements the PatchEnrollSettings interface.

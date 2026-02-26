@@ -117,7 +117,7 @@ export const RoleEntityReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type RoleEntityReferenceTypeEnum = (typeof RoleEntityReferenceTypeEnum)[keyof typeof RoleEntityReferenceTypeEnum];
+export type RoleEntityReferenceTypeEnum = typeof RoleEntityReferenceTypeEnum[keyof typeof RoleEntityReferenceTypeEnum];
 
 /**
  * Check if a given object implements the RoleEntity interface.

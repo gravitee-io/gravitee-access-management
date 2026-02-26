@@ -1151,13 +1151,15 @@ export const FindApplicationFormTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindApplicationFormTemplateEnum = (typeof FindApplicationFormTemplateEnum)[keyof typeof FindApplicationFormTemplateEnum];
+export type FindApplicationFormTemplateEnum = typeof FindApplicationFormTemplateEnum[keyof typeof FindApplicationFormTemplateEnum];
 /**
  * @export
  */
@@ -1179,13 +1181,15 @@ export const FindFormTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
   ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
-export type FindFormTemplateEnum = (typeof FindFormTemplateEnum)[keyof typeof FindFormTemplateEnum];
+export type FindFormTemplateEnum = typeof FindFormTemplateEnum[keyof typeof FindFormTemplateEnum];
 /**
  * @export
  */
@@ -1207,6 +1211,8 @@ export const FindOrganizationFormTemplateTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
@@ -1214,4 +1220,4 @@ export const FindOrganizationFormTemplateTemplateEnum = {
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type FindOrganizationFormTemplateTemplateEnum =
-  (typeof FindOrganizationFormTemplateTemplateEnum)[keyof typeof FindOrganizationFormTemplateTemplateEnum];
+  typeof FindOrganizationFormTemplateTemplateEnum[keyof typeof FindOrganizationFormTemplateTemplateEnum];

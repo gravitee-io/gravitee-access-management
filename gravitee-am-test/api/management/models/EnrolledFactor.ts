@@ -106,7 +106,7 @@ export const EnrolledFactorStatusEnum = {
   Revoked: 'REVOKED',
   Null: 'NULL',
 } as const;
-export type EnrolledFactorStatusEnum = (typeof EnrolledFactorStatusEnum)[keyof typeof EnrolledFactorStatusEnum];
+export type EnrolledFactorStatusEnum = typeof EnrolledFactorStatusEnum[keyof typeof EnrolledFactorStatusEnum];
 
 /**
  * Check if a given object implements the EnrolledFactor interface.

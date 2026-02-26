@@ -93,7 +93,7 @@ export const DeviceIdentifierReferenceTypeEnum = {
   Environment: 'ENVIRONMENT',
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
-export type DeviceIdentifierReferenceTypeEnum = (typeof DeviceIdentifierReferenceTypeEnum)[keyof typeof DeviceIdentifierReferenceTypeEnum];
+export type DeviceIdentifierReferenceTypeEnum = typeof DeviceIdentifierReferenceTypeEnum[keyof typeof DeviceIdentifierReferenceTypeEnum];
 
 /**
  * Check if a given object implements the DeviceIdentifier interface.

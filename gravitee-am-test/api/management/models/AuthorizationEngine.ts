@@ -94,7 +94,7 @@ export const AuthorizationEngineReferenceTypeEnum = {
   ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AuthorizationEngineReferenceTypeEnum =
-  (typeof AuthorizationEngineReferenceTypeEnum)[keyof typeof AuthorizationEngineReferenceTypeEnum];
+  typeof AuthorizationEngineReferenceTypeEnum[keyof typeof AuthorizationEngineReferenceTypeEnum];
 
 /**
  * Check if a given object implements the AuthorizationEngine interface.

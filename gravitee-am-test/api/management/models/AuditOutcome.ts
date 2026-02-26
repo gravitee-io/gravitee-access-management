@@ -53,7 +53,7 @@ export const AuditOutcomeStatusEnum = {
   Success: 'SUCCESS',
   Failure: 'FAILURE',
 } as const;
-export type AuditOutcomeStatusEnum = (typeof AuditOutcomeStatusEnum)[keyof typeof AuditOutcomeStatusEnum];
+export type AuditOutcomeStatusEnum = typeof AuditOutcomeStatusEnum[keyof typeof AuditOutcomeStatusEnum];
 
 /**
  * Check if a given object implements the AuditOutcome interface.
