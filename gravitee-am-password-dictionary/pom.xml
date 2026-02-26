@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
-        <version>4.11.0-SNAPSHOT</version>
+        <version>4.11.0-alpha.1</version>
     </parent>
 
     <groupId>io.gravitee.am.password.dictionary</groupId>
