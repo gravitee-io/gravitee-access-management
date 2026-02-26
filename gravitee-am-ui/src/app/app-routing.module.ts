@@ -263,7 +263,10 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
-import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
+import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
+import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
+import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
+import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { ApplicationOAuth2Service, McpServerOAuth2Service, OAUTH2_SETTINGS_SERVICE } from './services/oauth2-settings.service';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
@@ -2876,7 +2879,7 @@ export const routes: Routes = [
                       },
                       {
                         path: 'token-exchange',
-                        component: TokenExchangeComponent,
+                        component: TokenExchangeContainerComponent,
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
@@ -2885,9 +2888,25 @@ export const routes: Routes = [
                             level: 'level2',
                           },
                           perms: {
-                            only: ['domain_uma_read'],
+                            only: ['domain_openid_read'],
                           },
                         },
+                        children: [
+                          { path: '', redirectTo: 'settings', pathMatch: 'full' },
+                          { path: 'settings', component: TokenExchangeSettingsComponent },
+                          {
+                            path: 'trusted-issuers',
+                            children: [
+                              { path: '', component: TrustedIssuersListComponent, pathMatch: 'full' },
+                              { path: 'new', component: TrustedIssuerDetailComponent },
+                              {
+                                path: ':issuerIndex',
+                                component: TrustedIssuerDetailComponent,
+                                data: { breadcrumb: { label: 'detail' } },
+                              },
+                            ],
+                          },
+                        ],
                       },
                       {
                         path: 'dcr',
