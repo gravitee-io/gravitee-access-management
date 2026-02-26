@@ -29,7 +29,7 @@ import { delay } from '@utils-commands/misc';
 // RFC 8707 Introspection: Protected Resource can introspect tokens obtained via authorization_code grant with resource indicators
 // AuthZen Introspection: Protected Resource can introspect tokens obtained via client_credentials grant with aud = clientId
 
-setup(200000);
+setup();
 
 let fixture: ProtectedResourcesFixture;
 
