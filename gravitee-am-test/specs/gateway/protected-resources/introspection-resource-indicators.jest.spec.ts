@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
+import { setup } from '../../test-fixture';
 import { performPost, requestClientCredentialsToken } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { setupProtectedResourcesFixture, ProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
@@ -29,8 +29,7 @@ import { delay } from '@utils-commands/misc';
 // RFC 8707 Introspection: Protected Resource can introspect tokens obtained via authorization_code grant with resource indicators
 // AuthZen Introspection: Protected Resource can introspect tokens obtained via client_credentials grant with aud = clientId
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup(200000);
 
 let fixture: ProtectedResourcesFixture;
 

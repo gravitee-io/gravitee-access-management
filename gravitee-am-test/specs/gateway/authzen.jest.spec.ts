@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import {afterAll, beforeAll, describe, expect, it, jest} from '@jest/globals';
+import {afterAll, beforeAll, describe, expect, it} from '@jest/globals';
+import {setup} from '../test-fixture';
 import {requestAdminAccessToken} from '@management-commands/token-management-commands';
 import {
     safeDeleteDomain,
@@ -33,7 +33,7 @@ import {evaluateAccess, evaluateAccessExpectError, evaluateAccessUnauthenticated
 import {getWellKnownOpenIdConfiguration, requestClientCredentialsToken} from '@gateway-commands/oauth-oidc-commands';
 import {createProtectedResource, deleteProtectedResource} from '@management-commands/protected-resources-management-commands';
 
-global.fetch = fetch;
+setup(200000);
 
 let accessToken: string; // Admin token for management API
 let testDomain: any;
@@ -45,8 +45,6 @@ let openIdConfiguration: any; // OpenID configuration
 let authEngine: AuthorizationEngine;
 let storeId: string;
 let authorizationModelId: string;
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
   // 1. Get admin access token

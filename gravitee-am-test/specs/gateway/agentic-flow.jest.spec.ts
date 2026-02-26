@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import {afterAll, beforeAll, describe, expect, it, jest} from '@jest/globals';
+import {afterAll, beforeAll, describe, expect, it} from '@jest/globals';
+import {setup} from '../test-fixture';
 import {requestAdminAccessToken} from '@management-commands/token-management-commands';
 import {
     safeDeleteDomain,
@@ -43,7 +43,7 @@ import type {UpdateMcpTool} from '@management-models/UpdateMcpTool';
 import {login} from '@gateway-commands/login-commands';
 import {UpdateProtectedResource} from '@management-models/UpdateProtectedResource';
 
-global.fetch = fetch;
+setup(200000);
 
 let accessToken: string; // Admin token for management API
 let testDomain: any;
@@ -54,8 +54,6 @@ let mcpServer: any; // MCP server (protected resource)
 let authEngine: AuthorizationEngine;
 let storeId: string;
 let authorizationModelId: string;
-
-jest.setTimeout(200000);
 
 beforeAll(async () => {
     // 1. Get admin access token
