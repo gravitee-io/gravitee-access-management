@@ -103,12 +103,23 @@
           </mat-form-field>
           <mat-form-field *ngIf="domainScopes?.length" appearance="outline" class="staging-field">
             <mat-label>Domain Scope</mat-label>
-            <mat-select name="newDomScope" [(ngModel)]="newScopeStaging.value" (selectionChange)="onFieldChange()" [disabled]="!editMode">
-              <mat-option *ngFor="let scope of getAvailableDomainScopes()" [value]="scope.key">
+            <input
+              matInput
+              name="newDomScope"
+              [formControl]="domainScopeCtrl"
+              [matAutocomplete]="scopeAuto"
+              placeholder="Type to search scopes"
+            />
+            <mat-autocomplete
+              #scopeAuto="matAutocomplete"
+              (optionSelected)="onDomainScopeSelected($event)"
+              [displayWith]="displayDomainScope"
+            >
+              <mat-option *ngFor="let scope of filteredDomainScopes" [value]="scope.key">
                 <span>{{ scope.name || scope.key }}</span>
                 <small *ngIf="scope.description"> | {{ scope.description }}</small>
               </mat-option>
-            </mat-select>
+            </mat-autocomplete>
           </mat-form-field>
           <mat-form-field *ngIf="!domainScopes?.length" appearance="outline" class="staging-field">
             <mat-label>Domain Scope</mat-label>

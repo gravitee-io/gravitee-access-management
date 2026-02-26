@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { UntypedFormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 import { Subject, takeUntil } from 'rxjs';
@@ -58,6 +59,8 @@ export class TrustedIssuerDetailComponent implements OnInit, OnDestroy {
 
   newScopeStaging: ScopeStaging = { key: '', value: '' };
   newUserBindingStaging: UserBindingCriterion = { attribute: '', expression: '' };
+  domainScopeCtrl = new UntypedFormControl();
+  filteredDomainScopes: any[] = [];
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -75,9 +78,24 @@ export class TrustedIssuerDetailComponent implements OnInit, OnDestroy {
     this.domainStore.domain$.pipe(takeUntil(this.destroy$)).subscribe((domain) => (this.domain = deepClone(domain)));
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
+    if (!this.editMode) {
+      this.domainScopeCtrl.disable();
+    }
     this.scopeService.findAllByDomain(this.domainId).subscribe({
-      next: (scopes) => (this.domainScopes = scopes || []),
+      next: (scopes) => {
+        this.domainScopes = scopes || [];
+        this.refreshFilteredDomainScopes();
+      },
       error: () => (this.domainScopes = []),
+    });
+    this.domainScopeCtrl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+      if (typeof value === 'string' || value instanceof String) {
+        this.newScopeStaging.value = '';
+        const term = (value as string).toLowerCase();
+        this.filteredDomainScopes = this.getAvailableDomainScopes().filter(
+          (s) => s.key.toLowerCase().includes(term) || (s.name || '').toLowerCase().includes(term),
+        );
+      }
     });
 
     const param = this.route.snapshot.paramMap.get('issuerIndex');
@@ -275,12 +293,15 @@ export class TrustedIssuerDetailComponent implements OnInit, OnDestroy {
     if (isDuplicate) return;
     this.trustedIssuer._scopeMappingRows = [...this.trustedIssuer._scopeMappingRows, { key: ext, value: dom }];
     this.newScopeStaging = { key: '', value: '' };
+    this.domainScopeCtrl.setValue('');
+    this.refreshFilteredDomainScopes();
     this.formChanged = true;
   }
 
   removeScopeMapping(rowIndex: number): void {
     if (this.trustedIssuer._scopeMappingRows) {
       this.trustedIssuer._scopeMappingRows = this.trustedIssuer._scopeMappingRows.filter((_, idx) => idx !== rowIndex);
+      this.refreshFilteredDomainScopes();
       this.formChanged = true;
     }
   }
@@ -293,6 +314,22 @@ export class TrustedIssuerDetailComponent implements OnInit, OnDestroy {
     if (!this.domainScopes?.length) return [];
     const usedKeys = new Set((this.trustedIssuer._scopeMappingRows ?? []).map((r) => r.value));
     return this.domainScopes.filter((s) => !usedKeys.has(s.key));
+  }
+
+  displayDomainScope = (key: string): string => {
+    if (!key) return '';
+    const scope = this.domainScopes?.find((s) => s.key === key);
+    return scope ? scope.name || scope.key : key;
+  };
+
+  onDomainScopeSelected(event): void {
+    this.newScopeStaging.value = event.option.value;
+    this.onFieldChange();
+    this.refreshFilteredDomainScopes();
+  }
+
+  refreshFilteredDomainScopes(): void {
+    this.filteredDomainScopes = this.getAvailableDomainScopes();
   }
 
   getDomainScopeLabel(scopeKey: string): string {
