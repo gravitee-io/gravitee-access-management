@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-parent</artifactId>
         <groupId>io.gravitee.am</groupId>
-        <version>4.11.0-alpha.1</version>
+        <version>4.11.0-alpha.2-SNAPSHOT</version>
     </parent>
 
     <groupId>io.gravitee.am.common</groupId>
