@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
+import { setup } from '../test-fixture';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
@@ -30,7 +30,7 @@ import {
 } from '@management-commands/certificate-management-commands';
 import { buildCertificate } from '../../api/fixtures/certificates';
 
-global.fetch = fetch;
+setup();
 
 let accessToken;
 let domain;
