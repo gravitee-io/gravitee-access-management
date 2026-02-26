@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { setup } from '../test-fixture';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { deleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
   createCertificate,
   deleteCertificate,

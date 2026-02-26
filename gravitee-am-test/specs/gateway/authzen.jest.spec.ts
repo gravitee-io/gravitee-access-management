@@ -33,7 +33,7 @@ import {evaluateAccess, evaluateAccessExpectError, evaluateAccessUnauthenticated
 import {getWellKnownOpenIdConfiguration, requestClientCredentialsToken} from '@gateway-commands/oauth-oidc-commands';
 import {createProtectedResource, deleteProtectedResource} from '@management-commands/protected-resources-management-commands';
 
-setup(200000);
+setup();
 
 let accessToken: string; // Admin token for management API
 let testDomain: any;

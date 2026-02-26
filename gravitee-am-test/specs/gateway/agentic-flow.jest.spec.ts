@@ -38,12 +38,11 @@ import {
     updateProtectedResource
 } from '@management-commands/protected-resources-management-commands';
 import {getBase64BasicAuth} from '@gateway-commands/utils';
-import type {NewMcpTool} from '@management-models/NewMcpTool';
 import type {UpdateMcpTool} from '@management-models/UpdateMcpTool';
 import {login} from '@gateway-commands/login-commands';
 import {UpdateProtectedResource} from '@management-models/UpdateProtectedResource';
 
-setup(200000);
+setup();
 
 let accessToken: string; // Admin token for management API
 let testDomain: any;
