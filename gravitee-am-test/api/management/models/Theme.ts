@@ -34,22 +34,28 @@ import { mapValues } from '../runtime';
 export interface Theme {
   /**
    *
+   * @type {Date}
+   * @memberof Theme
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Theme
+   */
+  css?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Theme
+   */
+  faviconUrl?: string;
+  /**
+   *
    * @type {string}
    * @memberof Theme
    */
   id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Theme
-   */
-  referenceId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Theme
-   */
-  referenceType?: ThemeReferenceTypeEnum;
   /**
    *
    * @type {string}
@@ -67,19 +73,7 @@ export interface Theme {
    * @type {string}
    * @memberof Theme
    */
-  faviconUrl?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Theme
-   */
   primaryButtonColorHex?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Theme
-   */
-  secondaryButtonColorHex?: string;
   /**
    *
    * @type {string}
@@ -91,19 +85,25 @@ export interface Theme {
    * @type {string}
    * @memberof Theme
    */
-  secondaryTextColorHex?: string;
+  referenceId?: string;
   /**
    *
    * @type {string}
    * @memberof Theme
    */
-  css?: string;
+  referenceType?: ThemeReferenceTypeEnum;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof Theme
    */
-  createdAt?: Date;
+  secondaryButtonColorHex?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Theme
+   */
+  secondaryTextColorHex?: string;
   /**
    *
    * @type {Date}
@@ -141,18 +141,18 @@ export function ThemeFromJSONTyped(json: any, ignoreDiscriminator: boolean): The
     return json;
   }
   return {
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    css: json['css'] == null ? undefined : json['css'],
+    faviconUrl: json['faviconUrl'] == null ? undefined : json['faviconUrl'],
     id: json['id'] == null ? undefined : json['id'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     logoUrl: json['logoUrl'] == null ? undefined : json['logoUrl'],
     logoWidth: json['logoWidth'] == null ? undefined : json['logoWidth'],
-    faviconUrl: json['faviconUrl'] == null ? undefined : json['faviconUrl'],
     primaryButtonColorHex: json['primaryButtonColorHex'] == null ? undefined : json['primaryButtonColorHex'],
-    secondaryButtonColorHex: json['secondaryButtonColorHex'] == null ? undefined : json['secondaryButtonColorHex'],
     primaryTextColorHex: json['primaryTextColorHex'] == null ? undefined : json['primaryTextColorHex'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    secondaryButtonColorHex: json['secondaryButtonColorHex'] == null ? undefined : json['secondaryButtonColorHex'],
     secondaryTextColorHex: json['secondaryTextColorHex'] == null ? undefined : json['secondaryTextColorHex'],
-    css: json['css'] == null ? undefined : json['css'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -167,18 +167,18 @@ export function ThemeToJSONTyped(value?: Theme | null, ignoreDiscriminator: bool
   }
 
   return {
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    css: value['css'],
+    faviconUrl: value['faviconUrl'],
     id: value['id'],
-    referenceId: value['referenceId'],
-    referenceType: value['referenceType'],
     logoUrl: value['logoUrl'],
     logoWidth: value['logoWidth'],
-    faviconUrl: value['faviconUrl'],
     primaryButtonColorHex: value['primaryButtonColorHex'],
-    secondaryButtonColorHex: value['secondaryButtonColorHex'],
     primaryTextColorHex: value['primaryTextColorHex'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    secondaryButtonColorHex: value['secondaryButtonColorHex'],
     secondaryTextColorHex: value['secondaryTextColorHex'],
-    css: value['css'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

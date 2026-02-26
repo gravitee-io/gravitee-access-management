@@ -43,13 +43,13 @@ export interface PreviewResponse {
    * @type {string}
    * @memberof PreviewResponse
    */
-  type?: PreviewResponseTypeEnum;
+  template?: string;
   /**
    *
    * @type {string}
    * @memberof PreviewResponse
    */
-  template?: string;
+  type?: PreviewResponseTypeEnum;
 }
 
 /**
@@ -78,8 +78,8 @@ export function PreviewResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
   }
   return {
     content: json['content'] == null ? undefined : json['content'],
-    type: json['type'] == null ? undefined : json['type'],
     template: json['template'] == null ? undefined : json['template'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -94,7 +94,7 @@ export function PreviewResponseToJSONTyped(value?: PreviewResponse | null, ignor
 
   return {
     content: value['content'],
-    type: value['type'],
     template: value['template'],
+    type: value['type'],
   };
 }

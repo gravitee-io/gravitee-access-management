@@ -25,6 +25,7 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
@@ -32,6 +33,7 @@ import io.swagger.v3.oas.models.tags.Tag;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +51,13 @@ public class GraviteeApiDefinition implements ReaderListener {
     @Override
     public void beforeScan(OpenApiReader openApiReader, OpenAPI openAPI) {
         // This method is currently not implemented and does not perform any actions.
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static void sortSchemaProperties(Schema schema) {
+        if (schema.getProperties() != null) {
+            schema.setProperties(new LinkedHashMap<>(new TreeMap<>(schema.getProperties())));
+        }
     }
 
     @Override
@@ -82,8 +91,11 @@ public class GraviteeApiDefinition implements ReaderListener {
         paths.putAll(new TreeMap<>(openAPI.getPaths()));
         openAPI.setPaths(paths);
         // sort definitions for better comparisons
+        Map<String, Schema> sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
+        // sort properties within each schema for deterministic SDK generation
+        sortedSchemas.values().forEach(GraviteeApiDefinition::sortSchemaProperties);
         Components components = new Components();
-        components.schemas(new TreeMap<>(openAPI.getComponents().getSchemas()));
+        components.schemas(sortedSchemas);
         components.addSecuritySchemes(TOKEN_AUTH_SCHEME, new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("Bearer"));
         openAPI.components(components);
         openAPI.addSecurityItem(new SecurityRequirement().addList(TOKEN_AUTH_SCHEME));

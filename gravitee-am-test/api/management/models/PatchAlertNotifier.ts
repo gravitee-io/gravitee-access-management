@@ -37,7 +37,7 @@ export interface PatchAlertNotifier {
    * @type {string}
    * @memberof PatchAlertNotifier
    */
-  name?: string;
+  configuration?: string;
   /**
    *
    * @type {boolean}
@@ -49,7 +49,7 @@ export interface PatchAlertNotifier {
    * @type {string}
    * @memberof PatchAlertNotifier
    */
-  configuration?: string;
+  name?: string;
 }
 
 /**
@@ -68,9 +68,9 @@ export function PatchAlertNotifierFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     configuration: json['configuration'] == null ? undefined : json['configuration'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    name: json['name'] == null ? undefined : json['name'],
   };
 }
 
@@ -84,8 +84,8 @@ export function PatchAlertNotifierToJSONTyped(value?: PatchAlertNotifier | null,
   }
 
   return {
-    name: value['name'],
-    enabled: value['enabled'],
     configuration: value['configuration'],
+    enabled: value['enabled'],
+    name: value['name'],
   };
 }

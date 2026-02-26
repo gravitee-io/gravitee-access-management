@@ -37,13 +37,13 @@ export interface PatchSecurityProfileSettings {
    * @type {boolean}
    * @memberof PatchSecurityProfileSettings
    */
-  enablePlainFapi?: boolean;
+  enableFapiBrazil?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchSecurityProfileSettings
    */
-  enableFapiBrazil?: boolean;
+  enablePlainFapi?: boolean;
 }
 
 /**
@@ -62,8 +62,8 @@ export function PatchSecurityProfileSettingsFromJSONTyped(json: any, ignoreDiscr
     return json;
   }
   return {
-    enablePlainFapi: json['enablePlainFapi'] == null ? undefined : json['enablePlainFapi'],
     enableFapiBrazil: json['enableFapiBrazil'] == null ? undefined : json['enableFapiBrazil'],
+    enablePlainFapi: json['enablePlainFapi'] == null ? undefined : json['enablePlainFapi'],
   };
 }
 
@@ -80,7 +80,7 @@ export function PatchSecurityProfileSettingsToJSONTyped(
   }
 
   return {
-    enablePlainFapi: value['enablePlainFapi'],
     enableFapiBrazil: value['enableFapiBrazil'],
+    enablePlainFapi: value['enablePlainFapi'],
   };
 }

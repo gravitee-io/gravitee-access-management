@@ -37,7 +37,7 @@ export interface NewCertificate {
    * @type {string}
    * @memberof NewCertificate
    */
-  type: string;
+  configuration: string;
   /**
    *
    * @type {string}
@@ -49,16 +49,16 @@ export interface NewCertificate {
    * @type {string}
    * @memberof NewCertificate
    */
-  configuration: string;
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewCertificate interface.
  */
 export function instanceOfNewCertificate(value: object): value is NewCertificate {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -71,9 +71,9 @@ export function NewCertificateFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    type: json['type'],
-    name: json['name'],
     configuration: json['configuration'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -87,8 +87,8 @@ export function NewCertificateToJSONTyped(value?: NewCertificate | null, ignoreD
   }
 
   return {
-    type: value['type'],
-    name: value['name'],
     configuration: value['configuration'],
+    name: value['name'],
+    type: value['type'],
   };
 }

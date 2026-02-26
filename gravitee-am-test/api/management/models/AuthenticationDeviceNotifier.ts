@@ -37,6 +37,18 @@ export interface AuthenticationDeviceNotifier {
    * @type {string}
    * @memberof AuthenticationDeviceNotifier
    */
+  configuration?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof AuthenticationDeviceNotifier
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof AuthenticationDeviceNotifier
+   */
   id?: string;
   /**
    *
@@ -44,18 +56,6 @@ export interface AuthenticationDeviceNotifier {
    * @memberof AuthenticationDeviceNotifier
    */
   name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AuthenticationDeviceNotifier
-   */
-  type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AuthenticationDeviceNotifier
-   */
-  configuration?: string;
   /**
    *
    * @type {string}
@@ -70,10 +70,10 @@ export interface AuthenticationDeviceNotifier {
   referenceType?: AuthenticationDeviceNotifierReferenceTypeEnum;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof AuthenticationDeviceNotifier
    */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
@@ -112,13 +112,13 @@ export function AuthenticationDeviceNotifierFromJSONTyped(json: any, ignoreDiscr
     return json;
   }
   return {
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -136,13 +136,13 @@ export function AuthenticationDeviceNotifierToJSONTyped(
   }
 
   return {
+    configuration: value['configuration'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     id: value['id'],
     name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

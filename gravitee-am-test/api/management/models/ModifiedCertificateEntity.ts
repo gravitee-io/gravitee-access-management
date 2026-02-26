@@ -37,37 +37,7 @@ export interface ModifiedCertificateEntity {
    * @type {string}
    * @memberof ModifiedCertificateEntity
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ModifiedCertificateEntity
-   */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ModifiedCertificateEntity
-   */
-  type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ModifiedCertificateEntity
-   */
   configuration?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ModifiedCertificateEntity
-   */
-  domain?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof ModifiedCertificateEntity
-   */
-  metadata?: { [key: string]: any };
   /**
    *
    * @type {Date}
@@ -76,10 +46,10 @@ export interface ModifiedCertificateEntity {
   createdAt?: Date;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof ModifiedCertificateEntity
    */
-  updatedAt?: Date;
+  domain?: string;
   /**
    *
    * @type {Date}
@@ -88,10 +58,40 @@ export interface ModifiedCertificateEntity {
   expiresAt?: Date;
   /**
    *
+   * @type {string}
+   * @memberof ModifiedCertificateEntity
+   */
+  id?: string;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof ModifiedCertificateEntity
+   */
+  metadata?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof ModifiedCertificateEntity
+   */
+  name?: string;
+  /**
+   *
    * @type {boolean}
    * @memberof ModifiedCertificateEntity
    */
   system?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof ModifiedCertificateEntity
+   */
+  type?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof ModifiedCertificateEntity
+   */
+  updatedAt?: Date;
 }
 
 /**
@@ -110,16 +110,16 @@ export function ModifiedCertificateEntityFromJSONTyped(json: any, ignoreDiscrimi
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
     configuration: json['configuration'] == null ? undefined : json['configuration'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    metadata: json['metadata'] == null ? undefined : json['metadata'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    domain: json['domain'] == null ? undefined : json['domain'],
     expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    metadata: json['metadata'] == null ? undefined : json['metadata'],
+    name: json['name'] == null ? undefined : json['name'],
     system: json['system'] == null ? undefined : json['system'],
+    type: json['type'] == null ? undefined : json['type'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
@@ -133,15 +133,15 @@ export function ModifiedCertificateEntityToJSONTyped(value?: ModifiedCertificate
   }
 
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
     configuration: value['configuration'],
-    domain: value['domain'],
-    metadata: value['metadata'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    domain: value['domain'],
     expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
+    id: value['id'],
+    metadata: value['metadata'],
+    name: value['name'],
     system: value['system'],
+    type: value['type'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

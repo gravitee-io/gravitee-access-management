@@ -15,7 +15,7 @@
  */
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { getDomainFlows, updateDomainFlows } from '@management-commands/domain-management-commands';
-import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { createUser, deleteUser, getAllUsers } from '@management-commands/user-management-commands';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
@@ -61,8 +61,9 @@ describe('Account Linking - local IDP and OIDC', () => {
     // Remove and recreate users
     await deleteUser(fixture.upstreamDomain.domain.id, fixture.accessToken, allUsers.data[0].id);
     await deleteUser(fixture.upstreamDomain.domain.id, fixture.accessToken, allUsers.data[1].id);
-    await createUser(fixture.upstreamDomain.domain.id, fixture.accessToken, fixture.upstreamDomain.user);
-    await waitForNextSync(fixture.upstreamDomain.domain.id);
+    await waitForSyncAfter(fixture.upstreamDomain.domain.id, () =>
+      createUser(fixture.upstreamDomain.domain.id, fixture.accessToken, fixture.upstreamDomain.user),
+    );
   });
 
   it('Should login and create double user - account linking setup', async () => {
@@ -81,8 +82,9 @@ describe('Account Linking - local IDP and OIDC', () => {
         condition: '',
       },
     ]);
-    await updateDomainFlows(fixture.upstreamDomain.domain.id, fixture.accessToken, flows);
-    await waitForNextSync(fixture.upstreamDomain.domain.id);
+    await waitForSyncAfter(fixture.upstreamDomain.domain.id, () =>
+      updateDomainFlows(fixture.upstreamDomain.domain.id, fixture.accessToken, flows),
+    );
 
     const user1TokenResponse = await loginUserNameAndPassword(
       fixture.upstreamDomain.oidcApp.settings.oauth.clientId,

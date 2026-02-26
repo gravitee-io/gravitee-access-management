@@ -37,7 +37,7 @@ export interface Address {
    * @type {string}
    * @memberof Address
    */
-  type?: string;
+  country?: string;
   /**
    *
    * @type {string}
@@ -49,13 +49,19 @@ export interface Address {
    * @type {string}
    * @memberof Address
    */
-  streetAddress?: string;
+  locality?: string;
   /**
    *
    * @type {string}
    * @memberof Address
    */
-  locality?: string;
+  postalCode?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Address
+   */
+  primary?: boolean;
   /**
    *
    * @type {string}
@@ -67,19 +73,13 @@ export interface Address {
    * @type {string}
    * @memberof Address
    */
-  postalCode?: string;
+  streetAddress?: string;
   /**
    *
    * @type {string}
    * @memberof Address
    */
-  country?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Address
-   */
-  primary?: boolean;
+  type?: string;
 }
 
 /**
@@ -98,14 +98,14 @@ export function AddressFromJSONTyped(json: any, ignoreDiscriminator: boolean): A
     return json;
   }
   return {
-    type: json['type'] == null ? undefined : json['type'],
-    formatted: json['formatted'] == null ? undefined : json['formatted'],
-    streetAddress: json['streetAddress'] == null ? undefined : json['streetAddress'],
-    locality: json['locality'] == null ? undefined : json['locality'],
-    region: json['region'] == null ? undefined : json['region'],
-    postalCode: json['postalCode'] == null ? undefined : json['postalCode'],
     country: json['country'] == null ? undefined : json['country'],
+    formatted: json['formatted'] == null ? undefined : json['formatted'],
+    locality: json['locality'] == null ? undefined : json['locality'],
+    postalCode: json['postalCode'] == null ? undefined : json['postalCode'],
     primary: json['primary'] == null ? undefined : json['primary'],
+    region: json['region'] == null ? undefined : json['region'],
+    streetAddress: json['streetAddress'] == null ? undefined : json['streetAddress'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -119,13 +119,13 @@ export function AddressToJSONTyped(value?: Address | null, ignoreDiscriminator: 
   }
 
   return {
-    type: value['type'],
-    formatted: value['formatted'],
-    streetAddress: value['streetAddress'],
-    locality: value['locality'],
-    region: value['region'],
-    postalCode: value['postalCode'],
     country: value['country'],
+    formatted: value['formatted'],
+    locality: value['locality'],
+    postalCode: value['postalCode'],
     primary: value['primary'],
+    region: value['region'],
+    streetAddress: value['streetAddress'],
+    type: value['type'],
   };
 }

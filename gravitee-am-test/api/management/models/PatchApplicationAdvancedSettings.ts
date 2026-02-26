@@ -34,10 +34,10 @@ import { mapValues } from '../runtime';
 export interface PatchApplicationAdvancedSettings {
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof PatchApplicationAdvancedSettings
    */
-  skipConsent?: boolean;
+  agentCardUrl?: string;
   /**
    *
    * @type {boolean}
@@ -46,10 +46,10 @@ export interface PatchApplicationAdvancedSettings {
   flowsInherited?: boolean;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof PatchApplicationAdvancedSettings
    */
-  agentCardUrl?: string;
+  skipConsent?: boolean;
 }
 
 /**
@@ -68,9 +68,9 @@ export function PatchApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreD
     return json;
   }
   return {
-    skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
-    flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
     agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
+    flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
+    skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
   };
 }
 
@@ -87,8 +87,8 @@ export function PatchApplicationAdvancedSettingsToJSONTyped(
   }
 
   return {
-    skipConsent: value['skipConsent'],
-    flowsInherited: value['flowsInherited'],
     agentCardUrl: value['agentCardUrl'],
+    flowsInherited: value['flowsInherited'],
+    skipConsent: value['skipConsent'],
   };
 }

@@ -34,16 +34,16 @@ import { mapValues } from '../runtime';
 export interface ApplicationScopeSettings {
   /**
    *
-   * @type {string}
-   * @memberof ApplicationScopeSettings
-   */
-  scope?: string;
-  /**
-   *
    * @type {boolean}
    * @memberof ApplicationScopeSettings
    */
   defaultScope?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationScopeSettings
+   */
+  scope?: string;
   /**
    *
    * @type {number}
@@ -68,8 +68,8 @@ export function ApplicationScopeSettingsFromJSONTyped(json: any, ignoreDiscrimin
     return json;
   }
   return {
-    scope: json['scope'] == null ? undefined : json['scope'],
     defaultScope: json['defaultScope'] == null ? undefined : json['defaultScope'],
+    scope: json['scope'] == null ? undefined : json['scope'],
     scopeApproval: json['scopeApproval'] == null ? undefined : json['scopeApproval'],
   };
 }
@@ -84,8 +84,8 @@ export function ApplicationScopeSettingsToJSONTyped(value?: ApplicationScopeSett
   }
 
   return {
-    scope: value['scope'],
     defaultScope: value['defaultScope'],
+    scope: value['scope'],
     scopeApproval: value['scopeApproval'],
   };
 }

@@ -37,25 +37,19 @@ export interface ExtensionGrant {
    * @type {string}
    * @memberof ExtensionGrant
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ExtensionGrant
-   */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ExtensionGrant
-   */
-  type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ExtensionGrant
-   */
   configuration?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ExtensionGrant
+   */
+  createUser?: boolean;
+  /**
+   *
+   * @type {Date}
+   * @memberof ExtensionGrant
+   */
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -73,31 +67,37 @@ export interface ExtensionGrant {
    * @type {string}
    * @memberof ExtensionGrant
    */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExtensionGrant
+   */
   identityProvider?: string;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof ExtensionGrant
    */
-  createUser?: boolean;
+  name?: string;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof ExtensionGrant
    */
-  userExists?: boolean;
-  /**
-   *
-   * @type {Date}
-   * @memberof ExtensionGrant
-   */
-  createdAt?: Date;
+  type?: string;
   /**
    *
    * @type {Date}
    * @memberof ExtensionGrant
    */
   updatedAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ExtensionGrant
+   */
+  userExists?: boolean;
 }
 
 /**
@@ -116,17 +116,17 @@ export function ExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
     configuration: json['configuration'] == null ? undefined : json['configuration'],
+    createUser: json['createUser'] == null ? undefined : json['createUser'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     domain: json['domain'] == null ? undefined : json['domain'],
     grantType: json['grantType'] == null ? undefined : json['grantType'],
+    id: json['id'] == null ? undefined : json['id'],
     identityProvider: json['identityProvider'] == null ? undefined : json['identityProvider'],
-    createUser: json['createUser'] == null ? undefined : json['createUser'],
-    userExists: json['userExists'] == null ? undefined : json['userExists'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    userExists: json['userExists'] == null ? undefined : json['userExists'],
   };
 }
 
@@ -140,16 +140,16 @@ export function ExtensionGrantToJSONTyped(value?: ExtensionGrant | null, ignoreD
   }
 
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
     configuration: value['configuration'],
+    createUser: value['createUser'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     domain: value['domain'],
     grantType: value['grantType'],
+    id: value['id'],
     identityProvider: value['identityProvider'],
-    createUser: value['createUser'],
-    userExists: value['userExists'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    name: value['name'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    userExists: value['userExists'],
   };
 }

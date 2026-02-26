@@ -43,6 +43,12 @@ export interface PreviewRequest {
   content?: string;
   /**
    *
+   * @type {string}
+   * @memberof PreviewRequest
+   */
+  template: string;
+  /**
+   *
    * @type {Theme}
    * @memberof PreviewRequest
    */
@@ -53,12 +59,6 @@ export interface PreviewRequest {
    * @memberof PreviewRequest
    */
   type: PreviewRequestTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof PreviewRequest
-   */
-  template: string;
 }
 
 /**
@@ -74,8 +74,8 @@ export type PreviewRequestTypeEnum = typeof PreviewRequestTypeEnum[keyof typeof 
  * Check if a given object implements the PreviewRequest interface.
  */
 export function instanceOfPreviewRequest(value: object): value is PreviewRequest {
-  if (!('type' in value) || value['type'] === undefined) return false;
   if (!('template' in value) || value['template'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -89,9 +89,9 @@ export function PreviewRequestFromJSONTyped(json: any, ignoreDiscriminator: bool
   }
   return {
     content: json['content'] == null ? undefined : json['content'],
+    template: json['template'],
     theme: json['theme'] == null ? undefined : ThemeFromJSON(json['theme']),
     type: json['type'],
-    template: json['template'],
   };
 }
 
@@ -106,8 +106,8 @@ export function PreviewRequestToJSONTyped(value?: PreviewRequest | null, ignoreD
 
   return {
     content: value['content'],
+    template: value['template'],
     theme: ThemeToJSON(value['theme']),
     type: value['type'],
-    template: value['template'],
   };
 }

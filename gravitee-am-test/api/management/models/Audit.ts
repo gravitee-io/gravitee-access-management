@@ -48,36 +48,6 @@ import {
 export interface Audit {
   /**
    *
-   * @type {string}
-   * @memberof Audit
-   */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Audit
-   */
-  transactionId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Audit
-   */
-  type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Audit
-   */
-  referenceType?: AuditReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof Audit
-   */
-  referenceId?: string;
-  /**
-   *
    * @type {AuditAccessPoint}
    * @memberof Audit
    */
@@ -90,10 +60,10 @@ export interface Audit {
   actor?: AuditEntity;
   /**
    *
-   * @type {AuditEntity}
+   * @type {string}
    * @memberof Audit
    */
-  target?: AuditEntity;
+  id?: string;
   /**
    *
    * @type {AuditOutcome}
@@ -102,16 +72,46 @@ export interface Audit {
   outcome?: AuditOutcome;
   /**
    *
+   * @type {Reference}
+   * @memberof Audit
+   */
+  reference?: Reference;
+  /**
+   *
+   * @type {string}
+   * @memberof Audit
+   */
+  referenceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Audit
+   */
+  referenceType?: AuditReferenceTypeEnum;
+  /**
+   *
+   * @type {AuditEntity}
+   * @memberof Audit
+   */
+  target?: AuditEntity;
+  /**
+   *
    * @type {Date}
    * @memberof Audit
    */
   timestamp?: Date;
   /**
    *
-   * @type {Reference}
+   * @type {string}
    * @memberof Audit
    */
-  reference?: Reference;
+  transactionId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Audit
+   */
+  type?: string;
 }
 
 /**
@@ -143,17 +143,17 @@ export function AuditFromJSONTyped(json: any, ignoreDiscriminator: boolean): Aud
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    transactionId: json['transactionId'] == null ? undefined : json['transactionId'],
-    type: json['type'] == null ? undefined : json['type'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     accessPoint: json['accessPoint'] == null ? undefined : AuditAccessPointFromJSON(json['accessPoint']),
     actor: json['actor'] == null ? undefined : AuditEntityFromJSON(json['actor']),
-    target: json['target'] == null ? undefined : AuditEntityFromJSON(json['target']),
+    id: json['id'] == null ? undefined : json['id'],
     outcome: json['outcome'] == null ? undefined : AuditOutcomeFromJSON(json['outcome']),
-    timestamp: json['timestamp'] == null ? undefined : new Date(json['timestamp']),
     reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    target: json['target'] == null ? undefined : AuditEntityFromJSON(json['target']),
+    timestamp: json['timestamp'] == null ? undefined : new Date(json['timestamp']),
+    transactionId: json['transactionId'] == null ? undefined : json['transactionId'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -167,16 +167,16 @@ export function AuditToJSONTyped(value?: Audit | null, ignoreDiscriminator: bool
   }
 
   return {
-    id: value['id'],
-    transactionId: value['transactionId'],
-    type: value['type'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
     accessPoint: AuditAccessPointToJSON(value['accessPoint']),
     actor: AuditEntityToJSON(value['actor']),
-    target: AuditEntityToJSON(value['target']),
+    id: value['id'],
     outcome: AuditOutcomeToJSON(value['outcome']),
-    timestamp: value['timestamp'] == null ? value['timestamp'] : value['timestamp'].toISOString(),
     reference: ReferenceToJSON(value['reference']),
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    target: AuditEntityToJSON(value['target']),
+    timestamp: value['timestamp'] == null ? value['timestamp'] : value['timestamp'].toISOString(),
+    transactionId: value['transactionId'],
+    type: value['type'],
   };
 }

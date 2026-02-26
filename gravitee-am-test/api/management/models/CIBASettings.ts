@@ -42,22 +42,10 @@ import {
 export interface CIBASettings {
   /**
    *
-   * @type {boolean}
-   * @memberof CIBASettings
-   */
-  enabled?: boolean;
-  /**
-   *
    * @type {number}
    * @memberof CIBASettings
    */
   authReqExpiry?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof CIBASettings
-   */
-  tokenReqInterval?: number;
   /**
    *
    * @type {number}
@@ -70,6 +58,18 @@ export interface CIBASettings {
    * @memberof CIBASettings
    */
   deviceNotifiers?: Array<CIBASettingNotifier>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CIBASettings
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof CIBASettings
+   */
+  tokenReqInterval?: number;
 }
 
 /**
@@ -88,11 +88,11 @@ export function CIBASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     authReqExpiry: json['authReqExpiry'] == null ? undefined : json['authReqExpiry'],
-    tokenReqInterval: json['tokenReqInterval'] == null ? undefined : json['tokenReqInterval'],
     bindingMessageLength: json['bindingMessageLength'] == null ? undefined : json['bindingMessageLength'],
     deviceNotifiers: json['deviceNotifiers'] == null ? undefined : (json['deviceNotifiers'] as Array<any>).map(CIBASettingNotifierFromJSON),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    tokenReqInterval: json['tokenReqInterval'] == null ? undefined : json['tokenReqInterval'],
   };
 }
 
@@ -106,10 +106,10 @@ export function CIBASettingsToJSONTyped(value?: CIBASettings | null, ignoreDiscr
   }
 
   return {
-    enabled: value['enabled'],
     authReqExpiry: value['authReqExpiry'],
-    tokenReqInterval: value['tokenReqInterval'],
     bindingMessageLength: value['bindingMessageLength'],
     deviceNotifiers: value['deviceNotifiers'] == null ? undefined : (value['deviceNotifiers'] as Array<any>).map(CIBASettingNotifierToJSON),
+    enabled: value['enabled'],
+    tokenReqInterval: value['tokenReqInterval'],
   };
 }

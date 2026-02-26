@@ -34,6 +34,12 @@ import { mapValues } from '../runtime';
 export interface SAMLSettings {
   /**
    *
+   * @type {string}
+   * @memberof SAMLSettings
+   */
+  certificate?: string;
+  /**
+   *
    * @type {boolean}
    * @memberof SAMLSettings
    */
@@ -44,12 +50,6 @@ export interface SAMLSettings {
    * @memberof SAMLSettings
    */
   entityId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof SAMLSettings
-   */
-  certificate?: string;
 }
 
 /**
@@ -68,9 +68,9 @@ export function SAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
   };
 }
 
@@ -84,8 +84,8 @@ export function SAMLSettingsToJSONTyped(value?: SAMLSettings | null, ignoreDiscr
   }
 
   return {
+    certificate: value['certificate'],
     enabled: value['enabled'],
     entityId: value['entityId'],
-    certificate: value['certificate'],
   };
 }

@@ -37,6 +37,12 @@ export interface UpdateFactor {
    * @type {string}
    * @memberof UpdateFactor
    */
+  configuration: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateFactor
+   */
   name: string;
   /**
    *
@@ -44,21 +50,15 @@ export interface UpdateFactor {
    * @memberof UpdateFactor
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateFactor
-   */
-  configuration: string;
 }
 
 /**
  * Check if a given object implements the UpdateFactor interface.
  */
 export function instanceOfUpdateFactor(value: object): value is UpdateFactor {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -71,9 +71,9 @@ export function UpdateFactorFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
+    configuration: json['configuration'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
   };
 }
 
@@ -87,8 +87,8 @@ export function UpdateFactorToJSONTyped(value?: UpdateFactor | null, ignoreDiscr
   }
 
   return {
+    configuration: value['configuration'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
   };
 }

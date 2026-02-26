@@ -37,13 +37,7 @@ export interface JWK {
    * @type {string}
    * @memberof JWK
    */
-  kty?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof JWK
-   */
-  use?: string;
+  alg?: string;
   /**
    *
    * @type {Set<string>}
@@ -55,19 +49,19 @@ export interface JWK {
    * @type {string}
    * @memberof JWK
    */
-  alg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof JWK
-   */
   kid?: string;
   /**
    *
    * @type {string}
    * @memberof JWK
    */
-  x5u?: string;
+  kty?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof JWK
+   */
+  use?: string;
   /**
    *
    * @type {Set<string>}
@@ -86,6 +80,12 @@ export interface JWK {
    * @memberof JWK
    */
   x5tS256?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof JWK
+   */
+  x5u?: string;
 }
 
 /**
@@ -104,15 +104,15 @@ export function JWKFromJSONTyped(json: any, ignoreDiscriminator: boolean): JWK {
     return json;
   }
   return {
+    alg: json['alg'] == null ? undefined : json['alg'],
+    keyOps: json['keyOps'] == null ? undefined : new Set(json['keyOps']),
+    kid: json['kid'] == null ? undefined : json['kid'],
     kty: json['kty'] == null ? undefined : json['kty'],
     use: json['use'] == null ? undefined : json['use'],
-    keyOps: json['keyOps'] == null ? undefined : new Set(json['keyOps']),
-    alg: json['alg'] == null ? undefined : json['alg'],
-    kid: json['kid'] == null ? undefined : json['kid'],
-    x5u: json['x5u'] == null ? undefined : json['x5u'],
     x5c: json['x5c'] == null ? undefined : new Set(json['x5c']),
     x5t: json['x5t'] == null ? undefined : json['x5t'],
     x5tS256: json['x5tS256'] == null ? undefined : json['x5tS256'],
+    x5u: json['x5u'] == null ? undefined : json['x5u'],
   };
 }
 
@@ -126,14 +126,14 @@ export function JWKToJSONTyped(value?: JWK | null, ignoreDiscriminator: boolean 
   }
 
   return {
+    alg: value['alg'],
+    keyOps: value['keyOps'] == null ? undefined : Array.from(value['keyOps'] as Set<any>),
+    kid: value['kid'],
     kty: value['kty'],
     use: value['use'],
-    keyOps: value['keyOps'] == null ? undefined : Array.from(value['keyOps'] as Set<any>),
-    alg: value['alg'],
-    kid: value['kid'],
-    x5u: value['x5u'],
     x5c: value['x5c'] == null ? undefined : Array.from(value['x5c'] as Set<any>),
     x5t: value['x5t'],
     x5tS256: value['x5tS256'],
+    x5u: value['x5u'],
   };
 }

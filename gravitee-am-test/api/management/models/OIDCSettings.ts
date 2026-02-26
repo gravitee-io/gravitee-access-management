@@ -51,16 +51,22 @@ import {
 export interface OIDCSettings {
   /**
    *
+   * @type {CIBASettings}
+   * @memberof OIDCSettings
+   */
+  cibaSettings?: CIBASettings;
+  /**
+   *
    * @type {ClientRegistrationSettings}
    * @memberof OIDCSettings
    */
   clientRegistrationSettings?: ClientRegistrationSettings;
   /**
    *
-   * @type {SecurityProfileSettings}
+   * @type {Array<string>}
    * @memberof OIDCSettings
    */
-  securityProfileSettings?: SecurityProfileSettings;
+  postLogoutRedirectUris?: Array<string>;
   /**
    *
    * @type {boolean}
@@ -72,19 +78,13 @@ export interface OIDCSettings {
    * @type {Array<string>}
    * @memberof OIDCSettings
    */
-  postLogoutRedirectUris?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof OIDCSettings
-   */
   requestUris?: Array<string>;
   /**
    *
-   * @type {CIBASettings}
+   * @type {SecurityProfileSettings}
    * @memberof OIDCSettings
    */
-  cibaSettings?: CIBASettings;
+  securityProfileSettings?: SecurityProfileSettings;
 }
 
 /**
@@ -103,14 +103,14 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
+    cibaSettings: json['cibaSettings'] == null ? undefined : CIBASettingsFromJSON(json['cibaSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
+    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
+    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
     securityProfileSettings:
       json['securityProfileSettings'] == null ? undefined : SecurityProfileSettingsFromJSON(json['securityProfileSettings']),
-    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
-    postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
-    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
-    cibaSettings: json['cibaSettings'] == null ? undefined : CIBASettingsFromJSON(json['cibaSettings']),
   };
 }
 
@@ -124,11 +124,11 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
   }
 
   return {
-    clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
-    securityProfileSettings: SecurityProfileSettingsToJSON(value['securityProfileSettings']),
-    redirectUriStrictMatching: value['redirectUriStrictMatching'],
-    postLogoutRedirectUris: value['postLogoutRedirectUris'],
-    requestUris: value['requestUris'],
     cibaSettings: CIBASettingsToJSON(value['cibaSettings']),
+    clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
+    postLogoutRedirectUris: value['postLogoutRedirectUris'],
+    redirectUriStrictMatching: value['redirectUriStrictMatching'],
+    requestUris: value['requestUris'],
+    securityProfileSettings: SecurityProfileSettingsToJSON(value['securityProfileSettings']),
   };
 }

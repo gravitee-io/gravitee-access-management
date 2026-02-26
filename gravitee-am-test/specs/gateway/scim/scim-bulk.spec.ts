@@ -621,10 +621,10 @@ async function createRandomUser() {
   const createOp: BulkOperation = {
     method: 'POST',
     path: '/Users',
-    bulkId: random.word(),
+    bulkId: uniqueName('bulk', true),
     data: {
       schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-      userName: random.word(),
+      userName: uniqueName('bulk-user', true),
     },
   };
 

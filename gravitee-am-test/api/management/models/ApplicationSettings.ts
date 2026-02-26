@@ -90,28 +90,10 @@ import {
 export interface ApplicationSettings {
   /**
    *
-   * @type {ApplicationOAuthSettings}
-   * @memberof ApplicationSettings
-   */
-  oauth?: ApplicationOAuthSettings;
-  /**
-   *
-   * @type {ApplicationSAMLSettings}
-   * @memberof ApplicationSettings
-   */
-  saml?: ApplicationSAMLSettings;
-  /**
-   *
    * @type {AccountSettings}
    * @memberof ApplicationSettings
    */
   account?: AccountSettings;
-  /**
-   *
-   * @type {LoginSettings}
-   * @memberof ApplicationSettings
-   */
-  login?: LoginSettings;
   /**
    *
    * @type {ApplicationAdvancedSettings}
@@ -120,10 +102,16 @@ export interface ApplicationSettings {
   advanced?: ApplicationAdvancedSettings;
   /**
    *
-   * @type {PasswordSettings}
+   * @type {CookieSettings}
    * @memberof ApplicationSettings
    */
-  passwordSettings?: PasswordSettings;
+  cookieSettings?: CookieSettings;
+  /**
+   *
+   * @type {LoginSettings}
+   * @memberof ApplicationSettings
+   */
+  login?: LoginSettings;
   /**
    *
    * @type {MFASettings}
@@ -132,16 +120,28 @@ export interface ApplicationSettings {
   mfa?: MFASettings;
   /**
    *
-   * @type {CookieSettings}
+   * @type {ApplicationOAuthSettings}
    * @memberof ApplicationSettings
    */
-  cookieSettings?: CookieSettings;
+  oauth?: ApplicationOAuthSettings;
+  /**
+   *
+   * @type {PasswordSettings}
+   * @memberof ApplicationSettings
+   */
+  passwordSettings?: PasswordSettings;
   /**
    *
    * @type {RiskAssessmentSettings}
    * @memberof ApplicationSettings
    */
   riskAssessment?: RiskAssessmentSettings;
+  /**
+   *
+   * @type {ApplicationSAMLSettings}
+   * @memberof ApplicationSettings
+   */
+  saml?: ApplicationSAMLSettings;
   /**
    *
    * @type {SecretExpirationSettings}
@@ -166,15 +166,15 @@ export function ApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator:
     return json;
   }
   return {
-    oauth: json['oauth'] == null ? undefined : ApplicationOAuthSettingsFromJSON(json['oauth']),
-    saml: json['saml'] == null ? undefined : ApplicationSAMLSettingsFromJSON(json['saml']),
     account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
-    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
     advanced: json['advanced'] == null ? undefined : ApplicationAdvancedSettingsFromJSON(json['advanced']),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
-    mfa: json['mfa'] == null ? undefined : MFASettingsFromJSON(json['mfa']),
     cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
+    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
+    mfa: json['mfa'] == null ? undefined : MFASettingsFromJSON(json['mfa']),
+    oauth: json['oauth'] == null ? undefined : ApplicationOAuthSettingsFromJSON(json['oauth']),
+    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
     riskAssessment: json['riskAssessment'] == null ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
+    saml: json['saml'] == null ? undefined : ApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
   };
@@ -190,15 +190,15 @@ export function ApplicationSettingsToJSONTyped(value?: ApplicationSettings | nul
   }
 
   return {
-    oauth: ApplicationOAuthSettingsToJSON(value['oauth']),
-    saml: ApplicationSAMLSettingsToJSON(value['saml']),
     account: AccountSettingsToJSON(value['account']),
-    login: LoginSettingsToJSON(value['login']),
     advanced: ApplicationAdvancedSettingsToJSON(value['advanced']),
-    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
-    mfa: MFASettingsToJSON(value['mfa']),
     cookieSettings: CookieSettingsToJSON(value['cookieSettings']),
+    login: LoginSettingsToJSON(value['login']),
+    mfa: MFASettingsToJSON(value['mfa']),
+    oauth: ApplicationOAuthSettingsToJSON(value['oauth']),
+    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
+    saml: ApplicationSAMLSettingsToJSON(value['saml']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
   };
 }

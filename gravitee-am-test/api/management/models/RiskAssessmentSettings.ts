@@ -42,6 +42,12 @@ import {
 export interface RiskAssessmentSettings {
   /**
    *
+   * @type {AssessmentSettings}
+   * @memberof RiskAssessmentSettings
+   */
+  deviceAssessment?: AssessmentSettings;
+  /**
+   *
    * @type {boolean}
    * @memberof RiskAssessmentSettings
    */
@@ -51,19 +57,13 @@ export interface RiskAssessmentSettings {
    * @type {AssessmentSettings}
    * @memberof RiskAssessmentSettings
    */
-  deviceAssessment?: AssessmentSettings;
+  geoVelocityAssessment?: AssessmentSettings;
   /**
    *
    * @type {AssessmentSettings}
    * @memberof RiskAssessmentSettings
    */
   ipReputationAssessment?: AssessmentSettings;
-  /**
-   *
-   * @type {AssessmentSettings}
-   * @memberof RiskAssessmentSettings
-   */
-  geoVelocityAssessment?: AssessmentSettings;
 }
 
 /**
@@ -82,10 +82,10 @@ export function RiskAssessmentSettingsFromJSONTyped(json: any, ignoreDiscriminat
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     deviceAssessment: json['deviceAssessment'] == null ? undefined : AssessmentSettingsFromJSON(json['deviceAssessment']),
-    ipReputationAssessment: json['ipReputationAssessment'] == null ? undefined : AssessmentSettingsFromJSON(json['ipReputationAssessment']),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     geoVelocityAssessment: json['geoVelocityAssessment'] == null ? undefined : AssessmentSettingsFromJSON(json['geoVelocityAssessment']),
+    ipReputationAssessment: json['ipReputationAssessment'] == null ? undefined : AssessmentSettingsFromJSON(json['ipReputationAssessment']),
   };
 }
 
@@ -99,9 +99,9 @@ export function RiskAssessmentSettingsToJSONTyped(value?: RiskAssessmentSettings
   }
 
   return {
-    enabled: value['enabled'],
     deviceAssessment: AssessmentSettingsToJSON(value['deviceAssessment']),
-    ipReputationAssessment: AssessmentSettingsToJSON(value['ipReputationAssessment']),
+    enabled: value['enabled'],
     geoVelocityAssessment: AssessmentSettingsToJSON(value['geoVelocityAssessment']),
+    ipReputationAssessment: AssessmentSettingsToJSON(value['ipReputationAssessment']),
   };
 }

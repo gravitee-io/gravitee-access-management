@@ -37,16 +37,16 @@ import { ResourceEntityFromJSON, ResourceEntityFromJSONTyped, ResourceEntityToJS
 export interface ResourceListItem {
   /**
    *
-   * @type {Array<ResourceEntity>}
-   * @memberof ResourceListItem
-   */
-  resources?: Array<ResourceEntity>;
-  /**
-   *
    * @type {{ [key: string]: { [key: string]: any; }; }}
    * @memberof ResourceListItem
    */
   metadata?: { [key: string]: { [key: string]: any } };
+  /**
+   *
+   * @type {Array<ResourceEntity>}
+   * @memberof ResourceListItem
+   */
+  resources?: Array<ResourceEntity>;
 }
 
 /**
@@ -65,8 +65,8 @@ export function ResourceListItemFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
-    resources: json['resources'] == null ? undefined : (json['resources'] as Array<any>).map(ResourceEntityFromJSON),
     metadata: json['metadata'] == null ? undefined : json['metadata'],
+    resources: json['resources'] == null ? undefined : (json['resources'] as Array<any>).map(ResourceEntityFromJSON),
   };
 }
 
@@ -80,7 +80,7 @@ export function ResourceListItemToJSONTyped(value?: ResourceListItem | null, ign
   }
 
   return {
-    resources: value['resources'] == null ? undefined : (value['resources'] as Array<any>).map(ResourceEntityToJSON),
     metadata: value['metadata'],
+    resources: value['resources'] == null ? undefined : (value['resources'] as Array<any>).map(ResourceEntityToJSON),
   };
 }

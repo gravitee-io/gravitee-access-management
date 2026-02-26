@@ -34,6 +34,12 @@ import { mapValues } from '../runtime';
 export interface FilteredIdentityProviderInfo {
   /**
    *
+   * @type {boolean}
+   * @memberof FilteredIdentityProviderInfo
+   */
+  external?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof FilteredIdentityProviderInfo
    */
@@ -49,7 +55,7 @@ export interface FilteredIdentityProviderInfo {
    * @type {string}
    * @memberof FilteredIdentityProviderInfo
    */
-  type?: string;
+  passwordPolicy?: string;
   /**
    *
    * @type {boolean}
@@ -58,16 +64,10 @@ export interface FilteredIdentityProviderInfo {
   system?: boolean;
   /**
    *
-   * @type {boolean}
-   * @memberof FilteredIdentityProviderInfo
-   */
-  external?: boolean;
-  /**
-   *
    * @type {string}
    * @memberof FilteredIdentityProviderInfo
    */
-  passwordPolicy?: string;
+  type?: string;
 }
 
 /**
@@ -86,12 +86,12 @@ export function FilteredIdentityProviderInfoFromJSONTyped(json: any, ignoreDiscr
     return json;
   }
   return {
+    external: json['external'] == null ? undefined : json['external'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    system: json['system'] == null ? undefined : json['system'],
-    external: json['external'] == null ? undefined : json['external'],
     passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
+    system: json['system'] == null ? undefined : json['system'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -108,11 +108,11 @@ export function FilteredIdentityProviderInfoToJSONTyped(
   }
 
   return {
+    external: value['external'],
     id: value['id'],
     name: value['name'],
-    type: value['type'],
-    system: value['system'],
-    external: value['external'],
     passwordPolicy: value['passwordPolicy'],
+    system: value['system'],
+    type: value['type'],
   };
 }

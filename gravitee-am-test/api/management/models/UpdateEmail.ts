@@ -34,10 +34,22 @@ import { mapValues } from '../runtime';
 export interface UpdateEmail {
   /**
    *
+   * @type {string}
+   * @memberof UpdateEmail
+   */
+  content: string;
+  /**
+   *
    * @type {boolean}
    * @memberof UpdateEmail
    */
   enabled?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateEmail
+   */
+  expiresAfter: number;
   /**
    *
    * @type {string}
@@ -56,28 +68,16 @@ export interface UpdateEmail {
    * @memberof UpdateEmail
    */
   subject: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateEmail
-   */
-  content: string;
-  /**
-   *
-   * @type {number}
-   * @memberof UpdateEmail
-   */
-  expiresAfter: number;
 }
 
 /**
  * Check if a given object implements the UpdateEmail interface.
  */
 export function instanceOfUpdateEmail(value: object): value is UpdateEmail {
-  if (!('from' in value) || value['from'] === undefined) return false;
-  if (!('subject' in value) || value['subject'] === undefined) return false;
   if (!('content' in value) || value['content'] === undefined) return false;
   if (!('expiresAfter' in value) || value['expiresAfter'] === undefined) return false;
+  if (!('from' in value) || value['from'] === undefined) return false;
+  if (!('subject' in value) || value['subject'] === undefined) return false;
   return true;
 }
 
@@ -90,12 +90,12 @@ export function UpdateEmailFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
+    content: json['content'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    expiresAfter: json['expiresAfter'],
     from: json['from'],
     fromName: json['fromName'] == null ? undefined : json['fromName'],
     subject: json['subject'],
-    content: json['content'],
-    expiresAfter: json['expiresAfter'],
   };
 }
 
@@ -109,11 +109,11 @@ export function UpdateEmailToJSONTyped(value?: UpdateEmail | null, ignoreDiscrim
   }
 
   return {
+    content: value['content'],
     enabled: value['enabled'],
+    expiresAfter: value['expiresAfter'],
     from: value['from'],
     fromName: value['fromName'],
     subject: value['subject'],
-    content: value['content'],
-    expiresAfter: value['expiresAfter'],
   };
 }

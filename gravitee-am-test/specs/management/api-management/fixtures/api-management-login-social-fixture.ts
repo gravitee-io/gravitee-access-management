@@ -49,7 +49,7 @@ const MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL!;
  * Wait for the social provider link to appear on the management login page.
  * Organization settings may take time to propagate.
  */
-async function waitForSocialProviderOnLoginPage(maxWaitMs = 10000, intervalMs = 500): Promise<void> {
+async function waitForSocialProviderOnLoginPage(maxWaitMs = 30000, intervalMs = 500): Promise<void> {
   await retryUntil(
     async () => {
       try {
@@ -351,10 +351,8 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
     patchOrganization: { identities: [currentIdp, newIdp] },
   });
 
-  await waitForDomainSync(started.domain.id);
-
   // Wait for the social provider to appear on the management login page
-  // Organization settings may take time to propagate to the management console
+  // Organization settings may take time to propagate to the management console's IdentityProviderManager
   await waitForSocialProviderOnLoginPage();
 
   const cleanUp = async () => {

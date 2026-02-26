@@ -37,13 +37,13 @@ export interface CorsSettings {
    * @type {boolean}
    * @memberof CorsSettings
    */
-  enabled?: boolean;
+  allowCredentials?: boolean;
   /**
    *
    * @type {Set<string>}
    * @memberof CorsSettings
    */
-  allowedOrigins?: Set<string>;
+  allowedHeaders?: Set<string>;
   /**
    *
    * @type {Set<string>}
@@ -55,19 +55,19 @@ export interface CorsSettings {
    * @type {Set<string>}
    * @memberof CorsSettings
    */
-  allowedHeaders?: Set<string>;
+  allowedOrigins?: Set<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CorsSettings
+   */
+  enabled?: boolean;
   /**
    *
    * @type {number}
    * @memberof CorsSettings
    */
   maxAge?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof CorsSettings
-   */
-  allowCredentials?: boolean;
 }
 
 /**
@@ -86,12 +86,12 @@ export function CorsSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    allowedOrigins: json['allowedOrigins'] == null ? undefined : new Set(json['allowedOrigins']),
-    allowedMethods: json['allowedMethods'] == null ? undefined : new Set(json['allowedMethods']),
-    allowedHeaders: json['allowedHeaders'] == null ? undefined : new Set(json['allowedHeaders']),
-    maxAge: json['maxAge'] == null ? undefined : json['maxAge'],
     allowCredentials: json['allowCredentials'] == null ? undefined : json['allowCredentials'],
+    allowedHeaders: json['allowedHeaders'] == null ? undefined : new Set(json['allowedHeaders']),
+    allowedMethods: json['allowedMethods'] == null ? undefined : new Set(json['allowedMethods']),
+    allowedOrigins: json['allowedOrigins'] == null ? undefined : new Set(json['allowedOrigins']),
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    maxAge: json['maxAge'] == null ? undefined : json['maxAge'],
   };
 }
 
@@ -105,11 +105,11 @@ export function CorsSettingsToJSONTyped(value?: CorsSettings | null, ignoreDiscr
   }
 
   return {
-    enabled: value['enabled'],
-    allowedOrigins: value['allowedOrigins'] == null ? undefined : Array.from(value['allowedOrigins'] as Set<any>),
-    allowedMethods: value['allowedMethods'] == null ? undefined : Array.from(value['allowedMethods'] as Set<any>),
-    allowedHeaders: value['allowedHeaders'] == null ? undefined : Array.from(value['allowedHeaders'] as Set<any>),
-    maxAge: value['maxAge'],
     allowCredentials: value['allowCredentials'],
+    allowedHeaders: value['allowedHeaders'] == null ? undefined : Array.from(value['allowedHeaders'] as Set<any>),
+    allowedMethods: value['allowedMethods'] == null ? undefined : Array.from(value['allowedMethods'] as Set<any>),
+    allowedOrigins: value['allowedOrigins'] == null ? undefined : Array.from(value['allowedOrigins'] as Set<any>),
+    enabled: value['enabled'],
+    maxAge: value['maxAge'],
   };
 }

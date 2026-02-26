@@ -37,6 +37,12 @@ export interface UpdateDeviceIdentifier {
    * @type {string}
    * @memberof UpdateDeviceIdentifier
    */
+  configuration: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateDeviceIdentifier
+   */
   name: string;
   /**
    *
@@ -44,21 +50,15 @@ export interface UpdateDeviceIdentifier {
    * @memberof UpdateDeviceIdentifier
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateDeviceIdentifier
-   */
-  configuration: string;
 }
 
 /**
  * Check if a given object implements the UpdateDeviceIdentifier interface.
  */
 export function instanceOfUpdateDeviceIdentifier(value: object): value is UpdateDeviceIdentifier {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -71,9 +71,9 @@ export function UpdateDeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminat
     return json;
   }
   return {
+    configuration: json['configuration'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
   };
 }
 
@@ -87,8 +87,8 @@ export function UpdateDeviceIdentifierToJSONTyped(value?: UpdateDeviceIdentifier
   }
 
   return {
+    configuration: value['configuration'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
   };
 }

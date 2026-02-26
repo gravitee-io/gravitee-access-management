@@ -34,10 +34,22 @@ import { mapValues } from '../runtime';
 export interface UpdateReporter {
   /**
    *
+   * @type {string}
+   * @memberof UpdateReporter
+   */
+  configuration: string;
+  /**
+   *
    * @type {boolean}
    * @memberof UpdateReporter
    */
   enabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdateReporter
+   */
+  inherited?: boolean;
   /**
    *
    * @type {string}
@@ -50,27 +62,15 @@ export interface UpdateReporter {
    * @memberof UpdateReporter
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateReporter
-   */
-  configuration: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof UpdateReporter
-   */
-  inherited?: boolean;
 }
 
 /**
  * Check if a given object implements the UpdateReporter interface.
  */
 export function instanceOfUpdateReporter(value: object): value is UpdateReporter {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -83,11 +83,11 @@ export function UpdateReporterFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
+    configuration: json['configuration'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
-    inherited: json['inherited'] == null ? undefined : json['inherited'],
   };
 }
 
@@ -101,10 +101,10 @@ export function UpdateReporterToJSONTyped(value?: UpdateReporter | null, ignoreD
   }
 
   return {
+    configuration: value['configuration'],
     enabled: value['enabled'],
+    inherited: value['inherited'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
-    inherited: value['inherited'],
   };
 }

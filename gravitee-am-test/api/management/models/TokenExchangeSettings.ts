@@ -40,19 +40,7 @@ export interface TokenExchangeSettings {
    * @type {boolean}
    * @memberof TokenExchangeSettings
    */
-  enabled?: boolean;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof TokenExchangeSettings
-   */
-  allowedSubjectTokenTypes?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof TokenExchangeSettings
-   */
-  allowedRequestedTokenTypes?: Array<string>;
+  allowDelegation?: boolean;
   /**
    *
    * @type {boolean}
@@ -67,10 +55,22 @@ export interface TokenExchangeSettings {
   allowedActorTokenTypes?: Array<string>;
   /**
    *
+   * @type {Array<string>}
+   * @memberof TokenExchangeSettings
+   */
+  allowedRequestedTokenTypes?: Array<string>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof TokenExchangeSettings
+   */
+  allowedSubjectTokenTypes?: Array<string>;
+  /**
+   *
    * @type {boolean}
    * @memberof TokenExchangeSettings
    */
-  allowDelegation?: boolean;
+  enabled?: boolean;
   /**
    *
    * @type {number}
@@ -101,12 +101,12 @@ export function TokenExchangeSettingsFromJSONTyped(json: any, ignoreDiscriminato
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    allowedSubjectTokenTypes: json['allowedSubjectTokenTypes'] == null ? undefined : json['allowedSubjectTokenTypes'],
-    allowedRequestedTokenTypes: json['allowedRequestedTokenTypes'] == null ? undefined : json['allowedRequestedTokenTypes'],
+    allowDelegation: json['allowDelegation'] == null ? undefined : json['allowDelegation'],
     allowImpersonation: json['allowImpersonation'] == null ? undefined : json['allowImpersonation'],
     allowedActorTokenTypes: json['allowedActorTokenTypes'] == null ? undefined : json['allowedActorTokenTypes'],
-    allowDelegation: json['allowDelegation'] == null ? undefined : json['allowDelegation'],
+    allowedRequestedTokenTypes: json['allowedRequestedTokenTypes'] == null ? undefined : json['allowedRequestedTokenTypes'],
+    allowedSubjectTokenTypes: json['allowedSubjectTokenTypes'] == null ? undefined : json['allowedSubjectTokenTypes'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     maxDelegationDepth: json['maxDelegationDepth'] == null ? undefined : json['maxDelegationDepth'],
     trustedIssuers: json['trustedIssuers'] == null ? undefined : (json['trustedIssuers'] as Array<any>).map(TrustedIssuerFromJSON),
   };
@@ -122,12 +122,12 @@ export function TokenExchangeSettingsToJSONTyped(value?: TokenExchangeSettings |
   }
 
   return {
-    enabled: value['enabled'],
-    allowedSubjectTokenTypes: value['allowedSubjectTokenTypes'],
-    allowedRequestedTokenTypes: value['allowedRequestedTokenTypes'],
+    allowDelegation: value['allowDelegation'],
     allowImpersonation: value['allowImpersonation'],
     allowedActorTokenTypes: value['allowedActorTokenTypes'],
-    allowDelegation: value['allowDelegation'],
+    allowedRequestedTokenTypes: value['allowedRequestedTokenTypes'],
+    allowedSubjectTokenTypes: value['allowedSubjectTokenTypes'],
+    enabled: value['enabled'],
     maxDelegationDepth: value['maxDelegationDepth'],
     trustedIssuers: value['trustedIssuers'] == null ? undefined : (value['trustedIssuers'] as Array<any>).map(TrustedIssuerToJSON),
   };

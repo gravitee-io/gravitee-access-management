@@ -37,6 +37,12 @@ export interface UpdateServiceResource {
    * @type {string}
    * @memberof UpdateServiceResource
    */
+  configuration: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateServiceResource
+   */
   name: string;
   /**
    *
@@ -44,21 +50,15 @@ export interface UpdateServiceResource {
    * @memberof UpdateServiceResource
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateServiceResource
-   */
-  configuration: string;
 }
 
 /**
  * Check if a given object implements the UpdateServiceResource interface.
  */
 export function instanceOfUpdateServiceResource(value: object): value is UpdateServiceResource {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -71,9 +71,9 @@ export function UpdateServiceResourceFromJSONTyped(json: any, ignoreDiscriminato
     return json;
   }
   return {
+    configuration: json['configuration'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
   };
 }
 
@@ -87,8 +87,8 @@ export function UpdateServiceResourceToJSONTyped(value?: UpdateServiceResource |
   }
 
   return {
+    configuration: value['configuration'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
   };
 }

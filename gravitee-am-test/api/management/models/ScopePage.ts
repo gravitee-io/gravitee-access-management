@@ -37,16 +37,16 @@ import { ScopeFromJSON, ScopeFromJSONTyped, ScopeToJSON, ScopeToJSONTyped } from
 export interface ScopePage {
   /**
    *
-   * @type {Array<Scope>}
-   * @memberof ScopePage
-   */
-  data?: Array<Scope>;
-  /**
-   *
    * @type {number}
    * @memberof ScopePage
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<Scope>}
+   * @memberof ScopePage
+   */
+  data?: Array<Scope>;
   /**
    *
    * @type {number}
@@ -71,8 +71,8 @@ export function ScopePageFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(ScopeFromJSON),
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(ScopeFromJSON),
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -87,8 +87,8 @@ export function ScopePageToJSONTyped(value?: ScopePage | null, ignoreDiscriminat
   }
 
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(ScopeToJSON),
     currentPage: value['currentPage'],
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(ScopeToJSON),
     totalCount: value['totalCount'],
   };
 }

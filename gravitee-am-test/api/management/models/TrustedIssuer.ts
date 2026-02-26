@@ -45,13 +45,13 @@ export interface TrustedIssuer {
    * @type {string}
    * @memberof TrustedIssuer
    */
-  issuer?: string;
+  certificate?: string;
   /**
    *
    * @type {string}
    * @memberof TrustedIssuer
    */
-  keyResolutionMethod?: TrustedIssuerKeyResolutionMethodEnum;
+  issuer?: string;
   /**
    *
    * @type {string}
@@ -63,7 +63,7 @@ export interface TrustedIssuer {
    * @type {string}
    * @memberof TrustedIssuer
    */
-  certificate?: string;
+  keyResolutionMethod?: TrustedIssuerKeyResolutionMethodEnum;
   /**
    *
    * @type {{ [key: string]: string; }}
@@ -72,16 +72,16 @@ export interface TrustedIssuer {
   scopeMappings?: { [key: string]: string };
   /**
    *
-   * @type {boolean}
-   * @memberof TrustedIssuer
-   */
-  userBindingEnabled?: boolean;
-  /**
-   *
    * @type {Array<UserBindingCriterion>}
    * @memberof TrustedIssuer
    */
   userBindingCriteria?: Array<UserBindingCriterion>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof TrustedIssuer
+   */
+  userBindingEnabled?: boolean;
 }
 
 /**
@@ -110,14 +110,14 @@ export function TrustedIssuerFromJSONTyped(json: any, ignoreDiscriminator: boole
     return json;
   }
   return {
-    issuer: json['issuer'] == null ? undefined : json['issuer'],
-    keyResolutionMethod: json['keyResolutionMethod'] == null ? undefined : json['keyResolutionMethod'],
-    jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
+    issuer: json['issuer'] == null ? undefined : json['issuer'],
+    jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
+    keyResolutionMethod: json['keyResolutionMethod'] == null ? undefined : json['keyResolutionMethod'],
     scopeMappings: json['scopeMappings'] == null ? undefined : json['scopeMappings'],
-    userBindingEnabled: json['userBindingEnabled'] == null ? undefined : json['userBindingEnabled'],
     userBindingCriteria:
       json['userBindingCriteria'] == null ? undefined : (json['userBindingCriteria'] as Array<any>).map(UserBindingCriterionFromJSON),
+    userBindingEnabled: json['userBindingEnabled'] == null ? undefined : json['userBindingEnabled'],
   };
 }
 
@@ -131,13 +131,13 @@ export function TrustedIssuerToJSONTyped(value?: TrustedIssuer | null, ignoreDis
   }
 
   return {
-    issuer: value['issuer'],
-    keyResolutionMethod: value['keyResolutionMethod'],
-    jwksUri: value['jwksUri'],
     certificate: value['certificate'],
+    issuer: value['issuer'],
+    jwksUri: value['jwksUri'],
+    keyResolutionMethod: value['keyResolutionMethod'],
     scopeMappings: value['scopeMappings'],
-    userBindingEnabled: value['userBindingEnabled'],
     userBindingCriteria:
       value['userBindingCriteria'] == null ? undefined : (value['userBindingCriteria'] as Array<any>).map(UserBindingCriterionToJSON),
+    userBindingEnabled: value['userBindingEnabled'],
   };
 }

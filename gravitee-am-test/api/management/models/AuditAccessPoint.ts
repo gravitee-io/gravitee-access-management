@@ -37,12 +37,6 @@ export interface AuditAccessPoint {
    * @type {string}
    * @memberof AuditAccessPoint
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AuditAccessPoint
-   */
   alternativeId?: string;
   /**
    *
@@ -50,6 +44,12 @@ export interface AuditAccessPoint {
    * @memberof AuditAccessPoint
    */
   displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AuditAccessPoint
+   */
+  id?: string;
   /**
    *
    * @type {string}
@@ -80,9 +80,9 @@ export function AuditAccessPointFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
     alternativeId: json['alternativeId'] == null ? undefined : json['alternativeId'],
     displayName: json['displayName'] == null ? undefined : json['displayName'],
+    id: json['id'] == null ? undefined : json['id'],
     ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
     userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
   };
@@ -98,9 +98,9 @@ export function AuditAccessPointToJSONTyped(value?: AuditAccessPoint | null, ign
   }
 
   return {
-    id: value['id'],
     alternativeId: value['alternativeId'],
     displayName: value['displayName'],
+    id: value['id'],
     ipAddress: value['ipAddress'],
     userAgent: value['userAgent'],
   };

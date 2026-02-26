@@ -37,13 +37,13 @@ export interface ApplicationSecretSettings {
    * @type {string}
    * @memberof ApplicationSecretSettings
    */
-  id?: string;
+  algorithm?: string;
   /**
    *
    * @type {string}
    * @memberof ApplicationSecretSettings
    */
-  algorithm?: string;
+  id?: string;
 }
 
 /**
@@ -62,8 +62,8 @@ export function ApplicationSecretSettingsFromJSONTyped(json: any, ignoreDiscrimi
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
     algorithm: json['algorithm'] == null ? undefined : json['algorithm'],
+    id: json['id'] == null ? undefined : json['id'],
   };
 }
 
@@ -77,7 +77,7 @@ export function ApplicationSecretSettingsToJSONTyped(value?: ApplicationSecretSe
   }
 
   return {
-    id: value['id'],
     algorithm: value['algorithm'],
+    id: value['id'],
   };
 }

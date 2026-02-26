@@ -34,34 +34,10 @@ import { mapValues } from '../runtime';
 export interface AccountAccessToken {
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof AccountAccessToken
    */
-  tokenId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AccountAccessToken
-   */
-  referenceType?: AccountAccessTokenReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof AccountAccessToken
-   */
-  referenceId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AccountAccessToken
-   */
-  userId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AccountAccessToken
-   */
-  issuerUsername?: string;
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -73,7 +49,25 @@ export interface AccountAccessToken {
    * @type {string}
    * @memberof AccountAccessToken
    */
+  issuerUsername?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AccountAccessToken
+   */
   name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AccountAccessToken
+   */
+  referenceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AccountAccessToken
+   */
+  referenceType?: AccountAccessTokenReferenceTypeEnum;
   /**
    *
    * @type {string}
@@ -82,16 +76,22 @@ export interface AccountAccessToken {
   token?: string;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof AccountAccessToken
    */
-  createdAt?: Date;
+  tokenId?: string;
   /**
    *
    * @type {Date}
    * @memberof AccountAccessToken
    */
   updatedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof AccountAccessToken
+   */
+  userId?: string;
 }
 
 /**
@@ -124,16 +124,16 @@ export function AccountAccessTokenFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
-    tokenId: json['tokenId'] == null ? undefined : json['tokenId'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    userId: json['userId'] == null ? undefined : json['userId'],
-    issuerUsername: json['issuerUsername'] == null ? undefined : json['issuerUsername'],
-    issuerId: json['issuerId'] == null ? undefined : json['issuerId'],
-    name: json['name'] == null ? undefined : json['name'],
-    token: json['token'] == null ? undefined : json['token'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    issuerId: json['issuerId'] == null ? undefined : json['issuerId'],
+    issuerUsername: json['issuerUsername'] == null ? undefined : json['issuerUsername'],
+    name: json['name'] == null ? undefined : json['name'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    token: json['token'] == null ? undefined : json['token'],
+    tokenId: json['tokenId'] == null ? undefined : json['tokenId'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    userId: json['userId'] == null ? undefined : json['userId'],
   };
 }
 
@@ -147,15 +147,15 @@ export function AccountAccessTokenToJSONTyped(value?: AccountAccessToken | null,
   }
 
   return {
-    tokenId: value['tokenId'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    userId: value['userId'],
-    issuerUsername: value['issuerUsername'],
-    issuerId: value['issuerId'],
-    name: value['name'],
-    token: value['token'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    issuerId: value['issuerId'],
+    issuerUsername: value['issuerUsername'],
+    name: value['name'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    token: value['token'],
+    tokenId: value['tokenId'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    userId: value['userId'],
   };
 }

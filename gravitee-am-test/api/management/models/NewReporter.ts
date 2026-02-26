@@ -37,7 +37,7 @@ export interface NewReporter {
    * @type {string}
    * @memberof NewReporter
    */
-  id?: string;
+  configuration: string;
   /**
    *
    * @type {boolean}
@@ -49,7 +49,13 @@ export interface NewReporter {
    * @type {string}
    * @memberof NewReporter
    */
-  type: string;
+  id?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof NewReporter
+   */
+  inherited?: boolean;
   /**
    *
    * @type {string}
@@ -61,22 +67,16 @@ export interface NewReporter {
    * @type {string}
    * @memberof NewReporter
    */
-  configuration: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof NewReporter
-   */
-  inherited?: boolean;
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewReporter interface.
  */
 export function instanceOfNewReporter(value: object): value is NewReporter {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -89,12 +89,12 @@ export function NewReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    type: json['type'],
-    name: json['name'],
     configuration: json['configuration'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    id: json['id'] == null ? undefined : json['id'],
     inherited: json['inherited'] == null ? undefined : json['inherited'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -108,11 +108,11 @@ export function NewReporterToJSONTyped(value?: NewReporter | null, ignoreDiscrim
   }
 
   return {
-    id: value['id'],
-    enabled: value['enabled'],
-    type: value['type'],
-    name: value['name'],
     configuration: value['configuration'],
+    enabled: value['enabled'],
+    id: value['id'],
     inherited: value['inherited'],
+    name: value['name'],
+    type: value['type'],
   };
 }

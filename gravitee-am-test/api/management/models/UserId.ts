@@ -37,13 +37,13 @@ export interface UserId {
    * @type {string}
    * @memberof UserId
    */
-  id?: string;
+  externalId?: string;
   /**
    *
    * @type {string}
    * @memberof UserId
    */
-  externalId?: string;
+  id?: string;
   /**
    *
    * @type {string}
@@ -68,8 +68,8 @@ export function UserIdFromJSONTyped(json: any, ignoreDiscriminator: boolean): Us
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
     externalId: json['externalId'] == null ? undefined : json['externalId'],
+    id: json['id'] == null ? undefined : json['id'],
     source: json['source'] == null ? undefined : json['source'],
   };
 }
@@ -84,8 +84,8 @@ export function UserIdToJSONTyped(value?: UserId | null, ignoreDiscriminator: bo
   }
 
   return {
-    id: value['id'],
     externalId: value['externalId'],
+    id: value['id'],
     source: value['source'],
   };
 }

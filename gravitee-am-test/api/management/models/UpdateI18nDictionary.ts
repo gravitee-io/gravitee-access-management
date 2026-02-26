@@ -34,10 +34,10 @@ import { mapValues } from '../runtime';
 export interface UpdateI18nDictionary {
   /**
    *
-   * @type {string}
+   * @type {{ [key: string]: string; }}
    * @memberof UpdateI18nDictionary
    */
-  name?: string;
+  entries?: { [key: string]: string };
   /**
    *
    * @type {string}
@@ -46,10 +46,10 @@ export interface UpdateI18nDictionary {
   locale?: string;
   /**
    *
-   * @type {{ [key: string]: string; }}
+   * @type {string}
    * @memberof UpdateI18nDictionary
    */
-  entries?: { [key: string]: string };
+  name?: string;
 }
 
 /**
@@ -68,9 +68,9 @@ export function UpdateI18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
-    locale: json['locale'] == null ? undefined : json['locale'],
     entries: json['entries'] == null ? undefined : json['entries'],
+    locale: json['locale'] == null ? undefined : json['locale'],
+    name: json['name'] == null ? undefined : json['name'],
   };
 }
 
@@ -84,8 +84,8 @@ export function UpdateI18nDictionaryToJSONTyped(value?: UpdateI18nDictionary | n
   }
 
   return {
-    name: value['name'],
-    locale: value['locale'],
     entries: value['entries'],
+    locale: value['locale'],
+    name: value['name'],
   };
 }

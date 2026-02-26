@@ -34,10 +34,10 @@ import { mapValues } from '../runtime';
 export interface UpdateForm {
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof UpdateForm
    */
-  enabled?: boolean;
+  assets?: string;
   /**
    *
    * @type {string}
@@ -46,10 +46,10 @@ export interface UpdateForm {
   content?: string;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof UpdateForm
    */
-  assets?: string;
+  enabled?: boolean;
 }
 
 /**
@@ -68,9 +68,9 @@ export function UpdateFormFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    content: json['content'] == null ? undefined : json['content'],
     assets: json['assets'] == null ? undefined : json['assets'],
+    content: json['content'] == null ? undefined : json['content'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
   };
 }
 
@@ -84,8 +84,8 @@ export function UpdateFormToJSONTyped(value?: UpdateForm | null, ignoreDiscrimin
   }
 
   return {
-    enabled: value['enabled'],
-    content: value['content'],
     assets: value['assets'],
+    content: value['content'],
+    enabled: value['enabled'],
   };
 }

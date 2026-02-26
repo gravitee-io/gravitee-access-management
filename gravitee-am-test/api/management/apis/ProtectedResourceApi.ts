@@ -738,7 +738,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissionsRaw(
@@ -803,7 +803,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE_MEMBER[READ] permission on the specified protected resource or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified domain or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified environment or PROTECTED_RESOURCE_MEMBER[READ] permission on the specified organization
+   * User must have PROTECTED_RESOURCE[READ] permission on the specified protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization
    * List protected resource member\'s permissions
    */
   async getProtectedResourceMemberPermissions(

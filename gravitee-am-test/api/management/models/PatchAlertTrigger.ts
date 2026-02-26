@@ -34,16 +34,16 @@ import { mapValues } from '../runtime';
 export interface PatchAlertTrigger {
   /**
    *
-   * @type {boolean}
-   * @memberof PatchAlertTrigger
-   */
-  enabled?: boolean;
-  /**
-   *
    * @type {Array<string>}
    * @memberof PatchAlertTrigger
    */
   alertNotifiers?: Array<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchAlertTrigger
+   */
+  enabled?: boolean;
   /**
    *
    * @type {string}
@@ -78,8 +78,8 @@ export function PatchAlertTriggerFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     alertNotifiers: json['alertNotifiers'] == null ? undefined : json['alertNotifiers'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     type: json['type'],
   };
 }
@@ -94,8 +94,8 @@ export function PatchAlertTriggerToJSONTyped(value?: PatchAlertTrigger | null, i
   }
 
   return {
-    enabled: value['enabled'],
     alertNotifiers: value['alertNotifiers'],
+    enabled: value['enabled'],
     type: value['type'],
   };
 }

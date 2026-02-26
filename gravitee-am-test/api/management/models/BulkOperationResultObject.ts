@@ -34,18 +34,6 @@ import { mapValues } from '../runtime';
 export interface BulkOperationResultObject {
   /**
    *
-   * @type {number}
-   * @memberof BulkOperationResultObject
-   */
-  index?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof BulkOperationResultObject
-   */
-  httpStatus?: number;
-  /**
-   *
    * @type {any}
    * @memberof BulkOperationResultObject
    */
@@ -56,6 +44,18 @@ export interface BulkOperationResultObject {
    * @memberof BulkOperationResultObject
    */
   errorDetails?: any;
+  /**
+   *
+   * @type {number}
+   * @memberof BulkOperationResultObject
+   */
+  httpStatus?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof BulkOperationResultObject
+   */
+  index?: number;
   /**
    *
    * @type {boolean}
@@ -80,10 +80,10 @@ export function BulkOperationResultObjectFromJSONTyped(json: any, ignoreDiscrimi
     return json;
   }
   return {
-    index: json['index'] == null ? undefined : json['index'],
-    httpStatus: json['httpStatus'] == null ? undefined : json['httpStatus'],
     body: json['body'] == null ? undefined : json['body'],
     errorDetails: json['errorDetails'] == null ? undefined : json['errorDetails'],
+    httpStatus: json['httpStatus'] == null ? undefined : json['httpStatus'],
+    index: json['index'] == null ? undefined : json['index'],
     success: json['success'] == null ? undefined : json['success'],
   };
 }
@@ -98,10 +98,10 @@ export function BulkOperationResultObjectToJSONTyped(value?: BulkOperationResult
   }
 
   return {
-    index: value['index'],
-    httpStatus: value['httpStatus'],
     body: value['body'],
     errorDetails: value['errorDetails'],
+    httpStatus: value['httpStatus'],
+    index: value['index'],
     success: value['success'],
   };
 }

@@ -37,73 +37,25 @@ export interface LoginSettings {
    * @type {boolean}
    * @memberof LoginSettings
    */
-  inherited?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  forgotPasswordEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  registerEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  rememberMeEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  passwordlessEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  passwordlessRememberDeviceEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  passwordlessEnforcePasswordEnabled?: boolean;
-  /**
-   *
-   * @type {number}
-   * @memberof LoginSettings
-   */
-  passwordlessEnforcePasswordMaxAge?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  passwordlessDeviceNamingEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
   certificateBasedAuthEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof LoginSettings
-   */
-  magicLinkAuthEnabled?: boolean;
   /**
    *
    * @type {string}
    * @memberof LoginSettings
    */
   certificateBasedAuthUrl?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  enforcePasswordPolicyEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  forgotPasswordEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -121,13 +73,61 @@ export interface LoginSettings {
    * @type {boolean}
    * @memberof LoginSettings
    */
-  resetPasswordOnExpiration?: boolean;
+  inherited?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof LoginSettings
    */
-  enforcePasswordPolicyEnabled?: boolean;
+  magicLinkAuthEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  passwordlessDeviceNamingEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  passwordlessEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  passwordlessEnforcePasswordEnabled?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof LoginSettings
+   */
+  passwordlessEnforcePasswordMaxAge?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  passwordlessRememberDeviceEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  registerEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  rememberMeEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
+  resetPasswordOnExpiration?: boolean;
 }
 
 /**
@@ -146,25 +146,25 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
     return json;
   }
   return {
-    inherited: json['inherited'] == null ? undefined : json['inherited'],
+    certificateBasedAuthEnabled: json['certificateBasedAuthEnabled'] == null ? undefined : json['certificateBasedAuthEnabled'],
+    certificateBasedAuthUrl: json['certificateBasedAuthUrl'] == null ? undefined : json['certificateBasedAuthUrl'],
+    enforcePasswordPolicyEnabled: json['enforcePasswordPolicyEnabled'] == null ? undefined : json['enforcePasswordPolicyEnabled'],
     forgotPasswordEnabled: json['forgotPasswordEnabled'] == null ? undefined : json['forgotPasswordEnabled'],
-    registerEnabled: json['registerEnabled'] == null ? undefined : json['registerEnabled'],
-    rememberMeEnabled: json['rememberMeEnabled'] == null ? undefined : json['rememberMeEnabled'],
+    hideForm: json['hideForm'] == null ? undefined : json['hideForm'],
+    identifierFirstEnabled: json['identifierFirstEnabled'] == null ? undefined : json['identifierFirstEnabled'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
+    magicLinkAuthEnabled: json['magicLinkAuthEnabled'] == null ? undefined : json['magicLinkAuthEnabled'],
+    passwordlessDeviceNamingEnabled: json['passwordlessDeviceNamingEnabled'] == null ? undefined : json['passwordlessDeviceNamingEnabled'],
     passwordlessEnabled: json['passwordlessEnabled'] == null ? undefined : json['passwordlessEnabled'],
-    passwordlessRememberDeviceEnabled:
-      json['passwordlessRememberDeviceEnabled'] == null ? undefined : json['passwordlessRememberDeviceEnabled'],
     passwordlessEnforcePasswordEnabled:
       json['passwordlessEnforcePasswordEnabled'] == null ? undefined : json['passwordlessEnforcePasswordEnabled'],
     passwordlessEnforcePasswordMaxAge:
       json['passwordlessEnforcePasswordMaxAge'] == null ? undefined : json['passwordlessEnforcePasswordMaxAge'],
-    passwordlessDeviceNamingEnabled: json['passwordlessDeviceNamingEnabled'] == null ? undefined : json['passwordlessDeviceNamingEnabled'],
-    certificateBasedAuthEnabled: json['certificateBasedAuthEnabled'] == null ? undefined : json['certificateBasedAuthEnabled'],
-    magicLinkAuthEnabled: json['magicLinkAuthEnabled'] == null ? undefined : json['magicLinkAuthEnabled'],
-    certificateBasedAuthUrl: json['certificateBasedAuthUrl'] == null ? undefined : json['certificateBasedAuthUrl'],
-    hideForm: json['hideForm'] == null ? undefined : json['hideForm'],
-    identifierFirstEnabled: json['identifierFirstEnabled'] == null ? undefined : json['identifierFirstEnabled'],
+    passwordlessRememberDeviceEnabled:
+      json['passwordlessRememberDeviceEnabled'] == null ? undefined : json['passwordlessRememberDeviceEnabled'],
+    registerEnabled: json['registerEnabled'] == null ? undefined : json['registerEnabled'],
+    rememberMeEnabled: json['rememberMeEnabled'] == null ? undefined : json['rememberMeEnabled'],
     resetPasswordOnExpiration: json['resetPasswordOnExpiration'] == null ? undefined : json['resetPasswordOnExpiration'],
-    enforcePasswordPolicyEnabled: json['enforcePasswordPolicyEnabled'] == null ? undefined : json['enforcePasswordPolicyEnabled'],
   };
 }
 
@@ -178,21 +178,21 @@ export function LoginSettingsToJSONTyped(value?: LoginSettings | null, ignoreDis
   }
 
   return {
-    inherited: value['inherited'],
-    forgotPasswordEnabled: value['forgotPasswordEnabled'],
-    registerEnabled: value['registerEnabled'],
-    rememberMeEnabled: value['rememberMeEnabled'],
-    passwordlessEnabled: value['passwordlessEnabled'],
-    passwordlessRememberDeviceEnabled: value['passwordlessRememberDeviceEnabled'],
-    passwordlessEnforcePasswordEnabled: value['passwordlessEnforcePasswordEnabled'],
-    passwordlessEnforcePasswordMaxAge: value['passwordlessEnforcePasswordMaxAge'],
-    passwordlessDeviceNamingEnabled: value['passwordlessDeviceNamingEnabled'],
     certificateBasedAuthEnabled: value['certificateBasedAuthEnabled'],
     certificateBasedAuthUrl: value['certificateBasedAuthUrl'],
-    magicLinkAuthEnabled: value['magicLinkAuthEnabled'],
+    enforcePasswordPolicyEnabled: value['enforcePasswordPolicyEnabled'],
+    forgotPasswordEnabled: value['forgotPasswordEnabled'],
     hideForm: value['hideForm'],
     identifierFirstEnabled: value['identifierFirstEnabled'],
+    inherited: value['inherited'],
+    magicLinkAuthEnabled: value['magicLinkAuthEnabled'],
+    passwordlessDeviceNamingEnabled: value['passwordlessDeviceNamingEnabled'],
+    passwordlessEnabled: value['passwordlessEnabled'],
+    passwordlessEnforcePasswordEnabled: value['passwordlessEnforcePasswordEnabled'],
+    passwordlessEnforcePasswordMaxAge: value['passwordlessEnforcePasswordMaxAge'],
+    passwordlessRememberDeviceEnabled: value['passwordlessRememberDeviceEnabled'],
+    registerEnabled: value['registerEnabled'],
+    rememberMeEnabled: value['rememberMeEnabled'],
     resetPasswordOnExpiration: value['resetPasswordOnExpiration'],
-    enforcePasswordPolicyEnabled: value['enforcePasswordPolicyEnabled'],
   };
 }

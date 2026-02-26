@@ -70,43 +70,7 @@ export interface MFASettings {
    * @type {string}
    * @memberof MFASettings
    */
-  loginRule?: string;
-  /**
-   *
-   * @type {FactorSettings}
-   * @memberof MFASettings
-   */
-  factor?: FactorSettings;
-  /**
-   *
-   * @type {string}
-   * @memberof MFASettings
-   */
-  stepUpAuthenticationRule?: string;
-  /**
-   *
-   * @type {StepUpAuthenticationSettings}
-   * @memberof MFASettings
-   */
-  stepUpAuthentication?: StepUpAuthenticationSettings;
-  /**
-   *
-   * @type {string}
-   * @memberof MFASettings
-   */
   adaptiveAuthenticationRule?: string;
-  /**
-   *
-   * @type {RememberDeviceSettings}
-   * @memberof MFASettings
-   */
-  rememberDevice?: RememberDeviceSettings;
-  /**
-   *
-   * @type {EnrollmentSettings}
-   * @memberof MFASettings
-   */
-  enrollment?: EnrollmentSettings;
   /**
    *
    * @type {ChallengeSettings}
@@ -119,6 +83,42 @@ export interface MFASettings {
    * @memberof MFASettings
    */
   enroll?: EnrollSettings;
+  /**
+   *
+   * @type {EnrollmentSettings}
+   * @memberof MFASettings
+   */
+  enrollment?: EnrollmentSettings;
+  /**
+   *
+   * @type {FactorSettings}
+   * @memberof MFASettings
+   */
+  factor?: FactorSettings;
+  /**
+   *
+   * @type {string}
+   * @memberof MFASettings
+   */
+  loginRule?: string;
+  /**
+   *
+   * @type {RememberDeviceSettings}
+   * @memberof MFASettings
+   */
+  rememberDevice?: RememberDeviceSettings;
+  /**
+   *
+   * @type {StepUpAuthenticationSettings}
+   * @memberof MFASettings
+   */
+  stepUpAuthentication?: StepUpAuthenticationSettings;
+  /**
+   *
+   * @type {string}
+   * @memberof MFASettings
+   */
+  stepUpAuthenticationRule?: string;
 }
 
 /**
@@ -137,16 +137,16 @@ export function MFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    loginRule: json['loginRule'] == null ? undefined : json['loginRule'],
-    factor: json['factor'] == null ? undefined : FactorSettingsFromJSON(json['factor']),
-    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
-    stepUpAuthentication:
-      json['stepUpAuthentication'] == null ? undefined : StepUpAuthenticationSettingsFromJSON(json['stepUpAuthentication']),
     adaptiveAuthenticationRule: json['adaptiveAuthenticationRule'] == null ? undefined : json['adaptiveAuthenticationRule'],
-    rememberDevice: json['rememberDevice'] == null ? undefined : RememberDeviceSettingsFromJSON(json['rememberDevice']),
-    enrollment: json['enrollment'] == null ? undefined : EnrollmentSettingsFromJSON(json['enrollment']),
     challenge: json['challenge'] == null ? undefined : ChallengeSettingsFromJSON(json['challenge']),
     enroll: json['enroll'] == null ? undefined : EnrollSettingsFromJSON(json['enroll']),
+    enrollment: json['enrollment'] == null ? undefined : EnrollmentSettingsFromJSON(json['enrollment']),
+    factor: json['factor'] == null ? undefined : FactorSettingsFromJSON(json['factor']),
+    loginRule: json['loginRule'] == null ? undefined : json['loginRule'],
+    rememberDevice: json['rememberDevice'] == null ? undefined : RememberDeviceSettingsFromJSON(json['rememberDevice']),
+    stepUpAuthentication:
+      json['stepUpAuthentication'] == null ? undefined : StepUpAuthenticationSettingsFromJSON(json['stepUpAuthentication']),
+    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
   };
 }
 
@@ -160,14 +160,14 @@ export function MFASettingsToJSONTyped(value?: MFASettings | null, ignoreDiscrim
   }
 
   return {
-    loginRule: value['loginRule'],
-    factor: FactorSettingsToJSON(value['factor']),
-    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
-    stepUpAuthentication: StepUpAuthenticationSettingsToJSON(value['stepUpAuthentication']),
     adaptiveAuthenticationRule: value['adaptiveAuthenticationRule'],
-    rememberDevice: RememberDeviceSettingsToJSON(value['rememberDevice']),
-    enrollment: EnrollmentSettingsToJSON(value['enrollment']),
     challenge: ChallengeSettingsToJSON(value['challenge']),
     enroll: EnrollSettingsToJSON(value['enroll']),
+    enrollment: EnrollmentSettingsToJSON(value['enrollment']),
+    factor: FactorSettingsToJSON(value['factor']),
+    loginRule: value['loginRule'],
+    rememberDevice: RememberDeviceSettingsToJSON(value['rememberDevice']),
+    stepUpAuthentication: StepUpAuthenticationSettingsToJSON(value['stepUpAuthentication']),
+    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
   };
 }

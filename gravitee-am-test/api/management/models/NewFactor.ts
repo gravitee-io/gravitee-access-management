@@ -37,13 +37,7 @@ export interface NewFactor {
    * @type {string}
    * @memberof NewFactor
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewFactor
-   */
-  type: string;
+  configuration: string;
   /**
    *
    * @type {string}
@@ -55,23 +49,29 @@ export interface NewFactor {
    * @type {string}
    * @memberof NewFactor
    */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewFactor
+   */
   name: string;
   /**
    *
    * @type {string}
    * @memberof NewFactor
    */
-  configuration: string;
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewFactor interface.
  */
 export function instanceOfNewFactor(value: object): value is NewFactor {
-  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('factorType' in value) || value['factorType'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -84,11 +84,11 @@ export function NewFactorFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'],
-    factorType: json['factorType'],
-    name: json['name'],
     configuration: json['configuration'],
+    factorType: json['factorType'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -102,10 +102,10 @@ export function NewFactorToJSONTyped(value?: NewFactor | null, ignoreDiscriminat
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    factorType: value['factorType'],
-    name: value['name'],
     configuration: value['configuration'],
+    factorType: value['factorType'],
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
   };
 }

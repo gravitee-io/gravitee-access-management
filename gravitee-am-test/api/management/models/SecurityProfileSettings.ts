@@ -37,13 +37,13 @@ export interface SecurityProfileSettings {
    * @type {boolean}
    * @memberof SecurityProfileSettings
    */
-  enablePlainFapi?: boolean;
+  enableFapiBrazil?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof SecurityProfileSettings
    */
-  enableFapiBrazil?: boolean;
+  enablePlainFapi?: boolean;
 }
 
 /**
@@ -62,8 +62,8 @@ export function SecurityProfileSettingsFromJSONTyped(json: any, ignoreDiscrimina
     return json;
   }
   return {
-    enablePlainFapi: json['enablePlainFapi'] == null ? undefined : json['enablePlainFapi'],
     enableFapiBrazil: json['enableFapiBrazil'] == null ? undefined : json['enableFapiBrazil'],
+    enablePlainFapi: json['enablePlainFapi'] == null ? undefined : json['enablePlainFapi'],
   };
 }
 
@@ -77,7 +77,7 @@ export function SecurityProfileSettingsToJSONTyped(value?: SecurityProfileSettin
   }
 
   return {
-    enablePlainFapi: value['enablePlainFapi'],
     enableFapiBrazil: value['enableFapiBrazil'],
+    enablePlainFapi: value['enablePlainFapi'],
   };
 }

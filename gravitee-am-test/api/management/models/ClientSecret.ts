@@ -34,16 +34,22 @@ import { mapValues } from '../runtime';
 export interface ClientSecret {
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof ClientSecret
    */
-  id?: string;
+  createdAt?: Date;
+  /**
+   *
+   * @type {Date}
+   * @memberof ClientSecret
+   */
+  expiresAt?: Date;
   /**
    *
    * @type {string}
    * @memberof ClientSecret
    */
-  settingsId?: string;
+  id?: string;
   /**
    *
    * @type {string}
@@ -58,16 +64,10 @@ export interface ClientSecret {
   secret?: string;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof ClientSecret
    */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof ClientSecret
-   */
-  expiresAt?: Date;
+  settingsId?: string;
 }
 
 /**
@@ -86,12 +86,12 @@ export function ClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    settingsId: json['settingsId'] == null ? undefined : json['settingsId'],
-    name: json['name'] == null ? undefined : json['name'],
-    secret: json['secret'] == null ? undefined : json['secret'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    secret: json['secret'] == null ? undefined : json['secret'],
+    settingsId: json['settingsId'] == null ? undefined : json['settingsId'],
   };
 }
 
@@ -105,11 +105,11 @@ export function ClientSecretToJSONTyped(value?: ClientSecret | null, ignoreDiscr
   }
 
   return {
-    id: value['id'],
-    settingsId: value['settingsId'],
-    name: value['name'],
-    secret: value['secret'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
+    id: value['id'],
+    name: value['name'],
+    secret: value['secret'],
+    settingsId: value['settingsId'],
   };
 }

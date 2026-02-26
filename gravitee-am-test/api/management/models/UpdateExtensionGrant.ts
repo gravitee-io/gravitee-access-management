@@ -37,19 +37,13 @@ export interface UpdateExtensionGrant {
    * @type {string}
    * @memberof UpdateExtensionGrant
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateExtensionGrant
-   */
-  type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateExtensionGrant
-   */
   configuration: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdateExtensionGrant
+   */
+  createUser?: boolean;
   /**
    *
    * @type {string}
@@ -64,10 +58,16 @@ export interface UpdateExtensionGrant {
   identityProvider?: string;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof UpdateExtensionGrant
    */
-  createUser?: boolean;
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateExtensionGrant
+   */
+  type: string;
   /**
    *
    * @type {boolean}
@@ -80,9 +80,9 @@ export interface UpdateExtensionGrant {
  * Check if a given object implements the UpdateExtensionGrant interface.
  */
 export function instanceOfUpdateExtensionGrant(value: object): value is UpdateExtensionGrant {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -95,12 +95,12 @@ export function UpdateExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator
     return json;
   }
   return {
-    name: json['name'],
-    type: json['type'],
     configuration: json['configuration'],
+    createUser: json['createUser'] == null ? undefined : json['createUser'],
     grantType: json['grantType'] == null ? undefined : json['grantType'],
     identityProvider: json['identityProvider'] == null ? undefined : json['identityProvider'],
-    createUser: json['createUser'] == null ? undefined : json['createUser'],
+    name: json['name'],
+    type: json['type'],
     userExists: json['userExists'] == null ? undefined : json['userExists'],
   };
 }
@@ -115,12 +115,12 @@ export function UpdateExtensionGrantToJSONTyped(value?: UpdateExtensionGrant | n
   }
 
   return {
-    name: value['name'],
-    type: value['type'],
     configuration: value['configuration'],
+    createUser: value['createUser'],
     grantType: value['grantType'],
     identityProvider: value['identityProvider'],
-    createUser: value['createUser'],
+    name: value['name'],
+    type: value['type'],
     userExists: value['userExists'],
   };
 }

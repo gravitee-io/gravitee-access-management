@@ -37,25 +37,25 @@ export interface UpdateRole {
    * @type {string}
    * @memberof UpdateRole
    */
-  name: string;
+  description?: string;
   /**
    *
    * @type {string}
    * @memberof UpdateRole
    */
-  description?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof UpdateRole
-   */
-  permissions?: Array<string>;
+  name: string;
   /**
    *
    * @type {Array<string>}
    * @memberof UpdateRole
    */
   oauthScopes?: Array<string>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof UpdateRole
+   */
+  permissions?: Array<string>;
 }
 
 /**
@@ -75,10 +75,10 @@ export function UpdateRoleFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'] == null ? undefined : json['description'],
-    permissions: json['permissions'] == null ? undefined : json['permissions'],
+    name: json['name'],
     oauthScopes: json['oauthScopes'] == null ? undefined : json['oauthScopes'],
+    permissions: json['permissions'] == null ? undefined : json['permissions'],
   };
 }
 
@@ -92,9 +92,9 @@ export function UpdateRoleToJSONTyped(value?: UpdateRole | null, ignoreDiscrimin
   }
 
   return {
-    name: value['name'],
     description: value['description'],
-    permissions: value['permissions'],
+    name: value['name'],
     oauthScopes: value['oauthScopes'],
+    permissions: value['permissions'],
   };
 }

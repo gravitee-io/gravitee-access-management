@@ -80,7 +80,25 @@ export interface PatchMFASettings {
    * @type {string}
    * @memberof PatchMFASettings
    */
-  loginRule?: string;
+  adaptiveAuthenticationRule?: string;
+  /**
+   *
+   * @type {PatchChallengeSettings}
+   * @memberof PatchMFASettings
+   */
+  challenge?: PatchChallengeSettings;
+  /**
+   *
+   * @type {PatchEnrollSettings}
+   * @memberof PatchMFASettings
+   */
+  enroll?: PatchEnrollSettings;
+  /**
+   *
+   * @type {PatchEnrollmentSettings}
+   * @memberof PatchMFASettings
+   */
+  enrollment?: PatchEnrollmentSettings;
   /**
    *
    * @type {PatchFactorSettings}
@@ -92,7 +110,13 @@ export interface PatchMFASettings {
    * @type {string}
    * @memberof PatchMFASettings
    */
-  stepUpAuthenticationRule?: string;
+  loginRule?: string;
+  /**
+   *
+   * @type {PatchRememberDeviceSettings}
+   * @memberof PatchMFASettings
+   */
+  rememberDevice?: PatchRememberDeviceSettings;
   /**
    *
    * @type {PatchStepUpAuthentication}
@@ -104,31 +128,7 @@ export interface PatchMFASettings {
    * @type {string}
    * @memberof PatchMFASettings
    */
-  adaptiveAuthenticationRule?: string;
-  /**
-   *
-   * @type {PatchRememberDeviceSettings}
-   * @memberof PatchMFASettings
-   */
-  rememberDevice?: PatchRememberDeviceSettings;
-  /**
-   *
-   * @type {PatchEnrollmentSettings}
-   * @memberof PatchMFASettings
-   */
-  enrollment?: PatchEnrollmentSettings;
-  /**
-   *
-   * @type {PatchEnrollSettings}
-   * @memberof PatchMFASettings
-   */
-  enroll?: PatchEnrollSettings;
-  /**
-   *
-   * @type {PatchChallengeSettings}
-   * @memberof PatchMFASettings
-   */
-  challenge?: PatchChallengeSettings;
+  stepUpAuthenticationRule?: string;
 }
 
 /**
@@ -147,16 +147,16 @@ export function PatchMFASettingsFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
-    loginRule: json['loginRule'] == null ? undefined : json['loginRule'],
+    adaptiveAuthenticationRule: json['adaptiveAuthenticationRule'] == null ? undefined : json['adaptiveAuthenticationRule'],
+    challenge: json['challenge'] == null ? undefined : PatchChallengeSettingsFromJSON(json['challenge']),
+    enroll: json['enroll'] == null ? undefined : PatchEnrollSettingsFromJSON(json['enroll']),
+    enrollment: json['enrollment'] == null ? undefined : PatchEnrollmentSettingsFromJSON(json['enrollment']),
     factor: json['factor'] == null ? undefined : PatchFactorSettingsFromJSON(json['factor']),
-    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
+    loginRule: json['loginRule'] == null ? undefined : json['loginRule'],
+    rememberDevice: json['rememberDevice'] == null ? undefined : PatchRememberDeviceSettingsFromJSON(json['rememberDevice']),
     stepUpAuthentication:
       json['stepUpAuthentication'] == null ? undefined : PatchStepUpAuthenticationFromJSON(json['stepUpAuthentication']),
-    adaptiveAuthenticationRule: json['adaptiveAuthenticationRule'] == null ? undefined : json['adaptiveAuthenticationRule'],
-    rememberDevice: json['rememberDevice'] == null ? undefined : PatchRememberDeviceSettingsFromJSON(json['rememberDevice']),
-    enrollment: json['enrollment'] == null ? undefined : PatchEnrollmentSettingsFromJSON(json['enrollment']),
-    enroll: json['enroll'] == null ? undefined : PatchEnrollSettingsFromJSON(json['enroll']),
-    challenge: json['challenge'] == null ? undefined : PatchChallengeSettingsFromJSON(json['challenge']),
+    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
   };
 }
 
@@ -170,14 +170,14 @@ export function PatchMFASettingsToJSONTyped(value?: PatchMFASettings | null, ign
   }
 
   return {
-    loginRule: value['loginRule'],
-    factor: PatchFactorSettingsToJSON(value['factor']),
-    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
-    stepUpAuthentication: PatchStepUpAuthenticationToJSON(value['stepUpAuthentication']),
     adaptiveAuthenticationRule: value['adaptiveAuthenticationRule'],
-    rememberDevice: PatchRememberDeviceSettingsToJSON(value['rememberDevice']),
-    enrollment: PatchEnrollmentSettingsToJSON(value['enrollment']),
-    enroll: PatchEnrollSettingsToJSON(value['enroll']),
     challenge: PatchChallengeSettingsToJSON(value['challenge']),
+    enroll: PatchEnrollSettingsToJSON(value['enroll']),
+    enrollment: PatchEnrollmentSettingsToJSON(value['enrollment']),
+    factor: PatchFactorSettingsToJSON(value['factor']),
+    loginRule: value['loginRule'],
+    rememberDevice: PatchRememberDeviceSettingsToJSON(value['rememberDevice']),
+    stepUpAuthentication: PatchStepUpAuthenticationToJSON(value['stepUpAuthentication']),
+    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
   };
 }

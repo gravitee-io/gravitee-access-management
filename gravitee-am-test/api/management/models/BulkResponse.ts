@@ -42,16 +42,16 @@ import {
 export interface BulkResponse {
   /**
    *
-   * @type {Array<BulkOperationResultObject>}
-   * @memberof BulkResponse
-   */
-  results?: Array<BulkOperationResultObject>;
-  /**
-   *
    * @type {boolean}
    * @memberof BulkResponse
    */
   allSuccessful?: boolean;
+  /**
+   *
+   * @type {Array<BulkOperationResultObject>}
+   * @memberof BulkResponse
+   */
+  results?: Array<BulkOperationResultObject>;
 }
 
 /**
@@ -70,8 +70,8 @@ export function BulkResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    results: json['results'] == null ? undefined : (json['results'] as Array<any>).map(BulkOperationResultObjectFromJSON),
     allSuccessful: json['allSuccessful'] == null ? undefined : json['allSuccessful'],
+    results: json['results'] == null ? undefined : (json['results'] as Array<any>).map(BulkOperationResultObjectFromJSON),
   };
 }
 
@@ -85,7 +85,7 @@ export function BulkResponseToJSONTyped(value?: BulkResponse | null, ignoreDiscr
   }
 
   return {
-    results: value['results'] == null ? undefined : (value['results'] as Array<any>).map(BulkOperationResultObjectToJSON),
     allSuccessful: value['allSuccessful'],
+    results: value['results'] == null ? undefined : (value['results'] as Array<any>).map(BulkOperationResultObjectToJSON),
   };
 }

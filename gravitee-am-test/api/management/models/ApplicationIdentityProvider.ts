@@ -40,16 +40,16 @@ export interface ApplicationIdentityProvider {
   identity?: string;
   /**
    *
-   * @type {string}
-   * @memberof ApplicationIdentityProvider
-   */
-  selectionRule?: string;
-  /**
-   *
    * @type {number}
    * @memberof ApplicationIdentityProvider
    */
   priority?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationIdentityProvider
+   */
+  selectionRule?: string;
 }
 
 /**
@@ -69,8 +69,8 @@ export function ApplicationIdentityProviderFromJSONTyped(json: any, ignoreDiscri
   }
   return {
     identity: json['identity'] == null ? undefined : json['identity'],
-    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
     priority: json['priority'] == null ? undefined : json['priority'],
+    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
   };
 }
 
@@ -88,7 +88,7 @@ export function ApplicationIdentityProviderToJSONTyped(
 
   return {
     identity: value['identity'],
-    selectionRule: value['selectionRule'],
     priority: value['priority'],
+    selectionRule: value['selectionRule'],
   };
 }

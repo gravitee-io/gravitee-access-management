@@ -37,25 +37,13 @@ export interface NewScope {
    * @type {string}
    * @memberof NewScope
    */
-  key: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewScope
-   */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewScope
-   */
   description: string;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof NewScope
    */
-  iconUri?: string;
+  discovery?: boolean;
   /**
    *
    * @type {number}
@@ -64,10 +52,22 @@ export interface NewScope {
   expiresIn?: number;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof NewScope
    */
-  discovery?: boolean;
+  iconUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewScope
+   */
+  key: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewScope
+   */
+  name: string;
   /**
    *
    * @type {boolean}
@@ -80,9 +80,9 @@ export interface NewScope {
  * Check if a given object implements the NewScope interface.
  */
 export function instanceOfNewScope(value: object): value is NewScope {
+  if (!('description' in value) || value['description'] === undefined) return false;
   if (!('key' in value) || value['key'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('description' in value) || value['description'] === undefined) return false;
   return true;
 }
 
@@ -95,12 +95,12 @@ export function NewScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
+    description: json['description'],
+    discovery: json['discovery'] == null ? undefined : json['discovery'],
+    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
     key: json['key'],
     name: json['name'],
-    description: json['description'],
-    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
-    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
-    discovery: json['discovery'] == null ? undefined : json['discovery'],
     parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
   };
 }
@@ -115,12 +115,12 @@ export function NewScopeToJSONTyped(value?: NewScope | null, ignoreDiscriminator
   }
 
   return {
+    description: value['description'],
+    discovery: value['discovery'],
+    expiresIn: value['expiresIn'],
+    iconUri: value['iconUri'],
     key: value['key'],
     name: value['name'],
-    description: value['description'],
-    iconUri: value['iconUri'],
-    expiresIn: value['expiresIn'],
-    discovery: value['discovery'],
     parameterized: value['parameterized'],
   };
 }

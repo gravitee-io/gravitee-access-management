@@ -62,9 +62,7 @@ export interface SessionManagementGatewayFixture {
 export const initFixture = async (): Promise<SessionManagementGatewayFixture> => {
   const accessToken = await requestAdminAccessToken();
 
-  let domain = await createDomain(accessToken, uniqueName('session-gw', true), 'test session management').then((createdDomain) =>
-    startDomain(createdDomain.id, accessToken),
-  );
+  let domain = await createDomain(accessToken, uniqueName('session-gw', true), 'test session management');
 
   const customIdp = jdbc === 'jdbc' ? await createJdbcIdp(domain.id, accessToken) : await createMongoIdp(domain.id, accessToken);
 
@@ -78,7 +76,7 @@ export const initFixture = async (): Promise<SessionManagementGatewayFixture> =>
     });
   };
 
-  // Create all apps upfront before syncing
+  // Create all apps BEFORE starting domain — initial sync picks up everything
   const appPersistentTrue = await createApp(uniqueName('persistent-on', true), {
     inherited: false,
     session: { persistent: true },
@@ -111,11 +109,8 @@ export const initFixture = async (): Promise<SessionManagementGatewayFixture> =>
     session: { persistent: false },
   });
 
-  // Wait for a NEW sync cycle so the gateway picks up all newly created apps.
-  // waitForDomainReady/waitForDomainSync return immediately if the domain is already
-  // deployed — which it is, since we started it before creating apps.
-  await waitForNextSync(domain.id);
-
+  // Start domain after all resources are created — initial sync includes everything
+  domain = await startDomain(domain.id, accessToken);
   const started = await waitForDomainStart(domain);
   domain = started.domain;
   const openIdConfiguration = started.oidcConfig;

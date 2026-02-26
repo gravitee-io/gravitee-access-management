@@ -34,16 +34,16 @@ import { mapValues } from '../runtime';
 export interface ErrorEntity {
   /**
    *
-   * @type {string}
-   * @memberof ErrorEntity
-   */
-  message?: string;
-  /**
-   *
    * @type {number}
    * @memberof ErrorEntity
    */
   http_status?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ErrorEntity
+   */
+  message?: string;
 }
 
 /**
@@ -62,8 +62,8 @@ export function ErrorEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    message: json['message'] == null ? undefined : json['message'],
     http_status: json['http_status'] == null ? undefined : json['http_status'],
+    message: json['message'] == null ? undefined : json['message'],
   };
 }
 
@@ -77,7 +77,7 @@ export function ErrorEntityToJSONTyped(value?: ErrorEntity | null, ignoreDiscrim
   }
 
   return {
-    message: value['message'],
     http_status: value['http_status'],
+    message: value['message'],
   };
 }

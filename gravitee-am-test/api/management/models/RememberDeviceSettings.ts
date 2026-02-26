@@ -40,16 +40,16 @@ export interface RememberDeviceSettings {
   active?: boolean;
   /**
    *
-   * @type {number}
-   * @memberof RememberDeviceSettings
-   */
-  expirationTimeSeconds?: number;
-  /**
-   *
    * @type {string}
    * @memberof RememberDeviceSettings
    */
   deviceIdentifierId?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof RememberDeviceSettings
+   */
+  expirationTimeSeconds?: number;
   /**
    *
    * @type {boolean}
@@ -81,8 +81,8 @@ export function RememberDeviceSettingsFromJSONTyped(json: any, ignoreDiscriminat
   }
   return {
     active: json['active'] == null ? undefined : json['active'],
-    expirationTimeSeconds: json['expirationTimeSeconds'] == null ? undefined : json['expirationTimeSeconds'],
     deviceIdentifierId: json['deviceIdentifierId'] == null ? undefined : json['deviceIdentifierId'],
+    expirationTimeSeconds: json['expirationTimeSeconds'] == null ? undefined : json['expirationTimeSeconds'],
     skipChallengeWhenRememberDevice: json['skipChallengeWhenRememberDevice'] == null ? undefined : json['skipChallengeWhenRememberDevice'],
     skipRememberDevice: json['skipRememberDevice'] == null ? undefined : json['skipRememberDevice'],
   };
@@ -99,8 +99,8 @@ export function RememberDeviceSettingsToJSONTyped(value?: RememberDeviceSettings
 
   return {
     active: value['active'],
-    expirationTimeSeconds: value['expirationTimeSeconds'],
     deviceIdentifierId: value['deviceIdentifierId'],
+    expirationTimeSeconds: value['expirationTimeSeconds'],
     skipChallengeWhenRememberDevice: value['skipChallengeWhenRememberDevice'],
     skipRememberDevice: value['skipRememberDevice'],
   };

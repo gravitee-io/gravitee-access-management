@@ -42,16 +42,16 @@ import {
 export interface ProtectedResourcePage {
   /**
    *
-   * @type {Array<ProtectedResourcePrimaryData>}
-   * @memberof ProtectedResourcePage
-   */
-  data?: Array<ProtectedResourcePrimaryData>;
-  /**
-   *
    * @type {number}
    * @memberof ProtectedResourcePage
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<ProtectedResourcePrimaryData>}
+   * @memberof ProtectedResourcePage
+   */
+  data?: Array<ProtectedResourcePrimaryData>;
   /**
    *
    * @type {number}
@@ -76,8 +76,8 @@ export function ProtectedResourcePageFromJSONTyped(json: any, ignoreDiscriminato
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(ProtectedResourcePrimaryDataFromJSON),
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(ProtectedResourcePrimaryDataFromJSON),
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -92,8 +92,8 @@ export function ProtectedResourcePageToJSONTyped(value?: ProtectedResourcePage |
   }
 
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(ProtectedResourcePrimaryDataToJSON),
     currentPage: value['currentPage'],
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(ProtectedResourcePrimaryDataToJSON),
     totalCount: value['totalCount'],
   };
 }

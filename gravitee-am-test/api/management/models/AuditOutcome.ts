@@ -37,13 +37,13 @@ export interface AuditOutcome {
    * @type {string}
    * @memberof AuditOutcome
    */
-  status?: AuditOutcomeStatusEnum;
+  message?: string;
   /**
    *
    * @type {string}
    * @memberof AuditOutcome
    */
-  message?: string;
+  status?: AuditOutcomeStatusEnum;
 }
 
 /**
@@ -71,8 +71,8 @@ export function AuditOutcomeFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    status: json['status'] == null ? undefined : json['status'],
     message: json['message'] == null ? undefined : json['message'],
+    status: json['status'] == null ? undefined : json['status'],
   };
 }
 
@@ -86,7 +86,7 @@ export function AuditOutcomeToJSONTyped(value?: AuditOutcome | null, ignoreDiscr
   }
 
   return {
-    status: value['status'],
     message: value['message'],
+    status: value['status'],
   };
 }

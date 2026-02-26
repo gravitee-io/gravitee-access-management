@@ -37,19 +37,13 @@ export interface AuditEntity {
    * @type {string}
    * @memberof AuditEntity
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AuditEntity
-   */
   alternativeId?: string;
   /**
    *
-   * @type {string}
+   * @type {{ [key: string]: any; }}
    * @memberof AuditEntity
    */
-  type?: string;
+  attributes?: { [key: string]: any };
   /**
    *
    * @type {string}
@@ -61,7 +55,7 @@ export interface AuditEntity {
    * @type {string}
    * @memberof AuditEntity
    */
-  referenceType?: AuditEntityReferenceTypeEnum;
+  id?: string;
   /**
    *
    * @type {string}
@@ -70,10 +64,16 @@ export interface AuditEntity {
   referenceId?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {string}
    * @memberof AuditEntity
    */
-  attributes?: { [key: string]: any };
+  referenceType?: AuditEntityReferenceTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof AuditEntity
+   */
+  type?: string;
 }
 
 /**
@@ -105,13 +105,13 @@ export function AuditEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
     alternativeId: json['alternativeId'] == null ? undefined : json['alternativeId'],
-    type: json['type'] == null ? undefined : json['type'],
-    displayName: json['displayName'] == null ? undefined : json['displayName'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     attributes: json['attributes'] == null ? undefined : json['attributes'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    id: json['id'] == null ? undefined : json['id'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -125,12 +125,12 @@ export function AuditEntityToJSONTyped(value?: AuditEntity | null, ignoreDiscrim
   }
 
   return {
-    id: value['id'],
     alternativeId: value['alternativeId'],
-    type: value['type'],
-    displayName: value['displayName'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
     attributes: value['attributes'],
+    displayName: value['displayName'],
+    id: value['id'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    type: value['type'],
   };
 }

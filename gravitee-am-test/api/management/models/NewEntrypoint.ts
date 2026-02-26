@@ -37,25 +37,25 @@ export interface NewEntrypoint {
    * @type {string}
    * @memberof NewEntrypoint
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewEntrypoint
-   */
   description?: string;
   /**
    *
    * @type {string}
    * @memberof NewEntrypoint
    */
-  url: string;
+  name: string;
   /**
    *
    * @type {Array<string>}
    * @memberof NewEntrypoint
    */
   tags: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof NewEntrypoint
+   */
+  url: string;
 }
 
 /**
@@ -63,8 +63,8 @@ export interface NewEntrypoint {
  */
 export function instanceOfNewEntrypoint(value: object): value is NewEntrypoint {
   if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('url' in value) || value['url'] === undefined) return false;
   if (!('tags' in value) || value['tags'] === undefined) return false;
+  if (!('url' in value) || value['url'] === undefined) return false;
   return true;
 }
 
@@ -77,10 +77,10 @@ export function NewEntrypointFromJSONTyped(json: any, ignoreDiscriminator: boole
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'] == null ? undefined : json['description'],
-    url: json['url'],
+    name: json['name'],
     tags: json['tags'],
+    url: json['url'],
   };
 }
 
@@ -94,9 +94,9 @@ export function NewEntrypointToJSONTyped(value?: NewEntrypoint | null, ignoreDis
   }
 
   return {
-    name: value['name'],
     description: value['description'],
-    url: value['url'],
+    name: value['name'],
     tags: value['tags'],
+    url: value['url'],
   };
 }

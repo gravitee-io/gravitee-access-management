@@ -34,24 +34,6 @@ import { mapValues } from '../runtime';
 export interface UserIdentity {
   /**
    *
-   * @type {string}
-   * @memberof UserIdentity
-   */
-  userId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserIdentity
-   */
-  username?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserIdentity
-   */
-  providerId?: string;
-  /**
-   *
    * @type {{ [key: string]: any; }}
    * @memberof UserIdentity
    */
@@ -62,6 +44,24 @@ export interface UserIdentity {
    * @memberof UserIdentity
    */
   linkedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof UserIdentity
+   */
+  providerId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserIdentity
+   */
+  userId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserIdentity
+   */
+  username?: string;
 }
 
 /**
@@ -80,11 +80,11 @@ export function UserIdentityFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    userId: json['userId'] == null ? undefined : json['userId'],
-    username: json['username'] == null ? undefined : json['username'],
-    providerId: json['providerId'] == null ? undefined : json['providerId'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
     linkedAt: json['linkedAt'] == null ? undefined : new Date(json['linkedAt']),
+    providerId: json['providerId'] == null ? undefined : json['providerId'],
+    userId: json['userId'] == null ? undefined : json['userId'],
+    username: json['username'] == null ? undefined : json['username'],
   };
 }
 
@@ -98,10 +98,10 @@ export function UserIdentityToJSONTyped(value?: UserIdentity | null, ignoreDiscr
   }
 
   return {
-    userId: value['userId'],
-    username: value['username'],
-    providerId: value['providerId'],
     additionalInformation: value['additionalInformation'],
     linkedAt: value['linkedAt'] == null ? value['linkedAt'] : value['linkedAt'].toISOString(),
+    providerId: value['providerId'],
+    userId: value['userId'],
+    username: value['username'],
   };
 }

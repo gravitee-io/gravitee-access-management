@@ -34,24 +34,6 @@ import { mapValues } from '../runtime';
 export interface UserIdentityEntity {
   /**
    *
-   * @type {string}
-   * @memberof UserIdentityEntity
-   */
-  userId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserIdentityEntity
-   */
-  username?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserIdentityEntity
-   */
-  providerId?: string;
-  /**
-   *
    * @type {{ [key: string]: any; }}
    * @memberof UserIdentityEntity
    */
@@ -67,7 +49,25 @@ export interface UserIdentityEntity {
    * @type {string}
    * @memberof UserIdentityEntity
    */
+  providerId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserIdentityEntity
+   */
   providerName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserIdentityEntity
+   */
+  userId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserIdentityEntity
+   */
+  username?: string;
 }
 
 /**
@@ -86,12 +86,12 @@ export function UserIdentityEntityFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
-    userId: json['userId'] == null ? undefined : json['userId'],
-    username: json['username'] == null ? undefined : json['username'],
-    providerId: json['providerId'] == null ? undefined : json['providerId'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
     linkedAt: json['linkedAt'] == null ? undefined : new Date(json['linkedAt']),
+    providerId: json['providerId'] == null ? undefined : json['providerId'],
     providerName: json['providerName'] == null ? undefined : json['providerName'],
+    userId: json['userId'] == null ? undefined : json['userId'],
+    username: json['username'] == null ? undefined : json['username'],
   };
 }
 
@@ -105,11 +105,11 @@ export function UserIdentityEntityToJSONTyped(value?: UserIdentityEntity | null,
   }
 
   return {
-    userId: value['userId'],
-    username: value['username'],
-    providerId: value['providerId'],
     additionalInformation: value['additionalInformation'],
     linkedAt: value['linkedAt'] == null ? value['linkedAt'] : value['linkedAt'].toISOString(),
+    providerId: value['providerId'],
     providerName: value['providerName'],
+    userId: value['userId'],
+    username: value['username'],
   };
 }
