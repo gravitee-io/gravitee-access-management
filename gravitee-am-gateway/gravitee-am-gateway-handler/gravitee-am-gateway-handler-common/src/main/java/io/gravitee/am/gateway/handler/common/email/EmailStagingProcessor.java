@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.email;
 
 import io.gravitee.am.common.exception.ActionLeaseException;
+import io.gravitee.am.common.utils.BulkEmailExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -24,14 +25,14 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Manages the lifecycle of the email staging batch processor.
@@ -62,13 +63,17 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
     private final boolean enabled;
 
     private UserRepository userRepository;
-    private ScheduledExecutorService scheduledExecutor;
+    private BulkEmailExecutor bulkEmailExecutor;
+    private AtomicBoolean running = new AtomicBoolean(false);
+
+    private Disposable scheduledJob;
 
     public EmailStagingProcessor(
             EmailStagingService emailStagingService,
             EmailService emailService,
             DataPlaneRegistry dataPlaneRegistry,
             ApplicationService applicationService,
+            BulkEmailExecutor bulkEmailExecutor,
             Domain domain,
             int batchSize,
             int batchPeriod,
@@ -78,6 +83,7 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
         this.emailService = emailService;
         this.dataPlaneRegistry = dataPlaneRegistry;
         this.applicationService = applicationService;
+        this.bulkEmailExecutor = bulkEmailExecutor;
         this.domain = domain;
         this.batchSize = batchSize;
         this.batchPeriod = batchPeriod;
@@ -89,36 +95,28 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() {
         this.userRepository = dataPlaneRegistry.getUserRepository(domain);
         if (enabled) {
-            this.scheduledExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread thread = new Thread(r, "EmailStagingProcessor-" + domain.getId());
-                thread.setDaemon(true);
-                return thread;
-            });
             scheduleEmailStagingProcessing();
         }
     }
 
     @Override
     public void destroy() throws Exception {
-        if (this.scheduledExecutor != null) {
-            log.debug("Shutting down email staging processor for domain {}", domain.getName());
-            this.scheduledExecutor.shutdown();
-            try {
-                if (!this.scheduledExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
-                    log.warn("Email staging processor did not terminate gracefully, forcing shutdown");
-                    this.scheduledExecutor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                log.warn("Interrupted while waiting for email staging processor shutdown", e);
-                this.scheduledExecutor.shutdownNow();
-                Thread.currentThread().interrupt();
-            } finally {
-                emailStagingService.releaseLease(Reference.domain(domain.getId()))
+        if (enabled) {
+            emailStagingService.releaseLease(Reference.domain(domain.getId()))
+                    .doFinally(() -> {
+                        this.running.set(false);
+                        if (scheduledJob != null && !scheduledJob.isDisposed()) {
+                            scheduledJob.dispose();
+                        }
+                    })
                     .subscribe(
                             () -> log.debug("Successfully released emailStaging lease on domain {}", domain.getName()),
                             error -> log.warn("An error occurs while trying to release emailStaging lease on domain {}", domain.getName(), error));
-            }
         }
+    }
+
+    public boolean isRunning() {
+        return this.running.get();
     }
 
     /**
@@ -130,54 +128,63 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
      * </p>
      */
     public void processBatchOfStagingEmails() {
-        log.debug("Start processing batch of {} staging emails for domain {}", batchSize, domain.getName());
-        emailStagingService.acquireLeaseAndFetch(domain.asReference(), batchSize)
-                .flatMapMaybe(stagingEmail ->
-                        userRepository.findById(domain.asReference(), UserId.internal(stagingEmail.getUserId()))
-                                .flatMap(user -> resolveClient(stagingEmail.getApplicationId())
-                                        .map(client -> new EmailContainer(user, client, stagingEmail))
-                                        .switchIfEmpty(Maybe.defer(() -> Maybe.just(new EmailContainer(user, null, stagingEmail))))
-                                ).switchIfEmpty(Maybe.defer(() -> {
-                                    log.warn("User {} not found for staging email {}, marking as processed",
-                                            stagingEmail.getUserId(), stagingEmail.getId());
-                                    stagingEmail.markAsProcessed();
-                                    return emailStagingService.manageAfterProcessing(stagingEmail)
-                                            .flatMapMaybe(ignored -> Maybe.<EmailContainer>empty())
-                                            .onErrorResumeNext(error -> {
-                                                log.warn("Unable to mark as processed the staging email {}", stagingEmail, error);
-                                                return Maybe.empty();
-                                            });
-                                }))
-                ).toList()
-                .observeOn(Schedulers.io())
-                .flattenStreamAsFlowable(containers -> emailService.batch(containers, maxAttempts).stream())
-                .flatMapSingle(container -> emailStagingService.manageAfterProcessing(container.stagingEmail()))
-                .count()
-                .blockingSubscribe(
-                        count -> {
-                            if (count > 0) {
-                                log.debug("Successfully processed {} staging emails", count);
+        if (noOngoingBatch()) {
+            log.debug("Start processing batch of {} staging emails for domain {}", batchSize, domain.getName());
+            emailStagingService.acquireLeaseAndFetch(domain.asReference(), batchSize)
+                    .flatMapMaybe(stagingEmail ->
+                            userRepository.findById(domain.asReference(), UserId.internal(stagingEmail.getUserId()))
+                                    .flatMap(user -> resolveClient(stagingEmail.getApplicationId())
+                                            .map(client -> new EmailContainer(user, client, stagingEmail))
+                                            .switchIfEmpty(Maybe.defer(() -> Maybe.just(new EmailContainer(user, null, stagingEmail))))
+                                    ).switchIfEmpty(Maybe.defer(() -> {
+                                        log.warn("User {} not found for staging email {}, marking as processed",
+                                                stagingEmail.getUserId(), stagingEmail.getId());
+                                        stagingEmail.markAsProcessed();
+                                        return emailStagingService.manageAfterProcessing(stagingEmail)
+                                                .flatMapMaybe(ignored -> Maybe.<EmailContainer>empty())
+                                                .onErrorResumeNext(error -> {
+                                                    log.warn("Unable to mark as processed the staging email {}", stagingEmail, error);
+                                                    return Maybe.empty();
+                                                });
+                                    }))
+                    ).toList()
+                    .observeOn(Schedulers.from(bulkEmailExecutor.getExecutor()))
+                    .flattenStreamAsFlowable(containers -> emailService.batch(containers, maxAttempts).stream())
+                    .flatMapSingle(container -> emailStagingService.manageAfterProcessing(container.stagingEmail()))
+                    .count()
+                    .doFinally(() -> this.running.set(false))
+                    .subscribe(
+                            count -> {
+                                if (count > 0) {
+                                    log.debug("Successfully processed {} staging emails", count);
+                                }
+                            },
+                            error -> {
+                                if (error instanceof ActionLeaseException) {
+                                    log.debug("Lease on emailStaging rejected, will retry in {} seconds", batchPeriod);
+                                } else {
+                                    log.error("An error occurs while trying to process staging emails", error);
+                                }
                             }
-                        },
-                        error -> {
-                            if (error instanceof ActionLeaseException) {
-                                log.debug("Lease on emailStaging rejected, will retry in {} seconds", batchPeriod);
-                            } else {
-                                log.error("An error occurs while trying to process staging emails", error);
-                            }
-                        }
-                );
+                    );
+        }
+    }
+
+    private boolean noOngoingBatch() {
+        // flag the processor as running to not start another task for this domain
+        // until the current on is released
+        return this.running.compareAndSet(false, true);
     }
 
     /**
-     * Schedules the batch processing task with a fixed delay between executions.
-     * Using {@code scheduleWithFixedDelay} ensures that the next execution starts only
-     * after the previous one completes, preventing concurrent runs.
+     * Schedules the batch processing task. The processor is aware of running task to ensure that
+     * the next execution will effectively manage emails only after the previous one completes,
+     * preventing concurrent runs.
      */
     private void scheduleEmailStagingProcessing() {
         log.debug("Scheduling email staging processing for domain {} with period {} seconds",
                 domain.getName(), batchPeriod);
-        this.scheduledExecutor.scheduleWithFixedDelay(
+        this.scheduledJob = this.bulkEmailExecutor.getScheduler().schedulePeriodicallyDirect(
                 () -> {
                     try {
                         processBatchOfStagingEmails();
@@ -190,6 +197,7 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
                 batchPeriod,
                 TimeUnit.SECONDS
         );
+
     }
 
     /**
