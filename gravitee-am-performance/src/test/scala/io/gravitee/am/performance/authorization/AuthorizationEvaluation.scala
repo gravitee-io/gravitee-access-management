@@ -47,6 +47,7 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend, tagFilter:
   private val httpProtocol = http
     .userAgentHeader(s"Gatling - ${backend.name} Evaluation")
     .disableFollowRedirect
+    .shareConnections
 
   private val normalizedTagFilter = tagFilter.map(_.trim).filter(_.nonEmpty)
 
