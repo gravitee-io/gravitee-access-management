@@ -21,7 +21,7 @@
     <parent>
         <groupId>io.gravitee.am.plugins.handlers</groupId>
         <artifactId>gravitee-am-plugins-handlers</artifactId>
-        <version>4.10.4</version>
+        <version>4.10.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-plugins-handlers-dataplane</artifactId>
