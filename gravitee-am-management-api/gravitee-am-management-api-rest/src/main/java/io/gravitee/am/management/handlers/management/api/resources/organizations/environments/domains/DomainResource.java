@@ -352,6 +352,21 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(AuthorizationBundlesResource.class);
     }
 
+    @Path("authorization/policy-sets")
+    public PolicySetsResource getPolicySetsResource() {
+        return resourceContext.getResource(PolicySetsResource.class);
+    }
+
+    @Path("authorization/schemas")
+    public AuthorizationSchemasResource getAuthorizationSchemasResource() {
+        return resourceContext.getResource(AuthorizationSchemasResource.class);
+    }
+
+    @Path("authorization/entity-stores")
+    public EntityStoresResource getEntityStoresResource() {
+        return resourceContext.getResource(EntityStoresResource.class);
+    }
+
     private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

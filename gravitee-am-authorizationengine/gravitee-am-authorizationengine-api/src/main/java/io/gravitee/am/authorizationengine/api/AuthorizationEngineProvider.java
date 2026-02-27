@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.authorizationengine.api;
 
+import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditCallback;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineRequest;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
 import io.gravitee.am.common.plugin.AmPluginProvider;
@@ -49,6 +50,18 @@ public interface AuthorizationEngineProvider extends Service<AuthorizationEngine
      */
     default void updateConfig(String policy, String data, String schema) {
         // No-op by default; providers supporting hot-reload override this
+    }
+
+    /**
+     * Called by the engine manager to provide a callback for reporting
+     * authorization evaluation audit events. Providers that support audit
+     * reporting (e.g., sidecar-based engines receiving external evaluation results)
+     * should store this callback and invoke it for each evaluation decision.
+     *
+     * @param callback the audit callback, never null
+     */
+    default void setAuditCallback(AuthorizationAuditCallback callback) {
+        // No-op by default; providers supporting audit reporting override this
     }
 
     /**

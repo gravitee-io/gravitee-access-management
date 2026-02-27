@@ -17,6 +17,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthorizationBundleService } from '../../../../services/authorization-bundle.service';
+import { PolicySetService } from '../../../../services/policy-set.service';
+import { AuthorizationSchemaService } from '../../../../services/authorization-schema.service';
+import { EntityStoreService } from '../../../../services/entity-store.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
@@ -26,11 +29,27 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   standalone: false,
 })
 export class AuthorizationBundleCreationComponent implements OnInit {
-  bundle: any = { engineType: 'cedar' };
+  bundle: any = {
+    engineType: 'cedar',
+    policySetPinToLatest: true,
+    schemaPinToLatest: true,
+    entityStorePinToLatest: true,
+  };
   domainId: string;
+
+  policySets: any[] = [];
+  schemas: any[] = [];
+  entityStores: any[] = [];
+
+  policySetVersions: any[] = [];
+  schemaVersions: any[] = [];
+  entityStoreVersions: any[] = [];
 
   constructor(
     private authorizationBundleService: AuthorizationBundleService,
+    private policySetService: PolicySetService,
+    private authorizationSchemaService: AuthorizationSchemaService,
+    private entityStoreService: EntityStoreService,
     private snackbarService: SnackbarService,
     private router: Router,
     private route: ActivatedRoute,
@@ -38,6 +57,58 @@ export class AuthorizationBundleCreationComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
+    this.loadComponents();
+  }
+
+  loadComponents() {
+    this.policySetService.findByDomain(this.domainId).subscribe((ps) => (this.policySets = ps));
+    this.authorizationSchemaService.findByDomain(this.domainId).subscribe((s) => (this.schemas = s));
+    this.entityStoreService.findByDomain(this.domainId).subscribe((es) => (this.entityStores = es));
+  }
+
+  onPolicySetChange(policySetId: string) {
+    this.bundle.policySetId = policySetId;
+    if (policySetId) {
+      const ps = this.policySets.find((p) => p.id === policySetId);
+      if (ps) {
+        this.bundle.policySetVersion = ps.latestVersion;
+      }
+      this.policySetService.getVersions(this.domainId, policySetId).subscribe((v) => {
+        this.policySetVersions = v.sort((a: any, b: any) => b.version - a.version);
+      });
+    } else {
+      this.policySetVersions = [];
+    }
+  }
+
+  onSchemaChange(schemaId: string) {
+    this.bundle.schemaId = schemaId;
+    if (schemaId) {
+      const s = this.schemas.find((sc) => sc.id === schemaId);
+      if (s) {
+        this.bundle.schemaVersion = s.latestVersion;
+      }
+      this.authorizationSchemaService.getVersions(this.domainId, schemaId).subscribe((v) => {
+        this.schemaVersions = v.sort((a: any, b: any) => b.version - a.version);
+      });
+    } else {
+      this.schemaVersions = [];
+    }
+  }
+
+  onEntityStoreChange(entityStoreId: string) {
+    this.bundle.entityStoreId = entityStoreId;
+    if (entityStoreId) {
+      const es = this.entityStores.find((e) => e.id === entityStoreId);
+      if (es) {
+        this.bundle.entityStoreVersion = es.latestVersion;
+      }
+      this.entityStoreService.getVersions(this.domainId, entityStoreId).subscribe((v) => {
+        this.entityStoreVersions = v.sort((a: any, b: any) => b.version - a.version);
+      });
+    } else {
+      this.entityStoreVersions = [];
+    }
   }
 
   create() {

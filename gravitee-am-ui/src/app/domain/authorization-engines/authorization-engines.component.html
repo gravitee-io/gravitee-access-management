@@ -40,7 +40,7 @@
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-button [routerLink]="[row.id, 'openfga']" *hasPermission="['domain_authorization_engine_read']"
+            <a mat-button [routerLink]="[row.id, engineRoute(row.type)]" *hasPermission="['domain_authorization_engine_read']"
               ><mat-icon>settings</mat-icon></a
             >
             <button *hasPermission="['domain_authorization_engine_delete']" mat-button (click)="delete(row.id, $event)">

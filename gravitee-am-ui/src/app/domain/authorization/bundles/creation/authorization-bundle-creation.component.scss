@@ -1,1 +1,12 @@
+.component-version-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-left: 8px;
+}
 
+.version-select {
+  flex: 1;
+  max-width: 400px;
+}

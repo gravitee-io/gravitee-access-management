@@ -24,9 +24,11 @@ import java.util.Date;
 import java.util.Objects;
 
 /**
- * Atomic deployment unit for Cedar authorization: bundles together
- * policy text, entity data, and schema as a single versioned artefact.
- * One active bundle per domain.
+ * Composition pointer that ties together a {@link PolicySet}, an {@link AuthorizationSchema},
+ * and an {@link EntityStore} at specific versions. Multiple bundles per domain are allowed;
+ * each authorization engine (sidecar) references one bundle via its configuration.
+ * <p>
+ * The bundle itself is not versioned — version history lives in each component.
  */
 @Getter
 @Setter
@@ -46,25 +48,31 @@ public class AuthorizationBundle {
      */
     private String engineType;
 
-    /**
-     * Cedar schema JSON defining entity types and actions.
-     */
-    private String schema;
+    // --- Component references ---
 
+    private String policySetId;
+    private int policySetVersion;
     /**
-     * Cedar policy text (one or more permit/forbid statements).
+     * When true, the gateway always resolves the latest version of the policy set,
+     * ignoring {@link #policySetVersion}.
      */
-    private String policies;
+    private boolean policySetPinToLatest;
 
+    private String schemaId;
+    private int schemaVersion;
     /**
-     * Cedar entities JSON array (entity definitions with attributes and hierarchy).
+     * When true, the gateway always resolves the latest version of the schema,
+     * ignoring {@link #schemaVersion}.
      */
-    private String entities;
+    private boolean schemaPinToLatest;
 
+    private String entityStoreId;
+    private int entityStoreVersion;
     /**
-     * Auto-incremented on each update. Starts at 1.
+     * When true, the gateway always resolves the latest version of the entity store,
+     * ignoring {@link #entityStoreVersion}.
      */
-    private int version;
+    private boolean entityStorePinToLatest;
 
     @Schema(type = "java.lang.Long")
     private Date createdAt;
@@ -78,10 +86,15 @@ public class AuthorizationBundle {
         this.name = other.name;
         this.description = other.description;
         this.engineType = other.engineType;
-        this.schema = other.schema;
-        this.policies = other.policies;
-        this.entities = other.entities;
-        this.version = other.version;
+        this.policySetId = other.policySetId;
+        this.policySetVersion = other.policySetVersion;
+        this.policySetPinToLatest = other.policySetPinToLatest;
+        this.schemaId = other.schemaId;
+        this.schemaVersion = other.schemaVersion;
+        this.schemaPinToLatest = other.schemaPinToLatest;
+        this.entityStoreId = other.entityStoreId;
+        this.entityStoreVersion = other.entityStoreVersion;
+        this.entityStorePinToLatest = other.entityStorePinToLatest;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }

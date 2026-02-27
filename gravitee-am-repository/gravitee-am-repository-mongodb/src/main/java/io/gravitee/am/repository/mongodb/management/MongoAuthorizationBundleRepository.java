@@ -119,10 +119,15 @@ public class MongoAuthorizationBundleRepository extends AbstractManagementMongoR
         bundle.setName(mongo.getName());
         bundle.setDescription(mongo.getDescription());
         bundle.setEngineType(mongo.getEngineType());
-        bundle.setSchema(mongo.getSchema());
-        bundle.setPolicies(mongo.getPolicies());
-        bundle.setEntities(mongo.getEntities());
-        bundle.setVersion(mongo.getVersion());
+        bundle.setPolicySetId(mongo.getPolicySetId());
+        bundle.setPolicySetVersion(mongo.getPolicySetVersion());
+        bundle.setPolicySetPinToLatest(mongo.isPolicySetPinToLatest());
+        bundle.setSchemaId(mongo.getSchemaId());
+        bundle.setSchemaVersion(mongo.getSchemaVersion());
+        bundle.setSchemaPinToLatest(mongo.isSchemaPinToLatest());
+        bundle.setEntityStoreId(mongo.getEntityStoreId());
+        bundle.setEntityStoreVersion(mongo.getEntityStoreVersion());
+        bundle.setEntityStorePinToLatest(mongo.isEntityStorePinToLatest());
         bundle.setCreatedAt(mongo.getCreatedAt());
         bundle.setUpdatedAt(mongo.getUpdatedAt());
 
@@ -140,10 +145,15 @@ public class MongoAuthorizationBundleRepository extends AbstractManagementMongoR
         mongo.setName(bundle.getName());
         mongo.setDescription(bundle.getDescription());
         mongo.setEngineType(bundle.getEngineType());
-        mongo.setSchema(bundle.getSchema());
-        mongo.setPolicies(bundle.getPolicies());
-        mongo.setEntities(bundle.getEntities());
-        mongo.setVersion(bundle.getVersion());
+        mongo.setPolicySetId(bundle.getPolicySetId());
+        mongo.setPolicySetVersion(bundle.getPolicySetVersion());
+        mongo.setPolicySetPinToLatest(bundle.isPolicySetPinToLatest());
+        mongo.setSchemaId(bundle.getSchemaId());
+        mongo.setSchemaVersion(bundle.getSchemaVersion());
+        mongo.setSchemaPinToLatest(bundle.isSchemaPinToLatest());
+        mongo.setEntityStoreId(bundle.getEntityStoreId());
+        mongo.setEntityStoreVersion(bundle.getEntityStoreVersion());
+        mongo.setEntityStorePinToLatest(bundle.isEntityStorePinToLatest());
         mongo.setCreatedAt(bundle.getCreatedAt());
         mongo.setUpdatedAt(bundle.getUpdatedAt());
 

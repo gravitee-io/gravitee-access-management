@@ -16,6 +16,9 @@
 package io.gravitee.am.gateway.handler.common.authorizationengine.impl;
 
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
+import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditEvent;
+import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineRequest;
+import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
 import io.gravitee.am.common.event.AuthorizationBundleEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
 import io.gravitee.am.common.event.EventManager;
@@ -28,8 +31,18 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.am.model.AuthorizationBundle;
 import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
+import io.gravitee.am.repository.management.api.AuthorizationSchemaRepository;
+import io.gravitee.am.repository.management.api.AuthorizationSchemaVersionRepository;
+import io.gravitee.am.repository.management.api.EntityStoreRepository;
+import io.gravitee.am.repository.management.api.EntityStoreVersionRepository;
+import io.gravitee.am.repository.management.api.PolicySetRepository;
+import io.gravitee.am.repository.management.api.PolicySetVersionRepository;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.gateway.PermissionEvaluatedAuditBuilder;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -68,7 +81,28 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     private AuthorizationBundleRepository authorizationBundleRepository;
 
     @Autowired
+    private PolicySetRepository policySetRepository;
+
+    @Autowired
+    private PolicySetVersionRepository policySetVersionRepository;
+
+    @Autowired
+    private AuthorizationSchemaRepository authorizationSchemaRepository;
+
+    @Autowired
+    private AuthorizationSchemaVersionRepository authorizationSchemaVersionRepository;
+
+    @Autowired
+    private EntityStoreRepository entityStoreRepository;
+
+    @Autowired
+    private EntityStoreVersionRepository entityStoreVersionRepository;
+
+    @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Autowired
+    private AuditService auditService;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -193,6 +227,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
             clearProvider(authorizationEngine.getId());
             if (provider != null) {
                 providers.put(authorizationEngine.getId(), provider);
+                provider.setAuditCallback(this::reportAuditEvent);
 
                 String bundleId = extractBundleId(authorizationEngine.getConfiguration());
                 if (bundleId != null && !bundleId.isBlank()) {
@@ -253,12 +288,13 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
         logger.info("Pushing bundle {} to engine {} for domain {}", bundleId, authorizationEngine.getId(), domain.getName());
         authorizationBundleRepository.findById(bundleId)
+                .flatMap(this::resolveBundleContent)
                 .subscribe(
-                        bundle -> {
+                        resolved -> {
                             try {
-                                provider.updateConfig(bundle.getPolicies(), bundle.getEntities(), bundle.getSchema());
-                                logger.info("Bundle {} (v{}) pushed to engine {} for domain {}",
-                                        bundleId, bundle.getVersion(), authorizationEngine.getId(), domain.getName());
+                                provider.updateConfig(resolved[0], resolved[1], resolved[2]);
+                                logger.info("Bundle {} pushed to engine {} for domain {}",
+                                        bundleId, authorizationEngine.getId(), domain.getName());
                             } catch (Exception e) {
                                 logger.error("Failed to push bundle {} to engine {} for domain {}",
                                         bundleId, authorizationEngine.getId(), domain.getName(), e);
@@ -318,9 +354,41 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     /**
-     * Fetch a specific authorization bundle and push its content
-     * to providers that are bound to this bundle via their configuration.
+     * Report an authorization evaluation event received from a provider (e.g., sidecar audit callback).
+     * Converts the provider-agnostic {@link AuthorizationAuditEvent} into a
+     * {@link PermissionEvaluatedAuditBuilder} and delegates to the gateway's audit pipeline.
      */
+    private void reportAuditEvent(AuthorizationAuditEvent event) {
+        try {
+            AuthorizationEngineRequest request = AuthorizationEngineRequest.builder()
+                    .subject(AuthorizationEngineRequest.Subject.builder()
+                            .type(event.principalType())
+                            .id(event.principalId())
+                            .build())
+                    .action(AuthorizationEngineRequest.Action.builder()
+                            .name(event.action())
+                            .build())
+                    .resource(AuthorizationEngineRequest.Resource.builder()
+                            .type(event.resourceType())
+                            .id(event.resourceId())
+                            .build())
+                    .build();
+
+            AuthorizationEngineResponse response = new AuthorizationEngineResponse(event.decision(), null);
+
+            auditService.report(AuditBuilder.builder(PermissionEvaluatedAuditBuilder.class)
+                    .domain(domain)
+                    .decisionId(event.decisionId())
+                    .request(request)
+                    .response(response));
+
+            logger.debug("Reported authorization audit event: decisionId={}, decision={}, engine={}",
+                    event.decisionId(), event.decision(), event.engine());
+        } catch (Exception e) {
+            logger.error("Failed to report authorization audit event: decisionId={}", event.decisionId(), e);
+        }
+    }
+
     private void hotReloadFromBundle(String bundleId) {
         if (providers.isEmpty()) {
             logger.debug("No running providers to hot-reload for domain {}", domain.getName());
@@ -328,16 +396,16 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         }
 
         authorizationBundleRepository.findById(bundleId)
+                .flatMap(this::resolveBundleContent)
                 .subscribe(
-                        bundle -> {
-                            logger.info("Hot-reloading bundle {} (v{}) for domain {}",
-                                    bundle.getId(), bundle.getVersion(), domain.getName());
+                        resolved -> {
+                            logger.info("Hot-reloading bundle {} for domain {}", bundleId, domain.getName());
                             engineBundleBindings.forEach((engineId, bId) -> {
                                 if (bundleId.equals(bId)) {
                                     AuthorizationEngineProvider provider = providers.get(engineId);
                                     if (provider != null) {
                                         try {
-                                            provider.updateConfig(bundle.getPolicies(), bundle.getEntities(), bundle.getSchema());
+                                            provider.updateConfig(resolved[0], resolved[1], resolved[2]);
                                         } catch (Exception e) {
                                             logger.error("Failed to hot-reload bundle for engine {} in domain {}", engineId, domain.getName(), e);
                                         }
@@ -350,5 +418,61 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                         () -> logger.warn("Bundle {} not found for hot-reload in domain {}",
                                 bundleId, domain.getName())
                 );
+    }
+
+    /**
+     * Resolves a bundle's component references into actual content.
+     * Returns a Maybe of String[3]: [policies, entities, schema].
+     * Supports pinToLatest: if true, resolves the latest version; otherwise uses the specific version from the bundle.
+     */
+    private Maybe<String[]> resolveBundleContent(AuthorizationBundle bundle) {
+        Single<String> policiesSingle = bundle.getPolicySetId() != null
+                ? resolvePolicySetContent(bundle)
+                : Single.just("");
+
+        Single<String> entitiesSingle = bundle.getEntityStoreId() != null
+                ? resolveEntityStoreContent(bundle)
+                : Single.just("");
+
+        Single<String> schemaSingle = bundle.getSchemaId() != null
+                ? resolveSchemaContent(bundle)
+                : Single.just("");
+
+        return Single.zip(policiesSingle, entitiesSingle, schemaSingle,
+                (policies, entities, schema) -> new String[]{policies, entities, schema})
+                .toMaybe();
+    }
+
+    private Single<String> resolvePolicySetContent(AuthorizationBundle bundle) {
+        if (bundle.isPolicySetPinToLatest()) {
+            return policySetVersionRepository.findLatestByPolicySetId(bundle.getPolicySetId())
+                    .map(v -> v.getContent())
+                    .defaultIfEmpty("");
+        }
+        return policySetVersionRepository.findByPolicySetIdAndVersion(bundle.getPolicySetId(), bundle.getPolicySetVersion())
+                .map(v -> v.getContent())
+                .defaultIfEmpty("");
+    }
+
+    private Single<String> resolveEntityStoreContent(AuthorizationBundle bundle) {
+        if (bundle.isEntityStorePinToLatest()) {
+            return entityStoreVersionRepository.findLatestByEntityStoreId(bundle.getEntityStoreId())
+                    .map(v -> v.getContent())
+                    .defaultIfEmpty("");
+        }
+        return entityStoreVersionRepository.findByEntityStoreIdAndVersion(bundle.getEntityStoreId(), bundle.getEntityStoreVersion())
+                .map(v -> v.getContent())
+                .defaultIfEmpty("");
+    }
+
+    private Single<String> resolveSchemaContent(AuthorizationBundle bundle) {
+        if (bundle.isSchemaPinToLatest()) {
+            return authorizationSchemaVersionRepository.findLatestBySchemaId(bundle.getSchemaId())
+                    .map(v -> v.getContent())
+                    .defaultIfEmpty("");
+        }
+        return authorizationSchemaVersionRepository.findBySchemaIdAndVersion(bundle.getSchemaId(), bundle.getSchemaVersion())
+                .map(v -> v.getContent())
+                .defaultIfEmpty("");
     }
 }

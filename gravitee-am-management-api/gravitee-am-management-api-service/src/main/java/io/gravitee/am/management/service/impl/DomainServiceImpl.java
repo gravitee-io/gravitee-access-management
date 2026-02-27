@@ -56,7 +56,11 @@ import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.AuthorizationBundleService;
 import io.gravitee.am.service.AuthorizationEngineService;
+import io.gravitee.am.service.AuthorizationSchemaService;
+import io.gravitee.am.service.EntityStoreService;
+import io.gravitee.am.service.PolicySetService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
@@ -275,6 +279,14 @@ public class DomainServiceImpl implements DomainService {
     private ServiceResourceService serviceResourceService;
     @Autowired
     private AuthorizationEngineService authorizationEngineService;
+    @Autowired
+    private AuthorizationBundleService authorizationBundleService;
+    @Autowired
+    private PolicySetService policySetService;
+    @Autowired
+    private AuthorizationSchemaService authorizationSchemaService;
+    @Autowired
+    private EntityStoreService entityStoreService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -703,6 +715,10 @@ public class DomainServiceImpl implements DomainService {
                             // delete certificate credentials
                             .andThen(certificateCredentialService.deleteByDomain(domain))
                             .andThen(authorizationEngineService.deleteByDomain(domainId))
+                            .andThen(authorizationBundleService.deleteByDomain(domainId))
+                            .andThen(policySetService.deleteByDomain(domainId))
+                            .andThen(authorizationSchemaService.deleteByDomain(domainId))
+                            .andThen(entityStoreService.deleteByDomain(domainId))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)

@@ -90,6 +90,15 @@ export class DomainSettingsAuthorizationEnginesComponent implements OnInit {
       .subscribe();
   }
 
+  engineRoute(type: string): string {
+    switch (type) {
+      case 'sidecar':
+        return 'sidecar';
+      default:
+        return 'openfga';
+    }
+  }
+
   private toPluginMap(plugins: any[]): Record<string, any> {
     if (!Array.isArray(plugins)) {
       return plugins || {};

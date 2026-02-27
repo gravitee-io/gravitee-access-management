@@ -40,43 +40,79 @@
             </mat-select>
             <mat-hint>The authorization engine type for this bundle.</mat-hint>
           </mat-form-field>
+        </div>
+      </div>
 
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Components</h5>
+        </div>
+        <div fxLayout="column">
+          <!-- Policy Set -->
           <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Policies</mat-label>
-            <textarea
-              matInput
-              name="policies"
-              [(ngModel)]="bundle.policies"
-              required
-              rows="15"
-              placeholder="Enter your authorization policies here..."
-            ></textarea>
-            <mat-hint>The policies content in the engine-specific format (e.g., Cedar policy syntax).</mat-hint>
+            <mat-label>Policy Set</mat-label>
+            <mat-select name="policySetId" (selectionChange)="onPolicySetChange($event.value)">
+              <mat-option [value]="null">-- None --</mat-option>
+              <mat-option *ngFor="let ps of policySets" [value]="ps.id"> {{ ps.name }} (v{{ ps.latestVersion }}) </mat-option>
+            </mat-select>
+            <mat-hint>Select the policy set containing authorization policies.</mat-hint>
           </mat-form-field>
 
+          <div class="component-version-row" *ngIf="bundle.policySetId">
+            <mat-checkbox name="policySetPinToLatest" [(ngModel)]="bundle.policySetPinToLatest">
+              Always use latest version
+            </mat-checkbox>
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.policySetPinToLatest" class="version-select">
+              <mat-label>Version</mat-label>
+              <mat-select name="policySetVersion" [(ngModel)]="bundle.policySetVersion">
+                <mat-option *ngFor="let v of policySetVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Schema -->
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Schema</mat-label>
-            <textarea
-              matInput
-              name="schema"
-              [(ngModel)]="bundle.schema"
-              rows="10"
-              placeholder="Enter the schema definition (optional)..."
-            ></textarea>
-            <mat-hint>The schema definition for this bundle (optional).</mat-hint>
+            <mat-select name="schemaId" (selectionChange)="onSchemaChange($event.value)">
+              <mat-option [value]="null">-- None --</mat-option>
+              <mat-option *ngFor="let s of schemas" [value]="s.id"> {{ s.name }} (v{{ s.latestVersion }}) </mat-option>
+            </mat-select>
+            <mat-hint>Select the authorization schema definition.</mat-hint>
           </mat-form-field>
 
+          <div class="component-version-row" *ngIf="bundle.schemaId">
+            <mat-checkbox name="schemaPinToLatest" [(ngModel)]="bundle.schemaPinToLatest">
+              Always use latest version
+            </mat-checkbox>
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.schemaPinToLatest" class="version-select">
+              <mat-label>Version</mat-label>
+              <mat-select name="schemaVersion" [(ngModel)]="bundle.schemaVersion">
+                <mat-option *ngFor="let v of schemaVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Entity Store -->
           <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Entities</mat-label>
-            <textarea
-              matInput
-              name="entities"
-              [(ngModel)]="bundle.entities"
-              rows="10"
-              placeholder="Enter the entities definition (optional)..."
-            ></textarea>
-            <mat-hint>The entities definition for this bundle (optional).</mat-hint>
+            <mat-label>Entity Store</mat-label>
+            <mat-select name="entityStoreId" (selectionChange)="onEntityStoreChange($event.value)">
+              <mat-option [value]="null">-- None --</mat-option>
+              <mat-option *ngFor="let es of entityStores" [value]="es.id"> {{ es.name }} (v{{ es.latestVersion }}) </mat-option>
+            </mat-select>
+            <mat-hint>Select the entity store containing authorization entities.</mat-hint>
           </mat-form-field>
+
+          <div class="component-version-row" *ngIf="bundle.entityStoreId">
+            <mat-checkbox name="entityStorePinToLatest" [(ngModel)]="bundle.entityStorePinToLatest">
+              Always use latest version
+            </mat-checkbox>
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.entityStorePinToLatest" class="version-select">
+              <mat-label>Version</mat-label>
+              <mat-select name="entityStoreVersion" [(ngModel)]="bundle.entityStoreVersion">
+                <mat-option *ngFor="let v of entityStoreVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
         </div>
       </div>
 

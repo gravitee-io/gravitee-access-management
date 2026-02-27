@@ -62,7 +62,8 @@ export class AuthorizationEngineCreationComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.snackbarService.open('Authorization engine ' + data.name + ' created');
-          this.router.navigate(['..', data.id, 'openfga'], { relativeTo: this.route });
+          const route = data.type === 'sidecar' ? 'sidecar' : 'openfga';
+          this.router.navigate(['..', data.id, route], { relativeTo: this.route });
         },
       });
   }

@@ -211,3 +211,7 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-bundles-table.yml
   - include:
       - file: liquibase/changelogs/v4_12_0/4.12.0-add-authorization-bundle-versions-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_12_0/4.12.0-refactor-authorization-bundles.yml
+  - include:
+      - file: liquibase/changelogs/v4_12_0/4.12.0-versioning-refactor.yml

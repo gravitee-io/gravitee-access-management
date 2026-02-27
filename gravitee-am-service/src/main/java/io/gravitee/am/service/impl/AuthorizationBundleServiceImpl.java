@@ -15,26 +15,27 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationBundle;
-import io.gravitee.am.model.AuthorizationBundleVersion;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
-import io.gravitee.am.repository.management.api.AuthorizationBundleVersionRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthorizationBundleService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthorizationBundleNotFoundException;
-import io.gravitee.am.service.exception.AuthorizationBundleVersionNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationBundle;
 import io.gravitee.am.service.model.UpdateAuthorizationBundle;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.AuthorizationBundleAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -57,15 +58,15 @@ public class AuthorizationBundleServiceImpl implements AuthorizationBundleServic
     private final Logger LOGGER = LoggerFactory.getLogger(AuthorizationBundleServiceImpl.class);
 
     private final AuthorizationBundleRepository authorizationBundleRepository;
-    private final AuthorizationBundleVersionRepository authorizationBundleVersionRepository;
     private final EventService eventService;
+    private final AuditService auditService;
 
     public AuthorizationBundleServiceImpl(@Lazy AuthorizationBundleRepository authorizationBundleRepository,
-                                          @Lazy AuthorizationBundleVersionRepository authorizationBundleVersionRepository,
-                                          EventService eventService) {
+                                          EventService eventService,
+                                          AuditService auditService) {
         this.authorizationBundleRepository = authorizationBundleRepository;
-        this.authorizationBundleVersionRepository = authorizationBundleVersionRepository;
         this.eventService = eventService;
+        this.auditService = auditService;
     }
 
     @Override
@@ -111,34 +112,25 @@ public class AuthorizationBundleServiceImpl implements AuthorizationBundleServic
         bundle.setName(request.getName());
         bundle.setDescription(request.getDescription());
         bundle.setEngineType(request.getEngineType());
-        bundle.setSchema(request.getSchema());
-        bundle.setPolicies(request.getPolicies());
-        bundle.setEntities(request.getEntities());
-        bundle.setVersion(1);
+        bundle.setPolicySetId(request.getPolicySetId());
+        bundle.setPolicySetVersion(request.getPolicySetVersion());
+        bundle.setPolicySetPinToLatest(request.isPolicySetPinToLatest());
+        bundle.setSchemaId(request.getSchemaId());
+        bundle.setSchemaVersion(request.getSchemaVersion());
+        bundle.setSchemaPinToLatest(request.isSchemaPinToLatest());
+        bundle.setEntityStoreId(request.getEntityStoreId());
+        bundle.setEntityStoreVersion(request.getEntityStoreVersion());
+        bundle.setEntityStorePinToLatest(request.isEntityStorePinToLatest());
         bundle.setCreatedAt(new Date());
         bundle.setUpdatedAt(bundle.getCreatedAt());
 
         return authorizationBundleRepository.create(bundle)
                 .flatMap(createdBundle -> {
-                    AuthorizationBundleVersion versionRecord = new AuthorizationBundleVersion();
-                    versionRecord.setId(RandomString.generate());
-                    versionRecord.setBundleId(createdBundle.getId());
-                    versionRecord.setDomainId(domain.getId());
-                    versionRecord.setVersion(1);
-                    versionRecord.setSchema(createdBundle.getSchema());
-                    versionRecord.setPolicies(createdBundle.getPolicies());
-                    versionRecord.setEntities(createdBundle.getEntities());
-                    versionRecord.setComment("Initial version");
-                    versionRecord.setCreatedBy(principal != null ? principal.getId() : null);
-                    versionRecord.setCreatedAt(createdBundle.getCreatedAt());
-
-                    return authorizationBundleVersionRepository.create(versionRecord)
-                            .flatMap(__ -> Single.just(createdBundle));
-                })
-                .flatMap(createdBundle -> {
                     Event event = new Event(Type.AUTHORIZATION_BUNDLE, new Payload(createdBundle.getId(), ReferenceType.DOMAIN, domain.getId(), Action.CREATE));
                     return eventService.create(event, domain).flatMap(__ -> Single.just(createdBundle));
                 })
+                .doOnSuccess(b -> auditService.report(AuditBuilder.builder(AuthorizationBundleAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_BUNDLE_CREATED).authorizationBundle(b)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationBundleAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_BUNDLE_CREATED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -162,40 +154,43 @@ public class AuthorizationBundleServiceImpl implements AuthorizationBundleServic
                     if (request.getDescription() != null) {
                         bundleToUpdate.setDescription(request.getDescription());
                     }
-                    if (request.getSchema() != null) {
-                        bundleToUpdate.setSchema(request.getSchema());
+                    if (request.getPolicySetId() != null) {
+                        bundleToUpdate.setPolicySetId(request.getPolicySetId());
                     }
-                    if (request.getPolicies() != null) {
-                        bundleToUpdate.setPolicies(request.getPolicies());
+                    if (request.getPolicySetVersion() != null) {
+                        bundleToUpdate.setPolicySetVersion(request.getPolicySetVersion());
                     }
-                    if (request.getEntities() != null) {
-                        bundleToUpdate.setEntities(request.getEntities());
+                    if (request.getSchemaId() != null) {
+                        bundleToUpdate.setSchemaId(request.getSchemaId());
                     }
-                    bundleToUpdate.setVersion(existingBundle.getVersion() + 1);
+                    if (request.getSchemaVersion() != null) {
+                        bundleToUpdate.setSchemaVersion(request.getSchemaVersion());
+                    }
+                    if (request.getEntityStoreId() != null) {
+                        bundleToUpdate.setEntityStoreId(request.getEntityStoreId());
+                    }
+                    if (request.getEntityStoreVersion() != null) {
+                        bundleToUpdate.setEntityStoreVersion(request.getEntityStoreVersion());
+                    }
+                    if (request.getPolicySetPinToLatest() != null) {
+                        bundleToUpdate.setPolicySetPinToLatest(request.getPolicySetPinToLatest());
+                    }
+                    if (request.getSchemaPinToLatest() != null) {
+                        bundleToUpdate.setSchemaPinToLatest(request.getSchemaPinToLatest());
+                    }
+                    if (request.getEntityStorePinToLatest() != null) {
+                        bundleToUpdate.setEntityStorePinToLatest(request.getEntityStorePinToLatest());
+                    }
                     bundleToUpdate.setUpdatedAt(new Date());
 
-                    return authorizationBundleRepository.update(bundleToUpdate)
-                            .flatMap(updatedBundle -> {
-                                AuthorizationBundleVersion versionRecord = new AuthorizationBundleVersion();
-                                versionRecord.setId(RandomString.generate());
-                                versionRecord.setBundleId(updatedBundle.getId());
-                                versionRecord.setDomainId(domain.getId());
-                                versionRecord.setVersion(updatedBundle.getVersion());
-                                versionRecord.setSchema(updatedBundle.getSchema());
-                                versionRecord.setPolicies(updatedBundle.getPolicies());
-                                versionRecord.setEntities(updatedBundle.getEntities());
-                                versionRecord.setComment(request.getComment());
-                                versionRecord.setCreatedBy(principal != null ? principal.getId() : null);
-                                versionRecord.setCreatedAt(updatedBundle.getUpdatedAt());
-
-                                return authorizationBundleVersionRepository.create(versionRecord)
-                                        .flatMap(__ -> Single.just(updatedBundle));
-                            });
+                    return authorizationBundleRepository.update(bundleToUpdate);
                 })
                 .flatMap(updatedBundle -> {
                     Event event = new Event(Type.AUTHORIZATION_BUNDLE, new Payload(updatedBundle.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
                     return eventService.create(event, domain).flatMap(__ -> Single.just(updatedBundle));
                 })
+                .doOnSuccess(b -> auditService.report(AuditBuilder.builder(AuthorizationBundleAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_BUNDLE_UPDATED).authorizationBundle(b)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationBundleAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_BUNDLE_UPDATED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -214,10 +209,11 @@ public class AuthorizationBundleServiceImpl implements AuthorizationBundleServic
                 .flatMapCompletable(bundle -> {
                     Event event = new Event(Type.AUTHORIZATION_BUNDLE, new Payload(id, ReferenceType.DOMAIN, domain.getId(), Action.DELETE));
 
-                    return authorizationBundleVersionRepository.deleteByBundleId(id)
-                            .andThen(authorizationBundleRepository.delete(id))
+                    return authorizationBundleRepository.delete(id)
                             .andThen(eventService.create(event, domain))
-                            .ignoreElement();
+                            .ignoreElement()
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthorizationBundleAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_BUNDLE_DELETED).authorizationBundle(bundle)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationBundleAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_BUNDLE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -232,84 +228,11 @@ public class AuthorizationBundleServiceImpl implements AuthorizationBundleServic
     @Override
     public Completable deleteByDomain(String domainId) {
         LOGGER.debug("Delete authorization bundles by domain {}", domainId);
-        return authorizationBundleVersionRepository.deleteByDomain(domainId)
-                .andThen(authorizationBundleRepository.deleteByDomain(domainId))
+        return authorizationBundleRepository.deleteByDomain(domainId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete authorization bundles for domain: {}", domainId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete authorization bundles for domain: %s", domainId), ex));
-                });
-    }
-
-    @Override
-    public Flowable<AuthorizationBundleVersion> getVersionHistory(String bundleId) {
-        LOGGER.debug("Get version history for authorization bundle: {}", bundleId);
-        return authorizationBundleVersionRepository.findByBundleId(bundleId)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to get version history for authorization bundle: {}", bundleId, ex);
-                    return Flowable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to get version history for authorization bundle: %s", bundleId), ex));
-                });
-    }
-
-    @Override
-    public Maybe<AuthorizationBundleVersion> getVersion(String bundleId, int version) {
-        LOGGER.debug("Get version {} for authorization bundle: {}", version, bundleId);
-        return authorizationBundleVersionRepository.findByBundleIdAndVersion(bundleId, version)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to get version {} for authorization bundle: {}", version, bundleId, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to get version %d for authorization bundle: %s", version, bundleId), ex));
-                });
-    }
-
-    @Override
-    public Single<AuthorizationBundle> rollback(Domain domain, String bundleId, int targetVersion, User principal) {
-        LOGGER.debug("Rollback authorization bundle {} to version {} for domain {}", bundleId, targetVersion, domain.getId());
-
-        return authorizationBundleRepository.findByDomainAndId(domain.getId(), bundleId)
-                .switchIfEmpty(Single.error(new AuthorizationBundleNotFoundException(bundleId)))
-                .flatMap(existingBundle ->
-                        authorizationBundleVersionRepository.findByBundleIdAndVersion(bundleId, targetVersion)
-                                .switchIfEmpty(Single.error(new AuthorizationBundleVersionNotFoundException(bundleId, targetVersion)))
-                                .flatMap(targetVersionRecord -> {
-                                    AuthorizationBundle bundleToUpdate = new AuthorizationBundle(existingBundle);
-                                    bundleToUpdate.setSchema(targetVersionRecord.getSchema());
-                                    bundleToUpdate.setPolicies(targetVersionRecord.getPolicies());
-                                    bundleToUpdate.setEntities(targetVersionRecord.getEntities());
-                                    bundleToUpdate.setVersion(existingBundle.getVersion() + 1);
-                                    bundleToUpdate.setUpdatedAt(new Date());
-
-                                    return authorizationBundleRepository.update(bundleToUpdate)
-                                            .flatMap(updatedBundle -> {
-                                                AuthorizationBundleVersion versionRecord = new AuthorizationBundleVersion();
-                                                versionRecord.setId(RandomString.generate());
-                                                versionRecord.setBundleId(updatedBundle.getId());
-                                                versionRecord.setDomainId(domain.getId());
-                                                versionRecord.setVersion(updatedBundle.getVersion());
-                                                versionRecord.setSchema(targetVersionRecord.getSchema());
-                                                versionRecord.setPolicies(targetVersionRecord.getPolicies());
-                                                versionRecord.setEntities(targetVersionRecord.getEntities());
-                                                versionRecord.setComment("Rollback to version " + targetVersion);
-                                                versionRecord.setCreatedBy(principal != null ? principal.getId() : null);
-                                                versionRecord.setCreatedAt(updatedBundle.getUpdatedAt());
-
-                                                return authorizationBundleVersionRepository.create(versionRecord)
-                                                        .flatMap(__ -> Single.just(updatedBundle));
-                                            });
-                                })
-                )
-                .flatMap(updatedBundle -> {
-                    Event event = new Event(Type.AUTHORIZATION_BUNDLE, new Payload(updatedBundle.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
-                    return eventService.create(event, domain).flatMap(__ -> Single.just(updatedBundle));
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to rollback authorization bundle: {}", bundleId, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to rollback authorization bundle: %s", bundleId), ex));
                 });
     }
 }

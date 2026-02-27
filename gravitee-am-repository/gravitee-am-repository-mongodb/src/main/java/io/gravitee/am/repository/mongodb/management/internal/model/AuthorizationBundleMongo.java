@@ -38,13 +38,16 @@ public class AuthorizationBundleMongo extends Auditable {
 
     private String engineType;
 
-    private String schema;
-
-    private String policies;
-
-    private String entities;
-
-    private int version;
+    // Component references
+    private String policySetId;
+    private int policySetVersion;
+    private boolean policySetPinToLatest;
+    private String schemaId;
+    private int schemaVersion;
+    private boolean schemaPinToLatest;
+    private String entityStoreId;
+    private int entityStoreVersion;
+    private boolean entityStorePinToLatest;
 
     @Override
     public boolean equals(Object o) {

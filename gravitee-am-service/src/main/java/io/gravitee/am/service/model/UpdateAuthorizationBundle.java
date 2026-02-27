@@ -29,14 +29,16 @@ public class UpdateAuthorizationBundle {
 
     private String description;
 
-    private String schema;
+    // Component references
+    private String policySetId;
+    private Integer policySetVersion;
+    private Boolean policySetPinToLatest;
 
-    private String policies;
+    private String schemaId;
+    private Integer schemaVersion;
+    private Boolean schemaPinToLatest;
 
-    private String entities;
-
-    /**
-     * Optional change note for version tracking.
-     */
-    private String comment;
+    private String entityStoreId;
+    private Integer entityStoreVersion;
+    private Boolean entityStorePinToLatest;
 }

@@ -1,0 +1,142 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-create-policy-sets-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: policy_sets
+      changes:
+        - createTable:
+            tableName: policy_sets
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: false } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_policy_sets
+            columnNames: id
+            tableName: policy_sets
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+            indexName: idx_policy_sets_domain
+            tableName: policy_sets
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-create-authorization-schemas-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_schemas
+      changes:
+        - createTable:
+            tableName: authorization_schemas
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: true } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_schemas
+            columnNames: id
+            tableName: authorization_schemas
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+            indexName: idx_authorization_schemas_domain
+            tableName: authorization_schemas
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-create-entity-stores-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: entity_stores
+      changes:
+        - createTable:
+            tableName: entity_stores
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: true } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_entity_stores
+            columnNames: id
+            tableName: entity_stores
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+            indexName: idx_entity_stores_domain
+            tableName: entity_stores
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-alter-authorization-bundles-add-component-refs
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      changes:
+        - addColumn:
+            tableName: authorization_bundles
+            columns:
+              - column: { name: policy_set_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: policy_set_version, type: int, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: schema_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: schema_version, type: int, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: entity_store_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: entity_store_version, type: int, defaultValueNumeric: 0, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 4.12.0-alter-authorization-bundles-drop-old-columns
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      changes:
+        - dropColumn:
+            tableName: authorization_bundles
+            columns:
+              - column: { name: authz_schema }
+              - column: { name: policies }
+              - column: { name: entities }
+              - column: { name: version }
+
+  - changeSet:
+      id: 4.12.0-drop-authorization-bundle-versions-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: authorization_bundle_versions
+      changes:
+        - dropTable:
+            tableName: authorization_bundle_versions

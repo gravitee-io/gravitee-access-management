@@ -44,16 +44,4 @@ export class AuthorizationBundleService {
   delete(domainId: string, bundleId: string): Observable<any> {
     return this.http.delete<any>(this.baseURL + domainId + '/authorization/bundles/' + bundleId);
   }
-
-  getVersions(domainId: string, bundleId: string): Observable<any> {
-    return this.http.get<any>(this.baseURL + domainId + '/authorization/bundles/' + bundleId + '/versions');
-  }
-
-  getVersion(domainId: string, bundleId: string, version: number): Observable<any> {
-    return this.http.get<any>(this.baseURL + domainId + '/authorization/bundles/' + bundleId + '/versions/' + version);
-  }
-
-  rollback(domainId: string, bundleId: string, version: number): Observable<any> {
-    return this.http.post<any>(this.baseURL + domainId + '/authorization/bundles/' + bundleId + '/rollback', { version });
-  }
 }

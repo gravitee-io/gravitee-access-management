@@ -1,0 +1,157 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>{{ policySet.name }}</h1>
+  <div class="gv-page-content">
+    <mat-tab-group (selectedIndexChange)="onTabChange($event)">
+      <!-- Edit Tab -->
+      <mat-tab label="Edit">
+        <form (ngSubmit)="update()" #policySetForm="ngForm">
+          <div class="gv-form-section">
+            <div fxLayout="column">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Name</mat-label>
+                <input matInput type="text" name="name" [(ngModel)]="policySet.name" required (ngModelChange)="formChanged = true" [disabled]="!editMode" />
+              </mat-form-field>
+
+              <div fxLayout="row" fxLayoutGap="10px">
+                <mat-form-field appearance="outline" floatLabel="always" fxFlex>
+                  <mat-label>Version</mat-label>
+                  <input matInput type="text" [value]="'v' + policySet.latestVersion" disabled />
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
+                <mat-label>Content</mat-label>
+                <textarea
+                  matInput
+                  name="content"
+                  [(ngModel)]="content"
+                  rows="20"
+                  (ngModelChange)="formChanged = true"
+                  [disabled]="!editMode"
+                  style="font-family: monospace"
+                ></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" floatLabel="always" *ngIf="editMode">
+                <mat-label>Commit Message</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  name="commitMessage"
+                  [(ngModel)]="commitMessage"
+                  required
+                  placeholder="Describe what changed..."
+                />
+                <mat-hint>Required. Briefly describe the changes in this version.</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div fxLayout="row" *ngIf="editMode">
+            <button mat-raised-button color="primary" type="submit" [disabled]="!policySetForm.valid || !formChanged || !commitMessage">Save</button>
+            <button mat-raised-button type="button" *hasPermission="['domain_authorization_bundle_delete']" (click)="delete($event)" class="delete-button">
+              Delete
+            </button>
+          </div>
+        </form>
+      </mat-tab>
+
+      <!-- Version History Tab -->
+      <mat-tab label="Version History">
+        <div class="gv-form-section" *ngIf="!selectedVersion">
+          <div class="gv-form-section-title">
+            <h5>Version History</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <div *ngIf="versions.length === 0" class="empty-versions">
+            No version history available.
+          </div>
+
+          <table class="version-table" *ngIf="versions.length > 0">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Commit Message</th>
+                <th>Created</th>
+                <th>Author</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let v of versions" [class.current-version]="v.version === policySet.latestVersion">
+                <td>
+                  v{{ v.version }}
+                  <span class="current-badge" *ngIf="v.version === policySet.latestVersion">current</span>
+                </td>
+                <td>{{ v.commitMessage }}</td>
+                <td>{{ v.createdAt | date: 'short' }}</td>
+                <td>{{ v.createdBy }}</td>
+                <td>
+                  <button mat-icon-button (click)="viewVersion(v)" matTooltip="View content">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    (click)="restoreVersion(v)"
+                    matTooltip="Restore this version"
+                    *ngIf="v.version !== policySet.latestVersion && editMode"
+                  >
+                    <mat-icon>restore</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Version Detail View -->
+        <div class="gv-form-section" *ngIf="selectedVersion">
+          <div class="gv-form-section-title">
+            <h5>Version {{ selectedVersion.version }} — {{ selectedVersion.commitMessage }}</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <div class="version-meta">
+            <span>Created: {{ selectedVersion.createdAt | date: 'medium' }}</span>
+            <span>Author: {{ selectedVersion.createdBy }}</span>
+          </div>
+
+          <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
+            <mat-label>Content (read-only)</mat-label>
+            <textarea matInput [value]="selectedVersion.content" rows="20" disabled style="font-family: monospace"></textarea>
+          </mat-form-field>
+
+          <div fxLayout="row" fxLayoutGap="10px">
+            <button mat-raised-button (click)="closeVersionView()">Back to History</button>
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="restoreVersion(selectedVersion)"
+              *ngIf="selectedVersion.version !== policySet.latestVersion && editMode"
+            >
+              Restore This Version
+            </button>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

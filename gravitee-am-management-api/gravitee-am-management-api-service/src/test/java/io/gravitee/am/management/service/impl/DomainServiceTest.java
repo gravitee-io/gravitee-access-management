@@ -69,7 +69,11 @@ import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.AuthorizationBundleService;
 import io.gravitee.am.service.AuthorizationEngineService;
+import io.gravitee.am.service.AuthorizationSchemaService;
+import io.gravitee.am.service.EntityStoreService;
+import io.gravitee.am.service.PolicySetService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DeviceIdentifierService;
@@ -338,6 +342,18 @@ public class DomainServiceTest {
 
     @Mock
     private AuthorizationEngineService authorizationEngineService;
+
+    @Mock
+    private AuthorizationBundleService authorizationBundleService;
+
+    @Mock
+    private PolicySetService policySetService;
+
+    @Mock
+    private AuthorizationSchemaService authorizationSchemaService;
+
+    @Mock
+    private EntityStoreService entityStoreService;
 
     @Test
     public void shouldDelegateFindById() {
@@ -1109,6 +1125,10 @@ public class DomainServiceTest {
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(authorizationBundleService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(policySetService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(authorizationSchemaService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(entityStoreService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1177,6 +1197,10 @@ public class DomainServiceTest {
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(authorizationBundleService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(policySetService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(authorizationSchemaService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(entityStoreService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

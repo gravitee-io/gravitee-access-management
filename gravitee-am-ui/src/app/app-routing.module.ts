@@ -227,6 +227,7 @@ import { UserDevicesResolver } from './resolvers/user-devices.resolver';
 import { DomainSettingsAuthorizationEnginesComponent } from './domain/authorization-engines/authorization-engines.component';
 import { AuthorizationEngineCreationComponent } from './domain/authorization-engines/creation/authorization-engine-creation.component';
 import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga.component';
+import { SidecarComponent } from './domain/authorization-engines/sidecar/sidecar.component';
 import { AuthorizationEnginesResolver } from './resolvers/authorization-engines.resolver';
 import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-engine-plugins.resolver';
 import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
@@ -236,6 +237,21 @@ import { AuthorizationBundleCreationComponent } from './domain/authorization/bun
 import { AuthorizationBundleComponent } from './domain/authorization/bundles/bundle/authorization-bundle.component';
 import { AuthorizationBundlesResolver } from './resolvers/authorization-bundles.resolver';
 import { AuthorizationBundleResolver } from './resolvers/authorization-bundle.resolver';
+import { PolicySetsComponent } from './domain/authorization/policy-sets/policy-sets.component';
+import { PolicySetCreationComponent } from './domain/authorization/policy-sets/creation/policy-set-creation.component';
+import { PolicySetComponent } from './domain/authorization/policy-sets/policy-set/policy-set.component';
+import { PolicySetsResolver } from './resolvers/policy-sets.resolver';
+import { PolicySetResolver } from './resolvers/policy-set.resolver';
+import { AuthorizationSchemasComponent } from './domain/authorization/schemas/authorization-schemas.component';
+import { AuthorizationSchemaCreationComponent } from './domain/authorization/schemas/creation/authorization-schema-creation.component';
+import { AuthorizationSchemaDetailComponent } from './domain/authorization/schemas/schema/authorization-schema.component';
+import { AuthorizationSchemasResolver } from './resolvers/authorization-schemas.resolver';
+import { AuthorizationSchemaResolver } from './resolvers/authorization-schema.resolver';
+import { EntityStoresComponent } from './domain/authorization/entity-stores/entity-stores.component';
+import { EntityStoreCreationComponent } from './domain/authorization/entity-stores/creation/entity-store-creation.component';
+import { EntityStoreDetailComponent } from './domain/authorization/entity-stores/entity-store/entity-store.component';
+import { EntityStoresResolver } from './resolvers/entity-stores.resolver';
+import { EntityStoreResolver } from './resolvers/entity-store.resolver';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
@@ -1713,6 +1729,156 @@ export const routes: Routes = [
                         ],
                       },
                       {
+                        path: 'policy-sets',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Policy Sets',
+                            section: 'Authorization',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_authorization_bundle_list'],
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: PolicySetsComponent,
+                            resolve: {
+                              policySets: PolicySetsResolver,
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: PolicySetCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_authorization_bundle_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':policySetId',
+                            component: PolicySetComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              policySet: PolicySetResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'policySet.name',
+                              },
+                              perms: {
+                                only: ['domain_authorization_bundle_read'],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        path: 'schemas',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Schemas',
+                            section: 'Authorization',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_authorization_bundle_list'],
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: AuthorizationSchemasComponent,
+                            resolve: {
+                              schemas: AuthorizationSchemasResolver,
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: AuthorizationSchemaCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_authorization_bundle_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':schemaId',
+                            component: AuthorizationSchemaDetailComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              schema: AuthorizationSchemaResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'schema.name',
+                              },
+                              perms: {
+                                only: ['domain_authorization_bundle_read'],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        path: 'entity-stores',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Entity Stores',
+                            section: 'Authorization',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_authorization_bundle_list'],
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: EntityStoresComponent,
+                            resolve: {
+                              entityStores: EntityStoresResolver,
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: EntityStoreCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_authorization_bundle_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':entityStoreId',
+                            component: EntityStoreDetailComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              entityStore: EntityStoreResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'entityStore.name',
+                              },
+                              perms: {
+                                only: ['domain_authorization_bundle_read'],
+                              },
+                            },
+                          },
+                        ],
+                      },
+                      {
                         path: 'engines',
                         canActivate: [AuthGuard],
                         data: {
@@ -1760,6 +1926,23 @@ export const routes: Routes = [
                             data: {
                               breadcrumb: {
                                 label: 'OpenFGA Management',
+                              },
+                              perms: {
+                                only: ['domain_authorization_engine_read'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':engineId/sidecar',
+                            component: SidecarComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              engine: AuthorizationEngineResolver,
+                              authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'Sidecar Management',
                               },
                               perms: {
                                 only: ['domain_authorization_engine_read'],

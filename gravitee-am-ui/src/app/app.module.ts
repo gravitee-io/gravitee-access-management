@@ -241,6 +241,24 @@ import { AuthorizationBundleComponent } from './domain/authorization/bundles/bun
 import { AuthorizationBundleService } from './services/authorization-bundle.service';
 import { AuthorizationBundlesResolver } from './resolvers/authorization-bundles.resolver';
 import { AuthorizationBundleResolver } from './resolvers/authorization-bundle.resolver';
+import { PolicySetsComponent } from './domain/authorization/policy-sets/policy-sets.component';
+import { PolicySetCreationComponent } from './domain/authorization/policy-sets/creation/policy-set-creation.component';
+import { PolicySetComponent } from './domain/authorization/policy-sets/policy-set/policy-set.component';
+import { PolicySetService } from './services/policy-set.service';
+import { PolicySetsResolver } from './resolvers/policy-sets.resolver';
+import { PolicySetResolver } from './resolvers/policy-set.resolver';
+import { AuthorizationSchemasComponent } from './domain/authorization/schemas/authorization-schemas.component';
+import { AuthorizationSchemaCreationComponent } from './domain/authorization/schemas/creation/authorization-schema-creation.component';
+import { AuthorizationSchemaDetailComponent } from './domain/authorization/schemas/schema/authorization-schema.component';
+import { AuthorizationSchemaService } from './services/authorization-schema.service';
+import { AuthorizationSchemasResolver } from './resolvers/authorization-schemas.resolver';
+import { AuthorizationSchemaResolver } from './resolvers/authorization-schema.resolver';
+import { EntityStoresComponent } from './domain/authorization/entity-stores/entity-stores.component';
+import { EntityStoreCreationComponent } from './domain/authorization/entity-stores/creation/entity-store-creation.component';
+import { EntityStoreDetailComponent } from './domain/authorization/entity-stores/entity-store/entity-store.component';
+import { EntityStoreService } from './services/entity-store.service';
+import { EntityStoresResolver } from './resolvers/entity-stores.resolver';
+import { EntityStoreResolver } from './resolvers/entity-store.resolver';
 import { AuditsComponent } from './domain/settings/audits/audits.component';
 import { AuditComponent } from './domain/settings/audits/audit/audit.component';
 import { AuditsSettingsComponent } from './domain/settings/audits/settings/settings.component';
@@ -473,6 +491,8 @@ import { AuthorizationEngineCreationComponent } from './domain/authorization-eng
 import { AuthorizationEngineCreationStep1Component } from './domain/authorization-engines/creation/steps/step1/step1.component';
 import { AuthorizationEngineCreationStep2Component } from './domain/authorization-engines/creation/steps/step2/step2.component';
 import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga.component';
+import { SidecarComponent } from './domain/authorization-engines/sidecar/sidecar.component';
+import { SidecarService } from './services/sidecar.service';
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
@@ -771,10 +791,20 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AuthorizationEngineCreationStep1Component,
     AuthorizationEngineCreationStep2Component,
     OpenFGAComponent,
+    SidecarComponent,
     DomainAuthorizationComponent,
     AuthorizationBundlesComponent,
     AuthorizationBundleCreationComponent,
     AuthorizationBundleComponent,
+    PolicySetsComponent,
+    PolicySetCreationComponent,
+    PolicySetComponent,
+    AuthorizationSchemasComponent,
+    AuthorizationSchemaCreationComponent,
+    AuthorizationSchemaDetailComponent,
+    EntityStoresComponent,
+    EntityStoreCreationComponent,
+    EntityStoreDetailComponent,
     McpToolsTableComponent,
     GrantFlowsComponent,
     ScopesComponent,
@@ -856,7 +886,11 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     OrganizationService,
     AuthorizationEngineService,
     AuthorizationBundleService,
+    PolicySetService,
+    AuthorizationSchemaService,
+    EntityStoreService,
     OpenFGAService,
+    SidecarService,
     EnvironmentService,
     AuthService,
     CertificateService,
@@ -913,6 +947,12 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AuthorizationEngineResolver,
     AuthorizationBundlesResolver,
     AuthorizationBundleResolver,
+    PolicySetsResolver,
+    PolicySetResolver,
+    AuthorizationSchemasResolver,
+    AuthorizationSchemaResolver,
+    EntityStoresResolver,
+    EntityStoreResolver,
     AuditService,
     AuditsResolver,
     AuditResolver,

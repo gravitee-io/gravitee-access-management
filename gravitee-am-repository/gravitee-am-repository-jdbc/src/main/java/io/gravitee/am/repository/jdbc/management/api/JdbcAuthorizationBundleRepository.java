@@ -51,10 +51,15 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
     public static final String COL_NAME = "name";
     public static final String COL_DESCRIPTION = "description";
     public static final String COL_ENGINE_TYPE = "engine_type";
-    public static final String COL_SCHEMA = "schema";
-    public static final String COL_POLICIES = "policies";
-    public static final String COL_ENTITIES = "entities";
-    public static final String COL_VERSION = "version";
+    public static final String COL_POLICY_SET_ID = "policy_set_id";
+    public static final String COL_POLICY_SET_VERSION = "policy_set_version";
+    public static final String COL_POLICY_SET_PIN_TO_LATEST = "policy_set_pin_to_latest";
+    public static final String COL_SCHEMA_ID = "schema_id";
+    public static final String COL_SCHEMA_VERSION = "schema_version";
+    public static final String COL_SCHEMA_PIN_TO_LATEST = "schema_pin_to_latest";
+    public static final String COL_ENTITY_STORE_ID = "entity_store_id";
+    public static final String COL_ENTITY_STORE_VERSION = "entity_store_version";
+    public static final String COL_ENTITY_STORE_PIN_TO_LATEST = "entity_store_pin_to_latest";
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_UPDATED_AT = "updated_at";
 
@@ -64,10 +69,15 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
             COL_NAME,
             COL_DESCRIPTION,
             COL_ENGINE_TYPE,
-            COL_SCHEMA,
-            COL_POLICIES,
-            COL_ENTITIES,
-            COL_VERSION,
+            COL_POLICY_SET_ID,
+            COL_POLICY_SET_VERSION,
+            COL_POLICY_SET_PIN_TO_LATEST,
+            COL_SCHEMA_ID,
+            COL_SCHEMA_VERSION,
+            COL_SCHEMA_PIN_TO_LATEST,
+            COL_ENTITY_STORE_ID,
+            COL_ENTITY_STORE_VERSION,
+            COL_ENTITY_STORE_PIN_TO_LATEST,
             COL_CREATED_AT,
             COL_UPDATED_AT
     );
@@ -125,10 +135,15 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_DESCRIPTION, item.getDescription(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_ENGINE_TYPE, item.getEngineType(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_SCHEMA, item.getSchema(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_POLICIES, item.getPolicies(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_ENTITIES, item.getEntities(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_VERSION, item.getVersion(), Integer.class);
+        insertSpec = addQuotedField(insertSpec, COL_POLICY_SET_ID, item.getPolicySetId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_POLICY_SET_VERSION, item.getPolicySetVersion(), Integer.class);
+        insertSpec = addQuotedField(insertSpec, COL_POLICY_SET_PIN_TO_LATEST, item.isPolicySetPinToLatest(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, COL_SCHEMA_ID, item.getSchemaId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_SCHEMA_VERSION, item.getSchemaVersion(), Integer.class);
+        insertSpec = addQuotedField(insertSpec, COL_SCHEMA_PIN_TO_LATEST, item.isSchemaPinToLatest(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, COL_ENTITY_STORE_ID, item.getEntityStoreId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_ENTITY_STORE_VERSION, item.getEntityStoreVersion(), Integer.class);
+        insertSpec = addQuotedField(insertSpec, COL_ENTITY_STORE_PIN_TO_LATEST, item.isEntityStorePinToLatest(), Boolean.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
@@ -148,10 +163,15 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
         updateSpec = addQuotedField(updateSpec, COL_NAME, item.getName(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_DESCRIPTION, item.getDescription(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_ENGINE_TYPE, item.getEngineType(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_SCHEMA, item.getSchema(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_POLICIES, item.getPolicies(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_ENTITIES, item.getEntities(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_VERSION, item.getVersion(), Integer.class);
+        updateSpec = addQuotedField(updateSpec, COL_POLICY_SET_ID, item.getPolicySetId(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_POLICY_SET_VERSION, item.getPolicySetVersion(), Integer.class);
+        updateSpec = addQuotedField(updateSpec, COL_POLICY_SET_PIN_TO_LATEST, item.isPolicySetPinToLatest(), Boolean.class);
+        updateSpec = addQuotedField(updateSpec, COL_SCHEMA_ID, item.getSchemaId(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_SCHEMA_VERSION, item.getSchemaVersion(), Integer.class);
+        updateSpec = addQuotedField(updateSpec, COL_SCHEMA_PIN_TO_LATEST, item.isSchemaPinToLatest(), Boolean.class);
+        updateSpec = addQuotedField(updateSpec, COL_ENTITY_STORE_ID, item.getEntityStoreId(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_ENTITY_STORE_VERSION, item.getEntityStoreVersion(), Integer.class);
+        updateSpec = addQuotedField(updateSpec, COL_ENTITY_STORE_PIN_TO_LATEST, item.isEntityStorePinToLatest(), Boolean.class);
         updateSpec = addQuotedField(updateSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         updateSpec = addQuotedField(updateSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 

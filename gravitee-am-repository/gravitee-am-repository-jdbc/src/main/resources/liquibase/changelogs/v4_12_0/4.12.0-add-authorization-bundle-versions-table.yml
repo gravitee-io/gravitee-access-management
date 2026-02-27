@@ -16,7 +16,7 @@ databaseChangeLog:
               - column: { name: bundle_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: version, type: int, constraints: { nullable: false } }
-              - column: { name: schema, type: clob, constraints: { nullable: true } }
+              - column: { name: authz_schema, type: clob, constraints: { nullable: true } }
               - column: { name: policies, type: clob, constraints: { nullable: false } }
               - column: { name: entities, type: clob, constraints: { nullable: true } }
               - column: { name: comment, type: nvarchar(512), constraints: { nullable: true } }

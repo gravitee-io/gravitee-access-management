@@ -17,7 +17,7 @@ databaseChangeLog:
               - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
               - column: { name: description, type: clob, constraints: { nullable: true } }
               - column: { name: engine_type, type: nvarchar(32), constraints: { nullable: false } }
-              - column: { name: schema, type: clob, constraints: { nullable: true } }
+              - column: { name: authz_schema, type: clob, constraints: { nullable: true } }
               - column: { name: policies, type: clob, constraints: { nullable: false } }
               - column: { name: entities, type: clob, constraints: { nullable: true } }
               - column: { name: version, type: int, constraints: { nullable: false } }

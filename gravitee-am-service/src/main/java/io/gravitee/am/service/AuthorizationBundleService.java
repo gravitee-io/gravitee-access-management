@@ -17,7 +17,6 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationBundle;
-import io.gravitee.am.model.AuthorizationBundleVersion;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.model.NewAuthorizationBundle;
 import io.gravitee.am.service.model.UpdateAuthorizationBundle;
@@ -44,12 +43,4 @@ public interface AuthorizationBundleService {
     Completable delete(Domain domain, String id, User principal);
 
     Completable deleteByDomain(String domainId);
-
-    // Versioning
-
-    Flowable<AuthorizationBundleVersion> getVersionHistory(String bundleId);
-
-    Maybe<AuthorizationBundleVersion> getVersion(String bundleId, int version);
-
-    Single<AuthorizationBundle> rollback(Domain domain, String bundleId, int targetVersion, User principal);
 }

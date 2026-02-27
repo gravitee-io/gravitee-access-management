@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,15 +32,21 @@ public class NewAuthorizationBundle {
 
     private String description;
 
-    @NotNull
+    @NotBlank
     private String engineType;
 
-    private String schema;
+    // Component references
+    private String policySetId;
+    private int policySetVersion;
+    private boolean policySetPinToLatest;
 
-    @NotNull
-    private String policies;
+    private String schemaId;
+    private int schemaVersion;
+    private boolean schemaPinToLatest;
 
-    private String entities;
+    private String entityStoreId;
+    private int entityStoreVersion;
+    private boolean entityStorePinToLatest;
 
     @Override
     public String toString() {

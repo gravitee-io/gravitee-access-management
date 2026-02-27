@@ -19,153 +19,132 @@
   <h1>{{ bundle.name }}</h1>
   <div class="gv-page-content">
     <form (ngSubmit)="update()" #bundleForm="ngForm">
-      <mat-tab-group>
-        <mat-tab label="General">
-          <div class="gv-form-section">
-            <div class="gv-form-section-title">
-              <h5>General</h5>
-            </div>
-            <div fxLayout="column">
-              <mat-form-field appearance="outline" floatLabel="always">
-                <mat-label>Name</mat-label>
-                <input
-                  matInput
-                  type="text"
-                  name="name"
-                  [(ngModel)]="bundle.name"
-                  required
-                  (ngModelChange)="formChanged = true"
-                  [disabled]="!editMode"
-                />
-              </mat-form-field>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>General</h5>
+        </div>
+        <div fxLayout="column">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" name="name" [(ngModel)]="bundle.name" required (ngModelChange)="formChanged = true" [disabled]="!editMode" />
+          </mat-form-field>
 
-              <mat-form-field appearance="outline" floatLabel="always">
-                <mat-label>Description</mat-label>
-                <input
-                  matInput
-                  type="text"
-                  name="description"
-                  [(ngModel)]="bundle.description"
-                  (ngModelChange)="formChanged = true"
-                  [disabled]="!editMode"
-                />
-              </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Description</mat-label>
+            <input
+              matInput
+              type="text"
+              name="description"
+              [(ngModel)]="bundle.description"
+              (ngModelChange)="formChanged = true"
+              [disabled]="!editMode"
+            />
+          </mat-form-field>
 
-              <div fxLayout="row" fxLayoutGap="10px">
-                <mat-form-field appearance="outline" floatLabel="always" fxFlex>
-                  <mat-label>Engine Type</mat-label>
-                  <input matInput type="text" [value]="bundle.engineType" disabled />
-                </mat-form-field>
-                <mat-form-field appearance="outline" floatLabel="always" fxFlex>
-                  <mat-label>Version</mat-label>
-                  <input matInput type="text" [value]="'v' + bundle.version" disabled />
-                </mat-form-field>
-              </div>
-            </div>
-          </div>
-        </mat-tab>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Engine Type</mat-label>
+            <input matInput type="text" [value]="bundle.engineType" disabled />
+          </mat-form-field>
+        </div>
+      </div>
 
-        <mat-tab label="Policies">
-          <div class="gv-form-section">
-            <div class="gv-form-section-title">
-              <h5>Policies</h5>
-            </div>
-            <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
-              <mat-label>Policies</mat-label>
-              <textarea
-                matInput
-                name="policies"
-                [(ngModel)]="bundle.policies"
-                required
-                rows="20"
-                (ngModelChange)="formChanged = true"
-                [disabled]="!editMode"
-                style="font-family: monospace"
-              ></textarea>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Components</h5>
+        </div>
+        <div fxLayout="column">
+          <!-- Policy Set -->
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Policy Set</mat-label>
+            <mat-select name="policySetId" [value]="bundle.policySetId" (selectionChange)="onPolicySetChange($event.value)" [disabled]="!editMode">
+              <mat-option [value]="null">-- None --</mat-option>
+              <mat-option *ngFor="let ps of policySets" [value]="ps.id"> {{ ps.name }} (v{{ ps.latestVersion }}) </mat-option>
+            </mat-select>
+            <mat-hint>The policy set to use for this bundle.</mat-hint>
+          </mat-form-field>
+
+          <div class="component-version-row" *ngIf="bundle.policySetId">
+            <mat-checkbox
+              name="policySetPinToLatest"
+              [(ngModel)]="bundle.policySetPinToLatest"
+              (ngModelChange)="onPinToLatestChange()"
+              [disabled]="!editMode"
+            >
+              Always use latest version
+            </mat-checkbox>
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.policySetPinToLatest" class="version-select">
+              <mat-label>Version</mat-label>
+              <mat-select name="policySetVersion" [(ngModel)]="bundle.policySetVersion" (ngModelChange)="formChanged = true" [disabled]="!editMode">
+                <mat-option *ngFor="let v of policySetVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
+              </mat-select>
             </mat-form-field>
           </div>
-        </mat-tab>
 
-        <mat-tab label="Entities">
-          <div class="gv-form-section">
-            <div class="gv-form-section-title">
-              <h5>Entities</h5>
-            </div>
-            <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
-              <mat-label>Entities</mat-label>
-              <textarea
-                matInput
-                name="entities"
-                [(ngModel)]="bundle.entities"
-                rows="15"
-                (ngModelChange)="formChanged = true"
-                [disabled]="!editMode"
-                style="font-family: monospace"
-              ></textarea>
+          <!-- Schema -->
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Schema</mat-label>
+            <mat-select name="schemaId" [value]="bundle.schemaId" (selectionChange)="onSchemaChange($event.value)" [disabled]="!editMode">
+              <mat-option [value]="null">-- None --</mat-option>
+              <mat-option *ngFor="let s of schemas" [value]="s.id"> {{ s.name }} (v{{ s.latestVersion }}) </mat-option>
+            </mat-select>
+            <mat-hint>The authorization schema to use for this bundle.</mat-hint>
+          </mat-form-field>
+
+          <div class="component-version-row" *ngIf="bundle.schemaId">
+            <mat-checkbox
+              name="schemaPinToLatest"
+              [(ngModel)]="bundle.schemaPinToLatest"
+              (ngModelChange)="onPinToLatestChange()"
+              [disabled]="!editMode"
+            >
+              Always use latest version
+            </mat-checkbox>
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.schemaPinToLatest" class="version-select">
+              <mat-label>Version</mat-label>
+              <mat-select name="schemaVersion" [(ngModel)]="bundle.schemaVersion" (ngModelChange)="formChanged = true" [disabled]="!editMode">
+                <mat-option *ngFor="let v of schemaVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
+              </mat-select>
             </mat-form-field>
           </div>
-        </mat-tab>
 
-        <mat-tab label="Schema">
-          <div class="gv-form-section">
-            <div class="gv-form-section-title">
-              <h5>Schema</h5>
-            </div>
-            <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
-              <mat-label>Schema</mat-label>
-              <textarea
-                matInput
-                name="schema"
-                [(ngModel)]="bundle.schema"
-                rows="15"
+          <!-- Entity Store -->
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Entity Store</mat-label>
+            <mat-select
+              name="entityStoreId"
+              [value]="bundle.entityStoreId"
+              (selectionChange)="onEntityStoreChange($event.value)"
+              [disabled]="!editMode"
+            >
+              <mat-option [value]="null">-- None --</mat-option>
+              <mat-option *ngFor="let es of entityStores" [value]="es.id"> {{ es.name }} (v{{ es.latestVersion }}) </mat-option>
+            </mat-select>
+            <mat-hint>The entity store to use for this bundle.</mat-hint>
+          </mat-form-field>
+
+          <div class="component-version-row" *ngIf="bundle.entityStoreId">
+            <mat-checkbox
+              name="entityStorePinToLatest"
+              [(ngModel)]="bundle.entityStorePinToLatest"
+              (ngModelChange)="onPinToLatestChange()"
+              [disabled]="!editMode"
+            >
+              Always use latest version
+            </mat-checkbox>
+            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.entityStorePinToLatest" class="version-select">
+              <mat-label>Version</mat-label>
+              <mat-select
+                name="entityStoreVersion"
+                [(ngModel)]="bundle.entityStoreVersion"
                 (ngModelChange)="formChanged = true"
                 [disabled]="!editMode"
-                style="font-family: monospace"
-              ></textarea>
+              >
+                <mat-option *ngFor="let v of entityStoreVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
+              </mat-select>
             </mat-form-field>
           </div>
-        </mat-tab>
-
-        <mat-tab label="History">
-          <div class="gv-form-section" *ngIf="versions.length > 0">
-            <div class="gv-form-section-title">
-              <h5>Version History</h5>
-            </div>
-            <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="0" [rowHeight]="50" [rows]="versions">
-              <ngx-datatable-column name="Version" [flexGrow]="1">
-                <ng-template let-row="row" ngx-datatable-cell-template> v{{ row.version }} </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Comment" [flexGrow]="3">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.comment || '-' }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Created" [flexGrow]="2">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.createdAt | date: 'medium' }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="" [flexGrow]="1">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  <button
-                    mat-button
-                    *ngIf="row.version !== bundle.version && editMode"
-                    (click)="rollback(row.version)"
-                    matTooltip="Rollback to this version"
-                  >
-                    <mat-icon>restore</mat-icon>
-                  </button>
-                </ng-template>
-              </ngx-datatable-column>
-            </ngx-datatable>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
-
-      <mat-form-field appearance="outline" floatLabel="always" *ngIf="editMode" style="width: 100%; margin-top: 20px">
-        <mat-label>Change comment (optional)</mat-label>
-        <input matInput type="text" name="updateComment" [(ngModel)]="updateComment" placeholder="Describe what changed..." />
-      </mat-form-field>
+        </div>
+      </div>
 
       <div fxLayout="row" *ngIf="editMode">
         <button mat-raised-button color="primary" type="submit" [disabled]="!bundleForm.valid || !formChanged">Save</button>

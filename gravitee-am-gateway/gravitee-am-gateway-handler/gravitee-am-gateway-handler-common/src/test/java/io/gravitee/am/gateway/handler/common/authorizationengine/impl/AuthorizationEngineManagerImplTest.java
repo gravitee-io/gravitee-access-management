@@ -16,12 +16,17 @@
 package io.gravitee.am.gateway.handler.common.authorizationengine.impl;
 
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
+import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditCallback;
+import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditEvent;
 import io.gravitee.am.common.event.AuthorizationBundleEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.model.AuthorizationBundle;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.AuthorizationSchemaVersion;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.EntityStoreVersion;
+import io.gravitee.am.model.PolicySetVersion;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
@@ -29,6 +34,14 @@ import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePlugin
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
+import io.gravitee.am.repository.management.api.AuthorizationSchemaRepository;
+import io.gravitee.am.repository.management.api.AuthorizationSchemaVersionRepository;
+import io.gravitee.am.repository.management.api.EntityStoreRepository;
+import io.gravitee.am.repository.management.api.EntityStoreVersionRepository;
+import io.gravitee.am.repository.management.api.PolicySetRepository;
+import io.gravitee.am.repository.management.api.PolicySetVersionRepository;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.common.event.Event;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -75,6 +88,24 @@ class AuthorizationEngineManagerImplTest {
     private AuthorizationBundleRepository authorizationBundleRepository;
 
     @Mock
+    private PolicySetRepository policySetRepository;
+
+    @Mock
+    private PolicySetVersionRepository policySetVersionRepository;
+
+    @Mock
+    private AuthorizationSchemaRepository authorizationSchemaRepository;
+
+    @Mock
+    private AuthorizationSchemaVersionRepository authorizationSchemaVersionRepository;
+
+    @Mock
+    private EntityStoreRepository entityStoreRepository;
+
+    @Mock
+    private EntityStoreVersionRepository entityStoreVersionRepository;
+
+    @Mock
     private EventManager eventManager;
 
     @Mock
@@ -82,6 +113,9 @@ class AuthorizationEngineManagerImplTest {
 
     @Mock
     private DomainReadinessService domainReadinessService;
+
+    @Mock
+    private AuditService auditService;
 
     @InjectMocks
     private AuthorizationEngineManagerImpl manager;
@@ -515,13 +549,30 @@ class AuthorizationEngineManagerImplTest {
         AuthorizationBundle bundle = new AuthorizationBundle();
         bundle.setId("bundle-1");
         bundle.setDomainId("domain-id");
-        bundle.setPolicies("permit(principal, action, resource);");
-        bundle.setEntities("[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]");
-        bundle.setSchema("{\"entityTypes\":{}}");
-        bundle.setVersion(1);
+        bundle.setPolicySetId("ps-1");
+        bundle.setPolicySetPinToLatest(true);
+        bundle.setSchemaId("schema-1");
+        bundle.setSchemaPinToLatest(true);
+        bundle.setEntityStoreId("es-1");
+        bundle.setEntityStorePinToLatest(true);
+
+        PolicySetVersion psVersion = new PolicySetVersion();
+        psVersion.setContent("permit(principal, action, resource);");
+
+        EntityStoreVersion esVersion = new EntityStoreVersion();
+        esVersion.setContent("[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]");
+
+        AuthorizationSchemaVersion schemaVersion = new AuthorizationSchemaVersion();
+        schemaVersion.setContent("{\"entityTypes\":{}}");
 
         when(authorizationBundleRepository.findById("bundle-1"))
                 .thenReturn(Maybe.just(bundle));
+        when(policySetVersionRepository.findLatestByPolicySetId("ps-1"))
+                .thenReturn(Maybe.just(psVersion));
+        when(entityStoreVersionRepository.findLatestByEntityStoreId("es-1"))
+                .thenReturn(Maybe.just(esVersion));
+        when(authorizationSchemaVersionRepository.findLatestBySchemaId("schema-1"))
+                .thenReturn(Maybe.just(schemaVersion));
         when(authorizationEngineRepository.findByDomain("domain-id"))
                 .thenReturn(Flowable.just(testEngine));
         when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
@@ -564,13 +615,30 @@ class AuthorizationEngineManagerImplTest {
         AuthorizationBundle bundle = new AuthorizationBundle();
         bundle.setId("bundle-1");
         bundle.setDomainId("domain-id");
-        bundle.setPolicies("permit(principal, action, resource);");
-        bundle.setEntities("[]");
-        bundle.setSchema("{}");
-        bundle.setVersion(1);
+        bundle.setPolicySetId("ps-1");
+        bundle.setPolicySetPinToLatest(true);
+        bundle.setEntityStoreId("es-1");
+        bundle.setEntityStorePinToLatest(true);
+        bundle.setSchemaId("schema-1");
+        bundle.setSchemaPinToLatest(true);
+
+        PolicySetVersion psVersion = new PolicySetVersion();
+        psVersion.setContent("permit(principal, action, resource);");
+
+        EntityStoreVersion esVersion = new EntityStoreVersion();
+        esVersion.setContent("[]");
+
+        AuthorizationSchemaVersion schemaVersion = new AuthorizationSchemaVersion();
+        schemaVersion.setContent("{}");
 
         when(authorizationBundleRepository.findById("bundle-1"))
                 .thenReturn(Maybe.just(bundle));
+        when(policySetVersionRepository.findLatestByPolicySetId("ps-1"))
+                .thenReturn(Maybe.just(psVersion));
+        when(entityStoreVersionRepository.findLatestByEntityStoreId("es-1"))
+                .thenReturn(Maybe.just(esVersion));
+        when(authorizationSchemaVersionRepository.findLatestBySchemaId("schema-1"))
+                .thenReturn(Maybe.just(schemaVersion));
         when(authorizationEngineRepository.findByDomain("domain-id"))
                 .thenReturn(Flowable.just(testEngine));
         when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
@@ -595,6 +663,56 @@ class AuthorizationEngineManagerImplTest {
 
         // then - should push null config to clear engine state
         verify(mockProvider, timeout(1000)).updateConfig(null, null, null);
+    }
+
+    // --- Audit callback tests ---
+
+    @Test
+    void shouldSetAuditCallbackOnDeploy() {
+        // given
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
+                .thenReturn(mockProvider);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+
+        // when
+        manager.afterPropertiesSet();
+
+        // then - audit callback should be set on provider
+        verify(mockProvider, timeout(1000)).setAuditCallback(any(AuthorizationAuditCallback.class));
+    }
+
+    @Test
+    void shouldReportAuditEventViaCallback() {
+        // given - deploy a provider and capture the callback
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
+                .thenReturn(mockProvider);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+
+        ArgumentCaptor<AuthorizationAuditCallback> callbackCaptor =
+                ArgumentCaptor.forClass(AuthorizationAuditCallback.class);
+
+        manager.afterPropertiesSet();
+        verify(mockProvider, timeout(1000)).setAuditCallback(callbackCaptor.capture());
+
+        AuthorizationAuditCallback callback = callbackCaptor.getValue();
+        assertNotNull(callback);
+
+        // when - simulate a sidecar audit event
+        AuthorizationAuditEvent auditEvent = new AuthorizationAuditEvent(
+                "dec-001", "2026-02-26T10:00:00Z", true,
+                "User", "alice", "read",
+                "Document", "doc-1", "cedar"
+        );
+        callback.onEvaluation(auditEvent);
+
+        // then - audit service should be called
+        verify(auditService).report(any(AuditBuilder.class));
     }
 
     @Test

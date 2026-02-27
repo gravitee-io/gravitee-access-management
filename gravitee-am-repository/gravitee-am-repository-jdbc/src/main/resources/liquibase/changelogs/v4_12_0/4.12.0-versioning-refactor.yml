@@ -1,0 +1,186 @@
+databaseChangeLog:
+  # --- Alter metadata tables: drop content, rename version -> latest_version ---
+  - changeSet:
+      id: 4.12.0-alter-policy-sets-for-versioning
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      changes:
+        - dropColumn:
+            tableName: policy_sets
+            columns:
+              - column: { name: content }
+        - renameColumn:
+            tableName: policy_sets
+            oldColumnName: version
+            newColumnName: latest_version
+            columnDataType: int
+
+  - changeSet:
+      id: 4.12.0-alter-authorization-schemas-for-versioning
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      changes:
+        - dropColumn:
+            tableName: authorization_schemas
+            columns:
+              - column: { name: content }
+        - renameColumn:
+            tableName: authorization_schemas
+            oldColumnName: version
+            newColumnName: latest_version
+            columnDataType: int
+
+  - changeSet:
+      id: 4.12.0-alter-entity-stores-for-versioning
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      changes:
+        - dropColumn:
+            tableName: entity_stores
+            columns:
+              - column: { name: content }
+        - renameColumn:
+            tableName: entity_stores
+            oldColumnName: version
+            newColumnName: latest_version
+            columnDataType: int
+
+  # --- Create version tables ---
+  - changeSet:
+      id: 4.12.0-create-policy-set-versions-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: policy_set_versions
+      changes:
+        - createTable:
+            tableName: policy_set_versions
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: policy_set_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: false } }
+              - column: { name: commit_message, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: created_by, type: nvarchar(64), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_policy_set_versions
+            columnNames: id
+            tableName: policy_set_versions
+
+        - addUniqueConstraint:
+            constraintName: uk_psv_policy_set_version
+            tableName: policy_set_versions
+            columnNames: policy_set_id, version
+
+        - createIndex:
+            columns:
+              - column:
+                  name: policy_set_id
+              - column:
+                  name: version
+                  descending: true
+            indexName: idx_psv_policy_set_version
+            tableName: policy_set_versions
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-create-authorization-schema-versions-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_schema_versions
+      changes:
+        - createTable:
+            tableName: authorization_schema_versions
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: schema_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: true } }
+              - column: { name: commit_message, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: created_by, type: nvarchar(64), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_schema_versions
+            columnNames: id
+            tableName: authorization_schema_versions
+
+        - addUniqueConstraint:
+            constraintName: uk_asv_schema_version
+            tableName: authorization_schema_versions
+            columnNames: schema_id, version
+
+        - createIndex:
+            columns:
+              - column:
+                  name: schema_id
+              - column:
+                  name: version
+                  descending: true
+            indexName: idx_asv_schema_version
+            tableName: authorization_schema_versions
+            unique: false
+
+  - changeSet:
+      id: 4.12.0-create-entity-store-versions-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: entity_store_versions
+      changes:
+        - createTable:
+            tableName: entity_store_versions
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: entity_store_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: version, type: int, constraints: { nullable: false } }
+              - column: { name: content, type: clob, constraints: { nullable: true } }
+              - column: { name: commit_message, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: created_by, type: nvarchar(64), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_entity_store_versions
+            columnNames: id
+            tableName: entity_store_versions
+
+        - addUniqueConstraint:
+            constraintName: uk_esv_entity_store_version
+            tableName: entity_store_versions
+            columnNames: entity_store_id, version
+
+        - createIndex:
+            columns:
+              - column:
+                  name: entity_store_id
+              - column:
+                  name: version
+                  descending: true
+            indexName: idx_esv_entity_store_version
+            tableName: entity_store_versions
+            unique: false
+
+  # --- Add pinToLatest columns to authorization_bundles ---
+  - changeSet:
+      id: 4.12.0-add-pin-to-latest-to-authorization-bundles
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      changes:
+        - addColumn:
+            tableName: authorization_bundles
+            columns:
+              - column: { name: policy_set_pin_to_latest, type: boolean, defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: schema_pin_to_latest, type: boolean, defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: entity_store_pin_to_latest, type: boolean, defaultValueBoolean: false, constraints: { nullable: false } }
