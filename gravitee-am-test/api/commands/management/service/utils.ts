@@ -37,6 +37,7 @@ import { ProtectedResourceApi } from '@management-apis/ProtectedResourceApi';
 import { DefaultApi } from '@management-apis/DefaultApi';
 import { AlertsApi } from '@management-apis/AlertsApi';
 import { NotifierApi } from '@management-apis/NotifierApi';
+import { ReporterApi } from '@management-apis/ReporterApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, accessToken: accessToken });
@@ -139,6 +140,9 @@ export function getNotifierApi(accessToken) {
   return new NotifierApi(createAccessTokenConfig(accessToken));
 }
 
+export function getReporterApi(accessToken: string): ReporterApi {
+  return new ReporterApi(createAccessTokenConfig(accessToken));
+}
 
 export function createRandomString(length: number) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
