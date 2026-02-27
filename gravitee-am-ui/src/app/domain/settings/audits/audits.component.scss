@@ -29,6 +29,13 @@ a.expanded {
   }
 }
 
+.audit-cell-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ngx-datatable.material {
   font-size: 12px;
 }
