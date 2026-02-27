@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.email;
 
 import io.gravitee.am.common.exception.ActionLeaseException;
+import io.gravitee.am.common.utils.BulkEmailExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -29,6 +30,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -74,6 +77,8 @@ class EmailStagingProcessorTest {
 
     private Domain domain;
 
+    private static BulkEmailExecutor executor = new BulkEmailExecutor(1, Schedulers.newThread());
+
     @BeforeEach
     void setUp() {
         domain = new Domain();
@@ -82,12 +87,20 @@ class EmailStagingProcessorTest {
         when(dataPlaneRegistry.getUserRepository(domain)).thenReturn(userRepository);
     }
 
+    @AfterAll
+    public static void shutdown() {
+        if (executor != null) {
+            executor.getScheduler().shutdown();
+        }
+    }
+
     private EmailStagingProcessor buildProcessor(boolean enabled) {
         return new EmailStagingProcessor(
                 emailStagingService,
                 emailService,
                 dataPlaneRegistry,
                 applicationService,
+                executor,
                 domain,
                 EmailStagingProcessor.DEFAULT_BATCH_SIZE,
                 EmailStagingProcessor.DEFAULT_PERIOD_IN_SECONDS,
@@ -117,7 +130,6 @@ class EmailStagingProcessorTest {
         void afterPropertiesSet_shouldNotStartSchedulerWhenDisabled() throws Exception {
             var processor = buildProcessor(false);
             processor.afterPropertiesSet();
-
             verify(dataPlaneRegistry).getUserRepository(domain);
             // No scheduler started, destroy should complete immediately without releasing lease
             processor.destroy();
@@ -158,6 +170,7 @@ class EmailStagingProcessorTest {
                     emailService,
                     dataPlaneRegistry,
                     applicationService,
+                    executor,
                     domain,
                     EmailStagingProcessor.DEFAULT_BATCH_SIZE,
                     1, // 1 second period for test speed
@@ -189,6 +202,8 @@ class EmailStagingProcessorTest {
             processor.afterPropertiesSet();
             processor.processBatchOfStagingEmails();
 
+            await().timeout(5, TimeUnit.SECONDS).until(() -> !processor.isRunning());
+
             verify(emailStagingService, never()).manageAfterProcessing(any());
         }
 
@@ -216,6 +231,8 @@ class EmailStagingProcessorTest {
             var processor = buildProcessor(false);
             processor.afterPropertiesSet();
             processor.processBatchOfStagingEmails();
+
+            await().timeout(5, TimeUnit.SECONDS).until(() -> !processor.isRunning());
 
             verify(emailStagingService).acquireLeaseAndFetch(domain.asReference(), EmailStagingProcessor.DEFAULT_BATCH_SIZE);
             verify(emailService).batch(any(), eq(EmailStagingProcessor.DEFAULT_MAX_ATTEMPTS));
@@ -250,6 +267,8 @@ class EmailStagingProcessorTest {
             processor.afterPropertiesSet();
             processor.processBatchOfStagingEmails();
 
+            await().timeout(5, TimeUnit.SECONDS).until(() -> !processor.isRunning());
+
             verify(applicationService).findById("app-id");
             verify(emailService).batch(any(), eq(EmailStagingProcessor.DEFAULT_MAX_ATTEMPTS));
         }
@@ -281,6 +300,8 @@ class EmailStagingProcessorTest {
             var processor = buildProcessor(false);
             processor.afterPropertiesSet();
             processor.processBatchOfStagingEmails();
+
+            await().timeout(5, TimeUnit.SECONDS).until(() -> !processor.isRunning());
 
             // application filtered out because domain mismatch; email still sent without client
             verify(emailService).batch(any(), anyInt());
@@ -344,6 +365,7 @@ class EmailStagingProcessorTest {
             var processor = buildProcessor(false);
             processor.afterPropertiesSet();
             processor.processBatchOfStagingEmails();
+            await().timeout(5, TimeUnit.SECONDS).until(() -> !processor.isRunning());
 
             // Email should still be processed with null client (application error swallowed)
             verify(emailService).batch(any(), anyInt());
@@ -377,6 +399,8 @@ class EmailStagingProcessorTest {
             var processor = buildProcessor(false);
             processor.afterPropertiesSet();
             processor.processBatchOfStagingEmails();
+
+            await().timeout(5, TimeUnit.SECONDS).until(() -> !processor.isRunning());
 
             verify(emailStagingService).acquireLeaseAndFetch(domain.asReference(), EmailStagingProcessor.DEFAULT_BATCH_SIZE);
             verify(emailStagingService, times(2)).manageAfterProcessing(any());
