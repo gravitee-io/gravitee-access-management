@@ -21,7 +21,7 @@
     <parent>
         <groupId>io.gravitee.am.dataplane</groupId>
         <artifactId>gravitee-am-dataplane</artifactId>
-        <version>4.7.31-SNAPSHOT</version>
+        <version>4.7.31</version>
     </parent>
 
     <artifactId>gravitee-am-dataplane-tests</artifactId>
