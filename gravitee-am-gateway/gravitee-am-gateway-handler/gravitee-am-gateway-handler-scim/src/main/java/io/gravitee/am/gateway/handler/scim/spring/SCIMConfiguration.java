@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.spring;
 
+import io.gravitee.am.common.utils.BulkEmailExecutor;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.email.EmailStagingProcessor;
@@ -55,6 +56,7 @@ public class SCIMConfiguration implements ProtocolConfiguration {
             EmailService emailService,
             DataPlaneRegistry dataPlaneRegistry,
             ApplicationService applicationService,
+            BulkEmailExecutor bulkEmailExecutor,
             Domain domain,
             @Value("${email.enabled:false}") boolean emailEnabled,
             @Value("${email.bulk.enabled:false}") boolean bulkEnabled,
@@ -66,6 +68,7 @@ public class SCIMConfiguration implements ProtocolConfiguration {
                 emailService,
                 dataPlaneRegistry,
                 applicationService,
+                bulkEmailExecutor,
                 domain,
                 batchSize,
                 batchPeriod,

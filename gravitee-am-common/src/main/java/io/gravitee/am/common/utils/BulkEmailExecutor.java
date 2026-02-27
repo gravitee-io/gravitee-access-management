@@ -15,29 +15,30 @@
  */
 package io.gravitee.am.common.utils;
 
-import java.util.concurrent.Executor;
+import io.reactivex.rxjava3.core.Scheduler;
+
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SMTPClientExecutor {
+public class BulkEmailExecutor {
 
-    private int numberOfThreads;
+    private ExecutorService executor;
+    private Scheduler scheduler;
 
-    private Executor executor;
-
-    public SMTPClientExecutor(int nbOfThreads) {
-        this.numberOfThreads = nbOfThreads;
-        this.executor = Executors.newFixedThreadPool(nbOfThreads) ;
+    public BulkEmailExecutor(int nbOfThreads, Scheduler scheduler) {
+        this.executor = Executors.newFixedThreadPool(nbOfThreads);
+        this.scheduler = scheduler;
     }
 
-    public Executor getExecutor() {
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+    public ExecutorService getExecutor() {
         return executor;
     }
 
-    public int getNumberOfThreads() {
-        return numberOfThreads;
-    }
 }
