@@ -158,26 +158,72 @@
       </ngx-datatable-column>
       <ngx-datatable-column [sortable]="true" name="Actor" [flexGrow]="2" prop="actor.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <span *ngIf="isUnknownActor(row)">{{ row.actor?.alternativeId }}</span>
-          <a *ngIf="!isUnknownActor(row) && hasActorUrl(row)" [routerLink]="getActorUrl(row)"
+          <span
+            #actorUnknownEl
+            *ngIf="isUnknownActor(row)"
+            class="audit-cell-text"
+            [matTooltip]="row.actor?.alternativeId"
+            #actorUnknownTip="matTooltip"
+            matTooltipPosition="above"
+            matTooltipDisabled
+            (mouseenter)="enableTooltipIfTruncated(actorUnknownEl, actorUnknownTip)"
+            >{{ row.actor?.alternativeId }}</span
+          >
+          <a
+            #actorLinkedEl
+            *ngIf="!isUnknownActor(row) && hasActorUrl(row)"
+            class="audit-cell-text"
+            [routerLink]="getActorUrl(row)"
+            [matTooltip]="(row.actor?.displayName || '') + (row.actor?.alternativeId ? ' | ' + row.actor?.alternativeId : '')"
+            #actorLinkedTip="matTooltip"
+            matTooltipPosition="above"
+            matTooltipDisabled
+            (mouseenter)="enableTooltipIfTruncated(actorLinkedEl, actorLinkedTip)"
             >{{ row.actor?.displayName }} | <small>{{ row.actor?.alternativeId }}</small></a
           >
-          <span *ngIf="!isUnknownActor(row) && !hasActorUrl(row)"
+          <span
+            #actorUnlinkedEl
+            *ngIf="!isUnknownActor(row) && !hasActorUrl(row)"
+            class="audit-cell-text"
+            [matTooltip]="(row.actor?.displayName || '') + (row.actor?.alternativeId ? ' | ' + row.actor?.alternativeId : '')"
+            #actorUnlinkedTip="matTooltip"
+            matTooltipPosition="above"
+            matTooltipDisabled
+            (mouseenter)="enableTooltipIfTruncated(actorUnlinkedEl, actorUnlinkedTip)"
             >{{ row.actor?.displayName }} | <small>{{ row.actor?.alternativeId }}</small></span
           >
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Target" [flexGrow]="2" prop="target.sortDisplayName">
+      <ngx-datatable-column [sortable]="true" name="Target" [flexGrow]="3" prop="target.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div *ngIf="row.target">
-            <a *ngIf="hasLinkableTarget(row); else unlinkedTarget" [routerLink]="getTargetUrl(row)" [queryParams]="getTargetParams(row)"
+            <a
+              #targetLinkedEl
+              *ngIf="hasLinkableTarget(row); else unlinkedTarget"
+              class="audit-cell-text"
+              [routerLink]="getTargetUrl(row)"
+              [queryParams]="getTargetParams(row)"
+              [matTooltip]="(row.target?.displayName || '') + (row.target?.alternativeId ? ' | ' + row.target?.alternativeId : '')"
+              #targetLinkedTip="matTooltip"
+              matTooltipPosition="above"
+              matTooltipDisabled
+              (mouseenter)="enableTooltipIfTruncated(targetLinkedEl, targetLinkedTip)"
               >{{ row.target?.displayName
               }}<span *ngIf="row.target.alternativeId">
                 | <small>{{ row.target?.alternativeId }}</small></span
               ></a
             >
             <ng-template #unlinkedTarget>
-              <span *ngIf="!hasLinkableTarget(row)">
+              <span
+                #targetUnlinkedEl
+                *ngIf="!hasLinkableTarget(row)"
+                class="audit-cell-text"
+                [matTooltip]="(row.target?.displayName || '') + (row.target?.alternativeId ? ' | ' + row.target?.alternativeId : '')"
+                #targetUnlinkedTip="matTooltip"
+                matTooltipPosition="above"
+                matTooltipDisabled
+                (mouseenter)="enableTooltipIfTruncated(targetUnlinkedEl, targetUnlinkedTip)"
+              >
                 {{ row.target?.displayName
                 }}<span *ngIf="row.target.alternativeId">
                   | <small>{{ row.target?.alternativeId }}</small></span
