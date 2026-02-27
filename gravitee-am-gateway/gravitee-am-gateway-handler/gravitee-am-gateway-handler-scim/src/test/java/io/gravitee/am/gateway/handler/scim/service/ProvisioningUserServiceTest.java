@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
-import io.gravitee.am.common.utils.SMTPClientExecutor;
+import io.gravitee.am.common.utils.BulkEmailExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
@@ -70,6 +70,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.json.Json;
 import org.awaitility.Awaitility;
 import org.junit.Assert;
@@ -203,7 +204,7 @@ public class ProvisioningUserServiceTest {
     private GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     @Spy
-    private SMTPClientExecutor executor = new SMTPClientExecutor(1);
+    private BulkEmailExecutor executor = new BulkEmailExecutor(1, Schedulers.newThread());
 
     @Before
     public void setUp() throws Exception {
