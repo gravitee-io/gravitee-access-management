@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import moment from 'moment';
 import { UntypedFormControl } from '@angular/forms';
@@ -286,7 +287,7 @@ export class AuditsComponent implements OnInit {
     if (audit.target) {
       audit.target.sortDisplayName = audit.target.displayName;
       if (audit.target.alternativeId) {
-        audit.target.sortDisplayName += ` | ${audit.target?.alertnativeId}`;
+        audit.target.sortDisplayName += ` | ${audit.target?.alternativeId}`;
       }
     }
     return audit;
@@ -297,7 +298,7 @@ export class AuditsComponent implements OnInit {
       if (this.isUnknownActor(audit)) {
         audit.actor.sortDisplayName = audit.actor.alternativeId;
       } else if (this.hasActorUrl(audit)) {
-        audit.actor.sortDisplayName = `${audit.actor.displayName} | ${audit.actor?.displayName}`;
+        audit.actor.sortDisplayName = `${audit.actor.displayName} | ${audit.actor?.alternativeId}`;
       } else {
         audit.actor.sortDisplayName = audit.actor.displayName;
       }
@@ -360,6 +361,13 @@ export class AuditsComponent implements OnInit {
     const isSuccessfulDeleteEvent = row.outcome.status === 'success' && this.isDeletionEventType(row.type);
     const hasValidUrl = this.getTargetUrl(row).length > 0;
     return !this.isDomainAuditOnOrganizationLevel(row) && !isSuccessfulDeleteEvent && hasValidUrl;
+  }
+
+  enableTooltipIfTruncated(el: HTMLElement, tooltip: MatTooltip) {
+    tooltip.disabled = el.scrollWidth <= el.clientWidth;
+    if (!tooltip.disabled) {
+      tooltip.show();
+    }
   }
 
   private isDeletionEventType(type: string): boolean {
