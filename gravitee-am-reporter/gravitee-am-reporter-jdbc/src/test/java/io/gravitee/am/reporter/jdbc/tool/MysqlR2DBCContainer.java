@@ -16,8 +16,8 @@
 package io.gravitee.am.reporter.jdbc.tool;
 
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.containers.MySQLR2DBCDatabaseContainer;
+import org.testcontainers.mysql.MySQLContainer;
+import org.testcontainers.mysql.MySQLR2DBCDatabaseContainer;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
