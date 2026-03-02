@@ -262,7 +262,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>r2dbc</artifactId>
+            <artifactId>testcontainers-r2dbc</artifactId>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -273,7 +273,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -284,19 +284,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>mysql</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mariadb</artifactId>
+            <artifactId>testcontainers-mysql</artifactId>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -308,7 +296,19 @@
 
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>mssqlserver</artifactId>
+            <artifactId>testcontainers-mariadb</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-mssqlserver</artifactId>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
