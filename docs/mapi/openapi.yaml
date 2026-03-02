@@ -1042,6 +1042,26 @@ paths:
         in: query
         schema:
           type: string
+      - name: type
+        in: query
+        description: >-
+          Filter applications by type. Multiple values can be provided
+          to match any of the specified types (OR logic). When omitted,
+          applications of all types are returned.
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - WEB
+            - NATIVE
+            - BROWSER
+            - SERVICE
+            - RESOURCE_SERVER
+            - AGENT
+        style: form
+        explode: true
       responses:
         "200":
           description: List registered applications for a security domain

@@ -20,6 +20,7 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +56,18 @@ public interface DatabaseDialectHelper {
     String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc);
 
     String buildCountApplicationsQuery(boolean wildcard, boolean withIds);
+
+    default String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc, List<String> types) {
+        return buildSearchApplicationsQueryWithTypes(wildcard, withIds, page, size, sort, asc, types);
+    }
+
+    default String buildCountApplicationsQuery(boolean wildcard, boolean withIds, List<String> types) {
+        return buildCountApplicationsQueryWithTypes(wildcard, withIds, types);
+    }
+
+    String buildSearchApplicationsQueryWithTypes(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc, List<String> types);
+
+    String buildCountApplicationsQueryWithTypes(boolean wildcard, boolean withIds, List<String> types);
 
     String buildSearchProtectedResourceQuery(boolean wildcard, int page, int size, String sort, boolean asc);
 

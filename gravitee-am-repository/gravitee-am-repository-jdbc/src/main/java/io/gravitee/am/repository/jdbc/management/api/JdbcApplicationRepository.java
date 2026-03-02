@@ -20,6 +20,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -292,6 +293,144 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, int page, int size, List<ApplicationType> types) {
+        LOGGER.debug("findByDomain({}, {}, {}, types={})", domain, page, size, types);
+        var criteria = where(COL_DOMAIN).is(domain);
+        if (types != null && !types.isEmpty()) {
+            List<String> typeStrings = types.stream().map(Enum::name).toList();
+            criteria = criteria.and(where(COL_TYPE).in(typeStrings));
+        }
+        final var finalCriteria = criteria;
+        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
+                .matching(query(finalCriteria).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
+                .all())
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> {
+                    if (types != null && !types.isEmpty()) {
+                        List<String> typeStrings = types.stream().map(Enum::name).toList();
+                        return applicationRepository.countByDomainAndTypes(domain, typeStrings).map(total -> new Page<>(data, page, total));
+                    }
+                    return applicationRepository.countByDomain(domain).map(total -> new Page<>(data, page, total));
+                })
+                .doOnError(error -> LOGGER.error("Unable to retrieve applications with domain {} and types {} (page={}/size={})", domain, types, page, size, error))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size, List<ApplicationType> types) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Single.just(new Page<>());
+        }
+        LOGGER.debug("findByDomain({}, appIds, {}, {}, types={})", domain, page, size, types);
+        var criteria = where(COL_DOMAIN).is(domain).and(where(COL_ID).in(applicationIds));
+        if (types != null && !types.isEmpty()) {
+            List<String> typeStrings = types.stream().map(Enum::name).toList();
+            criteria = criteria.and(where(COL_TYPE).in(typeStrings));
+        }
+        final var finalCriteria = criteria;
+        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
+                .matching(query(finalCriteria).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
+                .all())
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> {
+                    if (types != null && !types.isEmpty()) {
+                        List<String> typeStrings = types.stream().map(Enum::name).toList();
+                        return applicationRepository.countByDomainAndApplicationIdsAndTypes(domain, applicationIds, typeStrings).map(total -> new Page<>(data, page, total));
+                    }
+                    return applicationRepository.countByDomainAndApplicationIds(domain, applicationIds).map(total -> new Page<>(data, page, total));
+                })
+                .doOnError(error -> LOGGER.error("Unable to retrieve applications with domain {} and types {} (page={}/size={})", domain, types, page, size, error))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, String query, int page, int size, List<ApplicationType> types) {
+        LOGGER.debug("search({}, {}, {}, {}, types={})", domain, query, page, size, types);
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+
+        List<String> typeStrings = (types != null && !types.isEmpty()) ? types.stream().map(Enum::name).toList() : null;
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, page, size, COL_UPDATED_AT, false, typeStrings);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, false, typeStrings);
+
+        var searchSpecBuilder = getTemplate().getDatabaseClient().sql(search)
+                .bind(COL_DOMAIN, domain)
+                .bind("value", escapedQuery.toUpperCase());
+        var countSpecBuilder = getTemplate().getDatabaseClient().sql(count)
+                .bind(COL_DOMAIN, domain)
+                .bind("value", escapedQuery.toUpperCase());
+
+        if (typeStrings != null) {
+            searchSpecBuilder = searchSpecBuilder.bind("types", typeStrings);
+            countSpecBuilder = countSpecBuilder.bind("types", typeStrings);
+        }
+
+        final var searchSpec = searchSpecBuilder;
+        final var countSpec = countSpecBuilder;
+
+        return fluxToFlowable(searchSpec
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(countSpec
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to search applications with domain {} and types {} (page={}/size={})", domain, types, page, size, error));
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size, List<ApplicationType> types) {
+        LOGGER.debug("search({}, appIds, {}, {}, {}, types={})", domain, query, page, size, types);
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Single.just(new Page<>());
+        }
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+
+        List<String> typeStrings = (types != null && !types.isEmpty()) ? types.stream().map(Enum::name).toList() : null;
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, page, size, COL_UPDATED_AT, false, typeStrings);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, true, typeStrings);
+
+        var searchSpecBuilder = getTemplate().getDatabaseClient().sql(search)
+                .bind(COL_DOMAIN, domain)
+                .bind("applicationIds", applicationIds)
+                .bind("value", escapedQuery.toUpperCase());
+        var countSpecBuilder = getTemplate().getDatabaseClient().sql(count)
+                .bind(COL_DOMAIN, domain)
+                .bind("applicationIds", applicationIds)
+                .bind("value", escapedQuery.toUpperCase());
+
+        if (typeStrings != null) {
+            searchSpecBuilder = searchSpecBuilder.bind("types", typeStrings);
+            countSpecBuilder = countSpecBuilder.bind("types", typeStrings);
+        }
+
+        final var searchSpec = searchSpecBuilder;
+        final var countSpec = countSpecBuilder;
+
+        return fluxToFlowable(searchSpec
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(countSpec
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<Application>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to search applications with domain {} and types {} (page={}/size={})", domain, types, page, size, error));
     }
 
     @Override

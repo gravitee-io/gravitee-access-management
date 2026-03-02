@@ -115,6 +115,7 @@ import static java.util.stream.Collectors.toSet;
 public class MongoApplicationRepository extends AbstractManagementMongoRepository implements ApplicationRepository {
 
     private static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
+    private static final String FIELD_TYPE = "type";
     private static final String FIELD_APPLICATION_IDENTITY_PROVIDERS = "identityProviders";
     private static final String FIELD_IDENTITY = "identity";
     // Kept for retro-compatibility
@@ -245,6 +246,71 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, int page, int size, List<ApplicationType> types) {
+        Bson query = buildDomainQueryWithTypes(eq(FIELD_DOMAIN, domain), types);
+        return queryApplications(query, page, size).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size, List<ApplicationType> types) {
+        Bson query = buildDomainQueryWithTypes(and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds)), types);
+        return queryApplications(query, page, size).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, String query, int page, int size, List<ApplicationType> types) {
+        Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        mongoQuery = buildDomainQueryWithTypes(mongoQuery, types);
+        boolean useCollation = !isWildcardQuery(query);
+        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size, List<ApplicationType> types) {
+        boolean useWildcard = isWildcardQuery(query);
+
+        Bson searchQuery;
+        if (useWildcard) {
+            String escapedQuery = escapeRegexMetacharacters(query);
+            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = and(in(FIELD_ID, applicationIds), or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern)));
+        } else {
+            searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
+        }
+
+        Bson mongoQuery = buildDomainQueryWithTypes(and(eq(FIELD_DOMAIN, domain), searchQuery), types);
+
+        CountOptions countOpts = useWildcard ? countOptions() : countOptions().collation(CASE_INSENSITIVE_COLLATION);
+        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOpts)).first(0L);
+
+        FindPublisher<ApplicationMongo> findPublisher = withMaxTime(applicationsCollection.find(mongoQuery))
+                .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
+                .skip(size * page)
+                .limit(size);
+
+        if (!useWildcard) {
+            findPublisher = findPublisher.collation(CASE_INSENSITIVE_COLLATION);
+        }
+
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(findPublisher)
+                .map(MongoApplicationRepository::convert)
+                .collect(HashSet::new, Set::add);
+
+        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
+                .observeOn(Schedulers.computation());
+    }
+
+    private static Bson buildDomainQueryWithTypes(Bson baseQuery, List<ApplicationType> types) {
+        if (types == null || types.isEmpty()) {
+            return baseQuery;
+        }
+        List<String> typeStrings = types.stream().map(Enum::name).toList();
+        return and(baseQuery, in(FIELD_TYPE, typeStrings));
     }
 
     @Override
