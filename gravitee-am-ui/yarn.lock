@@ -5203,7 +5203,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfga/syntax-transformer@npm:0.2.0, @openfga/syntax-transformer@npm:^0.2.0-beta.21":
+"@openfga/syntax-transformer@npm:0.2.1":
+  version: 0.2.1
+  resolution: "@openfga/syntax-transformer@npm:0.2.1"
+  dependencies:
+    ajv: "npm:^8.17.1"
+    antlr4: "npm:^4.13.2"
+    yaml: "npm:^2.8.2"
+  checksum: 10c0/02e554d82851043b0d57ed3b640b0140332525ccbea4bf7494e8a5bfbfb1fe3a141e56d9e77be828678ec56d4d40633ba2980a98a36cda4218f21e7c6f61e447
+  languageName: node
+  linkType: hard
+
+"@openfga/syntax-transformer@npm:^0.2.0-beta.21":
   version: 0.2.0
   resolution: "@openfga/syntax-transformer@npm:0.2.0"
   dependencies:
@@ -11015,7 +11026,7 @@ __metadata:
     "@ngx-formly/material": "npm:6.3.12"
     "@openfga/frontend-utils": "npm:0.2.0-beta.11"
     "@openfga/sdk": "npm:0.2.10"
-    "@openfga/syntax-transformer": "npm:0.2.0"
+    "@openfga/syntax-transformer": "npm:0.2.1"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/jest": "npm:29.5.14"
     "@types/json-schema": "npm:7.0.15"
@@ -18874,7 +18885,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^2.8.0":
+"yaml@npm:^2.8.0, yaml@npm:^2.8.2":
   version: 2.8.2
   resolution: "yaml@npm:2.8.2"
   bin:
