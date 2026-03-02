@@ -26,9 +26,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextClosedEvent;
-import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.utility.DockerImageName;
 
 import static org.mockito.Mockito.when;
 
@@ -40,29 +39,28 @@ import static org.mockito.Mockito.when;
 @ComponentScan("io.gravitee.am.reporter.kafka")
 public class JUnitConfiguration implements ApplicationListener<ContextClosedEvent> {
 
-    private KafkaContainer kafkaContainer;
+    private ConfluentKafkaContainer kafkaContainer;
     private SchemaRegistryContainer schemaRegistryContainer;
     private static final Network NETWORK = Network.newNetwork();
     private static final String CONFLUENT_PLATFORM_VERSION = "7.6.1";
 
     @Bean
-    public KafkaContainer kafkaContainer() {
-        kafkaContainer = new KafkaContainer(
-                DockerImageName.parse("confluentinc/cp-kafka:" + CONFLUENT_PLATFORM_VERSION))
+    public ConfluentKafkaContainer kafkaContainer() {
+        kafkaContainer = new ConfluentKafkaContainer("confluentinc/cp-kafka:" + CONFLUENT_PLATFORM_VERSION)
                 .withNetwork(NETWORK);
         kafkaContainer.start();
         return kafkaContainer;
     }
 
     @Bean
-    public SchemaRegistryContainer schemaRegistryContainer(KafkaContainer kafkaContainer) {
+    public SchemaRegistryContainer schemaRegistryContainer(ConfluentKafkaContainer kafkaContainer) {
         schemaRegistryContainer = new SchemaRegistryContainer(CONFLUENT_PLATFORM_VERSION);
         schemaRegistryContainer.withNetwork(NETWORK).withKafka(kafkaContainer).start();
         return schemaRegistryContainer;
     }
 
     @Bean("config")
-    public KafkaReporterConfiguration configuration1(KafkaContainer kafkaContainer) {
+    public KafkaReporterConfiguration configuration1(ConfluentKafkaContainer kafkaContainer) {
         KafkaReporterConfiguration kafkaReporterConfiguration = new KafkaReporterConfiguration();
         kafkaReporterConfiguration.setTopic("gravitee-audit");
         kafkaReporterConfiguration.setBootstrapServers(kafkaContainer.getBootstrapServers());
@@ -71,7 +69,7 @@ public class JUnitConfiguration implements ApplicationListener<ContextClosedEven
     }
 
     @Bean("configWithSchemaRegistry")
-    public KafkaReporterConfiguration configuration2(KafkaContainer kafkaContainer) {
+    public KafkaReporterConfiguration configuration2(ConfluentKafkaContainer kafkaContainer) {
         KafkaReporterConfiguration kafkaReporterConfiguration = new KafkaReporterConfiguration();
         kafkaReporterConfiguration.setTopic("gravitee-audit-sr");
         kafkaReporterConfiguration.setBootstrapServers(kafkaContainer.getBootstrapServers());

@@ -38,7 +38,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
-import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.kafka.ConfluentKafkaContainer;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -68,7 +68,7 @@ public class KafkaAuditReporterITests {
     protected GraviteeContext graviteeContext;
 
     @Autowired
-    protected KafkaContainer kafkaContainer;
+    protected ConfluentKafkaContainer kafkaContainer;
 
     @Autowired
     protected Vertx vertx;
