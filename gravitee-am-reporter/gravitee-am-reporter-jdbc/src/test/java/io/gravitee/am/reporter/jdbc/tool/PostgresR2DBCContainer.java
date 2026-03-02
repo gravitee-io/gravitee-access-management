@@ -16,8 +16,8 @@
 package io.gravitee.am.reporter.jdbc.tool;
 
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.PostgreSQLR2DBCDatabaseContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLR2DBCDatabaseContainer;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

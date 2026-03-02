@@ -16,8 +16,8 @@
 package io.gravitee.am.reporter.jdbc.tool;
 
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import org.testcontainers.containers.MSSQLR2DBCDatabaseContainer;
-import org.testcontainers.containers.MSSQLServerContainer;
+import org.testcontainers.mssqlserver.MSSQLR2DBCDatabaseContainer;
+import org.testcontainers.mssqlserver.MSSQLServerContainer;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
