@@ -16,7 +16,7 @@
 package io.gravitee.am.reporter.kafka;
 
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryContainer> {
@@ -30,7 +30,7 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
         this.withExposedPorts(SCHEMA_REGISTRY_PORT);
     }
 
-    public SchemaRegistryContainer withKafka(KafkaContainer kafka) {
+    public SchemaRegistryContainer withKafka(ConfluentKafkaContainer kafka) {
         String bootstrapServers = kafka.getNetworkAliases().get(0) + ":9092";
         this.withEnv("SCHEMA_REGISTRY_HOST_NAME", "schema-registry");
         this.withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:8081");

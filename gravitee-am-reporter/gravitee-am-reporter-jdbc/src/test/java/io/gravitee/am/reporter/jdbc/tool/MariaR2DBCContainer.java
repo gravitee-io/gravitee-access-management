@@ -16,8 +16,8 @@
 package io.gravitee.am.reporter.jdbc.tool;
 
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.MariaDBR2DBCDatabaseContainer;
+import org.testcontainers.mariadb.MariaDBContainer;
+import org.testcontainers.mariadb.MariaDBR2DBCDatabaseContainer;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
