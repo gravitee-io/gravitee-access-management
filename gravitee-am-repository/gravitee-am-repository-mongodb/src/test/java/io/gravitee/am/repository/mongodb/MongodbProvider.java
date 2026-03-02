@@ -38,6 +38,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * @author GraviteeSource Team
  */
 public class MongodbProvider implements InitializingBean, DisposableBean {
+    private static final String DEFAULT_MONGO_IMAGE = "mongo:8.0";
 
     private MongoDBContainer mongoDBContainer = null;
 
@@ -51,7 +52,7 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() {
-        mongoDBContainer = new MongoDBContainer("mongo:8.0");
+        mongoDBContainer = new MongoDBContainer(DEFAULT_MONGO_IMAGE);
         mongoDBContainer.withEnv("MONGO_INITDB_DATABASE", databaseName);
         mongoDBContainer.start();
 
