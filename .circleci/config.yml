@@ -96,7 +96,7 @@ parameters:
 
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
-  continuation: circleci/continuation@2.0.0
+  continuation: circleci/continuation@2.0.1
 
 jobs:
   # Wrapper so workflow-level when is applied by CircleCI (continuation/continue orb does not accept when).
