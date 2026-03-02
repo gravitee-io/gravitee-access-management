@@ -5,7 +5,7 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@a2a-js/sdk@npm:^0.3.10":
+"@a2a-js/sdk@npm:0.3.10":
   version: 0.3.10
   resolution: "@a2a-js/sdk@npm:0.3.10"
   dependencies:
@@ -10981,7 +10981,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "gravitee-am-webui@workspace:."
   dependencies:
-    "@a2a-js/sdk": "npm:^0.3.10"
+    "@a2a-js/sdk": "npm:0.3.10"
     "@ajsf/core": "npm:0.8.0"
     "@ajsf/material": "npm:0.8.0"
     "@angular-builders/jest": "npm:19.0.1"

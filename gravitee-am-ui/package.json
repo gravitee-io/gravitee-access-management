@@ -22,7 +22,7 @@
   },
   "private": true,
   "dependencies": {
-    "@a2a-js/sdk": "^0.3.10",
+    "@a2a-js/sdk": "0.3.10",
     "@ajsf/core": "0.8.0",
     "@ajsf/material": "0.8.0",
     "@angular/animations": "19.2.14",
