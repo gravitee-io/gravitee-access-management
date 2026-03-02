@@ -29,8 +29,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.mongodb.MongoDBContainer;
 
 import java.util.Collections;
 
@@ -57,7 +56,7 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() {
-        mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:8.0"));
+        mongoDBContainer = new MongoDBContainer("mongo:8.0");
         mongoDBContainer.withEnv("MONGO_INITDB_DATABASE", databaseName);
         mongoDBContainer.start();
 
