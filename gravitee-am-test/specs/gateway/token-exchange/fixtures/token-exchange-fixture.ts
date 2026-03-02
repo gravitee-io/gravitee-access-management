@@ -316,8 +316,6 @@ export const setupTokenExchangeFixture = async (
           Authorization: `Basic ${basicAuth}`,
         },
       ).expect(200);
-
-      await waitFor(11000); // because of OFFLINE_VERIFICATION_TIMER_SECONDS = 10 seconds
     };
 
     const exchangeToken = async (

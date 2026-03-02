@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.oauth2.impl.BaseIntrospectionTokenService.LEGACY_RFC8707_ENABLED;
+import static io.gravitee.am.gateway.handler.common.oauth2.impl.BaseIntrospectionTokenService.OFFLINE_VERIFICATION_TIMER_SECONDS_KEY;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import org.mockito.ArgumentMatchers;
@@ -266,6 +267,7 @@ public class BaseIntrospectionTokenServiceTest {
 
     private void initService(boolean legacyFlagEnabled) {
         when(environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(legacyFlagEnabled);
+        when(environment.getProperty(OFFLINE_VERIFICATION_TIMER_SECONDS_KEY, Integer.class, 10)).thenReturn(10);
         introspectionTokenService = new TestIntrospectionTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment);
     }
 
