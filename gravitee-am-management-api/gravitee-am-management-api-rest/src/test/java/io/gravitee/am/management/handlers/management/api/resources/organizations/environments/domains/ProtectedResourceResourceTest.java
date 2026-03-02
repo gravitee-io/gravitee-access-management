@@ -48,11 +48,13 @@ import io.gravitee.am.service.model.NewProtectedResource;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -524,6 +526,50 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         assertEquals("test-server", result.name());
         assertEquals("description", result.description());
         assertEquals(ProtectedResource.Type.MCP_SERVER, result.type());
+    }
+
+    @Test
+    public void shouldUpdateProtectedResource_acceptPayloadWithReadOnlyFields_200() throws IOException {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        Map<String, Object> feature = new HashMap<>();
+        feature.put("key", "k1");
+        feature.put("description", "d1");
+        feature.put("type", "mcp_tool");
+        feature.put("scopes", List.of());
+        feature.put("createdAt", 1770766870952L);
+        feature.put("updatedAt", 1770766870952L);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", "test-server");
+        body.put("resourceIdentifiers", List.of("https://example.com"));
+        body.put("createdAt", 123L);
+        body.put("updatedAt", 456L);
+        body.put("features", List.of(feature));
+
+        ProtectedResource updatedResource = new ProtectedResource();
+        updatedResource.setId("resource-id");
+        updatedResource.setDomainId(domainId);
+        updatedResource.setName("test-server");
+        updatedResource.setResourceIdentifiers(List.of("https://example.com"));
+
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(ProtectedResourcePrimaryData.of(updatedResource)))
+                .when(protectedResourceService).update(any(Domain.class), eq("resource-id"), any(UpdateProtectedResource.class), any());
+
+        Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("resource-id")
+                .request()
+                .put(Entity.entity(objectMapper.writeValueAsString(body), MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        verify(protectedResourceService).update(any(Domain.class), eq("resource-id"), any(UpdateProtectedResource.class), any());
     }
 
     /**

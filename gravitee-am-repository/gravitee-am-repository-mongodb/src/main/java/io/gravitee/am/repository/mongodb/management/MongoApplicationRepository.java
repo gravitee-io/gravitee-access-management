@@ -65,6 +65,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMo
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeOAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Completable;
@@ -554,6 +555,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setBackchannelUserCodeParameter(other.isBackchannelUserCodeParameter());
         applicationOAuthSettingsMongo.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
         applicationOAuthSettingsMongo.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
+        applicationOAuthSettingsMongo.setTokenExchangeOAuthSettings(
+                TokenExchangeOAuthSettingsMongo.convert(other.getTokenExchangeOAuthSettings()));
 
         return applicationOAuthSettingsMongo;
     }
@@ -635,6 +638,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setBackchannelClientNotificationEndpoint(other.getBackchannelClientNotificationEndpoint());
         applicationOAuthSettings.setRequireParRequest(other.isRequireParRequest());
         applicationOAuthSettings.setDisableRefreshTokenRotation(other.isDisableRefreshTokenRotation());
+        applicationOAuthSettings.setTokenExchangeOAuthSettings(
+                other.getTokenExchangeOAuthSettings() != null ? other.getTokenExchangeOAuthSettings().convert() : null);
 
         return applicationOAuthSettings;
     }
@@ -717,6 +722,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettings applicationAdvancedSettings = new ApplicationAdvancedSettings();
         applicationAdvancedSettings.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettings.setFlowsInherited(other.isFlowsInherited());
+        applicationAdvancedSettings.setAgentCardUrl(other.getAgentCardUrl());
         return applicationAdvancedSettings;
     }
 
@@ -728,6 +734,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettingsMongo applicationAdvancedSettingsMongo = new ApplicationAdvancedSettingsMongo();
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
+        applicationAdvancedSettingsMongo.setAgentCardUrl(other.getAgentCardUrl());
         return applicationAdvancedSettingsMongo;
     }
 

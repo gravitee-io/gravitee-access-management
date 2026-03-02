@@ -37,16 +37,16 @@ import { DomainFromJSON, DomainFromJSONTyped, DomainToJSON, DomainToJSONTyped } 
 export interface DomainPage {
   /**
    *
-   * @type {Array<Domain>}
-   * @memberof DomainPage
-   */
-  data?: Array<Domain>;
-  /**
-   *
    * @type {number}
    * @memberof DomainPage
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<Domain>}
+   * @memberof DomainPage
+   */
+  data?: Array<Domain>;
   /**
    *
    * @type {number}
@@ -71,8 +71,8 @@ export function DomainPageFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(DomainFromJSON),
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(DomainFromJSON),
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -87,8 +87,8 @@ export function DomainPageToJSONTyped(value?: DomainPage | null, ignoreDiscrimin
   }
 
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(DomainToJSON),
     currentPage: value['currentPage'],
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(DomainToJSON),
     totalCount: value['totalCount'],
   };
 }

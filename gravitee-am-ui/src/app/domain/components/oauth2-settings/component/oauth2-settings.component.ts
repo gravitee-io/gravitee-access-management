@@ -80,6 +80,7 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.jwksUri = newSettings.jwksUri;
     this.oauthSettings.jwks = newSettings.jwks;
     this.oauthSettings.disableRefreshTokenRotation = newSettings.disableRefreshTokenRotation;
+    this.oauthSettings.tokenExchangeOAuthSettings = newSettings.tokenExchangeOAuthSettings;
 
     // Scopes
     this.oauthSettings.scopeSettings = newSettings.scopeSettings;
@@ -138,6 +139,7 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.tlsClientAuthSanEmail = this.oauthSettings.tlsClientAuthSanEmail;
     oauthSettings.jwksUri = this.oauthSettings.jwksUri;
     oauthSettings.disableRefreshTokenRotation = this.oauthSettings.disableRefreshTokenRotation;
+    oauthSettings.tokenExchangeOAuthSettings = this.oauthSettings.tokenExchangeOAuthSettings;
 
     // Parse jwks if it's a string
     if (this.oauthSettings.jwks !== undefined) {

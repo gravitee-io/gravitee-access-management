@@ -27,6 +27,11 @@ public class ApplicationAdvancedSettings {
 
     private boolean skipConsent;
     private boolean flowsInherited = true;
+    /**
+     * Optional URL to the agent's AgentCard, as defined by the A2A specification.
+     * This setting is only applicable to Agentic applications.
+     */
+    private String agentCardUrl;
 
     public ApplicationAdvancedSettings() {
     }
@@ -34,6 +39,7 @@ public class ApplicationAdvancedSettings {
     public ApplicationAdvancedSettings(ApplicationAdvancedSettings other) {
         this.skipConsent = other.skipConsent;
         this.flowsInherited = other.flowsInherited;
+        this.agentCardUrl = other.agentCardUrl;
     }
 
     public boolean isSkipConsent() {
@@ -50,6 +56,14 @@ public class ApplicationAdvancedSettings {
 
     public void setFlowsInherited(boolean flowsInherited) {
         this.flowsInherited = flowsInherited;
+    }
+
+    public String getAgentCardUrl() {
+        return agentCardUrl;
+    }
+
+    public void setAgentCardUrl(String agentCardUrl) {
+        this.agentCardUrl = agentCardUrl;
     }
 
     public void copyTo(Client client) {

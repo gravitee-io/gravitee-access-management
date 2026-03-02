@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantData;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.model.Domain;
@@ -50,6 +51,9 @@ class TokenExchangeStrategyTest {
     @Mock
     private TokenExchangeService tokenExchangeService;
 
+    @Mock
+    private UserGatewayService userGatewayService;
+
     private TokenExchangeStrategy strategy;
     private Domain domain;
     private Client client;
@@ -57,7 +61,7 @@ class TokenExchangeStrategyTest {
 
     @BeforeEach
     void setUp() {
-        strategy = new TokenExchangeStrategy(tokenExchangeService);
+        strategy = new TokenExchangeStrategy(tokenExchangeService, userGatewayService);
 
         domain = new Domain();
         domain.setId("domain-id");
@@ -111,7 +115,7 @@ class TokenExchangeStrategyTest {
                 TokenTypeHint.ACCESS_TOKEN.name()
         );
 
-        when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
+        when(tokenExchangeService.exchange(any(), eq(client), eq(domain), eq(userGatewayService)))
                 .thenReturn(Single.just(exchangeResult));
 
         TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
@@ -143,7 +147,7 @@ class TokenExchangeStrategyTest {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
 
-        when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
+        when(tokenExchangeService.exchange(any(), eq(client), eq(domain), eq(userGatewayService)))
                 .thenReturn(Single.error(new InvalidGrantException("Invalid subject token")));
 
         strategy.process(tokenRequest, client, domain)
@@ -170,7 +174,7 @@ class TokenExchangeStrategyTest {
                 TokenTypeHint.ACCESS_TOKEN.name()
         );
 
-        when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
+        when(tokenExchangeService.exchange(any(), eq(client), eq(domain), eq(userGatewayService)))
                 .thenReturn(Single.just(exchangeResult));
 
         TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();

@@ -37,37 +37,7 @@ export interface UpdateIdentityProvider {
    * @type {string}
    * @memberof UpdateIdentityProvider
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateIdentityProvider
-   */
-  type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateIdentityProvider
-   */
   configuration: string;
-  /**
-   *
-   * @type {{ [key: string]: string; }}
-   * @memberof UpdateIdentityProvider
-   */
-  mappers?: { [key: string]: string };
-  /**
-   *
-   * @type {{ [key: string]: Array<string>; }}
-   * @memberof UpdateIdentityProvider
-   */
-  roleMapper?: { [key: string]: Array<string> };
-  /**
-   *
-   * @type {{ [key: string]: Array<string>; }}
-   * @memberof UpdateIdentityProvider
-   */
-  groupMapper?: { [key: string]: Array<string> };
   /**
    *
    * @type {Array<string>}
@@ -76,19 +46,49 @@ export interface UpdateIdentityProvider {
   domainWhitelist?: Array<string>;
   /**
    *
+   * @type {{ [key: string]: Array<string>; }}
+   * @memberof UpdateIdentityProvider
+   */
+  groupMapper?: { [key: string]: Array<string> };
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof UpdateIdentityProvider
+   */
+  mappers?: { [key: string]: string };
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateIdentityProvider
+   */
+  name: string;
+  /**
+   *
    * @type {string}
    * @memberof UpdateIdentityProvider
    */
   passwordPolicy?: string;
+  /**
+   *
+   * @type {{ [key: string]: Array<string>; }}
+   * @memberof UpdateIdentityProvider
+   */
+  roleMapper?: { [key: string]: Array<string> };
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateIdentityProvider
+   */
+  type: string;
 }
 
 /**
  * Check if a given object implements the UpdateIdentityProvider interface.
  */
 export function instanceOfUpdateIdentityProvider(value: object): value is UpdateIdentityProvider {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -101,14 +101,14 @@ export function UpdateIdentityProviderFromJSONTyped(json: any, ignoreDiscriminat
     return json;
   }
   return {
-    name: json['name'],
-    type: json['type'],
     configuration: json['configuration'],
-    mappers: json['mappers'] == null ? undefined : json['mappers'],
-    roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
-    groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
     domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
+    groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
+    mappers: json['mappers'] == null ? undefined : json['mappers'],
+    name: json['name'],
     passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
+    roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
+    type: json['type'],
   };
 }
 
@@ -122,13 +122,13 @@ export function UpdateIdentityProviderToJSONTyped(value?: UpdateIdentityProvider
   }
 
   return {
-    name: value['name'],
-    type: value['type'],
     configuration: value['configuration'],
-    mappers: value['mappers'],
-    roleMapper: value['roleMapper'],
-    groupMapper: value['groupMapper'],
     domainWhitelist: value['domainWhitelist'],
+    groupMapper: value['groupMapper'],
+    mappers: value['mappers'],
+    name: value['name'],
     passwordPolicy: value['passwordPolicy'],
+    roleMapper: value['roleMapper'],
+    type: value['type'],
   };
 }

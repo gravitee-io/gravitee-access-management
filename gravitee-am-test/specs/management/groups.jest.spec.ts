@@ -44,8 +44,8 @@ let group;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('groups', true), { accessToken }).then((it) => it.domain);
-  domain2 = await setupDomainForTest(uniqueName('groups2', true), { accessToken }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('groups', true), { accessToken, waitForStart: true }).then((it) => it.domain);
+  domain2 = await setupDomainForTest(uniqueName('groups2', true), { accessToken, waitForStart: true }).then((it) => it.domain);
 });
 
 describe('before creating groups', () => {

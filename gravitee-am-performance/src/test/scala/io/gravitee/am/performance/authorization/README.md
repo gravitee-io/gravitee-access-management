@@ -55,6 +55,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 
 #### Parameters
 * `fga_api_url`: base URL of the OpenFGA REST API (default: http://localhost:8080)
+* `fga_api_token`: Authorization Bearer token
 * `fga_store_id`: OpenFGA Store identifier
 * `fga_authorization_model_id`: OpenFGA authorization model identifier
 * `number_of_users`: how many users the simulation will create tuples for
@@ -146,6 +147,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 
 #### Parameters
 * `fga_api_url`: base URL of the OpenFGA REST API (default: http://localhost:8080)
+* `fga_api_token`: Authorization Bearer token
 * `fga_store_id`: OpenFGA Store identifier
 * `fga_authorization_model_id`: OpenFGA authorization model identifier
 * `number_of_users`: how many users the provisioning data created
@@ -155,6 +157,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.authorizat
 * `inject-during`: duration (in sec) of the steady-state load (default: 300)
 * `repeat`: number of evaluation checks each virtual agent performs per iteration (default: 10)
 * `evaluation_tags`: optional comma-separated tags to filter evaluation cases
+* `consistency`: optional, values: MINIMIZE_LATENCY, HIGHER_CONSISTENCY (default) or UNSPECIFIED
 
 #### Tag filtering
 Evaluation cases are tagged to support comparisons with AuthZen/PDP runs:

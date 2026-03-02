@@ -21,6 +21,8 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.AgentApplicationConstraints;
+import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
@@ -151,7 +153,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> patch(Client toPatch, DynamicClientRegistrationRequest request, String basePath) {
-        return this.validateClientPatchRequest(request)
+        return this.preserveApplicationType(toPatch, request)
+                .flatMap(this::validateClientPatchRequest)
                 .map(req -> req.patch(toPatch))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::update)
@@ -160,7 +163,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> update(Client toUpdate, DynamicClientRegistrationRequest request, String basePath) {
-        return this.validateClientRegistrationRequest(request)
+        return this.preserveApplicationType(toUpdate, request)
+                .flatMap(this::validateClientRegistrationRequest)
                 .map(req -> req.patch(toUpdate))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::update)
@@ -381,6 +385,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateScopes)
                 .flatMap(this::validateGrantType)
                 .flatMap(this::validateResponseType)
+                .flatMap(this::validateAgentConstraints)
                 .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
@@ -519,6 +524,79 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
 
         }
+        return Single.just(request);
+    }
+
+    /**
+     * On update/patch, preserve the existing client's application_type in the request if not explicitly set.
+     * If application_type is explicitly provided in the request, it will be used (allowing type changes).
+     * If omitted, the existing type is preserved to ensure constraints are still enforced.
+     */
+    private Single<DynamicClientRegistrationRequest> preserveApplicationType(Client existingClient, DynamicClientRegistrationRequest request) {
+        String existingType = existingClient.getApplicationType();
+        if ((request.getApplicationType() == null || request.getApplicationType().isEmpty()) && existingType != null) {
+            // Request omits application_type — carry forward existing value so constraints apply
+            request.setApplicationType(Optional.of(existingType));
+        }
+        return Single.just(request);
+    }
+
+    /**
+     * When application_type is "agent", enforce agent constraints (see {@link AgentApplicationConstraints}):
+     * - Strip forbidden grant types (implicit, password, refresh_token)
+     * - If no grant types remain (or none were provided), default to authorization_code with response type "code"
+     * - Otherwise, strip implicit response types (token, id_token, id_token token),
+     *   falling back to "code" if the list becomes empty and authorization_code is granted
+     * - Default to client_secret_basic auth method if not explicitly set
+     */
+    private Single<DynamicClientRegistrationRequest> validateAgentConstraints(DynamicClientRegistrationRequest request) {
+        boolean isAgent = request.getApplicationType() != null
+                && request.getApplicationType().filter(io.gravitee.am.common.oidc.ApplicationType.AGENT::equals).isPresent();
+        if (!isAgent) {
+            return Single.just(request);
+        }
+
+        // Strip forbidden grant types, keeping only allowed ones
+        List<String> grantTypes = request.getGrantTypes() != null
+                ? request.getGrantTypes().orElse(Collections.emptyList()).stream()
+                    .filter(g -> !AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES.contains(g)).toList()
+                : Collections.emptyList();
+
+        if (request.getGrantTypes() != null && request.getGrantTypes().isPresent()) {
+            List<String> stripped = request.getGrantTypes().get().stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES::contains).toList();
+            if (!stripped.isEmpty()) {
+                LOGGER.warn("Agent application registration: stripped forbidden grant types {} from request", stripped);
+            }
+        }
+
+        if (grantTypes.isEmpty()) {
+            // Default to authorization_code when no allowed grant types remain
+            request.setGrantTypes(Optional.of(List.of(GrantType.AUTHORIZATION_CODE)));
+            request.setResponseTypes(Optional.of(List.of("code")));
+        } else {
+            request.setGrantTypes(Optional.of(grantTypes));
+
+            // Strip forbidden response types
+            List<String> responseTypes = new ArrayList<>(
+                    request.getResponseTypes() != null ? request.getResponseTypes().orElse(Collections.emptyList()) : Collections.emptyList());
+            List<String> strippedResponseTypes = responseTypes.stream()
+                    .filter(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES::contains).toList();
+            if (!strippedResponseTypes.isEmpty()) {
+                LOGGER.warn("Agent application registration: stripped forbidden response types {} from request", strippedResponseTypes);
+            }
+            responseTypes.removeAll(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES);
+            if (responseTypes.isEmpty() && grantTypes.contains(GrantType.AUTHORIZATION_CODE)) {
+                responseTypes.add("code");
+            }
+            request.setResponseTypes(Optional.of(responseTypes));
+        }
+
+        // Default to client_secret_basic if no auth method specified
+        if (request.getTokenEndpointAuthMethod() == null || request.getTokenEndpointAuthMethod().isEmpty()) {
+            request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.CLIENT_SECRET_BASIC));
+        }
+
         return Single.just(request);
     }
 

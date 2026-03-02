@@ -94,7 +94,7 @@ object OpenFGACalls {
     val requestBody = Obj(
       "tuple_key" -> tupleKeyToJson(TupleKey(user, relation, objectKey)),
       "authorization_model_id" -> FGA_AUTHORIZATION_MODEL_ID,
-      "consistency" -> "HIGHER_CONSISTENCY"
+      "consistency" -> CHECK_CONSISTENCY_LEVEL
     )
 
     context.foreach(ctx => requestBody("context") = mapToJson(ctx))
@@ -110,24 +110,28 @@ object OpenFGACalls {
   def getStore = {
     http("Get Store")
       .get(FGA_API_URL + s"/stores/${FGA_STORE_ID}")
+      .header("Authorization", s"Bearer ${FGA_API_TOKEN}")
       .check(status.is(200))
   }
 
   def listAuthorizationModels = {
     http("List Authorization Models")
       .get(FGA_API_URL + s"/stores/${FGA_STORE_ID}/authorization-models")
+      .header("Authorization", s"Bearer ${FGA_API_TOKEN}")
       .check(status.is(200))
   }
 
   def getAuthorizationModel = {
     http("Get Authorization Model")
       .get(FGA_API_URL + s"/stores/${FGA_STORE_ID}/authorization-models/${FGA_AUTHORIZATION_MODEL_ID}")
+      .header("Authorization", s"Bearer ${FGA_API_TOKEN}")
       .check(status.is(200))
   }
 
   def writeTuplesFrom(description: String, tuples: List[Tuple]) = {
     http("Write Tuples: " + description)
       .post(FGA_API_URL + s"/stores/${FGA_STORE_ID}/write")
+      .header("Authorization", s"Bearer ${FGA_API_TOKEN}")
       .body(StringBody(tuplesToJsonRequestBody(tuples))).asJson
       .check(status.is(200))
   }
@@ -135,6 +139,7 @@ object OpenFGACalls {
   def writeTuples(description: String) = {
     http("Write Tuples: " + description)
       .post(FGA_API_URL + s"/stores/${FGA_STORE_ID}/write")
+      .header("Authorization", s"Bearer ${FGA_API_TOKEN}")
       .body(StringBody("#{tupleRequestBody}")).asJson
       .check(status.is(200))
   }
@@ -142,6 +147,7 @@ object OpenFGACalls {
   def checkAuthorization(description: String) = {
     http("Check Authorization: " + description)
       .post(FGA_API_URL + s"/stores/${FGA_STORE_ID}/check")
+      .header("Authorization", s"Bearer ${FGA_API_TOKEN}")
       .body(StringBody("#{checkRequestBody}")).asJson
       .check(status.is(200))
       .check(jsonPath("$.allowed").ofType[Boolean].saveAs("allowed"))

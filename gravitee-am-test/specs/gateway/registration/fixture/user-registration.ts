@@ -27,7 +27,6 @@ import { uniqueName } from '@utils-commands/misc';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createCustomIdp } from '@utils-commands/idps-commands';
-import faker from 'faker';
 import { expect } from '@jest/globals';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { extractXsrfToken, performFormPost } from '@gateway-commands/oauth-oidc-commands';
@@ -41,103 +40,158 @@ export interface UserRegistrationFixture extends Fixture {
   application: Application;
   applicationWithCustomIdp: Application;
   applicationWithCustomIdpAndRedirect: Application;
+  /** App with registerEnabled=false */
+  applicationRegistrationDisabled: Application;
+  /** App with inherited login+account settings (falls back to domain-level) */
+  applicationInherited: Application;
   defaultIdp: IdentityProvider;
   customIdp: IdentityProvider;
 }
 
 export const setupFixture = async (): Promise<UserRegistrationFixture> => {
-  const accessToken = await requestAdminAccessToken();
-  const domain = await createDomain(accessToken, uniqueName('user-registration', true), 'Description');
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
-  const customIdp = await createCustomIdp(domain.id, accessToken);
-  const application = await createApp(domain.id, accessToken, {
-    settings: {
-      oauth: {
-        redirectUris: ['https://callback'],
-        grantTypes: ['authorization_code'],
-      },
-      login: {
-        inherited: false,
-        registerEnabled: true,
-      },
-    },
-    identityProviders: [
-      { identity: defaultIdp.id, priority: -1 },
-      { identity: customIdp.id, priority: -1 },
-    ],
-  });
+  let domain: Domain | null = null;
+  let accessToken: string | null = null;
 
-  const applicationWithCustomIdp = await createApp(domain.id, accessToken, {
-    settings: {
-      oauth: {
-        redirectUris: ['https://callback'],
-        grantTypes: ['authorization_code'],
+  try {
+    accessToken = await requestAdminAccessToken();
+    domain = await createDomain(accessToken, uniqueName('user-registration', true), 'Description');
+    const idpSet = await getAllIdps(domain.id, accessToken);
+    const defaultIdp = idpSet.values().next().value;
+    if (!defaultIdp) throw new Error('No default identity provider found for domain');
+    const customIdp = await createCustomIdp(domain.id, accessToken);
+    const application = await createApp(domain.id, accessToken, {
+      settings: {
+        oauth: {
+          redirectUris: ['https://callback'],
+          grantTypes: ['authorization_code'],
+        },
+        login: {
+          inherited: false,
+          registerEnabled: true,
+        },
       },
-      login: {
-        inherited: false,
-        registerEnabled: true,
-      },
-      account: {
-        inherited: false,
-        defaultIdentityProviderForRegistration: customIdp.id,
-      },
-    },
-    identityProviders: [
-      { identity: defaultIdp.id, priority: -1 },
-      { identity: customIdp.id, priority: -1 },
-    ],
-  });
+      identityProviders: [
+        { identity: defaultIdp.id, priority: -1 },
+        { identity: customIdp.id, priority: -1 },
+      ],
+    });
 
-  const applicationWithCustomIdpAndRedirect = await createApp(domain.id, accessToken, {
-    settings: {
-      oauth: {
-        redirectUris: ['https://callback'],
-        grantTypes: ['authorization_code'],
+    const applicationWithCustomIdp = await createApp(domain.id, accessToken, {
+      settings: {
+        oauth: {
+          redirectUris: ['https://callback'],
+          grantTypes: ['authorization_code'],
+        },
+        login: {
+          inherited: false,
+          registerEnabled: true,
+        },
+        account: {
+          inherited: false,
+          defaultIdentityProviderForRegistration: customIdp.id,
+        },
       },
-      login: {
-        inherited: false,
-        registerEnabled: true,
-      },
-      account: {
-        inherited: false,
-        defaultIdentityProviderForRegistration: customIdp.id,
-        autoLoginAfterRegistration: true,
-        redirectUriAfterRegistration: 'https://acustom/web/site',
-      },
-    },
-    identityProviders: [
-      { identity: defaultIdp.id, priority: -1 },
-      { identity: customIdp.id, priority: -1 },
-    ],
-  });
+      identityProviders: [
+        { identity: defaultIdp.id, priority: -1 },
+        { identity: customIdp.id, priority: -1 },
+      ],
+    });
 
-  await startDomain(domain.id, accessToken);
-  const domainWithOidc = await waitForDomainStart(domain);
+    const applicationWithCustomIdpAndRedirect = await createApp(domain.id, accessToken, {
+      settings: {
+        oauth: {
+          redirectUris: ['https://callback'],
+          grantTypes: ['authorization_code'],
+        },
+        login: {
+          inherited: false,
+          registerEnabled: true,
+        },
+        account: {
+          inherited: false,
+          defaultIdentityProviderForRegistration: customIdp.id,
+          autoLoginAfterRegistration: true,
+          redirectUriAfterRegistration: 'https://acustom/web/site',
+        },
+      },
+      identityProviders: [
+        { identity: defaultIdp.id, priority: -1 },
+        { identity: customIdp.id, priority: -1 },
+      ],
+    });
 
-  return {
-    domain: domain,
-    accessToken: accessToken,
-    oidc: domainWithOidc.oidcConfig,
-    application: application,
-    applicationWithCustomIdp: applicationWithCustomIdp,
-    applicationWithCustomIdpAndRedirect: applicationWithCustomIdpAndRedirect,
-    customIdp: customIdp,
-    defaultIdp: defaultIdp,
-    cleanUp: async () => {
-      if (domain?.id && accessToken) {
+    const applicationRegistrationDisabled = await createApp(domain.id, accessToken, {
+      settings: {
+        oauth: {
+          redirectUris: ['https://callback'],
+          grantTypes: ['authorization_code'],
+        },
+        login: {
+          inherited: false,
+          registerEnabled: false,
+        },
+      },
+      identityProviders: [{ identity: defaultIdp.id, priority: -1 }],
+    });
+
+    const applicationInherited = await createApp(domain.id, accessToken, {
+      settings: {
+        oauth: {
+          redirectUris: ['https://callback'],
+          grantTypes: ['authorization_code'],
+        },
+        login: {
+          inherited: true,
+        },
+        account: {
+          inherited: true,
+        },
+      },
+      identityProviders: [
+        { identity: defaultIdp.id, priority: -1 },
+        { identity: customIdp.id, priority: -1 },
+      ],
+    });
+
+    await startDomain(domain.id, accessToken);
+    const domainWithOidc = await waitForDomainStart(domain);
+
+    return {
+      domain: domain,
+      accessToken: accessToken,
+      oidc: domainWithOidc.oidcConfig,
+      application: application,
+      applicationWithCustomIdp: applicationWithCustomIdp,
+      applicationWithCustomIdpAndRedirect: applicationWithCustomIdpAndRedirect,
+      applicationRegistrationDisabled: applicationRegistrationDisabled,
+      applicationInherited: applicationInherited,
+      customIdp: customIdp,
+      defaultIdp: defaultIdp,
+      cleanUp: async () => {
+        if (domain?.id && accessToken) {
+          await safeDeleteDomain(domain.id, accessToken);
+        }
+      },
+    };
+  } catch (error) {
+    if (domain?.id && accessToken) {
+      try {
         await safeDeleteDomain(domain.id, accessToken);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup after setup failure:', cleanupError);
       }
-    },
-  };
+    }
+    throw error;
+  }
 };
 
-export const createApp = async (domainId: string, accessToken: string, settings: any): Promise<Application> => {
+export const createApp = async (domainId: string, accessToken: string, settings: Record<string, any>): Promise<Application> => {
+  const appName = uniqueName('reg-app', true);
   return await createApplication(domainId, accessToken, {
-    name: faker.database.column.name,
+    name: appName,
     type: 'WEB',
-    clientId: faker.random.alphaNumeric,
-    clientSecret: faker.random.alphaNumeric,
+    clientId: appName,
+    clientSecret: appName,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(domainId, accessToken, settings, app.id).then((updatedApp) => {
@@ -173,11 +227,13 @@ export const register = async (domain: Domain, user: User, expected: string, cli
 
   const cookies = postResponse.headers['set-cookie'];
   expect(cookies).toBeDefined();
-  cookies
-    .filter((entry) => entry.startsWith('GRAVITEE_IO_AM_SESSION'))
-    .map((gioSessionCookie) => gioSessionCookie.substring(gioSessionCookie.indexOf('='), gioSessionCookie.indexOf(';') - 1))
-    .map((jwtSession) => {
-      const JWT = decodeJwt(jwtSession);
-      sessionActive ? expect(JWT.userId).toBeDefined() : expect(JWT.userId).not.toBeDefined();
-    });
+  const sessionCookies = cookies.filter((entry) => entry.startsWith('GRAVITEE_IO_AM_SESSION'));
+  if (sessionActive) {
+    expect(sessionCookies.length).toBeGreaterThan(0);
+  }
+  sessionCookies.forEach((gioSessionCookie) => {
+    const jwtSession = gioSessionCookie.substring(gioSessionCookie.indexOf('=') + 1, gioSessionCookie.indexOf(';'));
+    const JWT = decodeJwt(jwtSession);
+    sessionActive ? expect(JWT.userId).toBeDefined() : expect(JWT.userId).not.toBeDefined();
+  });
 };

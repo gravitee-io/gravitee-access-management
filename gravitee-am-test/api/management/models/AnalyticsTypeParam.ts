@@ -37,13 +37,13 @@ export interface AnalyticsTypeParam {
    * @type {string}
    * @memberof AnalyticsTypeParam
    */
-  value?: AnalyticsTypeParamValueEnum;
+  originalParam?: string;
   /**
    *
    * @type {string}
    * @memberof AnalyticsTypeParam
    */
-  originalParam?: string;
+  value?: AnalyticsTypeParamValueEnum;
 }
 
 /**
@@ -72,8 +72,8 @@ export function AnalyticsTypeParamFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
-    value: json['value'] == null ? undefined : json['value'],
     originalParam: json['originalParam'] == null ? undefined : json['originalParam'],
+    value: json['value'] == null ? undefined : json['value'],
   };
 }
 
@@ -87,7 +87,7 @@ export function AnalyticsTypeParamToJSONTyped(value?: AnalyticsTypeParam | null,
   }
 
   return {
-    value: value['value'],
     originalParam: value['originalParam'],
+    value: value['value'],
   };
 }

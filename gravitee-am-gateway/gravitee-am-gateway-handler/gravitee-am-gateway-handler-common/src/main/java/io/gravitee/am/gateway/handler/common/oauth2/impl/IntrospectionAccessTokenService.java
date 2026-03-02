@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.core.env.Environment;
@@ -29,25 +29,25 @@ import org.springframework.core.env.Environment;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 
 public class IntrospectionAccessTokenService extends BaseIntrospectionTokenService implements IntrospectionTokenService {
-    private final AccessTokenRepository accessTokenRepository;
+    private final TokenRepository tokenRepository;
 
     public IntrospectionAccessTokenService(JWTService jwtService,
                                            ClientSyncService clientService,
                                            ProtectedResourceManager protectedResourceManager,
                                            ProtectedResourceSyncService protectedResourceSyncService,
                                            Environment environment,
-                                           AccessTokenRepository accessTokenRepository) {
+                                           TokenRepository tokenRepository) {
         super(ACCESS_TOKEN, jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment);
-        this.accessTokenRepository = accessTokenRepository;
+        this.tokenRepository = tokenRepository;
     }
 
     @Override
     protected Maybe<AccessToken> findByToken(String token) {
-        return accessTokenRepository.findByToken(token);
+        return tokenRepository.findAccessTokenByJti(token);
     }
 
     @Override
-    public Maybe<JWT> introspect(String token, boolean offlineVerification, String callerClientId) {
+    public Maybe<IntrospectionResult> introspect(String token, boolean offlineVerification, String callerClientId) {
         return introspectToken(token, offlineVerification, callerClientId);
     }
 }

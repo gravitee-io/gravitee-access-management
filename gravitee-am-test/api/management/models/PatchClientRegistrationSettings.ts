@@ -37,31 +37,13 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  allowLocalhostRedirectUri?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
   allowHttpSchemeRedirectUri?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  allowWildCardRedirectUri?: boolean;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchClientRegistrationSettings
-   */
-  defaultScopes?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchClientRegistrationSettings
-   */
-  allowedScopes?: Array<string>;
+  allowLocalhostRedirectUri?: boolean;
   /**
    *
    * @type {boolean}
@@ -73,19 +55,43 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  dynamicClientRegistrationEnabled?: boolean;
+  allowWildCardRedirectUri?: boolean;
   /**
    *
-   * @type {boolean}
+   * @type {Array<string>}
    * @memberof PatchClientRegistrationSettings
    */
-  openDynamicClientRegistrationEnabled?: boolean;
+  allowedScopes?: Array<string>;
   /**
    *
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
   clientTemplateEnabled?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof PatchClientRegistrationSettings
+   */
+  defaultScopes?: Array<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  dynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  isAllowedScopesEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  isClientTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -103,13 +109,7 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  isAllowedScopesEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
-  isClientTemplateEnabled?: boolean;
+  openDynamicClientRegistrationEnabled?: boolean;
 }
 
 /**
@@ -128,24 +128,24 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
     return json;
   }
   return {
-    allowLocalhostRedirectUri: json['allowLocalhostRedirectUri'] == null ? undefined : json['allowLocalhostRedirectUri'],
     allowHttpSchemeRedirectUri: json['allowHttpSchemeRedirectUri'] == null ? undefined : json['allowHttpSchemeRedirectUri'],
-    allowWildCardRedirectUri: json['allowWildCardRedirectUri'] == null ? undefined : json['allowWildCardRedirectUri'],
-    defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
-    allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
+    allowLocalhostRedirectUri: json['allowLocalhostRedirectUri'] == null ? undefined : json['allowLocalhostRedirectUri'],
     allowRedirectUriParamsExpressionLanguage:
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
+    allowWildCardRedirectUri: json['allowWildCardRedirectUri'] == null ? undefined : json['allowWildCardRedirectUri'],
+    allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
+    defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
-    openDynamicClientRegistrationEnabled:
-      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
+    isAllowedScopesEnabled: json['isAllowedScopesEnabled'] == null ? undefined : json['isAllowedScopesEnabled'],
+    isClientTemplateEnabled: json['isClientTemplateEnabled'] == null ? undefined : json['isClientTemplateEnabled'],
     isDynamicClientRegistrationEnabled:
       json['isDynamicClientRegistrationEnabled'] == null ? undefined : json['isDynamicClientRegistrationEnabled'],
     isOpenDynamicClientRegistrationEnabled:
       json['isOpenDynamicClientRegistrationEnabled'] == null ? undefined : json['isOpenDynamicClientRegistrationEnabled'],
-    isAllowedScopesEnabled: json['isAllowedScopesEnabled'] == null ? undefined : json['isAllowedScopesEnabled'],
-    isClientTemplateEnabled: json['isClientTemplateEnabled'] == null ? undefined : json['isClientTemplateEnabled'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -162,18 +162,18 @@ export function PatchClientRegistrationSettingsToJSONTyped(
   }
 
   return {
-    allowLocalhostRedirectUri: value['allowLocalhostRedirectUri'],
     allowHttpSchemeRedirectUri: value['allowHttpSchemeRedirectUri'],
-    allowWildCardRedirectUri: value['allowWildCardRedirectUri'],
-    defaultScopes: value['defaultScopes'],
-    allowedScopes: value['allowedScopes'],
+    allowLocalhostRedirectUri: value['allowLocalhostRedirectUri'],
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
-    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
-    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
+    allowWildCardRedirectUri: value['allowWildCardRedirectUri'],
+    allowedScopes: value['allowedScopes'],
     clientTemplateEnabled: value['clientTemplateEnabled'],
-    isDynamicClientRegistrationEnabled: value['isDynamicClientRegistrationEnabled'],
-    isOpenDynamicClientRegistrationEnabled: value['isOpenDynamicClientRegistrationEnabled'],
+    defaultScopes: value['defaultScopes'],
+    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     isAllowedScopesEnabled: value['isAllowedScopesEnabled'],
     isClientTemplateEnabled: value['isClientTemplateEnabled'],
+    isDynamicClientRegistrationEnabled: value['isDynamicClientRegistrationEnabled'],
+    isOpenDynamicClientRegistrationEnabled: value['isOpenDynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
   };
 }

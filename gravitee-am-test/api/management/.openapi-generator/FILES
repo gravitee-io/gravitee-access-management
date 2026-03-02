@@ -81,6 +81,7 @@ models/Certificate.ts
 models/CertificateCredential.ts
 models/CertificateEntity.ts
 models/CertificateKey.ts
+models/CertificateSettings.ts
 models/ChallengeSettings.ts
 models/ClientRegistrationSettings.ts
 models/ClientSecret.ts
@@ -229,7 +230,9 @@ models/Tag.ts
 models/Theme.ts
 models/ThemeEntity.ts
 models/TokenClaim.ts
+models/TokenExchangeOAuthSettings.ts
 models/TokenExchangeSettings.ts
+models/TrustedIssuer.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts
 models/UpdateAuthorizationEngine.ts
@@ -256,6 +259,7 @@ models/UpdateTag.ts
 models/UpdateUser.ts
 models/UpdateUserWithId.ts
 models/User.ts
+models/UserBindingCriterion.ts
 models/UserEntity.ts
 models/UserId.ts
 models/UserIdentity.ts

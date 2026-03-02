@@ -32,19 +32,11 @@ import java.time.LocalDateTime;
  */
 @Repository
 public interface SpringAccessTokenRepository extends RxJava3CrudRepository<JdbcAccessToken, String> {
+
     @Query("select * from access_tokens a where a.token = :token and (a.expire_at > :now or a.expire_at is null)")
     Maybe<JdbcAccessToken> findByToken(@Param("token") String token, @Param("now")LocalDateTime now);
 
-    @Query("select * from access_tokens a where a.client = :cli and a.subject = :sub and (a.expire_at > :now or a.expire_at is null)")
-    Flowable<JdbcAccessToken> findByClientIdAndSubject(@Param("cli") String clientId, @Param("sub") String subject, @Param("now")LocalDateTime now);
-
-    @Query("select * from access_tokens a where a.client = :cli and (a.expire_at > :now or a.expire_at is null)")
-    Flowable<JdbcAccessToken> findByClientId(@Param("cli") String clientId, @Param("now")LocalDateTime now);
-
     @Query("select * from access_tokens a where a.authorization_code = :auth and (a.expire_at > :now or a.expire_at is null)")
     Flowable<JdbcAccessToken> findByAuthorizationCode(@Param("auth") String code, @Param("now")LocalDateTime now);
-
-    @Query("select count(*) from access_tokens a where a.client = :cli and (a.expire_at > :now or a.expire_at is null)")
-    Single<Long> countByClientId(@Param("cli") String clientId, @Param("now")LocalDateTime now);
 
 }

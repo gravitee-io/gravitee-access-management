@@ -37,12 +37,6 @@ export interface NewRole {
    * @type {string}
    * @memberof NewRole
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewRole
-   */
   assignableType?: NewRoleAssignableTypeEnum;
   /**
    *
@@ -50,6 +44,12 @@ export interface NewRole {
    * @memberof NewRole
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewRole
+   */
+  name: string;
 }
 
 /**
@@ -82,9 +82,9 @@ export function NewRoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): N
     return json;
   }
   return {
-    name: json['name'],
     assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
     description: json['description'] == null ? undefined : json['description'],
+    name: json['name'],
   };
 }
 
@@ -98,8 +98,8 @@ export function NewRoleToJSONTyped(value?: NewRole | null, ignoreDiscriminator: 
   }
 
   return {
-    name: value['name'],
     assignableType: value['assignableType'],
     description: value['description'],
+    name: value['name'],
   };
 }

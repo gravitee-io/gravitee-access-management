@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.validators.url.Url;
 import jakarta.validation.Valid;
@@ -29,6 +30,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Request body for PUT /protected-resources/{id}.
+ * Additional properties (e.g. read-only fields such as createdAt/updatedAt from the GET response) are ignored if sent.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
 public class UpdateProtectedResource {

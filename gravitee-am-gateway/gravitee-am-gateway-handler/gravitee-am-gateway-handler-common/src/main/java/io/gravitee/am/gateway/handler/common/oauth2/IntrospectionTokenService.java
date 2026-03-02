@@ -25,8 +25,12 @@ import io.reactivex.rxjava3.core.Maybe;
 public interface IntrospectionTokenService {
 
     default Maybe<JWT> introspect(String token, boolean offlineVerification) {
-        return introspect(token, offlineVerification, null);
+        return introspect(token, offlineVerification, null).map(IntrospectionResult::jwt);
     }
 
-    Maybe<JWT> introspect(String token, boolean offlineVerification, String callerClientId);
+    /**
+     * Performs token introspection and returns both the verified JWT and
+     * optional metadata coming from the persistence layer.
+     */
+    Maybe<IntrospectionResult> introspect(String token, boolean offlineVerification, String callerClientId);
 }

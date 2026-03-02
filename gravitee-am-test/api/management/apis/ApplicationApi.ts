@@ -205,6 +205,13 @@ export interface GetAppFlowRequest {
   flow: string;
 }
 
+export interface GetApplicationAgentCardRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  application: string;
+}
+
 export interface GetApplicationAnalyticsRequest {
   organizationId: string;
   environmentId: string;
@@ -1527,6 +1534,82 @@ export class ApplicationApi extends runtime.BaseAPI {
   async getAppFlow(requestParameters: GetAppFlowRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
     const response = await this.getAppFlowRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have APPLICATION[READ] permission on the specified application. Fetches and proxies the agent card JSON from the application\'s configured agentCardUrl.
+   * Fetch the agent card for an application
+   */
+  async getApplicationAgentCardRaw(
+    requestParameters: GetApplicationAgentCardRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    if (requestParameters.application === null || requestParameters.application === undefined) {
+      throw new runtime.RequiredError(
+        'application',
+        'Required parameter requestParameters.application was null or undefined when calling getApplicationAgentCard.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/agent-card`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'application'}}`, encodeURIComponent(String(requestParameters.application))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have APPLICATION[READ] permission on the specified application. Fetches and proxies the agent card JSON from the application\'s configured agentCardUrl.
+   * Fetch the agent card for an application
+   */
+  async getApplicationAgentCard(
+    requestParameters: GetApplicationAgentCardRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getApplicationAgentCardRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -3110,6 +3193,8 @@ export const FindApplicationEmailTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
@@ -3138,6 +3223,8 @@ export const FindApplicationFormTemplateEnum = {
   WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
   WebauthnLogin: 'WEBAUTHN_LOGIN',
   CbaLogin: 'CBA_LOGIN',
+  MagicLinkLogin: 'MAGIC_LINK_LOGIN',
+  MagicLink: 'MAGIC_LINK',
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',

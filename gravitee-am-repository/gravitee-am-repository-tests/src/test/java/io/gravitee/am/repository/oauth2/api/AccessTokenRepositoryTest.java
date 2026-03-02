@@ -141,60 +141,6 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
-    public void shouldFindByClientIdAndSubject() {
-        AccessToken token = new AccessToken();
-        token.setId(RandomString.generate());
-        token.setToken("my-token");
-        token.setClient("my-client-id");
-        token.setSubject("my-subject");
-
-        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository.create(token))
-                .andThen(accessTokenRepository.findByClientIdAndSubject("my-client-id", "my-subject"))
-                .test();
-
-
-        observer.awaitDone(10, TimeUnit.SECONDS);
-
-        observer.assertComplete();
-        observer.assertNoErrors();
-        observer.assertValue(accessToken -> accessToken.getSubject().equals("my-subject") && accessToken.getClient().equals("my-client-id"));
-    }
-
-    @Test
-    public void shouldFindByClientId() {
-        AccessToken token = new AccessToken();
-        token.setId(RandomString.generate());
-        token.setToken("my-token");
-        token.setClient("my-client-id-2");
-
-        TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository.create(token))
-                .andThen(accessTokenRepository.findByClientId("my-client-id-2"))
-                .test();
-
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
-        observer.assertValueCount(1);
-    }
-
-    @Test
-    public void shouldCountByClientId() {
-        AccessToken token = new AccessToken();
-        token.setId(RandomString.generate());
-        token.setToken("my-token");
-        token.setClient("my-client-id-count");
-
-        TestObserver<Long> observer = Completable.fromSingle(accessTokenRepository.create(token))
-                .andThen(accessTokenRepository.countByClientId("my-client-id-count"))
-                .test();
-
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
-        observer.assertValue(Long.valueOf(1));
-    }
-
-    @Test
     public void shouldDeleteByDomainIdClientIdAndAndUserId() {
         AccessToken token1 = new AccessToken();
         token1.setId("my-token");

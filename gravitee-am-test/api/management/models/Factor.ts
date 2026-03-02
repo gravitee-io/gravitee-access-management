@@ -37,6 +37,30 @@ export interface Factor {
    * @type {string}
    * @memberof Factor
    */
+  configuration?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof Factor
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Factor
+   */
+  domain?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Factor
+   */
+  factorType?: FactorFactorTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof Factor
+   */
   id?: string;
   /**
    *
@@ -50,30 +74,6 @@ export interface Factor {
    * @memberof Factor
    */
   type?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Factor
-   */
-  factorType?: FactorFactorTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof Factor
-   */
-  configuration?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Factor
-   */
-  domain?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof Factor
-   */
-  createdAt?: Date;
   /**
    *
    * @type {Date}
@@ -113,13 +113,13 @@ export function FactorFromJSONTyped(json: any, ignoreDiscriminator: boolean): Fa
     return json;
   }
   return {
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    domain: json['domain'] == null ? undefined : json['domain'],
+    factorType: json['factorType'] == null ? undefined : json['factorType'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
     type: json['type'] == null ? undefined : json['type'],
-    factorType: json['factorType'] == null ? undefined : json['factorType'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -134,13 +134,13 @@ export function FactorToJSONTyped(value?: Factor | null, ignoreDiscriminator: bo
   }
 
   return {
+    configuration: value['configuration'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    domain: value['domain'],
+    factorType: value['factorType'],
     id: value['id'],
     name: value['name'],
     type: value['type'],
-    factorType: value['factorType'],
-    configuration: value['configuration'],
-    domain: value['domain'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

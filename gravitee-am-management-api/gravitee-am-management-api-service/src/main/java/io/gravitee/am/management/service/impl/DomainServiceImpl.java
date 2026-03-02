@@ -30,6 +30,7 @@ import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
@@ -96,6 +97,7 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
@@ -176,6 +178,9 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private AccountSettingsValidator accountSettingsValidator;
+
+    @Autowired
+    private TokenExchangeSettingsValidator tokenExchangeSettingsValidator;
 
     @Autowired
     private ApplicationService applicationService;
@@ -268,6 +273,7 @@ public class DomainServiceImpl implements DomainService {
     @With(AccessLevel.PACKAGE) // to make test setup less painful
     @Value("${domains.identities.default.enabled:true}")
     private boolean createDefaultIdentityProvider = true;
+
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;
     @Autowired
@@ -465,6 +471,7 @@ public class DomainServiceImpl implements DomainService {
                     domain.setHrid(IdGenerator.generate(domain.getName()));
                     domain.setUpdatedAt(new Date());
                     return validateDomain(domain)
+                            .andThen(validateCertificateSettings(domain))
                             .andThen(Single.defer(() -> domainRepository.update(domain)));
                 })
                 // create event for sync process
@@ -500,6 +507,7 @@ public class DomainServiceImpl implements DomainService {
                     toPatch.setHrid(IdGenerator.generate(toPatch.getName()));
                     toPatch.setUpdatedAt(new Date());
                     return validateDomain(toPatch)
+                            .andThen(validateCertificateSettings(toPatch))
                             .andThen(Single.defer(() -> domainRepository.update(toPatch)))
                             // create event for sync process
                             .flatMap(domain1 -> {
@@ -543,6 +551,41 @@ public class DomainServiceImpl implements DomainService {
 
     private boolean needOrganizationAudit(Domain oldDomain, Domain toPatch) {
         return !Objects.equals(oldDomain.getName(), toPatch.getName()) || oldDomain.isEnabled() != toPatch.isEnabled();
+    }
+
+    @Override
+    public Single<Domain> updateCertificateSettings(GraviteeContext graviteeContext, String domainId, CertificateSettings certificateSettings, User principal) {
+        LOGGER.debug("Updating certificate settings for domain: {}", domainId);
+        return domainRepository.findById(domainId)
+                .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
+                .flatMap(oldDomain -> {
+                    Domain toUpdate = new Domain(oldDomain);
+                    toUpdate.setCertificateSettings(certificateSettings);
+                    toUpdate.setUpdatedAt(new Date());
+                    return validateCertificateSettings(toUpdate)
+                            .andThen(Single.defer(() -> domainRepository.update(toUpdate)))
+                            .flatMap(updatedDomain -> {
+                                Event event = new Event(Type.DOMAIN_CERTIFICATE_SETTINGS, new Payload(updatedDomain.getId(), DOMAIN, updatedDomain.getId(), Action.UPDATE));
+                                return eventService.create(event, updatedDomain).map(__ -> updatedDomain);
+                            })
+                            .doOnSuccess(updatedDomain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.DOMAIN_UPDATED)
+                                    .oldValue(oldDomain)
+                                    .domain(updatedDomain)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                                    .principal(principal)
+                                    .domain(oldDomain)
+                                    .type(EventType.DOMAIN_UPDATED)
+                                    .throwable(throwable)));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurred while trying to update certificate settings for domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to update certificate settings for domain", ex));
+                });
     }
 
     @Override
@@ -743,6 +786,24 @@ public class DomainServiceImpl implements DomainService {
         return "/" + IdGenerator.generate(domainName);
     }
 
+    private Completable validateCertificateSettings(Domain domain) {
+        if (domain.getCertificateSettings() == null ||
+                domain.getCertificateSettings().getFallbackCertificate() == null ||
+                domain.getCertificateSettings().getFallbackCertificate().isEmpty()) {
+            return Completable.complete();
+        }
+
+        String fallbackCertificateId = domain.getCertificateSettings().getFallbackCertificate();
+        return certificateService.findById(fallbackCertificateId)
+                .switchIfEmpty(Maybe.error(new InvalidParameterException("Fallback certificate not found: " + fallbackCertificateId)))
+                .flatMapCompletable(certificate -> {
+                    if (!domain.getId().equals(certificate.getDomain())) {
+                        return Completable.error(new InvalidParameterException("Fallback certificate does not belong to this domain"));
+                    }
+                    return Completable.complete();
+                });
+    }
+
     private Completable validateDomain(Domain domain) throws URISyntaxException {
         if (domain.getReferenceType() != ReferenceType.ENVIRONMENT) {
             return Completable.error(new InvalidDomainException("Domain must be attached to an environment"));
@@ -781,9 +842,7 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("CORS settings are invalid"));
         }
 
-        if (domain.getTokenExchangeSettings() != null && !domain.getTokenExchangeSettings().isValid()) {
-            return Completable.error(new InvalidDomainException("Token Exchange settings are invalid"));
-        }
+        Completable tokenExchangeValidation = tokenExchangeSettingsValidator.validate(domain.getTokenExchangeSettings());
 
         if (domain.getWebAuthnSettings() != null) {
             final String origin = domain.getWebAuthnSettings().getOrigin();
@@ -801,18 +860,19 @@ public class DomainServiceImpl implements DomainService {
         }
 
         // check the uniqueness of the domain
-        return domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMapCompletable(optDomain -> {
-                    if (optDomain.isPresent() && !optDomain.get().getId().equals(domain.getId())) {
-                        return Completable.error(new DomainAlreadyExistsException(domain.getName()));
-                    } else {
-                        // Get environment domain restrictions and validate all data are correctly defined.
-                        return environmentService.findById(domain.getReferenceId())
-                                .flatMapCompletable(environment -> validateDomain(domain, environment));
-                    }
-                });
+        return tokenExchangeValidation
+                .andThen(domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
+                        .map(Optional::of)
+                        .defaultIfEmpty(Optional.empty())
+                        .flatMapCompletable(optDomain -> {
+                            if (optDomain.isPresent() && !optDomain.get().getId().equals(domain.getId())) {
+                                return Completable.error(new DomainAlreadyExistsException(domain.getName()));
+                            } else {
+                                // Get environment domain restrictions and validate all data are correctly defined.
+                                return environmentService.findById(domain.getReferenceId())
+                                        .flatMapCompletable(environment -> validateDomain(domain, environment));
+                            }
+                        }));
     }
 
     private boolean hasIncorrectOrigins(Domain domain) {

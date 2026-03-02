@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -38,9 +39,11 @@ public class TokenExchangeStrategy implements GrantStrategy {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenExchangeStrategy.class);
 
     private final TokenExchangeService tokenExchangeService;
+    private final UserGatewayService userGatewayService;
 
-    public TokenExchangeStrategy(TokenExchangeService tokenExchangeService) {
+    public TokenExchangeStrategy(TokenExchangeService tokenExchangeService, UserGatewayService userGatewayService) {
         this.tokenExchangeService = tokenExchangeService;
+        this.userGatewayService = userGatewayService;
     }
 
     @Override
@@ -66,7 +69,7 @@ public class TokenExchangeStrategy implements GrantStrategy {
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
         LOGGER.debug("Processing token exchange request for client: {}", client.getClientId());
 
-        return tokenExchangeService.exchange(request, client, domain)
+        return tokenExchangeService.exchange(request, client, domain, userGatewayService)
                 .doOnSuccess(result -> LOGGER.debug("Token exchange successful for subject: {}", result.user().getId()))
                 .map(result -> TokenCreationRequest.forTokenExchange(
                         request,

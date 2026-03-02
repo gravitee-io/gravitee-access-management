@@ -17,16 +17,20 @@ import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { setupDomainForTest, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { createApplication } from '@management-commands/application-management-commands';
-import { Domain } from '@management-models/Domain';
-import { Application } from '@management-models/Application';
+import { performPost, performDelete } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
+import { Application, NewApplication, Domain } from '../../../../api/management/models';
+
+export type CreateAgentAppOptions = Partial<NewApplication>;
 
 export interface AgentApplicationFixture extends Fixture {
   domain: Domain;
   accessToken: string;
-  createAgentApp: (name?: string) => Promise<Application>;
-  cleanup: () => Promise<void>;
+  internalWiremockUrl: string;
+  createAgentApp: (name?: string, options?: CreateAgentAppOptions) => Promise<Application>;
+  createWiremockStub: (urlPath: string, status: number, body: string, contentType?: string) => Promise<void>;
+  cleanUp: () => Promise<void>;
 }
 
 export const AGENT_APP_TEST = {
@@ -39,6 +43,12 @@ export const AGENT_APP_TEST = {
 export const setupAgentApplicationFixture = async (): Promise<AgentApplicationFixture> => {
   let domain: Domain | null = null;
   let accessToken: string | null = null;
+  const wiremockUrl = process.env.SFR_URL;
+  const internalWiremockUrl = process.env.INTERNAL_SFR_URL;
+  if (!wiremockUrl || !internalWiremockUrl) {
+    throw new Error('SFR_URL and INTERNAL_SFR_URL environment variables must be set for agent card tests');
+  }
+  const stubIds: string[] = [];
 
   try {
     accessToken = await requestAdminAccessToken();
@@ -49,18 +59,35 @@ export const setupAgentApplicationFixture = async (): Promise<AgentApplicationFi
     expect(domain).toBeDefined();
     expect(domain.id).toBeDefined();
 
-    const createAgentApp = async (name?: string): Promise<Application> => {
-      const app = await createApplication(domain!.id, accessToken!, {
+    const createAgentApp = async (name?: string, options?: CreateAgentAppOptions): Promise<Application> => {
+      const body: NewApplication = {
         name: name ?? uniqueName('agent-app', true),
         type: AGENT_APP_TEST.APP_TYPE,
         description: AGENT_APP_TEST.APP_DESCRIPTION,
         redirectUris: [AGENT_APP_TEST.REDIRECT_URI],
-      });
+        ...options,
+      };
+      const app = await createApplication(domain!.id, accessToken!, body);
       expect(app).toBeDefined();
       return app;
     };
 
-    const cleanup = async () => {
+    const createWiremockStub = async (urlPath: string, status: number, body: string, contentType = 'application/json') => {
+      const res = await performPost(wiremockUrl, '/__admin/mappings', {
+        request: { method: 'GET', urlPath },
+        response: { status, headers: { 'Content-Type': contentType }, body },
+      }).expect(201);
+      stubIds.push(res.body.id);
+    };
+
+    const cleanUp = async () => {
+      for (const id of stubIds) {
+        try {
+          await performDelete(wiremockUrl, `/__admin/mappings/${id}`, {});
+        } catch (e) {
+          console.error(`Failed to delete WireMock stub ${id}:`, e);
+        }
+      }
       if (domain?.id && accessToken) {
         await safeDeleteDomain(domain.id, accessToken);
       }
@@ -69,8 +96,10 @@ export const setupAgentApplicationFixture = async (): Promise<AgentApplicationFi
     return {
       domain,
       accessToken,
+      internalWiremockUrl,
       createAgentApp,
-      cleanup,
+      createWiremockStub,
+      cleanUp,
     };
   } catch (error) {
     if (domain?.id && accessToken) {

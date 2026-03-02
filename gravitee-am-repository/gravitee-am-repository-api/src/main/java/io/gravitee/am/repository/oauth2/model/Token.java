@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.oauth2.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 import java.util.Objects;
 
@@ -22,6 +25,8 @@ import java.util.Objects;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public abstract class Token {
 
     /**
@@ -57,63 +62,22 @@ public abstract class Token {
     /**
      * The token expiration date
      */
+
     private Date expireAt;
 
-    public String getId() {
-        return id;
-    }
+    /**
+     * The parent subject JWT jti claim
+     */
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    private String parentSubjectJti;
 
-    public String getToken() {
-        return token;
-    }
+    /**
+     * The parent actor JWT jti claim
+     */
 
-    public void setToken(String token) {
-        this.token = token;
-    }
+    private String parentActorJti;
 
-    public String getDomain() {
-        return domain;
-    }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public void setClient(String client) {
-        this.client = client;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(Date expireAt) {
-        this.expireAt = expireAt;
-    }
 
     @Override
     public boolean equals(Object o) {

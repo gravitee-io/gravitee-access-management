@@ -49,7 +49,17 @@ export class ApplicationEmailsComponent implements OnInit {
     return this.emailTemplateFactoryService
       .findBy((email) => email.template !== 'CERTIFICATE_EXPIRATION')
       .map((email) => {
-        email.enabled = email.template === 'RESET_PASSWORD' ? this.allowResetPassword() : this.applicationSettingsValid();
+        if (email.template === 'RESET_PASSWORD') {
+          email.enabled = this.allowResetPassword();
+          return email;
+        }
+
+        if (email.template === 'MAGIC_LINK') {
+          email.enabled = this.allowMagicLink();
+          return email;
+        }
+
+        email.enabled = this.applicationSettingsValid();
         return email;
       });
   }
@@ -72,5 +82,12 @@ export class ApplicationEmailsComponent implements OnInit {
       return this.application.settings.login.forgotPasswordEnabled;
     }
     return this.domain.loginSettings?.forgotPasswordEnabled;
+  }
+
+  private allowMagicLink(): boolean {
+    if (this.application.settings?.login && !this.application.settings.login.inherited) {
+      return this.application.settings.login.magicLinkAuthEnabled;
+    }
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 }

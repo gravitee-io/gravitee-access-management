@@ -37,48 +37,6 @@ export interface PatchPasswordSettings {
    * @type {boolean}
    * @memberof PatchPasswordSettings
    */
-  inherited?: boolean;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchPasswordSettings
-   */
-  minLength?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchPasswordSettings
-   */
-  maxLength?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchPasswordSettings
-   */
-  includeNumbers?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchPasswordSettings
-   */
-  includeSpecialCharacters?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchPasswordSettings
-   */
-  lettersInMixedCase?: boolean;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchPasswordSettings
-   */
-  maxConsecutiveLetters?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchPasswordSettings
-   */
   excludePasswordsInDictionary?: boolean;
   /**
    *
@@ -97,13 +55,55 @@ export interface PatchPasswordSettings {
    * @type {boolean}
    * @memberof PatchPasswordSettings
    */
-  passwordHistoryEnabled?: boolean;
+  includeNumbers?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchPasswordSettings
+   */
+  includeSpecialCharacters?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchPasswordSettings
+   */
+  inherited?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchPasswordSettings
+   */
+  lettersInMixedCase?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchPasswordSettings
+   */
+  maxConsecutiveLetters?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchPasswordSettings
+   */
+  maxLength?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchPasswordSettings
+   */
+  minLength?: number;
   /**
    *
    * @type {number}
    * @memberof PatchPasswordSettings
    */
   oldPasswords?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchPasswordSettings
+   */
+  passwordHistoryEnabled?: boolean;
 }
 
 /**
@@ -122,19 +122,19 @@ export function PatchPasswordSettingsFromJSONTyped(json: any, ignoreDiscriminato
     return json;
   }
   return {
-    inherited: json['inherited'] == null ? undefined : json['inherited'],
-    minLength: json['minLength'] == null ? undefined : json['minLength'],
-    maxLength: json['maxLength'] == null ? undefined : json['maxLength'],
-    includeNumbers: json['includeNumbers'] == null ? undefined : json['includeNumbers'],
-    includeSpecialCharacters: json['includeSpecialCharacters'] == null ? undefined : json['includeSpecialCharacters'],
-    lettersInMixedCase: json['lettersInMixedCase'] == null ? undefined : json['lettersInMixedCase'],
-    maxConsecutiveLetters: json['maxConsecutiveLetters'] == null ? undefined : json['maxConsecutiveLetters'],
     excludePasswordsInDictionary: json['excludePasswordsInDictionary'] == null ? undefined : json['excludePasswordsInDictionary'],
     excludeUserProfileInfoInPassword:
       json['excludeUserProfileInfoInPassword'] == null ? undefined : json['excludeUserProfileInfoInPassword'],
     expiryDuration: json['expiryDuration'] == null ? undefined : json['expiryDuration'],
-    passwordHistoryEnabled: json['passwordHistoryEnabled'] == null ? undefined : json['passwordHistoryEnabled'],
+    includeNumbers: json['includeNumbers'] == null ? undefined : json['includeNumbers'],
+    includeSpecialCharacters: json['includeSpecialCharacters'] == null ? undefined : json['includeSpecialCharacters'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
+    lettersInMixedCase: json['lettersInMixedCase'] == null ? undefined : json['lettersInMixedCase'],
+    maxConsecutiveLetters: json['maxConsecutiveLetters'] == null ? undefined : json['maxConsecutiveLetters'],
+    maxLength: json['maxLength'] == null ? undefined : json['maxLength'],
+    minLength: json['minLength'] == null ? undefined : json['minLength'],
     oldPasswords: json['oldPasswords'] == null ? undefined : json['oldPasswords'],
+    passwordHistoryEnabled: json['passwordHistoryEnabled'] == null ? undefined : json['passwordHistoryEnabled'],
   };
 }
 
@@ -148,17 +148,17 @@ export function PatchPasswordSettingsToJSONTyped(value?: PatchPasswordSettings |
   }
 
   return {
-    inherited: value['inherited'],
-    minLength: value['minLength'],
-    maxLength: value['maxLength'],
-    includeNumbers: value['includeNumbers'],
-    includeSpecialCharacters: value['includeSpecialCharacters'],
-    lettersInMixedCase: value['lettersInMixedCase'],
-    maxConsecutiveLetters: value['maxConsecutiveLetters'],
     excludePasswordsInDictionary: value['excludePasswordsInDictionary'],
     excludeUserProfileInfoInPassword: value['excludeUserProfileInfoInPassword'],
     expiryDuration: value['expiryDuration'],
-    passwordHistoryEnabled: value['passwordHistoryEnabled'],
+    includeNumbers: value['includeNumbers'],
+    includeSpecialCharacters: value['includeSpecialCharacters'],
+    inherited: value['inherited'],
+    lettersInMixedCase: value['lettersInMixedCase'],
+    maxConsecutiveLetters: value['maxConsecutiveLetters'],
+    maxLength: value['maxLength'],
+    minLength: value['minLength'],
     oldPasswords: value['oldPasswords'],
+    passwordHistoryEnabled: value['passwordHistoryEnabled'],
   };
 }

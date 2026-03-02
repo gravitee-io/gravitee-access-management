@@ -37,6 +37,18 @@ export interface FilteredApplication {
    * @type {string}
    * @memberof FilteredApplication
    */
+  description?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof FilteredApplication
+   */
+  enabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof FilteredApplication
+   */
   id?: string;
   /**
    *
@@ -46,28 +58,16 @@ export interface FilteredApplication {
   name?: string;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof FilteredApplication
    */
-  description?: string;
+  template?: boolean;
   /**
    *
    * @type {string}
    * @memberof FilteredApplication
    */
   type?: FilteredApplicationTypeEnum;
-  /**
-   *
-   * @type {boolean}
-   * @memberof FilteredApplication
-   */
-  enabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof FilteredApplication
-   */
-  template?: boolean;
   /**
    *
    * @type {Date}
@@ -105,12 +105,12 @@ export function FilteredApplicationFromJSONTyped(json: any, ignoreDiscriminator:
     return json;
   }
   return {
+    description: json['description'] == null ? undefined : json['description'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    type: json['type'] == null ? undefined : json['type'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     template: json['template'] == null ? undefined : json['template'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -125,12 +125,12 @@ export function FilteredApplicationToJSONTyped(value?: FilteredApplication | nul
   }
 
   return {
+    description: value['description'],
+    enabled: value['enabled'],
     id: value['id'],
     name: value['name'],
-    description: value['description'],
-    type: value['type'],
-    enabled: value['enabled'],
     template: value['template'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

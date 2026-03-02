@@ -113,9 +113,6 @@ public class ClientServiceImpl implements ClientService {
         }
 
         /* GRAVITEE.IO custom fields */
-        client.setAccessTokenValiditySeconds(Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
-        client.setRefreshTokenValiditySeconds(Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
-        client.setIdTokenValiditySeconds(Client.DEFAULT_ID_TOKEN_VALIDITY_SECONDS);
         client.setEnabled(true);
 
         client.setCreatedAt(new Date());
@@ -179,6 +176,11 @@ public class ClientServiceImpl implements ClientService {
     private ApplicationType getType(Client client) {
         GrantTypeUtils.completeGrantTypeCorrespondance(client);
 
+        // Explicit agent type takes priority over grant-type heuristics
+        if (io.gravitee.am.common.oidc.ApplicationType.AGENT.equals(client.getApplicationType())) {
+            return ApplicationType.AGENT;
+        }
+
         // if client has no grant => SERVICE
         // if client has only client_credentials grant_type => SERVICE
         // if client has only implicit => BROWSER
@@ -204,6 +206,7 @@ public class ClientServiceImpl implements ClientService {
             case io.gravitee.am.common.oidc.ApplicationType.WEB -> ApplicationType.WEB;
             case io.gravitee.am.common.oidc.ApplicationType.NATIVE -> ApplicationType.NATIVE;
             case io.gravitee.am.common.oidc.ApplicationType.BROWSER -> ApplicationType.BROWSER;
+            case io.gravitee.am.common.oidc.ApplicationType.AGENT -> ApplicationType.AGENT;
             default -> ApplicationType.SERVICE;
         };
     }

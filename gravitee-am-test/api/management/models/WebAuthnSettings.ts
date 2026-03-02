@@ -37,6 +37,42 @@ export interface WebAuthnSettings {
    * @type {string}
    * @memberof WebAuthnSettings
    */
+  attestationConveyancePreference?: WebAuthnSettingsAttestationConveyancePreferenceEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof WebAuthnSettings
+   */
+  authenticatorAttachment?: WebAuthnSettingsAuthenticatorAttachmentEnum;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof WebAuthnSettings
+   */
+  certificates?: { [key: string]: any };
+  /**
+   *
+   * @type {boolean}
+   * @memberof WebAuthnSettings
+   */
+  enforceAuthenticatorIntegrity?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof WebAuthnSettings
+   */
+  enforceAuthenticatorIntegrityMaxAge?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof WebAuthnSettings
+   */
+  forceRegistration?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof WebAuthnSettings
+   */
   origin?: string;
   /**
    *
@@ -62,54 +98,18 @@ export interface WebAuthnSettings {
    * @memberof WebAuthnSettings
    */
   userVerification?: WebAuthnSettingsUserVerificationEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof WebAuthnSettings
-   */
-  authenticatorAttachment?: WebAuthnSettingsAuthenticatorAttachmentEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof WebAuthnSettings
-   */
-  attestationConveyancePreference?: WebAuthnSettingsAttestationConveyancePreferenceEnum;
-  /**
-   *
-   * @type {boolean}
-   * @memberof WebAuthnSettings
-   */
-  forceRegistration?: boolean;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof WebAuthnSettings
-   */
-  certificates?: { [key: string]: any };
-  /**
-   *
-   * @type {boolean}
-   * @memberof WebAuthnSettings
-   */
-  enforceAuthenticatorIntegrity?: boolean;
-  /**
-   *
-   * @type {number}
-   * @memberof WebAuthnSettings
-   */
-  enforceAuthenticatorIntegrityMaxAge?: number;
 }
 
 /**
  * @export
  */
-export const WebAuthnSettingsUserVerificationEnum = {
-  Required: 'REQUIRED',
-  Preferred: 'PREFERRED',
-  Discouraged: 'DISCOURAGED',
+export const WebAuthnSettingsAttestationConveyancePreferenceEnum = {
+  None: 'NONE',
+  Indirect: 'INDIRECT',
+  Direct: 'DIRECT',
 } as const;
-export type WebAuthnSettingsUserVerificationEnum =
-  typeof WebAuthnSettingsUserVerificationEnum[keyof typeof WebAuthnSettingsUserVerificationEnum];
+export type WebAuthnSettingsAttestationConveyancePreferenceEnum =
+  typeof WebAuthnSettingsAttestationConveyancePreferenceEnum[keyof typeof WebAuthnSettingsAttestationConveyancePreferenceEnum];
 
 /**
  * @export
@@ -124,13 +124,13 @@ export type WebAuthnSettingsAuthenticatorAttachmentEnum =
 /**
  * @export
  */
-export const WebAuthnSettingsAttestationConveyancePreferenceEnum = {
-  None: 'NONE',
-  Indirect: 'INDIRECT',
-  Direct: 'DIRECT',
+export const WebAuthnSettingsUserVerificationEnum = {
+  Required: 'REQUIRED',
+  Preferred: 'PREFERRED',
+  Discouraged: 'DISCOURAGED',
 } as const;
-export type WebAuthnSettingsAttestationConveyancePreferenceEnum =
-  typeof WebAuthnSettingsAttestationConveyancePreferenceEnum[keyof typeof WebAuthnSettingsAttestationConveyancePreferenceEnum];
+export type WebAuthnSettingsUserVerificationEnum =
+  typeof WebAuthnSettingsUserVerificationEnum[keyof typeof WebAuthnSettingsUserVerificationEnum];
 
 /**
  * Check if a given object implements the WebAuthnSettings interface.
@@ -148,18 +148,18 @@ export function WebAuthnSettingsFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
+    attestationConveyancePreference: json['attestationConveyancePreference'] == null ? undefined : json['attestationConveyancePreference'],
+    authenticatorAttachment: json['authenticatorAttachment'] == null ? undefined : json['authenticatorAttachment'],
+    certificates: json['certificates'] == null ? undefined : json['certificates'],
+    enforceAuthenticatorIntegrity: json['enforceAuthenticatorIntegrity'] == null ? undefined : json['enforceAuthenticatorIntegrity'],
+    enforceAuthenticatorIntegrityMaxAge:
+      json['enforceAuthenticatorIntegrityMaxAge'] == null ? undefined : json['enforceAuthenticatorIntegrityMaxAge'],
+    forceRegistration: json['forceRegistration'] == null ? undefined : json['forceRegistration'],
     origin: json['origin'] == null ? undefined : json['origin'],
     relyingPartyId: json['relyingPartyId'] == null ? undefined : json['relyingPartyId'],
     relyingPartyName: json['relyingPartyName'] == null ? undefined : json['relyingPartyName'],
     requireResidentKey: json['requireResidentKey'] == null ? undefined : json['requireResidentKey'],
     userVerification: json['userVerification'] == null ? undefined : json['userVerification'],
-    authenticatorAttachment: json['authenticatorAttachment'] == null ? undefined : json['authenticatorAttachment'],
-    attestationConveyancePreference: json['attestationConveyancePreference'] == null ? undefined : json['attestationConveyancePreference'],
-    forceRegistration: json['forceRegistration'] == null ? undefined : json['forceRegistration'],
-    certificates: json['certificates'] == null ? undefined : json['certificates'],
-    enforceAuthenticatorIntegrity: json['enforceAuthenticatorIntegrity'] == null ? undefined : json['enforceAuthenticatorIntegrity'],
-    enforceAuthenticatorIntegrityMaxAge:
-      json['enforceAuthenticatorIntegrityMaxAge'] == null ? undefined : json['enforceAuthenticatorIntegrityMaxAge'],
   };
 }
 
@@ -173,16 +173,16 @@ export function WebAuthnSettingsToJSONTyped(value?: WebAuthnSettings | null, ign
   }
 
   return {
+    attestationConveyancePreference: value['attestationConveyancePreference'],
+    authenticatorAttachment: value['authenticatorAttachment'],
+    certificates: value['certificates'],
+    enforceAuthenticatorIntegrity: value['enforceAuthenticatorIntegrity'],
+    enforceAuthenticatorIntegrityMaxAge: value['enforceAuthenticatorIntegrityMaxAge'],
+    forceRegistration: value['forceRegistration'],
     origin: value['origin'],
     relyingPartyId: value['relyingPartyId'],
     relyingPartyName: value['relyingPartyName'],
     requireResidentKey: value['requireResidentKey'],
     userVerification: value['userVerification'],
-    authenticatorAttachment: value['authenticatorAttachment'],
-    attestationConveyancePreference: value['attestationConveyancePreference'],
-    forceRegistration: value['forceRegistration'],
-    certificates: value['certificates'],
-    enforceAuthenticatorIntegrity: value['enforceAuthenticatorIntegrity'],
-    enforceAuthenticatorIntegrityMaxAge: value['enforceAuthenticatorIntegrityMaxAge'],
   };
 }

@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-gateway-standalone</artifactId>
         <groupId>io.gravitee.am.gateway.standalone</groupId>
-        <version>4.11.0-SNAPSHOT</version>
+        <version>4.11.0-alpha.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-standalone-distribution</artifactId>
@@ -1219,13 +1219,20 @@
                                             <type>zip</type>
                                         </artifactItem>
 
-
                                         <artifactItem>
                                             <groupId>io.gravitee.am.authenticator</groupId>
                                             <artifactId>gravitee-am-authenticator-cba</artifactId>
                                             <version>${gravitee-am-authenticator-cba.version}</version>
                                             <type>zip</type>
                                         </artifactItem>
+
+                                        <!-- TODO uncomment when first alpha release for ML will be done-->
+                                        <!-- <artifactItem>
+                                            <groupId>io.gravitee.am.authenticator</groupId>
+                                            <artifactId>gravitee-am-authenticator-magiclink</artifactId>
+                                            <version>${gravitee-am-authenticator-magiclink.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem> -->
                                     </artifactItems>
                                 </configuration>
                             </execution>

@@ -70,6 +70,10 @@
             <a>tokenExchangeSettings</a>
             <b>tokenExchangeSettings</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.CertificateSettingsConverter">
+            <a>certificateSettings</a>
+            <b>certificateSettings</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

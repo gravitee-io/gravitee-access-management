@@ -30,7 +30,7 @@ import {
   updateCertificate,
 } from '@management-commands/certificate-management-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import { createApplication, deleteApplication, updateApplication } from '@management-commands/application-management-commands';
 import { setup } from '../../test-fixture';
 
 setup(200000);
@@ -56,24 +56,28 @@ describe('Certificates', () => {
   it('should create certificate - JKS', async () => {
     const request = createJksCertificateRequest(fixture.jks);
     const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
-    const configuration = JSON.parse(createdCertificate.configuration);
-    expect(createdCertificate.name).toBe(request.name);
-    expect(createdCertificate.type).toBe(request.type);
-    expect(createdCertificate.domain).toBe(fixture.domain.id);
-    expect(configuration).toEqual(
-      expect.objectContaining({
-        alias: fixture.jks.alias,
-        storepass: '********',
-        keypass: '********',
-        jks: '********',
-      }),
-    );
-    const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
-    expect(certificateList).toContainEqual(
-      expect.objectContaining({
-        id: createdCertificate.id,
-      }),
-    );
+    try {
+      const configuration = JSON.parse(createdCertificate.configuration);
+      expect(createdCertificate.name).toBe(request.name);
+      expect(createdCertificate.type).toBe(request.type);
+      expect(createdCertificate.domain).toBe(fixture.domain.id);
+      expect(configuration).toEqual(
+        expect.objectContaining({
+          alias: fixture.jks.alias,
+          storepass: '********',
+          keypass: '********',
+          jks: '********',
+        }),
+      );
+      const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
+      expect(certificateList).toContainEqual(
+        expect.objectContaining({
+          id: createdCertificate.id,
+        }),
+      );
+    } finally {
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+    }
   });
 
   it('should NOT create certificate - JKS - invalid password', async () => {
@@ -89,61 +93,66 @@ describe('Certificates', () => {
   it('should create certificate - PKCS12', async () => {
     const request = createPKCS12CertificateRequest(fixture.p12);
     const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
-    const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
-    expect(certificateList).toContainEqual(
-      expect.objectContaining({
-        id: createdCertificate.id,
-      }),
-    );
+    try {
+      const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
+      expect(certificateList).toContainEqual(
+        expect.objectContaining({
+          id: createdCertificate.id,
+        }),
+      );
+    } finally {
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+    }
   });
 
   it('should create and delete multiple certificates - JKS', async () => {
     const before = await getAllCertificates(fixture.domain.id, fixture.accessToken);
-    const created: Array<{ id?: string }> = [];
-    try {
-      for (let i = 0; i < 10; i++) {
-        const request = createJksCertificateRequest(fixture.jks);
-        const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
-        created.push(createdCertificate);
-      }
-      const after = await getAllCertificates(fixture.domain.id, fixture.accessToken);
-      expect(after.length).toBe(before.length + 10);
-    } finally {
-      for (const certificate of created) {
-        await deleteCertificate(fixture.domain.id, fixture.accessToken, certificate.id);
-      }
+    for (let i = 0; i < 10; i++) {
+      const request = createJksCertificateRequest(fixture.jks);
+      const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
     }
+    const after = await getAllCertificates(fixture.domain.id, fixture.accessToken);
+    expect(after.length).toBe(before.length);
   });
 
   it('should update certificate', async () => {
     const request = createPKCS12CertificateRequest(fixture.p12);
     const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
-    const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
-    expect(certificateList).toContainEqual(
-      expect.objectContaining({
-        id: createdCertificate.id,
-      }),
-    );
-    const newName = uniqueName('new', true);
-    const updateRequest = { ...request, name: newName };
-    const updatedCertificate = await updateCertificate(fixture.domain.id, fixture.accessToken, updateRequest, createdCertificate.id);
-    expect(updatedCertificate.name).toBe(newName);
+    try {
+      const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
+      expect(certificateList).toContainEqual(
+        expect.objectContaining({
+          id: createdCertificate.id,
+        }),
+      );
+      const newName = uniqueName('new', true);
+      const updateRequest = { ...request, name: newName };
+      const updatedCertificate = await updateCertificate(fixture.domain.id, fixture.accessToken, updateRequest, createdCertificate.id);
+      expect(updatedCertificate.name).toBe(newName);
+    } finally {
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+    }
   });
 
   it('should NOT update certificate - invalid password', async () => {
     const request = createPKCS12CertificateRequest(fixture.p12);
     const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
-    const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
-    expect(certificateList).toContainEqual(
-      expect.objectContaining({
-        id: createdCertificate.id,
-      }),
-    );
-    const updateRequest = createPKCS12CertificateRequest({ ...fixture.p12, password: 'invalid' });
-    await expect(updateCertificate(fixture.domain.id, fixture.accessToken, updateRequest, createdCertificate.id)).rejects.toHaveProperty(
-      'response.status',
-      400,
-    );
+    try {
+      const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
+      expect(certificateList).toContainEqual(
+        expect.objectContaining({
+          id: createdCertificate.id,
+        }),
+      );
+      const updateRequest = createPKCS12CertificateRequest({ ...fixture.p12, password: 'invalid' });
+      await expect(updateCertificate(fixture.domain.id, fixture.accessToken, updateRequest, createdCertificate.id)).rejects.toHaveProperty(
+        'response.status',
+        400,
+      );
+    } finally {
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+    }
   });
 
   it('should delete certificate', async () => {
@@ -169,51 +178,64 @@ describe('Certificates', () => {
       redirectUris: ['https://local.local'],
       type: 'WEB',
     });
-    await updateApplication(fixture.domain.id, fixture.accessToken, { certificate: createdCertificate.id }, createdApplication.id);
-    await expect(deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id)).rejects.toHaveProperty(
-      'response.status',
-      400,
-    );
+    try {
+      await updateApplication(fixture.domain.id, fixture.accessToken, { certificate: createdCertificate.id }, createdApplication.id);
+      await expect(deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id)).rejects.toHaveProperty(
+        'response.status',
+        400,
+      );
 
-    const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
-    expect(certificateList).toContainEqual(
-      expect.objectContaining({
-        id: createdCertificate.id,
-      }),
-    );
+      const certificateList = await getAllCertificates(fixture.domain.id, fixture.accessToken);
+      expect(certificateList).toContainEqual(
+        expect.objectContaining({
+          id: createdCertificate.id,
+        }),
+      );
+    } finally {
+      await deleteApplication(fixture.domain.id, fixture.accessToken, createdApplication.id);
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+    }
   });
   it('should publish keys - JKS', async () => {
     const request = createJksCertificateRequest(fixture.jks);
     const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
-    const keys = await getPublicKeys(fixture.domain.id, fixture.accessToken, createdCertificate.id);
-    expect(keys).toContainEqual(
-      expect.objectContaining({
-        fmt: 'PEM',
-      }),
-    );
-    expect(keys).toContainEqual(
-      expect.objectContaining({
-        fmt: 'SSH-RSA',
-      }),
-    );
+    try {
+      const keys = await getPublicKeys(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+      expect(keys).toContainEqual(
+        expect.objectContaining({
+          fmt: 'PEM',
+        }),
+      );
+      expect(keys).toContainEqual(
+        expect.objectContaining({
+          fmt: 'SSH-RSA',
+        }),
+      );
+    } finally {
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+    }
   });
 
   it('should publish keys - PKCS12', async () => {
     const request = createPKCS12CertificateRequest(fixture.p12);
     const createdCertificate = await createCertificate(fixture.domain.id, fixture.accessToken, request);
-    const keys = await getPublicKeys(fixture.domain.id, fixture.accessToken, createdCertificate.id);
-    expect(keys).toContainEqual(
-      expect.objectContaining({
-        fmt: 'PEM',
-      }),
-    );
-    expect(keys).toContainEqual(
-      expect.objectContaining({
-        fmt: 'SSH-RSA',
-        payload:
-          'AAAAB3NzaC1yc2EAAAADAQABAAABAQDCMwP5u2NyoE3i/OY9tbdenOUiUQNBKsBTFFWRrlq6FAkHox1zBowaazrIPuq6ayhfe2NTUX57oowKbvb0c+Lkbk2MwimpO6Fx4HfZ8mpy2YFelohDqoLb2ws37p9gOw9T8ESeVw63U2J89qw97lFr11cG8RsPsZUIIQMrJni1J8Oql90R5oxIn5HTBfxHGtOfwiXOYe1vtNcNieNGjR4nWUda6FBicSShM87wrk1oNxfe3F5hxx/J80Vl7DNUtGI93ckv0X05JCmdI3pUHSoyi+M4PGp9/RJO5SJDYJ+GRptOMzllA/sZbG7oROB9dbD6NkV03GT7HMnLNZGTcLg1',
-      }),
-    );
+    try {
+      const keys = await getPublicKeys(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+      expect(keys).toContainEqual(
+        expect.objectContaining({
+          fmt: 'PEM',
+        }),
+      );
+      expect(keys).toContainEqual(
+        expect.objectContaining({
+          fmt: 'SSH-RSA',
+          payload:
+            'AAAAB3NzaC1yc2EAAAADAQABAAABAQDCMwP5u2NyoE3i/OY9tbdenOUiUQNBKsBTFFWRrlq6FAkHox1zBowaazrIPuq6ayhfe2NTUX57oowKbvb0c+Lkbk2MwimpO6Fx4HfZ8mpy2YFelohDqoLb2ws37p9gOw9T8ESeVw63U2J89qw97lFr11cG8RsPsZUIIQMrJni1J8Oql90R5oxIn5HTBfxHGtOfwiXOYe1vtNcNieNGjR4nWUda6FBicSShM87wrk1oNxfe3F5hxx/J80Vl7DNUtGI93ckv0X05JCmdI3pUHSoyi+M4PGp9/RJO5SJDYJ+GRptOMzllA/sZbG7oROB9dbD6NkV03GT7HMnLNZGTcLg1',
+        }),
+      );
+    } finally {
+      await deleteCertificate(fixture.domain.id, fixture.accessToken, createdCertificate.id);
+    }
   });
 });
 

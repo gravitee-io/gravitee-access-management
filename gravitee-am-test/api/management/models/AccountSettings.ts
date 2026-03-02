@@ -37,6 +37,54 @@ import { FormFieldFromJSON, FormFieldFromJSONTyped, FormFieldToJSON, FormFieldTo
 export interface AccountSettings {
   /**
    *
+   * @type {number}
+   * @memberof AccountSettings
+   */
+  accountBlockedDuration?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
+  autoLoginAfterRegistration?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
+  autoLoginAfterResetPassword?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof AccountSettings
+   */
+  botDetectionPlugin?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
+  completeRegistrationWhenResetPassword?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof AccountSettings
+   */
+  defaultIdentityProviderForRegistration?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
+  deletePasswordlessDevicesAfterResetPassword?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
+  dynamicUserRegistration?: boolean;
+  /**
+   *
    * @type {boolean}
    * @memberof AccountSettings
    */
@@ -52,37 +100,37 @@ export interface AccountSettings {
    * @type {number}
    * @memberof AccountSettings
    */
-  maxLoginAttempts?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof AccountSettings
-   */
   loginAttemptsResetTime?: number;
   /**
    *
    * @type {number}
    * @memberof AccountSettings
    */
-  accountBlockedDuration?: number;
+  maxLoginAttempts?: number;
   /**
    *
    * @type {boolean}
    * @memberof AccountSettings
    */
-  sendRecoverAccountEmail?: boolean;
+  mfaChallengeAttemptsDetectionEnabled?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof AccountSettings
+   */
+  mfaChallengeAttemptsResetTime?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof AccountSettings
+   */
+  mfaChallengeMaxAttempts?: number;
   /**
    *
    * @type {boolean}
    * @memberof AccountSettings
    */
-  completeRegistrationWhenResetPassword?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AccountSettings
-   */
-  autoLoginAfterRegistration?: boolean;
+  mfaChallengeSendVerifyAlertEmail?: boolean;
   /**
    *
    * @type {string}
@@ -91,46 +139,10 @@ export interface AccountSettings {
   redirectUriAfterRegistration?: string;
   /**
    *
-   * @type {boolean}
-   * @memberof AccountSettings
-   */
-  dynamicUserRegistration?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof AccountSettings
-   */
-  defaultIdentityProviderForRegistration?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AccountSettings
-   */
-  autoLoginAfterResetPassword?: boolean;
-  /**
-   *
    * @type {string}
    * @memberof AccountSettings
    */
   redirectUriAfterResetPassword?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AccountSettings
-   */
-  deletePasswordlessDevicesAfterResetPassword?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AccountSettings
-   */
-  useBotDetection?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof AccountSettings
-   */
-  botDetectionPlugin?: string;
   /**
    *
    * @type {boolean}
@@ -148,6 +160,12 @@ export interface AccountSettings {
    * @type {boolean}
    * @memberof AccountSettings
    */
+  resetPasswordConfirmIdentity?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
   resetPasswordCustomForm?: boolean;
   /**
    *
@@ -160,43 +178,25 @@ export interface AccountSettings {
    * @type {boolean}
    * @memberof AccountSettings
    */
-  resetPasswordConfirmIdentity?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AccountSettings
-   */
   resetPasswordInvalidateTokens?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof AccountSettings
    */
-  mfaChallengeAttemptsDetectionEnabled?: boolean;
-  /**
-   *
-   * @type {number}
-   * @memberof AccountSettings
-   */
-  mfaChallengeMaxAttempts?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof AccountSettings
-   */
-  mfaChallengeAttemptsResetTime?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof AccountSettings
-   */
-  mfaChallengeSendVerifyAlertEmail?: boolean;
+  sendRecoverAccountEmail?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof AccountSettings
    */
   sendVerifyRegistrationAccountEmail?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AccountSettings
+   */
+  useBotDetection?: boolean;
 }
 
 /**
@@ -215,42 +215,42 @@ export function AccountSettingsFromJSONTyped(json: any, ignoreDiscriminator: boo
     return json;
   }
   return {
-    inherited: json['inherited'] == null ? undefined : json['inherited'],
-    loginAttemptsDetectionEnabled: json['loginAttemptsDetectionEnabled'] == null ? undefined : json['loginAttemptsDetectionEnabled'],
-    maxLoginAttempts: json['maxLoginAttempts'] == null ? undefined : json['maxLoginAttempts'],
-    loginAttemptsResetTime: json['loginAttemptsResetTime'] == null ? undefined : json['loginAttemptsResetTime'],
     accountBlockedDuration: json['accountBlockedDuration'] == null ? undefined : json['accountBlockedDuration'],
-    sendRecoverAccountEmail: json['sendRecoverAccountEmail'] == null ? undefined : json['sendRecoverAccountEmail'],
+    autoLoginAfterRegistration: json['autoLoginAfterRegistration'] == null ? undefined : json['autoLoginAfterRegistration'],
+    autoLoginAfterResetPassword: json['autoLoginAfterResetPassword'] == null ? undefined : json['autoLoginAfterResetPassword'],
+    botDetectionPlugin: json['botDetectionPlugin'] == null ? undefined : json['botDetectionPlugin'],
     completeRegistrationWhenResetPassword:
       json['completeRegistrationWhenResetPassword'] == null ? undefined : json['completeRegistrationWhenResetPassword'],
-    autoLoginAfterRegistration: json['autoLoginAfterRegistration'] == null ? undefined : json['autoLoginAfterRegistration'],
-    redirectUriAfterRegistration: json['redirectUriAfterRegistration'] == null ? undefined : json['redirectUriAfterRegistration'],
-    dynamicUserRegistration: json['dynamicUserRegistration'] == null ? undefined : json['dynamicUserRegistration'],
     defaultIdentityProviderForRegistration:
       json['defaultIdentityProviderForRegistration'] == null ? undefined : json['defaultIdentityProviderForRegistration'],
-    autoLoginAfterResetPassword: json['autoLoginAfterResetPassword'] == null ? undefined : json['autoLoginAfterResetPassword'],
-    redirectUriAfterResetPassword: json['redirectUriAfterResetPassword'] == null ? undefined : json['redirectUriAfterResetPassword'],
     deletePasswordlessDevicesAfterResetPassword:
       json['deletePasswordlessDevicesAfterResetPassword'] == null ? undefined : json['deletePasswordlessDevicesAfterResetPassword'],
-    useBotDetection: json['useBotDetection'] == null ? undefined : json['useBotDetection'],
-    botDetectionPlugin: json['botDetectionPlugin'] == null ? undefined : json['botDetectionPlugin'],
+    dynamicUserRegistration: json['dynamicUserRegistration'] == null ? undefined : json['dynamicUserRegistration'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
+    loginAttemptsDetectionEnabled: json['loginAttemptsDetectionEnabled'] == null ? undefined : json['loginAttemptsDetectionEnabled'],
+    loginAttemptsResetTime: json['loginAttemptsResetTime'] == null ? undefined : json['loginAttemptsResetTime'],
+    maxLoginAttempts: json['maxLoginAttempts'] == null ? undefined : json['maxLoginAttempts'],
+    mfaChallengeAttemptsDetectionEnabled:
+      json['mfaChallengeAttemptsDetectionEnabled'] == null ? undefined : json['mfaChallengeAttemptsDetectionEnabled'],
+    mfaChallengeAttemptsResetTime: json['mfaChallengeAttemptsResetTime'] == null ? undefined : json['mfaChallengeAttemptsResetTime'],
+    mfaChallengeMaxAttempts: json['mfaChallengeMaxAttempts'] == null ? undefined : json['mfaChallengeMaxAttempts'],
+    mfaChallengeSendVerifyAlertEmail:
+      json['mfaChallengeSendVerifyAlertEmail'] == null ? undefined : json['mfaChallengeSendVerifyAlertEmail'],
+    redirectUriAfterRegistration: json['redirectUriAfterRegistration'] == null ? undefined : json['redirectUriAfterRegistration'],
+    redirectUriAfterResetPassword: json['redirectUriAfterResetPassword'] == null ? undefined : json['redirectUriAfterResetPassword'],
     rememberMe: json['rememberMe'] == null ? undefined : json['rememberMe'],
     rememberMeDuration: json['rememberMeDuration'] == null ? undefined : json['rememberMeDuration'],
+    resetPasswordConfirmIdentity: json['resetPasswordConfirmIdentity'] == null ? undefined : json['resetPasswordConfirmIdentity'],
     resetPasswordCustomForm: json['resetPasswordCustomForm'] == null ? undefined : json['resetPasswordCustomForm'],
     resetPasswordCustomFormFields:
       json['resetPasswordCustomFormFields'] == null
         ? undefined
         : (json['resetPasswordCustomFormFields'] as Array<any>).map(FormFieldFromJSON),
-    resetPasswordConfirmIdentity: json['resetPasswordConfirmIdentity'] == null ? undefined : json['resetPasswordConfirmIdentity'],
     resetPasswordInvalidateTokens: json['resetPasswordInvalidateTokens'] == null ? undefined : json['resetPasswordInvalidateTokens'],
-    mfaChallengeAttemptsDetectionEnabled:
-      json['mfaChallengeAttemptsDetectionEnabled'] == null ? undefined : json['mfaChallengeAttemptsDetectionEnabled'],
-    mfaChallengeMaxAttempts: json['mfaChallengeMaxAttempts'] == null ? undefined : json['mfaChallengeMaxAttempts'],
-    mfaChallengeAttemptsResetTime: json['mfaChallengeAttemptsResetTime'] == null ? undefined : json['mfaChallengeAttemptsResetTime'],
-    mfaChallengeSendVerifyAlertEmail:
-      json['mfaChallengeSendVerifyAlertEmail'] == null ? undefined : json['mfaChallengeSendVerifyAlertEmail'],
+    sendRecoverAccountEmail: json['sendRecoverAccountEmail'] == null ? undefined : json['sendRecoverAccountEmail'],
     sendVerifyRegistrationAccountEmail:
       json['sendVerifyRegistrationAccountEmail'] == null ? undefined : json['sendVerifyRegistrationAccountEmail'],
+    useBotDetection: json['useBotDetection'] == null ? undefined : json['useBotDetection'],
   };
 }
 
@@ -264,35 +264,35 @@ export function AccountSettingsToJSONTyped(value?: AccountSettings | null, ignor
   }
 
   return {
+    accountBlockedDuration: value['accountBlockedDuration'],
+    autoLoginAfterRegistration: value['autoLoginAfterRegistration'],
+    autoLoginAfterResetPassword: value['autoLoginAfterResetPassword'],
+    botDetectionPlugin: value['botDetectionPlugin'],
+    completeRegistrationWhenResetPassword: value['completeRegistrationWhenResetPassword'],
+    defaultIdentityProviderForRegistration: value['defaultIdentityProviderForRegistration'],
+    deletePasswordlessDevicesAfterResetPassword: value['deletePasswordlessDevicesAfterResetPassword'],
+    dynamicUserRegistration: value['dynamicUserRegistration'],
     inherited: value['inherited'],
     loginAttemptsDetectionEnabled: value['loginAttemptsDetectionEnabled'],
-    maxLoginAttempts: value['maxLoginAttempts'],
     loginAttemptsResetTime: value['loginAttemptsResetTime'],
-    accountBlockedDuration: value['accountBlockedDuration'],
-    sendRecoverAccountEmail: value['sendRecoverAccountEmail'],
-    completeRegistrationWhenResetPassword: value['completeRegistrationWhenResetPassword'],
-    autoLoginAfterRegistration: value['autoLoginAfterRegistration'],
+    maxLoginAttempts: value['maxLoginAttempts'],
+    mfaChallengeAttemptsDetectionEnabled: value['mfaChallengeAttemptsDetectionEnabled'],
+    mfaChallengeAttemptsResetTime: value['mfaChallengeAttemptsResetTime'],
+    mfaChallengeMaxAttempts: value['mfaChallengeMaxAttempts'],
+    mfaChallengeSendVerifyAlertEmail: value['mfaChallengeSendVerifyAlertEmail'],
     redirectUriAfterRegistration: value['redirectUriAfterRegistration'],
-    dynamicUserRegistration: value['dynamicUserRegistration'],
-    defaultIdentityProviderForRegistration: value['defaultIdentityProviderForRegistration'],
-    autoLoginAfterResetPassword: value['autoLoginAfterResetPassword'],
     redirectUriAfterResetPassword: value['redirectUriAfterResetPassword'],
-    deletePasswordlessDevicesAfterResetPassword: value['deletePasswordlessDevicesAfterResetPassword'],
-    useBotDetection: value['useBotDetection'],
-    botDetectionPlugin: value['botDetectionPlugin'],
     rememberMe: value['rememberMe'],
     rememberMeDuration: value['rememberMeDuration'],
+    resetPasswordConfirmIdentity: value['resetPasswordConfirmIdentity'],
     resetPasswordCustomForm: value['resetPasswordCustomForm'],
     resetPasswordCustomFormFields:
       value['resetPasswordCustomFormFields'] == null
         ? undefined
         : (value['resetPasswordCustomFormFields'] as Array<any>).map(FormFieldToJSON),
-    resetPasswordConfirmIdentity: value['resetPasswordConfirmIdentity'],
     resetPasswordInvalidateTokens: value['resetPasswordInvalidateTokens'],
-    mfaChallengeAttemptsDetectionEnabled: value['mfaChallengeAttemptsDetectionEnabled'],
-    mfaChallengeMaxAttempts: value['mfaChallengeMaxAttempts'],
-    mfaChallengeAttemptsResetTime: value['mfaChallengeAttemptsResetTime'],
-    mfaChallengeSendVerifyAlertEmail: value['mfaChallengeSendVerifyAlertEmail'],
+    sendRecoverAccountEmail: value['sendRecoverAccountEmail'],
     sendVerifyRegistrationAccountEmail: value['sendVerifyRegistrationAccountEmail'],
+    useBotDetection: value['useBotDetection'],
   };
 }

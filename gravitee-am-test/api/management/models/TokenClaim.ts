@@ -37,12 +37,6 @@ export interface TokenClaim {
    * @type {string}
    * @memberof TokenClaim
    */
-  tokenType?: TokenClaimTokenTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof TokenClaim
-   */
   claimName?: string;
   /**
    *
@@ -50,6 +44,12 @@ export interface TokenClaim {
    * @memberof TokenClaim
    */
   claimValue?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof TokenClaim
+   */
+  tokenType?: TokenClaimTokenTypeEnum;
 }
 
 /**
@@ -78,9 +78,9 @@ export function TokenClaimFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
-    tokenType: json['tokenType'] == null ? undefined : json['tokenType'],
     claimName: json['claimName'] == null ? undefined : json['claimName'],
     claimValue: json['claimValue'] == null ? undefined : json['claimValue'],
+    tokenType: json['tokenType'] == null ? undefined : json['tokenType'],
   };
 }
 
@@ -94,8 +94,8 @@ export function TokenClaimToJSONTyped(value?: TokenClaim | null, ignoreDiscrimin
   }
 
   return {
-    tokenType: value['tokenType'],
     claimName: value['claimName'],
     claimValue: value['claimValue'],
+    tokenType: value['tokenType'],
   };
 }

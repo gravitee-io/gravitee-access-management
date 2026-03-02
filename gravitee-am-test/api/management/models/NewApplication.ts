@@ -37,19 +37,7 @@ export interface NewApplication {
    * @type {string}
    * @memberof NewApplication
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewApplication
-   */
-  type: NewApplicationTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof NewApplication
-   */
-  description?: string;
+  agentCardUrl?: string;
   /**
    *
    * @type {string}
@@ -64,16 +52,34 @@ export interface NewApplication {
   clientSecret?: string;
   /**
    *
-   * @type {Array<string>}
+   * @type {string}
    * @memberof NewApplication
    */
-  redirectUris?: Array<string>;
+  description?: string;
   /**
    *
    * @type {{ [key: string]: any; }}
    * @memberof NewApplication
    */
   metadata?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof NewApplication
+   */
+  name: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof NewApplication
+   */
+  redirectUris?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof NewApplication
+   */
+  type: NewApplicationTypeEnum;
 }
 
 /**
@@ -107,13 +113,14 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    name: json['name'],
-    type: json['type'],
-    description: json['description'] == null ? undefined : json['description'],
+    agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
-    redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
+    description: json['description'] == null ? undefined : json['description'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
+    name: json['name'],
+    redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
+    type: json['type'],
   };
 }
 
@@ -127,12 +134,13 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
   }
 
   return {
-    name: value['name'],
-    type: value['type'],
-    description: value['description'],
+    agentCardUrl: value['agentCardUrl'],
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
-    redirectUris: value['redirectUris'],
+    description: value['description'],
     metadata: value['metadata'],
+    name: value['name'],
+    redirectUris: value['redirectUris'],
+    type: value['type'],
   };
 }

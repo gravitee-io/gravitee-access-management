@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway.handler</groupId>
         <artifactId>gravitee-am-gateway-handler</artifactId>
-        <version>4.11.0-SNAPSHOT</version>
+        <version>4.11.0-alpha.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -34,6 +34,12 @@
         <dependency>
             <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-api</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.am</groupId>
+            <artifactId>gravitee-am-monitoring</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

@@ -194,10 +194,15 @@ export class DomainSettingsThemeComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.themes = this.route.snapshot.data['themes'] || [];
     this.theme = this.themes[0] || {};
-    this.forms = this.formTemplateFactoryService.findAll().map((form) => {
-      form.enabled = true;
-      return form;
-    });
+
+    this.forms = this.formTemplateFactoryService
+      .findAll()
+      .filter((form) => form.template !== 'MAGIC_LINK_LOGIN' || this.allowMagicLink())
+      .map((form) => {
+        form.enabled = true;
+        return form;
+      });
+
     if (this.theme.id && this.theme.primaryButtonColorHex) {
       const filteredObj = find(this.colorPalettes, { primaryButtonColorHex: this.theme.primaryButtonColorHex });
       if (filteredObj) {
@@ -317,6 +322,10 @@ export class DomainSettingsThemeComponent implements OnInit {
       this.loadTheme();
       this.loadForm();
     });
+  }
+
+  private allowMagicLink(): boolean {
+    return this.domain.loginSettings?.magicLinkAuthEnabled;
   }
 
   private createThemeToPublish() {

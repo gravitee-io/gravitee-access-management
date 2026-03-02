@@ -37,25 +37,19 @@ export interface Step {
    * @type {string}
    * @memberof Step
    */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Step
-   */
-  policy?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof Step
-   */
-  description?: string;
+  condition?: string;
   /**
    *
    * @type {string}
    * @memberof Step
    */
   configuration?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Step
+   */
+  description?: string;
   /**
    *
    * @type {boolean}
@@ -67,7 +61,13 @@ export interface Step {
    * @type {string}
    * @memberof Step
    */
-  condition?: string;
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Step
+   */
+  policy?: string;
 }
 
 /**
@@ -86,12 +86,12 @@ export function StepFromJSONTyped(json: any, ignoreDiscriminator: boolean): Step
     return json;
   }
   return {
+    condition: json['condition'] == null ? undefined : json['condition'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    description: json['description'] == null ? undefined : json['description'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     name: json['name'] == null ? undefined : json['name'],
     policy: json['policy'] == null ? undefined : json['policy'],
-    description: json['description'] == null ? undefined : json['description'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    condition: json['condition'] == null ? undefined : json['condition'],
   };
 }
 
@@ -105,11 +105,11 @@ export function StepToJSONTyped(value?: Step | null, ignoreDiscriminator: boolea
   }
 
   return {
+    condition: value['condition'],
+    configuration: value['configuration'],
+    description: value['description'],
+    enabled: value['enabled'],
     name: value['name'],
     policy: value['policy'],
-    description: value['description'],
-    configuration: value['configuration'],
-    enabled: value['enabled'],
-    condition: value['condition'],
   };
 }

@@ -25,7 +25,7 @@ import {
   ProtectedResourceFeature,
   ProtectedResourceService,
   ProtectedResourceFeatureType,
-  UpdateProtectedResourceRequest,
+  PatchProtectedResourceRequest,
 } from '../../../../services/protected-resource.service';
 import { McpTool } from '../../../components/mcp-tools-table/mcp-tools-table.component';
 import { ScopeService } from '../../../../services/scope.service';
@@ -172,15 +172,10 @@ export class DomainMcpServerToolsComponent implements OnInit {
       },
     ];
 
-    const updateRequest: UpdateProtectedResourceRequest = {
-      name: this.protectedResource.name,
-      resourceIdentifiers: this.protectedResource.resourceIdentifiers,
-      description: this.protectedResource.description,
-      features: updatedFeatures,
-    };
+    const patchRequest: PatchProtectedResourceRequest = { features: updatedFeatures };
 
     this.protectedResourceService
-      .update(this.domainId, this.protectedResource.id, updateRequest)
+      .patch(this.domainId, this.protectedResource.id, patchRequest)
       .pipe(
         catchError((err: unknown) => {
           this.snackbarService.open(
@@ -211,16 +206,10 @@ export class DomainMcpServerToolsComponent implements OnInit {
       scopes: f.scopes,
     }));
 
-    // Create the update request
-    const updateRequest: UpdateProtectedResourceRequest = {
-      name: this.protectedResource.name,
-      resourceIdentifiers: this.protectedResource.resourceIdentifiers,
-      description: this.protectedResource.description,
-      features: updatedFeatures,
-    };
+    const patchRequest: PatchProtectedResourceRequest = { features: updatedFeatures };
 
     this.protectedResourceService
-      .update(this.domainId, this.protectedResource.id, updateRequest)
+      .patch(this.domainId, this.protectedResource.id, patchRequest)
       .pipe(
         catchError((err: unknown) => {
           this.snackbarService.open(
@@ -266,15 +255,10 @@ export class DomainMcpServerToolsComponent implements OnInit {
       };
     });
 
-    const updateRequest: UpdateProtectedResourceRequest = {
-      name: this.protectedResource.name,
-      resourceIdentifiers: this.protectedResource.resourceIdentifiers,
-      description: this.protectedResource.description,
-      features: updatedFeatures,
-    };
+    const patchRequest: PatchProtectedResourceRequest = { features: updatedFeatures };
 
     this.protectedResourceService
-      .update(this.domainId, this.protectedResource.id, updateRequest)
+      .patch(this.domainId, this.protectedResource.id, patchRequest)
       .pipe(
         catchError((err: unknown) => {
           this.snackbarService.open(

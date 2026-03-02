@@ -44,22 +44,10 @@ import { ApplicationFromJSON, ApplicationFromJSONTyped, ApplicationToJSON, Appli
 export interface CertificateEntity {
   /**
    *
-   * @type {string}
+   * @type {Array<Application>}
    * @memberof CertificateEntity
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CertificateEntity
-   */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CertificateEntity
-   */
-  type?: string;
+  applications?: Array<Application>;
   /**
    *
    * @type {Date}
@@ -74,6 +62,30 @@ export interface CertificateEntity {
   expiresAt?: Date;
   /**
    *
+   * @type {string}
+   * @memberof CertificateEntity
+   */
+  id?: string;
+  /**
+   *
+   * @type {Array<IdentityProvider>}
+   * @memberof CertificateEntity
+   */
+  identityProviders?: Array<IdentityProvider>;
+  /**
+   *
+   * @type {string}
+   * @memberof CertificateEntity
+   */
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CertificateEntity
+   */
+  status?: CertificateEntityStatusEnum;
+  /**
+   *
    * @type {boolean}
    * @memberof CertificateEntity
    */
@@ -83,25 +95,13 @@ export interface CertificateEntity {
    * @type {string}
    * @memberof CertificateEntity
    */
-  status?: CertificateEntityStatusEnum;
+  type?: string;
   /**
    *
    * @type {Array<string>}
    * @memberof CertificateEntity
    */
   usage?: Array<string>;
-  /**
-   *
-   * @type {Array<Application>}
-   * @memberof CertificateEntity
-   */
-  applications?: Array<Application>;
-  /**
-   *
-   * @type {Array<IdentityProvider>}
-   * @memberof CertificateEntity
-   */
-  identityProviders?: Array<IdentityProvider>;
 }
 
 /**
@@ -131,17 +131,17 @@ export function CertificateEntityFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
+    applications: json['applications'] == null ? undefined : (json['applications'] as Array<any>).map(ApplicationFromJSON),
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
-    system: json['system'] == null ? undefined : json['system'],
-    status: json['status'] == null ? undefined : json['status'],
-    usage: json['usage'] == null ? undefined : json['usage'],
-    applications: json['applications'] == null ? undefined : (json['applications'] as Array<any>).map(ApplicationFromJSON),
+    id: json['id'] == null ? undefined : json['id'],
     identityProviders:
       json['identityProviders'] == null ? undefined : (json['identityProviders'] as Array<any>).map(IdentityProviderFromJSON),
+    name: json['name'] == null ? undefined : json['name'],
+    status: json['status'] == null ? undefined : json['status'],
+    system: json['system'] == null ? undefined : json['system'],
+    type: json['type'] == null ? undefined : json['type'],
+    usage: json['usage'] == null ? undefined : json['usage'],
   };
 }
 
@@ -155,16 +155,16 @@ export function CertificateEntityToJSONTyped(value?: CertificateEntity | null, i
   }
 
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
+    applications: value['applications'] == null ? undefined : (value['applications'] as Array<any>).map(ApplicationToJSON),
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
-    system: value['system'],
-    status: value['status'],
-    usage: value['usage'],
-    applications: value['applications'] == null ? undefined : (value['applications'] as Array<any>).map(ApplicationToJSON),
+    id: value['id'],
     identityProviders:
       value['identityProviders'] == null ? undefined : (value['identityProviders'] as Array<any>).map(IdentityProviderToJSON),
+    name: value['name'],
+    status: value['status'],
+    system: value['system'],
+    type: value['type'],
+    usage: value['usage'],
   };
 }

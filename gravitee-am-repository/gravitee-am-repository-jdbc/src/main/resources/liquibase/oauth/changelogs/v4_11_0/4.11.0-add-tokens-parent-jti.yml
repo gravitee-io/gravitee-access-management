@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.1-add-tokens-parent-subject-jti
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: tokens
+                columnName: parent_subject_jti
+      changes:
+        - addColumn:
+            tableName: tokens
+            columns:
+              - column: { name: parent_subject_jti, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: parent_actor_jti, type: nvarchar(64), constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: parent_subject_jti
+            indexName: idx_tokens_parent_subject_jti
+            tableName: tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: parent_actor_jti
+            indexName: idx_tokens_parent_actor_jti
+            tableName: tokens
+            unique: false

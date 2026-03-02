@@ -15,8 +15,13 @@
  */
 
 import { getApplicationApi } from './service/utils';
-import { ApplicationPage } from '../../management/models/ApplicationPage';
-import { PatchApplicationTypeTypeEnum } from '../../management/models/PatchApplicationType';
+import {
+    Application,
+    ApplicationPage,
+    NewApplication,
+    PatchApplication,
+    PatchApplicationTypeTypeEnum
+} from '../../management/models';
 
 export type ApplicationListOptions = {
   page?: number;
@@ -24,7 +29,7 @@ export type ApplicationListOptions = {
   q?: string;
 };
 
-export const createApplication = (domainId, accessToken, body) =>
+export const createApplication = (domainId: string, accessToken: string, body: NewApplication): Promise<Application> =>
   getApplicationApi(accessToken).createApplication({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -32,7 +37,7 @@ export const createApplication = (domainId, accessToken, body) =>
     newApplication: body,
   });
 
-export const getApplication = (domainId, accessToken, applicationId) =>
+export const getApplication = (domainId: string, accessToken: string, applicationId: string) =>
   getApplicationApi(accessToken).findApplication({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -50,7 +55,7 @@ export const listApplications = (domainId: string, accessToken: string, options?
     q: options?.q,
   });
 
-export const patchApplication = (domainId, accessToken, body, applicationId) =>
+export const patchApplication = (domainId: string, accessToken: string, body: PatchApplication, applicationId: string) =>
   getApplicationApi(accessToken).patchApplication({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -59,7 +64,7 @@ export const patchApplication = (domainId, accessToken, body, applicationId) =>
     patchApplication: body,
   });
 
-export const updateApplication = (domainId, accessToken, body, applicationId) =>
+export const updateApplication = (domainId: string, accessToken: string, body: PatchApplication, applicationId: string) =>
   getApplicationApi(accessToken).updateApplication({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -68,7 +73,7 @@ export const updateApplication = (domainId, accessToken, body, applicationId) =>
     patchApplication: body,
   });
 
-export const deleteApplication = (domainId, accessToken, applicationId) =>
+export const deleteApplication = (domainId: string, accessToken: string, applicationId: string) =>
   getApplicationApi(accessToken).deleteApplication({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -76,7 +81,7 @@ export const deleteApplication = (domainId, accessToken, applicationId) =>
     application: applicationId,
   });
 
-export const renewApplicationSecrets = (domainId, accessToken, applicationId, secretId) =>
+export const renewApplicationSecrets = (domainId: string, accessToken: string, applicationId: string, secretId: string) =>
   getApplicationApi(accessToken).renewClientSecret({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -85,7 +90,7 @@ export const renewApplicationSecrets = (domainId, accessToken, applicationId, se
     secret: secretId,
   });
 
-export const getApplicationFlows = (domainId, accessToken, applicationId) =>
+export const getApplicationFlows = (domainId: string, accessToken: string, applicationId: string) =>
   getApplicationApi(accessToken).listAppFlows({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -93,7 +98,7 @@ export const getApplicationFlows = (domainId, accessToken, applicationId) =>
     application: applicationId,
   });
 
-export const updateApplicationFlows = (domainId, accessToken, applicationId, flows) =>
+export const updateApplicationFlows = (domainId: string, accessToken: string, applicationId: string, flows) =>
   getApplicationApi(accessToken).defineAppFlows({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -102,7 +107,7 @@ export const updateApplicationFlows = (domainId, accessToken, applicationId, flo
     flow: flows,
   });
 
-export const updateApplicationType = (domainId, accessToken, applicationId, type: PatchApplicationTypeTypeEnum) =>
+export const updateApplicationType = (domainId: string, accessToken: string, applicationId: string, type: PatchApplicationTypeTypeEnum) =>
   getApplicationApi(accessToken).updateApplicationType({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -110,3 +115,13 @@ export const updateApplicationType = (domainId, accessToken, applicationId, type
     application: applicationId,
     patchApplicationType: { type },
   });
+
+export const getApplicationAgentCard = async (domainId: string, accessToken: string, applicationId: string): Promise<any> => {
+  const response = await getApplicationApi(accessToken).getApplicationAgentCardRaw({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    application: applicationId,
+  });
+  return response.raw.json();
+};

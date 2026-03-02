@@ -37,6 +37,12 @@ export interface DataSource {
    * @type {string}
    * @memberof DataSource
    */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DataSource
+   */
   id?: string;
   /**
    *
@@ -44,12 +50,6 @@ export interface DataSource {
    * @memberof DataSource
    */
   name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof DataSource
-   */
-  description?: string;
 }
 
 /**
@@ -68,9 +68,9 @@ export function DataSourceFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
+    description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
   };
 }
 
@@ -84,8 +84,8 @@ export function DataSourceToJSONTyped(value?: DataSource | null, ignoreDiscrimin
   }
 
   return {
+    description: value['description'],
     id: value['id'],
     name: value['name'],
-    description: value['description'],
   };
 }

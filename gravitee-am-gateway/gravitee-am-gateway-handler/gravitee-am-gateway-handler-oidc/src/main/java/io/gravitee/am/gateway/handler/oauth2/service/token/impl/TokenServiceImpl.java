@@ -48,8 +48,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.model.uma.PermissionRequest;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
@@ -96,10 +96,7 @@ public class TokenServiceImpl implements TokenService {
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
 
     @Autowired
-    private AccessTokenRepository accessTokenRepository;
-
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Autowired
     private TokenEnhancer tokenEnhancer;
@@ -141,7 +138,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> accessTokenRepository.findByToken(jwt.getJti()).map(accessToken -> convertAccessToken(jwt, null)));
+                .flatMapMaybe(jwt -> tokenRepository.findAccessTokenByJti(jwt.getJti()).map(accessToken -> convertAccessToken(jwt, null)));
     }
 
     @Override
@@ -153,7 +150,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> refreshTokenRepository.findByToken(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt, null)));
+                .flatMapMaybe(jwt -> tokenRepository.findRefreshTokenByJti(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt, null)));
     }
 
     @Override
@@ -197,16 +194,12 @@ public class TokenServiceImpl implements TokenService {
 
     private Maybe<Token> introspectAsAccessToken(String token, String callerClientId) {
         return introspectionTokenFacade.introspectAccessToken(token, callerClientId)
-                .flatMap(jwt -> accessTokenRepository.findByToken(jwt.getJti())
-                        .map(repoToken -> convertAccessToken(jwt, repoToken.getClient()))
-                        .switchIfEmpty(Maybe.just(convertAccessToken(jwt, null))));
+                .map(result -> convertAccessToken(result.jwt(), result.clientId()));
     }
 
     private Maybe<Token> introspectAsRefreshToken(String token, String callerClientId) {
         return introspectionTokenFacade.introspectRefreshToken(token, callerClientId)
-                .flatMap(jwt -> refreshTokenRepository.findByToken(jwt.getJti())
-                        .map(repoToken -> convertRefreshToken(jwt, repoToken.getClient()))
-                        .switchIfEmpty(Maybe.just(convertRefreshToken(jwt, null))));
+                .map(result -> convertRefreshToken(result.jwt(), result.clientId()));
     }
 
     @Override
@@ -316,7 +309,7 @@ public class TokenServiceImpl implements TokenService {
                     }
 
                     // else, refresh token is used only once
-                    return refreshTokenRepository.delete(refreshToken1.getValue())
+                    return tokenRepository.deleteByJti(refreshToken1.getValue())
                             .andThen(Single.just(refreshToken1));
                 })
                 .doOnEvent((token, error) -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
@@ -328,12 +321,12 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Completable deleteAccessToken(String accessToken) {
-        return accessTokenRepository.delete(accessToken);
+        return tokenRepository.deleteByJti(accessToken);
     }
 
     @Override
     public Completable deleteRefreshToken(String refreshToken) {
-        return refreshTokenRepository.delete(refreshToken);
+        return tokenRepository.deleteByJti(refreshToken);
     }
 
     private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
@@ -341,7 +334,7 @@ public class TokenServiceImpl implements TokenService {
         final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request, user));
         // store refresh token (if exists)
         if (refreshToken != null) {
-            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request.getClientId())));
+            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user, oAuth2Request)));
         }
         return persistAccessToken;
     }
@@ -352,11 +345,20 @@ public class TokenServiceImpl implements TokenService {
         accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
         accessToken.setRefreshToken(refreshToken != null ? refreshToken.getJti() : null);
+        accessToken.setParentSubjectJti(oAuth2Request.getSubjectTokenId());
+        if (oAuth2Request.isDelegation() && oAuth2Request.getActorTokenId() != null) {
+            accessToken.setParentActorJti(oAuth2Request.getActorTokenId());
+        }
         return accessToken;
     }
 
-    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user, String clientId) {
-        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, clientId);
+    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user, OAuth2Request request) {
+        io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken =  convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, request.getClientId());
+        refreshToken.setParentSubjectJti(request.getSubjectTokenId());
+        if (request.isDelegation() && request.getActorTokenId() != null) {
+            refreshToken.setParentActorJti(request.getActorTokenId());
+        }
+        return refreshToken;
     }
 
     private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user, String clientId) {

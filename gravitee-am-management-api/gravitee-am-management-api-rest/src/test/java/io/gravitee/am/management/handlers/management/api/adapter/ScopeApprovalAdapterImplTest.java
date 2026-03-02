@@ -27,8 +27,6 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
@@ -54,8 +52,6 @@ class ScopeApprovalAdapterImplTest {
     public static final Domain TEST_DOMAIN = new Domain(TEST_DOMAIN_ID);
     private final DataPlaneRegistry dataPlaneRegistry = mock();
     private final UserRepository userRepository = mock();
-    private final AccessTokenRepository accessTokenRepository = mock();
-    private final RefreshTokenRepository refreshTokenRepository = mock();
 
     private final ScopeApprovalRepository scopeApprovalRepository = new MemoryScopeApprovalRepository();
     private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(dataPlaneRegistry, mock());
@@ -98,8 +94,6 @@ class ScopeApprovalAdapterImplTest {
     void shouldRevokeConsents() {
         when(userRepository.findById(any(UserId.class)))
                 .thenReturn(Maybe.just(new User()));
-        when(accessTokenRepository.deleteByDomainIdClientIdAndUserId(any(),any(),any())).thenReturn(Completable.complete());
-        when(refreshTokenRepository.deleteByDomainIdClientIdAndUserId(any(),any(),any())).thenReturn(Completable.complete());
         var created = Single.mergeArray(
                         scopeApprovalRepository.create(approvalWithUser("internal-user-id")),
                         scopeApprovalRepository.create(approvalWithUser("some-other-user")))

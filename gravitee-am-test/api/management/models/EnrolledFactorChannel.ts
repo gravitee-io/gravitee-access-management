@@ -34,10 +34,10 @@ import { mapValues } from '../runtime';
 export interface EnrolledFactorChannel {
   /**
    *
-   * @type {string}
+   * @type {{ [key: string]: any; }}
    * @memberof EnrolledFactorChannel
    */
-  type?: EnrolledFactorChannelTypeEnum;
+  additionalData?: { [key: string]: any };
   /**
    *
    * @type {string}
@@ -46,10 +46,10 @@ export interface EnrolledFactorChannel {
   target?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {string}
    * @memberof EnrolledFactorChannel
    */
-  additionalData?: { [key: string]: any };
+  type?: EnrolledFactorChannelTypeEnum;
 }
 
 /**
@@ -79,9 +79,9 @@ export function EnrolledFactorChannelFromJSONTyped(json: any, ignoreDiscriminato
     return json;
   }
   return {
-    type: json['type'] == null ? undefined : json['type'],
-    target: json['target'] == null ? undefined : json['target'],
     additionalData: json['additionalData'] == null ? undefined : json['additionalData'],
+    target: json['target'] == null ? undefined : json['target'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -95,8 +95,8 @@ export function EnrolledFactorChannelToJSONTyped(value?: EnrolledFactorChannel |
   }
 
   return {
-    type: value['type'],
-    target: value['target'],
     additionalData: value['additionalData'],
+    target: value['target'],
+    type: value['type'],
   };
 }

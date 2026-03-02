@@ -37,13 +37,13 @@ export interface ResourceEntity {
    * @type {string}
    * @memberof ResourceEntity
    */
-  id?: string;
+  clientId?: string;
   /**
    *
-   * @type {Array<string>}
+   * @type {Date}
    * @memberof ResourceEntity
    */
-  resourceScopes?: Array<string>;
+  createdAt?: Date;
   /**
    *
    * @type {string}
@@ -55,7 +55,19 @@ export interface ResourceEntity {
    * @type {string}
    * @memberof ResourceEntity
    */
+  domain?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceEntity
+   */
   iconUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceEntity
+   */
+  id?: string;
   /**
    *
    * @type {string}
@@ -64,22 +76,28 @@ export interface ResourceEntity {
   name?: string;
   /**
    *
+   * @type {number}
+   * @memberof ResourceEntity
+   */
+  policies?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ResourceEntity
+   */
+  resourceScopes?: Array<string>;
+  /**
+   *
    * @type {string}
    * @memberof ResourceEntity
    */
   type?: string;
   /**
    *
-   * @type {string}
+   * @type {Date}
    * @memberof ResourceEntity
    */
-  domain?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ResourceEntity
-   */
-  userId?: string;
+  updatedAt?: Date;
   /**
    *
    * @type {string}
@@ -91,25 +109,7 @@ export interface ResourceEntity {
    * @type {string}
    * @memberof ResourceEntity
    */
-  clientId?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof ResourceEntity
-   */
-  policies?: number;
-  /**
-   *
-   * @type {Date}
-   * @memberof ResourceEntity
-   */
-  createdAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof ResourceEntity
-   */
-  updatedAt?: Date;
+  userId?: string;
 }
 
 /**
@@ -128,19 +128,19 @@ export function ResourceEntityFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    resourceScopes: json['resourceScopes'] == null ? undefined : json['resourceScopes'],
-    description: json['description'] == null ? undefined : json['description'],
-    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    userId: json['userId'] == null ? undefined : json['userId'],
-    userDisplayName: json['userDisplayName'] == null ? undefined : json['userDisplayName'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
-    policies: json['policies'] == null ? undefined : json['policies'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    description: json['description'] == null ? undefined : json['description'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    policies: json['policies'] == null ? undefined : json['policies'],
+    resourceScopes: json['resourceScopes'] == null ? undefined : json['resourceScopes'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    userDisplayName: json['userDisplayName'] == null ? undefined : json['userDisplayName'],
+    userId: json['userId'] == null ? undefined : json['userId'],
   };
 }
 
@@ -154,18 +154,18 @@ export function ResourceEntityToJSONTyped(value?: ResourceEntity | null, ignoreD
   }
 
   return {
-    id: value['id'],
-    resourceScopes: value['resourceScopes'],
-    description: value['description'],
-    iconUri: value['iconUri'],
-    name: value['name'],
-    type: value['type'],
-    domain: value['domain'],
-    userId: value['userId'],
-    userDisplayName: value['userDisplayName'],
     clientId: value['clientId'],
-    policies: value['policies'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    description: value['description'],
+    domain: value['domain'],
+    iconUri: value['iconUri'],
+    id: value['id'],
+    name: value['name'],
+    policies: value['policies'],
+    resourceScopes: value['resourceScopes'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    userDisplayName: value['userDisplayName'],
+    userId: value['userId'],
   };
 }

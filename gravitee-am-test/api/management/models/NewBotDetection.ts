@@ -37,13 +37,7 @@ export interface NewBotDetection {
    * @type {string}
    * @memberof NewBotDetection
    */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewBotDetection
-   */
-  type: string;
+  configuration: string;
   /**
    *
    * @type {string}
@@ -55,23 +49,29 @@ export interface NewBotDetection {
    * @type {string}
    * @memberof NewBotDetection
    */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewBotDetection
+   */
   name: string;
   /**
    *
    * @type {string}
    * @memberof NewBotDetection
    */
-  configuration: string;
+  type: string;
 }
 
 /**
  * Check if a given object implements the NewBotDetection interface.
  */
 export function instanceOfNewBotDetection(value: object): value is NewBotDetection {
-  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('detectionType' in value) || value['detectionType'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
   return true;
 }
 
@@ -84,11 +84,11 @@ export function NewBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: boo
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'],
-    detectionType: json['detectionType'],
-    name: json['name'],
     configuration: json['configuration'],
+    detectionType: json['detectionType'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'],
+    type: json['type'],
   };
 }
 
@@ -102,10 +102,10 @@ export function NewBotDetectionToJSONTyped(value?: NewBotDetection | null, ignor
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    detectionType: value['detectionType'],
-    name: value['name'],
     configuration: value['configuration'],
+    detectionType: value['detectionType'],
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
   };
 }

@@ -39,9 +39,15 @@ public interface EmailService {
 
     void send(Template template, User user, Client client, MultiMap queryParams);
 
+    void asyncSend(Template template, User user, Client client, MultiMap queryParams);
+
     void send(Email email);
 
+    List<EmailContainer> batch(List<EmailContainer> containers, int maxAttempt);
+
     EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params, Locale preferredLanguage) throws IOException, TemplateException;
+
+    void traceEmailEviction(User user, Client client, Template emailTemplate);
 
     final class EmailWrapper {
         final io.gravitee.am.common.email.Email email;

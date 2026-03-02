@@ -37,16 +37,16 @@ import { UserFromJSON, UserFromJSONTyped, UserToJSON, UserToJSONTyped } from './
 export interface UserPage {
   /**
    *
-   * @type {Array<User>}
-   * @memberof UserPage
-   */
-  data?: Array<User>;
-  /**
-   *
    * @type {number}
    * @memberof UserPage
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<User>}
+   * @memberof UserPage
+   */
+  data?: Array<User>;
   /**
    *
    * @type {number}
@@ -71,8 +71,8 @@ export function UserPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(UserFromJSON),
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(UserFromJSON),
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -87,8 +87,8 @@ export function UserPageToJSONTyped(value?: UserPage | null, ignoreDiscriminator
   }
 
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(UserToJSON),
     currentPage: value['currentPage'],
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(UserToJSON),
     totalCount: value['totalCount'],
   };
 }

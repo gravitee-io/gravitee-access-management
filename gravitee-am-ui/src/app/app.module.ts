@@ -128,6 +128,7 @@ import {
   CertitificatePublicKeyDialogComponent,
   DomainSettingsCertificatesComponent,
 } from './domain/settings/certificates/certificates.component';
+import { CertificateSettingsDialogComponent } from './domain/settings/certificates/dialog/certificate-settings.component';
 import { DomainSettingsProvidersComponent } from './domain/settings/providers/providers.component';
 import { DomainSettingsExtensionGrantsComponent } from './domain/settings/extension-grants/extension-grants.component';
 import { DomainSettingsFormsComponent } from './domain/settings/forms/forms.component';
@@ -290,6 +291,7 @@ import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/com
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
+import { AgentMetadataComponent } from './domain/applications/application/advanced/agent-metadata/agent-metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
@@ -485,7 +487,10 @@ import { TokensComponent } from './domain/components/oauth2-settings/tokens/toke
 import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
-import { TokenExchangeComponent } from './domain/settings/oauth/token-exchange/token-exchange.component';
+import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
+import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
+import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
+import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
 
 @NgModule({
@@ -564,6 +569,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     CertificateCreationStep2Component,
     CertificateFormComponent,
     CertitificatePublicKeyDialogComponent,
+    CertificateSettingsDialogComponent,
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,
@@ -679,6 +685,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationSecretsCertificatesComponent,
 
     ApplicationMetadataComponent,
+    AgentMetadataComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,
     ApplicationResourcesComponent,
@@ -765,7 +772,10 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopesComponent,
     AddScopeComponent,
     TokensComponent,
-    TokenExchangeComponent,
+    TokenExchangeContainerComponent,
+    TokenExchangeSettingsComponent,
+    TrustedIssuersListComponent,
+    TrustedIssuerDetailComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],

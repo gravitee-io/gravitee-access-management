@@ -40,10 +40,10 @@ export interface PatchRememberDeviceSettings {
   active?: boolean;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof PatchRememberDeviceSettings
    */
-  skipRememberDevice?: boolean;
+  deviceIdentifierId?: string;
   /**
    *
    * @type {number}
@@ -52,10 +52,10 @@ export interface PatchRememberDeviceSettings {
   expirationTimeSeconds?: number;
   /**
    *
-   * @type {string}
+   * @type {boolean}
    * @memberof PatchRememberDeviceSettings
    */
-  deviceIdentifierId?: string;
+  skipRememberDevice?: boolean;
 }
 
 /**
@@ -75,9 +75,9 @@ export function PatchRememberDeviceSettingsFromJSONTyped(json: any, ignoreDiscri
   }
   return {
     active: json['active'] == null ? undefined : json['active'],
-    skipRememberDevice: json['skipRememberDevice'] == null ? undefined : json['skipRememberDevice'],
-    expirationTimeSeconds: json['expirationTimeSeconds'] == null ? undefined : json['expirationTimeSeconds'],
     deviceIdentifierId: json['deviceIdentifierId'] == null ? undefined : json['deviceIdentifierId'],
+    expirationTimeSeconds: json['expirationTimeSeconds'] == null ? undefined : json['expirationTimeSeconds'],
+    skipRememberDevice: json['skipRememberDevice'] == null ? undefined : json['skipRememberDevice'],
   };
 }
 
@@ -95,8 +95,8 @@ export function PatchRememberDeviceSettingsToJSONTyped(
 
   return {
     active: value['active'],
-    skipRememberDevice: value['skipRememberDevice'],
-    expirationTimeSeconds: value['expirationTimeSeconds'],
     deviceIdentifierId: value['deviceIdentifierId'],
+    expirationTimeSeconds: value['expirationTimeSeconds'],
+    skipRememberDevice: value['skipRememberDevice'],
   };
 }

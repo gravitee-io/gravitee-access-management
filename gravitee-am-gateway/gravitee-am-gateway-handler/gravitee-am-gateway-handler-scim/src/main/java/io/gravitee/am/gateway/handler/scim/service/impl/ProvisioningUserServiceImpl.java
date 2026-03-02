@@ -25,12 +25,16 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.email.EmailContainer;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -52,13 +56,12 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
-import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -73,20 +76,20 @@ import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -119,7 +122,6 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
             StandardClaims.PICTURE,
             StandardClaims.ZONEINFO,
             StandardClaims.LOCALE);
-
 
     private UserRepository userRepository;
 
@@ -174,13 +176,25 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     @Autowired
     private ApplicationService applicationService;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
+
+    @Autowired
+    private EmailStagingService emailStagingService;
+
+    @Value("${email.enabled:false}")
+    private boolean emailEnabled = false;
+
+    @Value("${email.bulk.enabled:false}")
+    private boolean bulkEnabled = false;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         this.userRepository = dataPlaneRegistry.getUserRepository(domain);
     }
-
-    @Autowired
-    private EmailService emailService;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int startIndex, int size, String baseUrl) {
@@ -318,16 +332,14 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                             }))
                                     .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
                                     .doOnSuccess(user1 -> {
-                                        if (user1.isPreRegistration()) {
+                                        if (user1.isPreRegistration() && emailEnabled) {
                                             // Send email with client information if available
                                             var resolvedClient = optApp.map(Application::toClient).orElse(null);
-                                            Completable.fromAction(
-                                                    () -> emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient))
-                                                    .subscribeOn(Schedulers.io())
-                                                    .subscribe(
-                                                            () -> LOGGER.debug("An email has been sent to {} to confirm his registration", user1.getUsername()),
-                                                            (error) -> LOGGER.warn("An exception occurs while trying to send an email to {} to confirm his registration: {}", user1.getUsername(), error.getMessage())
-                                                    );
+                                            if (bulkEnabled) {
+                                                pushStagingEmail(user1, resolvedClient);
+                                            } else {
+                                                emailService.send(Template.REGISTRATION_CONFIRMATION, user1, resolvedClient);
+                                            }
                                         }
                                     });
                         }))
@@ -354,6 +366,21 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                     LOGGER.error("An error occurs while trying to create a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
                 });
+    }
+
+    private void pushStagingEmail(io.gravitee.am.model.User user1, Client resolvedClient) {
+        emailStagingService.push(new EmailContainer(user1, resolvedClient), Template.REGISTRATION_CONFIRMATION)
+                .retryWhen(new RetryAtMostWithDelay(2, 1000))
+                .onErrorComplete(error -> {
+                    LOGGER.warn("The email cannot be push on staging on domain {} for user {}",
+                            domain.getName(), user1.getUsername(), error);
+                    emailService.traceEmailEviction(user1, resolvedClient, Template.REGISTRATION_CONFIRMATION);
+                    gatewayMetricProvider.incrementDroppedEmails();
+                    // we don't want to stop the Flowable in case of insertion error
+                    // we trace the eviction in an audit and return false to complete the Completable
+                    return true;
+                })
+                .subscribe();
     }
 
     @Override
@@ -685,4 +712,5 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
             return this;
         }
     }
+
 }

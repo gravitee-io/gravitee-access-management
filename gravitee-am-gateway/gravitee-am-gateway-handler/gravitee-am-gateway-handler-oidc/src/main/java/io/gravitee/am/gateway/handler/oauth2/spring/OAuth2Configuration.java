@@ -46,16 +46,21 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
-import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.DefaultTokenValidator;
-import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenExchangeServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.*;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceValidationServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceConsistencyValidationServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 
 import java.util.List;
+
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -79,15 +84,27 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TokenExchangeService tokenExchangeService(List<TokenValidator> validators,
-                                                     SubjectManager subjectManager,
-                                                     ProtectedResourceManager protectedResourceManager) {
-        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager);
+    public TokenExchangeUserResolver tokenExchangeUserResolver() {
+        return new TokenExchangeUserResolverImpl();
     }
 
     @Bean
-    public TokenValidator accessTokenValidator(JWTService jwtService) {
-        return new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN);
+    public TokenExchangeService tokenExchangeService(List<TokenValidator> validators,
+                                                     SubjectManager subjectManager,
+                                                     ProtectedResourceManager protectedResourceManager,
+                                                     TokenExchangeUserResolver tokenExchangeUserResolver) {
+        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager, tokenExchangeUserResolver);
+    }
+
+    @Bean
+    public TrustedIssuerResolver trustedIssuerResolver() {
+        return new TrustedIssuerResolverImpl();
+    }
+
+    @Bean
+    public TokenValidator accessTokenValidator(JWTService jwtService, BackwardCompatibleTokenRepository tokenRepository) {
+        DefaultTokenValidator defaultTokenValidator = new DefaultTokenValidator(jwtService, JWTService.TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN);
+        return new DomainTokenValidator(defaultTokenValidator, tokenRepository, JWTService.TokenType.ACCESS_TOKEN, TokenType.ACCESS_TOKEN);
     }
 
     @Bean
@@ -96,13 +113,18 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TokenValidator refreshTokenValidator(JWTService jwtService) {
-        return new DefaultTokenValidator(jwtService, JWTService.TokenType.REFRESH_TOKEN, TokenType.REFRESH_TOKEN);
+    public TokenValidator refreshTokenValidator(JWTService jwtService, BackwardCompatibleTokenRepository tokenRepository) {
+        DefaultTokenValidator defaultTokenValidator = new DefaultTokenValidator(jwtService, JWTService.TokenType.REFRESH_TOKEN, TokenType.REFRESH_TOKEN);
+        return new DomainTokenValidator(defaultTokenValidator, tokenRepository, JWTService.TokenType.REFRESH_TOKEN, TokenType.REFRESH_TOKEN);
     }
 
     @Bean
-    public TokenValidator jwtTokenValidator(JWTService jwtService) {
-        return new DefaultTokenValidator(jwtService, JWTService.TokenType.JWT, TokenType.JWT);
+    public TokenValidator jwtTokenValidator(JWTService jwtService, TrustedIssuerResolver trustedIssuerResolver) {
+        DefaultTokenValidator domainValidator = new DefaultTokenValidator(
+                jwtService, JWTService.TokenType.JWT, TokenType.JWT);
+        return new TrustedIssuerTokenValidator(
+                domainValidator, trustedIssuerResolver, jwtService,
+                JWTService.TokenType.JWT, TokenType.JWT);
     }
 
     @Bean

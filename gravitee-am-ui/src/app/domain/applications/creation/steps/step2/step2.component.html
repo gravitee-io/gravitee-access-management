@@ -18,7 +18,7 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Configure your application.</p>
   <div>
-    <form class="provider-creation-step2-form" fxLayout="column">
+    <form class="provider-creation-step2-form" fxLayout="column" #appForm="ngForm">
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>Application Settings</h5>
@@ -47,6 +47,19 @@
               ></textarea>
               <mat-hint>The application's description</mat-hint>
             </mat-form-field>
+            <div *ngIf="application.type === 'AGENT'">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>AgentCard URL</mat-label>
+                <input
+                  matInput
+                  type="url"
+                  placeholder="https://example.com/.well-known/agent-card.json"
+                  name="agentCardUrl"
+                  [(ngModel)]="application.agentCardUrl"
+                />
+                <mat-hint> URL to the agent's AgentCard, as defined in the A2A specification. </mat-hint>
+              </mat-form-field>
+            </div>
           </div>
           <div fxFlex fxLayout="column" fxLayoutAlign="center center" style="text-align: center">
             <mat-hint style="font-size: 75%">Application's type: {{ application.type }}</mat-hint>

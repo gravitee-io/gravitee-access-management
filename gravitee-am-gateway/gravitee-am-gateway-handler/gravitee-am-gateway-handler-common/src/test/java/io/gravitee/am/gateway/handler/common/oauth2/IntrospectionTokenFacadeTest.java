@@ -37,7 +37,7 @@ public class IntrospectionTokenFacadeTest {
     public void should_introspect_access_token_by_dedicated_service_component(){
         // given
         IntrospectionTokenService accessService = mock(IntrospectionTokenService.class);
-        Mockito.when(accessService.introspect("accessToken", false, null)).thenReturn(Maybe.just(new JWT(Map.of("jti", "accessId"))));
+        Mockito.when(accessService.introspect("accessToken", false, null)).thenReturn(Maybe.just(new IntrospectionResult(new JWT(Map.of("jti", "accessId")), null)));
         IntrospectionTokenFacade facade = new IntrospectionTokenFacade(accessService, mock(IntrospectionTokenService.class));
 
         // when
@@ -49,7 +49,7 @@ public class IntrospectionTokenFacadeTest {
     public void should_introspect_refresh_token_by_dedicated_service_component(){
         // given
         IntrospectionTokenService refreshService = mock(IntrospectionTokenService.class);
-        Mockito.when(refreshService.introspect("refreshToken", false, null)).thenReturn(Maybe.just(new JWT(Map.of("jti", "refreshId"))));
+        Mockito.when(refreshService.introspect("refreshToken", false, null)).thenReturn(Maybe.just(new IntrospectionResult(new JWT(Map.of("jti", "refreshId")), null)));
         IntrospectionTokenFacade facade = new IntrospectionTokenFacade(mock(IntrospectionTokenService.class), refreshService);
 
         // when

@@ -1,0 +1,216 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <div fxFlex="70">
+    <form (ngSubmit)="save()">
+      <div class="gv-form-section" fxLayout="column">
+        <mat-slide-toggle (change)="enableTokenExchange($event)" [checked]="isTokenExchangeEnabled()" [disabled]="!editMode">
+          Enable Token Exchange
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%">Enable RFC 8693 OAuth 2.0 Token Exchange</mat-hint>
+      </div>
+
+      <div *ngIf="isTokenExchangeEnabled()">
+        <!-- Subject Token Types Section -->
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>Subject Token Configuration</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Allowed Subject Token Types</mat-label>
+            <mat-select
+              multiple
+              name="allowedSubjectTokenTypes"
+              [(ngModel)]="domain.tokenExchangeSettings.allowedSubjectTokenTypes"
+              (selectionChange)="modelChanged()"
+              [disabled]="!editMode"
+            >
+              <mat-option *ngFor="let tokenType of SUBJECT_TOKEN_TYPES" [value]="tokenType.value">{{ tokenType.label }}</mat-option>
+            </mat-select>
+            <mat-hint>Token types that can be submitted as subject_token for exchange</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Requested Token Types Section -->
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>Requested Token Configuration</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Allowed Requested Token Types</mat-label>
+            <mat-select
+              multiple
+              name="allowedRequestedTokenTypes"
+              [(ngModel)]="domain.tokenExchangeSettings.allowedRequestedTokenTypes"
+              (selectionChange)="modelChanged()"
+              [disabled]="!editMode"
+            >
+              <mat-option *ngFor="let tokenType of REQUESTED_TOKEN_TYPES" [value]="tokenType.value">{{ tokenType.label }}</mat-option>
+            </mat-select>
+            <mat-hint>Token types that can be requested via requested_token_type parameter</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Impersonation Settings Section -->
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>Impersonation Settings</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <mat-slide-toggle
+            name="allowImpersonation"
+            [(ngModel)]="domain.tokenExchangeSettings.allowImpersonation"
+            (change)="modelChanged()"
+            [disabled]="!editMode"
+          >
+            Allow Impersonation
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%; margin-bottom: 16px">
+            Allow token exchange for impersonation scenarios (no actor_token)
+          </mat-hint>
+        </div>
+
+        <!-- Delegation Settings Section -->
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>Delegation Settings</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <mat-slide-toggle
+            name="allowDelegation"
+            [(ngModel)]="domain.tokenExchangeSettings.allowDelegation"
+            (change)="modelChanged()"
+            [disabled]="!editMode"
+          >
+            Allow Delegation
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%; margin-bottom: 16px">
+            Allow token exchange for delegation scenarios (with actor_token). The issued token will contain an "act" claim.
+          </mat-hint>
+
+          <div *ngIf="domain.tokenExchangeSettings.allowDelegation" style="margin-top: 16px">
+            <mat-form-field appearance="outline">
+              <mat-label>Allowed Actor Token Types</mat-label>
+              <mat-select
+                multiple
+                name="allowedActorTokenTypes"
+                [(ngModel)]="domain.tokenExchangeSettings.allowedActorTokenTypes"
+                (selectionChange)="modelChanged()"
+                [disabled]="!editMode"
+              >
+                <mat-option *ngFor="let tokenType of ACTOR_TOKEN_TYPES" [value]="tokenType.value">{{ tokenType.label }}</mat-option>
+              </mat-select>
+              <mat-hint>Token types that can be submitted as actor_token for delegation</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="margin-top: 16px">
+              <mat-label>Maximum Delegation Depth</mat-label>
+              <input
+                matInput
+                type="number"
+                name="maxDelegationDepth"
+                [(ngModel)]="domain.tokenExchangeSettings.maxDelegationDepth"
+                (ngModelChange)="modelChanged()"
+                [disabled]="!editMode"
+                [min]="minDelegationDepth"
+                [max]="maxDelegationDepthLimit"
+                required
+              />
+              <mat-hint>
+                Maximum depth of delegation chain (nested "act" claims). Must be between {{ minDelegationDepth }} and
+                {{ maxDelegationDepthLimit }}. Default is {{ defaultDelegationDepth }}.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Scope Handling Section -->
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>Scope Handling</h5>
+            <mat-divider></mat-divider>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Scope Handling</mat-label>
+            <mat-select
+              name="tokenExchangeScopeHandling"
+              [(ngModel)]="domain.tokenExchangeSettings.tokenExchangeOAuthSettings.scopeHandling"
+              (ngModelChange)="modelChanged()"
+              [disabled]="!editMode"
+            >
+              <mat-option *ngFor="let opt of TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS" [value]="opt.value">{{ opt.label }}</mat-option>
+            </mat-select>
+            <mat-hint>
+              Scope handling for client applications using token exchange. Applications can override this by disabling inheritance.
+            </mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Validation warnings -->
+        <div *ngFor="let error of getValidationErrors()" class="gv-form-section validation-error">
+          <mat-icon>warning</mat-icon>
+          <span style="margin-left: 8px">{{ error }}</span>
+        </div>
+      </div>
+      <div fxLayout="row" *ngIf="editMode">
+        <button mat-raised-button color="primary" [disabled]="!formChanged || !isFormValid()" type="submit">SAVE</button>
+      </div>
+    </form>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>What is Token Exchange?</h3>
+    <div class="gv-page-description-content">
+      <p>
+        OAuth 2.0 Token Exchange (<a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>) is a protocol for requesting and
+        obtaining security tokens from an authorization server.
+      </p>
+      <h4>Impersonation</h4>
+      <p>
+        In <strong>Impersonation</strong> scenarios, a token is exchanged for a new token. The exchanged token inherits the subject's
+        identity and permissions.
+      </p>
+      <h4>Delegation</h4>
+      <p>
+        In <strong>Delegation</strong> scenarios, an actor acts on behalf of the subject. The request includes both a
+        <code>subject_token</code> (who the action is performed for) and an <code>actor_token</code> (who is performing the action). The
+        issued token contains an <code>act</code> claim identifying the actor.
+      </p>
+      <p>
+        <strong>Key features:</strong>
+      </p>
+      <ul>
+        <li>Exchange valid tokens for new access tokens or ID tokens</li>
+        <li>Generated tokens include the client_id claim identifying the requesting client</li>
+        <li>No refresh tokens are issued during token exchange</li>
+        <li>When requesting an ID token, it is returned in the access_token field with token_type "N_A"</li>
+      </ul>
+      <p>
+        Clients must have the <code>Token Exchange</code> grant type enabled to use token exchange.
+        <br />
+        Token request must have the <code>urn:ietf:params:oauth:grant-type:token-exchange</code> as <code>grant_type</code> parameter.
+      </p>
+    </div>
+  </div>
+</div>

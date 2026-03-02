@@ -15,19 +15,25 @@
  */
 package io.gravitee.am.gateway.handler.common.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Key;
+import io.gravitee.am.common.exception.jwt.SignatureException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
+import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.jwt.Claims;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,12 +42,19 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.crypto.KeyGenerator;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPairGenerator;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -62,6 +75,7 @@ public class JWTServiceTest {
         var rs256CertProvider = mockCertProvider(mockJwtBuilder("token_rs_256"));
         var rs512CertProvider = mockCertProvider(mockJwtBuilder("token_rs_512"));
         var defaultCertProvider = mockCertProvider(mockJwtBuilder("token_default"));
+        var fallbackCertProvider = mockCertProvider(mockJwtBuilder("token_fallback"));
         var noneAlgCertProvider = mockCertProvider(mockJwtBuilder("not_signed_jwt"));
 
         when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
@@ -71,6 +85,7 @@ public class JWTServiceTest {
         when(certificateManager.getClientCertificateProvider(any(), anyBoolean())).thenCallRealMethod();
         when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCertProvider);
         when(certificateManager.noneAlgorithmCertificateProvider()).thenReturn(noneAlgCertProvider);
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.just(fallbackCertProvider));
     }
 
     private JWTBuilder mockJwtBuilder(String theSignedValue) {
@@ -82,12 +97,23 @@ public class JWTServiceTest {
     }
 
     private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProvider(JWTBuilder jwtBuilder, Key key) {
+        return mockCertProviderWithId(jwtBuilder, key, null);
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProviderWithId(JWTBuilder jwtBuilder, String certificateId) {
+        return mockCertProviderWithId(jwtBuilder, generateKey("HMACSHA256"), certificateId);
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProviderWithId(JWTBuilder jwtBuilder, Key key, String certificateId) {
         var actualProvider = mock(CertificateProvider.class);
         when(actualProvider.key()).thenReturn(Single.just(key));
+
+        var certInfo = new CertificateInfo(certificateId, "testCertificate");
 
         var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
         when(theProvider.getJwtBuilder()).thenReturn(jwtBuilder);
         when(theProvider.getProvider()).thenReturn(actualProvider);
+        when(theProvider.getCertificateInfo()).thenReturn(certInfo);
         return theProvider;
     }
 
@@ -145,7 +171,8 @@ public class JWTServiceTest {
 
     @Test
     public void encode_noClientCertificateFound() throws Exception  {
-        this.testEncode("notExistingId", "token_default");
+        // When certificate is not found, falls back to fallbackCertificateProvider
+        this.testEncode("notExistingId", "token_fallback");
     }
 
     @Test
@@ -174,7 +201,8 @@ public class JWTServiceTest {
 
     @Test
     public void encodeUserinfo_noMatchingAlgorithm_noClientCertificateFound() throws Exception {
-        this.testEncodeUserinfo("unknown", "notExistingId", "token_default");
+        // When certificate is not found, falls back to fallbackCertificateProvider
+        this.testEncodeUserinfo("unknown", "notExistingId", "token_fallback");
     }
 
     @Test
@@ -209,6 +237,7 @@ public class JWTServiceTest {
     @Test
     public void encode_noClientCertificateFound_noFallback() throws Exception {
         jwtService = new JWTServiceImpl(certificateManager, new ObjectMapper(), false);
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
 
         Client client = new Client();
         client.setCertificate("notExistingId");
@@ -218,4 +247,357 @@ public class JWTServiceTest {
         testObserver.assertError(TemporarilyUnavailableException.class);
     }
 
+    @Test
+    public void decodeAndVerify_withValidKid_shouldUseKidCertificate() throws Exception {
+        // Create a JWT token with a valid UUID kid in the header
+        String kid = RandomString.generate();
+        String headerJson = "{\"kid\":\"" + kid + "\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for the kid UUID
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider kidCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager to return the kid certificate provider
+        when(certificateManager.get(kid)).thenReturn(Maybe.just(kidCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify
+        TestObserver<JWT> testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the kid certificate provider was used, not the default
+        verify(certificateManager).get(kid);
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withLegacyKid_shouldFallBackToDefaultCertificate() throws Exception {
+        // Create a JWT token with non-UUID kid in the header
+        String aliasKid = "legacy-alias";
+        String headerJson = "{\"kid\":\"" + aliasKid + "\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - alias kid should be ignored and default certificate used
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used and alias kid was not looked up
+        verify(certificateManager).get("default-cert-id");
+        verify(certificateManager, never()).get("legacy-alias");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withoutKid_shouldFallBackToDefaultCertificate() throws Exception {
+        // Create a JWT token without kid in the header
+        String headerJson = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify
+        TestObserver<JWT> testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withMalformedHeader_shouldFallBackToDefaultCertificate() throws Exception {
+        // Create a JWT token with malformed header (invalid base64)
+        String jwtToken = "invalid-base64-header.payload.signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - should fallback to default certificate
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withEmptyKid_shouldFallBackToDefaultCertificate() throws Exception {
+        // Create a JWT token with empty kid in the header
+        String headerJson = "{\"kid\":\"\",\"typ\":\"JWT\",\"alg\":\"HS256\"}";
+        String payloadJson = "{\"sub\":\"test-user\",\"exp\":9999999999}";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test-user", "exp", 9999999999L));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - should fallback to default certificate
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(jwt -> jwt.getSub().equals("test-user"));
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    @Test
+    public void decodeAndVerify_withInvalidJsonHeader_shouldFallBackToDefaultCertificate() throws Exception {
+        // Create a JWT token with invalid JSON in the header
+        String headerJson = "{\"kid\":\"my-cert-id\",invalid-json";
+        String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString("{\"sub\":\"test\"}".getBytes(StandardCharsets.UTF_8));
+        String jwtToken = headerB64 + "." + payloadB64 + ".signature";
+
+        // Mock CertificateProvider for default certificate
+        JWT expectedJwt = new JWT(Map.of("sub", "test"));
+        JWTParser mockParser = mock(JWTParser.class);
+        when(mockParser.parse(jwtToken)).thenReturn(expectedJwt);
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mockCertProviderWithParser(mockParser);
+
+        // Mock CertificateManager
+        when(certificateManager.get("default-cert-id")).thenReturn(Maybe.just(defaultCertProvider));
+
+        // Mock default certificate ID supplier
+        Supplier<String> defaultCertIdSupplier = () -> "default-cert-id";
+
+        // Test decodeAndVerify - should fallback to default certificate
+        var testObserver = jwtService.decodeAndVerify(jwtToken, defaultCertIdSupplier, JWTService.TokenType.ACCESS_TOKEN).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        // Verify that the default certificate was used
+        verify(certificateManager).get("default-cert-id");
+        verify(mockParser).parse(jwtToken);
+    }
+
+    private io.gravitee.am.gateway.certificate.CertificateProvider mockCertProviderWithParser(JWTParser jwtParser) {
+        var actualProvider = mock(CertificateProvider.class);
+
+        var theProvider = mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        when(theProvider.getJwtParser()).thenReturn(jwtParser);
+        when(theProvider.getProvider()).thenReturn(actualProvider);
+        return theProvider;
+    }
+
+    @Test
+    public void encode_signingFails_usesFallback() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        var test = jwtService.encode(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete().assertValue("token_fallback");
+    }
+
+    @Test
+    public void encode_signingFails_noFallback_propagatesError() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        var test = jwtService.encode(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void encode_signingFails_fallbackSameCert_propagatesError() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "sameCertId");
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.just(failingCertProvider));
+
+        var test = jwtService.encode(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void encodeUserinfo_signingFails_usesFallback() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+        client.setUserinfoSignedResponseAlg("unknown");
+
+        var test = jwtService.encodeUserinfo(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete().assertValue(o -> o.encodedToken().equals("token_fallback"));
+    }
+
+    @Test
+    public void encodeUserinfo_signingFails_noFallback_propagatesError() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+        client.setUserinfoSignedResponseAlg("unknown");
+
+        var test = jwtService.encodeUserinfo(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void encodeUserinfo_signingFails_fallbackSameCert_propagatesError() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "sameCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.just(failingCertProvider));
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+        client.setUserinfoSignedResponseAlg("unknown");
+
+        var test = jwtService.encodeUserinfo(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void encodeAuthorization_signingFails_usesFallback() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.findByAlgorithm(anyString())).thenReturn(Maybe.empty());
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        var test = jwtService.encodeAuthorization(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete().assertValue(o -> o.encodedToken().equals("token_fallback"));
+    }
+
+    @Test
+    public void encodeAuthorization_signingFails_noFallback_propagatesError() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "failingCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.findByAlgorithm(anyString())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.empty());
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        var test = jwtService.encodeAuthorization(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void encodeAuthorization_signingFails_fallbackSameCert_propagatesError() throws Exception {
+        JWTBuilder failingBuilder = mock(JWTBuilder.class);
+        when(failingBuilder.sign(any())).thenThrow(new SignatureException("Signing failed"));
+        var failingCertProvider = mockCertProviderWithId(failingBuilder, "sameCertId");
+
+        when(certificateManager.get("failingCert")).thenReturn(Maybe.just(failingCertProvider));
+        when(certificateManager.findByAlgorithm(anyString())).thenReturn(Maybe.empty());
+        when(certificateManager.fallbackCertificateProvider()).thenReturn(Maybe.just(failingCertProvider));
+
+        Client client = new Client();
+        client.setCertificate("failingCert");
+
+        var test = jwtService.encodeAuthorization(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertError(InvalidTokenException.class);
+    }
 }

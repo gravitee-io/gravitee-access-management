@@ -30,6 +30,8 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
+import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
@@ -236,6 +238,9 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                 && a.getSecrets().get(0).getSettingsId().equals("settingId")
                 && a.getSecrets().get(0).getCreatedAt() != null
                 && a.getSecrets().get(0).getId() != null);
+        testObserver.assertValue(a -> a.getSettings().getOauth().getTokenExchangeOAuthSettings() != null
+                && a.getSettings().getOauth().getTokenExchangeOAuthSettings().getScopeHandling() == TokenExchangeScopeHandling.PERMISSIVE
+                && !a.getSettings().getOauth().getTokenExchangeOAuthSettings().isInherited());
     }
 
     private static Application buildApplication() {
@@ -289,6 +294,10 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         scopeSettings.setDefaultScope(true);
         scopeSettings.setScopeApproval(42);
         oauth.setScopeSettings(List.of(scopeSettings));
+        TokenExchangeOAuthSettings teSettings = new TokenExchangeOAuthSettings();
+        teSettings.setInherited(false);
+        teSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
+        oauth.setTokenExchangeOAuthSettings(teSettings);
 
         final AccountSettings account = new AccountSettings();
         account.setResetPasswordInvalidateTokens(true);

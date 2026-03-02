@@ -56,16 +56,28 @@ import {
 export interface PatchOIDCSettings {
   /**
    *
-   * @type {boolean}
+   * @type {PatchCIBASettings}
    * @memberof PatchOIDCSettings
    */
-  redirectUriStrictMatching?: boolean;
+  cibaSettings?: PatchCIBASettings;
+  /**
+   *
+   * @type {PatchClientRegistrationSettings}
+   * @memberof PatchOIDCSettings
+   */
+  clientRegistrationSettings?: PatchClientRegistrationSettings;
   /**
    *
    * @type {Array<string>}
    * @memberof PatchOIDCSettings
    */
   postLogoutRedirectUris?: Array<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchOIDCSettings
+   */
+  redirectUriStrictMatching?: boolean;
   /**
    *
    * @type {Array<string>}
@@ -80,22 +92,10 @@ export interface PatchOIDCSettings {
   requiredPermissions?: Set<PatchOIDCSettingsRequiredPermissionsEnum>;
   /**
    *
-   * @type {PatchClientRegistrationSettings}
-   * @memberof PatchOIDCSettings
-   */
-  clientRegistrationSettings?: PatchClientRegistrationSettings;
-  /**
-   *
    * @type {PatchSecurityProfileSettings}
    * @memberof PatchOIDCSettings
    */
   securityProfileSettings?: PatchSecurityProfileSettings;
-  /**
-   *
-   * @type {PatchCIBASettings}
-   * @memberof PatchOIDCSettings
-   */
-  cibaSettings?: PatchCIBASettings;
 }
 
 /**
@@ -166,6 +166,9 @@ export const PatchOIDCSettingsRequiredPermissionsEnum = {
   LicenseNotification: 'LICENSE_NOTIFICATION',
   ProtectedResource: 'PROTECTED_RESOURCE',
   ProtectedResourceMember: 'PROTECTED_RESOURCE_MEMBER',
+  ProtectedResourceSettings: 'PROTECTED_RESOURCE_SETTINGS',
+  ProtectedResourceOauth: 'PROTECTED_RESOURCE_OAUTH',
+  ProtectedResourceCertificate: 'PROTECTED_RESOURCE_CERTIFICATE',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchOIDCSettingsRequiredPermissionsEnum =
@@ -187,15 +190,15 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
-    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
-    postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
-    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    cibaSettings: json['cibaSettings'] == null ? undefined : PatchCIBASettingsFromJSON(json['cibaSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : PatchClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
+    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
+    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
     securityProfileSettings:
       json['securityProfileSettings'] == null ? undefined : PatchSecurityProfileSettingsFromJSON(json['securityProfileSettings']),
-    cibaSettings: json['cibaSettings'] == null ? undefined : PatchCIBASettingsFromJSON(json['cibaSettings']),
   };
 }
 
@@ -209,12 +212,12 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
   }
 
   return {
-    redirectUriStrictMatching: value['redirectUriStrictMatching'],
+    cibaSettings: PatchCIBASettingsToJSON(value['cibaSettings']),
+    clientRegistrationSettings: PatchClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
+    redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
-    clientRegistrationSettings: PatchClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
     securityProfileSettings: PatchSecurityProfileSettingsToJSON(value['securityProfileSettings']),
-    cibaSettings: PatchCIBASettingsToJSON(value['cibaSettings']),
   };
 }

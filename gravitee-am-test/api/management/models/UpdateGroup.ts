@@ -37,12 +37,6 @@ export interface UpdateGroup {
    * @type {string}
    * @memberof UpdateGroup
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateGroup
-   */
   description?: string;
   /**
    *
@@ -50,6 +44,12 @@ export interface UpdateGroup {
    * @memberof UpdateGroup
    */
   members?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateGroup
+   */
+  name: string;
   /**
    *
    * @type {Array<string>}
@@ -75,9 +75,9 @@ export function UpdateGroupFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'] == null ? undefined : json['description'],
     members: json['members'] == null ? undefined : json['members'],
+    name: json['name'],
     roles: json['roles'] == null ? undefined : json['roles'],
   };
 }
@@ -92,9 +92,9 @@ export function UpdateGroupToJSONTyped(value?: UpdateGroup | null, ignoreDiscrim
   }
 
   return {
-    name: value['name'],
     description: value['description'],
     members: value['members'],
+    name: value['name'],
     roles: value['roles'],
   };
 }

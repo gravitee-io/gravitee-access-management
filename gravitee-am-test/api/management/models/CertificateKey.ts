@@ -40,16 +40,16 @@ export interface CertificateKey {
   fmt?: string;
   /**
    *
-   * @type {string}
-   * @memberof CertificateKey
-   */
-  payload?: string;
-  /**
-   *
    * @type {{ [key: string]: any; }}
    * @memberof CertificateKey
    */
   metadata?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof CertificateKey
+   */
+  payload?: string;
 }
 
 /**
@@ -69,8 +69,8 @@ export function CertificateKeyFromJSONTyped(json: any, ignoreDiscriminator: bool
   }
   return {
     fmt: json['fmt'] == null ? undefined : json['fmt'],
-    payload: json['payload'] == null ? undefined : json['payload'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
+    payload: json['payload'] == null ? undefined : json['payload'],
   };
 }
 
@@ -85,7 +85,7 @@ export function CertificateKeyToJSONTyped(value?: CertificateKey | null, ignoreD
 
   return {
     fmt: value['fmt'],
-    payload: value['payload'],
     metadata: value['metadata'],
+    payload: value['payload'],
   };
 }

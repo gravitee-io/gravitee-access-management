@@ -37,13 +37,13 @@ export interface NewTag {
    * @type {string}
    * @memberof NewTag
    */
-  name: string;
+  description?: string;
   /**
    *
    * @type {string}
    * @memberof NewTag
    */
-  description?: string;
+  name: string;
 }
 
 /**
@@ -63,8 +63,8 @@ export function NewTagFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ne
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'] == null ? undefined : json['description'],
+    name: json['name'],
   };
 }
 
@@ -78,7 +78,7 @@ export function NewTagToJSONTyped(value?: NewTag | null, ignoreDiscriminator: bo
   }
 
   return {
-    name: value['name'],
     description: value['description'],
+    name: value['name'],
   };
 }

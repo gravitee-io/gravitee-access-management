@@ -46,6 +46,13 @@
       font-weight: normal;
     }
   }
+
+  .fallback-badge {
+    padding: 4px 8px 5px;
+    border-radius: 16px;
+    margin-left: auto;
+    background-color: #e7e2fb;
+  }
 }
 
 :host {

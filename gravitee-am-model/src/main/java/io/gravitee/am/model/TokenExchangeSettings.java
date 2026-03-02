@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -42,9 +43,19 @@ public class TokenExchangeSettings {
     private static final List<String> DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES = List.of(ACCESS_TOKEN, ID_TOKEN);
 
     /**
-     * Default value for maxDelegationDepth (0 = unlimited/disabled).
+     * Minimum allowed value for maxDelegationDepth.
      */
-    public static final int DEFAULT_MAX_DELEGATION_DEPTH = 0;
+    public static final int MIN_MAX_DELEGATION_DEPTH = 1;
+
+    /**
+     * Maximum allowed value for maxDelegationDepth.
+     */
+    public static final int MAX_MAX_DELEGATION_DEPTH = 100;
+
+    /**
+     * Default value for maxDelegationDepth.
+     */
+    public static final int DEFAULT_MAX_DELEGATION_DEPTH = 25;
 
     /**
      * Enable or disable token exchange functionality.
@@ -84,10 +95,23 @@ public class TokenExchangeSettings {
 
     /**
      * Maximum depth of delegation chain (nested "act" claims).
-     * Value of 0 means unlimited (depth check is disabled).
-     * Default is 0 (unlimited).
+     * Must be between {@link #MIN_MAX_DELEGATION_DEPTH} and {@link #MAX_MAX_DELEGATION_DEPTH}.
+     * Default is {@link #DEFAULT_MAX_DELEGATION_DEPTH}.
      */
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
+
+    /**
+     * List of trusted external issuers whose JWTs can be accepted as subject/actor tokens.
+     * Null means no trusted issuers (only domain-issued tokens accepted).
+     */
+    private List<TrustedIssuer> trustedIssuers;
+
+    /**
+     * Domain-level default token exchange OAuth settings (e.g. scope handling).
+     * Applications can inherit these or override them per-application.
+     * Null means use system defaults (DOWNSCOPING).
+     */
+    private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     public TokenExchangeSettings() {
         this.allowedSubjectTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, JWT));
@@ -107,40 +131,13 @@ public class TokenExchangeSettings {
     }
 
     /**
-     * Set maximum delegation depth.
-     * Value of 0 means unlimited (depth check is disabled).
-     * Negative values are treated as 0 (unlimited).
+     * Set maximum delegation depth, clamped to the allowed range
+     * [{@link #MIN_MAX_DELEGATION_DEPTH}, {@link #MAX_MAX_DELEGATION_DEPTH}].
      *
-     * @param maxDelegationDepth the maximum delegation depth (0 = unlimited)
+     * @param maxDelegationDepth the maximum delegation depth
      */
     public void setMaxDelegationDepth(int maxDelegationDepth) {
-        this.maxDelegationDepth = Math.max(0, maxDelegationDepth);
+        this.maxDelegationDepth = Math.max(MIN_MAX_DELEGATION_DEPTH, Math.min(MAX_MAX_DELEGATION_DEPTH, maxDelegationDepth));
     }
 
-    /**
-     * Validate the settings consistency.
-     * When token exchange is enabled, at least one of impersonation or delegation must be enabled.
-     *
-     * @throws IllegalStateException if the settings are invalid
-     */
-    public void validate() {
-        if (enabled && !allowImpersonation && !allowDelegation) {
-            throw new IllegalStateException("Token exchange is enabled but neither impersonation nor delegation is allowed. At least one must be enabled.");
-        }
-    }
-
-    /**
-     * Check if the settings are valid without throwing an exception.
-     *
-     * @return true if settings are valid, false otherwise
-     */
-    public boolean isValid() {
-        if (!enabled) {
-            return true;
-        }
-        return (allowImpersonation || allowDelegation)
-                && (allowedSubjectTokenTypes != null && !allowedSubjectTokenTypes.isEmpty())
-                && (allowedRequestedTokenTypes != null && !allowedRequestedTokenTypes.isEmpty())
-                && (!allowDelegation || (allowedActorTokenTypes != null && !allowedActorTokenTypes.isEmpty()));
-    }
 }

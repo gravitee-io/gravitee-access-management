@@ -20,6 +20,7 @@ import io.gatling.http.Predef._
 import io.gravitee.am.performance.utils.SimulationSettings._
 import io.gatling.core.session.Session
 import io.gravitee.am.performance.commands.ManagementAPICalls
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Purpose of this simulation is to create users with SCIM bulk command
@@ -48,13 +49,9 @@ class SCIMBulkUsersCreation extends Simulation {
     .disableFollowRedirect
           .shareConnections
 
-  // Feeder that generates bulk operation batches
-  val bulkOperationsFeeder = Iterator.from(0).map { batchIndex =>
-    val startIndex = MIN_USER_INDEX + (batchIndex * BATCH_SIZE)
-    val endIndex = Math.min(startIndex + BATCH_SIZE, MIN_USER_INDEX + NUMBER_OF_USERS)
-
-    Map("startIndex" -> startIndex, "endIndex" -> endIndex, "batchIndex" -> batchIndex)
-  }
+  val TOTAL_BATCHES: Int = Math.ceil(NUMBER_OF_USERS.toDouble / BATCH_SIZE).toInt
+  val ACTUAL_AGENTS: Int = Math.min(AGENTS.intValue(), TOTAL_BATCHES)
+  val agentIndexCounter = new AtomicInteger(0)
 
   val initializeIdentityProvider = scenario("Initialize Identity Provider")
     .exec(ManagementAPICalls.login)
@@ -90,7 +87,7 @@ class SCIMBulkUsersCreation extends Simulation {
          |      "path": "/Users",
          |      "bulkId": "user_$userIndex",
          |      "data": {
-         |        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+         |        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User", "urn:ietf:params:scim:schemas:extension:custom:2.0:User"],
          |        "externalId": "externalId_$userIndex",
          |        "userName": "username_$userIndex",
          |        "password": "Gr@v1t33B3nchUs3rs!",
@@ -117,17 +114,24 @@ class SCIMBulkUsersCreation extends Simulation {
   val scn = scenario("Bulk Create SCIM Users")
     .exec(_.set("scimAccessToken", scimAccessToken))
     .exec(_.set("idpId", identityProviderId))
-    .repeat(session => {
-      // Calculate how many batches this agent should process
-      val agentId = session.userId
-      val totalBatches = Math.ceil(NUMBER_OF_USERS.toDouble / BATCH_SIZE).toInt
-      val batchesPerAgent = Math.ceil(totalBatches.toDouble / AGENTS.intValue()).toInt
-      val startBatch = (agentId - 1) * batchesPerAgent
-      val endBatch = Math.min(startBatch + batchesPerAgent, totalBatches)
-      val batchesToProcess = Math.max(0, endBatch - startBatch).toInt
-      batchesToProcess
-    }, "batchCounter") {
-      feed(bulkOperationsFeeder)
+    .exec(session => {
+      val myIndex = agentIndexCounter.getAndIncrement()  // 0-based, independent of session.userId
+      val baseBatchesPerAgent = TOTAL_BATCHES / ACTUAL_AGENTS
+      val remainder = TOTAL_BATCHES % ACTUAL_AGENTS
+      val myBatches = if (myIndex < remainder) baseBatchesPerAgent + 1 else baseBatchesPerAgent
+      val myStartBatch = if (myIndex < remainder)
+        myIndex * (baseBatchesPerAgent + 1)
+      else
+        remainder * (baseBatchesPerAgent + 1) + (myIndex - remainder) * baseBatchesPerAgent
+      session.set("myBatches", myBatches).set("myStartBatch", myStartBatch)
+    })
+    .repeat(session => session("myBatches").as[Int], "batchCounter") {
+      exec(session => {
+        val batchIndex = session("myStartBatch").as[Int] + session("batchCounter").as[Int]
+        val startIndex = MIN_USER_INDEX + (batchIndex * BATCH_SIZE)
+        val endIndex = Math.min(startIndex + BATCH_SIZE, MIN_USER_INDEX + NUMBER_OF_USERS)
+        session.set("startIndex", startIndex).set("endIndex", endIndex)
+      })
         .exec(http("Create SCIM Users via Bulk")
           .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/scim/Bulk")
           .header("Authorization", "Bearer #{scimAccessToken}")
@@ -142,7 +146,7 @@ class SCIMBulkUsersCreation extends Simulation {
         createAccessToken.inject(atOnceUsers(1))
       )
       .andThen(
-        scn.inject(atOnceUsers(AGENTS.intValue()))
+        scn.inject(atOnceUsers(ACTUAL_AGENTS))
       )
   ).protocols(httpProtocol)
 }

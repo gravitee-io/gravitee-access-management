@@ -18,6 +18,11 @@ import { some, minBy } from 'lodash';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainStoreService } from '../../../../stores/domain.store';
+import {
+  TokenExchangeScopeHandling,
+  TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS,
+  DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
+} from '../../../settings/oauth/token-exchange/token-exchange.types';
 
 @Component({
   selector: 'app-grant-flows-settings',
@@ -43,6 +48,9 @@ export class GrantFlowsComponent implements OnInit {
 
   readonly MCP_SERVER_CONTEXT = 'McpServer' as const;
   readonly CLIENT_CREDENTIALS_GRANT_TYPE = 'client_credentials';
+
+  readonly DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING = DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING;
+  readonly TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS = TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS;
 
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
@@ -77,6 +85,10 @@ export class GrantFlowsComponent implements OnInit {
     if (this.oauthSettings.jwks && typeof this.oauthSettings.jwks !== 'string') {
       this.oauthSettings.jwks = JSON.stringify(this.oauthSettings.jwks, null, 2);
     }
+    this.oauthSettings.tokenExchangeOAuthSettings ??= {
+      inherited: true,
+      scopeHandling: this.DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
+    };
 
     this.initTokenEndpointAuthMethods();
     this.initGrantTypes();
@@ -159,6 +171,30 @@ export class GrantFlowsComponent implements OnInit {
 
   isRefreshTokenFlowSelected() {
     return this.selectedGrantTypes.includes('refresh_token');
+  }
+
+  isTokenExchangeFlowSelected(): boolean {
+    return this.selectedGrantTypes.includes(this.TOKEN_EXCHANGE_GRANT_TYPE);
+  }
+
+  isTokenExchangeInherited(): boolean {
+    return this.oauthSettings.tokenExchangeOAuthSettings?.inherited !== false;
+  }
+
+  enableTokenExchangeInherit(event: any) {
+    this.oauthSettings.tokenExchangeOAuthSettings = {
+      ...this.oauthSettings.tokenExchangeOAuthSettings,
+      inherited: event.checked,
+    };
+    this.modelChanged();
+  }
+
+  tokenExchangeScopeHandlingChanged(value: TokenExchangeScopeHandling) {
+    this.oauthSettings.tokenExchangeOAuthSettings = {
+      ...this.oauthSettings.tokenExchangeOAuthSettings,
+      scopeHandling: value,
+    };
+    this.modelChanged();
   }
 
   disableRefreshTokenRotation(event) {

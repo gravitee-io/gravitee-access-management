@@ -15,80 +15,28 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.api.model;
 
-import org.springframework.data.annotation.Id;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDateTime;
+@Table("tokens")
+@Getter
+@Setter
+public class JdbcToken extends JdbcBaseToken {
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public abstract class JdbcToken {
-    @Id
-    private String id;
-    private String token;
-    private String domain;
-    private String client;
-    private String subject;
-    @Column("created_at")
-    private LocalDateTime createdAt;
-    @Column("expire_at")
-    private LocalDateTime expireAt;
+    @Column("authorization_code")
+    private String authorizationCode;
 
-    public String getId() {
-        return id;
-    }
+    @Column("refresh_token")
+    private String refreshToken;
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    @Column("type")
+    private String type;
 
-    public String getToken() {
-        return token;
-    }
+    @Column("parent_subject_jti")
+    private String parentSubjectJti;
 
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public void setClient(String client) {
-        this.client = client;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(LocalDateTime expireAt) {
-        this.expireAt = expireAt;
-    }
+    @Column("parent_actor_jti")
+    private String parentActorJti;
 }

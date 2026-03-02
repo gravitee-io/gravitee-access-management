@@ -16,11 +16,11 @@
 
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { waitForDomainSync } from '@management-commands/domain-management-commands';
+import { patchDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
-import { extractXsrfToken, performFormPost } from '@gateway-commands/oauth-oidc-commands';
-import { updateApplication } from '@management-commands/application-management-commands';
-import { decodeJwt } from '@utils-commands/jwt';
+import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { register, setupFixture, UserRegistrationFixture } from './fixture/user-registration';
 import { setup } from '../../test-fixture';
 
@@ -41,7 +41,6 @@ afterAll(async () => {
 describe('Register User on domain', () => {
   it("Domain shouldn't have users", async () => {
     const usersPage = await getAllUsers(fixture.domain.id, fixture.accessToken);
-    expect(usersPage).toBeDefined();
     expect(usersPage.totalCount).toEqual(0);
   });
 
@@ -57,7 +56,6 @@ describe('Register User on domain', () => {
       await register(fixture.domain, user, 'warning=invalid_user_information', fixture.application.settings.oauth.clientId);
 
       const usersPage = await getAllUsers(fixture.domain.id, fixture.accessToken);
-      expect(usersPage).toBeDefined();
       expect(usersPage.totalCount).toEqual(0);
     });
 
@@ -72,7 +70,6 @@ describe('Register User on domain', () => {
       await register(fixture.domain, user, 'warning=invalid_email', fixture.application.settings.oauth.clientId);
 
       const usersPage = await getAllUsers(fixture.domain.id, fixture.accessToken);
-      expect(usersPage).toBeDefined();
       expect(usersPage.totalCount).toEqual(0);
     });
 
@@ -87,7 +84,6 @@ describe('Register User on domain', () => {
       await register(fixture.domain, user, 'warning=invalid_password_value', fixture.application.settings.oauth.clientId);
 
       const usersPage = await getAllUsers(fixture.domain.id, fixture.accessToken);
-      expect(usersPage).toBeDefined();
       expect(usersPage.totalCount).toEqual(0);
     });
 
@@ -102,9 +98,7 @@ describe('Register User on domain', () => {
       await register(fixture.domain, user, 'success=registration_succeed', fixture.application.settings.oauth.clientId);
 
       const foundUser = await listUsers(fixture.domain.id, fixture.accessToken, user.username);
-      expect(foundUser).toBeDefined();
       expect(foundUser.totalCount).toEqual(1);
-      expect(foundUser.data[0]).toBeDefined();
       expect(foundUser.data[0].source).toEqual(fixture.defaultIdp.name);
     });
   });
@@ -121,9 +115,7 @@ describe('Register User on domain', () => {
       await register(fixture.domain, user, 'success=registration_succeed', fixture.applicationWithCustomIdp.settings.oauth.clientId);
 
       const foundUser = await listUsers(fixture.domain.id, fixture.accessToken, user.username);
-      expect(foundUser).toBeDefined();
       expect(foundUser.totalCount).toEqual(1);
-      expect(foundUser.data[0]).toBeDefined();
       expect(foundUser.data[0].source).toEqual(fixture.customIdp.name);
     });
   });
@@ -147,10 +139,91 @@ describe('Register User on domain', () => {
       );
 
       const foundUser = await listUsers(fixture.domain.id, fixture.accessToken, user.username);
-      expect(foundUser).toBeDefined();
       expect(foundUser.totalCount).toEqual(1);
-      expect(foundUser.data[0]).toBeDefined();
       expect(foundUser.data[0].source).toEqual(fixture.customIdp.name);
+    });
+  });
+
+  describe('Registration disabled', () => {
+    it('should reject registration when registerEnabled is false', async () => {
+      const clientId = fixture.applicationRegistrationDisabled.settings.oauth.clientId;
+      const uri = `/${fixture.domain.hrid}/register?client_id=${clientId}`;
+      const response = await performGet(process.env.AM_GATEWAY_URL, uri);
+      // Gateway returns 302 redirect with error when registration is disabled
+      expect(response.status).toEqual(302);
+      expect(response.headers['location']).toContain('error=registration_failed');
+    });
+  });
+
+  describe('Duplicate username rejection', () => {
+    it('should reject registration with a username that already exists', async () => {
+      const username = uniqueName('dup-user', true);
+      const user = {
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        username,
+        email: faker.internet.email(),
+        password: 'P@ssw0rd!123',
+      };
+
+      // First registration should succeed
+      await register(fixture.domain, user, 'success=registration_succeed', fixture.application.settings.oauth.clientId);
+
+      // Second registration with same username should fail
+      const duplicateUser = {
+        ...user,
+        email: faker.internet.email(), // different email, same username
+      };
+      await register(fixture.domain, duplicateUser, 'error=registration_failed', fixture.application.settings.oauth.clientId);
+
+      // Verify only one user exists with this username
+      const foundUsers = await listUsers(fixture.domain.id, fixture.accessToken, username);
+      expect(foundUsers.totalCount).toEqual(1);
+    });
+  });
+
+  // This test mutates domain-level settings so it MUST run last
+  describe('Domain-level registration settings (application inherits)', () => {
+    it('should use domain-level registration settings when application inherits', async () => {
+      // Patch domain-level settings: enable registration + set autoLoginAfterRegistration
+      await waitForSyncAfter(fixture.domain.id, () =>
+        patchDomain(fixture.domain.id, fixture.accessToken, {
+          loginSettings: {
+            inherited: false,
+            registerEnabled: true,
+          },
+          accountSettings: {
+            inherited: false,
+            autoLoginAfterRegistration: true,
+            redirectUriAfterRegistration: 'https://domain-level/redirect',
+          },
+        }),
+      );
+      // patchDomain causes full route redeploy — wait for OIDC routes to be live
+      await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+
+      const user = {
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        username: uniqueName('domain-lvl', true),
+        email: faker.internet.email(),
+        password: 'P@ssw0rd!123',
+      };
+
+      // The inherited app should pick up domain-level settings:
+      // registerEnabled=true (allows registration) and autoLoginAfterRegistration=true
+      // with redirectUriAfterRegistration
+      await register(
+        fixture.domain,
+        user,
+        'https://domain-level/redirect',
+        fixture.applicationInherited.settings.oauth.clientId,
+        true,
+      );
+
+      // Verify the user was created
+      const foundUser = await listUsers(fixture.domain.id, fixture.accessToken, user.username);
+      expect(foundUser.totalCount).toEqual(1);
     });
   });
 });

@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.common.audit.EventType.USER_CBA_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
+import static io.gravitee.am.common.audit.EventType.USER_MAGIC_LINK_LOGIN;
 import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
 
 /**
@@ -207,6 +208,7 @@ public class JdbcAuditReporterTest {
         int webauthnLogin = 0;
         int cbaLogin = 0;
         int userLogin = 0;
+        int magicLinkLogin = 0;
         Random random = new Random();
         for (int i = 0; i < loop; ++i) {
             Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_loginType");
@@ -216,18 +218,27 @@ public class JdbcAuditReporterTest {
                     reportable.getActor().setAlternativeId(MY_USER);
                     userLogin++;
                 } else {
-                    if (random.nextBoolean()) {
-                        reportable.setType(USER_WEBAUTHN_LOGIN);
-                        reportable.getTarget().setAlternativeId(MY_USER);
-                        reportable.getOutcome().setStatus(Status.FAILURE);
-                        webauthnLogin++;
-                    } else {
-                        reportable.setType(USER_CBA_LOGIN);
-                        reportable.getTarget().setAlternativeId(MY_USER);
-                        reportable.getOutcome().setStatus(Status.FAILURE);
-                        cbaLogin++;
+                    var intValue = random.nextInt(1000) % 3;
+                    switch (intValue) {
+                        case 0:
+                            reportable.setType(USER_WEBAUTHN_LOGIN);
+                            reportable.getTarget().setAlternativeId(MY_USER);
+                            reportable.getOutcome().setStatus(Status.FAILURE);
+                            webauthnLogin++;
+                            break;
+                        case 1:
+                            reportable.setType(USER_CBA_LOGIN);
+                            reportable.getTarget().setAlternativeId(MY_USER);
+                            reportable.getOutcome().setStatus(Status.FAILURE);
+                            cbaLogin++;
+                            break;
+                        default:
+                            reportable.setType(USER_MAGIC_LINK_LOGIN);
+                            reportable.getTarget().setAlternativeId(MY_USER);
+                            reportable.getOutcome().setStatus(Status.FAILURE);
+                            magicLinkLogin++;
+                            break;
                     }
-
                 }
             }
             auditReporter.report(reportable);
@@ -246,13 +257,16 @@ public class JdbcAuditReporterTest {
         int expectedUserLogin = userLogin;
         int expectedWebauthnLogin = webauthnLogin;
         int expectedCbaLogin = cbaLogin;
-        test.assertValue(map -> map.size() == (Math.signum(expectedUserLogin) + Math.signum(expectedWebauthnLogin) + Math.signum(expectedCbaLogin)));
+        int expectedMagicLinkLogin = magicLinkLogin;
+        test.assertValue(map -> map.size() == (Math.signum(expectedUserLogin) + Math.signum(expectedWebauthnLogin) + Math.signum(expectedCbaLogin) + Math.signum(expectedMagicLinkLogin)));
         test.assertValue(map -> expectedWebauthnLogin == 0 || map.containsKey("USER_WEBAUTHN_LOGIN"));
         test.assertValue(map -> expectedUserLogin == 0 || map.containsKey("USER_LOGIN"));
         test.assertValue(map -> expectedCbaLogin == 0 || map.containsKey("USER_CBA_LOGIN"));
+        test.assertValue(map -> expectedMagicLinkLogin == 0 || map.containsKey("USER_MAGIC_LINK_LOGIN"));
         test.assertValue(map -> expectedWebauthnLogin == 0 || ((Number) map.get("USER_WEBAUTHN_LOGIN")).intValue() == expectedWebauthnLogin);
         test.assertValue(map -> expectedUserLogin == 0 || ((Number) map.get("USER_LOGIN")).intValue() == expectedUserLogin);
         test.assertValue(map -> expectedCbaLogin == 0 || ((Number) map.get("USER_CBA_LOGIN")).intValue() == expectedCbaLogin);
+        test.assertValue(map -> expectedMagicLinkLogin == 0 || ((Number) map.get("USER_MAGIC_LINK_LOGIN")).intValue() == expectedMagicLinkLogin);
     }
 
     @Test
@@ -335,6 +349,52 @@ public class JdbcAuditReporterTest {
                 .field("outcome.status")
                 .build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy_cbaLogin", criteria, Type.GROUP_BY).test();
+        test.awaitDone(10, TimeUnit.SECONDS);
+        test.assertNoErrors();
+
+        int expectedFailure = accFailure;
+        int expectedSuccess = accSuccess;
+        test.assertValue(map -> map.size() == ((expectedFailure > 0 && expectedSuccess > 0) ? 2 : 1));
+        test.assertValue(map -> expectedFailure == 0 || map.containsKey("FAILURE"));
+        test.assertValue(map -> expectedSuccess == 0 || map.containsKey("SUCCESS"));
+        test.assertValue(map -> expectedFailure == 0 || ((Number) map.get("FAILURE")).intValue() == expectedFailure);
+        test.assertValue(map -> expectedSuccess == 0 || ((Number) map.get("SUCCESS")).intValue() == expectedSuccess);
+    }
+
+    @Test
+    public void testReporter_aggregationGroupBy_magicLinkLogin() {
+        int loop = 10;
+        int accFailure = 0;
+        int accSuccess = 0;
+        Random random = new Random();
+        for (int i = 0; i < loop; ++i) {
+            Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_magicLinkLogin");
+            reportable.setType(USER_MAGIC_LINK_LOGIN);
+            if (i % 2 == 0) {
+                if (random.nextBoolean()) {
+                    reportable.getActor().setAlternativeId(MY_USER);
+                    accSuccess++;
+                } else {
+                    reportable.getTarget().setAlternativeId(MY_USER);
+                    reportable.getOutcome().setStatus(Status.FAILURE);
+                    accFailure++;
+                }
+            }
+            auditReporter.report(reportable);
+        }
+        Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_magicLinkLogin");
+        reportable.setType(USER_LOGIN);
+        reportable.getActor().setAlternativeId(MY_USER);
+        auditReporter.report(reportable);
+
+        waitBulkLoadFlush();
+
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder()
+                .user(MY_USER)
+                .types(List.of(USER_MAGIC_LINK_LOGIN))
+                .field("outcome.status")
+                .build();
+        TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy_magicLinkLogin", criteria, Type.GROUP_BY).test();
         test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 

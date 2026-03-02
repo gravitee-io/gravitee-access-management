@@ -1,0 +1,32 @@
+.validation-error {
+  display: flex;
+  align-items: center;
+  color: #f44336;
+}
+
+.section-hint {
+  display: block;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-size: 75%;
+}
+
+.sub-section-title {
+  margin: 0 0 8px;
+}
+
+.staging-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  gap: 10px;
+
+  .staging-field {
+    min-width: 0;
+    flex: 1;
+  }
+}

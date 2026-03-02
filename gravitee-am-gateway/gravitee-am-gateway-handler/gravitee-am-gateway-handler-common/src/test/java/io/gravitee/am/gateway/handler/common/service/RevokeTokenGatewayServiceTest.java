@@ -23,8 +23,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.token.RevokeToken;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -54,18 +54,14 @@ public class RevokeTokenGatewayServiceTest {
     private RevokeTokenGatewayService tokenService = new RevokeTokenGatewayServiceImpl();
 
     @Mock
-    private AccessTokenRepository accessTokenRepository;
-
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Mock
     private AuditService auditService;
 
     @Test
     public void shouldDeleteTokensByUser_withAudit() {
-        when(accessTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
-        when(refreshTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
+        when(tokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
         var user = new User();
         user.setId("userId");
         user.setReferenceType(ReferenceType.DOMAIN);
@@ -79,8 +75,7 @@ public class RevokeTokenGatewayServiceTest {
 
     @Test
     public void shouldDeleteTokensByUser_withoutAudit() {
-        when(accessTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
-        when(refreshTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
+        when(tokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
         var user = new User();
         user.setId("userId");
         user.setReferenceType(ReferenceType.DOMAIN);
@@ -94,46 +89,40 @@ public class RevokeTokenGatewayServiceTest {
 
     @Test
     public void processMethod_shouldDeleteTokensByDomainAndUser() {
-        when(accessTokenRepository.deleteByDomainIdAndUserId(anyString(), any())).thenReturn(Completable.complete());
-        when(refreshTokenRepository.deleteByDomainIdAndUserId(anyString(), any())).thenReturn(Completable.complete());
+        when(tokenRepository.deleteByDomainIdAndUserId(anyString(), any())).thenReturn(Completable.complete());
 
         var revoke = RevokeToken.byUser(UUID.randomUUID().toString(), UserId.internal(UUID.randomUUID().toString()));
         TestObserver<Void> testObserver = tokenService.process(new Domain(), revoke).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(accessTokenRepository).deleteByDomainIdAndUserId(anyString(), any());
-        verify(refreshTokenRepository).deleteByDomainIdAndUserId(anyString(), any());
+        verify(tokenRepository).deleteByDomainIdAndUserId(anyString(), any());
         verify(auditService, never()).report(any());
     }
 
     @Test
     public void processMethod_shouldDeleteTokensByDomainAndClient() {
-        when(accessTokenRepository.deleteByDomainIdAndClientId(anyString(), any())).thenReturn(Completable.complete());
-        when(refreshTokenRepository.deleteByDomainIdAndClientId(anyString(), any())).thenReturn(Completable.complete());
+        when(tokenRepository.deleteByDomainIdAndClientId(anyString(), any())).thenReturn(Completable.complete());
 
         var revoke = RevokeToken.byClientId(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         TestObserver<Void> testObserver = tokenService.process(new Domain(), revoke).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(accessTokenRepository).deleteByDomainIdAndClientId(anyString(), any());
-        verify(refreshTokenRepository).deleteByDomainIdAndClientId(anyString(), any());
+        verify(tokenRepository).deleteByDomainIdAndClientId(anyString(), any());
         verify(auditService, never()).report(any());
     }
 
     @Test
     public void processMethod_shouldDeleteTokensByDomainAndClientAndUser() {
-        when(accessTokenRepository.deleteByDomainIdClientIdAndUserId(anyString(), any(), any())).thenReturn(Completable.complete());
-        when(refreshTokenRepository.deleteByDomainIdClientIdAndUserId(anyString(), any(), any())).thenReturn(Completable.complete());
+        when(tokenRepository.deleteByDomainIdClientIdAndUserId(anyString(), any(), any())).thenReturn(Completable.complete());
 
         var revoke = RevokeToken.byUserAndClientId(UUID.randomUUID().toString(), UUID.randomUUID().toString(), UserId.internal(UUID.randomUUID().toString()));
         TestObserver<Void> testObserver = tokenService.process(new Domain(), revoke).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(accessTokenRepository).deleteByDomainIdClientIdAndUserId(anyString(), any(), any());
-        verify(refreshTokenRepository).deleteByDomainIdClientIdAndUserId(anyString(), any(), any());
+        verify(tokenRepository).deleteByDomainIdClientIdAndUserId(anyString(), any(), any());
         verify(auditService, never()).report(any());
     }
 

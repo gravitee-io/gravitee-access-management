@@ -30,6 +30,7 @@ object SimulationSettings {
 
   val FGA_API_URL = System.getProperty("fga_api_url", "http://localhost:8080")
   val FGA_STORE_ID = System.getProperty("fga_store_id", "")
+  val FGA_API_TOKEN = System.getProperty("fga_api_token", "")
   val FGA_AUTHORIZATION_MODEL_ID = System.getProperty("fga_authorization_model_id", "")
   val CONFIGURE_DOMAIN_AUTH_ENGINE = java.lang.Boolean.getBoolean("configure_domain")
   val CLIENT_ID = System.getProperty("client_id", "")
@@ -45,6 +46,7 @@ object SimulationSettings {
 
   val MIN_USER_INDEX = Integer.getInteger("min_user_index", 1)
   val NUMBER_OF_USERS = Integer.getInteger("number_of_users", 2000)
+  val CHECK_CONSISTENCY_LEVEL = System.getProperty("consistency", "HIGHER_CONSISTENCY")
 
   // useful if in future simulation we want multiple IDP
   // it will be possible to generate username with IDP relationship

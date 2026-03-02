@@ -23,7 +23,7 @@ import org.springframework.data.relational.core.mapping.Table;
  * @author GraviteeSource Team
  */
 @Table("access_tokens")
-public class JdbcAccessToken extends JdbcToken {
+public class JdbcAccessToken extends JdbcBaseToken {
     @Column("refresh_token")
     private String refreshToken;
     @Column("authorization_code")

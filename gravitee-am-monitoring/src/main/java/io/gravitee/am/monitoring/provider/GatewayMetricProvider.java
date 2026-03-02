@@ -30,6 +30,7 @@ import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESO
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCE_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_IDP;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_STATUS;
+import static io.gravitee.am.monitoring.metrics.Constants.TAG_STATUS;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_EXTERNAL;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_INTERNAL;
 
@@ -39,6 +40,8 @@ import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_INT
  */
 public class GatewayMetricProvider {
 
+    public static final String STATUS_SUCCESS = "SUCCESS";
+    public static final String STATUS_FAILURE = "FAILURE";
     private final CounterHelper appEvtCounter = new CounterHelper(METRICS_APP_EVENTS);
 
     private final GaugeHelper appGauge = new GaugeHelper(METRICS_APP);
@@ -55,7 +58,15 @@ public class GatewayMetricProvider {
 
     private final GaugeHelper domainGauge = new GaugeHelper(Constants.METRICS_DOMAINS);
 
-    private GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
+    private final GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
+
+    private final GaugeHelper successfulStagingEmails = new GaugeHelper(Constants.METRICS_PROCESSED_STAGING_EMAILS, Tags.of(
+            Tag.of(TAG_STATUS, STATUS_SUCCESS)));
+
+    private final GaugeHelper failureStagingEmails = new GaugeHelper(Constants.METRICS_PROCESSED_STAGING_EMAILS, Tags.of(
+            Tag.of(TAG_STATUS, STATUS_FAILURE)));
+
+    private final GaugeHelper droppedEmails = new GaugeHelper(Constants.METRICS_DROPPED_EMAILS);
 
     private final CounterHelper internalSuccessfulAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
             Tag.of(TAG_AUTH_STATUS, "SUCCESS"),
@@ -119,6 +130,18 @@ public class GatewayMetricProvider {
 
     public void decrementDomain() {
         this.domainGauge.decrementValue();
+    }
+
+    public void incrementProcessedStagingEmails(boolean success) {
+        if (success) {
+            this.successfulStagingEmails.incrementValue();
+        } else {
+            this.failureStagingEmails.incrementValue();
+        }
+    }
+
+    public void incrementDroppedEmails() {
+        this.droppedEmails.incrementValue();
     }
 
     public void updateSyncEvents(int evts) {

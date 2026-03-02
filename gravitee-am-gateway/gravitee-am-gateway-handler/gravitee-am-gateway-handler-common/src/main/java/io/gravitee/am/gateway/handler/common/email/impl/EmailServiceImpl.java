@@ -21,10 +21,13 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
+import io.gravitee.am.common.exception.email.EmailDroppedException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.TokenPurpose;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.email.EmailContainer;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.utils.FreemarkerDataHelper;
@@ -36,8 +39,10 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.service.exception.BatchEmailException;
 import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
@@ -45,7 +50,10 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.vertx.rxjava3.core.MultiMap;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -60,7 +68,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
@@ -70,7 +83,8 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailServiceImpl implements EmailService {
+@Slf4j
+public class EmailServiceImpl implements EmailService, InitializingBean, DisposableBean {
 
     private final boolean enabled;
     private final String resetPasswordSubject;
@@ -84,6 +98,13 @@ public class EmailServiceImpl implements EmailService {
     private final int userRegistrationVerifyExpiresAfter;
     private final String registrationConfirmationSubject;
     private final int userRegistrationConfirmationVerifyExpiresAfter;
+    private final String userMagicLinkLoginSubject;
+    private final int userMagicLinkLoginExpiresAfter;
+
+    private final EmailDroppedException droppedException = new EmailDroppedException("Email not delivered due to staging persistence issue");
+
+    private final String EMAIL_TOKEN_SESSION_ID_QUERY_PARAM = "session_id";
+
     @Autowired
     private EmailManager emailManager;
 
@@ -110,6 +131,11 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private GraviteeMessageResolver graviteeMessageResolver;
 
+    private ExecutorService executorService;
+
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
+
     public EmailServiceImpl(
             boolean enabled,
             String resetPasswordSubject,
@@ -122,7 +148,9 @@ public class EmailServiceImpl implements EmailService {
             String registrationVerifySubject,
             int userRegistrationVerifyExpiresAfter,
             String registrationConfirmationSubject,
-            int userRegistrationConfirmationVerifyExpiresAfter) {
+            int userRegistrationConfirmationVerifyExpiresAfter,
+            String userMagicLinkLoginSubject,
+            int userMagicLinkLoginExpiresAfter) {
         this.enabled = enabled;
         this.resetPasswordSubject = resetPasswordSubject;
         this.resetPasswordExpireAfter = resetPasswordExpireAfter;
@@ -135,6 +163,8 @@ public class EmailServiceImpl implements EmailService {
         this.userRegistrationVerifyExpiresAfter = userRegistrationVerifyExpiresAfter;
         this.registrationConfirmationSubject = registrationConfirmationSubject;
         this.userRegistrationConfirmationVerifyExpiresAfter = userRegistrationConfirmationVerifyExpiresAfter;
+        this.userMagicLinkLoginSubject = userMagicLinkLoginSubject;
+        this.userMagicLinkLoginExpiresAfter = userMagicLinkLoginExpiresAfter;
     }
 
     @Override
@@ -150,48 +180,91 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    public void asyncSend(io.gravitee.am.model.Template template, User user, Client client, MultiMap queryParams) {
+        executorService.execute(() -> send(template, user, client, queryParams));
+    }
+
+    @Override
+    public List<EmailContainer> batch(List<EmailContainer> containers, int maxAttempt) {
+        if (containers == null || containers.isEmpty()) {
+            return List.of();
+        }
+
+        if (enabled) {
+            var emailsToSend = containers.stream().map(container -> {
+                Email email = null;
+                try {
+                    var template = io.gravitee.am.model.Template.valueOf(container.stagingEmail().getEmailTemplateName());
+                    // get raw email template
+                    io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, container.client());
+                    // prepare email
+                    email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap());
+
+                    return container.with(prepareEmailToSend(email, container.user()));
+                } catch (Exception ex) {
+                    log.warn("Unable to prepare email for user [{}], batch will exclude it and it will be removed from staging collection", container.user().getUsername(), ex);
+                    // mark as processed to remove the entry from the staging collection
+                    container.stagingEmail().markAsProcessed();
+                    auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                            .reference(Reference.domain(domain.getId()))
+                            .email(email) // email() method check ignore null value
+                            .throwable(ex));
+                    return null;
+                }
+            }).filter(Objects::nonNull)
+            // It may happen that multiple users have the same email address
+            // we group them together. In case of error all users will be notified
+            // as we do not have a way to uniquely identify the user in that case
+            .collect(Collectors.groupingBy(container -> container.user().getEmail()));
+
+            try {
+                emailService.batch(emailsToSend.values().stream().flatMap(List::stream).map(EmailContainer::email).toList());
+                emailsToSend.values().stream().flatMap(List::stream).forEach(container -> {
+                    container.stagingEmail().markAsProcessed();
+                    log.debug("Email staging process {}", container.stagingEmail());
+                    gatewayMetricProvider.incrementProcessedStagingEmails(true);
+                    traceSuccessfulEmail(container.email(), container.user(), container.client());
+                });
+            } catch (BatchEmailException batchEx) {
+                batchEx.getEmails().forEach(email -> {
+                    Optional.ofNullable(emailsToSend.get(email)).ifPresent(failureContainers ->
+                        failureContainers.forEach(container -> {
+                            container.stagingEmail().incrementAttempts();
+                            if (container.stagingEmail().getAttempts() >= maxAttempt) {
+                                // maxAttempt reached, mark it as processed
+                                // and trace the failure in the audit logs
+                                container.stagingEmail().markAsProcessed();
+                                log.warn("Send {} email failed for user {}, max attempts have been reach", container.stagingEmail().getEmailTemplateName(), email);
+                                gatewayMetricProvider.incrementProcessedStagingEmails(false);
+                                traceFailureEmail(container.email(), container.user(), container.client(), batchEx);
+                            } else {
+                                log.info("Send {} email failed for user {}", container.stagingEmail().getEmailTemplateName(), email);
+                            }
+                        })
+                    );
+                });
+
+                // create an audit for all the email missing from the exception, they are processed
+                emailsToSend.forEach((email, containerValues) -> {
+                    if (!batchEx.getEmails().contains(email)) {
+                        containerValues.forEach(successfulContainer -> {
+                            successfulContainer.stagingEmail().markAsProcessed();
+                            gatewayMetricProvider.incrementProcessedStagingEmails(true);
+                            traceSuccessfulEmail(successfulContainer.email(), successfulContainer.user(), successfulContainer.client());
+                        });
+                    }
+                });
+            }
+        }
+
+        return containers;
+    }
+
+    @Override
     public void send(Email email) {
         if (enabled) {
             try {
-
-                Locale language = Locale.ENGLISH;
-                if (email.getParams().containsKey(ConstantKeys.USER_CONTEXT_KEY)) {
-                    language = preferredLanguage((User) email.getParams().get(ConstantKeys.USER_CONTEXT_KEY), Locale.ENGLISH);
-                }
-
-                // sanitize data
-                final Map<String, Object> params = FreemarkerDataHelper.generateData(email.getParams());
-
-                // compute email to
-                final List<String> to = new ArrayList<>();
-                for (String emailTo : email.getTo()) {
-                    to.add(processTemplate(
-                            new Template("to", new StringReader(emailTo), freemarkerConfiguration),
-                            params, language));
-                }
-                // compute email from
-                final String from = processTemplate(
-                        new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration),
-                        params, language);
-                // compute email fromName
-                final String fromName = Strings.isNullOrEmpty(email.getFromName()) ? null : processTemplate(
-                        new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration),
-                        params, language);
-                // compute email subject
-                final String subject = processTemplate(
-                        new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration),
-                        params, language);
-                // compute email content
-                final String content = processTemplate(
-                        new Template("content", new StringReader(email.getContent()), freemarkerConfiguration),
-                        params, language);
-                // send the email
-                final Email emailToSend = new Email(email);
-                emailToSend.setFrom(from);
-                emailToSend.setFromName(fromName);
-                emailToSend.setTo(to.toArray(new String[0]));
-                emailToSend.setSubject(subject);
-                emailToSend.setContent(content);
+                final Email emailToSend = prepareEmailToSend(email);
                 emailService.send(emailToSend);
                 auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                         .reference(Reference.domain(domain.getId()))
@@ -205,43 +278,97 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    private Email prepareEmailToSend(Email email) throws TemplateException, IOException {
+        Locale language = Locale.ENGLISH;
+        if (email.getParams().containsKey(ConstantKeys.USER_CONTEXT_KEY)) {
+            language = preferredLanguage((User) email.getParams().get(ConstantKeys.USER_CONTEXT_KEY), Locale.ENGLISH);
+        }
+
+        // sanitize data
+        final Map<String, Object> params = FreemarkerDataHelper.generateData(email.getParams());
+
+        // compute email to
+        final List<String> to = new ArrayList<>();
+        for (String emailTo : email.getTo()) {
+            to.add(processTemplate(
+                    new Template("to", new StringReader(emailTo), freemarkerConfiguration),
+                    params, language));
+        }
+        // compute email from
+        final String from = processTemplate(
+                new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration),
+                params, language);
+        // compute email fromName
+        final String fromName = Strings.isNullOrEmpty(email.getFromName()) ? null : processTemplate(
+                new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration),
+                params, language);
+        // compute email subject
+        final String subject = processTemplate(
+                new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration),
+                params, language);
+        // compute email content
+        final String content = processTemplate(
+                new Template("content", new StringReader(email.getContent()), freemarkerConfiguration),
+                params, language);
+        // send the email
+        final Email emailToSend = new Email(email);
+        emailToSend.setFrom(from);
+        emailToSend.setFromName(fromName);
+        emailToSend.setTo(to.toArray(new String[0]));
+        emailToSend.setSubject(subject);
+        emailToSend.setContent(content);
+        return emailToSend;
+    }
+
     private void sendEmail(Email email, User user, Client client) {
         try {
-            final Locale preferredLanguage = preferredLanguage(user, Locale.ENGLISH);
-            final Map<String, Object> params = email.getParams();
-            final Email emailToSend = new Email(email);
-
-            if (!StringUtils.isEmpty(email.getFromName())) {
-                // compute email - fromName
-                final Template fromNameTemplate = new Template("fromName", email.getFromName(), freemarkerConfiguration);
-                final String fromName = processTemplate(fromNameTemplate, params, preferredLanguage);
-                emailToSend.setFromName(fromName);
-            }
-
-            // compute email subject
-            final Template plainTextTemplate = new Template("subject", email.getSubject(), freemarkerConfiguration);
-            final String subject = processTemplate(plainTextTemplate, params, preferredLanguage);
-            emailToSend.setSubject(subject);
-
-            // compute email content
-            final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
-            final String content = processTemplate(template, params, preferredLanguage);
-            emailToSend.setContent(content);
-
+            final Email emailToSend = prepareEmailToSend(email, user);
             emailService.send(emailToSend);
-            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
-                    .reference(Reference.domain(domain.getId()))
-                    .client(client)
-                    .email(email)
-                    .user(user));
+            traceSuccessfulEmail(email, user, client);
         } catch (final Exception ex) {
-            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
-                    .reference(Reference.domain(domain.getId()))
-                    .client(client)
-                    .email(email)
-                    .user(user)
-                    .throwable(ex));
+            traceFailureEmail(email, user, client, ex);
         }
+    }
+
+    private Email prepareEmailToSend(Email email, User user) throws IOException, TemplateException {
+        final Locale preferredLanguage = preferredLanguage(user, Locale.ENGLISH);
+        final Map<String, Object> params = email.getParams();
+        final Email emailToSend = new Email(email);
+
+        if (!StringUtils.isEmpty(email.getFromName())) {
+            // compute email - fromName
+            final Template fromNameTemplate = new Template("fromName", email.getFromName(), freemarkerConfiguration);
+            final String fromName = processTemplate(fromNameTemplate, params, preferredLanguage);
+            emailToSend.setFromName(fromName);
+        }
+
+        // compute email subject
+        final Template plainTextTemplate = new Template("subject", email.getSubject(), freemarkerConfiguration);
+        final String subject = processTemplate(plainTextTemplate, params, preferredLanguage);
+        emailToSend.setSubject(subject);
+
+        // compute email content
+        final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
+        final String content = processTemplate(template, params, preferredLanguage);
+        emailToSend.setContent(content);
+        return emailToSend;
+    }
+
+    private void traceFailureEmail(Email email, User user, Client client, Exception ex) {
+        auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                .reference(Reference.domain(domain.getId()))
+                .client(client)
+                .email(email)
+                .user(user)
+                .throwable(ex));
+    }
+
+    private void traceSuccessfulEmail(Email email, User user, Client client) {
+        auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                .reference(Reference.domain(domain.getId()))
+                .client(client)
+                .email(email)
+                .user(user));
     }
 
     private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client, MultiMap queryParams) {
@@ -265,6 +392,10 @@ public class EmailServiceImpl implements EmailService {
         claims.put(Claims.SUB, user.getId());
         if (client != null) {
             claims.put(Claims.AUD, client.getId());
+        }
+        if(queryParams != null && queryParams.contains(EMAIL_TOKEN_SESSION_ID_QUERY_PARAM) ) {
+            claims.put(Claims.SESSION_ID, queryParams.get(EMAIL_TOKEN_SESSION_ID_QUERY_PARAM));
+            queryParams.remove(EMAIL_TOKEN_SESSION_ID_QUERY_PARAM);
         }
 
         if (client != null && !queryParams.contains(CLIENT_ID)) {
@@ -366,6 +497,7 @@ public class EmailServiceImpl implements EmailService {
             case VERIFY_ATTEMPT -> mfaVerifyAttemptSubject;
             case REGISTRATION_VERIFY -> registrationVerifySubject;
             case REGISTRATION_CONFIRMATION -> registrationConfirmationSubject;
+            case MAGIC_LINK -> userMagicLinkLoginSubject;
             default -> throw new IllegalArgumentException(template.template() + " not found");
         };
     }
@@ -378,8 +510,32 @@ public class EmailServiceImpl implements EmailService {
             case VERIFY_ATTEMPT -> 0;
             case REGISTRATION_VERIFY -> userRegistrationVerifyExpiresAfter;
             case REGISTRATION_CONFIRMATION -> userRegistrationConfirmationVerifyExpiresAfter;
+            case MAGIC_LINK -> userMagicLinkLoginExpiresAfter;
             default -> throw new IllegalArgumentException(template.template() + " not found");
         };
     }
 
+    @Override
+    public void traceEmailEviction(User user, Client client, io.gravitee.am.model.Template template) {
+        Email email = new Email();
+        email.setTemplate(getTemplateName(template, client));
+        auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                .reference(Reference.domain(domain.getId()))
+                .client(client)
+                .user(user)
+                .email(email)
+                .throwable(droppedException));
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (executorService != null) {
+            executorService.shutdown();
+        }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        executorService = Executors.newCachedThreadPool();
+    }
 }

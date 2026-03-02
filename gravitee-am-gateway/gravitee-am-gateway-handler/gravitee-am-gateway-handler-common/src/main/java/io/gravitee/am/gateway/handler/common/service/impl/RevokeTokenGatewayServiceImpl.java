@@ -24,11 +24,10 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.token.RevokeToken;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -46,14 +45,10 @@ import org.springframework.context.annotation.Lazy;
  */
 @Slf4j
 public class RevokeTokenGatewayServiceImpl extends AbstractService implements RevokeTokenGatewayService {
-    
-    @Lazy
-    @Autowired
-    private AccessTokenRepository accessTokenRepository;
 
     @Lazy
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Autowired
     private EventManager eventManager;
@@ -104,8 +99,7 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
     public Completable deleteByUser(User user, boolean needAudit) {
         log.debug("Delete tokens by user : {}", user.getId());
         var userId = user.getId();
-        return accessTokenRepository.deleteByUserId(userId)
-                .andThen(refreshTokenRepository.deleteByUserId(userId))
+        return tokenRepository.deleteByUserId(userId)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to delete tokens by user {}", userId, ex);
                     return Completable.error(new TechnicalManagementException(
@@ -129,30 +123,10 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
 
     private Completable process(RevokeToken revokeTokenDescription) {
         return switch (revokeTokenDescription.getRevokeType()) {
-            case BY_USER -> deleteByDomainAndUserId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getUserId());
-            case BY_CLIENT -> deleteByDomainAndClient(revokeTokenDescription.getDomainId(), revokeTokenDescription.getClientId());
-            case BY_USER_AND_CLIENT -> deleteByDomainAndClientAndUserId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getClientId(), revokeTokenDescription.getUserId());
+            case BY_USER -> tokenRepository.deleteByDomainIdAndUserId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getUserId());
+            case BY_CLIENT -> tokenRepository.deleteByDomainIdAndClientId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getClientId());
+            case BY_USER_AND_CLIENT -> tokenRepository.deleteByDomainIdClientIdAndUserId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getClientId(), revokeTokenDescription.getUserId());
         };
     }
 
-    private Completable deleteByDomainAndUserId(String domainId, UserId userId) {
-        return Completable.mergeArray(
-                accessTokenRepository.deleteByDomainIdAndUserId(domainId, userId),
-                refreshTokenRepository.deleteByDomainIdAndUserId(domainId, userId)
-        );
-    }
-
-    private Completable deleteByDomainAndClient(String domainId, String clientId) {
-        return Completable.mergeArray(
-                accessTokenRepository.deleteByDomainIdAndClientId(domainId, clientId),
-                refreshTokenRepository.deleteByDomainIdAndClientId(domainId, clientId)
-        );
-    }
-
-    private Completable deleteByDomainAndClientAndUserId(String domainId, String clientId, UserId userId) {
-        return Completable.mergeArray(
-                accessTokenRepository.deleteByDomainIdClientIdAndUserId(domainId, clientId, userId),
-                refreshTokenRepository.deleteByDomainIdClientIdAndUserId(domainId, clientId, userId)
-        );
-    }
 }

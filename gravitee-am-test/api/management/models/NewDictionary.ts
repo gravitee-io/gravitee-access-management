@@ -37,21 +37,21 @@ export interface NewDictionary {
    * @type {string}
    * @memberof NewDictionary
    */
-  name: string;
+  locale: string;
   /**
    *
    * @type {string}
    * @memberof NewDictionary
    */
-  locale: string;
+  name: string;
 }
 
 /**
  * Check if a given object implements the NewDictionary interface.
  */
 export function instanceOfNewDictionary(value: object): value is NewDictionary {
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('locale' in value) || value['locale'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
   return true;
 }
 
@@ -64,8 +64,8 @@ export function NewDictionaryFromJSONTyped(json: any, ignoreDiscriminator: boole
     return json;
   }
   return {
-    name: json['name'],
     locale: json['locale'],
+    name: json['name'],
   };
 }
 
@@ -79,7 +79,7 @@ export function NewDictionaryToJSONTyped(value?: NewDictionary | null, ignoreDis
   }
 
   return {
-    name: value['name'],
     locale: value['locale'],
+    name: value['name'],
   };
 }

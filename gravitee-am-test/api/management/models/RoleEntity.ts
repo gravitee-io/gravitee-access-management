@@ -37,13 +37,25 @@ export interface RoleEntity {
    * @type {string}
    * @memberof RoleEntity
    */
-  id?: string;
+  assignableType?: string;
   /**
    *
-   * @type {string}
+   * @type {Array<string>}
    * @memberof RoleEntity
    */
-  name?: string;
+  availablePermissions?: Array<string>;
+  /**
+   *
+   * @type {Date}
+   * @memberof RoleEntity
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {boolean}
+   * @memberof RoleEntity
+   */
+  defaultRole?: boolean;
   /**
    *
    * @type {string}
@@ -55,7 +67,19 @@ export interface RoleEntity {
    * @type {string}
    * @memberof RoleEntity
    */
-  referenceType?: RoleEntityReferenceTypeEnum;
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof RoleEntity
+   */
+  name?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof RoleEntity
+   */
+  permissions?: Array<string>;
   /**
    *
    * @type {string}
@@ -67,37 +91,13 @@ export interface RoleEntity {
    * @type {string}
    * @memberof RoleEntity
    */
-  assignableType?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof RoleEntity
-   */
-  permissions?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof RoleEntity
-   */
-  availablePermissions?: Array<string>;
+  referenceType?: RoleEntityReferenceTypeEnum;
   /**
    *
    * @type {boolean}
    * @memberof RoleEntity
    */
   system?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof RoleEntity
-   */
-  defaultRole?: boolean;
-  /**
-   *
-   * @type {Date}
-   * @memberof RoleEntity
-   */
-  createdAt?: Date;
   /**
    *
    * @type {Date}
@@ -135,17 +135,17 @@ export function RoleEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return json;
   }
   return {
+    assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
+    availablePermissions: json['availablePermissions'] == null ? undefined : json['availablePermissions'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    defaultRole: json['defaultRole'] == null ? undefined : json['defaultRole'],
+    description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
     permissions: json['permissions'] == null ? undefined : json['permissions'],
-    availablePermissions: json['availablePermissions'] == null ? undefined : json['availablePermissions'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     system: json['system'] == null ? undefined : json['system'],
-    defaultRole: json['defaultRole'] == null ? undefined : json['defaultRole'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -160,17 +160,17 @@ export function RoleEntityToJSONTyped(value?: RoleEntity | null, ignoreDiscrimin
   }
 
   return {
+    assignableType: value['assignableType'],
+    availablePermissions: value['availablePermissions'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    defaultRole: value['defaultRole'],
+    description: value['description'],
     id: value['id'],
     name: value['name'],
-    description: value['description'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    assignableType: value['assignableType'],
     permissions: value['permissions'],
-    availablePermissions: value['availablePermissions'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
     system: value['system'],
-    defaultRole: value['defaultRole'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

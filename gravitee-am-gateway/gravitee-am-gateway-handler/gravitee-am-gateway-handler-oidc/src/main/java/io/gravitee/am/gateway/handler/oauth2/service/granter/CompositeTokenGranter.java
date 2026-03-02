@@ -39,6 +39,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.UmaStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
@@ -128,6 +129,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private TokenExchangeService tokenExchangeService;
 
     @Autowired
+    private UserGatewayService userGatewayService;
+
+    @Autowired
     private ExecutionContextFactory executionContextFactory;
 
     @Override
@@ -198,7 +202,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         ));
 
         // Register Token Exchange strategy
-        registerStrategy(GrantType.TOKEN_EXCHANGE, new TokenExchangeStrategy(tokenExchangeService));
+        registerStrategy(GrantType.TOKEN_EXCHANGE, new TokenExchangeStrategy(tokenExchangeService, userGatewayService));
 
         // Register CIBA strategy
         registerStrategy(GrantType.CIBA_GRANT_TYPE, new CibaStrategy(

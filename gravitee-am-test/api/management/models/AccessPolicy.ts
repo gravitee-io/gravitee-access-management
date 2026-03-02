@@ -37,13 +37,25 @@ export interface AccessPolicy {
    * @type {string}
    * @memberof AccessPolicy
    */
-  id?: string;
+  condition?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof AccessPolicy
+   */
+  createdAt?: Date;
   /**
    *
    * @type {string}
    * @memberof AccessPolicy
    */
-  type?: AccessPolicyTypeEnum;
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof AccessPolicy
+   */
+  domain?: string;
   /**
    *
    * @type {boolean}
@@ -55,13 +67,13 @@ export interface AccessPolicy {
    * @type {string}
    * @memberof AccessPolicy
    */
-  name?: string;
+  id?: string;
   /**
    *
    * @type {string}
    * @memberof AccessPolicy
    */
-  description?: string;
+  name?: string;
   /**
    *
    * @type {number}
@@ -73,25 +85,13 @@ export interface AccessPolicy {
    * @type {string}
    * @memberof AccessPolicy
    */
-  condition?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AccessPolicy
-   */
-  domain?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof AccessPolicy
-   */
   resource?: string;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof AccessPolicy
    */
-  createdAt?: Date;
+  type?: AccessPolicyTypeEnum;
   /**
    *
    * @type {Date}
@@ -124,16 +124,16 @@ export function AccessPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    type: json['type'] == null ? undefined : json['type'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    order: json['order'] == null ? undefined : json['order'],
     condition: json['condition'] == null ? undefined : json['condition'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    resource: json['resource'] == null ? undefined : json['resource'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    description: json['description'] == null ? undefined : json['description'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    order: json['order'] == null ? undefined : json['order'],
+    resource: json['resource'] == null ? undefined : json['resource'],
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -148,16 +148,16 @@ export function AccessPolicyToJSONTyped(value?: AccessPolicy | null, ignoreDiscr
   }
 
   return {
-    id: value['id'],
-    type: value['type'],
-    enabled: value['enabled'],
-    name: value['name'],
-    description: value['description'],
-    order: value['order'],
     condition: value['condition'],
-    domain: value['domain'],
-    resource: value['resource'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    description: value['description'],
+    domain: value['domain'],
+    enabled: value['enabled'],
+    id: value['id'],
+    name: value['name'],
+    order: value['order'],
+    resource: value['resource'],
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

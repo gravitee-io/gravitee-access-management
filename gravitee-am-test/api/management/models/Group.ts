@@ -34,22 +34,28 @@ import { mapValues } from '../runtime';
 export interface Group {
   /**
    *
+   * @type {Date}
+   * @memberof Group
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof Group
+   */
+  description?: string;
+  /**
+   *
    * @type {string}
    * @memberof Group
    */
   id?: string;
   /**
    *
-   * @type {string}
+   * @type {Array<string>}
    * @memberof Group
    */
-  referenceType?: GroupReferenceTypeEnum;
-  /**
-   *
-   * @type {string}
-   * @memberof Group
-   */
-  referenceId?: string;
+  members?: Array<string>;
   /**
    *
    * @type {string}
@@ -61,25 +67,19 @@ export interface Group {
    * @type {string}
    * @memberof Group
    */
-  description?: string;
+  referenceId?: string;
   /**
    *
-   * @type {Array<string>}
+   * @type {string}
    * @memberof Group
    */
-  members?: Array<string>;
+  referenceType?: GroupReferenceTypeEnum;
   /**
    *
    * @type {Array<string>}
    * @memberof Group
    */
   roles?: Array<string>;
-  /**
-   *
-   * @type {Date}
-   * @memberof Group
-   */
-  createdAt?: Date;
   /**
    *
    * @type {Date}
@@ -117,14 +117,14 @@ export function GroupFromJSONTyped(json: any, ignoreDiscriminator: boolean): Gro
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    members: json['members'] == null ? undefined : json['members'],
-    roles: json['roles'] == null ? undefined : json['roles'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    description: json['description'] == null ? undefined : json['description'],
+    id: json['id'] == null ? undefined : json['id'],
+    members: json['members'] == null ? undefined : json['members'],
+    name: json['name'] == null ? undefined : json['name'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    roles: json['roles'] == null ? undefined : json['roles'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
@@ -139,14 +139,14 @@ export function GroupToJSONTyped(value?: Group | null, ignoreDiscriminator: bool
   }
 
   return {
-    id: value['id'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    name: value['name'],
-    description: value['description'],
-    members: value['members'],
-    roles: value['roles'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    description: value['description'],
+    id: value['id'],
+    members: value['members'],
+    name: value['name'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    roles: value['roles'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

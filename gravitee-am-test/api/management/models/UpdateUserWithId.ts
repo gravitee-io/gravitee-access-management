@@ -34,36 +34,6 @@ import { mapValues } from '../runtime';
 export interface UpdateUserWithId {
   /**
    *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  email?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  firstName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  lastName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  displayName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  externalId?: string;
-  /**
-   *
    * @type {boolean}
    * @memberof UpdateUserWithId
    */
@@ -76,10 +46,40 @@ export interface UpdateUserWithId {
   accountNonLocked?: boolean;
   /**
    *
+   * @type {{ [key: string]: any; }}
+   * @memberof UpdateUserWithId
+   */
+  additionalInformation?: { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  client?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof UpdateUserWithId
+   */
+  createdAt?: Date;
+  /**
+   *
    * @type {boolean}
    * @memberof UpdateUserWithId
    */
   credentialsNonExpired?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  email?: string;
   /**
    *
    * @type {boolean}
@@ -88,10 +88,58 @@ export interface UpdateUserWithId {
   enabled?: boolean;
   /**
    *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  externalId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  firstName?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdateUserWithId
+   */
+  forceResetPassword?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  lastName?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof UpdateUserWithId
+   */
+  loggedAt?: Date;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateUserWithId
+   */
+  loginsCount?: number;
+  /**
+   *
    * @type {boolean}
    * @memberof UpdateUserWithId
    */
   preRegistration?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateUserWithId
+   */
+  preferredLanguage?: string;
   /**
    *
    * @type {boolean}
@@ -106,58 +154,10 @@ export interface UpdateUserWithId {
   source?: string;
   /**
    *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  client?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof UpdateUserWithId
-   */
-  loginsCount?: number;
-  /**
-   *
-   * @type {Date}
-   * @memberof UpdateUserWithId
-   */
-  loggedAt?: Date;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  preferredLanguage?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UpdateUserWithId
-   */
-  additionalInformation?: { [key: string]: any };
-  /**
-   *
-   * @type {Date}
-   * @memberof UpdateUserWithId
-   */
-  createdAt?: Date;
-  /**
-   *
    * @type {Date}
    * @memberof UpdateUserWithId
    */
   updatedAt?: Date;
-  /**
-   *
-   * @type {boolean}
-   * @memberof UpdateUserWithId
-   */
-  forceResetPassword?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateUserWithId
-   */
-  id?: string;
 }
 
 /**
@@ -176,27 +176,27 @@ export function UpdateUserWithIdFromJSONTyped(json: any, ignoreDiscriminator: bo
     return json;
   }
   return {
-    email: json['email'] == null ? undefined : json['email'],
-    firstName: json['firstName'] == null ? undefined : json['firstName'],
-    lastName: json['lastName'] == null ? undefined : json['lastName'],
-    displayName: json['displayName'] == null ? undefined : json['displayName'],
-    externalId: json['externalId'] == null ? undefined : json['externalId'],
     accountNonExpired: json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
     accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
-    credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
-    registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
-    source: json['source'] == null ? undefined : json['source'],
-    client: json['client'] == null ? undefined : json['client'],
-    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
-    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
-    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
     additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
+    client: json['client'] == null ? undefined : json['client'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    email: json['email'] == null ? undefined : json['email'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    externalId: json['externalId'] == null ? undefined : json['externalId'],
+    firstName: json['firstName'] == null ? undefined : json['firstName'],
     forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
     id: json['id'] == null ? undefined : json['id'],
+    lastName: json['lastName'] == null ? undefined : json['lastName'],
+    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
+    preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
+    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
+    registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
+    source: json['source'] == null ? undefined : json['source'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
@@ -210,26 +210,26 @@ export function UpdateUserWithIdToJSONTyped(value?: UpdateUserWithId | null, ign
   }
 
   return {
-    email: value['email'],
-    firstName: value['firstName'],
-    lastName: value['lastName'],
-    displayName: value['displayName'],
-    externalId: value['externalId'],
     accountNonExpired: value['accountNonExpired'],
     accountNonLocked: value['accountNonLocked'],
-    credentialsNonExpired: value['credentialsNonExpired'],
-    enabled: value['enabled'],
-    preRegistration: value['preRegistration'],
-    registrationCompleted: value['registrationCompleted'],
-    source: value['source'],
-    client: value['client'],
-    loginsCount: value['loginsCount'],
-    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
-    preferredLanguage: value['preferredLanguage'],
     additionalInformation: value['additionalInformation'],
+    client: value['client'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    credentialsNonExpired: value['credentialsNonExpired'],
+    displayName: value['displayName'],
+    email: value['email'],
+    enabled: value['enabled'],
+    externalId: value['externalId'],
+    firstName: value['firstName'],
     forceResetPassword: value['forceResetPassword'],
     id: value['id'],
+    lastName: value['lastName'],
+    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    loginsCount: value['loginsCount'],
+    preRegistration: value['preRegistration'],
+    preferredLanguage: value['preferredLanguage'],
+    registrationCompleted: value['registrationCompleted'],
+    source: value['source'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

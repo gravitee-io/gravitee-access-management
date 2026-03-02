@@ -179,12 +179,47 @@ export interface NewProtectedResourceResponse extends ProtectedResource {
   clientSecret: string;
 }
 
+/** Request body for PUT /protected-resources/{id}. Only writable fields (matches OpenAPI UpdateProtectedResource). */
 export interface UpdateProtectedResourceRequest {
   name: string;
   resourceIdentifiers: string[];
   description?: string;
-  features: ProtectedResourceFeature[];
+  features: UpdateProtectedResourceFeatureRequest[];
   settings?: any;
+}
+
+/** Writable fields for a feature in an update request (no read-only createdAt/updatedAt). */
+export interface UpdateProtectedResourceFeatureRequest {
+  key: string;
+  description: string;
+  type: ProtectedResourceFeatureType;
+  scopes?: string[];
+}
+
+/**
+ * Builds an update request payload from a full resource (GET response).
+ * Strips read-only fields so the payload matches the API contract (UpdateProtectedResource in OpenAPI).
+ */
+export function toUpdateProtectedResourceRequest(
+  resource: ProtectedResource & { features?: Array<ProtectedResourceFeature & { scopes?: string[] }> },
+): UpdateProtectedResourceRequest {
+  return {
+    name: resource.name,
+    resourceIdentifiers: resource.resourceIdentifiers,
+    description: resource.description,
+    features: (resource.features ?? []).map((f) => {
+      const feature: UpdateProtectedResourceFeatureRequest = {
+        key: f.key,
+        description: f.description ?? '',
+        type: f.type,
+      };
+      if ('scopes' in f && Array.isArray(f.scopes)) {
+        feature.scopes = f.scopes;
+      }
+      return feature;
+    }),
+    settings: resource.settings,
+  };
 }
 
 export interface PatchProtectedResourceRequest {

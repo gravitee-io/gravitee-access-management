@@ -37,6 +37,12 @@ export interface UpdateBotDetection {
    * @type {string}
    * @memberof UpdateBotDetection
    */
+  configuration: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateBotDetection
+   */
   name: string;
   /**
    *
@@ -44,21 +50,15 @@ export interface UpdateBotDetection {
    * @memberof UpdateBotDetection
    */
   type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateBotDetection
-   */
-  configuration: string;
 }
 
 /**
  * Check if a given object implements the UpdateBotDetection interface.
  */
 export function instanceOfUpdateBotDetection(value: object): value is UpdateBotDetection {
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   if (!('name' in value) || value['name'] === undefined) return false;
   if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
   return true;
 }
 
@@ -71,9 +71,9 @@ export function UpdateBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: 
     return json;
   }
   return {
+    configuration: json['configuration'],
     name: json['name'],
     type: json['type'],
-    configuration: json['configuration'],
   };
 }
 
@@ -87,8 +87,8 @@ export function UpdateBotDetectionToJSONTyped(value?: UpdateBotDetection | null,
   }
 
   return {
+    configuration: value['configuration'],
     name: value['name'],
     type: value['type'],
-    configuration: value['configuration'],
   };
 }

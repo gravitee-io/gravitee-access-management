@@ -37,6 +37,13 @@ import {
   ApplicationScopeSettingsToJSON,
   ApplicationScopeSettingsToJSONTyped,
 } from './ApplicationScopeSettings';
+import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
+import {
+  TokenExchangeOAuthSettingsFromJSON,
+  TokenExchangeOAuthSettingsFromJSONTyped,
+  TokenExchangeOAuthSettingsToJSON,
+  TokenExchangeOAuthSettingsToJSONTyped,
+} from './TokenExchangeOAuthSettings';
 
 /**
  *
@@ -46,298 +53,16 @@ import {
 export interface PatchApplicationOAuthSettings {
   /**
    *
-   * @type {Array<string>}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  redirectUris?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  responseTypes?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  grantTypes?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  applicationType?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  contacts?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  clientName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  logoUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  clientUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  policyUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tosUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  jwksUri?: string;
-  /**
-   *
-   * @type {JWKSet}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  jwks?: JWKSet;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  sectorIdentifierUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  subjectType?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  idTokenSignedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  idTokenEncryptedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  idTokenEncryptedResponseEnc?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  userinfoSignedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  userinfoEncryptedResponseAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  userinfoEncryptedResponseEnc?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  requestObjectSigningAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  requestObjectEncryptionAlg?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  requestObjectEncryptionEnc?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tokenEndpointAuthMethod?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tokenEndpointAuthSigningAlg?: string;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  defaultMaxAge?: number;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  requireAuthTime?: boolean;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  defaultACRvalues?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  initiateLoginUri?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  requestUris?: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  softwareId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  softwareVersion?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  softwareStatement?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  registrationAccessToken?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  registrationClientUri?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  clientIdIssuedAt?: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  clientSecretExpiresAt?: Date;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  enhanceScopesWithUserPermissions?: boolean;
-  /**
-   *
    * @type {number}
    * @memberof PatchApplicationOAuthSettings
    */
   accessTokenValiditySeconds?: number;
   /**
    *
-   * @type {number}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  refreshTokenValiditySeconds?: number;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  idTokenValiditySeconds?: number;
-  /**
-   *
-   * @type {Array<TokenClaim>}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tokenCustomClaims?: Array<TokenClaim>;
-  /**
-   *
    * @type {string}
    * @memberof PatchApplicationOAuthSettings
    */
-  tlsClientAuthSubjectDn?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tlsClientAuthSanDns?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tlsClientAuthSanUri?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tlsClientAuthSanIp?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tlsClientAuthSanEmail?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  tlsClientCertificateBoundAccessTokens?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationOAuthSettings
-   */
-  authorizationSignedResponseAlg?: string;
+  applicationType?: string;
   /**
    *
    * @type {string}
@@ -350,6 +75,66 @@ export interface PatchApplicationOAuthSettings {
    * @memberof PatchApplicationOAuthSettings
    */
   authorizationEncryptedResponseEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  authorizationSignedResponseAlg?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  clientIdIssuedAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  clientName?: string;
+  /**
+   *
+   * @type {Date}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  clientSecretExpiresAt?: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  clientUri?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  contacts?: Array<string>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  defaultACRvalues?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  defaultMaxAge?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  disableRefreshTokenRotation?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  enhanceScopesWithUserPermissions?: boolean;
   /**
    *
    * @type {boolean}
@@ -367,19 +152,127 @@ export interface PatchApplicationOAuthSettings {
    * @type {Array<string>}
    * @memberof PatchApplicationOAuthSettings
    */
+  grantTypes?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  idTokenEncryptedResponseAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  idTokenEncryptedResponseEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  idTokenSignedResponseAlg?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  idTokenValiditySeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  initiateLoginUri?: string;
+  /**
+   *
+   * @type {JWKSet}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  jwks?: JWKSet;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  jwksUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  logoUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  policyUri?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof PatchApplicationOAuthSettings
+   */
   postLogoutRedirectUris?: Array<string>;
   /**
    *
-   * @type {boolean}
+   * @type {Array<string>}
    * @memberof PatchApplicationOAuthSettings
    */
-  singleSignOut?: boolean;
+  redirectUris?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  refreshTokenValiditySeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  registrationAccessToken?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  registrationClientUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  requestObjectEncryptionAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  requestObjectEncryptionEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  requestObjectSigningAlg?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  requestUris?: Array<string>;
   /**
    *
    * @type {boolean}
    * @memberof PatchApplicationOAuthSettings
    */
-  silentReAuthentication?: boolean;
+  requireAuthTime?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  responseTypes?: Array<string>;
   /**
    *
    * @type {Array<ApplicationScopeSettings>}
@@ -388,10 +281,130 @@ export interface PatchApplicationOAuthSettings {
   scopeSettings?: Array<ApplicationScopeSettings>;
   /**
    *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  sectorIdentifierUri?: string;
+  /**
+   *
    * @type {boolean}
    * @memberof PatchApplicationOAuthSettings
    */
-  disableRefreshTokenRotation?: boolean;
+  silentReAuthentication?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  singleSignOut?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  softwareId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  softwareStatement?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  softwareVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  subjectType?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tlsClientAuthSanDns?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tlsClientAuthSanEmail?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tlsClientAuthSanIp?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tlsClientAuthSanUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tlsClientAuthSubjectDn?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tlsClientCertificateBoundAccessTokens?: boolean;
+  /**
+   *
+   * @type {Array<TokenClaim>}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tokenCustomClaims?: Array<TokenClaim>;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tokenEndpointAuthMethod?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tokenEndpointAuthSigningAlg?: string;
+  /**
+   *
+   * @type {TokenExchangeOAuthSettings}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  tosUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  userinfoEncryptedResponseAlg?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  userinfoEncryptedResponseEnc?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  userinfoSignedResponseAlg?: string;
 }
 
 /**
@@ -410,68 +423,70 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
     return json;
   }
   return {
-    redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
-    responseTypes: json['responseTypes'] == null ? undefined : json['responseTypes'],
-    grantTypes: json['grantTypes'] == null ? undefined : json['grantTypes'],
-    applicationType: json['applicationType'] == null ? undefined : json['applicationType'],
-    contacts: json['contacts'] == null ? undefined : json['contacts'],
-    clientName: json['clientName'] == null ? undefined : json['clientName'],
-    logoUri: json['logoUri'] == null ? undefined : json['logoUri'],
-    clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
-    policyUri: json['policyUri'] == null ? undefined : json['policyUri'],
-    tosUri: json['tosUri'] == null ? undefined : json['tosUri'],
-    jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
-    jwks: json['jwks'] == null ? undefined : JWKSetFromJSON(json['jwks']),
-    sectorIdentifierUri: json['sectorIdentifierUri'] == null ? undefined : json['sectorIdentifierUri'],
-    subjectType: json['subjectType'] == null ? undefined : json['subjectType'],
-    idTokenSignedResponseAlg: json['idTokenSignedResponseAlg'] == null ? undefined : json['idTokenSignedResponseAlg'],
-    idTokenEncryptedResponseAlg: json['idTokenEncryptedResponseAlg'] == null ? undefined : json['idTokenEncryptedResponseAlg'],
-    idTokenEncryptedResponseEnc: json['idTokenEncryptedResponseEnc'] == null ? undefined : json['idTokenEncryptedResponseEnc'],
-    userinfoSignedResponseAlg: json['userinfoSignedResponseAlg'] == null ? undefined : json['userinfoSignedResponseAlg'],
-    userinfoEncryptedResponseAlg: json['userinfoEncryptedResponseAlg'] == null ? undefined : json['userinfoEncryptedResponseAlg'],
-    userinfoEncryptedResponseEnc: json['userinfoEncryptedResponseEnc'] == null ? undefined : json['userinfoEncryptedResponseEnc'],
-    requestObjectSigningAlg: json['requestObjectSigningAlg'] == null ? undefined : json['requestObjectSigningAlg'],
-    requestObjectEncryptionAlg: json['requestObjectEncryptionAlg'] == null ? undefined : json['requestObjectEncryptionAlg'],
-    requestObjectEncryptionEnc: json['requestObjectEncryptionEnc'] == null ? undefined : json['requestObjectEncryptionEnc'],
-    tokenEndpointAuthMethod: json['tokenEndpointAuthMethod'] == null ? undefined : json['tokenEndpointAuthMethod'],
-    tokenEndpointAuthSigningAlg: json['tokenEndpointAuthSigningAlg'] == null ? undefined : json['tokenEndpointAuthSigningAlg'],
-    defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
-    requireAuthTime: json['requireAuthTime'] == null ? undefined : json['requireAuthTime'],
-    defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
-    initiateLoginUri: json['initiateLoginUri'] == null ? undefined : json['initiateLoginUri'],
-    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
-    softwareId: json['softwareId'] == null ? undefined : json['softwareId'],
-    softwareVersion: json['softwareVersion'] == null ? undefined : json['softwareVersion'],
-    softwareStatement: json['softwareStatement'] == null ? undefined : json['softwareStatement'],
-    registrationAccessToken: json['registrationAccessToken'] == null ? undefined : json['registrationAccessToken'],
-    registrationClientUri: json['registrationClientUri'] == null ? undefined : json['registrationClientUri'],
-    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : new Date(json['clientIdIssuedAt']),
-    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : new Date(json['clientSecretExpiresAt']),
-    enhanceScopesWithUserPermissions:
-      json['enhanceScopesWithUserPermissions'] == null ? undefined : json['enhanceScopesWithUserPermissions'],
     accessTokenValiditySeconds: json['accessTokenValiditySeconds'] == null ? undefined : json['accessTokenValiditySeconds'],
-    refreshTokenValiditySeconds: json['refreshTokenValiditySeconds'] == null ? undefined : json['refreshTokenValiditySeconds'],
-    idTokenValiditySeconds: json['idTokenValiditySeconds'] == null ? undefined : json['idTokenValiditySeconds'],
-    tokenCustomClaims: json['tokenCustomClaims'] == null ? undefined : (json['tokenCustomClaims'] as Array<any>).map(TokenClaimFromJSON),
-    tlsClientAuthSubjectDn: json['tlsClientAuthSubjectDn'] == null ? undefined : json['tlsClientAuthSubjectDn'],
-    tlsClientAuthSanDns: json['tlsClientAuthSanDns'] == null ? undefined : json['tlsClientAuthSanDns'],
-    tlsClientAuthSanUri: json['tlsClientAuthSanUri'] == null ? undefined : json['tlsClientAuthSanUri'],
-    tlsClientAuthSanIp: json['tlsClientAuthSanIp'] == null ? undefined : json['tlsClientAuthSanIp'],
-    tlsClientAuthSanEmail: json['tlsClientAuthSanEmail'] == null ? undefined : json['tlsClientAuthSanEmail'],
-    tlsClientCertificateBoundAccessTokens:
-      json['tlsClientCertificateBoundAccessTokens'] == null ? undefined : json['tlsClientCertificateBoundAccessTokens'],
-    authorizationSignedResponseAlg: json['authorizationSignedResponseAlg'] == null ? undefined : json['authorizationSignedResponseAlg'],
+    applicationType: json['applicationType'] == null ? undefined : json['applicationType'],
     authorizationEncryptedResponseAlg:
       json['authorizationEncryptedResponseAlg'] == null ? undefined : json['authorizationEncryptedResponseAlg'],
     authorizationEncryptedResponseEnc:
       json['authorizationEncryptedResponseEnc'] == null ? undefined : json['authorizationEncryptedResponseEnc'],
+    authorizationSignedResponseAlg: json['authorizationSignedResponseAlg'] == null ? undefined : json['authorizationSignedResponseAlg'],
+    clientIdIssuedAt: json['clientIdIssuedAt'] == null ? undefined : new Date(json['clientIdIssuedAt']),
+    clientName: json['clientName'] == null ? undefined : json['clientName'],
+    clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : new Date(json['clientSecretExpiresAt']),
+    clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
+    contacts: json['contacts'] == null ? undefined : json['contacts'],
+    defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
+    defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
+    disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
+    enhanceScopesWithUserPermissions:
+      json['enhanceScopesWithUserPermissions'] == null ? undefined : json['enhanceScopesWithUserPermissions'],
     forcePKCE: json['forcePKCE'] == null ? undefined : json['forcePKCE'],
     forceS256CodeChallengeMethod: json['forceS256CodeChallengeMethod'] == null ? undefined : json['forceS256CodeChallengeMethod'],
+    grantTypes: json['grantTypes'] == null ? undefined : json['grantTypes'],
+    idTokenEncryptedResponseAlg: json['idTokenEncryptedResponseAlg'] == null ? undefined : json['idTokenEncryptedResponseAlg'],
+    idTokenEncryptedResponseEnc: json['idTokenEncryptedResponseEnc'] == null ? undefined : json['idTokenEncryptedResponseEnc'],
+    idTokenSignedResponseAlg: json['idTokenSignedResponseAlg'] == null ? undefined : json['idTokenSignedResponseAlg'],
+    idTokenValiditySeconds: json['idTokenValiditySeconds'] == null ? undefined : json['idTokenValiditySeconds'],
+    initiateLoginUri: json['initiateLoginUri'] == null ? undefined : json['initiateLoginUri'],
+    jwks: json['jwks'] == null ? undefined : JWKSetFromJSON(json['jwks']),
+    jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
+    logoUri: json['logoUri'] == null ? undefined : json['logoUri'],
+    policyUri: json['policyUri'] == null ? undefined : json['policyUri'],
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
-    singleSignOut: json['singleSignOut'] == null ? undefined : json['singleSignOut'],
-    silentReAuthentication: json['silentReAuthentication'] == null ? undefined : json['silentReAuthentication'],
+    redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
+    refreshTokenValiditySeconds: json['refreshTokenValiditySeconds'] == null ? undefined : json['refreshTokenValiditySeconds'],
+    registrationAccessToken: json['registrationAccessToken'] == null ? undefined : json['registrationAccessToken'],
+    registrationClientUri: json['registrationClientUri'] == null ? undefined : json['registrationClientUri'],
+    requestObjectEncryptionAlg: json['requestObjectEncryptionAlg'] == null ? undefined : json['requestObjectEncryptionAlg'],
+    requestObjectEncryptionEnc: json['requestObjectEncryptionEnc'] == null ? undefined : json['requestObjectEncryptionEnc'],
+    requestObjectSigningAlg: json['requestObjectSigningAlg'] == null ? undefined : json['requestObjectSigningAlg'],
+    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
+    requireAuthTime: json['requireAuthTime'] == null ? undefined : json['requireAuthTime'],
+    responseTypes: json['responseTypes'] == null ? undefined : json['responseTypes'],
     scopeSettings: json['scopeSettings'] == null ? undefined : (json['scopeSettings'] as Array<any>).map(ApplicationScopeSettingsFromJSON),
-    disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
+    sectorIdentifierUri: json['sectorIdentifierUri'] == null ? undefined : json['sectorIdentifierUri'],
+    silentReAuthentication: json['silentReAuthentication'] == null ? undefined : json['silentReAuthentication'],
+    singleSignOut: json['singleSignOut'] == null ? undefined : json['singleSignOut'],
+    softwareId: json['softwareId'] == null ? undefined : json['softwareId'],
+    softwareStatement: json['softwareStatement'] == null ? undefined : json['softwareStatement'],
+    softwareVersion: json['softwareVersion'] == null ? undefined : json['softwareVersion'],
+    subjectType: json['subjectType'] == null ? undefined : json['subjectType'],
+    tlsClientAuthSanDns: json['tlsClientAuthSanDns'] == null ? undefined : json['tlsClientAuthSanDns'],
+    tlsClientAuthSanEmail: json['tlsClientAuthSanEmail'] == null ? undefined : json['tlsClientAuthSanEmail'],
+    tlsClientAuthSanIp: json['tlsClientAuthSanIp'] == null ? undefined : json['tlsClientAuthSanIp'],
+    tlsClientAuthSanUri: json['tlsClientAuthSanUri'] == null ? undefined : json['tlsClientAuthSanUri'],
+    tlsClientAuthSubjectDn: json['tlsClientAuthSubjectDn'] == null ? undefined : json['tlsClientAuthSubjectDn'],
+    tlsClientCertificateBoundAccessTokens:
+      json['tlsClientCertificateBoundAccessTokens'] == null ? undefined : json['tlsClientCertificateBoundAccessTokens'],
+    tokenCustomClaims: json['tokenCustomClaims'] == null ? undefined : (json['tokenCustomClaims'] as Array<any>).map(TokenClaimFromJSON),
+    tokenEndpointAuthMethod: json['tokenEndpointAuthMethod'] == null ? undefined : json['tokenEndpointAuthMethod'],
+    tokenEndpointAuthSigningAlg: json['tokenEndpointAuthSigningAlg'] == null ? undefined : json['tokenEndpointAuthSigningAlg'],
+    tokenExchangeOAuthSettings:
+      json['tokenExchangeOAuthSettings'] == null ? undefined : TokenExchangeOAuthSettingsFromJSON(json['tokenExchangeOAuthSettings']),
+    tosUri: json['tosUri'] == null ? undefined : json['tosUri'],
+    userinfoEncryptedResponseAlg: json['userinfoEncryptedResponseAlg'] == null ? undefined : json['userinfoEncryptedResponseAlg'],
+    userinfoEncryptedResponseEnc: json['userinfoEncryptedResponseEnc'] == null ? undefined : json['userinfoEncryptedResponseEnc'],
+    userinfoSignedResponseAlg: json['userinfoSignedResponseAlg'] == null ? undefined : json['userinfoSignedResponseAlg'],
   };
 }
 
@@ -488,64 +503,65 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
   }
 
   return {
-    redirectUris: value['redirectUris'],
-    responseTypes: value['responseTypes'],
-    grantTypes: value['grantTypes'],
-    applicationType: value['applicationType'],
-    contacts: value['contacts'],
-    clientName: value['clientName'],
-    logoUri: value['logoUri'],
-    clientUri: value['clientUri'],
-    policyUri: value['policyUri'],
-    tosUri: value['tosUri'],
-    jwksUri: value['jwksUri'],
-    jwks: JWKSetToJSON(value['jwks']),
-    sectorIdentifierUri: value['sectorIdentifierUri'],
-    subjectType: value['subjectType'],
-    idTokenSignedResponseAlg: value['idTokenSignedResponseAlg'],
-    idTokenEncryptedResponseAlg: value['idTokenEncryptedResponseAlg'],
-    idTokenEncryptedResponseEnc: value['idTokenEncryptedResponseEnc'],
-    userinfoSignedResponseAlg: value['userinfoSignedResponseAlg'],
-    userinfoEncryptedResponseAlg: value['userinfoEncryptedResponseAlg'],
-    userinfoEncryptedResponseEnc: value['userinfoEncryptedResponseEnc'],
-    requestObjectSigningAlg: value['requestObjectSigningAlg'],
-    requestObjectEncryptionAlg: value['requestObjectEncryptionAlg'],
-    requestObjectEncryptionEnc: value['requestObjectEncryptionEnc'],
-    tokenEndpointAuthMethod: value['tokenEndpointAuthMethod'],
-    tokenEndpointAuthSigningAlg: value['tokenEndpointAuthSigningAlg'],
-    defaultMaxAge: value['defaultMaxAge'],
-    requireAuthTime: value['requireAuthTime'],
-    defaultACRvalues: value['defaultACRvalues'],
-    initiateLoginUri: value['initiateLoginUri'],
-    requestUris: value['requestUris'],
-    softwareId: value['softwareId'],
-    softwareVersion: value['softwareVersion'],
-    softwareStatement: value['softwareStatement'],
-    registrationAccessToken: value['registrationAccessToken'],
-    registrationClientUri: value['registrationClientUri'],
-    clientIdIssuedAt: value['clientIdIssuedAt'] == null ? value['clientIdIssuedAt'] : value['clientIdIssuedAt'].toISOString(),
-    clientSecretExpiresAt:
-      value['clientSecretExpiresAt'] == null ? value['clientSecretExpiresAt'] : value['clientSecretExpiresAt'].toISOString(),
-    enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],
     accessTokenValiditySeconds: value['accessTokenValiditySeconds'],
-    refreshTokenValiditySeconds: value['refreshTokenValiditySeconds'],
-    idTokenValiditySeconds: value['idTokenValiditySeconds'],
-    tokenCustomClaims: value['tokenCustomClaims'] == null ? undefined : (value['tokenCustomClaims'] as Array<any>).map(TokenClaimToJSON),
-    tlsClientAuthSubjectDn: value['tlsClientAuthSubjectDn'],
-    tlsClientAuthSanDns: value['tlsClientAuthSanDns'],
-    tlsClientAuthSanUri: value['tlsClientAuthSanUri'],
-    tlsClientAuthSanIp: value['tlsClientAuthSanIp'],
-    tlsClientAuthSanEmail: value['tlsClientAuthSanEmail'],
-    tlsClientCertificateBoundAccessTokens: value['tlsClientCertificateBoundAccessTokens'],
-    authorizationSignedResponseAlg: value['authorizationSignedResponseAlg'],
+    applicationType: value['applicationType'],
     authorizationEncryptedResponseAlg: value['authorizationEncryptedResponseAlg'],
     authorizationEncryptedResponseEnc: value['authorizationEncryptedResponseEnc'],
+    authorizationSignedResponseAlg: value['authorizationSignedResponseAlg'],
+    clientIdIssuedAt: value['clientIdIssuedAt'] == null ? value['clientIdIssuedAt'] : value['clientIdIssuedAt'].toISOString(),
+    clientName: value['clientName'],
+    clientSecretExpiresAt:
+      value['clientSecretExpiresAt'] == null ? value['clientSecretExpiresAt'] : value['clientSecretExpiresAt'].toISOString(),
+    clientUri: value['clientUri'],
+    contacts: value['contacts'],
+    defaultACRvalues: value['defaultACRvalues'],
+    defaultMaxAge: value['defaultMaxAge'],
+    disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
+    enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],
     forcePKCE: value['forcePKCE'],
     forceS256CodeChallengeMethod: value['forceS256CodeChallengeMethod'],
+    grantTypes: value['grantTypes'],
+    idTokenEncryptedResponseAlg: value['idTokenEncryptedResponseAlg'],
+    idTokenEncryptedResponseEnc: value['idTokenEncryptedResponseEnc'],
+    idTokenSignedResponseAlg: value['idTokenSignedResponseAlg'],
+    idTokenValiditySeconds: value['idTokenValiditySeconds'],
+    initiateLoginUri: value['initiateLoginUri'],
+    jwks: JWKSetToJSON(value['jwks']),
+    jwksUri: value['jwksUri'],
+    logoUri: value['logoUri'],
+    policyUri: value['policyUri'],
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
-    singleSignOut: value['singleSignOut'],
-    silentReAuthentication: value['silentReAuthentication'],
+    redirectUris: value['redirectUris'],
+    refreshTokenValiditySeconds: value['refreshTokenValiditySeconds'],
+    registrationAccessToken: value['registrationAccessToken'],
+    registrationClientUri: value['registrationClientUri'],
+    requestObjectEncryptionAlg: value['requestObjectEncryptionAlg'],
+    requestObjectEncryptionEnc: value['requestObjectEncryptionEnc'],
+    requestObjectSigningAlg: value['requestObjectSigningAlg'],
+    requestUris: value['requestUris'],
+    requireAuthTime: value['requireAuthTime'],
+    responseTypes: value['responseTypes'],
     scopeSettings: value['scopeSettings'] == null ? undefined : (value['scopeSettings'] as Array<any>).map(ApplicationScopeSettingsToJSON),
-    disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
+    sectorIdentifierUri: value['sectorIdentifierUri'],
+    silentReAuthentication: value['silentReAuthentication'],
+    singleSignOut: value['singleSignOut'],
+    softwareId: value['softwareId'],
+    softwareStatement: value['softwareStatement'],
+    softwareVersion: value['softwareVersion'],
+    subjectType: value['subjectType'],
+    tlsClientAuthSanDns: value['tlsClientAuthSanDns'],
+    tlsClientAuthSanEmail: value['tlsClientAuthSanEmail'],
+    tlsClientAuthSanIp: value['tlsClientAuthSanIp'],
+    tlsClientAuthSanUri: value['tlsClientAuthSanUri'],
+    tlsClientAuthSubjectDn: value['tlsClientAuthSubjectDn'],
+    tlsClientCertificateBoundAccessTokens: value['tlsClientCertificateBoundAccessTokens'],
+    tokenCustomClaims: value['tokenCustomClaims'] == null ? undefined : (value['tokenCustomClaims'] as Array<any>).map(TokenClaimToJSON),
+    tokenEndpointAuthMethod: value['tokenEndpointAuthMethod'],
+    tokenEndpointAuthSigningAlg: value['tokenEndpointAuthSigningAlg'],
+    tokenExchangeOAuthSettings: TokenExchangeOAuthSettingsToJSON(value['tokenExchangeOAuthSettings']),
+    tosUri: value['tosUri'],
+    userinfoEncryptedResponseAlg: value['userinfoEncryptedResponseAlg'],
+    userinfoEncryptedResponseEnc: value['userinfoEncryptedResponseEnc'],
+    userinfoSignedResponseAlg: value['userinfoSignedResponseAlg'],
   };
 }

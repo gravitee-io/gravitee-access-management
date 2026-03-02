@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.11.0-SNAPSHOT
+  version: 4.11.0-alpha.2-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -1262,6 +1262,49 @@ paths:
                 $ref: "#/components/schemas/Application"
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/agent-card:
+    get:
+      tags:
+      - application
+      - domain
+      summary: Fetch the agent card for an application
+      description: "User must have APPLICATION[READ] permission on the specified application.\
+        \ Fetches and proxies the agent card JSON from the application's configured\
+        \ agentCardUrl."
+      operationId: getApplicationAgentCard
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Agent card JSON successfully fetched
+        "400":
+          description: No agentCardUrl configured or invalid URL
+        "404":
+          description: Application not found
+        "502":
+          description: "Agent card fetch failed (upstream unreachable, invalid response,\
+            \ or non-200 status)"
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics:
     get:
       tags:
@@ -1390,6 +1433,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -1786,6 +1831,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -3241,6 +3288,48 @@ paths:
           description: Bot detection successfully deleted
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/certificate-settings:
+    put:
+      tags:
+      - domain
+      summary: Update the security domain certificate settings
+      description: "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified\
+        \ domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment\
+        \ or DOMAIN_SETTINGS[UPDATE] permission on the specified organization. This\
+        \ endpoint updates only certificate settings without triggering a full domain\
+        \ reload."
+      operationId: updateDomainCertificateSettings
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateSettings"
+        required: true
+      responses:
+        "200":
+          description: Certificate settings successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Domain"
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/certificates:
     get:
       tags:
@@ -3815,6 +3904,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -4604,6 +4695,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -6662,10 +6755,11 @@ paths:
       - protected-resource
       - domain
       summary: List secrets of a protected resource
-      description: "User must have the PROTECTED_RESOURCE[LIST] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[LIST] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[LIST] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[LIST] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[LIST] permission on\
+        \ the specified resource or PROTECTED_RESOURCE_OAUTH[LIST] permission on the\
+        \ specified domain or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified\
+        \ environment or PROTECTED_RESOURCE_OAUTH[LIST] permission on the specified\
+        \ organization."
       operationId: getSecrets
       parameters:
       - name: organizationId
@@ -6704,10 +6798,11 @@ paths:
       - protected-resource
       - domain
       summary: Create a secret for a protected resource
-      description: "User must have the PROTECTED_RESOURCE[CREATE] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[CREATE] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[CREATE] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[CREATE] permission\
+        \ on the specified resource or PROTECTED_RESOURCE_OAUTH[CREATE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_OAUTH[CREATE] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_OAUTH[CREATE] permission\
+        \ on the specified organization."
       operationId: create
       parameters:
       - name: organizationId
@@ -6751,10 +6846,11 @@ paths:
       - protected-resource
       - domain
       summary: Remove a secret for a protected resource
-      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[DELETE] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[DELETE] permission\
+        \ on the specified resource or PROTECTED_RESOURCE_OAUTH[DELETE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_OAUTH[DELETE] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_OAUTH[DELETE] permission\
+        \ on the specified organization."
       operationId: delete
       parameters:
       - name: organizationId
@@ -6795,10 +6891,11 @@ paths:
       - protected-resource
       - domain
       summary: Renew a secret for a protected resource
-      description: "User must have the PROTECTED_RESOURCE[UPDATE] permission on the\
-        \ specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE_OAUTH[UPDATE] permission\
+        \ on the specified resource or PROTECTED_RESOURCE_OAUTH[UPDATE] permission\
+        \ on the specified domain or PROTECTED_RESOURCE_OAUTH[UPDATE] permission on\
+        \ the specified environment or PROTECTED_RESOURCE_OAUTH[UPDATE] permission\
+        \ on the specified organization."
       operationId: renew
       parameters:
       - name: organizationId
@@ -8522,7 +8619,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ScopeApprovalEntity"
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScopeApprovalEntity"
         "500":
           description: Internal server error
     delete:
@@ -9469,6 +9568,8 @@ paths:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -11821,52 +11922,61 @@ components:
     AccessPolicy:
       type: object
       properties:
+        condition:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        domain:
+          type: string
+        enabled:
+          type: boolean
         id:
+          type: string
+        name:
+          type: string
+        order:
+          type: integer
+          format: int32
+        resource:
           type: string
         type:
           type: string
           enum:
           - GROOVY
-        enabled:
-          type: boolean
-        name:
-          type: string
-        description:
-          type: string
-        order:
-          type: integer
-          format: int32
-        condition:
-          type: string
-        domain:
-          type: string
-        resource:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     AccessPolicyListItem:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
         id:
           type: string
         name:
           type: string
-        description:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     AccountAccessToken:
       type: object
       properties:
-        tokenId:
+        createdAt:
+          type: string
+          format: date-time
+        issuerId:
+          type: string
+        issuerUsername:
+          type: string
+        name:
+          type: string
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -11877,120 +11987,114 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
-          type: string
-        userId:
-          type: string
-        issuerUsername:
-          type: string
-        issuerId:
-          type: string
-        name:
-          type: string
         token:
           type: string
-        createdAt:
+        tokenId:
           type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
+        userId:
+          type: string
     AccountSettings:
       type: object
       properties:
+        accountBlockedDuration:
+          type: integer
+          format: int32
+        autoLoginAfterRegistration:
+          type: boolean
+        autoLoginAfterResetPassword:
+          type: boolean
+        botDetectionPlugin:
+          type: string
+        completeRegistrationWhenResetPassword:
+          type: boolean
+        defaultIdentityProviderForRegistration:
+          type: string
+        deletePasswordlessDevicesAfterResetPassword:
+          type: boolean
+        dynamicUserRegistration:
+          type: boolean
         inherited:
           type: boolean
         loginAttemptsDetectionEnabled:
           type: boolean
-        maxLoginAttempts:
-          type: integer
-          format: int32
         loginAttemptsResetTime:
           type: integer
           format: int32
-        accountBlockedDuration:
+        maxLoginAttempts:
           type: integer
           format: int32
-        sendRecoverAccountEmail:
+        mfaChallengeAttemptsDetectionEnabled:
           type: boolean
-        completeRegistrationWhenResetPassword:
-          type: boolean
-        autoLoginAfterRegistration:
+        mfaChallengeAttemptsResetTime:
+          type: integer
+          format: int32
+        mfaChallengeMaxAttempts:
+          type: integer
+          format: int32
+        mfaChallengeSendVerifyAlertEmail:
           type: boolean
         redirectUriAfterRegistration:
           type: string
-        dynamicUserRegistration:
-          type: boolean
-        defaultIdentityProviderForRegistration:
-          type: string
-        autoLoginAfterResetPassword:
-          type: boolean
         redirectUriAfterResetPassword:
-          type: string
-        deletePasswordlessDevicesAfterResetPassword:
-          type: boolean
-        useBotDetection:
-          type: boolean
-        botDetectionPlugin:
           type: string
         rememberMe:
           type: boolean
         rememberMeDuration:
           type: integer
           format: int32
+        resetPasswordConfirmIdentity:
+          type: boolean
         resetPasswordCustomForm:
           type: boolean
         resetPasswordCustomFormFields:
           type: array
           items:
             $ref: "#/components/schemas/FormField"
-        resetPasswordConfirmIdentity:
-          type: boolean
         resetPasswordInvalidateTokens:
           type: boolean
-        mfaChallengeAttemptsDetectionEnabled:
-          type: boolean
-        mfaChallengeMaxAttempts:
-          type: integer
-          format: int32
-        mfaChallengeAttemptsResetTime:
-          type: integer
-          format: int32
-        mfaChallengeSendVerifyAlertEmail:
+        sendRecoverAccountEmail:
           type: boolean
         sendVerifyRegistrationAccountEmail:
+          type: boolean
+        useBotDetection:
           type: boolean
     Address:
       type: object
       properties:
-        type:
+        country:
           type: string
         formatted:
           type: string
-        streetAddress:
-          type: string
         locality:
-          type: string
-        region:
           type: string
         postalCode:
           type: string
-        country:
-          type: string
         primary:
           type: boolean
+        region:
+          type: string
+        streetAddress:
+          type: string
+        type:
+          type: string
     AlertNotifier:
       type: object
       properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        enabled:
+          type: boolean
         id:
           type: string
         name:
           type: string
-        type:
-          type: string
-        enabled:
-          type: boolean
-        configuration:
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -12001,11 +12105,8 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        type:
           type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
@@ -12017,15 +12118,19 @@ components:
     AlertTrigger:
       type: object
       properties:
-        id:
+        alertNotifiers:
+          type: array
+          items:
+            type: string
+        createdAt:
           type: string
-        type:
-          type: string
-          enum:
-          - TOO_MANY_LOGIN_FAILURES
-          - RISK_ASSESSMENT
+          format: date-time
         enabled:
           type: boolean
+        id:
+          type: string
+        referenceId:
+          type: string
         referenceType:
           type: string
           enum:
@@ -12035,36 +12140,71 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        type:
           type: string
-        alertNotifiers:
-          type: array
-          items:
-            type: string
-        createdAt:
-          type: string
-          format: date-time
+          enum:
+          - TOO_MANY_LOGIN_FAILURES
+          - RISK_ASSESSMENT
         updatedAt:
           type: string
           format: date-time
     AnalyticsTypeParam:
       type: object
       properties:
+        originalParam:
+          type: string
         value:
           type: string
           enum:
           - DATE_HISTO
           - COUNT
           - GROUP_BY
-        originalParam:
-          type: string
     Application:
       type: object
       properties:
+        certificate:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        domain:
+          type: string
+        enabled:
+          type: boolean
+        factors:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
         id:
           type: string
+        identityProviders:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationIdentityProvider"
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
         name:
           type: string
+        passwordSettings:
+          $ref: "#/components/schemas/PasswordSettings"
+        secretSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationSecretSettings"
+        secrets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientSecret"
+        settings:
+          $ref: "#/components/schemas/ApplicationSettings"
+        template:
+          type: boolean
         type:
           type: string
           enum:
@@ -12074,61 +12214,24 @@ components:
           - SERVICE
           - RESOURCE_SERVER
           - AGENT
-        description:
-          type: string
-        domain:
-          type: string
-        enabled:
-          type: boolean
-        template:
-          type: boolean
-        factors:
-          uniqueItems: true
-          type: array
-          items:
-            type: string
-        certificate:
-          type: string
-        metadata:
-          type: object
-          additionalProperties:
-            type: object
-        settings:
-          $ref: "#/components/schemas/ApplicationSettings"
-        identityProviders:
-          uniqueItems: true
-          type: array
-          items:
-            $ref: "#/components/schemas/ApplicationIdentityProvider"
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
-        secretSettings:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApplicationSecretSettings"
-        secrets:
-          type: array
-          items:
-            $ref: "#/components/schemas/ClientSecret"
-        passwordSettings:
-          $ref: "#/components/schemas/PasswordSettings"
     ApplicationAdvancedSettings:
       type: object
       properties:
-        skipConsent:
-          type: boolean
+        agentCardUrl:
+          type: string
         flowsInherited:
+          type: boolean
+        skipConsent:
           type: boolean
     ApplicationEntity:
       type: object
       properties:
-        id:
-          type: string
         clientId:
+          type: string
+        id:
           type: string
         name:
           type: string
@@ -12144,114 +12247,125 @@ components:
       properties:
         identity:
           type: string
-        selectionRule:
-          type: string
         priority:
           type: integer
           format: int32
+        selectionRule:
+          type: string
     ApplicationOAuthSettings:
       type: object
       properties:
+        accessTokenValiditySeconds:
+          type: integer
+          format: int32
+        applicationType:
+          type: string
+        authorizationEncryptedResponseAlg:
+          type: string
+        authorizationEncryptedResponseEnc:
+          type: string
+        authorizationSignedResponseAlg:
+          type: string
+        backchannelAuthRequestSignAlg:
+          type: string
+        backchannelClientNotificationEndpoint:
+          type: string
+        backchannelTokenDeliveryMode:
+          type: string
+        backchannelUserCodeParameter:
+          type: boolean
         clientId:
+          type: string
+        clientIdIssuedAt:
+          type: string
+          format: date-time
+        clientName:
           type: string
         clientSecret:
           type: string
+        clientSecretExpiresAt:
+          type: string
+          format: date-time
         clientType:
           type: string
-        redirectUris:
-          type: array
-          items:
-            type: string
-        responseTypes:
-          type: array
-          items:
-            type: string
-        grantTypes:
-          type: array
-          items:
-            type: string
-        applicationType:
+        clientUri:
           type: string
         contacts:
           type: array
           items:
             type: string
-        clientName:
-          type: string
-        logoUri:
-          type: string
-        clientUri:
-          type: string
-        policyUri:
-          type: string
-        tosUri:
-          type: string
-        jwksUri:
-          type: string
-        jwks:
-          $ref: "#/components/schemas/JWKSet"
-        sectorIdentifierUri:
-          type: string
-        subjectType:
-          type: string
-        idTokenSignedResponseAlg:
-          type: string
+        defaultACRvalues:
+          type: array
+          items:
+            type: string
+        defaultMaxAge:
+          type: integer
+          format: int32
+        defaultScopes:
+          type: array
+          items:
+            type: string
+        disableRefreshTokenRotation:
+          type: boolean
+        enhanceScopesWithUserPermissions:
+          type: boolean
+        forcePKCE:
+          type: boolean
+        forceS256CodeChallengeMethod:
+          type: boolean
+        grantTypes:
+          type: array
+          items:
+            type: string
         idTokenEncryptedResponseAlg:
           type: string
         idTokenEncryptedResponseEnc:
           type: string
-        userinfoSignedResponseAlg:
+        idTokenSignedResponseAlg:
           type: string
-        userinfoEncryptedResponseAlg:
+        idTokenValiditySeconds:
+          type: integer
+          format: int32
+        initiateLoginUri:
           type: string
-        userinfoEncryptedResponseEnc:
+        jwks:
+          $ref: "#/components/schemas/JWKSet"
+        jwksUri:
           type: string
-        requestObjectSigningAlg:
+        logoUri:
+          type: string
+        policyUri:
+          type: string
+        postLogoutRedirectUris:
+          type: array
+          items:
+            type: string
+        redirectUris:
+          type: array
+          items:
+            type: string
+        refreshTokenValiditySeconds:
+          type: integer
+          format: int32
+        registrationAccessToken:
+          type: string
+        registrationClientUri:
           type: string
         requestObjectEncryptionAlg:
           type: string
         requestObjectEncryptionEnc:
           type: string
-        tokenEndpointAuthMethod:
-          type: string
-        tokenEndpointAuthSigningAlg:
-          type: string
-        defaultMaxAge:
-          type: integer
-          format: int32
-        requireAuthTime:
-          type: boolean
-        defaultACRvalues:
-          type: array
-          items:
-            type: string
-        initiateLoginUri:
+        requestObjectSigningAlg:
           type: string
         requestUris:
           type: array
           items:
             type: string
-        softwareId:
-          type: string
-        softwareVersion:
-          type: string
-        softwareStatement:
-          type: string
-        registrationAccessToken:
-          type: string
-        registrationClientUri:
-          type: string
-        clientIdIssuedAt:
-          type: string
-          format: date-time
-        clientSecretExpiresAt:
-          type: string
-          format: date-time
-        scopes:
-          type: array
-          items:
-            type: string
-        defaultScopes:
+        requireAuthTime:
+          type: boolean
+        requireParRequest:
+          type: boolean
+        responseTypes:
           type: array
           items:
             type: string
@@ -12264,131 +12378,122 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationScopeSettings"
-        enhanceScopesWithUserPermissions:
+        scopes:
+          type: array
+          items:
+            type: string
+        sectorIdentifierUri:
+          type: string
+        silentReAuthentication:
           type: boolean
-        accessTokenValiditySeconds:
-          type: integer
-          format: int32
-        refreshTokenValiditySeconds:
-          type: integer
-          format: int32
-        idTokenValiditySeconds:
-          type: integer
-          format: int32
+        singleSignOut:
+          type: boolean
+        softwareId:
+          type: string
+        softwareStatement:
+          type: string
+        softwareVersion:
+          type: string
+        subjectType:
+          type: string
+        tlsClientAuthSanDns:
+          type: string
+        tlsClientAuthSanEmail:
+          type: string
+        tlsClientAuthSanIp:
+          type: string
+        tlsClientAuthSanUri:
+          type: string
+        tlsClientAuthSubjectDn:
+          type: string
+        tlsClientCertificateBoundAccessTokens:
+          type: boolean
         tokenCustomClaims:
           type: array
           items:
             $ref: "#/components/schemas/TokenClaim"
-        tlsClientAuthSubjectDn:
+        tokenEndpointAuthMethod:
           type: string
-        tlsClientAuthSanDns:
+        tokenEndpointAuthSigningAlg:
           type: string
-        tlsClientAuthSanUri:
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
+        tosUri:
           type: string
-        tlsClientAuthSanIp:
+        userinfoEncryptedResponseAlg:
           type: string
-        tlsClientAuthSanEmail:
+        userinfoEncryptedResponseEnc:
           type: string
-        tlsClientCertificateBoundAccessTokens:
-          type: boolean
-        authorizationSignedResponseAlg:
+        userinfoSignedResponseAlg:
           type: string
-        authorizationEncryptedResponseAlg:
-          type: string
-        authorizationEncryptedResponseEnc:
-          type: string
-        forcePKCE:
-          type: boolean
-        forceS256CodeChallengeMethod:
-          type: boolean
-        postLogoutRedirectUris:
-          type: array
-          items:
-            type: string
-        singleSignOut:
-          type: boolean
-        silentReAuthentication:
-          type: boolean
-        requireParRequest:
-          type: boolean
-        backchannelTokenDeliveryMode:
-          type: string
-        backchannelClientNotificationEndpoint:
-          type: string
-        backchannelAuthRequestSignAlg:
-          type: string
-        backchannelUserCodeParameter:
-          type: boolean
-        disableRefreshTokenRotation:
-          type: boolean
     ApplicationPage:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/FilteredApplication"
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
     ApplicationSAMLSettings:
       type: object
       properties:
-        entityId:
-          type: string
         attributeConsumeServiceUrl:
-          type: string
-        singleLogoutServiceUrl:
           type: string
         certificate:
           type: string
-        wantResponseSigned:
-          type: boolean
-        wantAssertionsSigned:
-          type: boolean
+        entityId:
+          type: string
         responseBinding:
           type: string
+        singleLogoutServiceUrl:
+          type: string
+        wantAssertionsSigned:
+          type: boolean
+        wantResponseSigned:
+          type: boolean
     ApplicationScopeSettings:
       type: object
       properties:
-        scope:
-          type: string
         defaultScope:
           type: boolean
+        scope:
+          type: string
         scopeApproval:
           type: integer
           format: int32
     ApplicationSecretSettings:
       type: object
       properties:
-        id:
-          type: string
         algorithm:
+          type: string
+        id:
           type: string
     ApplicationSettings:
       type: object
       properties:
-        oauth:
-          $ref: "#/components/schemas/ApplicationOAuthSettings"
-        saml:
-          $ref: "#/components/schemas/ApplicationSAMLSettings"
         account:
           $ref: "#/components/schemas/AccountSettings"
-        login:
-          $ref: "#/components/schemas/LoginSettings"
         advanced:
           $ref: "#/components/schemas/ApplicationAdvancedSettings"
-        passwordSettings:
-          $ref: "#/components/schemas/PasswordSettings"
-        mfa:
-          $ref: "#/components/schemas/MFASettings"
         cookieSettings:
           $ref: "#/components/schemas/CookieSettings"
+        login:
+          $ref: "#/components/schemas/LoginSettings"
+        mfa:
+          $ref: "#/components/schemas/MFASettings"
+        oauth:
+          $ref: "#/components/schemas/ApplicationOAuthSettings"
+        passwordSettings:
+          $ref: "#/components/schemas/PasswordSettings"
         riskAssessment:
           $ref: "#/components/schemas/RiskAssessmentSettings"
+        saml:
+          $ref: "#/components/schemas/ApplicationSAMLSettings"
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
     AssessmentSettings:
@@ -12409,20 +12514,26 @@ components:
     Attribute:
       type: object
       properties:
-        value:
-          type: string
-        type:
-          type: string
         primary:
           type: boolean
+        type:
+          type: string
+        value:
+          type: string
     Audit:
       type: object
       properties:
+        accessPoint:
+          $ref: "#/components/schemas/AuditAccessPoint"
+        actor:
+          $ref: "#/components/schemas/AuditEntity"
         id:
           type: string
-        transactionId:
-          type: string
-        type:
+        outcome:
+          $ref: "#/components/schemas/AuditOutcome"
+        reference:
+          $ref: "#/components/schemas/Reference"
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -12433,30 +12544,24 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
-          type: string
-        accessPoint:
-          $ref: "#/components/schemas/AuditAccessPoint"
-        actor:
-          $ref: "#/components/schemas/AuditEntity"
         target:
           $ref: "#/components/schemas/AuditEntity"
-        outcome:
-          $ref: "#/components/schemas/AuditOutcome"
         timestamp:
           type: string
           format: date-time
           writeOnly: true
-        reference:
-          $ref: "#/components/schemas/Reference"
+        transactionId:
+          type: string
+        type:
+          type: string
     AuditAccessPoint:
       type: object
       properties:
-        id:
-          type: string
         alternativeId:
           type: string
         displayName:
+          type: string
+        id:
           type: string
         ipAddress:
           type: string
@@ -12465,49 +12570,15 @@ components:
     AuditEntity:
       type: object
       properties:
-        id:
-          type: string
         alternativeId:
-          type: string
-        type:
-          type: string
-        displayName:
-          type: string
-        referenceType:
-          type: string
-          enum:
-          - PLATFORM
-          - DOMAIN
-          - APPLICATION
-          - ORGANIZATION
-          - ENVIRONMENT
-          - PROTECTED_RESOURCE
-        referenceId:
           type: string
         attributes:
           type: object
           additionalProperties:
             type: object
-    AuditOutcome:
-      type: object
-      properties:
-        status:
+        displayName:
           type: string
-          enum:
-          - SUCCESS
-          - FAILURE
-        message:
-          type: string
-    AuthenticationDeviceNotifier:
-      type: object
-      properties:
         id:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
-        configuration:
           type: string
         referenceId:
           type: string
@@ -12520,22 +12591,59 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
+        type:
+          type: string
+    AuditOutcome:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+          enum:
+          - SUCCESS
+          - FAILURE
+    AuthenticationDeviceNotifier:
+      type: object
+      properties:
+        configuration:
+          type: string
         createdAt:
           type: string
           format: date-time
+        id:
+          type: string
+        name:
+          type: string
+        referenceId:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
+        type:
+          type: string
         updatedAt:
           type: string
           format: date-time
     AuthorizationEngine:
       type: object
       properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
         id:
           type: string
         name:
           type: string
-        type:
-          type: string
-        configuration:
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -12546,11 +12654,8 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        type:
           type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
@@ -12559,15 +12664,16 @@ components:
     BotDetection:
       type: object
       properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        detectionType:
+          type: string
         id:
           type: string
         name:
-          type: string
-        type:
-          type: string
-        detectionType:
-          type: string
-        configuration:
           type: string
         referenceId:
           type: string
@@ -12580,9 +12686,8 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        createdAt:
+        type:
           type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
@@ -12649,29 +12754,29 @@ components:
     BulkOperationResultObject:
       type: object
       properties:
-        index:
-          type: integer
-          format: int32
+        body:
+          type: object
+        errorDetails:
+          type: object
         httpStatus:
           maximum: 599
           minimum: 100
           type: integer
           format: int32
-        body:
-          type: object
-        errorDetails:
-          type: object
+        index:
+          type: integer
+          format: int32
         success:
           type: boolean
     BulkResponse:
       type: object
       properties:
+        allSuccessful:
+          type: boolean
         results:
           type: array
           items:
             $ref: "#/components/schemas/BulkOperationResultObject"
-        allSuccessful:
-          type: boolean
     BulkUpdateUser:
       required:
       - action
@@ -12700,12 +12805,7 @@ components:
     CIBASettings:
       type: object
       properties:
-        enabled:
-          type: boolean
         authReqExpiry:
-          type: integer
-          format: int32
-        tokenReqInterval:
           type: integer
           format: int32
         bindingMessageLength:
@@ -12715,6 +12815,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CIBASettingNotifier"
+        enabled:
+          type: boolean
+        tokenReqInterval:
+          type: integer
+          format: int32
     Certificate:
       type: object
       properties:
@@ -12723,7 +12828,34 @@ components:
     CertificateCredential:
       type: object
       properties:
+        accessedAt:
+          type: string
+          format: date-time
+        certificateExpiresAt:
+          type: string
+          format: date-time
+        certificateIssuerDN:
+          type: string
+        certificatePem:
+          type: string
+        certificateSerialNumber:
+          type: string
+        certificateSubjectDN:
+          type: string
+        certificateThumbprint:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
         id:
+          type: string
+        ipAddress:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -12734,59 +12866,36 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        updatedAt:
+          type: string
+          format: date-time
+        userAgent:
           type: string
         userId:
           type: string
         username:
           type: string
-        ipAddress:
-          type: string
-        userAgent:
-          type: string
-        certificatePem:
-          type: string
-        certificateThumbprint:
-          type: string
-        certificateSubjectDN:
-          type: string
-        certificateSerialNumber:
-          type: string
-        certificateIssuerDN:
-          type: string
-        certificateExpiresAt:
-          type: string
-          format: date-time
-        metadata:
-          type: object
-          additionalProperties:
-            type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        accessedAt:
-          type: string
-          format: date-time
     CertificateEntity:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
+        applications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Application"
         createdAt:
           type: string
           format: date-time
         expiresAt:
           type: string
           format: date-time
-        system:
-          type: boolean
+        id:
+          type: string
+        identityProviders:
+          type: array
+          items:
+            $ref: "#/components/schemas/IdentityProvider"
+        name:
+          type: string
         status:
           type: string
           enum:
@@ -12794,29 +12903,30 @@ components:
           - WILL_EXPIRE
           - EXPIRED
           - RENEWED
+        system:
+          type: boolean
+        type:
+          type: string
         usage:
           type: array
           items:
             type: string
-        applications:
-          type: array
-          items:
-            $ref: "#/components/schemas/Application"
-        identityProviders:
-          type: array
-          items:
-            $ref: "#/components/schemas/IdentityProvider"
     CertificateKey:
       type: object
       properties:
         fmt:
           type: string
-        payload:
-          type: string
         metadata:
           type: object
           additionalProperties:
             type: object
+        payload:
+          type: string
+    CertificateSettings:
+      type: object
+      properties:
+        fallbackCertificate:
+          type: string
     ChallengeSettings:
       type: object
       properties:
@@ -12833,47 +12943,47 @@ components:
     ClientRegistrationSettings:
       type: object
       properties:
+        allowHttpSchemeRedirectUri:
+          type: boolean
         allowLocalhostRedirectUri:
           type: boolean
-        allowHttpSchemeRedirectUri:
+        allowRedirectUriParamsExpressionLanguage:
           type: boolean
         allowWildCardRedirectUri:
           type: boolean
-        allowRedirectUriParamsExpressionLanguage:
+        allowedScopes:
+          type: array
+          items:
+            type: string
+        allowedScopesEnabled:
+          type: boolean
+        clientTemplateEnabled:
           type: boolean
         defaultScopes:
           type: array
           items:
             type: string
-        allowedScopes:
-          type: array
-          items:
-            type: string
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-        clientTemplateEnabled:
-          type: boolean
-        allowedScopesEnabled:
-          type: boolean
         dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
           type: boolean
     ClientSecret:
       type: object
       properties:
-        id:
-          type: string
-        settingsId:
-          type: string
-        name:
-          type: string
-        secret:
-          type: string
         createdAt:
           type: string
           format: date-time
         expiresAt:
           type: string
           format: date-time
+        id:
+          type: string
+        name:
+          type: string
+        secret:
+          type: string
+        settingsId:
+          type: string
     CookieSettings:
       type: object
       properties:
@@ -12884,9 +12994,9 @@ components:
     CorsSettings:
       type: object
       properties:
-        enabled:
+        allowCredentials:
           type: boolean
-        allowedOrigins:
+        allowedHeaders:
           uniqueItems: true
           type: array
           items:
@@ -12896,20 +13006,48 @@ components:
           type: array
           items:
             type: string
-        allowedHeaders:
+        allowedOrigins:
           uniqueItems: true
           type: array
           items:
             type: string
+        enabled:
+          type: boolean
         maxAge:
           type: integer
           format: int32
-        allowCredentials:
-          type: boolean
     Credential:
       type: object
       properties:
+        aaguid:
+          type: string
+        accessedAt:
+          type: string
+          format: date-time
+        attestationStatement:
+          type: string
+        attestationStatementFormat:
+          type: string
+        counter:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        credentialId:
+          type: string
+        deviceName:
+          type: string
         id:
+          type: string
+        ipAddress:
+          type: string
+        lastCheckedAt:
+          type: string
+          format: date-time
+        publicKey:
+          type: string
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -12920,43 +13058,15 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        updatedAt:
+          type: string
+          format: date-time
+        userAgent:
           type: string
         userId:
           type: string
         username:
           type: string
-        credentialId:
-          type: string
-        publicKey:
-          type: string
-        counter:
-          type: integer
-          format: int64
-        aaguid:
-          type: string
-        attestationStatementFormat:
-          type: string
-        attestationStatement:
-          type: string
-        ipAddress:
-          type: string
-        userAgent:
-          type: string
-        deviceName:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        accessedAt:
-          type: string
-          format: date-time
-        lastCheckedAt:
-          type: string
-          format: date-time
     DataPlane:
       type: object
       properties:
@@ -12965,22 +13075,23 @@ components:
     DataSource:
       type: object
       properties:
+        description:
+          type: string
         id:
           type: string
         name:
-          type: string
-        description:
           type: string
     DeviceIdentifier:
       type: object
       properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
         id:
           type: string
         name:
-          type: string
-        type:
-          type: string
-        configuration:
           type: string
         referenceId:
           type: string
@@ -12993,27 +13104,69 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        createdAt:
+        type:
           type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     Domain:
       type: object
       properties:
-        id:
+        accountSettings:
+          $ref: "#/components/schemas/AccountSettings"
+        alertEnabled:
+          type: boolean
+        certificateSettings:
+          $ref: "#/components/schemas/CertificateSettings"
+        corsSettings:
+          $ref: "#/components/schemas/CorsSettings"
+        createdAt:
           type: string
+          format: date-time
+        dataPlaneId:
+          type: string
+        description:
+          type: string
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        dynamicClientRegistrationTemplateEnabled:
+          type: boolean
+        enabled:
+          type: boolean
         hrid:
           type: string
+        id:
+          type: string
+        identities:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        loginSettings:
+          $ref: "#/components/schemas/LoginSettings"
+        master:
+          type: boolean
         name:
           type: string
-        version:
+        oidc:
+          $ref: "#/components/schemas/OIDCSettings"
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+        passwordSettings:
+          $ref: "#/components/schemas/PasswordSettings"
+        path:
           type: string
-          enum:
-          - V1_0
-          - V2_0
-        description:
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
+        redirectUriLocalhostAllowed:
+          type: boolean
+        redirectUriStrictMatching:
+          type: boolean
+        redirectUriUnsecuredHttpSchemeAllowed:
+          type: boolean
+        redirectUriWildcardAllowed:
+          type: boolean
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -13024,90 +13177,49 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
-          type: string
-        enabled:
-          type: boolean
-        alertEnabled:
-          type: boolean
-        path:
-          type: string
-        identities:
+        saml:
+          $ref: "#/components/schemas/SAMLSettings"
+        scim:
+          $ref: "#/components/schemas/SCIMSettings"
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
+        selfServiceAccountManagementSettings:
+          $ref: "#/components/schemas/SelfServiceAccountManagementSettings"
+        tags:
           uniqueItems: true
           type: array
           items:
             type: string
-        master:
-          type: boolean
+        tokenExchangeSettings:
+          $ref: "#/components/schemas/TokenExchangeSettings"
+        uma:
+          $ref: "#/components/schemas/UMASettings"
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: string
+          enum:
+          - V1_0
+          - V2_0
         vhostMode:
           type: boolean
         vhosts:
           type: array
           items:
             $ref: "#/components/schemas/VirtualHost"
-        tags:
-          uniqueItems: true
-          type: array
-          items:
-            type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        oidc:
-          $ref: "#/components/schemas/OIDCSettings"
-        uma:
-          $ref: "#/components/schemas/UMASettings"
-        loginSettings:
-          $ref: "#/components/schemas/LoginSettings"
         webAuthnSettings:
           $ref: "#/components/schemas/WebAuthnSettings"
-        scim:
-          $ref: "#/components/schemas/SCIMSettings"
-        accountSettings:
-          $ref: "#/components/schemas/AccountSettings"
-        passwordSettings:
-          $ref: "#/components/schemas/PasswordSettings"
-        selfServiceAccountManagementSettings:
-          $ref: "#/components/schemas/SelfServiceAccountManagementSettings"
-        saml:
-          $ref: "#/components/schemas/SAMLSettings"
-        corsSettings:
-          $ref: "#/components/schemas/CorsSettings"
-        dataPlaneId:
-          type: string
-        secretExpirationSettings:
-          $ref: "#/components/schemas/SecretExpirationSettings"
-        tokenExchangeSettings:
-          $ref: "#/components/schemas/TokenExchangeSettings"
-        redirectUriLocalhostAllowed:
-          type: boolean
-        redirectUriWildcardAllowed:
-          type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
-          type: boolean
-        redirectUriStrictMatching:
-          type: boolean
-        redirectUriExpressionLanguageEnabled:
-          type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
     DomainPage:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/Domain"
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
@@ -13144,10 +13256,28 @@ components:
     Email:
       type: object
       properties:
-        id:
+        client:
           type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        defaultTemplate:
+          type: boolean
         enabled:
           type: boolean
+        expiresAfter:
+          type: integer
+          format: int32
+        from:
+          type: string
+        fromName:
+          type: string
+        id:
+          type: string
+        referenceId:
+          type: string
         referenceType:
           type: string
           enum:
@@ -13157,28 +13287,10 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
-          type: string
-        client:
+        subject:
           type: string
         template:
           type: string
-        defaultTemplate:
-          type: boolean
-        from:
-          type: string
-        fromName:
-          type: string
-        subject:
-          type: string
-        content:
-          type: string
-        expiresAfter:
-          type: integer
-          format: int32
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
@@ -13194,14 +13306,14 @@ components:
       properties:
         active:
           type: boolean
-        forceEnrollment:
-          type: boolean
         enrollmentRule:
           type: string
         enrollmentSkipActive:
           type: boolean
         enrollmentSkipRule:
           type: string
+        forceEnrollment:
+          type: boolean
         skipTimeSeconds:
           type: integer
           format: int64
@@ -13214,10 +13326,19 @@ components:
     EnrolledFactor:
       type: object
       properties:
-        factorId:
-          type: string
         appId:
           type: string
+        channel:
+          $ref: "#/components/schemas/EnrolledFactorChannel"
+        createdAt:
+          type: string
+          format: date-time
+        factorId:
+          type: string
+        primary:
+          type: boolean
+        security:
+          $ref: "#/components/schemas/EnrolledFactorSecurity"
         status:
           type: string
           enum:
@@ -13225,21 +13346,18 @@ components:
           - ACTIVATED
           - REVOKED
           - "NULL"
-        security:
-          $ref: "#/components/schemas/EnrolledFactorSecurity"
-        channel:
-          $ref: "#/components/schemas/EnrolledFactorChannel"
-        primary:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     EnrolledFactorChannel:
       type: object
       properties:
+        additionalData:
+          type: object
+          additionalProperties:
+            type: object
+        target:
+          type: string
         type:
           type: string
           enum:
@@ -13247,38 +13365,32 @@ components:
           - EMAIL
           - HTTP
           - CALL
-        target:
-          type: string
-        additionalData:
-          type: object
-          additionalProperties:
-            type: object
     EnrolledFactorEntity:
       type: object
       properties:
-        id:
-          type: string
-        type:
-          type: string
-        name:
-          type: string
         createdAt:
           type: string
           format: date-time
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
         updatedAt:
           type: string
           format: date-time
     EnrolledFactorSecurity:
       type: object
       properties:
-        type:
-          type: string
-        value:
-          type: string
         additionalData:
           type: object
           additionalProperties:
             type: object
+        type:
+          type: string
+        value:
+          type: string
     EnrollmentSettings:
       type: object
       properties:
@@ -13290,96 +13402,97 @@ components:
     Entrypoint:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
+        defaultEntrypoint:
+          type: boolean
+        description:
+          type: string
         id:
           type: string
         name:
           type: string
-        description:
-          type: string
-        url:
+        organizationId:
           type: string
         tags:
           type: array
           items:
             type: string
-        organizationId:
-          type: string
-        defaultEntrypoint:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
+        url:
+          type: string
     Environment:
       type: object
       properties:
-        id:
+        createdAt:
           type: string
-        hrids:
-          type: array
-          items:
-            type: string
-        name:
-          type: string
+          format: date-time
         description:
           type: string
         domainRestrictions:
           type: array
           items:
             type: string
+        hrids:
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+        name:
+          type: string
         organizationId:
           type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     ErrorEntity:
       type: object
       properties:
-        message:
-          type: string
         http_status:
           type: integer
           format: int32
+        message:
+          type: string
     ExtensionGrant:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
         configuration:
           type: string
-        domain:
-          type: string
-        grantType:
-          type: string
-        identityProvider:
-          type: string
         createUser:
-          type: boolean
-        userExists:
           type: boolean
         createdAt:
           type: string
           format: date-time
-        updatedAt:
+        domain:
           type: string
-          format: date-time
-    Factor:
-      type: object
-      properties:
+        grantType:
+          type: string
         id:
+          type: string
+        identityProvider:
           type: string
         name:
           type: string
         type:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        userExists:
+          type: boolean
+    Factor:
+      type: object
+      properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        domain:
           type: string
         factorType:
           type: string
@@ -13392,34 +13505,37 @@ components:
           - RECOVERY_CODE
           - FIDO2
           - MOCK
-        configuration:
+        id:
           type: string
-        domain:
+        name:
           type: string
-        createdAt:
+        type:
           type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     FactorSettings:
       type: object
       properties:
-        defaultFactorId:
-          type: string
         applicationFactors:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationFactorSettings"
+        defaultFactorId:
+          type: string
     FilteredApplication:
       type: object
       properties:
+        description:
+          type: string
+        enabled:
+          type: boolean
         id:
           type: string
         name:
           type: string
-        description:
-          type: string
+        template:
+          type: boolean
         type:
           type: string
           enum:
@@ -13429,27 +13545,23 @@ components:
           - SERVICE
           - RESOURCE_SERVER
           - AGENT
-        enabled:
-          type: boolean
-        template:
-          type: boolean
         updatedAt:
           type: string
           format: date-time
     FilteredIdentityProviderInfo:
       type: object
       properties:
+        external:
+          type: boolean
         id:
           type: string
         name:
           type: string
-        type:
+        passwordPolicy:
           type: string
         system:
           type: boolean
-        external:
-          type: boolean
-        passwordPolicy:
+        type:
           type: string
     Flow:
       required:
@@ -13457,20 +13569,22 @@ components:
       - type
       type: object
       properties:
+        condition:
+          type: string
+        enabled:
+          type: boolean
         id:
           type: string
         name:
           type: string
-        pre:
-          type: array
-          items:
-            $ref: "#/components/schemas/Step"
         post:
           type: array
           items:
             $ref: "#/components/schemas/Step"
-        enabled:
-          type: boolean
+        pre:
+          type: array
+          items:
+            $ref: "#/components/schemas/Step"
         type:
           type: string
           enum:
@@ -13486,57 +13600,66 @@ components:
           - WEBAUTHN_REGISTER
           - MFA_CHALLENGE
           - MFA_ENROLLMENT
-        condition:
-          type: string
     FlowEntity:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        pre:
-          type: array
-          items:
-            $ref: "#/components/schemas/Step"
-        post:
-          type: array
-          items:
-            $ref: "#/components/schemas/Step"
-        enabled:
-          type: boolean
-        type:
-          type: string
-          enum:
-          - ROOT
-          - LOGIN_IDENTIFIER
-          - LOGIN
-          - CONNECT
-          - CONSENT
-          - REGISTER
-          - RESET_PASSWORD
-          - REGISTRATION_CONFIRMATION
-          - TOKEN
-          - WEBAUTHN_REGISTER
-          - MFA_CHALLENGE
-          - MFA_ENROLLMENT
         condition:
-          type: string
-        icon:
           type: string
         createdAt:
           type: string
           format: date-time
+        enabled:
+          type: boolean
+        icon:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        post:
+          type: array
+          items:
+            $ref: "#/components/schemas/Step"
+        pre:
+          type: array
+          items:
+            $ref: "#/components/schemas/Step"
+        type:
+          type: string
+          enum:
+          - ROOT
+          - LOGIN_IDENTIFIER
+          - LOGIN
+          - CONNECT
+          - CONSENT
+          - REGISTER
+          - RESET_PASSWORD
+          - REGISTRATION_CONFIRMATION
+          - TOKEN
+          - WEBAUTHN_REGISTER
+          - MFA_CHALLENGE
+          - MFA_ENROLLMENT
         updatedAt:
           type: string
           format: date-time
     Form:
       type: object
       properties:
-        id:
+        assets:
           type: string
+        client:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
         enabled:
           type: boolean
+        id:
+          type: string
+        referenceId:
+          type: string
         referenceType:
           type: string
           enum:
@@ -13546,19 +13669,8 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
-          type: string
-        client:
-          type: string
         template:
           type: string
-        content:
-          type: string
-        assets:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
@@ -13574,7 +13686,20 @@ components:
     Group:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
         id:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -13585,100 +13710,46 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        members:
-          type: array
-          items:
-            type: string
         roles:
           type: array
           items:
             type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     GroupPage:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/Group"
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
     I18nDictionary:
       type: object
       properties:
-        id:
-          type: string
-        referenceId:
-          type: string
-        referenceType:
-          type: string
-          enum:
-          - PLATFORM
-          - DOMAIN
-          - APPLICATION
-          - ORGANIZATION
-          - ENVIRONMENT
-          - PROTECTED_RESOURCE
-        name:
-          type: string
-        locale:
-          type: string
         createdAt:
-          type: string
-          format: date-time
-        updatedAt:
           type: string
           format: date-time
         entries:
           type: object
           additionalProperties:
             type: string
-        reference:
-          $ref: "#/components/schemas/Reference"
-    IdentityProvider:
-      type: object
-      properties:
         id:
+          type: string
+        locale:
           type: string
         name:
           type: string
-        type:
+        reference:
+          $ref: "#/components/schemas/Reference"
+        referenceId:
           type: string
-        system:
-          type: boolean
-        configuration:
-          type: string
-        mappers:
-          type: object
-          additionalProperties:
-            type: string
-        roleMapper:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              type: string
-        groupMapper:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              type: string
         referenceType:
           type: string
           enum:
@@ -13688,29 +13759,68 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        updatedAt:
           type: string
-        external:
-          type: boolean
+          format: date-time
+    IdentityProvider:
+      type: object
+      properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        dataPlaneId:
+          type: string
         domainWhitelist:
           type: array
           items:
             type: string
-        createdAt:
+        external:
+          type: boolean
+        groupMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        id:
           type: string
-          format: date-time
+        mappers:
+          type: object
+          additionalProperties:
+            type: string
+        name:
+          type: string
+        passwordPolicy:
+          type: string
+        referenceId:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
+        roleMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        system:
+          type: boolean
+        type:
+          type: string
         updatedAt:
           type: string
           format: date-time
-        passwordPolicy:
-          type: string
-        dataPlaneId:
-          type: string
     InstallationEntity:
       type: object
       properties:
-        id:
-          type: string
         additionalInformation:
           type: object
           additionalProperties:
@@ -13718,26 +13828,26 @@ components:
         createdAt:
           type: string
           format: date-time
+        id:
+          type: string
         updatedAt:
           type: string
           format: date-time
     JWK:
       type: object
       properties:
-        kty:
-          type: string
-        use:
+        alg:
           type: string
         keyOps:
           uniqueItems: true
           type: array
           items:
             type: string
-        alg:
-          type: string
         kid:
           type: string
-        x5u:
+        kty:
+          type: string
+        use:
           type: string
         x5c:
           uniqueItems: true
@@ -13747,6 +13857,8 @@ components:
         x5t:
           type: string
         x5tS256:
+          type: string
+        x5u:
           type: string
     JWKSet:
       type: object
@@ -13758,58 +13870,60 @@ components:
     LoginSettings:
       type: object
       properties:
-        inherited:
+        certificateBasedAuthEnabled:
+          type: boolean
+        certificateBasedAuthUrl:
+          type: string
+        enforcePasswordPolicyEnabled:
           type: boolean
         forgotPasswordEnabled:
           type: boolean
-        registerEnabled:
+        hideForm:
           type: boolean
-        rememberMeEnabled:
+        identifierFirstEnabled:
+          type: boolean
+        inherited:
+          type: boolean
+        magicLinkAuthEnabled:
+          type: boolean
+        passwordlessDeviceNamingEnabled:
           type: boolean
         passwordlessEnabled:
-          type: boolean
-        passwordlessRememberDeviceEnabled:
           type: boolean
         passwordlessEnforcePasswordEnabled:
           type: boolean
         passwordlessEnforcePasswordMaxAge:
           type: integer
           format: int32
-        passwordlessDeviceNamingEnabled:
+        passwordlessRememberDeviceEnabled:
           type: boolean
-        certificateBasedAuthEnabled:
+        registerEnabled:
           type: boolean
-        certificateBasedAuthUrl:
-          type: string
-        hideForm:
-          type: boolean
-        identifierFirstEnabled:
+        rememberMeEnabled:
           type: boolean
         resetPasswordOnExpiration:
-          type: boolean
-        enforcePasswordPolicyEnabled:
           type: boolean
     MFASettings:
       type: object
       properties:
-        loginRule:
-          type: string
-        factor:
-          $ref: "#/components/schemas/FactorSettings"
-        stepUpAuthenticationRule:
-          type: string
-        stepUpAuthentication:
-          $ref: "#/components/schemas/StepUpAuthenticationSettings"
         adaptiveAuthenticationRule:
           type: string
-        rememberDevice:
-          $ref: "#/components/schemas/RememberDeviceSettings"
-        enrollment:
-          $ref: "#/components/schemas/EnrollmentSettings"
         challenge:
           $ref: "#/components/schemas/ChallengeSettings"
         enroll:
           $ref: "#/components/schemas/EnrollSettings"
+        enrollment:
+          $ref: "#/components/schemas/EnrollmentSettings"
+        factor:
+          $ref: "#/components/schemas/FactorSettings"
+        loginRule:
+          type: string
+        rememberDevice:
+          $ref: "#/components/schemas/RememberDeviceSettings"
+        stepUpAuthentication:
+          $ref: "#/components/schemas/StepUpAuthenticationSettings"
+        stepUpAuthenticationRule:
+          type: string
     McpTool:
       type: object
       allOf:
@@ -13823,9 +13937,14 @@ components:
     Membership:
       type: object
       properties:
-        id:
+        createdAt:
           type: string
+          format: date-time
         domain:
+          type: string
+        fromRoleMapper:
+          type: boolean
+        id:
           type: string
         memberId:
           type: string
@@ -13847,14 +13966,9 @@ components:
           - PROTECTED_RESOURCE
         roleId:
           type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
-        fromRoleMapper:
-          type: boolean
     MembershipListItem:
       type: object
       properties:
@@ -13871,31 +13985,31 @@ components:
     ModifiedCertificateEntity:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
         configuration:
           type: string
+        createdAt:
+          type: string
+          format: date-time
         domain:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        id:
           type: string
         metadata:
           type: object
           additionalProperties:
             type: object
-        createdAt:
+        name:
           type: string
-          format: date-time
+        system:
+          type: boolean
+        type:
+          type: string
         updatedAt:
           type: string
           format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-        system:
-          type: boolean
     NewAccountAccessToken:
       required:
       - name
@@ -13910,15 +14024,15 @@ components:
       - type
       type: object
       properties:
-        type:
-          minLength: 1
+        configuration:
           type: string
+        enabled:
+          type: boolean
         name:
           type: string
           writeOnly: true
-        enabled:
-          type: boolean
-        configuration:
+        type:
+          minLength: 1
           type: string
     NewApplication:
       required:
@@ -13926,8 +14040,24 @@ components:
       - type
       type: object
       properties:
+        agentCardUrl:
+          type: string
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
         name:
           type: string
+        redirectUris:
+          type: array
+          items:
+            type: string
         type:
           type: string
           enum:
@@ -13937,20 +14067,6 @@ components:
           - SERVICE
           - RESOURCE_SERVER
           - AGENT
-        description:
-          type: string
-        clientId:
-          type: string
-        clientSecret:
-          type: string
-        redirectUris:
-          type: array
-          items:
-            type: string
-        metadata:
-          type: object
-          additionalProperties:
-            type: object
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -13958,13 +14074,13 @@ components:
       - type
       type: object
       properties:
-        id:
+        configuration:
           type: string
-        type:
+        id:
           type: string
         name:
           type: string
-        configuration:
+        type:
           type: string
     NewAuthorizationEngine:
       required:
@@ -13973,13 +14089,13 @@ components:
       - type
       type: object
       properties:
-        id:
+        configuration:
           type: string
-        type:
+        id:
           type: string
         name:
           type: string
-        configuration:
+        type:
           type: string
     NewBotDetection:
       required:
@@ -13989,15 +14105,15 @@ components:
       - type
       type: object
       properties:
-        id:
-          type: string
-        type:
+        configuration:
           type: string
         detectionType:
           type: string
+        id:
+          type: string
         name:
           type: string
-        configuration:
+        type:
           type: string
     NewCertificate:
       required:
@@ -14006,13 +14122,13 @@ components:
       - type
       type: object
       properties:
-        type:
-          minLength: 1
+        configuration:
           type: string
         name:
           minLength: 1
           type: string
-        configuration:
+        type:
+          minLength: 1
           type: string
     NewCertificateCredential:
       required:
@@ -14041,13 +14157,13 @@ components:
       - type
       type: object
       properties:
-        id:
+        configuration:
           type: string
-        type:
+        id:
           type: string
         name:
           type: string
-        configuration:
+        type:
           type: string
     NewDictionary:
       required:
@@ -14055,10 +14171,10 @@ components:
       - name
       type: object
       properties:
-        name:
+        locale:
           minLength: 1
           type: string
-        locale:
+        name:
           minLength: 1
           type: string
     NewDomain:
@@ -14067,11 +14183,11 @@ components:
       - name
       type: object
       properties:
-        name:
+        dataPlaneId:
           type: string
         description:
           type: string
-        dataPlaneId:
+        name:
           type: string
     NewEmail:
       required:
@@ -14082,20 +14198,20 @@ components:
       - template
       type: object
       properties:
+        content:
+          type: string
         enabled:
           type: boolean
+        expiresAfter:
+          minimum: 1
+          type: integer
+          format: int32
         from:
           type: string
         fromName:
           type: string
         subject:
           type: string
-        content:
-          type: string
-        expiresAfter:
-          minimum: 1
-          type: integer
-          format: int32
         template:
           type: string
           enum:
@@ -14116,6 +14232,8 @@ components:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
@@ -14128,16 +14246,16 @@ components:
       - url
       type: object
       properties:
-        name:
-          type: string
         description:
           type: string
-        url:
+        name:
           type: string
         tags:
           type: array
           items:
             type: string
+        url:
+          type: string
     NewExtensionGrant:
       required:
       - configuration
@@ -14146,12 +14264,10 @@ components:
       - type
       type: object
       properties:
-        type:
-          type: string
-        name:
-          type: string
         configuration:
           type: string
+        createUser:
+          type: boolean
         grantType:
           pattern: "[A-Za-z][A-Za-z0-9+\\-.]*:(?://(?:(?:[A-Za-z0-9\\-._~!$&'()*+,;=:]|%[0-9A-Fa-f]{2})*@)?(?:\\\
             [(?:(?:(?:(?:[0-9A-Fa-f]{1,4}:){6}|::(?:[0-9A-Fa-f]{1,4}:){5}|(?:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){4}|(?:(?:[0-9A-Fa-f]{1,4}:){0,1}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){3}|(?:(?:[0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){2}|(?:(?:[0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}:|(?:(?:[0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})?::)(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\
@@ -14164,8 +14280,10 @@ components:
           type: string
         identityProvider:
           type: string
-        createUser:
-          type: boolean
+        name:
+          type: string
+        type:
+          type: string
         userExists:
           type: boolean
     NewFactor:
@@ -14176,15 +14294,15 @@ components:
       - type
       type: object
       properties:
-        id:
-          type: string
-        type:
+        configuration:
           type: string
         factorType:
           type: string
+        id:
+          type: string
         name:
           type: string
-        configuration:
+        type:
           type: string
     NewForm:
       required:
@@ -14192,6 +14310,10 @@ components:
       - template
       type: object
       properties:
+        assets:
+          type: string
+        content:
+          type: string
         enabled:
           type: boolean
         template:
@@ -14214,28 +14336,26 @@ components:
           - WEBAUTHN_REGISTER_SUCCESS
           - WEBAUTHN_LOGIN
           - CBA_LOGIN
+          - MAGIC_LINK_LOGIN
+          - MAGIC_LINK
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
           - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
-        content:
-          type: string
-        assets:
-          type: string
     NewGroup:
       required:
       - name
       type: object
       properties:
-        name:
-          type: string
         description:
           type: string
         members:
           type: array
           items:
             type: string
+        name:
+          type: string
     NewIdentityProvider:
       required:
       - configuration
@@ -14243,12 +14363,6 @@ components:
       - type
       type: object
       properties:
-        id:
-          type: string
-        type:
-          type: string
-        name:
-          type: string
         configuration:
           type: string
         domainWhitelist:
@@ -14257,6 +14371,12 @@ components:
             type: string
         external:
           type: boolean
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
     NewMcpTool:
       required:
       - key
@@ -14295,78 +14415,74 @@ components:
       - username
       type: object
       properties:
-        username:
-          minLength: 1
-          type: string
-        password:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        externalId:
-          type: string
         accountNonExpired:
           type: boolean
         accountNonLocked:
           type: boolean
-        credentialsNonExpired:
-          type: boolean
-        enabled:
-          type: boolean
-        internal:
-          type: boolean
-        preRegistration:
-          type: boolean
-        registrationCompleted:
-          type: boolean
-        domain:
-          type: string
-        source:
-          type: string
-        client:
-          type: string
-        loginsCount:
-          type: integer
-          format: int64
-        loggedAt:
-          type: string
-          format: date-time
-        preferredLanguage:
-          type: string
         additionalInformation:
           type: object
           additionalProperties:
             type: object
+        client:
+          type: string
         createdAt:
           type: string
           format: date-time
-        updatedAt:
+        credentialsNonExpired:
+          type: boolean
+        domain:
           type: string
-          format: date-time
+        email:
+          type: string
+        enabled:
+          type: boolean
+        externalId:
+          type: string
+        firstName:
+          type: string
         forceResetPassword:
           type: boolean
+        internal:
+          type: boolean
+        lastName:
+          type: string
         lastPasswordReset:
           type: string
           format: date-time
-        email:
+        loggedAt:
           type: string
+          format: date-time
+        loginsCount:
+          type: integer
+          format: int64
+        password:
+          type: string
+        preRegistration:
+          type: boolean
+        preferredLanguage:
+          type: string
+        registrationCompleted:
+          type: boolean
         serviceAccount:
           type: boolean
+        source:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        username:
+          minLength: 1
+          type: string
     NewPasswordPolicy:
       required:
       - name
       type: object
       properties:
-        name:
-          minLength: 1
-          type: string
-        minLength:
-          minimum: 0
-          type: integer
-          format: int32
-        maxLength:
-          minimum: 0
+        excludePasswordsInDictionary:
+          type: boolean
+        excludeUserProfileInfoInPassword:
+          type: boolean
+        expiryDuration:
           type: integer
           format: int32
         includeNumbers:
@@ -14378,18 +14494,22 @@ components:
         maxConsecutiveLetters:
           type: integer
           format: int32
-        excludePasswordsInDictionary:
-          type: boolean
-        excludeUserProfileInfoInPassword:
-          type: boolean
-        expiryDuration:
+        maxLength:
+          minimum: 0
+          type: integer
+          format: int32
+        minLength:
+          minimum: 0
+          type: integer
+          format: int32
+        name:
+          minLength: 1
+          type: string
+        oldPasswords:
           type: integer
           format: int32
         passwordHistoryEnabled:
           type: boolean
-        oldPasswords:
-          type: integer
-          format: int32
     NewProtectedResource:
       required:
       - name
@@ -14397,12 +14517,20 @@ components:
       - type
       type: object
       properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewProtectedResourceFeature"
         name:
           maxLength: 64
           minLength: 1
           pattern: "^[^\\s].*"
-          type: string
-        description:
           type: string
         resourceIdentifiers:
           minItems: 1
@@ -14410,32 +14538,24 @@ components:
           items:
             minLength: 1
             type: string
-        clientId:
-          type: string
-        clientSecret:
-          type: string
+        settings:
+          $ref: "#/components/schemas/ApplicationSettings"
         type:
           minLength: 1
           pattern: ^MCP_SERVER$
           type: string
-        features:
-          type: array
-          items:
-            $ref: "#/components/schemas/NewProtectedResourceFeature"
-        settings:
-          $ref: "#/components/schemas/ApplicationSettings"
     NewProtectedResourceFeature:
       required:
       - key
       - type
       type: object
       properties:
+        description:
+          type: string
         key:
           maxLength: 64
           minLength: 1
           pattern: "^[a-zA-Z0-9_-]+$"
-          type: string
-        description:
           type: string
         type:
           type: string
@@ -14448,25 +14568,23 @@ components:
       - type
       type: object
       properties:
-        id:
+        configuration:
           type: string
         enabled:
           type: boolean
-        type:
-          type: string
-        name:
-          type: string
-        configuration:
+        id:
           type: string
         inherited:
           type: boolean
+        name:
+          type: string
+        type:
+          type: string
     NewRole:
       required:
       - name
       type: object
       properties:
-        name:
-          type: string
         assignableType:
           type: string
           enum:
@@ -14478,6 +14596,8 @@ components:
           - PROTECTED_RESOURCE
         description:
           type: string
+        name:
+          type: string
     NewScope:
       required:
       - description
@@ -14485,19 +14605,19 @@ components:
       - name
       type: object
       properties:
+        description:
+          type: string
+        discovery:
+          type: boolean
+        expiresIn:
+          type: integer
+          format: int32
+        iconUri:
+          type: string
         key:
           type: string
         name:
           type: string
-        description:
-          type: string
-        iconUri:
-          type: string
-        expiresIn:
-          type: integer
-          format: int32
-        discovery:
-          type: boolean
         parameterized:
           type: boolean
     NewServiceResource:
@@ -14507,142 +14627,142 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         id:
           type: string
         name:
           type: string
         type:
           type: string
-        configuration:
-          type: string
     NewTag:
       required:
       - name
       type: object
       properties:
-        name:
-          type: string
         description:
+          type: string
+        name:
           type: string
     NewTheme:
       type: object
       properties:
+        css:
+          type: string
+        faviconUrl:
+          type: string
         logoUrl:
           type: string
         logoWidth:
           type: integer
           format: int32
-        faviconUrl:
-          type: string
         primaryButtonColorHex:
-          type: string
-        secondaryButtonColorHex:
           type: string
         primaryTextColorHex:
           type: string
-        secondaryTextColorHex:
+        secondaryButtonColorHex:
           type: string
-        css:
+        secondaryTextColorHex:
           type: string
     NewUser:
       required:
       - username
       type: object
       properties:
-        username:
-          minLength: 1
-          type: string
-        password:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        externalId:
-          type: string
         accountNonExpired:
           type: boolean
         accountNonLocked:
           type: boolean
-        credentialsNonExpired:
-          type: boolean
-        enabled:
-          type: boolean
-        internal:
-          type: boolean
-        preRegistration:
-          type: boolean
-        registrationCompleted:
-          type: boolean
-        domain:
-          type: string
-        source:
-          type: string
-        client:
-          type: string
-        loginsCount:
-          type: integer
-          format: int64
-        loggedAt:
-          type: string
-          format: date-time
-        preferredLanguage:
-          type: string
         additionalInformation:
           type: object
           additionalProperties:
             type: object
+        client:
+          type: string
         createdAt:
           type: string
           format: date-time
-        updatedAt:
+        credentialsNonExpired:
+          type: boolean
+        domain:
           type: string
-          format: date-time
+        email:
+          type: string
+        enabled:
+          type: boolean
+        externalId:
+          type: string
+        firstName:
+          type: string
         forceResetPassword:
           type: boolean
+        internal:
+          type: boolean
+        lastName:
+          type: string
         lastPasswordReset:
           type: string
           format: date-time
-        email:
+        loggedAt:
+          type: string
+          format: date-time
+        loginsCount:
+          type: integer
+          format: int64
+        password:
+          type: string
+        preRegistration:
+          type: boolean
+        preferredLanguage:
+          type: string
+        registrationCompleted:
+          type: boolean
+        source:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        username:
+          minLength: 1
           type: string
     NotifierPlugin:
       type: object
       properties:
+        deployed:
+          type: boolean
+        description:
+          type: string
+        displayName:
+          type: string
+        feature:
+          type: string
+        icon:
+          type: string
         id:
           type: string
         name:
           type: string
-        description:
-          type: string
         version:
-          type: string
-        deployed:
-          type: boolean
-        feature:
-          type: string
-        displayName:
-          type: string
-        icon:
           type: string
     OIDCSettings:
       type: object
       properties:
+        cibaSettings:
+          $ref: "#/components/schemas/CIBASettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/ClientRegistrationSettings"
-        securityProfileSettings:
-          $ref: "#/components/schemas/SecurityProfileSettings"
-        redirectUriStrictMatching:
-          type: boolean
         postLogoutRedirectUris:
           type: array
           items:
             type: string
+        redirectUriStrictMatching:
+          type: boolean
         requestUris:
           type: array
           items:
             type: string
-        cibaSettings:
-          $ref: "#/components/schemas/CIBASettings"
+        securityProfileSettings:
+          $ref: "#/components/schemas/SecurityProfileSettings"
     OrganizationUserBulkRequest:
       required:
       - action
@@ -14676,13 +14796,13 @@ components:
     Page:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             type: object
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
@@ -14696,8 +14816,42 @@ components:
     PasswordPolicy:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
+        defaultPolicy:
+          type: boolean
+        excludePasswordsInDictionary:
+          type: boolean
+        excludeUserProfileInfoInPassword:
+          type: boolean
+        expiryDuration:
+          type: integer
+          format: int32
         id:
           type: string
+        includeNumbers:
+          type: boolean
+        includeSpecialCharacters:
+          type: boolean
+        lettersInMixedCase:
+          type: boolean
+        maxConsecutiveLetters:
+          type: integer
+          format: int32
+        maxLength:
+          type: integer
+          format: int32
+        minLength:
+          type: integer
+          format: int32
+        name:
+          type: string
+        oldPasswords:
+          type: integer
+          format: int32
+        passwordHistoryEnabled:
+          type: boolean
         referenceId:
           type: string
         referenceType:
@@ -14709,78 +14863,27 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        createdAt:
+        regex:
           type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
-        name:
-          type: string
-        minLength:
-          type: integer
-          format: int32
-        maxLength:
-          type: integer
-          format: int32
-        includeNumbers:
-          type: boolean
-        includeSpecialCharacters:
-          type: boolean
-        lettersInMixedCase:
-          type: boolean
-        maxConsecutiveLetters:
-          type: integer
-          format: int32
-        excludePasswordsInDictionary:
-          type: boolean
-        excludeUserProfileInfoInPassword:
-          type: boolean
-        expiryDuration:
-          type: integer
-          format: int32
-        passwordHistoryEnabled:
-          type: boolean
-        oldPasswords:
-          type: integer
-          format: int32
-        regex:
-          type: string
-        defaultPolicy:
-          type: boolean
     PasswordPolicyEntity:
       type: object
       properties:
         id:
           type: string
-        name:
-          type: string
-        isDefault:
-          type: boolean
         idpsNames:
           type: array
           items:
             type: string
+        isDefault:
+          type: boolean
+        name:
+          type: string
     PasswordSettings:
       type: object
       properties:
-        inherited:
-          type: boolean
-        minLength:
-          type: integer
-          format: int32
-        maxLength:
-          type: integer
-          format: int32
-        includeNumbers:
-          type: boolean
-        includeSpecialCharacters:
-          type: boolean
-        lettersInMixedCase:
-          type: boolean
-        maxConsecutiveLetters:
-          type: integer
-          format: int32
         excludePasswordsInDictionary:
           type: boolean
         excludeUserProfileInfoInPassword:
@@ -14788,11 +14891,28 @@ components:
         expiryDuration:
           type: integer
           format: int32
-        passwordHistoryEnabled:
+        includeNumbers:
           type: boolean
+        includeSpecialCharacters:
+          type: boolean
+        inherited:
+          type: boolean
+        lettersInMixedCase:
+          type: boolean
+        maxConsecutiveLetters:
+          type: integer
+          format: int32
+        maxLength:
+          type: integer
+          format: int32
+        minLength:
+          type: integer
+          format: int32
         oldPasswords:
           type: integer
           format: int32
+        passwordHistoryEnabled:
+          type: boolean
     PasswordValue:
       required:
       - password
@@ -14803,23 +14923,23 @@ components:
     PatchAlertNotifier:
       type: object
       properties:
-        name:
+        configuration:
           type: string
         enabled:
           type: boolean
-        configuration:
+        name:
           type: string
     PatchAlertTrigger:
       required:
       - type
       type: object
       properties:
-        enabled:
-          type: boolean
         alertNotifiers:
           type: array
           items:
             type: string
+        enabled:
+          type: boolean
         type:
           type: string
           enum:
@@ -14828,32 +14948,28 @@ components:
     PatchApplication:
       type: object
       properties:
-        name:
+        certificate:
           type: string
         description:
           type: string
         enabled:
           type: boolean
-        template:
-          type: boolean
-        identityProviders:
-          uniqueItems: true
-          type: array
-          items:
-            $ref: "#/components/schemas/PatchApplicationIdentityProvider"
         factors:
           uniqueItems: true
           type: array
           items:
             type: string
-        certificate:
-          type: string
+        identityProviders:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/PatchApplicationIdentityProvider"
         metadata:
           type: object
           additionalProperties:
             type: object
-        settings:
-          $ref: "#/components/schemas/PatchApplicationSettings"
+        name:
+          type: string
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -14924,13 +15040,22 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
+        settings:
+          $ref: "#/components/schemas/PatchApplicationSettings"
+        template:
+          type: boolean
     PatchApplicationAdvancedSettings:
       type: object
       properties:
-        skipConsent:
-          type: boolean
+        agentCardUrl:
+          type: string
         flowsInherited:
+          type: boolean
+        skipConsent:
           type: boolean
     PatchApplicationFactorSettings:
       type: object
@@ -14944,194 +15069,190 @@ components:
       properties:
         identity:
           type: string
-        selectionRule:
-          type: string
         priority:
           type: integer
           format: int32
+        selectionRule:
+          type: string
     PatchApplicationOAuthSettings:
       type: object
       properties:
-        redirectUris:
-          type: array
-          items:
-            type: string
-        responseTypes:
-          type: array
-          items:
-            type: string
-        grantTypes:
-          type: array
-          items:
-            type: string
-        applicationType:
-          type: string
-        contacts:
-          type: array
-          items:
-            type: string
-        clientName:
-          type: string
-        logoUri:
-          type: string
-        clientUri:
-          type: string
-        policyUri:
-          type: string
-        tosUri:
-          type: string
-        jwksUri:
-          type: string
-        jwks:
-          $ref: "#/components/schemas/JWKSet"
-        sectorIdentifierUri:
-          type: string
-        subjectType:
-          type: string
-        idTokenSignedResponseAlg:
-          type: string
-        idTokenEncryptedResponseAlg:
-          type: string
-        idTokenEncryptedResponseEnc:
-          type: string
-        userinfoSignedResponseAlg:
-          type: string
-        userinfoEncryptedResponseAlg:
-          type: string
-        userinfoEncryptedResponseEnc:
-          type: string
-        requestObjectSigningAlg:
-          type: string
-        requestObjectEncryptionAlg:
-          type: string
-        requestObjectEncryptionEnc:
-          type: string
-        tokenEndpointAuthMethod:
-          type: string
-        tokenEndpointAuthSigningAlg:
-          type: string
-        defaultMaxAge:
-          type: integer
-          format: int32
-        requireAuthTime:
-          type: boolean
-        defaultACRvalues:
-          type: array
-          items:
-            type: string
-        initiateLoginUri:
-          type: string
-        requestUris:
-          type: array
-          items:
-            type: string
-        softwareId:
-          type: string
-        softwareVersion:
-          type: string
-        softwareStatement:
-          type: string
-        registrationAccessToken:
-          type: string
-        registrationClientUri:
-          type: string
-        clientIdIssuedAt:
-          type: string
-          format: date-time
-        clientSecretExpiresAt:
-          type: string
-          format: date-time
-        enhanceScopesWithUserPermissions:
-          type: boolean
         accessTokenValiditySeconds:
           type: integer
           format: int32
-        refreshTokenValiditySeconds:
-          type: integer
-          format: int32
-        idTokenValiditySeconds:
-          type: integer
-          format: int32
-        tokenCustomClaims:
-          type: array
-          items:
-            $ref: "#/components/schemas/TokenClaim"
-        tlsClientAuthSubjectDn:
-          type: string
-        tlsClientAuthSanDns:
-          type: string
-        tlsClientAuthSanUri:
-          type: string
-        tlsClientAuthSanIp:
-          type: string
-        tlsClientAuthSanEmail:
-          type: string
-        tlsClientCertificateBoundAccessTokens:
-          type: boolean
-        authorizationSignedResponseAlg:
+        applicationType:
           type: string
         authorizationEncryptedResponseAlg:
           type: string
         authorizationEncryptedResponseEnc:
           type: string
+        authorizationSignedResponseAlg:
+          type: string
+        clientIdIssuedAt:
+          type: string
+          format: date-time
+        clientName:
+          type: string
+        clientSecretExpiresAt:
+          type: string
+          format: date-time
+        clientUri:
+          type: string
+        contacts:
+          type: array
+          items:
+            type: string
+        defaultACRvalues:
+          type: array
+          items:
+            type: string
+        defaultMaxAge:
+          type: integer
+          format: int32
+        disableRefreshTokenRotation:
+          type: boolean
+        enhanceScopesWithUserPermissions:
+          type: boolean
         forcePKCE:
           type: boolean
         forceS256CodeChallengeMethod:
           type: boolean
+        grantTypes:
+          type: array
+          items:
+            type: string
+        idTokenEncryptedResponseAlg:
+          type: string
+        idTokenEncryptedResponseEnc:
+          type: string
+        idTokenSignedResponseAlg:
+          type: string
+        idTokenValiditySeconds:
+          type: integer
+          format: int32
+        initiateLoginUri:
+          type: string
+        jwks:
+          $ref: "#/components/schemas/JWKSet"
+        jwksUri:
+          type: string
+        logoUri:
+          type: string
+        policyUri:
+          type: string
         postLogoutRedirectUris:
           type: array
           items:
             type: string
-        singleSignOut:
+        redirectUris:
+          type: array
+          items:
+            type: string
+        refreshTokenValiditySeconds:
+          type: integer
+          format: int32
+        registrationAccessToken:
+          type: string
+        registrationClientUri:
+          type: string
+        requestObjectEncryptionAlg:
+          type: string
+        requestObjectEncryptionEnc:
+          type: string
+        requestObjectSigningAlg:
+          type: string
+        requestUris:
+          type: array
+          items:
+            type: string
+        requireAuthTime:
           type: boolean
-        silentReAuthentication:
-          type: boolean
+        responseTypes:
+          type: array
+          items:
+            type: string
         scopeSettings:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationScopeSettings"
-        disableRefreshTokenRotation:
+        sectorIdentifierUri:
+          type: string
+        silentReAuthentication:
           type: boolean
+        singleSignOut:
+          type: boolean
+        softwareId:
+          type: string
+        softwareStatement:
+          type: string
+        softwareVersion:
+          type: string
+        subjectType:
+          type: string
+        tlsClientAuthSanDns:
+          type: string
+        tlsClientAuthSanEmail:
+          type: string
+        tlsClientAuthSanIp:
+          type: string
+        tlsClientAuthSanUri:
+          type: string
+        tlsClientAuthSubjectDn:
+          type: string
+        tlsClientCertificateBoundAccessTokens:
+          type: boolean
+        tokenCustomClaims:
+          type: array
+          items:
+            $ref: "#/components/schemas/TokenClaim"
+        tokenEndpointAuthMethod:
+          type: string
+        tokenEndpointAuthSigningAlg:
+          type: string
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
+        tosUri:
+          type: string
+        userinfoEncryptedResponseAlg:
+          type: string
+        userinfoEncryptedResponseEnc:
+          type: string
+        userinfoSignedResponseAlg:
+          type: string
     PatchApplicationSAMLSettings:
       type: object
       properties:
-        entityId:
-          type: string
         attributeConsumeServiceUrl:
-          type: string
-        singleLogoutServiceUrl:
           type: string
         certificate:
           type: string
-        wantResponseSigned:
-          type: boolean
-        wantAssertionsSigned:
-          type: boolean
+        entityId:
+          type: string
         responseBinding:
           type: string
+        singleLogoutServiceUrl:
+          type: string
+        wantAssertionsSigned:
+          type: boolean
+        wantResponseSigned:
+          type: boolean
     PatchApplicationSettings:
       type: object
       properties:
         account:
           $ref: "#/components/schemas/AccountSettings"
-        login:
-          $ref: "#/components/schemas/LoginSettings"
-        oauth:
-          $ref: "#/components/schemas/PatchApplicationOAuthSettings"
-        saml:
-          $ref: "#/components/schemas/PatchApplicationSAMLSettings"
         advanced:
           $ref: "#/components/schemas/PatchApplicationAdvancedSettings"
-        passwordSettings:
-          $ref: "#/components/schemas/PatchPasswordSettings"
-        mfa:
-          $ref: "#/components/schemas/PatchMFASettings"
         cookieSettings:
           $ref: "#/components/schemas/CookieSettings"
-        riskAssessment:
-          $ref: "#/components/schemas/RiskAssessmentSettings"
-        secretExpirationSettings:
-          $ref: "#/components/schemas/SecretExpirationSettings"
+        login:
+          $ref: "#/components/schemas/LoginSettings"
+        mfa:
+          $ref: "#/components/schemas/PatchMFASettings"
+        oauth:
+          $ref: "#/components/schemas/PatchApplicationOAuthSettings"
+        passwordSettings:
+          $ref: "#/components/schemas/PatchPasswordSettings"
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -15202,7 +15323,16 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
+        riskAssessment:
+          $ref: "#/components/schemas/RiskAssessmentSettings"
+        saml:
+          $ref: "#/components/schemas/PatchApplicationSAMLSettings"
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
     PatchApplicationType:
       required:
       - type
@@ -15220,12 +15350,7 @@ components:
     PatchCIBASettings:
       type: object
       properties:
-        enabled:
-          type: boolean
         authReqExpiry:
-          type: integer
-          format: int32
-        tokenReqInterval:
           type: integer
           format: int32
         bindingMessageLength:
@@ -15235,6 +15360,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CIBASettingNotifier"
+        enabled:
+          type: boolean
+        tokenReqInterval:
+          type: integer
+          format: int32
     PatchChallengeSettings:
       type: object
       properties:
@@ -15251,91 +15381,68 @@ components:
     PatchClientRegistrationSettings:
       type: object
       properties:
+        allowHttpSchemeRedirectUri:
+          type: boolean
         allowLocalhostRedirectUri:
           type: boolean
-        allowHttpSchemeRedirectUri:
+        allowRedirectUriParamsExpressionLanguage:
           type: boolean
         allowWildCardRedirectUri:
           type: boolean
-        defaultScopes:
-          type: array
-          items:
-            type: string
         allowedScopes:
           type: array
           items:
             type: string
-        allowRedirectUriParamsExpressionLanguage:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-          writeOnly: true
         clientTemplateEnabled:
           type: boolean
           writeOnly: true
+        defaultScopes:
+          type: array
+          items:
+            type: string
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
-        isDynamicClientRegistrationEnabled:
-          type: boolean
-        isOpenDynamicClientRegistrationEnabled:
-          type: boolean
         isAllowedScopesEnabled:
           type: boolean
         isClientTemplateEnabled:
           type: boolean
+        isDynamicClientRegistrationEnabled:
+          type: boolean
+        isOpenDynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+          writeOnly: true
     PatchDomain:
       type: object
       properties:
-        name:
+        accountSettings:
+          $ref: "#/components/schemas/AccountSettings"
+        alertEnabled:
+          type: boolean
+        certificateSettings:
+          $ref: "#/components/schemas/CertificateSettings"
+        corsSettings:
+          $ref: "#/components/schemas/CorsSettings"
+        dataPlaneId:
           type: string
         description:
           type: string
         enabled:
           type: boolean
-        alertEnabled:
-          type: boolean
-        path:
-          type: string
-        vhostMode:
-          type: boolean
-        vhosts:
-          type: array
-          items:
-            $ref: "#/components/schemas/VirtualHost"
-        oidc:
-          $ref: "#/components/schemas/PatchOIDCSettings"
-        uma:
-          $ref: "#/components/schemas/UMASettings"
-        scim:
-          $ref: "#/components/schemas/SCIMSettings"
         loginSettings:
           $ref: "#/components/schemas/LoginSettings"
-        webAuthnSettings:
-          $ref: "#/components/schemas/WebAuthnSettings"
-        accountSettings:
-          $ref: "#/components/schemas/AccountSettings"
-        passwordSettings:
-          $ref: "#/components/schemas/PatchPasswordSettings"
-        selfServiceAccountManagementSettings:
-          $ref: "#/components/schemas/SelfServiceAccountManagementSettings"
-        tags:
-          uniqueItems: true
-          type: array
-          items:
-            type: string
         master:
           type: boolean
-        saml:
-          $ref: "#/components/schemas/PatchSAMLSettings"
-        corsSettings:
-          $ref: "#/components/schemas/CorsSettings"
-        dataPlaneId:
+        name:
           type: string
-        secretSettings:
-          $ref: "#/components/schemas/SecretExpirationSettings"
-        tokenExchangeSettings:
-          $ref: "#/components/schemas/TokenExchangeSettings"
+        oidc:
+          $ref: "#/components/schemas/PatchOIDCSettings"
+        passwordSettings:
+          $ref: "#/components/schemas/PatchPasswordSettings"
+        path:
+          type: string
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -15406,23 +15513,51 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
+        saml:
+          $ref: "#/components/schemas/PatchSAMLSettings"
+        scim:
+          $ref: "#/components/schemas/SCIMSettings"
+        secretSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
+        selfServiceAccountManagementSettings:
+          $ref: "#/components/schemas/SelfServiceAccountManagementSettings"
+        tags:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        tokenExchangeSettings:
+          $ref: "#/components/schemas/TokenExchangeSettings"
+        uma:
+          $ref: "#/components/schemas/UMASettings"
+        vhostMode:
+          type: boolean
+        vhosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/VirtualHost"
+        webAuthnSettings:
+          $ref: "#/components/schemas/WebAuthnSettings"
     PatchEnrollSettings:
       type: object
       properties:
         active:
           type: boolean
-        forceEnrollment:
-          type: boolean
-        skipTimeSeconds:
-          type: integer
-          format: int64
         enrollmentRule:
           type: string
         enrollmentSkipActive:
           type: boolean
         enrollmentSkipRule:
           type: string
+        forceEnrollment:
+          type: boolean
+        skipTimeSeconds:
+          type: integer
+          format: int64
         type:
           type: string
           enum:
@@ -15440,42 +15575,46 @@ components:
     PatchFactorSettings:
       type: object
       properties:
-        defaultFactorId:
-          type: string
         applicationFactors:
           type: array
           items:
             $ref: "#/components/schemas/PatchApplicationFactorSettings"
+        defaultFactorId:
+          type: string
     PatchMFASettings:
       type: object
       properties:
-        loginRule:
+        adaptiveAuthenticationRule:
           type: string
+        challenge:
+          $ref: "#/components/schemas/PatchChallengeSettings"
+        enroll:
+          $ref: "#/components/schemas/PatchEnrollSettings"
+        enrollment:
+          $ref: "#/components/schemas/PatchEnrollmentSettings"
         factor:
           $ref: "#/components/schemas/PatchFactorSettings"
-        stepUpAuthenticationRule:
-          type: string
-        stepUpAuthentication:
-          $ref: "#/components/schemas/PatchStepUpAuthentication"
-        adaptiveAuthenticationRule:
+        loginRule:
           type: string
         rememberDevice:
           $ref: "#/components/schemas/PatchRememberDeviceSettings"
-        enrollment:
-          $ref: "#/components/schemas/PatchEnrollmentSettings"
-        enroll:
-          $ref: "#/components/schemas/PatchEnrollSettings"
-        challenge:
-          $ref: "#/components/schemas/PatchChallengeSettings"
+        stepUpAuthentication:
+          $ref: "#/components/schemas/PatchStepUpAuthentication"
+        stepUpAuthenticationRule:
+          type: string
     PatchOIDCSettings:
       type: object
       properties:
-        redirectUriStrictMatching:
-          type: boolean
+        cibaSettings:
+          $ref: "#/components/schemas/PatchCIBASettings"
+        clientRegistrationSettings:
+          $ref: "#/components/schemas/PatchClientRegistrationSettings"
         postLogoutRedirectUris:
           type: array
           items:
             type: string
+        redirectUriStrictMatching:
+          type: boolean
         requestUris:
           type: array
           items:
@@ -15550,13 +15689,12 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
-        clientRegistrationSettings:
-          $ref: "#/components/schemas/PatchClientRegistrationSettings"
         securityProfileSettings:
           $ref: "#/components/schemas/PatchSecurityProfileSettings"
-        cibaSettings:
-          $ref: "#/components/schemas/PatchCIBASettings"
     PatchOrganization:
       type: object
       properties:
@@ -15568,23 +15706,6 @@ components:
     PatchPasswordSettings:
       type: object
       properties:
-        inherited:
-          type: boolean
-        minLength:
-          type: integer
-          format: int32
-        maxLength:
-          type: integer
-          format: int32
-        includeNumbers:
-          type: boolean
-        includeSpecialCharacters:
-          type: boolean
-        lettersInMixedCase:
-          type: boolean
-        maxConsecutiveLetters:
-          type: integer
-          format: int32
         excludePasswordsInDictionary:
           type: boolean
         excludeUserProfileInfoInPassword:
@@ -15592,31 +15713,48 @@ components:
         expiryDuration:
           type: integer
           format: int32
-        passwordHistoryEnabled:
+        includeNumbers:
           type: boolean
+        includeSpecialCharacters:
+          type: boolean
+        inherited:
+          type: boolean
+        lettersInMixedCase:
+          type: boolean
+        maxConsecutiveLetters:
+          type: integer
+          format: int32
+        maxLength:
+          type: integer
+          format: int32
+        minLength:
+          type: integer
+          format: int32
         oldPasswords:
           type: integer
           format: int32
+        passwordHistoryEnabled:
+          type: boolean
     PatchProtectedResource:
       type: object
       properties:
+        certificate:
+          type: string
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
         name:
           maxLength: 64
           minLength: 1
           pattern: "^[^\\s].*"
           type: string
-        description:
-          type: string
-        certificate:
-          type: string
         resourceIdentifiers:
           type: array
           items:
             type: string
-        features:
-          type: array
-          items:
-            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
         secretSettings:
           type: array
           items:
@@ -15628,21 +15766,21 @@ components:
       properties:
         active:
           type: boolean
-        skipRememberDevice:
-          type: boolean
+        deviceIdentifierId:
+          type: string
         expirationTimeSeconds:
           type: integer
           format: int64
-        deviceIdentifierId:
-          type: string
+        skipRememberDevice:
+          type: boolean
     PatchSAMLSettings:
       type: object
       properties:
+        certificate:
+          type: string
         enabled:
           type: boolean
         entityId:
-          type: string
-        certificate:
           type: string
         requiredPermissions:
           uniqueItems: true
@@ -15714,29 +15852,32 @@ components:
             - LICENSE_NOTIFICATION
             - PROTECTED_RESOURCE
             - PROTECTED_RESOURCE_MEMBER
+            - PROTECTED_RESOURCE_SETTINGS
+            - PROTECTED_RESOURCE_OAUTH
+            - PROTECTED_RESOURCE_CERTIFICATE
             - INSTALLATION
     PatchScope:
       type: object
       properties:
-        name:
-          type: string
         description:
           type: string
-        iconUri:
-          type: string
+        discovery:
+          type: boolean
         expiresIn:
           type: integer
           format: int32
-        discovery:
-          type: boolean
+        iconUri:
+          type: string
+        name:
+          type: string
         parameterized:
           type: boolean
     PatchSecurityProfileSettings:
       type: object
       properties:
-        enablePlainFapi:
-          type: boolean
         enableFapiBrazil:
+          type: boolean
+        enablePlainFapi:
           type: boolean
     PatchStepUpAuthentication:
       type: object
@@ -15755,6 +15896,8 @@ components:
       properties:
         content:
           type: string
+        template:
+          type: string
         theme:
           $ref: "#/components/schemas/Theme"
         type:
@@ -15762,34 +15905,32 @@ components:
           enum:
           - EMAIL
           - FORM
-        template:
-          type: string
     PreviewResponse:
       type: object
       properties:
         content:
+          type: string
+        template:
           type: string
         type:
           type: string
           enum:
           - EMAIL
           - FORM
-        template:
-          type: string
     ProtectedResourceFeature:
       type: object
       properties:
-        key:
+        createdAt:
           type: string
+          format: date-time
         description:
+          type: string
+        key:
           type: string
         type:
           type: string
           enum:
           - MCP_TOOL
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
@@ -15800,64 +15941,66 @@ components:
     ProtectedResourcePage:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/ProtectedResourcePrimaryData"
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
     ProtectedResourcePrimaryData:
       type: object
       properties:
-        id:
+        certificate:
           type: string
         clientId:
           type: string
-        name:
-          type: string
         description:
           type: string
-        type:
-          type: string
-          enum:
-          - MCP_SERVER
-        resourceIdentifiers:
-          type: array
-          items:
-            type: string
-        settings:
-          $ref: "#/components/schemas/ApplicationSettings"
-        secretSettings:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApplicationSecretSettings"
         features:
           type: array
           items:
             $ref: "#/components/schemas/ProtectedResourceFeature"
-        updatedAt:
-          type: string
-          format: date-time
-        certificate:
-          type: string
-    ProtectedResourceSecret:
-      type: object
-      properties:
         id:
           type: string
         name:
           type: string
+        resourceIdentifiers:
+          type: array
+          items:
+            type: string
+        secretSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationSecretSettings"
+        settings:
+          $ref: "#/components/schemas/ApplicationSettings"
+        type:
+          type: string
+          enum:
+          - MCP_SERVER
+        updatedAt:
+          type: string
+          format: date-time
+    ProtectedResourceSecret:
+      type: object
+      properties:
         clientId:
           type: string
         clientSecret:
           type: string
+        id:
+          type: string
+        name:
+          type: string
     Reference:
       type: object
       properties:
+        id:
+          type: string
         type:
           type: string
           enum:
@@ -15867,18 +16010,16 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        id:
-          type: string
     RememberDeviceSettings:
       type: object
       properties:
         active:
           type: boolean
+        deviceIdentifierId:
+          type: string
         expirationTimeSeconds:
           type: integer
           format: int64
-        deviceIdentifierId:
-          type: string
         skipChallengeWhenRememberDevice:
           type: boolean
         skipRememberDevice:
@@ -15886,30 +16027,30 @@ components:
     Reporter:
       type: object
       properties:
-        id:
-          type: string
-        reference:
-          $ref: "#/components/schemas/Reference"
-        enabled:
-          type: boolean
-        type:
-          type: string
-        name:
-          type: string
-        system:
-          type: boolean
-        dataType:
-          type: string
         configuration:
           type: string
         createdAt:
           type: string
           format: date-time
+        dataType:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        inherited:
+          type: boolean
+        name:
+          type: string
+        reference:
+          $ref: "#/components/schemas/Reference"
+        system:
+          type: boolean
+        type:
+          type: string
         updatedAt:
           type: string
           format: date-time
-        inherited:
-          type: boolean
     ResetPasswordSettings:
       type: object
       properties:
@@ -15921,110 +16062,93 @@ components:
     Resource:
       type: object
       properties:
-        id:
-          type: string
-        resourceScopes:
-          type: array
-          items:
-            type: string
-        description:
-          type: string
-        iconUri:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
-        domain:
-          type: string
-        userId:
-          type: string
         clientId:
           type: string
         createdAt:
           type: string
           format: date-time
-        updatedAt:
+        description:
           type: string
-          format: date-time
-    ResourceEntity:
-      type: object
-      properties:
+        domain:
+          type: string
+        iconUri:
+          type: string
         id:
+          type: string
+        name:
           type: string
         resourceScopes:
           type: array
           items:
             type: string
-        description:
-          type: string
-        iconUri:
-          type: string
-        name:
-          type: string
         type:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        userId:
+          type: string
+    ResourceEntity:
+      type: object
+      properties:
+        clientId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        description:
           type: string
         domain:
           type: string
-        userId:
+        iconUri:
           type: string
-        userDisplayName:
+        id:
           type: string
-        clientId:
+        name:
           type: string
         policies:
           type: integer
           format: int64
-        createdAt:
+        resourceScopes:
+          type: array
+          items:
+            type: string
+        type:
           type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
+        userDisplayName:
+          type: string
+        userId:
+          type: string
     ResourceListItem:
       type: object
       properties:
-        resources:
-          type: array
-          items:
-            $ref: "#/components/schemas/ResourceEntity"
         metadata:
           type: object
           additionalProperties:
             type: object
             additionalProperties:
               type: object
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceEntity"
     RiskAssessmentSettings:
       type: object
       properties:
-        enabled:
-          type: boolean
         deviceAssessment:
           $ref: "#/components/schemas/AssessmentSettings"
-        ipReputationAssessment:
-          $ref: "#/components/schemas/AssessmentSettings"
+        enabled:
+          type: boolean
         geoVelocityAssessment:
+          $ref: "#/components/schemas/AssessmentSettings"
+        ipReputationAssessment:
           $ref: "#/components/schemas/AssessmentSettings"
     Role:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        referenceType:
-          type: string
-          enum:
-          - PLATFORM
-          - DOMAIN
-          - APPLICATION
-          - ORGANIZATION
-          - ENVIRONMENT
-          - PROTECTED_RESOURCE
-        referenceId:
-          type: string
         assignableType:
           type: string
           enum:
@@ -16034,10 +16158,23 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        system:
-          type: boolean
+        createdAt:
+          type: string
+          format: date-time
         defaultRole:
           type: boolean
+        description:
+          type: string
+        id:
+          type: string
+        internalOnly:
+          type: boolean
+        name:
+          type: string
+        oauthScopes:
+          type: array
+          items:
+            type: string
         permissionAcls:
           type: object
           additionalProperties:
@@ -16051,26 +16188,7 @@ components:
               - LIST
               - UPDATE
               - DELETE
-        oauthScopes:
-          type: array
-          items:
-            type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        internalOnly:
-          type: boolean
-    RoleEntity:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -16081,49 +16199,72 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        system:
+          type: boolean
+        updatedAt:
           type: string
+          format: date-time
+    RoleEntity:
+      type: object
+      properties:
         assignableType:
+          type: string
+        availablePermissions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        defaultRole:
+          type: boolean
+        description:
+          type: string
+        id:
+          type: string
+        name:
           type: string
         permissions:
           type: array
           items:
             type: string
-        availablePermissions:
-          type: array
-          items:
-            type: string
+        referenceId:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
         system:
           type: boolean
-        defaultRole:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     RolePage:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/Role"
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
     SAMLSettings:
       type: object
       properties:
+        certificate:
+          type: string
         enabled:
           type: boolean
         entityId:
-          type: string
-        certificate:
           type: string
     SCIMSettings:
       type: object
@@ -16137,91 +16278,91 @@ components:
     Scope:
       type: object
       properties:
+        claims:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        discovery:
+          type: boolean
+        domain:
+          type: string
+        expiresIn:
+          type: integer
+          format: int32
+        iconUri:
+          type: string
         id:
           type: string
         key:
           type: string
         name:
           type: string
-        description:
+        parameterized:
+          type: boolean
+        system:
+          type: boolean
+        updatedAt:
           type: string
-        iconUri:
-          type: string
-        domain:
+          format: date-time
+    ScopeApprovalEntity:
+      type: object
+      properties:
+        clientEntity:
+          $ref: "#/components/schemas/ApplicationEntity"
+        clientId:
           type: string
         createdAt:
           type: string
           format: date-time
-        updatedAt:
+        domain:
+          type: string
+        expiresAt:
           type: string
           format: date-time
-        system:
-          type: boolean
-        claims:
-          type: array
-          items:
-            type: string
-        expiresIn:
-          type: integer
-          format: int32
-        discovery:
-          type: boolean
-        parameterized:
-          type: boolean
-    ScopeApprovalEntity:
-      type: object
-      properties:
         id:
-          type: string
-        transactionId:
-          type: string
-        userId:
-          $ref: "#/components/schemas/UserId"
-        clientId:
-          type: string
-        domain:
           type: string
         scope:
           type: string
+        scopeEntity:
+          $ref: "#/components/schemas/ScopeEntity"
         status:
           type: string
           enum:
           - APPROVED
           - DENIED
-        expiresAt:
+        transactionId:
           type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
-        clientEntity:
-          $ref: "#/components/schemas/ApplicationEntity"
-        scopeEntity:
-          $ref: "#/components/schemas/ScopeEntity"
+        userId:
+          $ref: "#/components/schemas/UserId"
     ScopeEntity:
       type: object
       properties:
+        description:
+          type: string
         id:
           type: string
         key:
           type: string
         name:
           type: string
-        description:
-          type: string
     ScopePage:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/Scope"
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
@@ -16236,9 +16377,9 @@ components:
     SecurityProfileSettings:
       type: object
       properties:
-        enablePlainFapi:
-          type: boolean
         enableFapiBrazil:
+          type: boolean
+        enablePlainFapi:
           type: boolean
     SelfServiceAccountManagementSettings:
       type: object
@@ -16250,7 +16391,16 @@ components:
     ServiceResource:
       type: object
       properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
         id:
+          type: string
+        name:
+          type: string
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -16261,17 +16411,8 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
-          type: string
-        name:
-          type: string
         type:
           type: string
-        configuration:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
@@ -16288,17 +16429,17 @@ components:
     Step:
       type: object
       properties:
-        name:
-          type: string
-        policy:
-          type: string
-        description:
+        condition:
           type: string
         configuration:
           type: string
+        description:
+          type: string
         enabled:
           type: boolean
-        condition:
+        name:
+          type: string
+        policy:
           type: string
     StepUpAuthenticationSettings:
       type: object
@@ -16310,24 +16451,40 @@ components:
     Tag:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
         id:
           type: string
         name:
           type: string
-        description:
-          type: string
         organizationId:
           type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     Theme:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
+        css:
+          type: string
+        faviconUrl:
+          type: string
         id:
+          type: string
+        logoUrl:
+          type: string
+        logoWidth:
+          type: integer
+          format: int32
+        primaryButtonColorHex:
+          type: string
+        primaryTextColorHex:
           type: string
         referenceId:
           type: string
@@ -16340,33 +16497,33 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        logoUrl:
-          type: string
-        logoWidth:
-          type: integer
-          format: int32
-        faviconUrl:
-          type: string
-        primaryButtonColorHex:
-          type: string
         secondaryButtonColorHex:
-          type: string
-        primaryTextColorHex:
           type: string
         secondaryTextColorHex:
           type: string
-        css:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     ThemeEntity:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
+        css:
+          type: string
+        faviconUrl:
+          type: string
         id:
+          type: string
+        logoUrl:
+          type: string
+        logoWidth:
+          type: integer
+          format: int32
+        primaryButtonColorHex:
+          type: string
+        primaryTextColorHex:
           type: string
         referenceId:
           type: string
@@ -16379,48 +16536,44 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        logoUrl:
-          type: string
-        logoWidth:
-          type: integer
-          format: int32
-        faviconUrl:
-          type: string
-        primaryButtonColorHex:
-          type: string
         secondaryButtonColorHex:
-          type: string
-        primaryTextColorHex:
           type: string
         secondaryTextColorHex:
           type: string
-        css:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
     TokenClaim:
       type: object
       properties:
+        claimName:
+          type: string
+        claimValue:
+          type: string
         tokenType:
           type: string
           enum:
           - ACCESS_TOKEN
           - REFRESH_TOKEN
           - ID_TOKEN
-        claimName:
+    TokenExchangeOAuthSettings:
+      type: object
+      properties:
+        inherited:
+          type: boolean
+        scopeHandling:
           type: string
-        claimValue:
-          type: string
+          enum:
+          - DOWNSCOPING
+          - PERMISSIVE
     TokenExchangeSettings:
       type: object
       properties:
-        enabled:
+        allowDelegation:
           type: boolean
-        allowedSubjectTokenTypes:
+        allowImpersonation:
+          type: boolean
+        allowedActorTokenTypes:
           type: array
           items:
             type: string
@@ -16428,18 +16581,44 @@ components:
           type: array
           items:
             type: string
-        allowImpersonation:
-          type: boolean
-        allowedActorTokenTypes:
+        allowedSubjectTokenTypes:
           type: array
           items:
             type: string
-        allowDelegation:
+        enabled:
           type: boolean
         maxDelegationDepth:
           type: integer
           format: int32
-        valid:
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
+        trustedIssuers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustedIssuer"
+    TrustedIssuer:
+      type: object
+      properties:
+        certificate:
+          type: string
+        issuer:
+          type: string
+        jwksUri:
+          type: string
+        keyResolutionMethod:
+          type: string
+          enum:
+          - JWKS_URL
+          - PEM
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+        userBindingCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
           type: boolean
     UMASettings:
       type: object
@@ -16453,12 +16632,12 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         name:
           type: string
         type:
           minLength: 1
-          type: string
-        configuration:
           type: string
     UpdateAuthorizationEngine:
       required:
@@ -16466,9 +16645,9 @@ components:
       - name
       type: object
       properties:
-        name:
-          type: string
         configuration:
+          type: string
+        name:
           type: string
         type:
           type: string
@@ -16479,12 +16658,12 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         name:
           type: string
         type:
           minLength: 1
-          type: string
-        configuration:
           type: string
     UpdateCertificate:
       required:
@@ -16493,13 +16672,13 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         name:
           minLength: 1
           type: string
         type:
           minLength: 1
-          type: string
-        configuration:
           type: string
     UpdateDeviceIdentifier:
       required:
@@ -16508,12 +16687,12 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         name:
           type: string
         type:
           minLength: 1
-          type: string
-        configuration:
           type: string
     UpdateEmail:
       required:
@@ -16523,20 +16702,20 @@ components:
       - subject
       type: object
       properties:
+        content:
+          type: string
         enabled:
           type: boolean
+        expiresAfter:
+          minimum: 1
+          type: integer
+          format: int32
         from:
           type: string
         fromName:
           type: string
         subject:
           type: string
-        content:
-          type: string
-        expiresAfter:
-          minimum: 1
-          type: integer
-          format: int32
     UpdateEntrypoint:
       required:
       - name
@@ -16544,16 +16723,16 @@ components:
       - url
       type: object
       properties:
-        name:
-          type: string
         description:
           type: string
-        url:
+        name:
           type: string
         tags:
           type: array
           items:
             type: string
+        url:
+          type: string
     UpdateExtensionGrant:
       required:
       - configuration
@@ -16561,13 +16740,10 @@ components:
       - type
       type: object
       properties:
-        name:
-          type: string
-        type:
-          minLength: 1
-          type: string
         configuration:
           type: string
+        createUser:
+          type: boolean
         grantType:
           pattern: "[A-Za-z][A-Za-z0-9+\\-.]*:(?://(?:(?:[A-Za-z0-9\\-._~!$&'()*+,;=:]|%[0-9A-Fa-f]{2})*@)?(?:\\\
             [(?:(?:(?:(?:[0-9A-Fa-f]{1,4}:){6}|::(?:[0-9A-Fa-f]{1,4}:){5}|(?:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){4}|(?:(?:[0-9A-Fa-f]{1,4}:){0,1}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){3}|(?:(?:[0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){2}|(?:(?:[0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}:|(?:(?:[0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})?::)(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\
@@ -16580,8 +16756,11 @@ components:
           type: string
         identityProvider:
           type: string
-        createUser:
-          type: boolean
+        name:
+          type: string
+        type:
+          minLength: 1
+          type: string
         userExists:
           type: boolean
     UpdateFactor:
@@ -16591,35 +16770,35 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         name:
           type: string
         type:
           minLength: 1
           type: string
-        configuration:
-          type: string
     UpdateForm:
       type: object
       properties:
-        enabled:
-          type: boolean
-        content:
-          type: string
         assets:
           type: string
+        content:
+          type: string
+        enabled:
+          type: boolean
     UpdateGroup:
       required:
       - name
       type: object
       properties:
-        name:
-          type: string
         description:
           type: string
         members:
           type: array
           items:
             type: string
+        name:
+          type: string
         roles:
           type: array
           items:
@@ -16627,14 +16806,14 @@ components:
     UpdateI18nDictionary:
       type: object
       properties:
-        name:
-          type: string
-        locale:
-          type: string
         entries:
           type: object
           additionalProperties:
             type: string
+        locale:
+          type: string
+        name:
+          type: string
     UpdateIdentityProvider:
       required:
       - configuration
@@ -16642,34 +16821,34 @@ components:
       - type
       type: object
       properties:
-        name:
-          type: string
-        type:
-          minLength: 1
-          type: string
         configuration:
           type: string
-        mappers:
-          type: object
-          additionalProperties:
+        domainWhitelist:
+          type: array
+          items:
             type: string
-        roleMapper:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              type: string
         groupMapper:
           type: object
           additionalProperties:
             type: array
             items:
               type: string
-        domainWhitelist:
-          type: array
-          items:
+        mappers:
+          type: object
+          additionalProperties:
             type: string
+        name:
+          type: string
         passwordPolicy:
+          type: string
+        roleMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        type:
+          minLength: 1
           type: string
     UpdateMcpTool:
       required:
@@ -16693,15 +16872,13 @@ components:
       - name
       type: object
       properties:
-        name:
-          minLength: 1
-          type: string
-        minLength:
-          minimum: 0
-          type: integer
-          format: int32
-        maxLength:
-          minimum: 0
+        defaultPolicy:
+          type: boolean
+        excludePasswordsInDictionary:
+          type: boolean
+        excludeUserProfileInfoInPassword:
+          type: boolean
+        expiryDuration:
           type: integer
           format: int32
         includeNumbers:
@@ -16713,19 +16890,21 @@ components:
         maxConsecutiveLetters:
           type: integer
           format: int32
-        excludePasswordsInDictionary:
-          type: boolean
-        excludeUserProfileInfoInPassword:
-          type: boolean
-        expiryDuration:
+        maxLength:
+          minimum: 0
           type: integer
           format: int32
-        passwordHistoryEnabled:
-          type: boolean
+        minLength:
+          minimum: 0
+          type: integer
+          format: int32
+        name:
+          minLength: 1
+          type: string
         oldPasswords:
           type: integer
           format: int32
-        defaultPolicy:
+        passwordHistoryEnabled:
           type: boolean
     UpdateProtectedResource:
       required:
@@ -16733,12 +16912,16 @@ components:
       - resourceIdentifiers
       type: object
       properties:
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
         name:
           maxLength: 64
           minLength: 1
           pattern: "^[^\\s].*"
-          type: string
-        description:
           type: string
         resourceIdentifiers:
           minItems: 1
@@ -16746,10 +16929,6 @@ components:
           items:
             minLength: 1
             type: string
-        features:
-          type: array
-          items:
-            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
         settings:
           $ref: "#/components/schemas/ApplicationSettings"
     UpdateProtectedResourceFeature:
@@ -16758,12 +16937,12 @@ components:
       - type
       type: object
       properties:
+        description:
+          type: string
         key:
           maxLength: 64
           minLength: 1
           pattern: "^[a-zA-Z0-9_-]+$"
-          type: string
-        description:
           type: string
         type:
           type: string
@@ -16776,31 +16955,31 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         enabled:
+          type: boolean
+        inherited:
           type: boolean
         name:
           type: string
         type:
           minLength: 1
           type: string
-        configuration:
-          type: string
-        inherited:
-          type: boolean
     UpdateRole:
       required:
       - name
       type: object
       properties:
-        name:
-          type: string
         description:
           type: string
-        permissions:
+        name:
+          type: string
+        oauthScopes:
           type: array
           items:
             type: string
-        oauthScopes:
+        permissions:
           type: array
           items:
             type: string
@@ -16810,19 +16989,19 @@ components:
       - name
       type: object
       properties:
-        name:
-          type: string
         description:
           type: string
+        discovery:
+          type: boolean
         expiresIn:
           type: integer
           format: int32
-        discovery:
-          type: boolean
-        parameterized:
-          type: boolean
         iconUri:
           type: string
+        name:
+          type: string
+        parameterized:
+          type: boolean
     UpdateServiceResource:
       required:
       - configuration
@@ -16830,180 +17009,165 @@ components:
       - type
       type: object
       properties:
+        configuration:
+          type: string
         name:
           type: string
         type:
           minLength: 1
-          type: string
-        configuration:
           type: string
     UpdateTag:
       required:
       - name
       type: object
       properties:
-        name:
-          type: string
         description:
+          type: string
+        name:
           type: string
     UpdateUser:
       type: object
       properties:
-        email:
-          maxLength: 320
-          minLength: 0
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        displayName:
-          type: string
-        externalId:
-          type: string
         accountNonExpired:
           type: boolean
         accountNonLocked:
           type: boolean
-        credentialsNonExpired:
-          type: boolean
-        enabled:
-          type: boolean
-        preRegistration:
-          type: boolean
-        registrationCompleted:
-          type: boolean
-        source:
-          type: string
-        client:
-          type: string
-        loginsCount:
-          type: integer
-          format: int64
-        loggedAt:
-          type: string
-          format: date-time
-        preferredLanguage:
-          type: string
         additionalInformation:
           type: object
           additionalProperties:
             type: object
+        client:
+          type: string
         createdAt:
           type: string
           format: date-time
+        credentialsNonExpired:
+          type: boolean
+        displayName:
+          type: string
+        email:
+          maxLength: 320
+          minLength: 0
+          type: string
+        enabled:
+          type: boolean
+        externalId:
+          type: string
+        firstName:
+          type: string
+        forceResetPassword:
+          type: boolean
+        lastName:
+          type: string
+        loggedAt:
+          type: string
+          format: date-time
+        loginsCount:
+          type: integer
+          format: int64
+        preRegistration:
+          type: boolean
+        preferredLanguage:
+          type: string
+        registrationCompleted:
+          type: boolean
+        source:
+          type: string
         updatedAt:
           type: string
           format: date-time
-        forceResetPassword:
-          type: boolean
     UpdateUserWithId:
       type: object
       properties:
+        accountNonExpired:
+          type: boolean
+        accountNonLocked:
+          type: boolean
+        additionalInformation:
+          type: object
+          additionalProperties:
+            type: object
+        client:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        credentialsNonExpired:
+          type: boolean
+        displayName:
+          type: string
         email:
           maxLength: 320
           minLength: 0
           type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        displayName:
-          type: string
-        externalId:
-          type: string
-        accountNonExpired:
-          type: boolean
-        accountNonLocked:
-          type: boolean
-        credentialsNonExpired:
-          type: boolean
         enabled:
           type: boolean
-        preRegistration:
-          type: boolean
-        registrationCompleted:
-          type: boolean
-        source:
+        externalId:
           type: string
-        client:
+        firstName:
           type: string
-        loginsCount:
-          type: integer
-          format: int64
-        loggedAt:
-          type: string
-          format: date-time
-        preferredLanguage:
-          type: string
-        additionalInformation:
-          type: object
-          additionalProperties:
-            type: object
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
         forceResetPassword:
           type: boolean
         id:
           type: string
+        lastName:
+          type: string
+        loggedAt:
+          type: string
+          format: date-time
+        loginsCount:
+          type: integer
+          format: int64
+        preRegistration:
+          type: boolean
+        preferredLanguage:
+          type: string
+        registrationCompleted:
+          type: boolean
+        source:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
     User:
       type: object
       properties:
-        id:
+        accountLockedAt:
           type: string
-        externalId:
+          format: date-time
+        accountLockedUntil:
           type: string
-        username:
-          type: string
-        password:
-          type: string
-        email:
-          type: string
-        displayName:
-          type: string
-        nickName:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        title:
-          type: string
-        type:
-          type: string
-        preferredLanguage:
-          type: string
-        picture:
-          type: string
-        emails:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        phoneNumbers:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        ims:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        photos:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        entitlements:
-          type: array
-          items:
-            type: string
+          format: date-time
+        accountNonExpired:
+          type: boolean
+        accountNonLocked:
+          type: boolean
+        additionalInformation:
+          type: object
+          additionalProperties:
+            type: object
+        address:
+          type: object
+          additionalProperties:
+            type: object
         addresses:
           type: array
           items:
             $ref: "#/components/schemas/Address"
-        roles:
+        birthdate:
+          type: string
+        client:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        credentialsNonExpired:
+          type: boolean
+        disabled:
+          type: boolean
+        displayName:
+          type: string
+        dynamicGroups:
           type: array
           items:
             type: string
@@ -17011,48 +17175,112 @@ components:
           type: array
           items:
             type: string
-        dynamicGroups:
+        email:
+          type: string
+        emails:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        enabled:
+          type: boolean
+        entitlements:
           type: array
           items:
             type: string
-        rolesPermissions:
-          uniqueItems: true
+        externalId:
+          type: string
+        factors:
           type: array
           items:
-            $ref: "#/components/schemas/Role"
+            $ref: "#/components/schemas/EnrolledFactor"
+        firstName:
+          type: string
+        forceResetPassword:
+          type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
         groups:
           type: array
           items:
             type: string
-        x509Certificates:
+        id:
+          type: string
+        identities:
           type: array
           items:
-            $ref: "#/components/schemas/Certificate"
-        accountNonExpired:
+            $ref: "#/components/schemas/UserIdentity"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        ims:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        inactive:
           type: boolean
-        accountNonLocked:
-          type: boolean
-        accountLockedAt:
-          type: string
-          format: date-time
-        accountLockedUntil:
-          type: string
-          format: date-time
-        credentialsNonExpired:
-          type: boolean
-        enabled:
+        indefinitelyLocked:
           type: boolean
         internal:
           type: boolean
-        preRegistration:
-          type: boolean
-        registrationCompleted:
-          type: boolean
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        lastIdentityUsed:
+          type: string
+        lastLoginWithCredentials:
+          type: string
+          format: date-time
+        lastLogoutAt:
+          type: string
+          format: date-time
+        lastName:
+          type: string
+        lastPasswordReset:
+          type: string
+          format: date-time
+        lastUsernameReset:
+          type: string
+          format: date-time
+        locale:
+          type: string
+        loggedAt:
+          type: string
+          format: date-time
+        loginsCount:
+          type: integer
+          format: int64
+        mfaEnrollmentSkippedAt:
+          type: string
+          format: date-time
+        middleName:
+          type: string
         newsletter:
           type: boolean
-        registrationUserUri:
+        nickName:
           type: string
-        registrationAccessToken:
+        password:
+          type: string
+        phoneNumber:
+          type: string
+        phoneNumbers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        picture:
+          type: string
+        preRegistration:
+          type: boolean
+        preferredLanguage:
+          type: string
+        profile:
+          type: string
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -17063,147 +17291,92 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        registrationAccessToken:
           type: string
+        registrationCompleted:
+          type: boolean
+        registrationUserUri:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        rolesPermissions:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+        serviceAccount:
+          type: boolean
         source:
           type: string
-        client:
+        temporarilyLocked:
+          type: boolean
+        title:
           type: string
-        loginsCount:
-          type: integer
-          format: int64
-        factors:
-          type: array
-          items:
-            $ref: "#/components/schemas/EnrolledFactor"
-        identities:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserIdentity"
-        lastIdentityUsed:
+        type:
           type: string
-        additionalInformation:
-          type: object
-          additionalProperties:
-            type: object
-        loggedAt:
-          type: string
-          format: date-time
-        lastLoginWithCredentials:
-          type: string
-          format: date-time
-        lastPasswordReset:
-          type: string
-          format: date-time
-        lastUsernameReset:
-          type: string
-          format: date-time
-        lastLogoutAt:
-          type: string
-          format: date-time
-        mfaEnrollmentSkippedAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
-        forceResetPassword:
-          type: boolean
-        serviceAccount:
-          type: boolean
-        address:
-          type: object
-          additionalProperties:
-            type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        middleName:
-          type: string
-        inactive:
-          type: boolean
-        profile:
+        username:
           type: string
         website:
           type: string
-        birthdate:
+        x509Certificates:
+          type: array
+          items:
+            $ref: "#/components/schemas/Certificate"
+        zoneInfo:
           type: string
-        phoneNumber:
+    UserBindingCriterion:
+      type: object
+      properties:
+        attribute:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        disabled:
-          type: boolean
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        indefinitelyLocked:
-          type: boolean
-        temporarilyLocked:
-          type: boolean
+        expression:
+          type: string
     UserEntity:
       type: object
       properties:
-        id:
+        accountLockedAt:
           type: string
-        externalId:
+          format: date-time
+        accountLockedUntil:
           type: string
-        username:
-          type: string
-        password:
-          type: string
-        email:
-          type: string
-        displayName:
-          type: string
-        nickName:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        title:
-          type: string
-        type:
-          type: string
-        preferredLanguage:
-          type: string
-        picture:
-          type: string
-        emails:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        phoneNumbers:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        ims:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        photos:
-          type: array
-          items:
-            $ref: "#/components/schemas/Attribute"
-        entitlements:
-          type: array
-          items:
-            type: string
+          format: date-time
+        accountNonExpired:
+          type: boolean
+        accountNonLocked:
+          type: boolean
+        additionalInformation:
+          type: object
+          additionalProperties:
+            type: object
+        address:
+          type: object
+          additionalProperties:
+            type: object
         addresses:
           type: array
           items:
             $ref: "#/components/schemas/Address"
-        roles:
+        applicationEntity:
+          $ref: "#/components/schemas/ApplicationEntity"
+        birthdate:
+          type: string
+        client:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        credentialsNonExpired:
+          type: boolean
+        disabled:
+          type: boolean
+        displayName:
+          type: string
+        dynamicGroups:
           type: array
           items:
             type: string
@@ -17211,48 +17384,112 @@ components:
           type: array
           items:
             type: string
-        dynamicGroups:
+        email:
+          type: string
+        emails:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        enabled:
+          type: boolean
+        entitlements:
           type: array
           items:
             type: string
-        rolesPermissions:
-          uniqueItems: true
+        externalId:
+          type: string
+        factors:
           type: array
           items:
-            $ref: "#/components/schemas/Role"
+            $ref: "#/components/schemas/EnrolledFactor"
+        firstName:
+          type: string
+        forceResetPassword:
+          type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
         groups:
           type: array
           items:
             type: string
-        x509Certificates:
+        id:
+          type: string
+        identities:
           type: array
           items:
-            $ref: "#/components/schemas/Certificate"
-        accountNonExpired:
+            $ref: "#/components/schemas/UserIdentity"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        ims:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        inactive:
           type: boolean
-        accountNonLocked:
-          type: boolean
-        accountLockedAt:
-          type: string
-          format: date-time
-        accountLockedUntil:
-          type: string
-          format: date-time
-        credentialsNonExpired:
-          type: boolean
-        enabled:
+        indefinitelyLocked:
           type: boolean
         internal:
           type: boolean
-        preRegistration:
-          type: boolean
-        registrationCompleted:
-          type: boolean
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        lastIdentityUsed:
+          type: string
+        lastLoginWithCredentials:
+          type: string
+          format: date-time
+        lastLogoutAt:
+          type: string
+          format: date-time
+        lastName:
+          type: string
+        lastPasswordReset:
+          type: string
+          format: date-time
+        lastUsernameReset:
+          type: string
+          format: date-time
+        locale:
+          type: string
+        loggedAt:
+          type: string
+          format: date-time
+        loginsCount:
+          type: integer
+          format: int64
+        mfaEnrollmentSkippedAt:
+          type: string
+          format: date-time
+        middleName:
+          type: string
         newsletter:
           type: boolean
-        registrationUserUri:
+        nickName:
           type: string
-        registrationAccessToken:
+        password:
+          type: string
+        phoneNumber:
+          type: string
+        phoneNumbers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        picture:
+          type: string
+        preRegistration:
+          type: boolean
+        preferredLanguage:
+          type: string
+        profile:
+          type: string
+        referenceId:
           type: string
         referenceType:
           type: string
@@ -17263,115 +17500,58 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        referenceId:
+        registrationAccessToken:
           type: string
+        registrationCompleted:
+          type: boolean
+        registrationUserUri:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        rolesPermissions:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+        serviceAccount:
+          type: boolean
         source:
           type: string
-        client:
+        sourceId:
           type: string
-        loginsCount:
-          type: integer
-          format: int64
-        factors:
-          type: array
-          items:
-            $ref: "#/components/schemas/EnrolledFactor"
-        identities:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserIdentity"
-        lastIdentityUsed:
+        temporarilyLocked:
+          type: boolean
+        title:
           type: string
-        additionalInformation:
-          type: object
-          additionalProperties:
-            type: object
-        loggedAt:
+        type:
           type: string
-          format: date-time
-        lastLoginWithCredentials:
-          type: string
-          format: date-time
-        lastPasswordReset:
-          type: string
-          format: date-time
-        lastUsernameReset:
-          type: string
-          format: date-time
-        lastLogoutAt:
-          type: string
-          format: date-time
-        mfaEnrollmentSkippedAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time
-        forceResetPassword:
-          type: boolean
-        serviceAccount:
-          type: boolean
-        applicationEntity:
-          $ref: "#/components/schemas/ApplicationEntity"
-        sourceId:
-          type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        middleName:
-          type: string
-        inactive:
-          type: boolean
-        profile:
+        username:
           type: string
         website:
           type: string
-        birthdate:
+        x509Certificates:
+          type: array
+          items:
+            $ref: "#/components/schemas/Certificate"
+        zoneInfo:
           type: string
-        phoneNumber:
-          type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        disabled:
-          type: boolean
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        indefinitelyLocked:
-          type: boolean
-        temporarilyLocked:
-          type: boolean
     UserId:
       type: object
       properties:
-        id:
-          type: string
         externalId:
+          type: string
+        id:
           type: string
         source:
           type: string
     UserIdentity:
       type: object
       properties:
-        userId:
-          type: string
-        username:
-          type: string
-        providerId:
-          type: string
         additionalInformation:
           type: object
           additionalProperties:
@@ -17379,15 +17559,15 @@ components:
         linkedAt:
           type: string
           format: date-time
+        providerId:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
     UserIdentityEntity:
       type: object
       properties:
-        userId:
-          type: string
-        username:
-          type: string
-        providerId:
-          type: string
         additionalInformation:
           type: object
           additionalProperties:
@@ -17395,12 +17575,23 @@ components:
         linkedAt:
           type: string
           format: date-time
+        providerId:
+          type: string
         providerName:
+          type: string
+        userId:
+          type: string
+        username:
           type: string
     UserNotificationContent:
       type: object
       properties:
+        createdAt:
+          type: string
+          format: date-time
         id:
+          type: string
+        message:
           type: string
         status:
           type: string
@@ -17409,21 +17600,16 @@ components:
           - READ
         title:
           type: string
-        message:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
     UserPage:
       type: object
       properties:
+        currentPage:
+          type: integer
+          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/User"
-        currentPage:
-          type: integer
-          format: int32
         totalCount:
           type: integer
           format: int64
@@ -17440,13 +17626,35 @@ components:
       properties:
         host:
           type: string
-        path:
-          type: string
         overrideEntrypoint:
           type: boolean
+        path:
+          type: string
     WebAuthnSettings:
       type: object
       properties:
+        attestationConveyancePreference:
+          type: string
+          enum:
+          - NONE
+          - INDIRECT
+          - DIRECT
+        authenticatorAttachment:
+          type: string
+          enum:
+          - CROSS_PLATFORM
+          - PLATFORM
+        certificates:
+          type: object
+          additionalProperties:
+            type: object
+        enforceAuthenticatorIntegrity:
+          type: boolean
+        enforceAuthenticatorIntegrityMaxAge:
+          type: integer
+          format: int32
+        forceRegistration:
+          type: boolean
         origin:
           type: string
         relyingPartyId:
@@ -17461,28 +17669,6 @@ components:
           - REQUIRED
           - PREFERRED
           - DISCOURAGED
-        authenticatorAttachment:
-          type: string
-          enum:
-          - CROSS_PLATFORM
-          - PLATFORM
-        attestationConveyancePreference:
-          type: string
-          enum:
-          - NONE
-          - INDIRECT
-          - DIRECT
-        forceRegistration:
-          type: boolean
-        certificates:
-          type: object
-          additionalProperties:
-            type: object
-        enforceAuthenticatorIntegrity:
-          type: boolean
-        enforceAuthenticatorIntegrityMaxAge:
-          type: integer
-          format: int32
   securitySchemes:
     gravitee-auth:
       type: http

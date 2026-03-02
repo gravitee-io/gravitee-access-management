@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import fetch from 'cross-fetch';
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
+import { setup } from '../../test-fixture';
 import {
   setupTokenExchangeFixture,
   TokenExchangeFixture,
   TOKEN_EXCHANGE_TEST,
 } from './fixtures/token-exchange-fixture';
 
-globalThis.fetch = fetch;
-jest.setTimeout(200000);
+setup();
 
 let defaultFixture: TokenExchangeFixture;
 let restrictedFixture: TokenExchangeFixture;

@@ -38,8 +38,10 @@ import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailManagerImpl;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
+import io.gravitee.am.gateway.handler.common.email.impl.EmailStagingServiceImpl;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
@@ -107,8 +109,7 @@ import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
@@ -272,8 +273,8 @@ public class CommonConfiguration {
                                                                      ClientSyncService clientSyncService,
                                                                      ProtectedResourceManager protectedResourceManager,
                                                                      ProtectedResourceSyncService protectedResourceSyncService,
-                                                                     AccessTokenRepository accessTokenRepository) {
-        return new IntrospectionAccessTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, accessTokenRepository);
+                                                                     BackwardCompatibleTokenRepository tokenRepository) {
+        return new IntrospectionAccessTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
     }
 
     @Bean
@@ -282,8 +283,8 @@ public class CommonConfiguration {
                                                                       ClientSyncService clientSyncService,
                                                                       ProtectedResourceManager protectedResourceManager,
                                                                       ProtectedResourceSyncService protectedResourceSyncService,
-                                                                      RefreshTokenRepository refreshTokenRepository) {
-        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, refreshTokenRepository);
+                                                                      BackwardCompatibleTokenRepository tokenRepository) {
+        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
     }
 
     @Bean
@@ -324,6 +325,9 @@ public class CommonConfiguration {
         final String registrationConfirmationSubject = environment.getProperty("user.registration.confirmation.email.subject", String.class, "${msg('email.registration_confirmation.subject')}");
         final int userRegistrationConfirmationTimeValue = environment.getProperty("user.registration.confirmation.time.value", Integer.class, 24);
         final TimeUnit userRegistrationConfirmationTimeUnit = environment.getProperty("user.registration.confirmation.time.unit", TimeUnit.class, TimeUnit.HOURS);
+        final String userMagicLinkLoginSubject = environment.getProperty("user.magic.link.login.email.subject", String.class, "Sign in");
+        final int userMagicLinkLoginTimeValue = environment.getProperty("user.magic.link.login.time.value", Integer.class, 15);
+        final TimeUnit userMagicLinkLoginTimeUnit = environment.getProperty("user.magic.link.login.time.unit", TimeUnit.class, TimeUnit.MINUTES);
 
         return new EmailServiceImpl(
                 enabled,
@@ -337,8 +341,15 @@ public class CommonConfiguration {
                 registrationVerifySubject,
                 Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue)),
                 registrationConfirmationSubject,
-                Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue))
+                Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue)),
+                userMagicLinkLoginSubject,
+                Math.toIntExact(userMagicLinkLoginTimeUnit.toSeconds(userMagicLinkLoginTimeValue))
         );
+    }
+
+    @Bean
+    public EmailStagingService emailStagingService() {
+        return new EmailStagingServiceImpl();
     }
 
     @Bean

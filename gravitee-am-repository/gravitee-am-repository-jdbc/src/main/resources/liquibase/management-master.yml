@@ -205,3 +205,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_11_0/4.11.0-protected-resources-add-settings.yml
   - include:
       - file: liquibase/changelogs/v4_11_0/4.11.0-protected-resource-add-certificate.yml
+  - include:
+      - file: liquibase/changelogs/v4_11_0/4.11.0-update-domains-certificate-settings.yml

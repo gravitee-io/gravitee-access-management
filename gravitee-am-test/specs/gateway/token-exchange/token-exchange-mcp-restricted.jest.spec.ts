@@ -30,10 +30,10 @@ let restrictedFixture: TokenExchangeMcpFixture;
 
 beforeAll(async () => {
   restrictedFixture = await setupTokenExchangeMcpFixture({
-    domainNamePrefix: 'token-exchange-mcp-id-only',
+    domainNamePrefix: 'te-mcp-id-only',
     domainDescription: 'Token exchange MCP ID only',
-    appClientName: 'token-exchange-mcp-id-only-app',
-    mcpServerName: 'token-exchange-mcp-id-only-server',
+    appClientName: 'te-mcp-id-only-app',
+    mcpServerName: 'te-mcp-id-only-server',
     appGrantTypes: ['password'],
     scopes: [
       { scope: 'openid', defaultScope: true },

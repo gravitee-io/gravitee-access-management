@@ -32,4 +32,7 @@ process.env.AM_ADMIN_PASSWORD = 'adminadmin';
 process.env.FAKE_SMTP = 'http://localhost:5080';
 process.env.INTERNAL_FAKE_SMTP_HOST = 'smtp';
 process.env.INTERNAL_FAKE_SMTP_PORT = '5025';
+process.env.SFR_URL = 'http://localhost:8181';
+process.env.INTERNAL_SFR_URL = 'http://wiremock:8080';
 process.env.AM_GATEWAY_SYNC_GRACE_PERIOD = '5000';
+process.env.KAFKA_BOOTSTRAP_URL = 'localhost:9092';

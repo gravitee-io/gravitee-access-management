@@ -34,6 +34,12 @@ import { mapValues } from '../runtime';
 export interface PatchSAMLSettings {
   /**
    *
+   * @type {string}
+   * @memberof PatchSAMLSettings
+   */
+  certificate?: string;
+  /**
+   *
    * @type {boolean}
    * @memberof PatchSAMLSettings
    */
@@ -44,12 +50,6 @@ export interface PatchSAMLSettings {
    * @memberof PatchSAMLSettings
    */
   entityId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchSAMLSettings
-   */
-  certificate?: string;
   /**
    *
    * @type {Set<string>}
@@ -126,6 +126,9 @@ export const PatchSAMLSettingsRequiredPermissionsEnum = {
   LicenseNotification: 'LICENSE_NOTIFICATION',
   ProtectedResource: 'PROTECTED_RESOURCE',
   ProtectedResourceMember: 'PROTECTED_RESOURCE_MEMBER',
+  ProtectedResourceSettings: 'PROTECTED_RESOURCE_SETTINGS',
+  ProtectedResourceOauth: 'PROTECTED_RESOURCE_OAUTH',
+  ProtectedResourceCertificate: 'PROTECTED_RESOURCE_CERTIFICATE',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchSAMLSettingsRequiredPermissionsEnum =
@@ -147,9 +150,9 @@ export function PatchSAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
     requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
@@ -164,9 +167,9 @@ export function PatchSAMLSettingsToJSONTyped(value?: PatchSAMLSettings | null, i
   }
 
   return {
+    certificate: value['certificate'],
     enabled: value['enabled'],
     entityId: value['entityId'],
-    certificate: value['certificate'],
     requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }

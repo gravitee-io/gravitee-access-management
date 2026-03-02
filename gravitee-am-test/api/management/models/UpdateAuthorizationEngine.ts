@@ -37,13 +37,13 @@ export interface UpdateAuthorizationEngine {
    * @type {string}
    * @memberof UpdateAuthorizationEngine
    */
-  name: string;
+  configuration: string;
   /**
    *
    * @type {string}
    * @memberof UpdateAuthorizationEngine
    */
-  configuration: string;
+  name: string;
   /**
    *
    * @type {string}
@@ -56,8 +56,8 @@ export interface UpdateAuthorizationEngine {
  * Check if a given object implements the UpdateAuthorizationEngine interface.
  */
 export function instanceOfUpdateAuthorizationEngine(value: object): value is UpdateAuthorizationEngine {
-  if (!('name' in value) || value['name'] === undefined) return false;
   if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
   return true;
 }
 
@@ -70,8 +70,8 @@ export function UpdateAuthorizationEngineFromJSONTyped(json: any, ignoreDiscrimi
     return json;
   }
   return {
-    name: json['name'],
     configuration: json['configuration'],
+    name: json['name'],
     type: json['type'] == null ? undefined : json['type'],
   };
 }
@@ -86,8 +86,8 @@ export function UpdateAuthorizationEngineToJSONTyped(value?: UpdateAuthorization
   }
 
   return {
-    name: value['name'],
     configuration: value['configuration'],
+    name: value['name'],
     type: value['type'],
   };
 }

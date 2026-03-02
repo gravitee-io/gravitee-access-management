@@ -5,6 +5,26 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"@a2a-js/sdk@npm:^0.3.10":
+  version: 0.3.10
+  resolution: "@a2a-js/sdk@npm:0.3.10"
+  dependencies:
+    uuid: "npm:^11.1.0"
+  peerDependencies:
+    "@bufbuild/protobuf": ^2.10.2
+    "@grpc/grpc-js": ^1.11.0
+    express: ^4.21.2 || ^5.1.0
+  peerDependenciesMeta:
+    "@bufbuild/protobuf":
+      optional: true
+    "@grpc/grpc-js":
+      optional: true
+    express:
+      optional: true
+  checksum: 10c0/7b24d36ef75dac89f628c8e2a7bf6563357ee96745c78309df77f7ddb7b4ce1796d4d6b035afd4ff3d363b355bdbee440bbaf5e86f230de5ca8ca6def4f22867
+  languageName: node
+  linkType: hard
+
 "@ajsf/core@npm:0.8.0, @ajsf/core@npm:~0.8.0":
   version: 0.8.0
   resolution: "@ajsf/core@npm:0.8.0"
@@ -10961,6 +10981,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "gravitee-am-webui@workspace:."
   dependencies:
+    "@a2a-js/sdk": "npm:^0.3.10"
     "@ajsf/core": "npm:0.8.0"
     "@ajsf/material": "npm:0.8.0"
     "@angular-builders/jest": "npm:19.0.1"
@@ -11023,7 +11044,7 @@ __metadata:
     jest: "npm:29.7.0"
     jest-preset-angular: "npm:14.5.5"
     license-check-and-add: "npm:4.0.5"
-    lodash: "npm:4.17.21"
+    lodash: "npm:4.17.23"
     moment: "npm:2.30.1"
     ngx-clipboard: "npm:16.0.0"
     ngx-file-helpers: "npm:12.0.0"
@@ -13331,7 +13352,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4.17.15":
+"lodash@npm:4.17.23":
+  version: 4.17.23
+  resolution: "lodash@npm:4.17.23"
+  checksum: 10c0/1264a90469f5bb95d4739c43eb6277d15b6d9e186df4ac68c3620443160fc669e2f14c11e7d8b2ccf078b81d06147c01a8ccced9aab9f9f63d50dcf8cace6bf6
+  languageName: node
+  linkType: hard
+
+"lodash@npm:^4.17.15":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: 10c0/d8cbea072bb08655bb4c989da418994b073a608dffa608b09ac04b43a791b12aeae7cd7ad919aa4c925f33b48490b5cfe6c1f71d827956071dae2e7bb3a6b74c
@@ -18066,6 +18094,15 @@ __metadata:
   version: 1.0.1
   resolution: "utils-merge@npm:1.0.1"
   checksum: 10c0/02ba649de1b7ca8854bfe20a82f1dfbdda3fb57a22ab4a8972a63a34553cf7aa51bc9081cf7e001b035b88186d23689d69e71b510e610a09a4c66f68aa95b672
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "uuid@npm:11.1.0"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10c0/34aa51b9874ae398c2b799c88a127701408cd581ee89ec3baa53509dd8728cbb25826f2a038f9465f8b7be446f0fbf11558862965b18d21c993684297628d4d3
   languageName: node
   linkType: hard
 

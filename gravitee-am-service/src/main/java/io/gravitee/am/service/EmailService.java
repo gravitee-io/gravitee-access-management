@@ -18,6 +18,8 @@ package io.gravitee.am.service;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -25,6 +27,7 @@ import io.gravitee.am.service.i18n.DictionaryProvider;
 public interface EmailService {
 
     void send(Email email);
+    void batch(List<Email> emails);
 
     DictionaryProvider getDefaultDictionaryProvider();
 

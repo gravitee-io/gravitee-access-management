@@ -34,6 +34,36 @@ import { mapValues } from '../runtime';
 export interface NotifierPlugin {
   /**
    *
+   * @type {boolean}
+   * @memberof NotifierPlugin
+   */
+  deployed?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof NotifierPlugin
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NotifierPlugin
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NotifierPlugin
+   */
+  feature?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NotifierPlugin
+   */
+  icon?: string;
+  /**
+   *
    * @type {string}
    * @memberof NotifierPlugin
    */
@@ -49,37 +79,7 @@ export interface NotifierPlugin {
    * @type {string}
    * @memberof NotifierPlugin
    */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NotifierPlugin
-   */
   version?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof NotifierPlugin
-   */
-  deployed?: boolean;
-  /**
-   *
-   * @type {string}
-   * @memberof NotifierPlugin
-   */
-  feature?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NotifierPlugin
-   */
-  displayName?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NotifierPlugin
-   */
-  icon?: string;
 }
 
 /**
@@ -98,14 +98,14 @@ export function NotifierPluginFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
+    deployed: json['deployed'] == null ? undefined : json['deployed'],
+    description: json['description'] == null ? undefined : json['description'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    feature: json['feature'] == null ? undefined : json['feature'],
+    icon: json['icon'] == null ? undefined : json['icon'],
     id: json['id'] == null ? undefined : json['id'],
     name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
     version: json['version'] == null ? undefined : json['version'],
-    deployed: json['deployed'] == null ? undefined : json['deployed'],
-    feature: json['feature'] == null ? undefined : json['feature'],
-    displayName: json['displayName'] == null ? undefined : json['displayName'],
-    icon: json['icon'] == null ? undefined : json['icon'],
   };
 }
 
@@ -119,13 +119,13 @@ export function NotifierPluginToJSONTyped(value?: NotifierPlugin | null, ignoreD
   }
 
   return {
+    deployed: value['deployed'],
+    description: value['description'],
+    displayName: value['displayName'],
+    feature: value['feature'],
+    icon: value['icon'],
     id: value['id'],
     name: value['name'],
-    description: value['description'],
     version: value['version'],
-    deployed: value['deployed'],
-    feature: value['feature'],
-    displayName: value['displayName'],
-    icon: value['icon'],
   };
 }

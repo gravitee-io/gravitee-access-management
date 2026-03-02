@@ -37,13 +37,13 @@ export interface UpdateTag {
    * @type {string}
    * @memberof UpdateTag
    */
-  name: string;
+  description?: string;
   /**
    *
    * @type {string}
    * @memberof UpdateTag
    */
-  description?: string;
+  name: string;
 }
 
 /**
@@ -63,8 +63,8 @@ export function UpdateTagFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'] == null ? undefined : json['description'],
+    name: json['name'],
   };
 }
 
@@ -78,7 +78,7 @@ export function UpdateTagToJSONTyped(value?: UpdateTag | null, ignoreDiscriminat
   }
 
   return {
-    name: value['name'],
     description: value['description'],
+    name: value['name'],
   };
 }

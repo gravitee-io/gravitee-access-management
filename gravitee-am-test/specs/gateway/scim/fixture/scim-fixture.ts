@@ -119,6 +119,8 @@ const setupScimApp = async (domainId: string, accessToken: string): Promise<Appl
     settings: {
       oauth: {
         grantTypes: ['client_credentials'],
+        tokenCustomClaim: [],
+        accessTokenValiditySeconds: 7200,
         scopeSettings: [
           {
             scope: 'scim',

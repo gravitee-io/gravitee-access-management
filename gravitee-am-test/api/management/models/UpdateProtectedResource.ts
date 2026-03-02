@@ -52,25 +52,25 @@ export interface UpdateProtectedResource {
    * @type {string}
    * @memberof UpdateProtectedResource
    */
-  name: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateProtectedResource
-   */
   description?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof UpdateProtectedResource
-   */
-  resourceIdentifiers: Array<string>;
   /**
    *
    * @type {Array<UpdateProtectedResourceFeature>}
    * @memberof UpdateProtectedResource
    */
   features?: Array<UpdateProtectedResourceFeature>;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProtectedResource
+   */
+  name: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof UpdateProtectedResource
+   */
+  resourceIdentifiers: Array<string>;
   /**
    *
    * @type {ApplicationSettings}
@@ -97,10 +97,10 @@ export function UpdateProtectedResourceFromJSONTyped(json: any, ignoreDiscrimina
     return json;
   }
   return {
-    name: json['name'],
     description: json['description'] == null ? undefined : json['description'],
-    resourceIdentifiers: json['resourceIdentifiers'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON),
+    name: json['name'],
+    resourceIdentifiers: json['resourceIdentifiers'],
     settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
   };
 }
@@ -115,10 +115,10 @@ export function UpdateProtectedResourceToJSONTyped(value?: UpdateProtectedResour
   }
 
   return {
-    name: value['name'],
     description: value['description'],
-    resourceIdentifiers: value['resourceIdentifiers'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(UpdateProtectedResourceFeatureToJSON),
+    name: value['name'],
+    resourceIdentifiers: value['resourceIdentifiers'],
     settings: ApplicationSettingsToJSON(value['settings']),
   };
 }

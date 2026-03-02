@@ -37,13 +37,13 @@ export interface Reference {
    * @type {string}
    * @memberof Reference
    */
-  type?: ReferenceTypeEnum;
+  id?: string;
   /**
    *
    * @type {string}
    * @memberof Reference
    */
-  id?: string;
+  type?: ReferenceTypeEnum;
 }
 
 /**
@@ -75,8 +75,8 @@ export function ReferenceFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return json;
   }
   return {
-    type: json['type'] == null ? undefined : json['type'],
     id: json['id'] == null ? undefined : json['id'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -90,7 +90,7 @@ export function ReferenceToJSONTyped(value?: Reference | null, ignoreDiscriminat
   }
 
   return {
-    type: value['type'],
     id: value['id'],
+    type: value['type'],
   };
 }

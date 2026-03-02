@@ -59,7 +59,7 @@ export interface ProtectedResourcePrimaryData {
    * @type {string}
    * @memberof ProtectedResourcePrimaryData
    */
-  id?: string;
+  certificate?: string;
   /**
    *
    * @type {string}
@@ -71,37 +71,7 @@ export interface ProtectedResourcePrimaryData {
    * @type {string}
    * @memberof ProtectedResourcePrimaryData
    */
-  name?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ProtectedResourcePrimaryData
-   */
   description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ProtectedResourcePrimaryData
-   */
-  type?: ProtectedResourcePrimaryDataTypeEnum;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof ProtectedResourcePrimaryData
-   */
-  resourceIdentifiers?: Array<string>;
-  /**
-   *
-   * @type {ApplicationSettings}
-   * @memberof ProtectedResourcePrimaryData
-   */
-  settings?: ApplicationSettings;
-  /**
-   *
-   * @type {Array<ApplicationSecretSettings>}
-   * @memberof ProtectedResourcePrimaryData
-   */
-  secretSettings?: Array<ApplicationSecretSettings>;
   /**
    *
    * @type {Array<ProtectedResourceFeature>}
@@ -110,16 +80,46 @@ export interface ProtectedResourcePrimaryData {
   features?: Array<ProtectedResourceFeature>;
   /**
    *
-   * @type {Date}
+   * @type {string}
    * @memberof ProtectedResourcePrimaryData
    */
-  updatedAt?: Date;
+  id?: string;
   /**
    *
    * @type {string}
    * @memberof ProtectedResourcePrimaryData
    */
-  certificate?: string;
+  name?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ProtectedResourcePrimaryData
+   */
+  resourceIdentifiers?: Array<string>;
+  /**
+   *
+   * @type {Array<ApplicationSecretSettings>}
+   * @memberof ProtectedResourcePrimaryData
+   */
+  secretSettings?: Array<ApplicationSecretSettings>;
+  /**
+   *
+   * @type {ApplicationSettings}
+   * @memberof ProtectedResourcePrimaryData
+   */
+  settings?: ApplicationSettings;
+  /**
+   *
+   * @type {string}
+   * @memberof ProtectedResourcePrimaryData
+   */
+  type?: ProtectedResourcePrimaryDataTypeEnum;
+  /**
+   *
+   * @type {Date}
+   * @memberof ProtectedResourcePrimaryData
+   */
+  updatedAt?: Date;
 }
 
 /**
@@ -147,18 +147,18 @@ export function ProtectedResourcePrimaryDataFromJSONTyped(json: any, ignoreDiscr
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
-    name: json['name'] == null ? undefined : json['name'],
     description: json['description'] == null ? undefined : json['description'],
-    type: json['type'] == null ? undefined : json['type'],
+    features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
     resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
-    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
     secretSettings:
       json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
-    features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
+    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
   };
 }
 
@@ -175,17 +175,17 @@ export function ProtectedResourcePrimaryDataToJSONTyped(
   }
 
   return {
-    id: value['id'],
+    certificate: value['certificate'],
     clientId: value['clientId'],
-    name: value['name'],
     description: value['description'],
-    type: value['type'],
+    features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(ProtectedResourceFeatureToJSON),
+    id: value['id'],
+    name: value['name'],
     resourceIdentifiers: value['resourceIdentifiers'],
-    settings: ApplicationSettingsToJSON(value['settings']),
     secretSettings:
       value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
-    features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(ProtectedResourceFeatureToJSON),
+    settings: ApplicationSettingsToJSON(value['settings']),
+    type: value['type'],
     updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    certificate: value['certificate'],
   };
 }

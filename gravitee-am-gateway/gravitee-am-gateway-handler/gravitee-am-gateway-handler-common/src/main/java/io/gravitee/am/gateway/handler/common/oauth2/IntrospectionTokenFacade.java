@@ -25,19 +25,21 @@ public class IntrospectionTokenFacade {
     private final IntrospectionTokenService refreshTokenIntrospectionTokenService;
 
     public Maybe<JWT> introspectAccessToken(String token) {
-        return introspectAccessToken(token, null);
+        return introspectAccessToken(token, null)
+                .map(IntrospectionResult::jwt);
     }
 
     public Maybe<JWT> introspectRefreshToken(String token) {
-        return introspectRefreshToken(token, null);
+        return introspectRefreshToken(token, null)
+                .map(IntrospectionResult::jwt);
     }
 
-    public Maybe<JWT> introspectAccessToken(String token, String callerClientId) {
+    public Maybe<IntrospectionResult> introspectAccessToken(String token, String callerClientId) {
         return accessTokenIntrospectionTokenService.introspect(token, false, callerClientId)
                 .onErrorResumeWith(Maybe.empty());
     }
 
-    public Maybe<JWT> introspectRefreshToken(String token, String callerClientId) {
+    public Maybe<IntrospectionResult> introspectRefreshToken(String token, String callerClientId) {
         return refreshTokenIntrospectionTokenService.introspect(token, false, callerClientId)
                 .onErrorResumeWith(Maybe.empty());
     }

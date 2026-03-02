@@ -16,13 +16,17 @@
 package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObject;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jose.JWSHeader;
+
+import com.nimbusds.jose.util.Base64URL;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -106,13 +110,13 @@ public class JWTServiceImpl implements JWTService {
     @Override
     public Single<EncodedJWT> encodeJwt(JWT jwt, Client client) {
         return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
-                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwtWithFallback(jwt, certificateProvider));
     }
 
     @Override
     public Single<String> encode(JWT jwt, Client client) {
         return certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature)
-                .flatMap(certificateProvider -> encode(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeWithFallback(jwt, certificateProvider));
     }
 
     @Override
@@ -124,7 +128,7 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
                 .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
-                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwtWithFallback(jwt, certificateProvider));
     }
 
     @Override
@@ -141,7 +145,7 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(signedResponseAlg)
                 .switchIfEmpty(certificateManager.getClientCertificateProvider(client, fallbackToHmacSignature))
-                .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
+                .flatMap(certificateProvider -> encodeJwtWithFallback(jwt, certificateProvider));
     }
 
     @Override
@@ -194,6 +198,26 @@ public class JWTServiceImpl implements JWTService {
         };
     }
 
+    private Single<EncodedJWT> encodeJwtWithFallback(JWT jwt, CertificateProvider certificateProvider) {
+        return encodeJwt(jwt, certificateProvider)
+                .onErrorResumeNext(error -> certificateManager.fallbackCertificateProvider()
+                        .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
+                                certificateProvider.getCertificateInfo().certificateId()))
+                        .doOnSuccess(fallback -> onFallbackUsed(certificateProvider, fallback))
+                        .flatMapSingle(fallback -> encodeJwt(jwt, fallback))
+                        .switchIfEmpty(Single.error(error)));
+    }
+
+    private Single<String> encodeWithFallback(JWT jwt, CertificateProvider certificateProvider) {
+        return encode(jwt, certificateProvider)
+                .onErrorResumeNext(error -> certificateManager.fallbackCertificateProvider()
+                        .filter(fallback -> !Objects.equals(fallback.getCertificateInfo().certificateId(),
+                                certificateProvider.getCertificateInfo().certificateId()))
+                        .doOnSuccess(fallback -> onFallbackUsed(certificateProvider, fallback))
+                        .flatMapSingle(fallback -> encode(jwt, fallback))
+                        .switchIfEmpty(Single.error(error)));
+    }
+
     private Single<EncodedJWT> signWithCertificateInfo(CertificateProvider certificateProvider, JWT jwt) {
         return sign(certificateProvider, jwt)
                 .map(encodedValue -> new EncodedJWT(encodedValue, certificateProvider.getCertificateInfo()));
@@ -236,11 +260,23 @@ public class JWTServiceImpl implements JWTService {
     }
 
     private Optional<String> extractKid(String jwt) {
+        final String parameterName = "kid";
         try {
-            return Optional.ofNullable(SignedJWT.parse(jwt).getHeader().getKeyID());
-        } catch (ParseException e) {
-            logger.debug("Unable to parse JWT header to extract kid", e);
+            Base64URL[] parts = JOSEObject.split(jwt);
+            JWSHeader header = JWSHeader.parse(parts[0]);
+            Object value = header.toJSONObject().get(parameterName);
+            return value instanceof String stringValue && RandomString.isUuid(stringValue)
+                ? Optional.of(stringValue)
+                : Optional.empty();
+        } catch (IllegalArgumentException | ParseException e) {
+            logger.debug("Unable to parse JWT header to extract {}", parameterName, e);
             return Optional.empty();
         }
+    }
+
+    private static void onFallbackUsed(CertificateProvider originalCertificateProvider, CertificateProvider fallback) {
+        logger.warn("Failed to sign JWT with certificate: {}, attempting fallback using: {}",
+                originalCertificateProvider.getCertificateInfo().certificateId(),
+                fallback.getCertificateInfo().certificateId());
     }
 }

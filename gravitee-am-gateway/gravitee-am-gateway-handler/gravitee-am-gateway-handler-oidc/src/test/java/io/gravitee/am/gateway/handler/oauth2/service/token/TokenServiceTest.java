@@ -43,8 +43,8 @@ import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -105,10 +105,7 @@ public class TokenServiceTest {
     private TokenServiceImpl tokenService = new TokenServiceImpl();
 
     @Mock
-    private AccessTokenRepository accessTokenRepository;
-
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+    private BackwardCompatibleTokenRepository tokenRepository;
 
     @Mock
     private TokenEnhancer tokenEnhancer;
@@ -163,8 +160,7 @@ public class TokenServiceTest {
         testObserver.assertNoErrors();
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
     }
@@ -191,8 +187,7 @@ public class TokenServiceTest {
         testObserver.assertValue(token -> token.getAdditionalInformation().containsKey("key"));
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
     }
@@ -222,8 +217,7 @@ public class TokenServiceTest {
         testObserver.assertValue(token -> token.getAdditionalInformation().isEmpty());
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
         verify(subjectManager).updateJWT(any(), any());
 
         expectTokenCreatedAuditLog();
@@ -253,8 +247,7 @@ public class TokenServiceTest {
         testObserver.assertValue(token -> token.getAdditionalInformation().isEmpty());
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
     }
@@ -280,8 +273,7 @@ public class TokenServiceTest {
         testObserver.assertNoErrors();
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Object> valueCaptor = ArgumentCaptor.forClass(Object.class);
@@ -316,8 +308,7 @@ public class TokenServiceTest {
         testObserver.assertNoErrors();
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
     }
@@ -350,8 +341,7 @@ public class TokenServiceTest {
         testObserver.assertNoErrors();
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
         verify(jwtService).encodeJwt(argThat(jwt -> jwt.get(Claims.AUD) instanceof List
                 && jwt.getAud().equals(((List) jwt.get(Claims.AUD)).get(0))
                 && ((List) jwt.get(Claims.AUD)).size() == 3
@@ -379,8 +369,7 @@ public class TokenServiceTest {
         testObserver.assertError(TechnicalException.class);
 
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedFailedAuditLog();
     }
@@ -407,8 +396,7 @@ public class TokenServiceTest {
         JWT jwt = jwtCaptor.getValue();
         assertTrue(jwt != null && jwt.get("permissions") != null);
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenCreatedAuditLog();
     }
@@ -453,8 +441,7 @@ public class TokenServiceTest {
         assertTrue(jwt.get("iss") != null && "https://custom-iss".equals(jwt.get("iss")));
         assertTrue(jwt.get("aud") != null && "my-api".equals(jwt.get("aud")));
         verify(tokenManager, times(1)).storeAccessToken(any());
-        verify(accessTokenRepository, never()).delete(anyString());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, never()).deleteByJti(anyString());
         verify(executionContext).setAttribute(eq(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY), any());
 
         expectTokenCreatedAuditLog();
@@ -483,15 +470,15 @@ public class TokenServiceTest {
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000L);
 
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
-        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
-        when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(tokenRepository.findRefreshTokenByJti(any())).thenReturn(Maybe.just(refreshToken));
+        when(tokenRepository.deleteByJti(anyString())).thenReturn(Completable.complete());
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(refreshTokenRepository, times(1)).findByToken(any());
-        verify(refreshTokenRepository, times(1)).delete(anyString());
+        verify(tokenRepository, times(1)).findRefreshTokenByJti(any());
+        verify(tokenRepository, times(1)).deleteByJti(anyString());
 
         expectTokenRefreshAuditLog();
     }
@@ -520,8 +507,8 @@ public class TokenServiceTest {
         jwt.put("permissions", Collections.singletonList(new PermissionRequest().setResourceId("one").setResourceScopes(List.of("A"))));
 
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
-        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
-        when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(tokenRepository.findRefreshTokenByJti(any())).thenReturn(Maybe.just(refreshToken));
+        when(tokenRepository.deleteByJti(anyString())).thenReturn(Completable.complete());
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
@@ -532,8 +519,8 @@ public class TokenServiceTest {
         List<PermissionRequest> permissions = tokenRequest.getPermissions();
         assertNotNull(permissions);
         assertTrue("one".equals(permissions.get(0).getResourceId()) && "A".equals(permissions.get(0).getResourceScopes().get(0)));
-        verify(refreshTokenRepository, times(1)).findByToken(any());
-        verify(refreshTokenRepository, times(1)).delete(anyString());
+        verify(tokenRepository, times(1)).findRefreshTokenByJti(any());
+        verify(tokenRepository, times(1)).deleteByJti(anyString());
 
         expectTokenRefreshAuditLog();
     }
@@ -559,15 +546,15 @@ public class TokenServiceTest {
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000L);
 
         when(jwtService.decodeAndVerify(eq("encoded"), any(Client.class), any())).thenReturn(Single.just(jwt));
-        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.empty());
+        when(tokenRepository.findRefreshTokenByJti(any())).thenReturn(Maybe.empty());
 
         TestObserver<Token> testObserver = tokenService.refresh("encoded", tokenRequest, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
-        verify(refreshTokenRepository, times(1)).findByToken(any());
-        verify(refreshTokenRepository, never()).delete(anyString());
-        verify(accessTokenRepository, never()).create(any());
+        verify(tokenRepository, times(1)).findRefreshTokenByJti(any());
+        verify(tokenRepository, never()).deleteByJti(anyString());
+        verify(tokenRepository, never()).create(any(RefreshToken.class));
 
         expectTokenRefreshFailedAuditLog();
     }
@@ -593,15 +580,15 @@ public class TokenServiceTest {
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000L);
 
         when(jwtService.decodeAndVerify(eq(refreshToken.getToken()), any(Client.class), any())).thenReturn(Single.just(jwt));
-        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
+        when(tokenRepository.findRefreshTokenByJti(any())).thenReturn(Maybe.just(refreshToken));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
-        verify(refreshTokenRepository, times(1)).findByToken(any());
-        verify(refreshTokenRepository, never()).delete(anyString());
-        verify(accessTokenRepository, never()).create(any());
+        verify(tokenRepository, times(1)).findRefreshTokenByJti(any());
+        verify(tokenRepository, never()).deleteByJti(anyString());
+        verify(tokenRepository, never()).create(any(RefreshToken.class));
 
         expectTokenRefreshFailedAuditLog();
     }
@@ -627,15 +614,15 @@ public class TokenServiceTest {
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000L);
 
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
-        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
+        when(tokenRepository.findRefreshTokenByJti(any())).thenReturn(Maybe.just(refreshToken));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
-        verify(refreshTokenRepository, times(1)).findByToken(any());
-        verify(refreshTokenRepository, never()).delete(anyString());
-        verify(accessTokenRepository, never()).create(any());
+        verify(tokenRepository, times(1)).findRefreshTokenByJti(any());
+        verify(tokenRepository, never()).deleteByJti(anyString());
+        verify(tokenRepository, never()).create(any(io.gravitee.am.repository.oauth2.model.AccessToken.class));
 
         expectTokenRefreshFailedAuditLog();
     }
@@ -655,9 +642,9 @@ public class TokenServiceTest {
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
-        verify(refreshTokenRepository, never()).findByToken(any());
-        verify(refreshTokenRepository, never()).delete(anyString());
-        verify(accessTokenRepository, never()).create(any());
+        verify(tokenRepository, never()).findRefreshTokenByJti(any());
+        verify(tokenRepository, never()).deleteByJti(anyString());
+        verify(tokenRepository, never()).create(any(RefreshToken.class));
 
         expectTokenRefreshFailedAuditLog();
     }
@@ -686,14 +673,14 @@ public class TokenServiceTest {
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000L);
 
         when(jwtService.decodeAndVerify(any(), any(Client.class), any())).thenReturn(Single.just(jwt));
-        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
+        when(tokenRepository.findRefreshTokenByJti(any())).thenReturn(Maybe.just(refreshToken));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(refreshTokenRepository, times(1)).findByToken(any());
-        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(tokenRepository, times(1)).findRefreshTokenByJti(any());
+        verify(tokenRepository, never()).deleteByJti(anyString());
 
         expectTokenRefreshAuditLog();
     }

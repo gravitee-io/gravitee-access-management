@@ -34,16 +34,16 @@ import { mapValues } from '../runtime';
 export interface Page {
   /**
    *
-   * @type {Array<any>}
-   * @memberof Page
-   */
-  data?: Array<any>;
-  /**
-   *
    * @type {number}
    * @memberof Page
    */
   currentPage?: number;
+  /**
+   *
+   * @type {Array<any>}
+   * @memberof Page
+   */
+  data?: Array<any>;
   /**
    *
    * @type {number}
@@ -68,8 +68,8 @@ export function PageFromJSONTyped(json: any, ignoreDiscriminator: boolean): Page
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : json['data'],
     currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    data: json['data'] == null ? undefined : json['data'],
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
@@ -84,8 +84,8 @@ export function PageToJSONTyped(value?: Page | null, ignoreDiscriminator: boolea
   }
 
   return {
-    data: value['data'],
     currentPage: value['currentPage'],
+    data: value['data'],
     totalCount: value['totalCount'],
   };
 }
