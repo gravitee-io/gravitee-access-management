@@ -44,6 +44,7 @@ import java.util.function.Supplier;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.oauth2.impl.BaseIntrospectionTokenService.LEGACY_RFC8707_ENABLED;
+import static io.gravitee.am.gateway.handler.common.oauth2.impl.BaseIntrospectionTokenService.OFFLINE_VERIFICATION_TIMER_SECONDS_KEY;
 import static org.mockito.Mockito.*;
 
 /**
@@ -76,6 +77,7 @@ public class IntrospectionAccessTokenServiceTest {
     @Before
     public void setUp() throws Exception {
         when(environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(false);
+        when(environment.getProperty(OFFLINE_VERIFICATION_TIMER_SECONDS_KEY, Integer.class, 10)).thenReturn(10);
         introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
     }
 
@@ -150,6 +152,35 @@ public class IntrospectionAccessTokenServiceTest {
         testObserver.assertNoErrors();
         // repository should not be call because the token is too recent
         verify(tokenRepository, never()).findAccessTokenByJti(jwt.getJti());
+    }
+
+    @Test
+    public void shouldIntrospect_validToken_online_whenTimerIsDisabled() {
+        final String token = "token";
+        final JWT jwt = new JWT();
+        jwt.setJti("jti");
+        jwt.setDomain("domain");
+        jwt.setAud("client");
+        jwt.setIat(Instant.now().getEpochSecond());
+        final Client client = new Client();
+        client.setClientId("client-id");
+        client.setCertificate("cert-id");
+        final AccessToken accessToken = new AccessToken();
+        accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()));
+
+        when(environment.getProperty(OFFLINE_VERIFICATION_TIMER_SECONDS_KEY, Integer.class, 10)).thenReturn(0);
+        introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
+
+        when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.just(accessToken));
+
+        TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(tokenRepository, times(1)).findAccessTokenByJti(jwt.getJti());
     }
 
     @Test

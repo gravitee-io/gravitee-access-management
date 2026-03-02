@@ -107,6 +107,55 @@ tests:
                   maxRequestLength: 2048
                   maxRequestOperations: 12
 
+  - it: should set oauth2 clientAuth jtiCache settings
+    set:
+      gateway.handlers.oauth2.clientAuth.jtiCache.enabled: true
+      gateway.handlers.oauth2.clientAuth.jtiCache.maxSize: 5000
+      gateway.handlers.oauth2.clientAuth.jtiCache.stats: true
+      gateway.handlers.oauth2.clientAuth.jtiCache.expireAfterWriteSeconds: 30
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            handlers:
+              oauth2:
+                clientAuth:
+                  jtiCache:
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{8}enabled: true"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{8}expireAfterWriteSeconds: 30"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{8}maxSize: 5000"
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "[ ]{8}stats: true"
+
+  - it: should set oauth2 introspect offline verification timer
+    set:
+      gateway.handlers.oauth2.introspect.offlineVerificationTimerSeconds: 25
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            handlers:
+              oauth2:
+                introspect:
+                  offlineVerificationTimerSeconds: 25
+
   - it: should set default alert engine values disabled
     asserts:
       - hasDocuments:

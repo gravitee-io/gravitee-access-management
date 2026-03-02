@@ -50,8 +50,8 @@ import java.util.stream.Collectors;
 abstract class BaseIntrospectionTokenService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseIntrospectionTokenService.class);
-    private static final long OFFLINE_VERIFICATION_TIMER_SECONDS = 10;
     static final String LEGACY_RFC8707_ENABLED = "legacy.rfc8707.enabled";
+    static final String OFFLINE_VERIFICATION_TIMER_SECONDS_KEY = "handlers.oauth2.introspect.offlineVerificationTimerSeconds";
 
     private final JWTService jwtService;
     private final ClientSyncService clientService;
@@ -59,6 +59,7 @@ abstract class BaseIntrospectionTokenService {
     private final ProtectedResourceSyncService protectedResourceSyncService;
     private final TokenType tokenType;
     private final boolean isLegacyRfc8707Enabled;
+    private final int offlineVerificationTimerSeconds;
     
     BaseIntrospectionTokenService(TokenType tokenType,
                                   JWTService jwtService,
@@ -72,6 +73,7 @@ abstract class BaseIntrospectionTokenService {
         this.protectedResourceManager = protectedResourceManager;
         this.protectedResourceSyncService = protectedResourceSyncService;
         this.isLegacyRfc8707Enabled = environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true);
+        this.offlineVerificationTimerSeconds = environment.getProperty(OFFLINE_VERIFICATION_TIMER_SECONDS_KEY, Integer.class, 10);
     }
 
     protected abstract Maybe<? extends Token> findByToken(String token);
@@ -84,7 +86,7 @@ abstract class BaseIntrospectionTokenService {
                 .flatMap(jwt -> {
                     // Just check the JWT signature and JWT validity if offline verification option is enabled
                     // or if the token has just been created (could not be in database so far because of async database storing process delay)
-                    if (offlineVerification || Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + OFFLINE_VERIFICATION_TIMER_SECONDS))) {
+                    if (offlineVerification || Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + offlineVerificationTimerSeconds))) {
                         return Maybe.just(new IntrospectionResult(jwt, null));
                     }
 

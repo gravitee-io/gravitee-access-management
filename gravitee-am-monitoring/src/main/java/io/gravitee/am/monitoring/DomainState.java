@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.monitoring;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,9 +40,15 @@ public class DomainState {
     }
 
     private volatile Status status = Status.INITIALIZING;
+    private volatile JtiCacheStatus jtiCacheStatus;
 
     public synchronized DomainState setStatus(Status status) {
         this.status = status;
+        return this;
+    }
+
+    public synchronized DomainState setJtiCacheStatus(JtiCacheStatus jtiCacheStatus) {
+        this.jtiCacheStatus = jtiCacheStatus;
         return this;
     }
 
@@ -101,5 +108,15 @@ public class DomainState {
         private boolean success;
         private String message;
         private long lastSync;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    public static class JtiCacheStatus {
+        private long currentSize;
+        private long maxSize;
+        private double hitRate;
+        private double missRate;
     }
 }

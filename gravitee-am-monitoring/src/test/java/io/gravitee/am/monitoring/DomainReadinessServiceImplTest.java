@@ -165,6 +165,28 @@ public class DomainReadinessServiceImplTest {
     }
 
     @Test
+    public void shouldUpdateJtiCacheState() {
+        String domainId = "domain-jti";
+        domainReadinessService.updateDomainStatus(domainId, DomainState.Status.DEPLOYED);
+
+        domainReadinessService.updateJtiCacheState(domainId, 5L, 100L, 0.75, 0.25);
+
+        DomainState state = domainReadinessService.getDomainState(domainId);
+        assertNotNull(state);
+        assertNotNull(state.getJtiCacheStatus());
+        assertEquals(5L, state.getJtiCacheStatus().getCurrentSize());
+        assertEquals(100L, state.getJtiCacheStatus().getMaxSize());
+        assertEquals(0.75, state.getJtiCacheStatus().getHitRate(), 0.0);
+        assertEquals(0.25, state.getJtiCacheStatus().getMissRate(), 0.0);
+    }
+
+    @Test
+    public void shouldIgnoreJtiCacheUpdateWhenDomainMissing() {
+        domainReadinessService.updateJtiCacheState("unknown-domain", 1L, 2L, 0.1, 0.9);
+        assertNull(domainReadinessService.getDomainState("unknown-domain"));
+    }
+
+    @Test
     public void shouldCheckIfAllDomainsReady() {
         assertTrue(domainReadinessService.isAllDomainsReady());
 

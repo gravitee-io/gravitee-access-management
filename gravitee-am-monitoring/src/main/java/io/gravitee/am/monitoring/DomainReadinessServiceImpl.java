@@ -196,6 +196,27 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     }
 
     @Override
+    public void updateJtiCacheState(String domainId, long currentSize, long maxSize, double hitRate, double missRate) {
+        if (domainId == null) {
+            logger.warn("Received updateJtiCacheState for null domainId");
+            return;
+        }
+
+        DomainState domainState = domainStates.get(domainId);
+        if (domainState == null) {
+            logger.debug("[Domain: {}] Domain not found.", domainId);
+            return;
+        }
+
+        domainState.setJtiCacheStatus(DomainState.JtiCacheStatus.builder()
+                .currentSize(currentSize)
+                .missRate(missRate)
+                .hitRate(hitRate)
+                .maxSize(maxSize)
+                .build());
+    }
+
+    @Override
     public Map<String, DomainState> getDomainStates() {
         return Collections.unmodifiableMap(domainStates);
     }

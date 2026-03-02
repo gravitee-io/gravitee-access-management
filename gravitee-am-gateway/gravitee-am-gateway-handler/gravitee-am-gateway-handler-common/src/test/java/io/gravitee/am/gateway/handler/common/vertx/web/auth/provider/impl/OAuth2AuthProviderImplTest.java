@@ -19,11 +19,13 @@ import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTCache;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,16 +59,20 @@ public class OAuth2AuthProviderImplTest {
     @Mock
     private ProtectedResourceSyncService protectedResourceSyncService;
 
+    @Mock
+    private JWTCache jtiCache;
+
     @InjectMocks
     private OAuth2AuthProviderImpl oAuth2AuthProvider;
 
     @Before
     public void setUp() {
         // Reset mocks before each test
-        reset(introspectionTokenService, clientSyncService, protectedResourceSyncService);
+        reset(introspectionTokenService, clientSyncService, protectedResourceSyncService, jtiCache);
         // Default: protectedResourceSyncService returns empty (for existing tests)
         when(protectedResourceSyncService.findByDomainAndClientId(anyString(), anyString()))
                 .thenReturn(Maybe.empty());
+        when(jtiCache.isPresent(anyString())).thenReturn(Single.just(false));
     }
 
     @Test
@@ -86,6 +92,7 @@ public class OAuth2AuthProviderImplTest {
         when(clientSyncService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
                 .thenReturn(Maybe.just(client));
 
+        jwt.setExp(123L);
         CountDownLatch latch = new CountDownLatch(1);
         @SuppressWarnings("unchecked")
         AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
@@ -104,6 +111,8 @@ public class OAuth2AuthProviderImplTest {
         assertEquals("JWT should match", jwt, result[0].result().getToken());
         assertEquals("Client should match", client, result[0].result().getClient());
 
+        verify(jtiCache).isPresent(TOKEN);
+        verify(jtiCache).put(TOKEN, 123L);
         verify(introspectionTokenService).introspect(TOKEN, false);
         verify(clientSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
     }
@@ -144,6 +153,8 @@ public class OAuth2AuthProviderImplTest {
         assertEquals("Error message should match", "The token is invalid", exception.getMessage());
         assertEquals("Error details should match", "Client or resource not found: " + CLIENT_ID, exception.getDetails());
 
+        verify(jtiCache).isPresent(TOKEN);
+        verify(jtiCache, never()).put(anyString(), anyLong());
         verify(introspectionTokenService).introspect(TOKEN, false);
         verify(clientSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
         verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
@@ -173,6 +184,8 @@ public class OAuth2AuthProviderImplTest {
         assertTrue("Result should be failed", result[0].failed());
         assertEquals("Failure cause should match", introspectionError, result[0].cause());
 
+        verify(jtiCache).isPresent(TOKEN);
+        verify(jtiCache, never()).put(anyString(), anyLong());
         verify(introspectionTokenService).introspect(TOKEN, true);
         verify(clientSyncService, never()).findByDomainAndClientId(anyString(), anyString());
     }
@@ -186,6 +199,7 @@ public class OAuth2AuthProviderImplTest {
                 Claims.AUD, protectedResourceClientId,
                 Claims.DOMAIN, DOMAIN
         ));
+        jwt.setExp(0L);
         Client protectedResourceClient = new Client();
         protectedResourceClient.setClientId(protectedResourceClientId);
         protectedResourceClient.setDomain(DOMAIN);
@@ -213,8 +227,49 @@ public class OAuth2AuthProviderImplTest {
         assertTrue("Result should be successful", result[0].succeeded());
         assertEquals("Client should match", protectedResourceClient, result[0].result().getClient());
 
+        verify(jtiCache).isPresent(TOKEN);
+        verify(jtiCache).put(TOKEN, 0L);
         verify(clientSyncService).findByDomainAndClientId(DOMAIN, protectedResourceClientId);
         verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, protectedResourceClientId);
     }
-}
 
+    @Test
+    public void shouldUseOfflineVerificationWhenTokenIsCached() throws InterruptedException {
+        // Given
+        JWT jwt = new JWT(Map.of(
+                Claims.SUB, "test-sub",
+                Claims.AUD, CLIENT_ID,
+                Claims.DOMAIN, DOMAIN
+        ));
+        jwt.setExp(456L);
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+        client.setDomain(DOMAIN);
+
+        when(jtiCache.isPresent(TOKEN)).thenReturn(Single.just(true));
+        when(introspectionTokenService.introspect(TOKEN, true))
+                .thenReturn(Maybe.just(jwt));
+        when(clientSyncService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
+                .thenReturn(Maybe.just(client));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
+
+        // When
+        oAuth2AuthProvider.decodeToken(TOKEN, false, handler -> {
+            result[0] = handler;
+            latch.countDown();
+        });
+
+        // Then
+        assertTrue("Handler should be called", latch.await(1, TimeUnit.SECONDS));
+        assertNotNull("Result should not be null", result[0]);
+        assertTrue("Result should be successful", result[0].succeeded());
+
+        verify(jtiCache).isPresent(TOKEN);
+        verify(jtiCache).put(TOKEN, 456L);
+        verify(introspectionTokenService).introspect(TOKEN, true);
+        verify(clientSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+    }
+}

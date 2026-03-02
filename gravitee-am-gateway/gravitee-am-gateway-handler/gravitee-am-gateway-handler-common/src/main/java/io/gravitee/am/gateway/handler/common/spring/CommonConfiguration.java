@@ -46,6 +46,8 @@ import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
 import io.gravitee.am.gateway.handler.common.group.impl.DefaultGroupManager;
+import io.gravitee.am.gateway.handler.common.jwt.InMemoryJWTCache;
+import io.gravitee.am.gateway.handler.common.jwt.JWTCache;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
@@ -108,6 +110,7 @@ import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.DomainDataPlane;
@@ -129,6 +132,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 
@@ -243,6 +247,30 @@ public class CommonConfiguration {
     }
 
     @Bean
+    public JWTCache jtiCache(Domain domain,
+                             DomainReadinessService domainReadinessService,
+                             @Value("${handlers.oauth2.clientAuth.jtiCache.enabled:false}") boolean jtiCacheEnabled,
+                             @Value("${handlers.oauth2.clientAuth.jtiCache.maxSize:10000}") long maxSize,
+                             @Value("${handlers.oauth2.clientAuth.jtiCache.expireAfterWriteSeconds:10}") int expireAfterWriteSeconds,
+                             @Value("${handlers.oauth2.clientAuth.jtiCache.stats:false}") boolean statsEnabled) {
+        if (jtiCacheEnabled) {
+            var builder = InMemoryJWTCache.builder()
+                    .maxSize(maxSize)
+                    .expireAfterWrite(Duration.ofSeconds(expireAfterWriteSeconds));
+            if (statsEnabled) {
+                return builder
+                        .statsConsumer(stats -> domainReadinessService.updateJtiCacheState(domain.getId(), stats.currentSize(), stats.maxSize(), stats.hitRate(), stats.missRate()))
+                        .build();
+            } else {
+                return builder
+                        .build();
+            }
+        } else {
+            return new JWTCache.NoOpJtiCache();
+        }
+    }
+
+    @Bean
     public AuthenticationEventListener authenticationEventListener() {
         return new AuthenticationEventListener();
     }
@@ -289,7 +317,7 @@ public class CommonConfiguration {
 
     @Bean
     public IntrospectionTokenFacade introspectionTokenFacade(@Qualifier("AccessTokenIntrospection") IntrospectionTokenService accessTokenIntrospectionService,
-                                                             @Qualifier("RefreshTokenIntrospection") IntrospectionTokenService refreshTokenIntrospectionService){
+                                                             @Qualifier("RefreshTokenIntrospection") IntrospectionTokenService refreshTokenIntrospectionService) {
         return new IntrospectionTokenFacade(accessTokenIntrospectionService, refreshTokenIntrospectionService);
     }
 
@@ -371,6 +399,7 @@ public class CommonConfiguration {
     public PasswordPolicyManager passwordPolicyManager() {
         return new PasswordPolicyManagerImpl();
     }
+
     @Bean
     public GroupManager groupManager(Environment environment, EventManager eventManager, DataPlaneRegistry registry, Domain domain) {
         final var cachedRepository = registry.getGroupRepository(domain);
@@ -382,7 +411,7 @@ public class CommonConfiguration {
         /*if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
             return new InMemoryGroupManager(domain, eventManager, cachedRepository);
         } else {*/
-            return new DefaultGroupManager(cachedRepository);
+        return new DefaultGroupManager(cachedRepository);
         /*}*/
     }
 
@@ -427,7 +456,7 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public DomainDataPlane domainDataPlane(Domain domain, DataPlaneRegistry dataPlaneRegistry){
+    public DomainDataPlane domainDataPlane(Domain domain, DataPlaneRegistry dataPlaneRegistry) {
         DataPlaneDescription description = dataPlaneRegistry.getDescription(domain);
         return new DomainDataPlane(domain, description);
     }
@@ -446,6 +475,7 @@ public class CommonConfiguration {
     public RateLimiterService rateLimiterService() {
         return new RateLimiterServiceImpl();
     }
+
     @Bean
     public VerifyAttemptService verifyAttemptService() {
         return new VerifyAttemptServiceImpl();

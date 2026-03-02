@@ -86,6 +86,8 @@ public interface DomainReadinessService {
      */
     boolean isAllDomainsReady();
 
+    void updateJtiCacheState(String domainId, long currentSize, long maxSize, double hitRate, double missRate);
+
     /**
      * Get all domain states.
      * @return Map of domain ID to DomainState.
