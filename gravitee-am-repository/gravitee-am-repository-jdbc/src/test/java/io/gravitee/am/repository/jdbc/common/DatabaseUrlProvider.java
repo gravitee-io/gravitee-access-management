@@ -19,10 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.testcontainers.containers.MSSQLServerContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.mssqlserver.MSSQLServerContainer;
+import org.testcontainers.mariadb.MariaDBContainer;
+import org.testcontainers.mysql.MySQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -92,31 +92,31 @@ public class DatabaseUrlProvider {
             if (jdbcType.contains("~")) {
                 dbContainer = new MssqlR2DBCContainer(new MSSQLServerContainer(MSSQLServerContainer.IMAGE + ":" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new MssqlR2DBCContainer(new MSSQLServerContainer());
+                dbContainer = new MssqlR2DBCContainer(new MSSQLServerContainer("mcr.microsoft.com/mssql/server:2019-latest"));
             }
         }
 
         if (jdbcType.startsWith("mysql-tc")) {
             if (jdbcType.contains("~")) {
-                dbContainer = new MysqlR2DBCContainer(new MySQLContainer(MySQLContainer.NAME + ":" + jdbcType.split("~")[1]));
+                dbContainer = new MysqlR2DBCContainer(new MySQLContainer("mysql:" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new MysqlR2DBCContainer(new MySQLContainer());
+                dbContainer = new MysqlR2DBCContainer(new MySQLContainer("mysql:8.0.27"));
             }
         }
 
         if (jdbcType.startsWith("mariadb-tc")) {
             if (jdbcType.contains("~")) {
-                dbContainer = new MariaR2DBCContainer(new MariaDBContainer(MariaDBContainer.NAME + ":" + jdbcType.split("~")[1]));
+                dbContainer = new MariaR2DBCContainer(new MariaDBContainer("mariadb:" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new MariaR2DBCContainer(new MariaDBContainer());
+                dbContainer = new MariaR2DBCContainer(new MariaDBContainer("mariadb:10.6.5"));
             }
         }
 
         if (jdbcType.startsWith("postgresql-tc")) {
             if (jdbcType.contains("~")) {
-                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer(PostgreSQLContainer.IMAGE + ":" + jdbcType.split("~")[1]));
+                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer("postgres:" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer());
+                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer("postgres:15.1"));
             }
         }
 
