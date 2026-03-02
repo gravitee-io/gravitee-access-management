@@ -35,6 +35,8 @@ import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.Router;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -48,6 +50,8 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public class DefaultReactor extends AbstractService implements Reactor, EventListener<DomainEvent, Domain>, InitializingBean {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultReactor.class);
 
     @Autowired
     private Environment environment;

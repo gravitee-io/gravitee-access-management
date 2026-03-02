@@ -34,11 +34,8 @@ import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.model.AuthorizationBundle;
 import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
-import io.gravitee.am.repository.management.api.AuthorizationSchemaRepository;
 import io.gravitee.am.repository.management.api.AuthorizationSchemaVersionRepository;
-import io.gravitee.am.repository.management.api.EntityStoreRepository;
 import io.gravitee.am.repository.management.api.EntityStoreVersionRepository;
-import io.gravitee.am.repository.management.api.PolicySetRepository;
 import io.gravitee.am.repository.management.api.PolicySetVersionRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -50,6 +47,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.ext.web.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -81,19 +79,10 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     private AuthorizationBundleRepository authorizationBundleRepository;
 
     @Autowired
-    private PolicySetRepository policySetRepository;
-
-    @Autowired
     private PolicySetVersionRepository policySetVersionRepository;
 
     @Autowired
-    private AuthorizationSchemaRepository authorizationSchemaRepository;
-
-    @Autowired
     private AuthorizationSchemaVersionRepository authorizationSchemaVersionRepository;
-
-    @Autowired
-    private EntityStoreRepository entityStoreRepository;
 
     @Autowired
     private EntityStoreVersionRepository entityStoreVersionRepository;
@@ -103,6 +92,9 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired(required = false)
+    private Router router;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -228,6 +220,9 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
             if (provider != null) {
                 providers.put(authorizationEngine.getId(), provider);
                 provider.setAuditCallback(this::reportAuditEvent);
+                if (router != null) {
+                    provider.configureGatewayRoutes(router);
+                }
 
                 String bundleId = extractBundleId(authorizationEngine.getConfiguration());
                 if (bundleId != null && !bundleId.isBlank()) {
@@ -475,4 +470,5 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 .map(v -> v.getContent())
                 .defaultIfEmpty("");
     }
+
 }

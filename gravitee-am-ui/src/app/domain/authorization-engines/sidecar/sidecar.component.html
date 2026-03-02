@@ -31,6 +31,10 @@
           </span>
         </span>
       </div>
+      <div class="page-header__details-item" *ngIf="connectedSidecars !== null">
+        <span class="label">Connected Sidecars</span>
+        <span class="value">{{ connectedSidecars }}</span>
+      </div>
     </div>
   </div>
 
@@ -52,10 +56,12 @@
                 <mat-icon class="health-icon">{{ healthReady ? 'check_circle' : 'error' }}</mat-icon>
                 <div class="health-info">
                   <span class="health-label">{{ healthStatus }}</span>
-                  <span class="health-detail" *ngIf="healthReady">The sidecar is running and has a policy loaded.</span>
-                  <span class="health-detail" *ngIf="healthStatus === 'AWAITING_POLICY'">The sidecar is running but no policy has been deployed yet.</span>
-                  <span class="health-detail" *ngIf="healthStatus === 'UNREACHABLE'">Cannot connect to the sidecar. Check that it is running and the URL is correct.</span>
-                  <span class="health-detail" *ngIf="healthStatus === 'DOWN'">The sidecar reported an unhealthy status.</span>
+                  <span class="health-detail" *ngIf="healthReady">
+                    {{ connectedSidecars }} sidecar(s) connected. Bundle version: {{ bundleVersion }}.
+                  </span>
+                  <span class="health-detail" *ngIf="healthStatus === 'AWAITING_CONNECTION'">No sidecar is currently connected via WebSocket. Start a sidecar and verify the API key and domain path.</span>
+                  <span class="health-detail" *ngIf="healthStatus === 'UNREACHABLE'">Cannot reach the gateway health endpoint. Check that the gateway is running.</span>
+                  <span class="health-detail" *ngIf="healthStatus === 'DOWN'">The gateway reported an unhealthy status.</span>
                 </div>
               </div>
             </div>
@@ -76,14 +82,14 @@
         <div class="gv-page-description" fxFlex="30">
           <h3>Sidecar Health</h3>
           <div class="gv-page-description-content">
-            <p>Shows the current status of the connected AuthZEN sidecar.</p>
+            <p>Shows the status of sidecars connected to the gateway via WebSocket.</p>
             <small>Status Values</small>
             <ul>
-              <li><strong>UP</strong> - Sidecar is running with a policy deployed</li>
-              <li><strong>AWAITING_POLICY</strong> - Sidecar is running but waiting for policy deployment</li>
-              <li><strong>UNREACHABLE</strong> - Cannot connect to the sidecar</li>
+              <li><strong>UP</strong> - At least one sidecar is connected and receiving policy bundles</li>
+              <li><strong>AWAITING_CONNECTION</strong> - No sidecar has connected yet</li>
+              <li><strong>UNREACHABLE</strong> - Cannot communicate with the gateway</li>
             </ul>
-            <p>Policy and entity data are managed through Authorization Bundles and pushed to the sidecar automatically.</p>
+            <p>Policy and entity data are managed through Authorization Bundles and pushed to sidecars automatically over the WebSocket connection.</p>
           </div>
         </div>
       </div>
@@ -101,16 +107,39 @@
             </mat-form-field>
           </div>
 
+          <div class="gv-form-section">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Domain Path</mat-label>
+              <input matInput type="text" [value]="domainPath" disabled />
+              <mat-hint>The domain path used in the WebSocket URL. Sidecars connect to <code>/&lt;domain-path&gt;/_authz/ws</code>.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Authorization Bundle</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Authorization Bundle</mat-label>
+              <mat-select [(ngModel)]="selectedBundleId" (ngModelChange)="onBundleChanged()">
+                <mat-option value="">-- None --</mat-option>
+                <mat-option *ngFor="let bundle of bundles" [value]="bundle.id">{{ bundle.name }}</mat-option>
+              </mat-select>
+              <mat-hint>Select the Authorization Bundle whose policies, entities, and schema will be served to connected sidecars.</mat-hint>
+            </mat-form-field>
+          </div>
+
           <info-banner
             type="warning"
-            text="Sidecar is currently not reachable. Please review the configuration."
+            text="Gateway is currently not reachable. Please review the configuration."
             [showButton]="false"
             *ngIf="hasLoadError"
           ></info-banner>
 
           <div class="gv-form-section">
             <div class="gv-form-section-title">
-              <h5>Configuration</h5>
+              <h5>Connection Settings</h5>
               <mat-divider></mat-divider>
             </div>
             <provider-form
@@ -138,13 +167,19 @@
         <div class="gv-page-description" fxFlex="30">
           <h3>Sidecar Configuration</h3>
           <div class="gv-page-description-content">
-            <p>Configure the connection to your AuthZEN sidecar instance.</p>
-            <small>Troubleshooting</small>
-            <p>If connection fails, verify:</p>
+            <p>Configure the WebSocket connection between the gateway and AuthZEN sidecars.</p>
+            <small>Connection Setup</small>
+            <p>Sidecars connect to the gateway at <code>/&lt;domain-path&gt;/_authz/ws</code> using:</p>
             <ul>
-              <li>Sidecar URL is reachable from the gateway</li>
-              <li>The sidecar process is running</li>
-              <li>Port is not blocked by a firewall</li>
+              <li><strong>Domain Path</strong> - Routes the WebSocket to the correct security domain</li>
+              <li><strong>API Key</strong> - Authenticates the sidecar connection</li>
+              <li><strong>Bundle</strong> - Determines which policies are served</li>
+            </ul>
+            <small>Sidecar Environment Variables</small>
+            <ul>
+              <li><code>GATEWAY_URL</code> - Gateway base URL</li>
+              <li><code>SIDECAR_DOMAIN_PATH</code> - Domain path shown above</li>
+              <li><code>SIDECAR_API_KEY</code> - API Key configured below</li>
             </ul>
           </div>
         </div>

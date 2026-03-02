@@ -153,6 +153,10 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         return domain;
     }
 
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
     private void startRootProtocol() {
         logger.info("Start security domain root protocol");
 

@@ -48,6 +48,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.vertx.rxjava3.ext.web.Router;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,6 +117,9 @@ class AuthorizationEngineManagerImplTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private Router router;
 
     @InjectMocks
     private AuthorizationEngineManagerImpl manager;
@@ -537,6 +541,23 @@ class AuthorizationEngineManagerImplTest {
         observer.assertError(throwable ->
             throwable instanceof IllegalStateException &&
             throwable.getMessage().equals("Multiple authorization engine providers found. Only one provider is allowed per domain."));
+    }
+
+    @Test
+    void shouldCallConfigureGatewayRoutesOnDeploy() {
+        // given
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
+                .thenReturn(mockProvider);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+
+        // when
+        manager.afterPropertiesSet();
+
+        // then - configureGatewayRoutes should be called with the router
+        verify(mockProvider, timeout(1000)).configureGatewayRoutes(router);
     }
 
     // --- Authorization Bundle event tests ---

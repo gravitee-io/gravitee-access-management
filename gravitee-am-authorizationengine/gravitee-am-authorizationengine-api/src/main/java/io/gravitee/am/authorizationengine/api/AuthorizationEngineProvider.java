@@ -21,6 +21,7 @@ import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
 import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.ext.web.Router;
 
 import java.util.Optional;
 
@@ -73,5 +74,16 @@ public interface AuthorizationEngineProvider extends Service<AuthorizationEngine
      */
     default Optional<Object> getManagementResource() {
         return Optional.empty();
+    }
+
+    /**
+     * Configure gateway routes on the domain-scoped Vert.x Router.
+     * Called once after the provider is deployed. Providers that need to handle
+     * inbound connections (e.g., WebSocket from sidecars) register their routes here.
+     *
+     * @param router the domain-scoped Vert.x Router
+     */
+    default void configureGatewayRoutes(Router router) {
+        // No-op by default; providers needing gateway routes override this
     }
 }

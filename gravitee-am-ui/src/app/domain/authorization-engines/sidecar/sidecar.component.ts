@@ -20,6 +20,7 @@ import { finalize } from 'rxjs/operators';
 
 import { SidecarService } from '../../../services/sidecar.service';
 import { AuthorizationEngineService } from '../../../services/authorization-engine.service';
+import { AuthorizationBundleService } from '../../../services/authorization-bundle.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 
@@ -37,6 +38,11 @@ interface Plugin {
   icon?: string;
 }
 
+interface Bundle {
+  id: string;
+  name: string;
+}
+
 @Component({
   selector: 'app-sidecar',
   standalone: false,
@@ -45,6 +51,7 @@ interface Plugin {
 })
 export class SidecarComponent implements OnInit, OnDestroy {
   domainId: string;
+  domainPath: string;
   engineId: string;
   authorizationEngine: AuthorizationEngine = { name: '', type: '', configuration: '' };
   plugin: Plugin | null = null;
@@ -52,12 +59,17 @@ export class SidecarComponent implements OnInit, OnDestroy {
   configuration: Record<string, any> = {};
   draftConfiguration: Record<string, any> = {};
   originalName: string = '';
+  selectedBundleId: string = '';
+  originalBundleId: string = '';
+  bundles: Bundle[] = [];
   configurationSchema: Record<string, any> = {};
   configurationIsValid = false;
   isSaving = false;
 
   healthStatus: string | null = null;
   healthReady: boolean | null = null;
+  connectedSidecars: number | null = null;
+  bundleVersion: number | null = null;
   isCheckingHealth = false;
   hasLoadError = false;
 
@@ -68,15 +80,18 @@ export class SidecarComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private sidecarService: SidecarService,
     private authorizationEngineService: AuthorizationEngineService,
+    private authorizationBundleService: AuthorizationBundleService,
     private organizationService: OrganizationService,
     private snackbarService: SnackbarService,
   ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.params['domainId'];
+    this.domainPath = this.route.snapshot.data['domain']?.path || '';
     this.engineId = this.route.snapshot.params['engineId'];
     this.authorizationEnginePlugins = this.toPluginMap(this.route.snapshot.data['authorizationEnginePlugins']);
 
+    this.loadBundles();
     this.load();
   }
 
@@ -95,6 +110,8 @@ export class SidecarComponent implements OnInit, OnDestroy {
           this.configuration = { ...config };
           this.draftConfiguration = { ...config };
           this.originalName = engine.name;
+          this.selectedBundleId = config.bundleId || '';
+          this.originalBundleId = config.bundleId || '';
 
           this.loadAuthorizationEngineSchema(engine.type);
           this.checkHealth();
@@ -102,6 +119,19 @@ export class SidecarComponent implements OnInit, OnDestroy {
         error: () => {
           this.snackbarService.open('Failed to load authorization engine');
           this.hasLoadError = true;
+        },
+      }),
+    );
+  }
+
+  loadBundles() {
+    this.subscriptions.add(
+      this.authorizationBundleService.findByDomain(this.domainId).subscribe({
+        next: (bundles) => {
+          this.bundles = bundles || [];
+        },
+        error: () => {
+          this.bundles = [];
         },
       }),
     );
@@ -127,12 +157,16 @@ export class SidecarComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.healthStatus = response.status;
           this.healthReady = response.status === 'UP';
+          this.connectedSidecars = response.connectedSidecars ?? null;
+          this.bundleVersion = response.bundleVersion ?? null;
           this.isCheckingHealth = false;
           this.hasLoadError = false;
         },
         error: () => {
           this.healthStatus = 'UNREACHABLE';
           this.healthReady = false;
+          this.connectedSidecars = null;
+          this.bundleVersion = null;
           this.isCheckingHealth = false;
           this.hasLoadError = true;
         },
@@ -140,15 +174,20 @@ export class SidecarComponent implements OnInit, OnDestroy {
     );
   }
 
+  onBundleChanged() {
+    this.draftConfiguration = { ...this.draftConfiguration, bundleId: this.selectedBundleId };
+  }
+
   isConfigurationDirty(): boolean {
     const configChanged = JSON.stringify(this.draftConfiguration) !== JSON.stringify(this.configuration);
     const nameChanged = this.authorizationEngine?.name !== this.originalName;
-    return configChanged || nameChanged;
+    const bundleChanged = this.selectedBundleId !== this.originalBundleId;
+    return configChanged || nameChanged || bundleChanged;
   }
 
   onConfigurationChanged(configurationWrapper: { isValid: boolean; configuration: Record<string, any> }) {
     this.configurationIsValid = configurationWrapper.isValid;
-    this.draftConfiguration = configurationWrapper.configuration || {};
+    this.draftConfiguration = { ...(configurationWrapper.configuration || {}), bundleId: this.selectedBundleId };
   }
 
   saveConfiguration() {
@@ -158,10 +197,12 @@ export class SidecarComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
 
+    const finalConfig = { ...this.draftConfiguration, bundleId: this.selectedBundleId };
+
     const updatedEngine: AuthorizationEngine = {
       ...this.authorizationEngine,
       name: this.authorizationEngine.name,
-      configuration: JSON.stringify(this.draftConfiguration),
+      configuration: JSON.stringify(finalConfig),
     };
 
     this.subscriptions.add(
@@ -179,6 +220,8 @@ export class SidecarComponent implements OnInit, OnDestroy {
             this.configuration = { ...config };
             this.draftConfiguration = { ...config };
             this.originalName = engine.name;
+            this.selectedBundleId = config.bundleId || '';
+            this.originalBundleId = config.bundleId || '';
             this.snackbarService.open('Configuration saved successfully');
 
             this.checkHealth();
