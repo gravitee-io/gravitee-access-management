@@ -28,6 +28,10 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  */
 @Configuration
 public class DatabaseUrlProvider {
+    private static final String DEFAULT_MSSQL_IMAGE = "mcr.microsoft.com/mssql/server:2019-latest";
+    private static final String DEFAULT_MYSQL_IMAGE = "mysql:8.0.27";
+    private static final String DEFAULT_MARIADB_IMAGE = "mariadb:10.6.5";
+    private static final String DEFAULT_POSTGRES_IMAGE = "postgres:15.1";
 
     public String getDatabaseType() {
         final String jdbcType = System.getProperty("jdbcType", "postgresql-tc~15.1");
@@ -60,31 +64,31 @@ public class DatabaseUrlProvider {
             if (jdbcType.contains("~")) {
                 dbContainer = new MssqlR2DBCContainer(new MSSQLServerContainer(MSSQLServerContainer.IMAGE + ":" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new MssqlR2DBCContainer(new MSSQLServerContainer("mcr.microsoft.com/mssql/server:2019-latest"));
+                dbContainer = new MssqlR2DBCContainer(new MSSQLServerContainer(DEFAULT_MSSQL_IMAGE));
             }
         }
 
         if (jdbcType.startsWith("mysql-tc")) {
             if (jdbcType.contains("~")) {
-                dbContainer = new MysqlR2DBCContainer(new MySQLContainer("mysql:" + jdbcType.split("~")[1]));
+                dbContainer = new MysqlR2DBCContainer(new MySQLContainer(MySQLContainer.NAME + ":" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new MysqlR2DBCContainer(new MySQLContainer("mysql:8.0.27"));
+                dbContainer = new MysqlR2DBCContainer(new MySQLContainer(DEFAULT_MYSQL_IMAGE));
             }
         }
 
         if (jdbcType.startsWith("mariadb-tc")) {
             if (jdbcType.contains("~")) {
-                dbContainer = new MariaR2DBCContainer(new MariaDBContainer("mariadb:" + jdbcType.split("~")[1]));
+                dbContainer = new MariaR2DBCContainer(new MariaDBContainer(MariaDBContainer.NAME + ":" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new MariaR2DBCContainer(new MariaDBContainer("mariadb:10.6.5"));
+                dbContainer = new MariaR2DBCContainer(new MariaDBContainer(DEFAULT_MARIADB_IMAGE));
             }
         }
 
         if (jdbcType.startsWith("postgresql-tc")) {
             if (jdbcType.contains("~")) {
-                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer("postgres:" + jdbcType.split("~")[1]));
+                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer(PostgreSQLContainer.IMAGE + ":" + jdbcType.split("~")[1]));
             } else {
-                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer("postgres:15.1"));
+                dbContainer = new PostgresR2DBCContainer(new PostgreSQLContainer(DEFAULT_POSTGRES_IMAGE));
             }
         }
 
