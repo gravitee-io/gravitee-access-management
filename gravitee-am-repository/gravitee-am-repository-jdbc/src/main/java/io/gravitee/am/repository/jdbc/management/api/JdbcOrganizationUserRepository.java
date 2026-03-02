@@ -275,8 +275,10 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         String search = this.databaseDialectHelper.buildSearchUserQuery(wildcardSearch, page, size, true);
         String count = this.databaseDialectHelper.buildCountUserQuery(wildcardSearch, true);
 
+        String searchValue = (wildcardSearch ? wildcardValue : query).toUpperCase();
+
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
-                .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
+                .bind(ATTR_COL_VALUE, searchValue)
                 .bind(REF_ID, referenceId)
                 .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcOrganizationUser.class, row))
@@ -285,7 +287,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 .concatMap(app -> completeUser(app).toFlowable())
                 .toList()
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
-                        .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
+                        .bind(ATTR_COL_VALUE, searchValue)
                         .bind(REF_ID, referenceId)
                         .bind(REF_TYPE, referenceType.name())
                         .map((row, rowMetadat) -> row.get(0, Long.class)).first())

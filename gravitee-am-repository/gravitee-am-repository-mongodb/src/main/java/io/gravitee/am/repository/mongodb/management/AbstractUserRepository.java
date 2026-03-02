@@ -131,27 +131,22 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
-        Bson searchQuery = or(
-                new BasicDBObject(FIELD_USERNAME, query),
-                new BasicDBObject(FIELD_EMAIL, query),
-                new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, query),
-                new BasicDBObject(FIELD_DISPLAY_NAME, query),
-                new BasicDBObject(FIELD_FIRST_NAME, query),
-                new BasicDBObject(FIELD_LAST_NAME, query));
-
-        // if query contains wildcard, use the regex query
+        // use case-insensitive regex for both exact and wildcard searches
+        String regex;
         if (query.contains("*")) {
             String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            searchQuery = or(
-                    new BasicDBObject(FIELD_USERNAME, pattern),
-                    new BasicDBObject(FIELD_EMAIL, pattern),
-                    new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, pattern),
-                    new BasicDBObject(FIELD_DISPLAY_NAME, pattern),
-                    new BasicDBObject(FIELD_FIRST_NAME, pattern),
-                    new BasicDBObject(FIELD_LAST_NAME, pattern));
+            regex = "^" + compactQuery;
+        } else {
+            regex = "^" + Pattern.quote(query) + "$";
         }
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Bson searchQuery = or(
+                new BasicDBObject(FIELD_USERNAME, pattern),
+                new BasicDBObject(FIELD_EMAIL, pattern),
+                new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, pattern),
+                new BasicDBObject(FIELD_DISPLAY_NAME, pattern),
+                new BasicDBObject(FIELD_FIRST_NAME, pattern),
+                new BasicDBObject(FIELD_LAST_NAME, pattern));
 
         Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
