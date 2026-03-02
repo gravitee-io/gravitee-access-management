@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21.0.10_7-jdk-jammy
 
 ENV GATLING_VERSION=3.14.3
 
