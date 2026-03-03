@@ -154,18 +154,18 @@ describe('Token Exchange grant', () => {
 
     const decoded = parseJwt(exchangedToken.access_token);
     expect(decoded.payload['client_id']).toBe(application.settings.oauth.clientId);
-    // Then: full allowed granted; response includes scope.
+    // Then: all client default scopes are granted when scope is omitted.
     const issuedScopes = (decoded.payload['scope'] as string)?.split(' ') ?? [];
-    expect(issuedScopes).toHaveLength(3);
+    expect(issuedScopes).toHaveLength(2);
     expect(issuedScopes).toContain('openid');
     expect(issuedScopes).toContain('profile');
-    expect(issuedScopes).toContain('offline_access');
+    expect(issuedScopes).not.toContain('offline_access');
     expect(exchangedToken.scope).toBeDefined();
     const responseScopeSet = new Set((exchangedToken.scope as string).split(' '));
-    expect(responseScopeSet.size).toBe(3);
+    expect(responseScopeSet.size).toBe(2);
     expect(responseScopeSet.has('openid')).toBe(true);
     expect(responseScopeSet.has('profile')).toBe(true);
-    expect(responseScopeSet.has('offline_access')).toBe(true);
+    expect(responseScopeSet.has('offline_access')).toBe(false);
 
     const introspectResponse = await performPost(
       oidc.introspection_endpoint,
@@ -637,11 +637,11 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     expect(actClaim).toBeDefined();
     expect(actClaim['sub']).toBeDefined();
     const issuedScopes = (decoded.payload['scope'] as string)?.split(' ') ?? [];
-    expect(issuedScopes).toHaveLength(3);
+    expect(issuedScopes).toHaveLength(2);
     expect(issuedScopes).toContain('openid');
     expect(issuedScopes).toContain('profile');
-    expect(issuedScopes).toContain('offline_access');
-    expect(response.body.scope.split(' ')).toHaveLength(3);
+    expect(issuedScopes).not.toContain('offline_access');
+    expect(response.body.scope.split(' ')).toHaveLength(2);
   });
 
   it('should reject delegation when delegation is not allowed', async () => {
