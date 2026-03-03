@@ -87,10 +87,10 @@ afterAll(async () => {
 describe('DOWNSCOPING – scope handling (allowed = (client ∪ resource) ∩ subject)', () => {
   const resourceUri = encodeURIComponent(TOKEN_EXCHANGE_MCP_TEST.RESOURCE_IDENTIFIER);
 
-  it('should grant full (client ∪ resource) ∩ subject when no scope is requested', async () => {
+  it('should grant full default (client ∪ resource) ∩ subject when no scope is requested', async () => {
     const { oidc, mcpServerBasicAuth, obtainToken } = downscopingFixture;
 
-    // Subject has openid, profile, offline_access; all are in client and ≥ in resource → grant all.
+    // Subject has openid, profile, offline_access; client+resource default scopes are openid+profile.
     const { accessToken: subjectAccessToken } = await obtainToken('openid%20profile%20offline_access');
 
     const response = await performPost(
@@ -110,8 +110,8 @@ describe('DOWNSCOPING – scope handling (allowed = (client ∪ resource) ∩ su
     const scopeSet = new Set((response.body.scope as string).split(' '));
     expect(scopeSet.has('openid')).toBe(true);
     expect(scopeSet.has('profile')).toBe(true);
-    expect(scopeSet.has('offline_access')).toBe(true);
-    expect(scopeSet.size).toBe(3);
+    expect(scopeSet.has('offline_access')).toBe(false);
+    expect(scopeSet.size).toBe(2);
 
     const introspectResponse = await performPost(
       oidc.introspection_endpoint,
@@ -120,7 +120,7 @@ describe('DOWNSCOPING – scope handling (allowed = (client ∪ resource) ∩ su
       { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${mcpServerBasicAuth}` },
     ).expect(200);
     expect(introspectResponse.body.active).toBe(true);
-    expect(new Set((introspectResponse.body.scope as string).split(' ')).size).toBe(3);
+    expect(new Set((introspectResponse.body.scope as string).split(' ')).size).toBe(2);
   });
 
   it('should grant requested scope that is in subject, client, and resource', async () => {
@@ -283,10 +283,10 @@ describe('PERMISSIVE – scope handling (allowed = client ∪ resource, subject 
     expect(parseJwt(response.body.access_token).payload['scope']).toBe('profile');
   });
 
-  it('should grant all client scopes when no scope is requested, regardless of narrow subject token', async () => {
+  it('should grant all default client scopes when no scope is requested, regardless of narrow subject token', async () => {
     const { oidc, mcpServerBasicAuth, obtainToken } = permissiveFixture;
 
-    // Narrow subject: only openid. Permissive must still grant the full client pool.
+    // Narrow subject: only openid. Permissive must still grant the full default client pool.
     const { accessToken: subjectAccessToken } = await obtainToken('openid');
 
     const response = await performPost(
@@ -304,8 +304,8 @@ describe('PERMISSIVE – scope handling (allowed = client ∪ resource, subject 
     const scopeSet = new Set((response.body.scope as string).split(' '));
     expect(scopeSet.has('openid')).toBe(true);
     expect(scopeSet.has('profile')).toBe(true);
-    expect(scopeSet.has('offline_access')).toBe(true);
-    expect(scopeSet.size).toBe(3);
+    expect(scopeSet.has('offline_access')).toBe(false);
+    expect(scopeSet.size).toBe(2);
 
     const introspectResponse = await performPost(
       oidc.introspection_endpoint,
@@ -314,7 +314,7 @@ describe('PERMISSIVE – scope handling (allowed = client ∪ resource, subject 
       { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${mcpServerBasicAuth}` },
     ).expect(200);
     expect(introspectResponse.body.active).toBe(true);
-    expect(new Set((introspectResponse.body.scope as string).split(' ')).size).toBe(3);
+    expect(new Set((introspectResponse.body.scope as string).split(' ')).size).toBe(2);
   });
 
   it('should grant scope from resource even when absent from subject token', async () => {
@@ -363,11 +363,11 @@ describe('PERMISSIVE – scope handling (allowed = client ∪ resource, subject 
     expect(response.body.error).toBe('invalid_scope');
   });
 
-  it('should grant all client scopes in delegation even when subject ∩ actor is empty', async () => {
+  it('should grant all default client scopes in delegation even when subject ∩ actor is empty', async () => {
     const { oidc, mcpServerBasicAuth, obtainToken } = permissiveFixture;
 
     // Subject: only openid; actor: only profile → intersection = {}.
-    // DOWNSCOPING would grant nothing; PERMISSIVE grants full client pool.
+    // DOWNSCOPING would grant nothing; PERMISSIVE grants full default client pool.
     const { accessToken: subjectAccessToken } = await obtainToken('openid');
     const { accessToken: actorAccessToken } = await obtainToken('profile');
 
@@ -388,7 +388,7 @@ describe('PERMISSIVE – scope handling (allowed = client ∪ resource, subject 
     const scopeSet = new Set((response.body.scope as string).split(' '));
     expect(scopeSet.has('openid')).toBe(true);
     expect(scopeSet.has('profile')).toBe(true);
-    expect(scopeSet.has('offline_access')).toBe(true);
+    expect(scopeSet.has('offline_access')).toBe(false);
 
     expect(parseJwt(response.body.access_token).payload['act']).toBeDefined();
   });

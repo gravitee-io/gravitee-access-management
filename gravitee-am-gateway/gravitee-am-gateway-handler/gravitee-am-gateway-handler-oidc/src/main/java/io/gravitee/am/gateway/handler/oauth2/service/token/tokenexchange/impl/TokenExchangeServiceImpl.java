@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TokenExchangeServiceImpl implements TokenExchangeService {
 
@@ -347,12 +348,23 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     }
 
     private static Set<String> getClientScopes(Client client) {
-        if (client.getScopeSettings() == null || client.getScopeSettings().isEmpty()) {
-            return Collections.emptySet();
-        }
-        return client.getScopeSettings().stream()
+        return getClientScopeSettings(client)
                 .map(ApplicationScopeSettings::getScope)
                 .collect(Collectors.toSet());
+    }
+
+    private static Set<String> getClientDefaultScopes(Client client) {
+        return getClientScopeSettings(client)
+                .filter(ApplicationScopeSettings::isDefaultScope)
+                .map(ApplicationScopeSettings::getScope)
+                .collect(Collectors.toSet());
+    }
+
+    private static Stream<ApplicationScopeSettings> getClientScopeSettings(Client client) {
+        if (client.getScopeSettings() == null) {
+            return Stream.empty();
+        }
+        return client.getScopeSettings().stream();
     }
 
     /**
@@ -364,14 +376,17 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
      * Requested ⊆ allowed; if omitted grant full allowed. Throws InvalidScopeException if not a subset.
      */
     private Single<Set<String>> computeGrantedScopes(Set<String> requestedScopes, Set<String> baseAllowedScopes,
-                                                      TokenRequest tokenRequest, Client client, Domain domain) {
-        Set<String> clientScopes = getClientScopes(client);
+                                                     TokenRequest tokenRequest, Client client, Domain domain) {
+        boolean noRequestedScopes = requestedScopes == null || requestedScopes.isEmpty();
+        Set<String> clientScopes = noRequestedScopes ? getClientDefaultScopes(client) : getClientScopes(client);
         TokenExchangeOAuthSettings teSettings = TokenExchangeOAuthSettings.getInstance(domain, client);
         boolean isPermissive = teSettings.getScopeHandling() == TokenExchangeScopeHandling.PERMISSIVE;
+
         Set<String> allowedScopes = isPermissive
                 ? computePermissiveAllowedScopes(tokenRequest.getResources(), clientScopes)
                 : computeDownscopingAllowedScopes(tokenRequest.getResources(), baseAllowedScopes, clientScopes);
-        if (requestedScopes == null || requestedScopes.isEmpty()) {
+
+        if (noRequestedScopes) {
             return Single.just(allowedScopes);
         }
         if (allowedScopes.containsAll(requestedScopes)) {

@@ -470,7 +470,7 @@ public class TokenExchangeServiceImplTest {
         Domain domain = domainWithTokenExchange();
         Client client = new Client();
         client.setClientId("client-id");
-        client.setScopeSettings(clientScopeSettings("openid"));
+        client.setScopeSettings(defaultClientScopeSettings("openid"));
 
         service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
@@ -487,7 +487,7 @@ public class TokenExchangeServiceImplTest {
         Domain domain = domainWithTokenExchange();
         Client client = new Client();
         client.setClientId("client-id");
-        client.setScopeSettings(clientScopeSettings("openid"));
+        client.setScopeSettings(defaultClientScopeSettings("openid"));
 
         var result = service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
         User user = result.user();
@@ -1555,7 +1555,7 @@ public class TokenExchangeServiceImplTest {
             Client client = new Client();
             client.setClientId("client-id");
             // tokenExchangeScopeHandling null → DOWNSCOPING (default)
-            client.setScopeSettings(clientScopeSettings(scopes));
+            client.setScopeSettings(defaultClientScopeSettings(scopes));
             return client;
         }
 
@@ -1724,11 +1724,11 @@ public class TokenExchangeServiceImplTest {
             teSettings.setInherited(false);
             teSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
             client.setTokenExchangeOAuthSettings(teSettings);
-            client.setScopeSettings(clientScopeSettings(scopes));
+            client.setScopeSettings(defaultClientScopeSettings(scopes));
             return client;
         }
 
-        /** no request scope, no resource: granted = all client scopes regardless of subject scopes. */
+        /** no request scope, no resource: granted = all client default scopes regardless of subject scopes. */
         @Test
         public void shouldGrantAllClientScopesWhenNoScopeRequested() throws Exception {
             // Subject has only {X} — completely disjoint from client. Permissive ignores subject scopes.
@@ -1954,7 +1954,7 @@ public class TokenExchangeServiceImplTest {
             TokenExchangeOAuthSettings inherited = new TokenExchangeOAuthSettings();
             inherited.setInherited(true);
             client.setTokenExchangeOAuthSettings(inherited);
-            client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+            client.setScopeSettings(defaultClientScopeSettings("A", "B", "C"));
 
             service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
@@ -2016,7 +2016,7 @@ public class TokenExchangeServiceImplTest {
             Client client = new Client();
             client.setClientId("client-id");
             // No tokenExchangeOAuthSettings → defaults to inherited=true
-            client.setScopeSettings(clientScopeSettings("A", "B", "C"));
+            client.setScopeSettings(defaultClientScopeSettings("A", "B", "C"));
 
             service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet();
 
@@ -2027,6 +2027,14 @@ public class TokenExchangeServiceImplTest {
 
     private static List<ApplicationScopeSettings> clientScopeSettings(String... scopes) {
         return Stream.of(scopes).map(ApplicationScopeSettings::new).collect(Collectors.toList());
+    }
+
+    private static List<ApplicationScopeSettings> defaultClientScopeSettings(String... scopes) {
+        return Stream.of(scopes).map(scope -> {
+            ApplicationScopeSettings s = new ApplicationScopeSettings(scope);
+            s.setDefaultScope(true);
+            return s;
+        }).collect(Collectors.toList());
     }
 
     private static TokenValidator scopeValidator(Set<String> scopes) {
