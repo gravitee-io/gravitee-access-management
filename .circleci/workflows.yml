@@ -1388,13 +1388,29 @@ jobs:
 
       - notify-on-failure
       - notify-on-success
-      - keeper/env-export:
-          secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
-          var-name: SLACK_ACCESS_TOKEN
+
+  notify-release-complete:
+    parameters:
+      graviteeio_version:
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: true
+    executor:
+      name: node-lts
+      class: small
+    steps:
+      - run:
+          name: "Check release status"
+          command: echo "Docker images and Maven packages published for << parameters.graviteeio_version >>"
       - when:
           condition:
-            not: << pipeline.parameters.dry_run>>
+            not: << parameters.dry_run >>
           steps:
+            - keeper/env-export:
+                secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+                var-name: SLACK_ACCESS_TOKEN
             - slack/notify:
                 channel: C02NGT20S4W
                 event: pass
@@ -1405,7 +1421,7 @@ jobs:
                         "type": "section",
                         "text": {
                           "type": "mrkdwn",
-                          "text": "🎆 AM - << pipeline.parameters.graviteeio_version >> released!"
+                          "text": "🎆 AM - << parameters.graviteeio_version >> released!"
                         }
                       }
                     ]
@@ -1854,6 +1870,14 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - notify-release-complete:
+          name: notify release complete
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - publish docker images
+            - publish maven packages
 
   release-alpha-version:
     when:
@@ -1893,6 +1917,14 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - notify-release-complete:
+          name: notify release complete
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - publish docker images
+            - publish maven packages
 
   release-hotfix-version:
     when:
@@ -1932,6 +1964,14 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - notify-release-complete:
+          name: notify release complete
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - publish docker images
+            - publish maven packages
 
             # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
   pull_requests:
