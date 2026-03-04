@@ -225,12 +225,4 @@ object GatewayCalls {
       .check(jsonPath("$.decision").ofType[Boolean].saveAs("allowed"))
   }
 
-  def requestAuthzenAccessToken(): HttpRequestBuilder = {
-    http("AuthZen Token")
-      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/token")
-      .basicAuth(CLIENT_ID, CLIENT_SECRET)
-      .formParam("grant_type", "client_credentials")
-      .check(status.is(200))
-      .check(jsonPath("$.access_token").saveAs(AUTHZEN_ACCESS_TOKEN_KEY))
-  }
 }

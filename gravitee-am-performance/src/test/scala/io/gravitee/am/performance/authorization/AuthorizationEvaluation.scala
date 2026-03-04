@@ -16,6 +16,7 @@
 package io.gravitee.am.performance.authorization
 
 import io.gatling.core.Predef._
+import io.gatling.core.structure.ScenarioBuilder
 import io.gatling.http.Predef._
 import io.gravitee.am.performance.commands.OpenFGACalls.TupleKey
 import io.gravitee.am.performance.utils.SimulationSettings._
@@ -50,6 +51,8 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend, tagFilter:
     .shareConnections
 
   private val normalizedTagFilter = tagFilter.map(_.trim).filter(_.nonEmpty)
+
+  protected def preScenario: Option[ScenarioBuilder] = None
 
   private def buildEvaluationCases(): List[EvaluationCase] = {
     val parentMap = AuthorizationTopology.teamParentMap()
@@ -289,11 +292,14 @@ abstract class AuthorizationEvaluation(backend: AuthorizationBackend, tagFilter:
         }
     }
 
-  setUp(
-    scn.inject(
-      rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
-      constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
-      rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
-    )
-  ).protocols(httpProtocol)
+  private val mainPopulation = scn.inject(
+    rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
+    constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
+    rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
+  )
+
+  preScenario match {
+    case Some(scenario) => setUp(scenario.inject(atOnceUsers(1)).andThen(mainPopulation)).protocols(httpProtocol)
+    case None => setUp(mainPopulation).protocols(httpProtocol)
+  }
 }
