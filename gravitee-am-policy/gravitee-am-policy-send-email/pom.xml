@@ -30,7 +30,6 @@
     <name>Gravitee IO - Access Management - Policy Send email</name>
 
     <properties>
-        <maven-assembly-plugin.version>2.5.5</maven-assembly-plugin.version>
     </properties>
 
     <dependencies>
@@ -101,7 +100,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>${maven-assembly-plugin.version}</version>
                 <configuration>
                     <appendAssemblyId>false</appendAssemblyId>
                     <descriptors>

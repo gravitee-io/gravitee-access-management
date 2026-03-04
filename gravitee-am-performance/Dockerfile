@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM eclipse-temurin:21-jdk-jammy
+FROM graviteeio/java:25
 
 ENV GATLING_VERSION=3.14.3
 

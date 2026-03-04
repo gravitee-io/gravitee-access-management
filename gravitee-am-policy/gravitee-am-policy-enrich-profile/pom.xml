@@ -29,9 +29,6 @@
     <artifactId>gravitee-am-policy-enrich-profile</artifactId>
     <name>Gravitee IO - Access Management - Policy Enrich Profile</name>
 
-    <properties>
-        <maven-assembly-plugin.version>2.5.5</maven-assembly-plugin.version>
-    </properties>
 
     <dependencies>
         <!-- Gravitee.io dependencies -->
@@ -100,7 +97,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>${maven-assembly-plugin.version}</version>
                 <configuration>
                     <appendAssemblyId>false</appendAssemblyId>
                     <descriptors>
