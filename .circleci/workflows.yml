@@ -41,9 +41,9 @@ executors:
         enum: ["small", "medium", "medium+", "large", "xlarge"]
         default: "medium"
       version:
-        description: the version of the JDK. Default is 21.0
+        description: the version of the JDK. Default is 25.0
         type: string
-        default: "21.0"
+        default: "25.0"
       with_node:
         description: should we use the "node" version of the image
         type: boolean
@@ -412,7 +412,7 @@ jobs:
             - .gravitee.settings.xml
   build:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0
     resource_class: large
     steps:
       - attach_workspace:
@@ -438,7 +438,7 @@ jobs:
             - ./gravitee-am-webui-*.zip
   deploy-snapshot-on-nexus:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0
     resource_class: medium+
     steps:
       - attach_workspace:
@@ -784,7 +784,7 @@ jobs:
 
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0
     resource_class: small
     steps:
       - checkout
@@ -912,7 +912,7 @@ jobs:
             done
   coverage_build:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0
     resource_class: large
     steps:
       - attach_workspace:
@@ -936,7 +936,7 @@ jobs:
           jobName: coverage_build
   frontend_version_build:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0
     resource_class: small
     steps:
       - attach_workspace:
