@@ -94,6 +94,34 @@ describe('Trusted Issuers - Impersonation with external JWT', () => {
     expect(response.body.error_description).toContain('Untrusted issuer: https://unknown-issuer.example.com');
   });
 
+  it('should exchange external JWT with kid in header when PEM trusted issuer configured', async () => {
+    const { oidc, basicAuth, trustedKey, externalIssuer } = fixture;
+
+    const externalJwt = signJwtForTrustedIssuer({
+      issuer: externalIssuer,
+      privateKeyPem: trustedKey.privateKeyPem,
+      subject: 'external-user-with-kid',
+      payload: { scope: 'external:read external:profile' },
+      kid: 'cert-uuid-simulating-am',
+    });
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${encodeURIComponent(externalJwt)}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    expect(response.body.access_token).toBeDefined();
+    expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
+    expect(response.body.token_type.toLowerCase()).toBe('bearer');
+  });
+
   it('should reject an external JWT with an invalid signature', async () => {
     const { oidc, basicAuth, untrustedKey, externalIssuer } = fixture;
 

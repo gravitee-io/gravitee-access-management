@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.JWSKeySelector;
@@ -149,7 +148,8 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
         }
         try {
             JWK jwk = JWK.parse(cert);
-            return new ImmutableJWKSet<>(new JWKSet(jwk));
+            // PEM has one key; return it unconditionally to bypass kid matching.
+            return (selector, context) -> List.of(jwk);
         } catch (JOSEException e) {
             throw new IllegalArgumentException("Failed to convert certificate to JWK", e);
         }
