@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.FloatNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -38,7 +39,7 @@ class JsonNodeValidatorTest {
     void shouldThrowIllegalArgForNegativeNumbers(JsonNode negativeNumericNode) {
         var jsonNode = mock(JsonNode.class);
         given(jsonNode.elements()).willReturn(List.of(negativeNumericNode).iterator());
-        assertThrows(IllegalArgumentException.class, () -> JsonNodeValidator.validateConfiguration(jsonNode));
+        assertThrows(InvalidPluginConfigurationException.class, () -> JsonNodeValidator.validateConfiguration(jsonNode));
     }
 
     @ParameterizedTest
