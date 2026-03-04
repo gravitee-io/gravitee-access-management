@@ -1002,7 +1002,6 @@
 
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
                 <inherited>false</inherited>
                 <executions>
                     <execution>
@@ -1118,7 +1117,6 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.6</version>
                         <inherited>false</inherited>
                         <executions>
                             <execution>

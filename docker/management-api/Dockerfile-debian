@@ -26,7 +26,7 @@ RUN apk update \
     && apk del unzip wget \
     && rm -rf /var/cache/apk/* /tmp/*
 
-FROM graviteeio/java:21-debian AS build-jattach
+FROM graviteeio/java:25-debian AS build-jattach
 LABEL maintainer="contact@graviteesource.com"
 
 ARG JATTACH_VERSION=2.2
@@ -47,7 +47,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz
 
-FROM graviteeio/java:21-debian
+FROM graviteeio/java:25-debian
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0

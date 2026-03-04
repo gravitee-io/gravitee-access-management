@@ -15,7 +15,7 @@
 #
 
 
-FROM graviteeio/java:21
+FROM graviteeio/java:25
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEIO_AM_VERSION=0
