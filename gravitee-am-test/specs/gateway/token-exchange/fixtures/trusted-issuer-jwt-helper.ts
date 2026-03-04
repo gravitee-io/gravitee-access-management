@@ -106,6 +106,8 @@ export interface SignJwtOptions {
   payload?: Record<string, unknown>;
   /** Expiration in seconds from now (default 3600). */
   expiresInSeconds?: number;
+  /** Key ID for JWT header (kid). Simulates AM-issued tokens which use kid = certificate UUID. */
+  kid?: string;
 }
 
 /**
@@ -119,6 +121,7 @@ export function signJwtForTrustedIssuer(options: SignJwtOptions): string {
     subject = 'external-subject-id',
     payload = {},
     expiresInSeconds = 3600,
+    kid,
   } = options;
 
   const now = Math.floor(Date.now() / 1000);
@@ -132,8 +135,13 @@ export function signJwtForTrustedIssuer(options: SignJwtOptions): string {
     ...payload,
   };
 
-  return jwt.sign(fullPayload, privateKeyPem, {
+  const signOptions: jwt.SignOptions = {
     algorithm: 'RS256',
     noTimestamp: false,
-  });
+  };
+  if (kid != null) {
+    signOptions.header = { kid };
+  }
+
+  return jwt.sign(fullPayload, privateKeyPem, signOptions);
 }

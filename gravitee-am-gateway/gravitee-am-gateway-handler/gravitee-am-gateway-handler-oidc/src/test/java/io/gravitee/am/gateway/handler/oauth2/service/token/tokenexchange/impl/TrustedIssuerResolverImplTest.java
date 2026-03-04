@@ -107,6 +107,19 @@ public class TrustedIssuerResolverImplTest {
         assertEquals("https://trusted.example.com", claims.getIssuer());
     }
 
+    @Test
+    public void shouldVerifyJwtWithKidInHeaderUsingPemCertificate() throws Exception {
+        TrustedIssuer issuer = pemIssuer("https://trusted.example.com", trustedCertPem);
+
+        String jwt = signJwtWithKid(trustedPrivateKey, "https://trusted.example.com", "user-with-kid", "cert-uuid-123");
+
+        JWTClaimsSet claims = resolver.resolve(jwt, issuer);
+
+        assertNotNull(claims);
+        assertEquals("user-with-kid", claims.getSubject());
+        assertEquals("https://trusted.example.com", claims.getIssuer());
+    }
+
     @Test(expected = InvalidGrantException.class)
     public void shouldRejectJwtSignedWithWrongKey() throws Exception {
         TrustedIssuer issuer = pemIssuer("https://trusted.example.com", trustedCertPem);
@@ -170,13 +183,21 @@ public class TrustedIssuerResolverImplTest {
     }
 
     private static String signJwt(PrivateKey privateKey, String issuer, String subject) throws Exception {
+        return signJwtWithKid(privateKey, issuer, subject, null);
+    }
+
+    private static String signJwtWithKid(PrivateKey privateKey, String issuer, String subject, String kid) throws Exception {
         JWSSigner signer = new RSASSASigner(privateKey);
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(subject)
                 .issuer(issuer)
                 .expirationTime(new Date(System.currentTimeMillis() + 3600_000))
                 .build();
-        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
+        JWSHeader.Builder headerBuilder = new JWSHeader.Builder(JWSAlgorithm.RS256);
+        if (kid != null) {
+            headerBuilder.keyID(kid);
+        }
+        SignedJWT signedJWT = new SignedJWT(headerBuilder.build(), claimsSet);
         signedJWT.sign(signer);
         return signedJWT.serialize();
     }
