@@ -58,7 +58,7 @@ object OpenFGAEvaluation {
 }
 
 object OpenFGAAuthorizationBackend extends AuthorizationBackend {
-  override val name: String = "openfga"
+  override val name: String = "OpenFGA"
 
   override def buildRequestBody(testCase: EvaluationCase): String = {
     val tuples = if (testCase.contextualTuples.nonEmpty) Some(testCase.contextualTuples) else None

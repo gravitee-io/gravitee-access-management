@@ -16,6 +16,7 @@
 package io.gravitee.am.performance.authorization
 
 import io.gatling.core.Predef._
+import io.gatling.http.Predef._
 import io.gatling.http.request.builder.HttpRequestBuilder
 import io.gravitee.am.performance.commands.GatewayCalls
 import io.gravitee.am.performance.utils.JsonUtils.mapToJson
@@ -42,12 +43,36 @@ class AuthZenEvaluation
     extends AuthorizationEvaluation(AuthZenAuthorizationBackend, Set(AuthorizationEvaluation.ComparableTag)) {
   require(CLIENT_ID.nonEmpty, "client_id system property must be set")
   require(CLIENT_SECRET.nonEmpty, "client_secret system property must be set")
+
+  private lazy val initAccessToken = scenario("Init AuthZen Access Token")
+    .exec(http("Ask AuthZen Token")
+      .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/token")
+      .basicAuth(CLIENT_ID, CLIENT_SECRET)
+      .formParam("grant_type", "client_credentials")
+      .check(status.is(200))
+      .check(jsonPath("$.access_token").saveAs(GatewayCalls.AUTHZEN_ACCESS_TOKEN_KEY)))
+    .exec { session =>
+      AuthZenAuthorizationBackend.setAccessToken(session(GatewayCalls.AUTHZEN_ACCESS_TOKEN_KEY).as[String])
+      session
+    }
+
+  override protected def preScenario = Some(initAccessToken)
 }
 
 object AuthZenAuthorizationBackend extends AuthorizationBackend {
-  override val name: String = "authzen"
+  override val name: String = "Authzen"
 
-  override def authenticate = exec(GatewayCalls.requestAuthzenAccessToken())
+  @volatile private var accessToken: String = ""
+
+  def setAccessToken(token: String): Unit = synchronized {
+    val trimmedToken = token.trim
+    require(trimmedToken.nonEmpty, "AuthZen access token must not be empty")
+    accessToken = trimmedToken
+  }
+
+  override def authenticate = exec { session =>
+    session.set(GatewayCalls.AUTHZEN_ACCESS_TOKEN_KEY, accessToken)
+  }
 
   private def parseEntity(value: String): (String, String) = {
     val parts = value.split(":", 2)
