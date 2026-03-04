@@ -879,7 +879,7 @@ jobs:
     executor:
       name: openjdk
       class: medium
-      version: "21.0.6"
+      version: "25.0"
     steps:
       - attach_workspace:
           at: /tmp
@@ -903,7 +903,7 @@ jobs:
     executor:
       name: openjdk
       class: large
-      version: "21.0.6"
+      version: "25.0"
     steps:
       - when:
           condition:
@@ -923,7 +923,7 @@ jobs:
     executor:
       name: openjdk
       class: large
-      version: "21.0.6"
+      version: "25.0"
     steps:
       - attach_workspace:
           at: /tmp
@@ -975,7 +975,7 @@ jobs:
     executor:
       name: openjdk
       class: xlarge
-      version: "21.0.6"
+      version: "25.0"
     environment:
       DRY_RUN: << parameters.dry_run >>
       RC_REQUESTED: << parameters.rc_requested >>
@@ -1220,7 +1220,7 @@ jobs:
     executor:
       name: openjdk
       class: xlarge
-      version: "21.0.6"
+      version: "25.0"
     environment:
       DRY_RUN: << parameters.dry_run >>
       GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
