@@ -36,6 +36,13 @@ object SimulationSettings {
   val CLIENT_ID = System.getProperty("client_id", "")
   val CLIENT_SECRET = System.getProperty("client_secret", "")
 
+  val DEPTH = Integer.getInteger("depth", 5)
+  val NUMBER_OF_TREES = Integer.getInteger("number_of_trees", 100)
+  val BRANCH_FACTOR = Integer.getInteger("branch_factor", 2)
+  val LEVEL_WIDTH = Integer.getInteger("level_width", 0)
+  val USE_DELEGATION_MODE = java.lang.Boolean.parseBoolean(System.getProperty("use_delegation_mode", "false"))
+  val NUMBER_OF_TOKENS = Integer.getInteger("number_of_tokens", 10000)
+
   val DOMAIN_NAME = System.getProperty("domain", "gatling-domain")
   val IDENTITY_PROVIDER_NAME = System.getProperty("idp", "Default Identity Provider")
   val MULTI_DOMAIN_NAMES = System.getProperty("multiDomains", "gatling-domain").split(",")

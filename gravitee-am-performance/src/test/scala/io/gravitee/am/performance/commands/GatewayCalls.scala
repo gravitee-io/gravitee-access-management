@@ -31,6 +31,7 @@ object GatewayCalls {
   val XSRF_TOKEN_KEY = "XSRF-Token"
   val FACTOR_ID = "factorId"
   val CODE_KEY = "authorizationCode"
+  val TOKEN_EXCHANGE_ACCESS_TOKEN_KEY = "tokenExchangeAccessToken"
 
   def initAuthFlow(scopes: Set[String] = Set.empty) = {
     http("Get Authorization Endpoint")
@@ -182,6 +183,48 @@ object GatewayCalls {
             .formParam("grant_type", "client_credentials")
             .check(status.is(200))
             .check(jsonPath("$.access_token").saveAs(GatewayCalls.ACCESS_TOKEN_KEY))
+  }
+
+  def requestClientCredentialsToken(clientId: String, clientSecret: String): HttpRequestBuilder = {
+    http("Ask Token - Client Credentials")
+      .post(GATEWAY_BASE_URL + "/#{domainName}/oauth/token")
+      .basicAuth(clientId, clientSecret)
+      .formParam("grant_type", "client_credentials")
+      .check(status.is(200))
+      .check(jsonPath("$.access_token").saveAs(TOKEN_EXCHANGE_ACCESS_TOKEN_KEY))
+  }
+
+  def exchangeImpersonateToken(subjectToken: String, clientId: String, clientSecret: String): HttpRequestBuilder = {
+    http("Token Exchange Impersonation")
+      .post(GATEWAY_BASE_URL + "/#{domainName}/oauth/token")
+      .basicAuth(clientId, clientSecret)
+      .formParam("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
+      .formParam("subject_token", subjectToken)
+      .formParam("subject_token_type", "urn:ietf:params:oauth:token-type:access_token")
+      .check(status.is(200))
+      .check(jsonPath("$.access_token").saveAs(TOKEN_EXCHANGE_ACCESS_TOKEN_KEY))
+  }
+
+  def exchangeDelegationToken(subjectToken: String, actorToken: String, clientId: String, clientSecret: String): HttpRequestBuilder = {
+    http("Token Exchange Delegation")
+      .post(GATEWAY_BASE_URL + "/#{domainName}/oauth/token")
+      .basicAuth(clientId, clientSecret)
+      .formParam("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
+      .formParam("subject_token", subjectToken)
+      .formParam("subject_token_type", "urn:ietf:params:oauth:token-type:access_token")
+      .formParam("actor_token", actorToken)
+      .formParam("actor_token_type", "urn:ietf:params:oauth:token-type:access_token")
+      .check(status.is(200))
+      .check(jsonPath("$.access_token").saveAs(TOKEN_EXCHANGE_ACCESS_TOKEN_KEY))
+  }
+
+  def revokeToken(token: String, clientId: String, clientSecret: String): HttpRequestBuilder = {
+    http("Revoke Token")
+      .post(GATEWAY_BASE_URL + "/#{domainName}/oauth/revoke")
+      .basicAuth(clientId, clientSecret)
+      .formParam("token", token)
+      .formParam("token_type_hint", "access_token")
+      .check(status.in(200, 204))
   }
 
   def logout() = {
