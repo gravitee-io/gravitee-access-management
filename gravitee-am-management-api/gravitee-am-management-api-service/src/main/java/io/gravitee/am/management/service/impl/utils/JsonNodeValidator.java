@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NumericNode;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 
 /**
  * Validates the values of {@link JsonNode}s.
@@ -40,7 +41,7 @@ public class JsonNodeValidator {
                     case FLOAT, DOUBLE, BIG_DECIMAL -> jsonNode.asDouble() < 0;
                 };
                 if (isNegative) {
-                    throw new IllegalArgumentException("Negative numbers not allowed");
+                    throw InvalidPluginConfigurationException.fromValidationError("Negative numbers not allowed");
                 }
             }
         });
