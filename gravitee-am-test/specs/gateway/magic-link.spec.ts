@@ -113,7 +113,7 @@ beforeAll(async () => {
     await waitFor(5000);
 });
 
-describe.skip('Should display information that the email has been sent', () => {
+describe('Should display information that the email has been sent', () => {
     it('with the email address assigned to the user', async () => {
         const clientId = app.settings.oauth.clientId;
 
@@ -135,7 +135,7 @@ describe.skip('Should display information that the email has been sent', () => {
         expect(magicLinkResponse.statusCode).toBe(200);
     });
 });
-describe.skip('Should display information that the email is invalid', () => {
+describe('Should display information that the email is invalid', () => {
     it('with invalid e-mail address', async () => {
         const clientId = app.settings.oauth.clientId;
 
@@ -159,7 +159,7 @@ describe.skip('Should display information that the email is invalid', () => {
         expect(url.searchParams.get('error_description')).toBe('Value [test] is not a valid email.');
     });
 });
-describe.skip('Should display generic information', () => {
+describe('Should display generic information', () => {
     it('when token is invalid', async () => {
         const clientId = app.settings.oauth.clientId;
 
@@ -181,7 +181,7 @@ describe.skip('Should display generic information', () => {
         expect(url.searchParams.get('error_description')).toBe('An unexpected error has occurred');
     });
 });
-describe.skip('Should authenticate user', () => {
+describe('Should authenticate user', () => {
     it('with valid token', async () => {
         const clientId = app.settings.oauth.clientId;
 
@@ -205,7 +205,7 @@ describe.skip('Should authenticate user', () => {
         expect(authorizeResponse.headers['location']).toContain('https://test');
     });
 });
-describe.skip('Should not authenticate user', () => {
+describe('Should not authenticate user', () => {
     it('if token has been used', async () => {
         const clientId = app.settings.oauth.clientId;
 
