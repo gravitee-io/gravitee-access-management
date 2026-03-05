@@ -483,7 +483,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Mongo << parameters.mongo_version >>
-          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:mongo
       - run:
           name: Run Management Jest tests (parallel)
           command: npm --prefix gravitee-am-test run ci:management:parallel
@@ -526,7 +526,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Postgres << parameters.psql_version >>
-          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:psql
       - run:
           name: Run Management Jest tests (parallel)
           command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
@@ -537,6 +537,117 @@ jobs:
           name: Stop
           when: always
           command: npm --prefix docker/local-stack run stack:down
+
+  run_playwright_tests_mongo:
+    parameters:
+      mongo_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: mongodb
+      GIO_MAX_MEM: 512m
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - run:
+          name: Install Playwright browsers
+          command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - run:
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
+      - run:
+          name: Build stack (gateway + management)
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Build UI image
+          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - run:
+          name: Spin up stack with Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:mongo
+      - run:
+          name: Run Playwright E2E tests
+          command: npm --prefix gravitee-am-test run pw:ci
+      - store_test_results:
+          path: gravitee-am-test/playwright/junit-results
+      - store_artifacts:
+          path: gravitee-am-test/playwright/playwright-report
+          destination: playwright-report
+      - store_artifacts:
+          path: gravitee-am-test/playwright/test-results
+          destination: playwright-traces
+      - run:
+          name: Stop stack
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_playwright_tests_psql:
+    parameters:
+      psql_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: jdbc
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - run:
+          name: Install Playwright browsers
+          command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - run:
+          name: Create CIBA image
+          command: npm --prefix docker/local-stack run stack:init:ciba
+      - run:
+          name: Prepare JDBC plugins
+          command: npm --prefix docker/local-stack run stack:init:plugins:psql
+      - run:
+          name: Build stack (gateway + management)
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Build UI image
+          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - run:
+          name: Spin up stack with Postgres << parameters.psql_version >>
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:psql
+      - run:
+          name: Run Playwright E2E tests
+          command: npm --prefix gravitee-am-test run pw:ci
+      - store_test_results:
+          path: gravitee-am-test/playwright/junit-results
+      - store_artifacts:
+          path: gravitee-am-test/playwright/playwright-report
+          destination: playwright-report
+      - store_artifacts:
+          path: gravitee-am-test/playwright/test-results
+          destination: playwright-traces
+      - run:
+          name: Stop stack
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
   run_postman_tests_mongo:
     parameters:
       mongo_version:
@@ -563,7 +674,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Mongo << parameters.mongo_version >>
-          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:mongo
       - run:
           name: Run Postman tests
           command: npm --prefix postman run test:collections
@@ -600,7 +711,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Postgres << parameters.psql_version >>
-          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:psql
       - run:
           name: Run Postman tests
           command: npm --prefix postman run test:collections
@@ -1830,6 +1941,20 @@ workflows:
           matrix:
             parameters:
               psql_version: ["11.18-bullseye", "17.2"]
+      - run_playwright_tests_mongo:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              mongo_version: ["8.0"]
+      - run_playwright_tests_psql:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              psql_version: ["17.2"]
 
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>
