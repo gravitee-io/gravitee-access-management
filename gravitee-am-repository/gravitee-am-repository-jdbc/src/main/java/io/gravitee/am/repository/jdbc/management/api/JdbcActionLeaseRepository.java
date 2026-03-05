@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc.gateway.api;
+package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ActionLease;
-import io.gravitee.am.repository.gateway.api.ActionLeaseRepository;
 import io.gravitee.am.repository.jdbc.common.AbstractActionLeaseRepository;
-import io.gravitee.am.repository.jdbc.gateway.api.model.JdbcActionLease;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcActionLease;
+import io.gravitee.am.repository.management.api.ActionLeaseRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.stereotype.Repository;
@@ -31,7 +31,7 @@ import java.time.LocalDateTime;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Repository("gatewayActionLeaseRepository")
+@Repository("managementActionLeaseRepository")
 public class JdbcActionLeaseRepository extends AbstractActionLeaseRepository<JdbcActionLease> implements ActionLeaseRepository {
 
     protected ActionLease toEntity(JdbcActionLease entity) {
