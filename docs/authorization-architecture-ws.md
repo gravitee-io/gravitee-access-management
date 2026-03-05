@@ -1,148 +1,37 @@
 # Authorization Engine Architecture (WebSocket)
 
-## High-Level Overview
+## Overview
 
 ```mermaid
-graph TB
-    subgraph UI["Management Console (Angular)"]
-        PS_UI["Policy Sets<br/>CRUD + versioned content editor"]
-        SC_UI["Schemas<br/>CRUD + versioned content editor"]
-        ES_UI["Entity Stores<br/>CRUD + versioned content editor"]
-        BN_UI["Bundles<br/>compose components + pin-to-latest"]
-        ENG_UI["Sidecar Engine<br/>API Key + Bundle dropdown + Domain ID"]
+graph LR
+    UI["Management Console"]
+    MAPI["Management API"]
+    DB[("Database<br/>(Mongo / JDBC)")]
+    SC["Sidecar<br/>Cedar Engine<br/>+ AuthZEN endpoint"]
+    APP["Client Application"]
+
+    subgraph GW["Gateway"]
+        MGR["AuthorizationEngineManager"]
+        PLUGIN["Sidecar Plugin<br/>AuthorizationEngineProvider"]
+        MGR -->|"updateConfig(snapshot)"| PLUGIN
     end
 
-    subgraph MAPI["Management API (REST / Jersey)"]
-        PS_R["PolicySetsResource<br/>POST / GET"]
-        PS_R1["PolicySetResource<br/>GET / PUT / DELETE / versions"]
-        SC_R["AuthorizationSchemasResource"]
-        SC_R1["AuthorizationSchemaResource<br/>+ versions"]
-        ES_R["EntityStoresResource"]
-        ES_R1["EntityStoreResource<br/>+ versions"]
-        BN_R["AuthorizationBundlesResource"]
-        BN_R1["AuthorizationBundleResource"]
-    end
-
-    subgraph SVC["Service Layer (RxJava)"]
-        PS_S["PolicySetServiceImpl<br/>metadata + version records<br/>+ audit"]
-        SC_S["AuthorizationSchemaServiceImpl<br/>+ audit"]
-        ES_S["EntityStoreServiceImpl<br/>+ audit"]
-        BN_S["AuthorizationBundleServiceImpl<br/>emits BundleEvent + audit"]
-    end
-
-    subgraph REPO["Repository Layer"]
-        direction LR
-        subgraph MONGO["MongoDB"]
-            PS_M["MongoPolicySetRepository"]
-            PSV_M["MongoPolicySetVersionRepository"]
-            SC_M["MongoAuthorizationSchemaRepository"]
-            SCV_M["MongoAuthorizationSchemaVersionRepository"]
-            ES_M["MongoEntityStoreRepository"]
-            ESV_M["MongoEntityStoreVersionRepository"]
-            BN_M["MongoAuthorizationBundleRepository"]
-        end
-        subgraph JDBC["JDBC (Postgres/MySQL/...)"]
-            PS_J["JdbcPolicySetRepository"]
-            PSV_J["JdbcPolicySetVersionRepository"]
-            SC_J["JdbcAuthorizationSchemaRepository"]
-            SCV_J["JdbcAuthorizationSchemaVersionRepository"]
-            ES_J["JdbcEntityStoreRepository"]
-            ESV_J["JdbcEntityStoreVersionRepository"]
-            BN_J["JdbcAuthorizationBundleRepository"]
-        end
-    end
-
-    subgraph GW["Gateway (Runtime)"]
-        EM["EventManager<br/>listens for BundleEvent"]
-        AEM["AuthorizationEngineManagerImpl<br/>resolves bundle content<br/>caches ResolvedBundleSnapshot"]
-        PROVIDER["SidecarAuthorizationEngineProvider<br/>manages WS sessions"]
-        WSEP["WebSocket Endpoint<br/>/_authz/ws<br/>API Key auth"]
-    end
-
-    subgraph SIDECAR["Sidecar (External Process)"]
-        WSCLIENT["GatewayWsClient<br/>WS connection + reconnect"]
-        EVAL["/access/v1/evaluation<br/>AuthZEN evaluation"]
-        HEALTH["/health<br/>health check"]
-        ENGINE["Cedar Engine<br/>evaluates policies"]
-    end
-
-    CLIENT["Client Application<br/>sends AuthZEN requests"]
-
-    %% UI -> API
-    PS_UI -->|"POST/PUT/GET/DELETE<br/>/authorization/policy-sets"| PS_R
-    SC_UI -->|"/authorization/schemas"| SC_R
-    ES_UI -->|"/authorization/entity-stores"| ES_R
-    BN_UI -->|"/authorization/bundles"| BN_R
-    ENG_UI -->|"/authorization-engines"| MAPI
-
-    %% API -> Service
-    PS_R --> PS_S
-    PS_R1 --> PS_S
-    SC_R --> SC_S
-    SC_R1 --> SC_S
-    ES_R --> ES_S
-    ES_R1 --> ES_S
-    BN_R --> BN_S
-    BN_R1 --> BN_S
-
-    %% Service -> Repo
-    PS_S --> PS_M
-    PS_S --> PSV_M
-    PS_S --> PS_J
-    PS_S --> PSV_J
-    SC_S --> SC_M
-    SC_S --> SCV_M
-    SC_S --> SC_J
-    SC_S --> SCV_J
-    ES_S --> ES_M
-    ES_S --> ESV_M
-    ES_S --> ES_J
-    ES_S --> ESV_J
-    BN_S --> BN_M
-    BN_S --> BN_J
-
-    %% Event flow
-    BN_S -->|"AuthorizationBundleEvent<br/>(DEPLOY/UPDATE/UNDEPLOY)"| EM
-    EM --> AEM
-
-    %% Gateway resolves bundle
-    AEM -->|"1. findById(bundleId)"| BN_M
-    AEM -->|"2. resolve versions"| PSV_M
-    AEM -->|"3. cache ResolvedBundleSnapshot"| PROVIDER
-
-    %% WS connection (sidecar initiates)
-    WSCLIENT ==>|"WebSocket<br/>/&lt;domain-path&gt;/_authz/ws<br/>X-API-Key header"| WSEP
-    WSEP -->|"validate apiKey"| PROVIDER
-
-    %% WS messages
-    PROVIDER -.->|"bundle_update<br/>{version, policy, data, schema}"| WSCLIENT
-    WSCLIENT -.->|"bundle_check(version)"| PROVIDER
-    WSCLIENT -.->|"audit_event"| PROVIDER
-
-    %% Bundle -> Engine
-    WSCLIENT -->|"deploy(policy, data, schema)"| ENGINE
-
-    %% Client -> Sidecar
-    CLIENT -->|"POST /access/v1/evaluation<br/>{subject, action, resource}"| EVAL
-    EVAL --> ENGINE
-
-    %% Styles
-    classDef ui fill:#4a90d9,stroke:#2c5f8a,color:#fff
-    classDef api fill:#50b87a,stroke:#2d7a4c,color:#fff
-    classDef svc fill:#f5a623,stroke:#c17d0e,color:#fff
-    classDef repo fill:#9b59b6,stroke:#6c3483,color:#fff
-    classDef gw fill:#e74c3c,stroke:#a93226,color:#fff
-    classDef sidecar fill:#1abc9c,stroke:#148f77,color:#fff
-    classDef client fill:#95a5a6,stroke:#707b7c,color:#fff
-
-    class PS_UI,SC_UI,ES_UI,BN_UI,ENG_UI ui
-    class PS_R,PS_R1,SC_R,SC_R1,ES_R,ES_R1,BN_R,BN_R1 api
-    class PS_S,SC_S,ES_S,BN_S svc
-    class PS_M,SC_M,ES_M,BN_M,PS_J,SC_J,ES_J,BN_J,PSV_M,SCV_M,ESV_M,PSV_J,SCV_J,ESV_J repo
-    class EM,AEM,PROVIDER,WSEP gw
-    class WSCLIENT,EVAL,HEALTH,ENGINE sidecar
-    class CLIENT client
+    UI -->|"REST"| MAPI
+    MAPI -->|"CRUD"| DB
+    MAPI -->|"BundleEvent"| MGR
+    MGR -->|"resolve bundle"| DB
+    PLUGIN <-->|"WebSocket<br/>/_authz/ws"| SC
+    APP -->|"POST /access/v1/evaluation"| SC
 ```
+
+**Components:**
+- **Management Console** -- Angular UI for managing policy sets, schemas, entity stores, bundles, and engine configuration
+- **Management API** -- REST layer (Jersey) + service layer (RxJava) + audit logging
+- **Database** -- MongoDB or JDBC (Postgres/MySQL/...) with versioned content tables
+- **Gateway** -- `AuthorizationEngineManagerImpl` listens for `BundleEvent`, resolves bundle content into `ResolvedBundleSnapshot`, pushes to provider via `updateConfig(snapshot)`
+- **Sidecar Plugin** -- `SidecarAuthorizationEngineProvider` implements `AuthorizationEngineProvider` API; manages WS sessions, broadcasts bundles, receives audit events
+- **Sidecar** -- external process connecting via WebSocket; runs Cedar engine locally, exposes AuthZEN evaluation endpoint, reports audit events back to gateway
+- **Client Application** -- sends authorization requests to the sidecar's `/access/v1/evaluation` endpoint
 
 ## WebSocket Protocol
 
@@ -375,8 +264,8 @@ sequenceDiagram
         DB-->>GW: EntityStoreVersion.content
     end
 
-    GW->>PROV: updateConfig(policy, data, schema)
-    PROV->>PROV: bundleVersion++, cache lastBundleUpdate
+    GW->>PROV: updateConfig(ResolvedBundleSnapshot)
+    PROV->>PROV: cache lastBundleUpdate from snapshot
 
     Note over PROV,SC: Broadcast to all connected sidecars
     PROV->>SC: bundle_update {version, policy, data, schema}
@@ -525,7 +414,7 @@ services:
 |-----------|------|------|
 | Message Types | `WsMessage.java` | Sealed interface with 5 record types |
 | Codec | `WsMessageCodec.java` | JSON encode/decode with `type` discriminator |
-| Bundle Snapshot | `ResolvedBundleSnapshot.java` | Immutable record: version + policy + data + schema |
+| Bundle Snapshot | `ResolvedBundleSnapshot.java` | Immutable record passed from manager to provider on bundle resolve |
 
 ## Audit Logging
 
@@ -542,6 +431,94 @@ All C/U/D operations emit audit events via dedicated AuditBuilders:
 Audit logging is implemented in the **Service layer** (not Resources). Resources pass the authenticated `User principal` to service methods.
 
 Permission evaluation audits flow from the sidecar through the WebSocket connection to the gateway's audit pipeline.
+
+## Health Endpoints
+
+Both the gateway and sidecar expose health endpoints for monitoring.
+
+### Gateway Side
+
+`SidecarManagementResource` exposes:
+
+```
+GET /_authz/ws/health
+```
+
+Response:
+```json
+{
+  "status": "UP",
+  "connectedSidecars": 2,
+  "bundleVersion": 5
+}
+```
+
+### Sidecar Side
+
+`HealthHandler` exposes:
+
+```
+GET /health
+```
+
+Response:
+```json
+{
+  "status": "UP",
+  "ready": true,
+  "engine": {
+    "policyLoaded": true,
+    "entityCount": 42,
+    "metrics": { "evaluations": 1234, "denials": 56 }
+  }
+}
+```
+
+## Initial Bundle Push on Connection
+
+When a sidecar connects via WebSocket, the provider immediately sends the current bundle if one is cached. This ensures the sidecar does not have to wait for the next poll interval to receive its initial configuration.
+
+```mermaid
+sequenceDiagram
+    participant SC as Sidecar
+    participant PROV as SidecarProvider
+
+    SC->>PROV: WS UPGRADE /_authz/ws (X-API-Key)
+    PROV->>PROV: Validate API key
+    PROV-->>SC: 101 Switching Protocols
+    PROV->>PROV: Check lastBundleUpdate cache
+    alt Bundle cached
+        PROV-->>SC: bundle_update {version, policy, data, schema}
+        SC->>SC: Deploy to Cedar engine
+    else No bundle yet
+        Note over SC,PROV: Sidecar waits for first bundle_update
+    end
+```
+
+## Audit Pipeline Integration
+
+Sidecars report evaluation decisions back to the gateway via WebSocket `audit_event` messages. The gateway integrates these into the standard AM audit pipeline.
+
+```mermaid
+sequenceDiagram
+    participant SC as Sidecar
+    participant PROV as SidecarProvider
+    participant MGR as AuthorizationEngineManager
+    participant AUD as AuditService
+
+    SC->>PROV: audit_event {decisionId, principalId, action, resourceType, resourceId, decision, engine}
+    PROV->>PROV: auditCallback.onEvaluation(event)
+    PROV->>MGR: reportAuditEvent(AuthorizationAuditEvent)
+    MGR->>MGR: Build AuthorizationEngineRequest + Response from event
+    MGR->>AUD: report(PermissionEvaluatedAuditBuilder)
+    AUD->>AUD: Persist audit record
+```
+
+The flow:
+1. Sidecar sends `audit_event` WS message after each authorization evaluation
+2. `SidecarAuthorizationEngineProvider` receives the message and calls the registered `AuthorizationAuditCallback`
+3. `AuthorizationEngineManagerImpl.reportAuditEvent()` converts the provider-agnostic `AuthorizationAuditEvent` into a `PermissionEvaluatedAuditBuilder`
+4. The builder is passed to `AuditService.report()` which persists it through the standard audit pipeline
 
 ## Architecture Comparison: HTTP Push vs WebSocket
 

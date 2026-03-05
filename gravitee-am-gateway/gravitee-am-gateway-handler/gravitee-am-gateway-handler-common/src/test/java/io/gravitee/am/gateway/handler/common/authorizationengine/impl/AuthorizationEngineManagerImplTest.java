@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.authorizationengine.impl;
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
 import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditCallback;
 import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditEvent;
+import io.gravitee.am.authorizationengine.api.ws.ResolvedBundleSnapshot;
 import io.gravitee.am.common.event.AuthorizationBundleEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
 import io.gravitee.am.common.event.EventManager;
@@ -620,11 +621,13 @@ class AuthorizationEngineManagerImplTest {
 
         // then - called during initial deploy push AND hot-reload
         verify(authorizationBundleRepository, timeout(1000).atLeast(2)).findById("bundle-1");
-        verify(mockProvider, timeout(1000).atLeast(2)).updateConfig(
-                "permit(principal, action, resource);",
-                "[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]",
-                "{\"entityTypes\":{}}"
-        );
+        ArgumentCaptor<ResolvedBundleSnapshot> snapshotCaptor = ArgumentCaptor.forClass(ResolvedBundleSnapshot.class);
+        verify(mockProvider, timeout(1000).atLeast(2)).updateConfig(snapshotCaptor.capture());
+
+        ResolvedBundleSnapshot snapshot = snapshotCaptor.getAllValues().get(0);
+        assertEquals("permit(principal, action, resource);", snapshot.policy());
+        assertEquals("[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]", snapshot.data());
+        assertEquals("{\"entityTypes\":{}}", snapshot.schema());
     }
 
     @Test
@@ -682,8 +685,8 @@ class AuthorizationEngineManagerImplTest {
         io.gravitee.common.event.EventListener<AuthorizationBundleEvent, Payload> capturedListener = listenerCaptor.getValue();
         capturedListener.onEvent(event);
 
-        // then - should push null config to clear engine state
-        verify(mockProvider, timeout(1000)).updateConfig(null, null, null);
+        // then - should push a clear snapshot (version=0, nulls) to clear engine state
+        verify(mockProvider, timeout(1000)).updateConfig(new ResolvedBundleSnapshot(0, null, null, null));
     }
 
     // --- Audit callback tests ---
@@ -756,6 +759,6 @@ class AuthorizationEngineManagerImplTest {
 
         // then - should not fetch any bundle
         verify(authorizationBundleRepository, never()).findById(any());
-        verify(mockProvider, never()).updateConfig(any(), any(), any());
+        verify(mockProvider, never()).updateConfig(any(ResolvedBundleSnapshot.class));
     }
 }

@@ -19,6 +19,7 @@ import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
 import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditEvent;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineRequest;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
+import io.gravitee.am.authorizationengine.api.ws.ResolvedBundleSnapshot;
 import io.gravitee.am.common.event.AuthorizationBundleEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
 import io.gravitee.am.common.event.EventManager;
@@ -55,6 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author GraviteeSource Team
@@ -100,6 +102,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, String> engineBundleBindings = new ConcurrentHashMap<>();
+    private final AtomicInteger bundleVersionCounter = new AtomicInteger(0);
 
     private final EventListener<AuthorizationBundleEvent, Payload> bundleEventListener =
             event -> handleBundleEvent(event);
@@ -285,9 +288,9 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         authorizationBundleRepository.findById(bundleId)
                 .flatMap(this::resolveBundleContent)
                 .subscribe(
-                        resolved -> {
+                        snapshot -> {
                             try {
-                                provider.updateConfig(resolved[0], resolved[1], resolved[2]);
+                                provider.updateConfig(snapshot);
                                 logger.info("Bundle {} pushed to engine {} for domain {}",
                                         bundleId, authorizationEngine.getId(), domain.getName());
                             } catch (Exception e) {
@@ -328,12 +331,13 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 case UNDEPLOY -> {
                     String removedBundleId = payload.getId();
                     logger.info("Authorization bundle {} undeployed for domain {}", removedBundleId, domain.getName());
+                    ResolvedBundleSnapshot clearSnapshot = new ResolvedBundleSnapshot(0, null, null, null);
                     engineBundleBindings.forEach((engineId, bId) -> {
                         if (removedBundleId.equals(bId)) {
                             AuthorizationEngineProvider provider = providers.get(engineId);
                             if (provider != null) {
                                 try {
-                                    provider.updateConfig(null, null, null);
+                                    provider.updateConfig(clearSnapshot);
                                 } catch (Exception e) {
                                     logger.error("Failed to clear config for engine {} in domain {}", engineId, domain.getName(), e);
                                 }
@@ -393,14 +397,14 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         authorizationBundleRepository.findById(bundleId)
                 .flatMap(this::resolveBundleContent)
                 .subscribe(
-                        resolved -> {
+                        snapshot -> {
                             logger.info("Hot-reloading bundle {} for domain {}", bundleId, domain.getName());
                             engineBundleBindings.forEach((engineId, bId) -> {
                                 if (bundleId.equals(bId)) {
                                     AuthorizationEngineProvider provider = providers.get(engineId);
                                     if (provider != null) {
                                         try {
-                                            provider.updateConfig(resolved[0], resolved[1], resolved[2]);
+                                            provider.updateConfig(snapshot);
                                         } catch (Exception e) {
                                             logger.error("Failed to hot-reload bundle for engine {} in domain {}", engineId, domain.getName(), e);
                                         }
@@ -416,11 +420,11 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     /**
-     * Resolves a bundle's component references into actual content.
-     * Returns a Maybe of String[3]: [policies, entities, schema].
+     * Resolves a bundle's component references into an immutable {@link ResolvedBundleSnapshot}.
+     * Each call increments the version counter so providers can track staleness.
      * Supports pinToLatest: if true, resolves the latest version; otherwise uses the specific version from the bundle.
      */
-    private Maybe<String[]> resolveBundleContent(AuthorizationBundle bundle) {
+    private Maybe<ResolvedBundleSnapshot> resolveBundleContent(AuthorizationBundle bundle) {
         Single<String> policiesSingle = bundle.getPolicySetId() != null
                 ? resolvePolicySetContent(bundle)
                 : Single.just("");
@@ -434,7 +438,8 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 : Single.just("");
 
         return Single.zip(policiesSingle, entitiesSingle, schemaSingle,
-                (policies, entities, schema) -> new String[]{policies, entities, schema})
+                (policies, entities, schema) -> new ResolvedBundleSnapshot(
+                        bundleVersionCounter.incrementAndGet(), policies, entities, schema))
                 .toMaybe();
     }
 

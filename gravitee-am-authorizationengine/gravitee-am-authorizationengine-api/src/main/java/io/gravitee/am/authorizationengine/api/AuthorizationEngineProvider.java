@@ -18,6 +18,7 @@ package io.gravitee.am.authorizationengine.api;
 import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditCallback;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineRequest;
 import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
+import io.gravitee.am.authorizationengine.api.ws.ResolvedBundleSnapshot;
 import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Single;
@@ -44,12 +45,12 @@ public interface AuthorizationEngineProvider extends Service<AuthorizationEngine
      * Hot-reload policy, data, and schema configuration without restarting the provider.
      * Implementations that support zero-downtime updates (e.g., sidecar-based engines)
      * override this method to push new configuration to the running engine.
+     * <p>
+     * To clear the bundle, pass {@code new ResolvedBundleSnapshot(0, null, null, null)}.
      *
-     * @param policy Engine-specific policy text (e.g., Cedar policy syntax)
-     * @param data   Engine-specific data payload (JSON string, e.g., entity definitions)
-     * @param schema Optional schema definition (JSON string)
+     * @param snapshot immutable snapshot containing version, policy, data, and schema
      */
-    default void updateConfig(String policy, String data, String schema) {
+    default void updateConfig(ResolvedBundleSnapshot snapshot) {
         // No-op by default; providers supporting hot-reload override this
     }
 
