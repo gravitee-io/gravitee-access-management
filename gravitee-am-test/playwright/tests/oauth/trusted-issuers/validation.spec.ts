@@ -54,14 +54,8 @@ test.describe('Trusted Issuer Validation', () => {
   test.beforeAll(async () => {
     trustedKey = createKeyMaterial();
     untrustedKey = createKeyMaterial();
-    // Create a real second domain (Domain B) to act as external issuer.
-    // This is fragile (AM-6654) — wrap in try/catch so other tests still run.
-    try {
-      const adminToken = await requestAdminAccessToken();
-      issuerDomain = await setupIssuerDomain(adminToken);
-    } catch (e) {
-      console.warn('setupIssuerDomain failed (AM-6654); cross-domain tests will be skipped:', (e as Error).message);
-    }
+    const adminToken = await requestAdminAccessToken();
+    issuerDomain = await setupIssuerDomain(adminToken);
   });
 
   test.afterAll(async () => {
@@ -72,9 +66,7 @@ test.describe('Trusted Issuer Validation', () => {
 /*  AM-6625: JWKS URL cross-domain trust                               */
 /* ------------------------------------------------------------------ */
 
-// AM-6654: Cross-domain trust is a known backend bug — PEM/JWKS from different domain
-// causes "no matching key(s) found". Re-enable when AM-6654 is fixed.
-test.fixme('AM-6625: exchange succeeds with real Domain B token via JWKS URL trust', async ({ tokenExchangeDomain, teAdminToken, doTokenExchange, doIntrospect }, testInfo) => {
+test('AM-6625: exchange succeeds with real Domain B token via JWKS URL trust', async ({ tokenExchangeDomain, teAdminToken, doTokenExchange, doIntrospect }, testInfo) => {
   linkJira(testInfo, 'AM-6625');
 
   // PROVE: real cross-domain trust via JWKS — Domain A trusts Domain B's JWKS endpoint
@@ -162,10 +154,7 @@ test('AM-6626: exchange fails with expired JWT from trusted issuer', async ({ to
 /*  AM-6627: PEM cross-domain trust                                    */
 /* ------------------------------------------------------------------ */
 
-// AM-6654: PEM cross-domain trust is a known backend bug — key mismatch between
-// JWKS JWK and x5c certificate causes "no matching key(s) found" on PEM resolution.
-// Re-enable this test when AM-6654 is fixed.
-test.fixme('AM-6627: exchange succeeds with real Domain B token via PEM trust', async ({ tokenExchangeDomain, teAdminToken, doTokenExchange, doIntrospect }, testInfo) => {
+test('AM-6627: exchange succeeds with real Domain B token via PEM trust', async ({ tokenExchangeDomain, teAdminToken, doTokenExchange, doIntrospect }, testInfo) => {
   linkJira(testInfo, 'AM-6627');
 
   await configureTrustedIssuer(tokenExchangeDomain.id, teAdminToken, tokenExchangeDomain.hrid, {
