@@ -146,7 +146,7 @@
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.1</gravitee-policy-callout-http.version>
-        <gravitee-policy-groovy.version>2.5.2</gravitee-policy-groovy.version>
+        <gravitee-policy-groovy.version>5.0.0-AM-6614-groovy-upgrade-for-java-25-SNAPSHOT</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.14.1</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
