@@ -15,41 +15,63 @@
  */
 package io.gravitee.am.management.service.purge;
 
+import io.gravitee.am.management.service.ActionLeaseService;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class ReporterAuditSweeper implements ExpiredDataSweeper {
 
-    @Lazy
+    public static final String LEASE_ACTION_AUDIT_SWEEPER = "auditSweeper";
+    public static final int MAX_CONCURRENCY = 4;
+    public static final boolean NO_DELAY_ERRORS = false;
+    public static final int DEFAULT_AUDIT_SWEEPER_LEASE_DURATION_IN_SECOND = 3600;
+
     private final AuditReporterManager auditReporterManager;
 
-    @Lazy
     private final ReporterService reporterService;
+
+    private final ActionLeaseService actionLeaseService;
+
+    public ReporterAuditSweeper(@Lazy AuditReporterManager auditReporterManager,
+                                @Lazy ReporterService reporterService,
+                                @Lazy ActionLeaseService actionLeaseService) {
+        this.auditReporterManager = auditReporterManager;
+        this.reporterService = reporterService;
+        this.actionLeaseService = actionLeaseService;
+    }
 
     @Value("${services.purge.audits.retention.days:0}")
     private int retentionDays;
+
+    @Value("${services.purge.audits.leaseDuration:"+ DEFAULT_AUDIT_SWEEPER_LEASE_DURATION_IN_SECOND +"}")
+    private int leaseDuration = DEFAULT_AUDIT_SWEEPER_LEASE_DURATION_IN_SECOND;
+
 
     @Override
     public Completable purgeExpiredData() {
         log.info("Starting audit reporter data purge (retention: {} days)", retentionDays);
 
-        return reporterService.findAll()
+        return actionLeaseService.acquireLease(LEASE_ACTION_AUDIT_SWEEPER, Duration.of(leaseDuration, ChronoUnit.SECONDS))
+                .flatMapPublisher(lease -> reporterService.findAll())
                 .flatMapCompletable(reporter -> purgeReporter(reporter)
                         .onErrorResumeNext(error -> {
                             log.error("Failed to purge audits for reporter {}: {}",
                                     reporter.getName(), error.getMessage(), error);
                             return Completable.complete();
-                        })
+                        }),
+                        NO_DELAY_ERRORS,
+                        MAX_CONCURRENCY
                 )
                 .doOnComplete(() -> log.info("Audit reporter data purge completed"))
                 .doOnError(error -> log.error("Audit reporter data purge failed", error));
