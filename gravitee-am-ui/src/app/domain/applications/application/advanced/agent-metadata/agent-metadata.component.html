@@ -23,7 +23,7 @@
     </div>
 
     <!-- No URL configured -->
-    <div *ngIf="!agentCardUrl" class="agent-card-state">
+    <div *ngIf="!agentCardUrl" class="agent-card-state" data-testid="agentCardState">
       <mat-icon>info_outline</mat-icon>
       <span>No AgentCard URL is configured for this application. Set it in the <strong>General</strong> settings tab.</span>
     </div>
@@ -49,7 +49,7 @@
     <!-- Loaded -->
     <div *ngIf="agentCardUrl && !loading && agentCard">
       <!-- Summary card -->
-      <mat-card class="agent-card-summary">
+      <mat-card class="agent-card-summary" data-testid="agentCardSummary">
         <mat-card-content>
           <div fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="start center">
             <img *ngIf="agentCard.iconUrl" [src]="agentCard.iconUrl" alt="Agent icon" class="agent-card-icon" />
