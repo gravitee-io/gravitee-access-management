@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.gateway;
+package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.ActionLease;
-import io.gravitee.am.repository.gateway.api.ActionLeaseRepository;
+import io.gravitee.am.repository.management.api.ActionLeaseRepository;
 import io.gravitee.am.repository.mongodb.common.ActionLeaseCommand;
 import io.gravitee.am.repository.mongodb.common.model.ActionLeaseMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -35,9 +35,9 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component("gatewayActionLeaseRepository")
-public class MongoActionLeaseRepository extends AbstractGatewayMongoRepository implements ActionLeaseRepository {
-    private static final String ACTION_LEASE = "dp_action_lease";
+@Component("managementActionLeaseRepository")
+public class MongoActionLeaseRepository extends AbstractManagementMongoRepository implements ActionLeaseRepository {
+    private static final String ACTION_LEASE = "cp_action_lease";
 
     private ActionLeaseCommand actionLeaseCommand;
 
@@ -50,13 +50,12 @@ public class MongoActionLeaseRepository extends AbstractGatewayMongoRepository i
 
         // Create unique index on action field to ensure only one lease per action
         super.createIndex(actionLeaseCollection,
-            Map.of(new Document(ActionLeaseCommand.FIELD_ACTION, 1), new IndexOptions().name("action_unique").unique(true)),
-            getEnsureIndexOnStart());
+            Map.of(new Document(ActionLeaseCommand.FIELD_ACTION, 1), new IndexOptions().name("action_unique").unique(true)), ensureIndexOnStart);
 
         // Create TTL index on expiryDate for automatic cleanup
         super.createIndex(actionLeaseCollection,
             Map.of(new Document(ActionLeaseCommand.FIELD_EXPIRY_DATE, 1), new IndexOptions().name("expiry_ttl").expireAfter(0L, java.util.concurrent.TimeUnit.SECONDS)),
-            getEnsureIndexOnStart());
+            ensureIndexOnStart);
     }
 
     @Override
