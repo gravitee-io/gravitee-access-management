@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Page, Locator } from '@playwright/test';
+import { TestInfo } from '@playwright/test';
 
-/** Locator for a gv-submenu navigation link by label. */
-export function submenuItem(page: Page, label: string): Locator {
-  return page.locator('gv-submenu a').filter({ hasText: new RegExp(`^\\s*${label}\\s*$`, 'i') }).first();
+/** Link a Playwright test to one or more Jira/Xray test keys for reporting. */
+export function linkJira(testInfo: TestInfo, ...keys: string[]) {
+  for (const key of keys) {
+    testInfo.annotations.push({ type: 'test_key', description: key });
+  }
 }

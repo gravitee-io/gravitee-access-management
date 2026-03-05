@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Page, Locator } from '@playwright/test';
 
-/** Locator for a gv-submenu navigation link by label. */
-export function submenuItem(page: Page, label: string): Locator {
-  return page.locator('gv-submenu a').filter({ hasText: new RegExp(`^\\s*${label}\\s*$`, 'i') }).first();
-}
+/** Default password used by buildCreateAndTestUser() — no trailing '!' */
+export const API_USER_PASSWORD = 'SomeP@ssw0rd';
+
+/** Password that satisfies AM Console password policy (uppercase, lowercase, digit, special, 10+ chars) */
+export const UI_USER_PASSWORD = 'SomeP@ssw0rd!';
+
+/** Default admin username */
+export const ADMIN_USERNAME = 'admin';
+
+/** Default admin password */
+export const ADMIN_PASSWORD = 'adminadmin';
+
+/** Regex matching a valid JWT (three Base64url segments separated by dots) */
+export const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;

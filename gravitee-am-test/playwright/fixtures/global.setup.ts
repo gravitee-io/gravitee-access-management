@@ -15,14 +15,45 @@
  */
 import { test as setup } from '@playwright/test';
 import { LoginPage } from '../pages/login.page';
+import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
+import { listDomains, safeDeleteDomain } from '../../api/commands/management/domain-management-commands';
+import { ADMIN_PASSWORD } from '../utils/test-constants';
 
 const ADMIN_STORAGE_STATE = 'playwright/fixtures/.auth/admin.json';
 
+/** Prefixes used by Playwright test fixtures for domain names. */
+export const TEST_DOMAIN_PREFIXES = ['pw-', 'cert-'];
+
+/** Delete stale test domains to keep the environment clean. */
+export async function cleanupTestDomains(label: string): Promise<void> {
+  try {
+    const token = await requestAdminAccessToken();
+    const page = await listDomains(token, { size: 200 });
+    const staleDomains = (page.data || []).filter((d) =>
+      TEST_DOMAIN_PREFIXES.some((prefix) => d.name?.startsWith(prefix)),
+    );
+
+    if (staleDomains.length === 0) return;
+
+    console.log(`[${label}] Cleaning up ${staleDomains.length} stale test domains...`);
+    for (const domain of staleDomains) {
+      await safeDeleteDomain(domain.id, token);
+    }
+    console.log(`[${label}] Stale domain cleanup complete.`);
+  } catch (err) {
+    console.warn(`[${label}] Stale domain cleanup failed (non-fatal):`, err);
+  }
+}
+
 /** Authenticate once and save browser state for all tests. */
+// eslint-disable-next-line playwright/expect-expect -- setup fixture, no assertions needed
 setup('authenticate as admin', async ({ page }) => {
+  // Clean up stale test domains before running the suite
+  await cleanupTestDomains('setup');
+
   const loginPage = new LoginPage(page);
   const username = process.env.AM_ADMIN_USERNAME || 'admin';
-  const password = process.env.AM_ADMIN_PASSWORD || 'adminadmin';
+  const password = process.env.AM_ADMIN_PASSWORD || ADMIN_PASSWORD;
 
   await loginPage.goto();
   await loginPage.login(username, password);

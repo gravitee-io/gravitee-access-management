@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Page, Locator } from '@playwright/test';
+import { cleanupTestDomains } from './global.setup';
 
-/** Locator for a gv-submenu navigation link by label. */
-export function submenuItem(page: Page, label: string): Locator {
-  return page.locator('gv-submenu a').filter({ hasText: new RegExp(`^\\s*${label}\\s*$`, 'i') }).first();
+/** Clean up any test domains left behind after the suite finishes. */
+async function globalTeardown(): Promise<void> {
+  await cleanupTestDomains('teardown');
 }
+
+export default globalTeardown;

@@ -18,34 +18,13 @@ import { BasePage } from './base.page';
 
 /** Page object for the AM Console home / dashboard page. */
 export class HomePage extends BasePage {
-  get navbar(): Locator {
-    return this.page.locator('.gio-top-nav').first();
-  }
-
   get sidenav(): Locator {
     return this.page.locator('.gio-side-nav').first();
   }
 
-  get userMenu(): Locator {
-    return this.page.locator('button.userAccountMenu').first();
-  }
-
-  get createDomainButton(): Locator {
-    return this.page.locator('a[mat-fab]').first();
-  }
-
-  async goto(): Promise<void> {
-    await this.navigate('/');
-  }
-
-  async expectLoaded(): Promise<void> {
-    await expect(this.navbar).toBeVisible({ timeout: 15_000 });
-  }
-
   /** Navigate to the domains list page. */
   async gotoDomainsList(): Promise<void> {
-    const envHrid = process.env.AM_DEF_ENV_HRID || 'default';
-    await this.navigate(`/environments/${envHrid}/domains`);
+    await this.navigate(`/environments/${this.envHrid}/domains`);
   }
 
   /** Domains list container. */
@@ -68,11 +47,17 @@ export class HomePage extends BasePage {
     return this.page.locator('.domain-information a').filter({ hasText: name }).first();
   }
 
-  /** Navigate to a domain's detail page via the domains list. */
+  /** Navigate to a domain's detail page via the domains list search. */
   async navigateToDomain(domainName: string): Promise<void> {
     await this.gotoDomainsList();
+
+    // Use the search box to filter — avoids pagination issues with many domains
+    const searchInput = this.page.getByPlaceholder(/search/i).first();
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill(domainName);
+
     const link = this.domainLink(domainName);
-    await expect(link).toBeVisible({ timeout: 10_000 });
+    await expect(link).toBeVisible();
     await link.click();
     await this.waitForReady();
   }

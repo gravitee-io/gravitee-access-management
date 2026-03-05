@@ -15,26 +15,22 @@
  */
 import { test as base } from '@playwright/test';
 
-// Polyfill fetch for Node < 18 (AM SDK expects global fetch).
-if (typeof globalThis.fetch === 'undefined') {
-  globalThis.fetch = require('cross-fetch');
-}
+// Always use cross-fetch — matches E2E test-fixture pattern.
+// Native Node 18+ fetch can behave differently with the generated SDK.
+import crossFetch from 'cross-fetch';
+globalThis.fetch = crossFetch;
 
 // Reuse the existing AM test API layer.
 import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitForDomainSync } from '../../api/commands/management/domain-management-commands';
+import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain } from '../../api/commands/management/domain-management-commands';
 import { createApplication, deleteApplication } from '../../api/commands/management/application-management-commands';
-import { Domain, Application } from '../../api/management/models';
+import { createUser, deleteUser } from '../../api/commands/management/user-management-commands';
+import { Domain, Application, User } from '../../api/management/models';
 
 import { HomePage } from '../pages/home.page';
 import { LoginPage } from '../pages/login.page';
-
-import faker from 'faker';
-
-/** Playwright fixtures for AM UI tests. API-first setup, UI-first assertions. */
-
-const uniqueName = (prefix: string) =>
-  `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+import { quietly, uniqueTestName as uniqueName } from '../utils/fixture-helpers';
+import { UI_USER_PASSWORD } from '../utils/test-constants';
 
 export type AmFixtures = {
   adminToken: string;
@@ -44,6 +40,10 @@ export type AmFixtures = {
   testDomain: Domain;
   /** Fresh application in testDomain, cleaned up after test. */
   testApplication: Application;
+  /** Fresh AGENT-type application in testDomain, cleaned up after test. */
+  testAgenticApp: Application;
+  /** Fresh user in testDomain, cleaned up after test. */
+  testUser: User;
 };
 
 export const test = base.extend<AmFixtures>({
@@ -62,14 +62,13 @@ export const test = base.extend<AmFixtures>({
 
   testDomain: async ({ adminToken }, use) => {
     const name = uniqueName('pw-domain');
-    const domain = await createDomain(adminToken, name, faker.company.catchPhraseDescriptor());
-    await startDomain(domain.id, adminToken);
-
-    await waitForDomainSync(domain.id);
+    const domain = await quietly(() => createDomain(adminToken, name, 'Playwright test domain'));
+    await quietly(() => startDomain(domain.id, adminToken));
+    await quietly(() => waitForDomainSync(domain.id));
 
     await use(domain);
 
-    try { await deleteDomain(domain.id, adminToken); } catch { /* already deleted */ }
+    await quietly(() => safeDeleteDomain(domain.id, adminToken));
   },
 
   testApplication: async ({ adminToken, testDomain }, use) => {
@@ -80,7 +79,62 @@ export const test = base.extend<AmFixtures>({
 
     await use(app);
 
-    try { await deleteApplication(testDomain.id, adminToken, app.id); } catch { /* already deleted */ }
+    await quietly(async () => {
+      try {
+        await deleteApplication(testDomain.id, adminToken, app.id);
+      } catch (e: unknown) {
+        // 404 expected if domain teardown already cascaded; log anything else
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- error shape is unknown SDK type
+        if (e && typeof e === 'object' && 'response' in e && (e as any).response?.status !== 404) {
+          console.warn(`testApplication teardown: ${e}`);
+        }
+      }
+    });
+  },
+
+  testAgenticApp: async ({ adminToken, testDomain }, use) => {
+    const app = await createApplication(testDomain.id, adminToken, {
+      name: uniqueName('pw-agent'),
+      type: 'AGENT',
+      redirectUris: ['https://gravitee.io/callback'],
+    });
+
+    await use(app);
+
+    await quietly(async () => {
+      try {
+        await deleteApplication(testDomain.id, adminToken, app.id);
+      } catch (e: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- error shape is unknown SDK type
+        if (e && typeof e === 'object' && 'response' in e && (e as any).response?.status !== 404) {
+          console.warn(`testAgenticApp teardown: ${e}`);
+        }
+      }
+    });
+  },
+
+  testUser: async ({ adminToken, testDomain }, use) => {
+    const user = await createUser(testDomain.id, adminToken, {
+      firstName: 'PW',
+      lastName: 'Test',
+      email: `${uniqueName('pw-test')}@example.com`,
+      username: uniqueName('pw-user'),
+      password: UI_USER_PASSWORD,
+      preRegistration: false,
+    });
+
+    await use(user);
+
+    await quietly(async () => {
+      try {
+        await deleteUser(testDomain.id, adminToken, user.id);
+      } catch (e: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- error shape is unknown SDK type
+        if (e && typeof e === 'object' && 'response' in e && (e as any).response?.status !== 404) {
+          console.warn(`testUser teardown: ${e}`);
+        }
+      }
+    });
   },
 });
 

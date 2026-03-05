@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { test, expect } from '../../fixtures/base.fixture';
+import { ADMIN_PASSWORD } from '../../utils/test-constants';
 
 /** Login flow tests — runs without saved auth state. */
 test.describe('Login', () => {
@@ -26,7 +27,7 @@ test.describe('Login', () => {
 
   test('should login with valid admin credentials', async ({ loginPage, page }) => {
     const username = process.env.AM_ADMIN_USERNAME || 'admin';
-    const password = process.env.AM_ADMIN_PASSWORD || 'adminadmin';
+    const password = process.env.AM_ADMIN_PASSWORD || ADMIN_PASSWORD;
 
     await loginPage.goto();
     await loginPage.login(username, password);
@@ -40,6 +41,8 @@ test.describe('Login', () => {
     await loginPage.passwordInput.fill('wrong-password');
     await loginPage.signInButton.click();
 
-    await expect(loginPage.usernameInput).toBeVisible({ timeout: 10_000 });
+    // Should remain on login page with error indication
+    await expect(loginPage.usernameInput).toBeVisible();
+    await loginPage.expectError();
   });
 });

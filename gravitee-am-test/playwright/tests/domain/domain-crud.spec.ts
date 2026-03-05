@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 import { test, expect } from '../../fixtures/base.fixture';
+import { linkJira } from '../../utils/jira';
+import { DomainGeneralPage } from '../../pages/domain-general.page';
 
 /** Domain CRUD tests — testDomain fixture handles API setup/teardown. */
 test.describe('Domain Management', () => {
   test('should display the domain list', async ({ homePage }) => {
     await homePage.gotoDomainsList();
 
-    await expect(homePage.domainsContent).toBeVisible({ timeout: 10_000 });
+    await expect(homePage.domainsContent).toBeVisible();
   });
 
   test('should navigate into a domain created via API', async ({ homePage, testDomain }) => {
@@ -32,6 +34,48 @@ test.describe('Domain Management', () => {
   test('should show domain detail page with sidenav', async ({ homePage, testDomain }) => {
     await homePage.navigateToDomain(testDomain.name);
 
-    await expect(homePage.sidenav.locator('a').first()).toBeVisible({ timeout: 10_000 });
+    await expect(homePage.sidenav.locator('a').first()).toBeVisible();
+  });
+
+  test('AM-2215: edit domain name and description', async ({ page, testDomain }, testInfo) => {
+    linkJira(testInfo, 'AM-2215');
+
+    const generalPage = new DomainGeneralPage(page);
+    await generalPage.navigateTo(testDomain.id);
+
+    const updatedName = `${testDomain.name}-edited`;
+    const updatedDesc = 'Updated description for Playwright test';
+    await generalPage.fillName(updatedName);
+    await generalPage.fillDescription(updatedDesc);
+    await generalPage.clickSave();
+    await generalPage.expectSnackbar('updated');
+
+    // Verify persistence on reload
+    await page.reload();
+    await generalPage.waitForReady();
+    await expect(generalPage.nameInput).toHaveValue(updatedName);
+    await expect(generalPage.descriptionInput).toHaveValue(updatedDesc);
+  });
+
+  test('AM-2212: disable and delete domain', async ({ page, homePage, testDomain }, testInfo) => {
+    linkJira(testInfo, 'AM-2212');
+
+    const generalPage = new DomainGeneralPage(page);
+    await generalPage.navigateTo(testDomain.id);
+
+    // Disable the domain first (required before deletion)
+    await generalPage.toggleEnabled();
+    await generalPage.waitForReady();
+
+    // Click delete in the danger zone
+    await generalPage.clickDelete();
+    await generalPage.confirmDialog();
+
+    // Should redirect to domains list
+    await generalPage.waitForReady();
+    await expect(page).toHaveURL(/.*domains.*/);
+
+    // Verify domain no longer in list
+    await expect(homePage.domainLink(testDomain.name)).toHaveCount(0);
   });
 });

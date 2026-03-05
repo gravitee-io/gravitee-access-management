@@ -101,6 +101,12 @@ export const safeDeleteDomain = async (domainId: string | null | undefined, acce
   }
 
   try {
+    // Unset fallback certificate first — deletion fails if one is configured
+    try {
+      await updateCertificateSettings(domainId, accessToken, { fallbackCertificate: null });
+    } catch {
+      // Domain may not have a fallback certificate — ignore
+    }
     await deleteDomain(domainId, accessToken);
     console.log(`✅ Deleted domain: ${domainId}`);
   } catch (err: any) {
@@ -194,7 +200,7 @@ export const waitForDomainStart = async (domain: Domain): Promise<DomainWithOidc
  *
  * @returns Promise that resolves when sync is complete
  */
-const DEFAULT_DOMAIN_SYNC_TIMEOUT_MS = 30000;
+const DEFAULT_DOMAIN_SYNC_TIMEOUT_MS = 60000;
 const DEFAULT_DOMAIN_SYNC_INTERVAL_MS = 500;
 const DOMAIN_SYNC_FALLBACK_WAIT_MS = 2000;
 

@@ -33,20 +33,21 @@ process.env.AM_DEF_ENV_ID = process.env.AM_DEF_ENV_ID || 'DEFAULT';
 process.env.AM_DEF_ENV_HRID = process.env.AM_DEF_ENV_HRID || 'default';
 
 export default defineConfig({
+  globalTeardown: './playwright/fixtures/global.teardown.ts',
   testDir: './playwright/tests',
   outputDir: './playwright/test-results',
 
   timeout: 60_000,
-  expect: { timeout: 10_000 },
+  expect: { timeout: 15_000 },
 
-  fullyParallel: !process.env.CI,  // Sequential in CI (shared AM state)
-  workers: process.env.CI ? 1 : undefined,
+  fullyParallel: true,
+  workers: process.env.CI ? 3 : undefined,
 
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
 
   reporter: process.env.CI
-    ? [['html', { open: 'never', outputFolder: 'playwright/playwright-report' }], ['junit', { outputFile: 'playwright/test-results/junit.xml' }]]
+    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright/playwright-report' }], ['junit', { outputFile: 'playwright/junit-results/junit.xml' }]]
     : [['html', { open: 'on-failure', outputFolder: 'playwright/playwright-report' }]],
 
   use: {

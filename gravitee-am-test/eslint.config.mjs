@@ -47,9 +47,14 @@ export default [
       ...playwright.configs['flat/recommended'].rules,
       // Tests use page object expect*() methods — count those as assertions.
       'playwright/expect-expect': [
-        'warn',
-        { assertFunctionNames: ['expect*', '**.expect*'] },
+        'error',
+        {
+          assertFunctionNames: ['expect'],
+          assertFunctionPatterns: ['^expect'],
+        },
       ],
+      // Conditionals in test logic hide failures; only cleanup try/finally is acceptable.
+      'playwright/no-conditional-in-test': 'error',
     },
   },
 

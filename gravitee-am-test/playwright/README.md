@@ -28,8 +28,17 @@ npx playwright install chromium
 ### Run Tests
 
 ```bash
-# Run all Playwright tests (headless)
+# Run all Playwright tests (default workers, headless)
 npm run pw
+
+# Run in single worker, serial mode (most reliable for local dev)
+npx playwright test --workers=1
+
+# Run a specific test file
+npx playwright test --workers=1 playwright/tests/security/certificates/fallback.spec.ts
+
+# Run a specific test suite folder
+npx playwright test --workers=1 playwright/tests/oauth/
 
 # Run with visible browser
 npm run pw:headed
@@ -48,9 +57,11 @@ npm run pw:application
 # View the HTML test report
 npm run pw:report
 
-# Run in CI mode (sequential, JUnit output, retries)
+# Run in CI mode (3 workers, JUnit output, retries)
 npm run pw:ci
 ```
+
+> **Tip:** If you're seeing many failures, start with `--workers=1` to rule out parallel contention. The Docker stack (especially management API) can become slow under concurrent load.
 
 ### Environment Variables
 
@@ -60,11 +71,14 @@ Same variables as the Jest tests — configure once, use everywhere.
 |---|---|---|
 | `AM_UI_URL` | `http://localhost:4200` | AM Console URL |
 | `AM_MANAGEMENT_URL` | `http://localhost:8093` | Management API URL |
+| `AM_MANAGEMENT_ENDPOINT` | `{AM_MANAGEMENT_URL}/management` | Full management API endpoint |
 | `AM_GATEWAY_URL` | `http://localhost:8092` | Gateway URL |
+| `AM_GATEWAY_NODE_MONITORING_URL` | `http://localhost:18092/_node` | Gateway monitoring endpoint (used by `waitForDomainSync`) |
 | `AM_ADMIN_USERNAME` | `admin` | Admin username |
 | `AM_ADMIN_PASSWORD` | `adminadmin` | Admin password |
 | `AM_DEF_ORG_ID` | `DEFAULT` | Default organization ID |
 | `AM_DEF_ENV_ID` | `DEFAULT` | Default environment ID |
+| `AM_DEF_ENV_HRID` | `default` | Default environment hrid (used in Angular routes — **lowercase**) |
 
 Override for a different environment:
 
@@ -77,40 +91,25 @@ AM_UI_URL=https://staging.gravitee.io AM_MANAGEMENT_URL=https://staging-api.grav
 
 ```
 gravitee-am-test/
-├── playwright.config.ts              # Playwright configuration
-├── api/                              # SHARED with Jest tests
-│   ├── commands/management/          #   createDomain(), requestAdminAccessToken(), etc.
-│   ├── commands/gateway/             #   OAuth/OIDC helpers
-│   └── management/models/            #   Auto-generated TypeScript types
-├── specs/                            # Jest integration tests (unchanged)
-├── cypress/                          # Legacy Cypress tests (unchanged)
+├── playwright.config.ts           # Playwright configuration
+├── api/                           # SHARED with Jest — management commands, gateway helpers, SDK models
 │
 └── playwright/
-    ├── README.md                     # ← You are here
-    ├── tsconfig.json                 # Extends parent, excludes Cypress types
-    │
-    ├── fixtures/
-    │   ├── global.setup.ts           # One-time login, saves browser state
-    │   ├── base.fixture.ts           # Custom fixtures: adminToken, testDomain, etc.
-    │   └── .auth/                    # Saved browser state (gitignored)
-    │
-    ├── pages/                        # Page Object Models
-    │   ├── base.page.ts              # Angular-aware waits, common helpers
-    │   ├── login.page.ts             # Gateway login form (server-rendered HTML)
-    │   └── home.page.ts              # Console dashboard / domain list
-    │
-    ├── utils/
-    │   ├── register-paths.ts         # Module resolver for path aliases + Jest shim
-    │   ├── jest-globals-shim.ts      # Bridges @jest/globals → @playwright/test
-    │   └── selectors.ts              # data-testid / role / mat-* selector helpers
-    │
-    └── tests/                        # Test specs organized by feature area
-        ├── auth/
-        │   └── login.spec.ts
-        ├── domain/
-        │   └── domain-crud.spec.ts
-        └── application/
-            └── application-crud.spec.ts
+    ├── fixtures/                  # Test scoping and lifecycle
+    │   ├── global.setup.ts        #   One-time admin login, saves browser state
+    │   ├── base.fixture.ts        #   Per-suite fixtures: domain, app, user (auto-cleaned)
+    │   └── ...                    #   Feature-specific fixture factories
+    ├── pages/                     # Page Object Models — one per AM Console view
+    │   ├── base.page.ts           #   Angular-aware waits, snackbar, dialog helpers
+    │   └── ...                    #   Feature-specific page objects
+    ├── utils/                     # Shared helpers
+    │   ├── jest-globals-shim.ts   #   Bridges @jest/globals → Playwright expect
+    │   └── ...                    #   Selectors, constants, protocol helpers
+    └── tests/                     # Specs organized by feature area
+        ├── auth/                  #   Login flow
+        ├── oauth/                 #   Token exchange, trusted issuers
+        ├── security/              #   Certificates
+        └── ...                    #   Application, domain, user management
 ```
 
 
@@ -130,12 +129,10 @@ The existing `api/commands/management/` layer provides battle-tested functions f
 Tests follow this principle: create test data via the Management API (fast, reliable, deterministic), then verify through the UI (the thing we're actually testing).
 
 ```typescript
-test('should show application created via API in the UI list', async ({ page, testDomain, testApplication }) => {
+test('should show application created via API in the UI list', async ({ homePage, testDomain, testApplication }) => {
   // testDomain and testApplication are created via API in the fixtures
   // The test only exercises the UI
-  await page.goto('/');
-  const domainLink = page.locator(`text=${testDomain.name}`);
-  await domainLink.click();
+  await homePage.navigateToDomain(testDomain.name);
   // ... navigate to applications and assert testApplication is visible
 });
 ```
@@ -200,7 +197,9 @@ test('my test', async ({ adminToken }) => {
 | `homePage` | `HomePage` | Pre-authenticated home page object |
 | `loginPage` | `LoginPage` | Login page object (for auth-specific tests) |
 | `testDomain` | `Domain` | Fresh domain, started and synced, auto-cleaned |
-| `testApplication` | `Application` | Fresh application in `testDomain`, auto-cleaned |
+| `testApplication` | `Application` | Fresh SERVICE-type application in `testDomain`, auto-cleaned |
+| `testAgenticApp` | `Application` | Fresh AGENT-type application in `testDomain`, auto-cleaned |
+| `testUser` | `User` | Fresh user in `testDomain`, auto-cleaned |
 
 ### Adding a New Fixture
 
@@ -276,16 +275,14 @@ export class DomainSettingsPage extends BasePage {
 
 ## Selector Strategy
 
-The AM Console has very few `data-testid` attributes today (~16 across 3 templates). Until coverage improves, use this priority order:
+The AM Console uses `data-testid` attributes across its Angular templates. Use this priority order for selectors:
 
 ### 1. data-testid (preferred)
 
-Most stable, survives refactors. Use the `byTestId()` helper from `utils/selectors.ts`:
+Most stable, survives refactors. Use Playwright's built-in `getByTestId()`:
 
 ```typescript
-import { byTestId } from '../utils/selectors';
-
-const table = byTestId(page, 'languagesTable');
+const table = page.getByTestId('languagesTable');
 ```
 
 Convention: camelCase, matching existing AM templates (`data-testid="textAddLanguageButton"`).
@@ -302,13 +299,16 @@ page.getByLabel('Domain name');
 
 ### 3. Angular Material Selectors
 
-For Material Design components where role-based selectors don't work well:
+For Material Design components where role-based selectors don't work well, use page-level locators (Material overlays render in `<body>`):
 
 ```typescript
-import { matTable, matButton, matSelect, matOption } from '../utils/selectors';
+// Submenu navigation helper from utils/selectors.ts
+import { submenuItem } from '../utils/selectors';
+const menuItem = submenuItem(page, 'Agent Metadata');
 
-const table = matTable(page);
-const btn = matButton(page, 'Create');
+// Material components via standard selectors
+page.locator('mat-option').filter({ hasText: /text/ });
+page.locator('mat-select');
 ```
 
 ### 4. CSS Fallback (last resort)
@@ -363,7 +363,7 @@ await expect(page.locator('text=Domain created')).toBeVisible();
 // ✅ Good — waits for a specific URL pattern
 await page.waitForURL(/.*domains.*/);
 
-// ✅ Good — waits for network to settle
+// ❌ Bad — networkidle is unreliable for Angular SPAs with polling/charts
 await page.waitForLoadState('networkidle');
 
 // ❌ Bad — arbitrary delay, flaky
@@ -484,21 +484,36 @@ npm run pw:ui
 npx playwright show-trace path/to/trace.zip
 ```
 
+### Common Failures When Running Locally
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| All tests fail with connection errors | AM stack not running | Start the stack: `npm --prefix docker/local-stack run stack:dev:setup:mongo` |
+| All tests fail with 401 | Admin credentials wrong or stack unhealthy | Check `docker ps` — management must be `healthy`. Default creds: `admin`/`adminadmin` |
+| Many timeout errors in fixture setup | Parallel workers overload the management API | Run with `--workers=1` |
+| UI tests fail but API tests pass | Webui container not running on `:4200` | Start it: `docker run -d --name dev-webui-1 --network dev_default -p 4200:8080 dev-webui:latest` |
+| `Cannot find module '@jest/globals'` | Running from wrong directory | Run from `gravitee-am-test/`, not from `playwright/` |
+| `data-testid` selectors not found | UI image outdated (missing `data-testid` attributes) | Rebuild UI: `mvn install -pl gravitee-am-ui -DskipTests` then rebuild the webui Docker image |
+| Domain sync timeout | Stack is slow or restarting | Wait for `docker ps` to show `healthy` for gateway and management, then retry |
+
 Common causes of flakiness in AM:
 
 - **Domain sync delay** — the gateway needs time to pick up domain changes. The `testDomain` fixture calls `waitForDomainSync()` but custom setups may not.
-- **Angular zone instability** — use `BasePage.waitForReady()` after navigation.
+- **Angular zone instability** — pages with continuous polling (dashboards, charts) never become "stable" per `getAllAngularTestabilities()`. `BasePage.waitForReady()` handles this by also accepting rendered content (`h1`, `ngx-datatable`, `.gv-page-container`) as a readiness signal. Always use `waitForReady()` after navigation.
+- **Home page redirects** — navigating to `/` redirects through `HomeComponent` → `EnvironmentComponent` → first domain's detail page, skipping the domains list entirely. Use `homePage.gotoDomainsList()` to navigate directly to `/environments/{envHrid}/domains`.
+- **Environment hrid vs ID** — Angular routes use the environment **hrid** (`default`, lowercase), not the environment **ID** (`DEFAULT`, uppercase). Using the uppercase ID renders an empty page shell with no content.
 - **Mat-select overlays** — Material dropdowns render as overlays outside the component tree. Use `matOption(page, text)` from selectors.
 - **Snackbar timing** — snackbars auto-dismiss. Assert quickly or increase `expectSnackbar()` timeout.
+- **Parallel test name collisions** — `uniqueName()` includes both a timestamp and random characters to avoid collisions when tests run in parallel at the same millisecond.
 
 ### CI Integration
 
 The `pw:ci` script sets `CI=true`, which changes behavior:
 
-- Tests run sequentially (`workers: 1`) to avoid AM state conflicts.
+- Tests run with 3 workers (`workers: 3`) to balance speed and AM state isolation.
 - `test.only()` causes failure (no accidentally committed debug flags).
 - Retries once on failure (catches genuine flakes vs real bugs).
-- Produces JUnit XML at `playwright/test-results/junit.xml` for CI dashboard integration.
+- Produces JUnit XML at `playwright/junit-results/junit.xml` for CI dashboard integration.
 - HTML report saved to `playwright/playwright-report/` (archive as build artifact).
 
 Example CircleCI job:
@@ -512,10 +527,27 @@ playwright-e2e:
     - run: cd gravitee-am-test && npm ci
     - run: cd gravitee-am-test && npm run pw:ci
     - store_test_results:
-        path: gravitee-am-test/playwright/test-results
+        path: gravitee-am-test/playwright/junit-results
     - store_artifacts:
         path: gravitee-am-test/playwright/playwright-report
 ```
+
+
+## Linting
+
+Playwright tests are linted with [eslint-plugin-playwright](https://github.com/playwright-community/eslint-plugin-playwright). The config lives in `playwright/eslint.config.mjs` and uses the `flat/recommended` preset.
+
+```bash
+# Check lint (from gravitee-am-test/)
+npx eslint playwright/
+
+# Auto-fix
+npx eslint playwright/ --fix
+```
+
+**Key rules**: no `page.waitForTimeout()`, no standalone `expect()` without `await`, prefer `toBeVisible()` over `toHaveCount(1)`.
+
+Page objects delegate assertions to test specs (`no-standalone-expect` is relaxed for `pages/` via override), since page objects should expose locators and actions, not make assertions.
 
 
 ## Relationship to Other Test Suites

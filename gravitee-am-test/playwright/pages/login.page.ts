@@ -45,17 +45,17 @@ export class LoginPage {
   /** Navigate to console (triggers OAuth redirect to login). */
   async goto(): Promise<void> {
     await this.page.goto('/');
-    await this.page.waitForURL(/.*login.*|.*auth\/authorize.*/i, { timeout: 30_000 });
+    await this.page.waitForURL(/.*login.*|.*auth\/authorize.*/i);
   }
 
   /** Log in and wait for redirect back to the Angular app. */
   async login(username: string, password: string): Promise<void> {
-    await this.usernameInput.waitFor({ state: 'visible', timeout: 15_000 });
+    await this.usernameInput.waitFor({ state: 'visible' });
     await this.usernameInput.fill(username);
     await this.passwordInput.fill(password);
     await this.signInButton.click();
 
-    await this.page.waitForURL(/.*(?:environments|dashboard|domains).*/i, { timeout: 30_000 });
+    await this.page.waitForURL(/.*(?:environments|dashboard|domains).*/i);
   }
 
   async expectLoginFormVisible(): Promise<void> {

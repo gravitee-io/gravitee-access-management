@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 /** Base page object for AM Console (Angular SPA). */
 export abstract class BasePage {
   constructor(protected readonly page: Page) {}
+
+  /** Environment hrid used in Angular route paths (lowercase, e.g. 'default'). */
+  protected get envHrid(): string {
+    return process.env.AM_DEF_ENV_HRID || 'default';
+  }
 
   /** Navigate to a path relative to baseURL. */
   async navigate(path: string): Promise<void> {
@@ -40,45 +45,27 @@ export abstract class BasePage {
         if (!root) return false;
         return root.querySelector('h1, h2, ngx-datatable, .gv-page-container') !== null;
       },
-      { timeout: 15_000 },
     );
-    const spinner = this.page.locator('mat-spinner, mat-progress-bar');
-    if (await spinner.isVisible()) {
-      await spinner.waitFor({ state: 'hidden', timeout: 30_000 });
-    }
+    // Wait for spinners to clear — resolves immediately if none are present
+    await this.page.locator('mat-spinner, mat-progress-bar').first().waitFor({ state: 'hidden' });
   }
 
-  get pageTitle(): Locator {
-    return this.page.locator('h1, h2, .page-title, .gv-page-title').first();
-  }
-
-  async currentPath(): Promise<string> {
-    return new URL(this.page.url()).pathname;
-  }
-
-  /** Assert a snackbar appears with expected text. */
-  async expectSnackbar(expectedText: string): Promise<void> {
-    const snackbar = this.page.locator('simple-snack-bar, mat-snack-bar-container');
-    await expect(snackbar).toBeVisible({ timeout: 10_000 });
+  /** Assert a snackbar appears with expected text, then wait for it to dismiss. */
+  async expectSnackbar(expectedText: string | RegExp): Promise<void> {
+    const snackbar = this.page.locator('simple-snack-bar').last();
+    await expect(snackbar).toBeVisible();
     await expect(snackbar).toContainText(expectedText);
+    await snackbar.waitFor({ state: 'hidden' });
   }
 
-  async clickNavItem(text: string): Promise<void> {
-    await this.page.locator('.gio-side-nav a').filter({ hasText: text }).click();
-    await this.waitForReady();
+  /** Click the primary save/submit button. */
+  async clickSave(): Promise<void> {
+    await this.page.locator('button[type="submit"]').filter({ hasText: /save/i }).first().click();
   }
 
-  async clickButton(text: string): Promise<void> {
-    await this.page.getByRole('button', { name: text }).click();
-  }
-
-  async fillInput(label: string, value: string): Promise<void> {
-    await this.page.getByLabel(label).fill(value);
-  }
-
-  async selectOption(selectLabel: string, optionText: string): Promise<void> {
-    await this.page.locator('mat-select').filter({ hasText: selectLabel }).click();
-    await this.page.locator('mat-option').filter({ hasText: optionText }).click();
+  /** Wait for significant page content to appear (positive anchor for negative assertions). */
+  async waitForPageContent(): Promise<void> {
+    await this.page.locator('h1, h2, ngx-datatable, .gv-page-container').first().waitFor({ state: 'visible' });
   }
 
   async confirmDialog(): Promise<void> {
