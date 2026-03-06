@@ -25,7 +25,7 @@ import {
 import { API_USER_PASSWORD } from '../../utils/test-constants';
 import { updateUsername, listUserCredentials } from '../../../api/commands/management/user-management-commands';
 import { uniqueTestName } from '../../utils/fixture-helpers';
-import { waitForNextSync } from '../../../api/commands/gateway/monitoring-commands';
+import { waitForOidcReady } from '../../../api/commands/management/domain-management-commands';
 
 /**
  * Poll credentials via management API until the username field matches the expected value.
@@ -92,8 +92,8 @@ test.describe('WebAuthn - Change Username (AM-2342)', () => {
     // poll until the management API confirms the credential has the new username.
     await waitForCredentialUsernameUpdate(waDomain.id, waAdminToken, waUser.id, newUsername);
 
-    // Wait for the gateway to sync the updated credential username
-    await waitForNextSync(waDomain.id);
+    // updateUsername triggers a domain event — wait for gateway routes to be live again
+    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
 
     // The IDP lowercases the username, so the credential and user both store it lowercased.
     const newUsernameLower = newUsername.toLowerCase();
@@ -150,8 +150,8 @@ test.describe('WebAuthn - Change Username (AM-2342)', () => {
     // Wait for credential username to be updated (fire-and-forget on server)
     await waitForCredentialUsernameUpdate(waDomain.id, waAdminToken, waUser.id, newUsername);
 
-    // Wait for the gateway to sync the updated credential username
-    await waitForNextSync(waDomain.id);
+    // updateUsername triggers a domain event — wait for gateway routes to be live again
+    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
 
     // Phase 3: Attempt passwordless login with the OLD username — should fail
     await page.context().clearCookies();
