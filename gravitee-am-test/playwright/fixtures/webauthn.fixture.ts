@@ -220,11 +220,15 @@ export async function passwordlessLogin(
  * Clean up the virtual authenticator.
  */
 export async function removeVirtualAuthenticator(auth: VirtualAuthenticator): Promise<void> {
-  await auth.cdpSession.send('WebAuthn.removeVirtualAuthenticator', {
-    authenticatorId: auth.authenticatorId,
-  });
-  await auth.cdpSession.send('WebAuthn.disable');
-  await auth.cdpSession.detach();
+  try {
+    await auth.cdpSession.send('WebAuthn.removeVirtualAuthenticator', {
+      authenticatorId: auth.authenticatorId,
+    });
+    await auth.cdpSession.send('WebAuthn.disable');
+    await auth.cdpSession.detach();
+  } catch {
+    // Page/context may already be closed during teardown — safe to ignore
+  }
 }
 
 /* ------------------------------------------------------------------ */

@@ -25,6 +25,7 @@ import {
 import { API_USER_PASSWORD } from '../../utils/test-constants';
 import { updateUsername, listUserCredentials } from '../../../api/commands/management/user-management-commands';
 import { uniqueTestName } from '../../utils/fixture-helpers';
+import { waitForNextSync } from '../../../api/commands/gateway/monitoring-commands';
 
 /**
  * Poll credentials via management API until the username field matches the expected value.
@@ -35,7 +36,7 @@ async function waitForCredentialUsernameUpdate(
   accessToken: string,
   userId: string,
   expectedUsername: string,
-  timeoutMs = 10000,
+  timeoutMs = 30000,
 ): Promise<void> {
   const start = Date.now();
   const expected = expectedUsername.toLowerCase();
@@ -77,6 +78,7 @@ test.describe('WebAuthn - Change Username (AM-2342)', () => {
     waDomain,
     gatewayUrl,
   }) => {
+    test.setTimeout(120000);
     const clientId = waApp.settings.oauth.clientId;
 
     // Phase 1: Register a WebAuthn credential with the original username
@@ -89,6 +91,9 @@ test.describe('WebAuthn - Change Username (AM-2342)', () => {
     // Credential username update is fire-and-forget on the server side —
     // poll until the management API confirms the credential has the new username.
     await waitForCredentialUsernameUpdate(waDomain.id, waAdminToken, waUser.id, newUsername);
+
+    // Wait for the gateway to sync the updated credential username
+    await waitForNextSync(waDomain.id);
 
     // The IDP lowercases the username, so the credential and user both store it lowercased.
     const newUsernameLower = newUsername.toLowerCase();
@@ -131,6 +136,7 @@ test.describe('WebAuthn - Change Username (AM-2342)', () => {
     waDomain,
     gatewayUrl,
   }) => {
+    test.setTimeout(120000);
     const clientId = waApp.settings.oauth.clientId;
     const originalUsername = waUser.username;
 
@@ -143,6 +149,9 @@ test.describe('WebAuthn - Change Username (AM-2342)', () => {
 
     // Wait for credential username to be updated (fire-and-forget on server)
     await waitForCredentialUsernameUpdate(waDomain.id, waAdminToken, waUser.id, newUsername);
+
+    // Wait for the gateway to sync the updated credential username
+    await waitForNextSync(waDomain.id);
 
     // Phase 3: Attempt passwordless login with the OLD username — should fail
     await page.context().clearCookies();
