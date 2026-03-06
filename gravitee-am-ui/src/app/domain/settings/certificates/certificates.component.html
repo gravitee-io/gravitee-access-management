@@ -39,7 +39,12 @@
             <div class="certificate-information">
               <h3 title="{{ row.name }}">{{ row.name }}</h3>
             </div>
-            <span *ngIf="isFallbackCertificate(row.id)" class="gio-badge-neutral badge fallback-badge">Fallback</span>
+            <span
+              *ngIf="isFallbackCertificate(row.id)"
+              class="gio-badge-neutral badge fallback-badge"
+              data-testid="certificateFallbackBadge"
+              >Fallback</span
+            >
           </div>
         </ng-template>
       </ngx-datatable-column>

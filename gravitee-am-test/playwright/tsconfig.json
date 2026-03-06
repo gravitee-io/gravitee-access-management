@@ -1,0 +1,24 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "strict": false,
+    "baseUrl": "..",
+    "paths": {
+      "@management-apis/*": ["api/management/apis/*"],
+      "@management-models/*": ["api/management/models/*"],
+      "@management-commands/*": ["api/commands/management/*"],
+      "@gateway-apis/*": ["api/gateway/apis/*"],
+      "@gateway-commands/*": ["api/commands/gateway/*"],
+      "@utils-commands/*": ["api/commands/utils/*"],
+      "@utils/*": ["api/utils/*"],
+      "@api-fixtures/*": ["api/fixtures/*"],
+      "@jest/globals": ["playwright/utils/jest-globals-shim"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "../api/**/*.ts"
+  ],
+  "exclude": ["node_modules", "test-results", "playwright-report"]
+}

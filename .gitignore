@@ -48,5 +48,8 @@ helm/charts/
 docker/compose/data/
 docker/compose/mongo/data/
 
+# Playwright auth state
+gravitee-am-test/playwright/fixtures/.auth/
+
 # AI/Development documentation - plan files (temporary work files)
 docs/ai-guidelines

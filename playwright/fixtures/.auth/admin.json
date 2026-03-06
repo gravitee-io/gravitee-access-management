@@ -1,0 +1,25 @@
+{
+  "cookies": [
+    {
+      "name": "Auth-Graviteeio-AM",
+      "value": "\"Bearer eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJlN2RlZjk3Zi02NzUzLTQ5ZTctOWVmOS03ZjY3NTM3OWU3ZjAiLCJsb2dpbl9jb3VudCI6NzYsIm9yZyI6IkRFRkFVTFQiLCJyb2xlcyI6W10sIm5hbWUiOiJBZG1pbmlzdHJhdG9yIEFkbWluaXN0cmF0b3IiLCJpc3MiOiJodHRwczovL2dyYXZpdGVlLmFtIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiYWRtaW4iLCJleHAiOjE3NzMwOTY1NTcsImdpdmVuX25hbWUiOiJBZG1pbmlzdHJhdG9yIiwiaWF0IjoxNzcyNDkxNzU3LCJmYW1pbHlfbmFtZSI6IkFkbWluaXN0cmF0b3IiLCJqdGkiOiItTE9KcE8xOGxQNHF1ZjRVb0E4dmswbjRuTTJSdDN3Mk1taVZLRnIyQlo0In0.Qsk60HPmTB2cjQZYzYTGMoltzp6JZjBySqu0jlCh-A0\"",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1773096557.297916,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "XSRF-Graviteeio-AM-API-TOKEN",
+      "value": "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJodHRwczovL2dyYXZpdGVlLmFtIiwiaWF0IjoxNzcyNDkxNzU3LCJqdGkiOiI2RlFwR2NDM2k0QU9PeEh6UUhrWWhYdEVWd016NGhvVWFnU2thUHlkMGtZIiwidG9rZW4iOiIyZGMzODVmYy1kNDNiLTQ0NTktYjAyZi05Y2I1ZGQ4MDFlYmMifQ.nwNCk2puClB4uV0tU1Vbhvlf73JzyG7JpVXlhajZzA4",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1773096557.726441,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

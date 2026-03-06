@@ -20,7 +20,7 @@
     <h2>Trusted Issuers</h2>
     <p>Configure external token issuers whose JWTs are accepted as subject or actor tokens during token exchange.</p>
   </div>
-  <button *ngIf="editMode" mat-raised-button class="add-issuer-button" color="primary" [routerLink]="['new']">
+  <button *ngIf="editMode" mat-raised-button class="add-issuer-button" data-testid="addIssuerButton" color="primary" [routerLink]="['new']">
     <mat-icon>add</mat-icon> Add trusted issuer
   </button>
 </div>
@@ -28,6 +28,7 @@
 <div *ngIf="!isEmpty" class="issuers-table-card">
   <ngx-datatable
     class="material issuers-table"
+    data-testid="issuersTable"
     [columnMode]="'flex'"
     [scrollbarV]="false"
     [scrollbarH]="false"
@@ -56,7 +57,13 @@
           <a class="action-icon" [routerLink]="[rowIndex]" matTooltip="Edit issuer">
             <mat-icon>settings</mat-icon>
           </a>
-          <a *ngIf="editMode" class="action-icon action-icon-delete" (click)="delete(rowIndex, $event)" matTooltip="Delete issuer">
+          <a
+            *ngIf="editMode"
+            class="action-icon action-icon-delete"
+            data-testid="issuerDeleteAction"
+            (click)="delete(rowIndex, $event)"
+            matTooltip="Delete issuer"
+          >
             <mat-icon>delete</mat-icon>
           </a>
         </div>
@@ -65,7 +72,7 @@
   </ngx-datatable>
 </div>
 
-<div *ngIf="isEmpty" class="issuers-empty-state">
+<div *ngIf="isEmpty" class="issuers-empty-state" data-testid="issuersEmptyState">
   <div class="empty-state-content">
     <div class="empty-state-icon">
       <mat-icon>verified_user</mat-icon>

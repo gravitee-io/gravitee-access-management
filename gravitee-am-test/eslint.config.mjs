@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import tseslint from 'typescript-eslint';
+import playwright from 'eslint-plugin-playwright';
+
+export default [
+  // TypeScript parsing for Playwright files.
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: ['playwright/**/*.ts'],
+  })),
+
+  // Relax strict TS rules for utility files that interact with Node internals.
+  {
+    files: ['playwright/utils/**/*.ts', 'playwright/pages/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
+  // Allow conditional require() in fixtures (cross-fetch polyfill).
+  {
+    files: ['playwright/fixtures/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
+  // Playwright rules for test and fixture files.
+  {
+    files: ['playwright/tests/**/*.ts', 'playwright/fixtures/**/*.ts'],
+    ...playwright.configs['flat/recommended'],
+    rules: {
+      ...playwright.configs['flat/recommended'].rules,
+      // Tests use page object expect*() methods — count those as assertions.
+      'playwright/expect-expect': [
+        'error',
+        {
+          assertFunctionNames: ['expect', 'retryOnStatus'],
+          assertFunctionPatterns: ['^expect'],
+        },
+      ],
+      // Conditionals in test logic hide failures; only cleanup try/finally is acceptable.
+      'playwright/no-conditional-in-test': 'error',
+    },
+  },
+
+  // Ignore non-Playwright files.
+  {
+    ignores: ['api/**', 'specs/**', 'cypress/**', 'scripts/**', 'node_modules/**'],
+  },
+];

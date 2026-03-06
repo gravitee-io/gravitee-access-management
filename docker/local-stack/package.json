@@ -7,11 +7,15 @@
   "scripts": {
     "stack:init:ciba": "mvn -f ../../gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild",
     "stack:init:plugins:psql": "sh dev/scripts/download-jdbc.sh",
-    "stack:init:copy-am": "rm -f ./dev/build-ctx/*.zip && cp ../../gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/gravitee-am*.zip dev/build-ctx && cp ../../gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am*.zip ./dev/build-ctx",
+    "stack:init:copy-am": "rm -f ./dev/build-ctx/*.zip && cp ../../gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/gravitee-am*.zip dev/build-ctx && cp ../../gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am*.zip ./dev/build-ctx && cp ../../gravitee-am-ui/target/gravitee-am-webui-*.zip ./dev/build-ctx",
     "stack:init:build": "AM_VERSION=* docker compose -f dev/docker-compose.yml build",
+    "stack:init:build:ui": "cp -r ../management-ui/config dev/build-ctx/ && AM_VERSION=* docker compose -f dev/docker-compose.yml -f dev/docker-compose-ui.yml build webui",
 
     "stack:ci:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml up -d",
     "stack:ci:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml up -d",
+
+    "stack:ci:pw:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml up -d",
+    "stack:ci:pw:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose-ui.yml up -d",
 
     "stack:dev:setup:mongo:4": "MONGO_VERSION=4.4 docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml up -d",
     "stack:dev:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml up -d",
@@ -23,7 +27,7 @@
 
     "stack:dev:mailbox": "docker compose -f dev/docker-compose.yml up -d smtp",
 
-    "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml down",
+    "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml down",
 
     "stack:perf:openfga": "docker compose -f perf/docker-compose.yml up -d && docker compose -f perf/docker-compose.yml logs --follow openfga-import",
     "stack:perf:down": "docker compose -f perf/docker-compose.yml down",

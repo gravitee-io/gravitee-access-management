@@ -1,0 +1,4 @@
+test-results/
+junit-results/
+playwright-report/
+fixtures/.auth/

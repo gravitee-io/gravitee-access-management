@@ -719,6 +719,10 @@
                         <exclude>**/LICENSE_TEMPLATE.txt</exclude>
                         <exclude>sonar-project.properties</exclude>
                         <exclude>gravitee-am-test/api/management/**</exclude>
+                        <exclude>gravitee-am-test/playwright/**/*.json</exclude>
+                        <exclude>gravitee-am-test/playwright/**/*.md</exclude>
+                        <exclude>gravitee-am-test/playwright/playwright-report/**</exclude>
+                        <exclude>gravitee-am-test/playwright/test-results/**</exclude>
                         <exclude>helm/**</exclude>
                         <exclude>node/**</exclude>
                         <exclude>scripts/**</exclude>
