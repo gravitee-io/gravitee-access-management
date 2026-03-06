@@ -33,6 +33,7 @@ test.describe('WebAuthn Passwordless Login', () => {
   test.afterEach(async () => {
     if (auth) {
       await removeVirtualAuthenticator(auth);
+      auth = undefined;
     }
   });
 

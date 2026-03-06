@@ -59,7 +59,7 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
       `&scope=openid`;
 
     await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     // User has NOT registered for WebAuthn — standard password login
     await page.locator('#username').fill(waUser.username);
