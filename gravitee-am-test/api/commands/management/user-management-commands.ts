@@ -227,3 +227,14 @@ export const listUsers = (domainId, accessToken, query) =>
     domain: domainId,
     q: query,
   });
+
+export const listUserCredentials = async (domainId: string, accessToken: string, userId: string) => {
+  const response = await getUserApi(accessToken).listUserCredentialsRaw({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
+  // The API returns an array but the generated SDK types it as singular Credential.
+  return (await response.raw.json()) as Array<{ id?: string; credentialId?: string; userId?: string; username?: string }>;
+};
