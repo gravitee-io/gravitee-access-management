@@ -21,7 +21,7 @@ import io.gatling.http.Predef._
 import io.gatling.http.request.builder.HttpRequestBuilder
 import io.gravitee.am.performance.utils.SimulationSettings._
 
-import java.net.URL
+import java.net.URI
 
 object GatewayCalls {
 
@@ -76,7 +76,7 @@ object GatewayCalls {
       .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
       .check(header(Location).transform(headerValue => headerValue.contains("code")).is(true))
       .check(header(Location).transform(headerValue => {
-        val params = new URL(headerValue).getQuery().split('&')
+        val params = URI.create(headerValue).toURL().getQuery().split('&')
         val head = params.filter(_.startsWith("code")).map(_.split("=")).head
         head(1)
       }
