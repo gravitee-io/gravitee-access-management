@@ -41,9 +41,9 @@ executors:
         enum: ["small", "medium", "medium+", "large", "xlarge"]
         default: "medium"
       version:
-        description: the version of the JDK. Default is 21.0
+        description: the version of the JDK. Default is 25.0.1
         type: string
-        default: "21.0"
+        default: "25.0.1"
       with_node:
         description: should we use the "node" version of the image
         type: boolean
@@ -194,6 +194,20 @@ commands:
           channel: C0336B2E96K
           event: pass
           template: basic_success_1
+
+  install-jdk-25:
+    description: Install JDK 25 on machine executor
+    steps:
+      - run:
+          name: Install JDK 25
+          command: |
+            wget -q "https://api.adoptium.net/v3/binary/latest/25/ga/linux/x64/jdk/hotspot/normal/eclipse" -O /tmp/openjdk-25.tar.gz
+            sudo mkdir -p /usr/lib/jvm/jdk-25
+            sudo tar -xzf /tmp/openjdk-25.tar.gz -C /usr/lib/jvm/jdk-25 --strip-components=1
+            echo "export JAVA_HOME=/usr/lib/jvm/jdk-25" >> $BASH_ENV
+            echo "export PATH=/usr/lib/jvm/jdk-25/bin:\$PATH" >> $BASH_ENV
+            source $BASH_ENV
+            java -version
 
   mvn_git_commit_id:
     steps:
@@ -412,7 +426,7 @@ jobs:
             - .gravitee.settings.xml
   build:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0.1
     resource_class: large
     steps:
       - attach_workspace:
@@ -438,7 +452,7 @@ jobs:
             - ./gravitee-am-webui-*.zip
   deploy-snapshot-on-nexus:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0.1
     resource_class: medium+
     steps:
       - attach_workspace:
@@ -472,12 +486,13 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Build stack
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
@@ -512,12 +527,13 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -663,12 +679,13 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix postman install
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Build stack
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
@@ -697,12 +714,13 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix postman install
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -727,6 +745,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - checkout
+      - install-jdk-25
       - restore-maven-job-cache:
           jobName: run_testcontainer_tests_mongo
       - run:
@@ -743,6 +762,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - checkout
+      - install-jdk-25
       - restore-maven-job-cache:
           jobName: run_testcontainer_tests_redis
       - run:
@@ -763,6 +783,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - checkout
+      - install-jdk-25
       - restore-maven-job-cache:
           jobName: run_testcontainer_tests_jdbc
       - run:
@@ -774,7 +795,7 @@ jobs:
 
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0.1
     resource_class: small
     steps:
       - checkout
@@ -902,7 +923,7 @@ jobs:
             done
   coverage_build:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0.1
     resource_class: large
     steps:
       - attach_workspace:
@@ -926,7 +947,7 @@ jobs:
           jobName: coverage_build
   frontend_version_build:
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0.1
     resource_class: small
     steps:
       - attach_workspace:
@@ -990,7 +1011,7 @@ jobs:
     executor:
       name: openjdk
       class: medium
-      version: "21.0.6"
+      version: "25.0.1"
     steps:
       - attach_workspace:
           at: /tmp
@@ -1014,7 +1035,7 @@ jobs:
     executor:
       name: openjdk
       class: large
-      version: "21.0.6"
+      version: "25.0.1"
     steps:
       - when:
           condition:
@@ -1034,7 +1055,7 @@ jobs:
     executor:
       name: openjdk
       class: large
-      version: "21.0.6"
+      version: "25.0.1"
     steps:
       - attach_workspace:
           at: /tmp
@@ -1086,7 +1107,7 @@ jobs:
     executor:
       name: openjdk
       class: xlarge
-      version: "21.0.6"
+      version: "25.0.1"
     environment:
       DRY_RUN: << parameters.dry_run >>
       RC_REQUESTED: << parameters.rc_requested >>
@@ -1331,7 +1352,7 @@ jobs:
     executor:
       name: openjdk
       class: xlarge
-      version: "21.0.6"
+      version: "25.0.1"
     environment:
       DRY_RUN: << parameters.dry_run >>
       GRAVITEEIO_VERSION: << parameters.graviteeio_version >>

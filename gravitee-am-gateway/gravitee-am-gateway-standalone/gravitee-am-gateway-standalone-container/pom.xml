@@ -177,6 +177,13 @@
             <artifactId>vertx-web</artifactId>
         </dependency>
 
+        <!-- Required for Netty SSL on JDK 25 (transitive is runtime scope, needs compile for distribution) -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-unix-common</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>

@@ -45,7 +45,7 @@ RUN apk update \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* /tmp/*
 
-FROM graviteeio/java:21
+FROM graviteeio/java:25
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
