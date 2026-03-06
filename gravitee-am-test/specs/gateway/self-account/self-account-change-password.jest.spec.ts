@@ -18,7 +18,7 @@ import { patchDomain, waitForOidcReady } from '@management-commands/domain-manag
 import { waitForNextSync, waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
-import { SelfAccountFixture, setupFixture } from './fixture/sef-account-fixture';
+import { SelfAccountFixture, setupFixture } from './fixture/self-account-fixture';
 import { setup } from '../../test-fixture';
 
 setup(200000);
@@ -54,6 +54,67 @@ describe('SelfAccount - Change Password', () => {
     currentPassword = fixture.user.password;
     expect(currentPassword).toBeDefined();
     expect(currentPassword).toBe(fixture.user.password);
+  });
+
+  describe('With invalid input', () => {
+    let endUserAccessToken: string;
+
+    beforeAll(async () => {
+      const tokenResponse = await performPost(
+        fixture.oidc.token_endpoint,
+        '',
+        `grant_type=password&username=${fixture.user.username}&password=${fixture.user.password}`,
+        {
+          'Content-type': 'application/x-www-form-urlencoded',
+          Authorization: 'Basic ' + applicationBase64Token(fixture.application),
+        },
+      ).expect(200);
+      endUserAccessToken = tokenResponse.body.access_token;
+    });
+
+    it('must reject a password that does not meet policy requirements', async () => {
+      const response = await performPost(
+        `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/account/api/changePassword`,
+        '',
+        '{"password": "123"}',
+        {
+          'Content-type': 'application/json',
+          Authorization: `Bearer ${endUserAccessToken}`,
+        },
+      ).expect(400);
+
+      expect(response.body.http_status).toBe(400);
+      expect(response.body.message).toBe('The provided password does not meet the password policy requirements');
+    });
+
+    it('must reject a null body', async () => {
+      const response = await performPost(
+        `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/account/api/changePassword`,
+        '',
+        null,
+        {
+          Authorization: `Bearer ${endUserAccessToken}`,
+        },
+      ).expect(400);
+
+      expect(response.body.http_status).toBe(400);
+      expect(response.body.message).toBe('Body is null or empty');
+    });
+
+    it('must reject an empty body', async () => {
+      const response = await performPost(
+        `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/account/api/changePassword`,
+        '',
+        '{}',
+        {
+          'Content-type': 'application/json',
+          Authorization: `Bearer ${endUserAccessToken}`,
+        },
+      ).expect(400);
+
+      expect(response.body.http_status).toBe(400);
+      expect(response.body.message).toBe('Body is null or empty');
+    });
   });
 
   describe('With default settings', () => {
