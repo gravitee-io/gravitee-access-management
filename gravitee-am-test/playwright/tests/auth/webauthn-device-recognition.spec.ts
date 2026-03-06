@@ -62,7 +62,7 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     }
   });
 
-  test('returning user skips login page when device recognition is enabled', async ({
+  test('returning user skips login page when device recognition is enabled (AM-5292)', async ({
     page,
     waApp,
     waUser,
@@ -121,7 +121,7 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     expect(url.searchParams.get('code')).toBeTruthy();
   });
 
-  test('disabling device recognition shows normal login page for returning user', async ({
+  test('disabling device recognition shows normal login page for returning user (AM-5292)', async ({
     page,
     waApp,
     waUser,

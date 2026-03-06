@@ -41,7 +41,7 @@ test.describe('WebAuthn - Disabled User (AM-4553)', () => {
     }
   });
 
-  test('disabled user cannot login via passwordless after registration', async ({
+  test('disabled user cannot login via passwordless after registration (AM-4553)', async ({
     page,
     waApp,
     waUser,

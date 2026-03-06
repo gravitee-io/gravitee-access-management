@@ -45,7 +45,7 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
     }
   });
 
-  test('user credentials exist after registration and are queryable via API', async ({
+  test('user credentials exist after registration and are queryable via API (AM-6085)', async ({
     page,
     waApp,
     waUser,
@@ -63,7 +63,7 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
     expect(credentials.length).toBeGreaterThanOrEqual(1);
   });
 
-  test('recreated user with same username can register new passwordless credential', async ({
+  test('recreated user with same username can register new passwordless credential (AM-6085)', async ({
     page,
     waApp,
     waUser,
