@@ -33,6 +33,7 @@ import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
@@ -56,6 +57,7 @@ public class EmailStagingServiceImpl implements EmailStagingService, Initializin
     private EmailStagingRepository emailStagingRepository;
 
     @Autowired
+    @Qualifier("gatewayActionLeaseRepository")
     private ActionLeaseRepository actionLeaseRepository;
 
     @Autowired

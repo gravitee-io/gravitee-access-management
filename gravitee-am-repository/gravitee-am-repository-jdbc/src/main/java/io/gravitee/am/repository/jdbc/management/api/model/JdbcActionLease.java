@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc.gateway.api.spring;
+package io.gravitee.am.repository.jdbc.management.api.model;
 
-import io.gravitee.am.repository.jdbc.gateway.api.model.JdbcActionLease;
-import io.reactivex.rxjava3.core.Maybe;
-import org.springframework.data.repository.reactive.RxJava3CrudRepository;
-import org.springframework.stereotype.Repository;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.time.LocalDateTime;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Repository
-public interface SpringActionLeaseRepository extends RxJava3CrudRepository<JdbcActionLease, String> {
-
-    Maybe<JdbcActionLease> findByAction(String action);
+@Table("cp_action_lease")
+@Getter
+@Setter
+public class JdbcActionLease {
+    @Id
+    private String id;
+    private String action;
+    @Column("node_id")
+    private String nodeId;
+    @Column("expiry_date")
+    private LocalDateTime expiryDate;
 }

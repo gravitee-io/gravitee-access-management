@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.management.service.purge;
 
+import io.gravitee.am.management.service.ActionLeaseService;
 import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.model.ActionLease;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.reporter.api.provider.NoOpReporter;
@@ -46,6 +48,9 @@ public class ReporterAuditSweeperTest {
     @Mock
     private ReporterService reporterService;
 
+    @Mock
+    private ActionLeaseService actionLeaseService;
+
     @InjectMocks
     private ReporterAuditSweeper sweeper;
 
@@ -63,6 +68,7 @@ public class ReporterAuditSweeperTest {
         Reporter config1 = createReporterConfig("MongoDB Reporter", true);
         Reporter config2 = createReporterConfig("JDBC Reporter", true);
 
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.just(config1, config2));
         when(auditReporterManager.getReporter(any(Reference.class)))
                 .thenReturn(Maybe.just(mockReporter1))
@@ -82,9 +88,30 @@ public class ReporterAuditSweeperTest {
     }
 
     @Test
+    public void should_not_purge_all_enabled_reporters_lease_not_acquired() {
+        // Given
+        io.gravitee.am.reporter.api.provider.Reporter mockReporter1 = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
+        io.gravitee.am.reporter.api.provider.Reporter mockReporter2 = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
+
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.empty());
+
+        // When
+        TestObserver<Void> testObserver = sweeper.purgeExpiredData().test();
+        testObserver.awaitDone(5, TimeUnit.SECONDS);
+
+        // Then
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(reporterService, never()).findAll();
+        verify(mockReporter1, never()).purgeExpiredData();
+        verify(mockReporter2, never()).purgeExpiredData();
+    }
+
+    @Test
     public void should_skip_disabled_reporters() {
         // Given
         Reporter config = createReporterConfig("MongoDB Reporter", false);
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.just(config));
 
         // When
@@ -103,6 +130,7 @@ public class ReporterAuditSweeperTest {
         io.gravitee.am.reporter.api.provider.Reporter mockReporter = mock(io.gravitee.am.reporter.api.provider.Reporter.class);
         Reporter config = createReporterConfig("MongoDB Reporter", true);
 
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.just(config));
         when(auditReporterManager.getReporter(any(Reference.class)))
                 .thenReturn(Maybe.just(mockReporter));
@@ -125,6 +153,7 @@ public class ReporterAuditSweeperTest {
         NoOpReporter noOpReporter = new NoOpReporter();
         Reporter config = createReporterConfig("MongoDB Reporter", true);
 
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.just(config));
         when(auditReporterManager.getReporter(any(Reference.class)))
                 .thenReturn(Maybe.just(noOpReporter));
@@ -143,6 +172,7 @@ public class ReporterAuditSweeperTest {
         // Given
         Reporter config = createReporterConfig("MongoDB Reporter", true);
 
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.just(config));
         when(auditReporterManager.getReporter(any(Reference.class)))
                 .thenReturn(Maybe.empty()); // Reporter not bootstrapped
@@ -167,6 +197,7 @@ public class ReporterAuditSweeperTest {
         Reporter config2 = createReporterConfig("Reporter 2", true);
         Reporter config3 = createReporterConfig("Reporter 3", true);
 
+        when(actionLeaseService.acquireLease(any(), any())).thenReturn(Maybe.just(new ActionLease()));
         when(reporterService.findAll()).thenReturn(Flowable.just(config1, config2, config3));
         when(auditReporterManager.getReporter(any(Reference.class)))
                 .thenReturn(Maybe.just(reporter1))

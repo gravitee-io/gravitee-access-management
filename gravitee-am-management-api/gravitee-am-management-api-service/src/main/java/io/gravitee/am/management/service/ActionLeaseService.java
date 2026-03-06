@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc.gateway.api.model;
+package io.gravitee.am.management.service;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
+import io.gravitee.am.model.ActionLease;
+import io.reactivex.rxjava3.core.Maybe;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Table("dp_action_lease")
-@Getter
-@Setter
-public class JdbcActionLease {
-    @Id
-    private String id;
-    private String action;
-    @Column("node_id")
-    private String nodeId;
-    @Column("expiry_date")
-    private LocalDateTime expiryDate;
+public interface ActionLeaseService {
+
+    /**
+     * Attempt to acquire a distributed lease for the given action on the current node.
+     *
+     * @param action   the action identifier
+     * @param duration how long the lease should be held
+     * @return a Maybe containing the acquired ActionLease, or empty if the lease is held by another node
+     */
+    Maybe<ActionLease> acquireLease(String action, Duration duration);
 }
