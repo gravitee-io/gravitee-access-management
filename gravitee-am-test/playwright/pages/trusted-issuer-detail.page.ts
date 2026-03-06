@@ -83,6 +83,9 @@ export class TrustedIssuerDetailPage extends BasePage {
     const autocompleteInput = this.page.locator('input[name="newDomScope"]');
     const textInput = this.page.locator('input[name="newDomScopeText"]');
 
+    // Wait for either input to be rendered before checking which variant is active
+    await this.page.locator('input[name="newDomScope"], input[name="newDomScopeText"]').first().waitFor({ state: 'visible' });
+
     if (await autocompleteInput.isVisible().catch(() => false)) {
       await autocompleteInput.fill(domainScope);
       // Wait for and select the autocomplete option

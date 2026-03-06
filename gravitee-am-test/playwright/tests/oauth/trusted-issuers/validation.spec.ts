@@ -23,6 +23,7 @@ import {
   parseJwt,
   configureTrustedIssuer,
   setupIssuerDomain,
+  retryOnStatus,
   IssuerDomain,
 } from '../../../utils/token-exchange-helpers';
 import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
@@ -92,10 +93,12 @@ test('AM-6625: exchange succeeds with real Domain B token via JWKS URL trust', a
 
   // Obtain a real AM-issued token from Domain B
   const domainBTokens = await issuerDomain.obtainToken();
-  const res = await doTokenExchange({
-    subjectToken: domainBTokens.accessToken,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(200);
+  // Retry on 400 — trusted issuer config may not be fully loaded in the gateway
+  // even after domain sync and OIDC readiness checks pass under parallel load.
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: domainBTokens.accessToken, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
 });
@@ -119,10 +122,10 @@ test('AM-6626: exchange fails with invalid JWKS URL issuer', async ({ tokenExcha
     subject: 'ext-user',
   });
 
-  await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -144,10 +147,10 @@ test('AM-6626: exchange fails with expired JWT from trusted issuer', async ({ to
     expiresInSeconds: -3600, // expired 1 hour ago
   });
 
-  await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -163,10 +166,10 @@ test('AM-6627: exchange succeeds with real Domain B token via PEM trust', async 
   });
 
   const domainBTokens = await issuerDomain.obtainToken();
-  const res = await doTokenExchange({
-    subjectToken: domainBTokens.accessToken,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: domainBTokens.accessToken, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
 });
@@ -189,10 +192,10 @@ test('AM-6628: exchange fails with untrusted key', async ({ tokenExchangeDomain,
     subject: 'ext-user',
   });
 
-  await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -215,10 +218,10 @@ test('AM-6628: exchange accepts JWT with wrong audience claim', async ({ tokenEx
     payload: { aud: 'https://wrong-audience.example.com' },
   });
 
-  const res = await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
 });
@@ -242,11 +245,10 @@ test('AM-6629: scope mapping translates external scopes to domain scopes', async
     payload: { scope: 'external:read external:profile' },
   });
 
-  const res = await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-    scope: 'openid profile',
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE, scope: 'openid profile' }),
+    { retryOn: 400 },
+  );
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
   const scope = intr.scope as string;
@@ -273,11 +275,10 @@ test('AM-6630: unmapped external scope is dropped', async ({ tokenExchangeDomain
     payload: { scope: 'external:read external:profile external:unknown' },
   });
 
-  const res = await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-    scope: 'openid profile',
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE, scope: 'openid profile' }),
+    { retryOn: 400 },
+  );
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
   const scope = intr.scope as string;
@@ -307,10 +308,10 @@ test('AM-6631: user binding with no matching user fails exchange', async ({ toke
   });
 
   // Should fail because no user matches the email
-  await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -332,10 +333,10 @@ test('AM-6631: exchange fails with unsupported subject_token_type id_token', asy
     subject: 'ext-user',
   });
 
-  await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: 'urn:ietf:params:oauth:token-type:id_token',
-  }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: 'urn:ietf:params:oauth:token-type:id_token' }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -362,10 +363,10 @@ test('AM-6632: user binding by fixed email succeeds', async ({ tokenExchangeDoma
     payload: { email: tokenExchangeUser.email },
   });
 
-  const res = await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
 
@@ -398,10 +399,10 @@ test('AM-6633: user binding by EL expression succeeds', async ({ tokenExchangeDo
     payload: { email: tokenExchangeUser.email },
   });
 
-  const res = await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
   // Verify the token was minted for the domain user, not a synthetic user
@@ -429,10 +430,10 @@ test('AM-6634: user binding fails when no matching domain user', async ({ tokenE
     payload: { preferred_username: 'user-that-does-not-exist' },
   });
 
-  await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -449,7 +450,10 @@ test('AM-6635: removing trusted issuer rejects exchange', async ({ tokenExchange
 
   // Verify exchange works
   const jwt1 = signJwt({ issuer: EXTERNAL_ISSUER, privateKeyPem: trustedKey.privateKeyPem });
-  await doTokenExchange({ subjectToken: jwt1, subjectTokenType: JWT_TOKEN_TYPE }).expect(200);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt1, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
 
   // Remove all trusted issuers
   await waitForSyncAfter(tokenExchangeDomain.id, async () => {
@@ -470,7 +474,10 @@ test('AM-6635: removing trusted issuer rejects exchange', async ({ tokenExchange
 
   // Exchange should now fail
   const jwt2 = signJwt({ issuer: EXTERNAL_ISSUER, privateKeyPem: trustedKey.privateKeyPem });
-  await doTokenExchange({ subjectToken: jwt2, subjectTokenType: JWT_TOKEN_TYPE }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt2, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -496,12 +503,18 @@ test('AM-6636: multiple trusted issuers can be configured', async ({ tokenExchan
 
   // Exchange with first issuer
   const jwt1 = signJwt({ issuer: EXTERNAL_ISSUER, privateKeyPem: trustedKey.privateKeyPem });
-  const res1 = await doTokenExchange({ subjectToken: jwt1, subjectTokenType: JWT_TOKEN_TYPE }).expect(200);
+  const res1 = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt1, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
   expect((await doIntrospect(res1.body.access_token)).active).toBe(true);
 
   // Exchange with second issuer
   const jwt2 = signJwt({ issuer: secondIssuer, privateKeyPem: secondKey.privateKeyPem });
-  const res2 = await doTokenExchange({ subjectToken: jwt2, subjectTokenType: JWT_TOKEN_TYPE }).expect(200);
+  const res2 = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt2, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
   expect((await doIntrospect(res2.body.access_token)).active).toBe(true);
 });
 
@@ -523,10 +536,10 @@ test('AM-6636: exchange fails with JWT from untrusted issuer', async ({ tokenExc
     subject: 'ext-user',
   });
 
-  await doTokenExchange({
-    subjectToken: jwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(400);
+  await retryOnStatus(
+    () => doTokenExchange({ subjectToken: jwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 404, expect: 400 },
+  );
 });
 
 /* ------------------------------------------------------------------ */
@@ -547,12 +560,15 @@ test('AM-6637: external JWT as actor_token in delegation', async ({ tokenExchang
     subject: 'external-actor',
   });
 
-  const res = await doTokenExchange({
-    subjectToken: subject.accessToken,
-    subjectTokenType: ACCESS_TOKEN_TYPE,
-    actorToken: actorJwt,
-    actorTokenType: JWT_TOKEN_TYPE,
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({
+      subjectToken: subject.accessToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actorJwt,
+      actorTokenType: JWT_TOKEN_TYPE,
+    }),
+    { retryOn: 400 },
+  );
 
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
@@ -578,10 +594,10 @@ test('AM-6638: external JWT as subject_token', async ({ tokenExchangeDomain, teA
     subject: 'external-subject',
   });
 
-  const res = await doTokenExchange({
-    subjectToken: subjectJwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({ subjectToken: subjectJwt, subjectTokenType: JWT_TOKEN_TYPE }),
+    { retryOn: 400 },
+  );
 
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);
@@ -608,12 +624,15 @@ test('AM-6638: delegation with external subject contains correct act claim', asy
   // Domain A user's token as actor
   const actor = await obtainSubjectToken();
 
-  const res = await doTokenExchange({
-    subjectToken: subjectJwt,
-    subjectTokenType: JWT_TOKEN_TYPE,
-    actorToken: actor.accessToken,
-    actorTokenType: ACCESS_TOKEN_TYPE,
-  }).expect(200);
+  const res = await retryOnStatus(
+    () => doTokenExchange({
+      subjectToken: subjectJwt,
+      subjectTokenType: JWT_TOKEN_TYPE,
+      actorToken: actor.accessToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }),
+    { retryOn: 400 },
+  );
 
   const intr = await doIntrospect(res.body.access_token);
   expect(intr.active).toBe(true);

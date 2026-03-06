@@ -22,6 +22,7 @@ import {
   createKeyMaterial,
   signJwt,
   configureTrustedIssuer,
+  retryOnStatus,
 } from '../../../utils/token-exchange-helpers';
 import { waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
 import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
@@ -454,10 +455,10 @@ scopelessDownscoping.describe('AM-6642: No-scope subject in downscoping mode', (
 
     // PROVE: in downscoping mode, a scopeless subject yields no/empty scope
     // because downscoping intersects subject scopes with requested scopes
-    const res = await doTokenExchange({
-      subjectToken: jwt,
-      subjectTokenType: 'urn:ietf:params:oauth:token-type:jwt',
-    }).expect(200);
+    const res = await retryOnStatus(
+      () => doTokenExchange({ subjectToken: jwt, subjectTokenType: 'urn:ietf:params:oauth:token-type:jwt' }),
+      { retryOn: 400 },
+    );
     const intr = await doIntrospect(res.body.access_token);
     expect(intr.active).toBe(true);
     // Scopeless subject in downscoping: result should have no scope or empty scope
@@ -502,10 +503,10 @@ scopelessPermissive.describe('AM-6643: No-scope subject in permissive mode', () 
 
     // Permissive mode with scopeless subject: exchange succeeds but scope is empty
     // (client scope expansion only applies when subject has at least some scopes)
-    const res = await doTokenExchange({
-      subjectToken: jwt,
-      subjectTokenType: 'urn:ietf:params:oauth:token-type:jwt',
-    }).expect(200);
+    const res = await retryOnStatus(
+      () => doTokenExchange({ subjectToken: jwt, subjectTokenType: 'urn:ietf:params:oauth:token-type:jwt' }),
+      { retryOn: 400 },
+    );
     const intr = await doIntrospect(res.body.access_token);
     expect(intr.active).toBe(true);
     const scope = ((intr.scope as string) || '').trim();

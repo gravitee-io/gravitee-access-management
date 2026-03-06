@@ -61,7 +61,7 @@ npm run pw:report
 npm run pw:ci
 ```
 
-> **Tip:** If you're seeing many failures, start with `--workers=1` to rule out parallel contention. The Docker stack (especially management API) can become slow under concurrent load.
+> **Tip:** When running against a local Docker Compose stack, always use `--workers=1`. The gateway's default heap (`512m`) cannot handle the parallel load from multiple workers creating domains simultaneously. See [Gateway OOM](#gateway-oom-under-parallel-load) below.
 
 ### Environment Variables
 
@@ -88,6 +88,8 @@ AM_UI_URL=https://staging.gravitee.io AM_MANAGEMENT_URL=https://staging-api.grav
 
 
 ## Project Structure
+
+Follow this layout when adding new tests. Prefer adding files within the existing folders over creating new top-level directories.
 
 ```
 gravitee-am-test/
@@ -491,6 +493,7 @@ npx playwright show-trace path/to/trace.zip
 | All tests fail with connection errors | AM stack not running | Start the stack: `npm --prefix docker/local-stack run stack:dev:setup:mongo` |
 | All tests fail with 401 | Admin credentials wrong or stack unhealthy | Check `docker ps` — management must be `healthy`. Default creds: `admin`/`adminadmin` |
 | Many timeout errors in fixture setup | Parallel workers overload the management API | Run with `--workers=1` |
+| ALL tests timeout after one passes | Gateway OOM — see [below](#gateway-oom-under-parallel-load) | Use `--workers=1` or increase gateway heap |
 | UI tests fail but API tests pass | Webui container not running on `:4200` | Start it: `docker run -d --name dev-webui-1 --network dev_default -p 4200:8080 dev-webui:latest` |
 | `Cannot find module '@jest/globals'` | Running from wrong directory | Run from `gravitee-am-test/`, not from `playwright/` |
 | `data-testid` selectors not found | UI image outdated (missing `data-testid` attributes) | Rebuild UI: `mvn install -pl gravitee-am-ui -DskipTests` then rebuild the webui Docker image |
@@ -505,6 +508,14 @@ Common causes of flakiness in AM:
 - **Mat-select overlays** — Material dropdowns render as overlays outside the component tree. Use `matOption(page, text)` from selectors.
 - **Snackbar timing** — snackbars auto-dismiss. Assert quickly or increase `expectSnackbar()` timeout.
 - **Parallel test name collisions** — `uniqueName()` includes both a timestamp and random characters to avoid collisions when tests run in parallel at the same millisecond.
+
+### Gateway OOM Under Parallel Load
+
+The gateway runs with `GIO_MAX_MEM=512m` by default. Each test domain creates a Spring `ApplicationContext` in the gateway, so multiple workers creating domains simultaneously can trigger an OOM. After OOM, the gateway never recovers — all remaining tests timeout.
+
+**How to tell:** a few tests pass, then everything times out. `docker ps` shows gateway `(unhealthy)`.
+
+**Fix:** use `--workers=1` for local dev, or increase `GIO_MAX_MEM` to `1024m`+ in `docker/local-stack/dev/docker-compose.yml`.
 
 ### CI Integration
 

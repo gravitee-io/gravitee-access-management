@@ -483,7 +483,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Mongo << parameters.mongo_version >>
-          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:mongo
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
       - run:
           name: Run Management Jest tests (parallel)
           command: npm --prefix gravitee-am-test run ci:management:parallel
@@ -526,7 +526,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Postgres << parameters.psql_version >>
-          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:psql
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
       - run:
           name: Run Management Jest tests (parallel)
           command: REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
@@ -674,7 +674,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Mongo << parameters.mongo_version >>
-          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:mongo
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
       - run:
           name: Run Postman tests
           command: npm --prefix postman run test:collections
@@ -711,7 +711,7 @@ jobs:
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
       - run:
           name: Spin up stack with Postgres << parameters.psql_version >>
-          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:psql
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
       - run:
           name: Run Postman tests
           command: npm --prefix postman run test:collections

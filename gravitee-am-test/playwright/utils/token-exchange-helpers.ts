@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import request from 'supertest';
+import { expect } from '@playwright/test';
 import * as forge from 'node-forge';
 import jwt from 'jsonwebtoken';
 import { getDomainManagerUrl } from '../../api/commands/management/service/utils';
@@ -86,6 +87,34 @@ export async function fetchOidcConfig(domainHrid: string): Promise<OidcConfigura
 /*  Token operations                                                   */
 /* ------------------------------------------------------------------ */
 
+export interface RetryOnStatusOptions {
+  retryOn: number;
+  expect?: number;
+  maxRetries?: number;
+  retryDelayMs?: number;
+}
+
+/**
+ * Retries a supertest request when it returns a transient status code.
+ * Used for tests where domain sync reports complete but the gateway
+ * hasn't fully loaded the configuration under parallel load.
+ */
+export async function retryOnStatus(
+  requestFn: () => request.Test,
+  options: RetryOnStatusOptions,
+): Promise<request.Response> {
+  const { retryOn, expect: expectedStatus = 200, maxRetries = 3, retryDelayMs = 2000 } = options;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await requestFn();
+    if (response.status !== retryOn || attempt === maxRetries) {
+      expect(response.status, `request failed with ${response.status} after ${attempt + 1} attempts`).toBe(expectedStatus);
+      return response;
+    }
+    await new Promise((r) => setTimeout(r, retryDelayMs));
+  }
+  throw new Error('unreachable');
+}
+
 export async function obtainSubjectToken(
   tokenEndpoint: string,
   basicAuth: string,
@@ -95,15 +124,19 @@ export async function obtainSubjectToken(
 ): Promise<SubjectTokens> {
   // Accept spaces or %20 — normalize to %20 for form-urlencoded body
   const encodedScope = scope.includes('%20') ? scope : scope.split(' ').join('%20');
-  const response = await performPost(
-    tokenEndpoint,
-    '',
-    `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&scope=${encodedScope}`,
-    {
-      'Content-type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${basicAuth}`,
-    },
-  ).expect(200);
+
+  const response = await retryOnStatus(
+    () => performPost(
+      tokenEndpoint,
+      '',
+      `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&scope=${encodedScope}`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ),
+    { retryOn: 401 },
+  );
 
   return {
     accessToken: response.body.access_token,

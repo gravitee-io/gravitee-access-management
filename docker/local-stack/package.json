@@ -27,7 +27,7 @@
 
     "stack:dev:mailbox": "docker compose -f dev/docker-compose.yml up -d smtp",
 
-    "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml down",
+    "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml down",
 
     "stack:perf:openfga": "docker compose -f perf/docker-compose.yml up -d && docker compose -f perf/docker-compose.yml logs --follow openfga-import",
     "stack:perf:down": "docker compose -f perf/docker-compose.yml down",

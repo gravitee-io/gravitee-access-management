@@ -49,7 +49,7 @@ export default [
       'playwright/expect-expect': [
         'error',
         {
-          assertFunctionNames: ['expect'],
+          assertFunctionNames: ['expect', 'retryOnStatus'],
           assertFunctionPatterns: ['^expect'],
         },
       ],
