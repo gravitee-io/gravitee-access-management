@@ -54,6 +54,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -882,6 +883,36 @@ public class UserRepositoryTest extends AbstractManagementTest {
     @Test
     public void testSearch_email_wildcard() {
         testSearch_wildcard("user.name@mail.com*");
+    }
+
+    @Test
+    public void testSearch_byUsername_strict_caseInsensitive() {
+        testSearch_strict_caseInsensitive("testusername", user -> user.setUsername("TestUsername"));
+    }
+
+    @Test
+    public void testSearch_byUsername_wildcard_caseInsensitive() {
+        testSearch_wildcard_caseInsensitive("test*", user -> user.setUsername("TestUsername"));
+    }
+
+    @Test
+    public void testSearch_byEmail_strict_caseInsensitive() {
+        testSearch_strict_caseInsensitive("user@mail.com", user -> user.setEmail("User@Mail.COM"));
+    }
+
+    @Test
+    public void testSearch_byDisplayName_strict_caseInsensitive() {
+        testSearch_strict_caseInsensitive("john doe", user -> user.setDisplayName("John Doe"));
+    }
+
+    @Test
+    public void testSearch_byFirstName_strict_caseInsensitive() {
+        testSearch_strict_caseInsensitive("firstname", user -> user.setFirstName("FirstName"));
+    }
+
+    @Test
+    public void testSearch_byLastName_strict_caseInsensitive() {
+        testSearch_strict_caseInsensitive("lastname", user -> user.setLastName("LastName"));
     }
 
     @Test
@@ -1723,6 +1754,47 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(users -> users.getData().size() == 2);
     }
 
+    private void testSearch_strict_caseInsensitive(String searchValue, Consumer<User> fieldSetter) {
+        final String domain = "domain";
+        // create user with mixed-case field
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
+        user.setUsername("ci_user_" + UUID.randomUUID());
+        fieldSetter.accept(user);
+        userRepository.create(user).blockingGet();
+
+        // search with different-case query
+        TestObserver<Page<User>> testObserver = userRepository.search(ReferenceType.DOMAIN, domain, searchValue, 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() >= 1);
+        testObserver.assertValue(users -> users.getData().stream()
+                .anyMatch(u -> u.getUsername().equals(user.getUsername())));
+    }
+
+    private void testSearch_wildcard_caseInsensitive(String searchValue, Consumer<User> fieldSetter) {
+        final String domain = "domain";
+        // create user with mixed-case field
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
+        user.setUsername("ci_wc_user_" + UUID.randomUUID());
+        fieldSetter.accept(user);
+        userRepository.create(user).blockingGet();
+
+        // search with different-case wildcard query
+        TestObserver<Page<User>> testObserver = userRepository.search(ReferenceType.DOMAIN, domain, searchValue, 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() >= 1);
+        testObserver.assertValue(users -> users.getData().stream()
+                .anyMatch(u -> u.getUsername().equals(user.getUsername())));
+    }
 
     @Test
     public void testStat_UserRegistration() {
