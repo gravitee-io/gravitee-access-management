@@ -19,6 +19,7 @@
     "pw:auth": "playwright test playwright/tests/auth/",
     "pw:domain": "playwright test playwright/tests/domain/",
     "pw:application": "playwright test playwright/tests/application/",
+    "pw:webauthn": "playwright test playwright/tests/auth/webauthn-",
     "pw:report": "playwright show-report playwright/playwright-report",
     "pw:ci": "CI=true playwright test",
     "pw:lint": "eslint playwright/ && prettier --check \"playwright/**/*.ts\" && playwright test --list",
