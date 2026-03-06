@@ -97,7 +97,7 @@
                         <image>localhost:5000/gravitee-am-fapi-resource</image>
                     </to>
                     <from>
-                        <image>eclipse-temurin:25</image>
+                        <image>eclipse-temurin:25.0.1</image>
                         <platforms>
                             <platform>
                                 <architecture>amd64</architecture>
