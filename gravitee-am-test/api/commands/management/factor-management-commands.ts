@@ -23,3 +23,19 @@ export const createFactor = (domainId, accessToken, body) =>
     domain: domainId,
     newFactor: body,
   });
+
+export const getFactor = (domainId: string, accessToken: string, factorId: string) =>
+  getFactorApi(accessToken).getFactor({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    factor: factorId,
+  });
+
+export const deleteFactor = (domainId: string, accessToken: string, factorId: string): Promise<void> =>
+  getFactorApi(accessToken).deleteFactor({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    factor: factorId,
+  });
