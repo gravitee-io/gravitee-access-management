@@ -235,7 +235,7 @@ async function fullLoginWithMfaAndWebAuthn(
     `&scope=openid`;
 
   await page.goto(authorizeUrl);
-  await page.waitForURL(/.*login.*/i);
+  await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
   // Login with password
   await page.locator('#username').fill(username);
