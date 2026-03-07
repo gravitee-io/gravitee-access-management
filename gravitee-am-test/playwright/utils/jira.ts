@@ -15,9 +15,12 @@
  */
 import { TestInfo } from '@playwright/test';
 
+const JIRA_BASE_URL = 'https://gravitee.atlassian.net/browse';
+
 /** Link a Playwright test to one or more Jira/Xray test keys for reporting. */
 export function linkJira(testInfo: TestInfo, ...keys: string[]) {
   for (const key of keys) {
+    testInfo.annotations.push({ type: 'issue', description: `${JIRA_BASE_URL}/${key}` });
     testInfo.annotations.push({ type: 'test_key', description: key });
   }
 }
