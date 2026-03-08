@@ -122,16 +122,6 @@ await waitForNextSync(waDomain.id);
 await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000 });
 ```
 
-### After User/Credential Updates
-
-User-level changes (e.g. `updateUsername`) do **not** require domain sync — the gateway reads user data directly from the database. However, `updateUsername` may trigger a domain event that causes a gateway route redeploy. Use `waitForOidcReady` to confirm routes are live before navigating:
-
-```typescript
-await updateUsername(domainId, adminToken, userId, newUsername);
-await waitForCredentialUsernameUpdate(domainId, adminToken, userId, newUsername);
-await waitForOidcReady(domain.hrid, { timeoutMs: 30000 });
-```
-
 ### Anti-Patterns
 
 ```typescript
