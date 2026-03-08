@@ -27,7 +27,6 @@ import {
   waitForOidcReady,
   patchDomain,
 } from '../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../api/commands/gateway/monitoring-commands';
 import { getAllIdps } from '../../api/commands/management/idp-management-commands';
 import { createUser, deleteUser } from '../../api/commands/management/user-management-commands';
 import { createTestApp } from '../../api/commands/utils/application-commands';
@@ -260,7 +259,9 @@ export const test = base.extend<WebAuthnFixtures>({
     const name = uniqueTestName('pw-webauthn');
     const domain = await quietly(() => createDomain(waAdminToken, name, 'WebAuthn Playwright test domain'));
 
-    // Enable passwordless (WebAuthn) on the domain
+    // Enable passwordless (WebAuthn) on the domain.
+    // Domain is NOT started here — gatewayUrl starts it after app+user are
+    // created so the initial sync picks up all resources in one pass.
     await quietly(() =>
       patchDomain(domain.id, waAdminToken, {
         loginSettings: {
@@ -279,9 +280,6 @@ export const test = base.extend<WebAuthnFixtures>({
         },
       }),
     );
-
-    await quietly(() => startDomain(domain.id, waAdminToken));
-    await quietly(() => waitForDomainSync(domain.id));
 
     await use(domain);
 
@@ -335,11 +333,14 @@ export const test = base.extend<WebAuthnFixtures>({
     });
   },
 
-  gatewayUrl: async ({ waDomain, waApp, waUser }, use) => {
-    // Depend on app and user to ensure they exist before syncing
+  gatewayUrl: async ({ waAdminToken, waDomain, waApp, waUser }, use) => {
+    // All resources (domain config, app, user) are created before starting
+    // the domain, so the initial sync picks up everything in one pass.
+    // This avoids the waitForNextSync race condition.
     void waApp;
     void waUser;
-    await waitForNextSync(waDomain.id);
+    await quietly(() => startDomain(waDomain.id, waAdminToken));
+    await quietly(() => waitForDomainSync(waDomain.id));
     await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
     const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
     await use(`${baseUrl}/${waDomain.hrid}`);
