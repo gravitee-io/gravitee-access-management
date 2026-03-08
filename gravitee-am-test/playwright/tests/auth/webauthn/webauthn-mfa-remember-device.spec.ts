@@ -18,7 +18,7 @@ import { test as base, expect, CDPSession, Page } from '@playwright/test';
 import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
 
-import { requestAdminAccessToken } from '../../../api/commands/management/token-management-commands';
+import { requestAdminAccessToken } from '../../../../api/commands/management/token-management-commands';
 import {
   createDomain,
   startDomain,
@@ -26,24 +26,24 @@ import {
   safeDeleteDomain,
   waitForOidcReady,
   patchDomain,
-} from '../../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../../api/commands/gateway/monitoring-commands';
-import { getAllIdps } from '../../../api/commands/management/idp-management-commands';
-import { createUser, deleteUser } from '../../../api/commands/management/user-management-commands';
-import { createTestApp } from '../../../api/commands/utils/application-commands';
-import { createFactor } from '../../../api/commands/management/factor-management-commands';
-import { createDevice } from '../../../api/commands/management/device-management-commands';
-import { patchApplication } from '../../../api/commands/management/application-management-commands';
-import { Domain, Application, User } from '../../../api/management/models';
+} from '../../../../api/commands/management/domain-management-commands';
+import { waitForNextSync } from '../../../../api/commands/gateway/monitoring-commands';
+import { getAllIdps } from '../../../../api/commands/management/idp-management-commands';
+import { createUser, deleteUser } from '../../../../api/commands/management/user-management-commands';
+import { createTestApp } from '../../../../api/commands/utils/application-commands';
+import { createFactor } from '../../../../api/commands/management/factor-management-commands';
+import { createDevice } from '../../../../api/commands/management/device-management-commands';
+import { patchApplication } from '../../../../api/commands/management/application-management-commands';
+import { Domain, Application, User } from '../../../../api/management/models';
 import {
   addVirtualAuthenticator,
   simulateWebAuthnGesture,
   handleConsentIfPresent,
   removeVirtualAuthenticator,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { quietly, uniqueTestName } from '../../utils/fixture-helpers';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
+} from '../../../fixtures/webauthn.fixture';
+import { quietly, uniqueTestName } from '../../../utils/fixture-helpers';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
 
 const REDIRECT_URI = 'https://gravitee.io/callback';
 const MOCK_MFA_CODE = '1234';

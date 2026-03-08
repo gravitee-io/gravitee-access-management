@@ -21,11 +21,11 @@ import {
   handleConsentIfPresent,
   removeVirtualAuthenticator,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
-import { updateUsername, listUserCredentials } from '../../../api/commands/management/user-management-commands';
-import { uniqueTestName } from '../../utils/fixture-helpers';
-import { waitForOidcReady } from '../../../api/commands/management/domain-management-commands';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { updateUsername, listUserCredentials } from '../../../../api/commands/management/user-management-commands';
+import { uniqueTestName } from '../../../utils/fixture-helpers';
+import { waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
 
 /**
  * Poll credentials via management API until the username field matches the expected value.

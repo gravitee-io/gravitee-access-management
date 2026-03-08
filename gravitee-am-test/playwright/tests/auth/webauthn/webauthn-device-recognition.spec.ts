@@ -21,10 +21,10 @@ import {
   handleConsentIfPresent,
   removeVirtualAuthenticator,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
-import { patchDomain, waitForOidcReady } from '../../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../../api/commands/gateway/monitoring-commands';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { patchDomain, waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
+import { waitForNextSync } from '../../../../api/commands/gateway/monitoring-commands';
 
 const SESSION_COOKIE = 'GRAVITEE_IO_AM_SESSION';
 
@@ -82,7 +82,7 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       },
     });
     await waitForNextSync(waDomain.id);
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 15000, intervalMs: 300 });
+    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 300 });
 
     // Phase 1: Register a WebAuthn credential (sets the remember-device cookie)
     auth = await loginAndRegisterWebAuthn(page, gatewayUrl, clientId, waUser.username, API_USER_PASSWORD);
@@ -96,11 +96,19 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
       `&scope=openid`;
 
-    await page.goto(authorizeUrl);
-
-    // With device recognition ON and the cookie present, we should go
-    // straight to the WebAuthn login page (no password form)
-    await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
+    // Device recognition redirect depends on the patchDomain config being fully
+    // propagated to the gateway. Poll navigation until we land on webauthn/login
+    // rather than the normal login page.
+    const deadline = Date.now() + 30000;
+    while (true) {
+      await page.goto(authorizeUrl);
+      await page.waitForURL(/.*login.*/i, { timeout: 15000 });
+      if (page.url().includes('webauthn/login')) break;
+      if (Date.now() > deadline) {
+        throw new Error('Device recognition did not redirect to webauthn/login within 30s');
+      }
+      await page.waitForTimeout(1000);
+    }
 
     // Verify we're on the WebAuthn login page with the username field
     await expect(page.locator('#username')).toBeVisible();
@@ -141,7 +149,7 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       },
     });
     await waitForNextSync(waDomain.id);
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 15000, intervalMs: 300 });
+    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 300 });
 
     // Register a credential (sets the remember-device cookie)
     auth = await loginAndRegisterWebAuthn(page, gatewayUrl, clientId, waUser.username, API_USER_PASSWORD);
@@ -156,7 +164,7 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
       },
     });
     await waitForNextSync(waDomain.id);
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 15000, intervalMs: 300 });
+    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 300 });
 
     // Clear only the session cookie — device recognition cookie stays
     await clearSessionOnly(page, gatewayUrl);

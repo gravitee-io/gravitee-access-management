@@ -21,8 +21,8 @@ import {
   loginAndRegisterWebAuthn,
   removeVirtualAuthenticator,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
 
 /**
  * AM-4550: Authentication filter - Without webauthn registered user (Successful attempts)

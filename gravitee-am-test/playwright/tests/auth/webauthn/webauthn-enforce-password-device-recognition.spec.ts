@@ -21,10 +21,10 @@ import {
   handleConsentIfPresent,
   removeVirtualAuthenticator,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
-import { patchDomain, waitForOidcReady } from '../../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../../api/commands/gateway/monitoring-commands';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { patchDomain, waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
+import { waitForNextSync } from '../../../../api/commands/gateway/monitoring-commands';
 
 const SESSION_COOKIE = 'GRAVITEE_IO_AM_SESSION';
 
