@@ -22,8 +22,8 @@ import {
   removeVirtualAuthenticator,
   handleConsentIfPresent,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
 
 test.describe('WebAuthn Passwordless Login', () => {
   test.use({ storageState: { cookies: [], origins: [] } });

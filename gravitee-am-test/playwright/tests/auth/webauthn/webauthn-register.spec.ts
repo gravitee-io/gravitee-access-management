@@ -22,8 +22,8 @@ import {
   removeVirtualAuthenticator,
   handleConsentIfPresent,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
 
 test.describe('WebAuthn Registration', () => {
   // No saved browser auth state — we're testing gateway login forms

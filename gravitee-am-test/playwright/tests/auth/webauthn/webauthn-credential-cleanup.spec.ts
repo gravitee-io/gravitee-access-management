@@ -19,14 +19,14 @@ import {
   loginAndRegisterWebAuthn,
   removeVirtualAuthenticator,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
 import {
   createUser,
   deleteUser,
   listUserCredentials,
-} from '../../../api/commands/management/user-management-commands';
-import { uniqueTestName } from '../../utils/fixture-helpers';
+} from '../../../../api/commands/management/user-management-commands';
+import { uniqueTestName } from '../../../utils/fixture-helpers';
 
 /**
  * AM-6085: WebAuthn credentials are not removed when a user is deleted.

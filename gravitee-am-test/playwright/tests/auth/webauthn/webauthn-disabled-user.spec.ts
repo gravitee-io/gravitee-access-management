@@ -20,9 +20,9 @@ import {
   simulateWebAuthnGesture,
   removeVirtualAuthenticator,
   VirtualAuthenticator,
-} from '../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../utils/test-constants';
-import { updateUserStatus } from '../../../api/commands/management/user-management-commands';
+} from '../../../fixtures/webauthn.fixture';
+import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { updateUserStatus } from '../../../../api/commands/management/user-management-commands';
 
 /**
  * AM-4553: Authentication filter - With webauthn registered user (Unsuccessful attempts)
