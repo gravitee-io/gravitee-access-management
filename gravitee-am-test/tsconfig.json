@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES6",
     "lib": ["es2020", "dom"],
-    "types": ["cypress", "node"],
+    "types": ["node"],
     "baseUrl": ".",
     "module": "commonjs",
     "moduleResolution": "node",
