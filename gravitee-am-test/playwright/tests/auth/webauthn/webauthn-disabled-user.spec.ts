@@ -19,6 +19,8 @@ import {
   loginAndRegisterWebAuthn,
   simulateWebAuthnGesture,
   removeVirtualAuthenticator,
+  buildAuthorizeUrl,
+  PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { API_USER_PASSWORD } from '../../../utils/test-constants';
@@ -38,10 +40,11 @@ test.describe('WebAuthn - Disabled User (AM-4553)', () => {
   test.afterEach(async () => {
     if (auth) {
       await removeVirtualAuthenticator(auth);
+      auth = undefined;
     }
   });
 
-  test('disabled user cannot login via passwordless after registration (AM-4553)', async ({
+  test('AM-4553: disabled user cannot login via passwordless after registration', async ({
     page,
     waApp,
     waUser,
@@ -49,6 +52,7 @@ test.describe('WebAuthn - Disabled User (AM-4553)', () => {
     waDomain,
     gatewayUrl,
   }) => {
+    test.setTimeout(120_000);
     const clientId = waApp.settings.oauth.clientId;
 
     // Phase 1: Register WebAuthn credential via normal login flow
@@ -60,48 +64,25 @@ test.describe('WebAuthn - Disabled User (AM-4553)', () => {
     // Phase 3: Clear session and attempt passwordless login
     await page.context().clearCookies();
 
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
-
-    const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
+    const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
     await passwordlessLink.click();
     await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
 
     await page.locator('#username').fill(waUser.username);
 
-    // Trigger the WebAuthn gesture. The virtual authenticator has the credential,
-    // the JS will complete the assertion, but the server should reject because
-    // the user is disabled. This means the form will POST, server rejects,
-    // and redirects back with an error.
-    await auth.cdpSession.send('WebAuthn.setUserVerified', {
-      authenticatorId: auth.authenticatorId,
-      isUserVerified: true,
-    });
-    await auth.cdpSession.send('WebAuthn.setAutomaticPresenceSimulation', {
-      authenticatorId: auth.authenticatorId,
-      enabled: true,
+    // The virtual authenticator completes the assertion (credentialAsserted fires),
+    // but the server rejects because the user is disabled and redirects with error.
+    await simulateWebAuthnGesture(auth, async () => {
+      await page.locator('button.primary, button#login-button').click();
     });
 
-    await page.locator('button.primary, button#login-button').click();
-
-    // The server rejects the disabled user and redirects back to the webauthn login
-    // page with an error parameter. Wait for the redirect to complete first,
-    // then check the DOM — otherwise the execution context is destroyed mid-navigation.
     await page.waitForURL(/.*error=.*/i, { timeout: 15000 });
 
     const serverError = page.locator('.item.error-text:not(.hide) .error');
     await expect(serverError).toBeVisible({ timeout: 5000 });
     await expect(serverError).toContainText('login_failed');
-
-    await auth.cdpSession.send('WebAuthn.setAutomaticPresenceSimulation', {
-      authenticatorId: auth.authenticatorId,
-      enabled: false,
-    });
   });
 });

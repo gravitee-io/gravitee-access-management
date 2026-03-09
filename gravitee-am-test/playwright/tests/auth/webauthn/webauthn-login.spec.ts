@@ -21,6 +21,8 @@ import {
   getCredentials,
   removeVirtualAuthenticator,
   handleConsentIfPresent,
+  buildAuthorizeUrl,
+  PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { API_USER_PASSWORD } from '../../../utils/test-constants';
@@ -43,18 +45,14 @@ test.describe('WebAuthn Passwordless Login', () => {
     waUser,
     gatewayUrl,
   }) => {
+    test.setTimeout(120_000);
     const clientId = waApp.settings.oauth.clientId;
-    const redirectUri = 'https://gravitee.io/callback';
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&scope=openid`;
+    const authorizeUrl = buildAuthorizeUrl(gatewayUrl, clientId);
 
     // ---- Phase 1: Register a credential ----
 
     await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     await page.locator('#username').fill(waUser.username);
     await page.locator('#password').fill(API_USER_PASSWORD);
@@ -84,10 +82,10 @@ test.describe('WebAuthn Passwordless Login', () => {
     // ---- Phase 2: Login using the registered credential ----
 
     await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     // Click the passwordless login link
-    const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
+    const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
     await passwordlessLink.click();
 
     // Should arrive at WebAuthn login page
@@ -104,7 +102,7 @@ test.describe('WebAuthn Passwordless Login', () => {
     await handleConsentIfPresent(page);
     await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toBeTruthy();
+    expect(url.searchParams.get('code')).toMatch(/^.+$/);
   });
 
   test('passwordless login fails for unregistered user', async ({
@@ -113,22 +111,13 @@ test.describe('WebAuthn Passwordless Login', () => {
     gatewayUrl,
   }) => {
     const clientId = waApp.settings.oauth.clientId;
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
 
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     // Click passwordless link
-    const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
-    if (!(await passwordlessLink.isVisible({ timeout: 5000 }))) {
-      // If passwordless link not visible, domain config may not be synced — skip
-      test.skip();
-      return;
-    }
+    const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
+    await expect(passwordlessLink).toBeVisible({ timeout: 10000 });
     await passwordlessLink.click();
 
     await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
@@ -150,20 +139,12 @@ test.describe('WebAuthn Passwordless Login', () => {
     gatewayUrl,
   }) => {
     const clientId = waApp.settings.oauth.clientId;
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
 
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
-    const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
-    if (!(await passwordlessLink.isVisible({ timeout: 5000 }))) {
-      test.skip();
-      return;
-    }
+    const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
+    await expect(passwordlessLink).toBeVisible({ timeout: 10000 });
     await passwordlessLink.click();
 
     await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });

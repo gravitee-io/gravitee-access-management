@@ -20,27 +20,14 @@ import {
   simulateWebAuthnGesture,
   handleConsentIfPresent,
   removeVirtualAuthenticator,
+  clearSessionOnly,
+  buildAuthorizeUrl,
+  PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { API_USER_PASSWORD } from '../../../utils/test-constants';
 import { patchDomain, waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../../../api/commands/gateway/monitoring-commands';
-
-const SESSION_COOKIE = 'GRAVITEE_IO_AM_SESSION';
-
-/**
- * Clear the gateway session cookie while preserving device recognition cookies.
- * This simulates a user returning after their session expired but their device
- * is still recognized.
- */
-async function clearSessionOnly(page, gatewayUrl: string) {
-  const allCookies = await page.context().cookies();
-  // Remove only session cookies, keep device recognition and others
-  const sessionCookies = allCookies.filter((c) => c.name === SESSION_COOKIE);
-  for (const cookie of sessionCookies) {
-    await page.context().clearCookies({ name: cookie.name, domain: cookie.domain });
-  }
-}
+import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
 
 /**
  * AM-5292: WebAuthn & Passwordless Device Recognition
@@ -51,7 +38,10 @@ async function clearSessionOnly(page, gatewayUrl: string) {
  * When the setting is toggled off, the normal login page should appear.
  */
 test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({
+    storageState: { cookies: [], origins: [] },
+    waExtraLoginSettings: { passwordlessRememberDeviceEnabled: true },
+  });
 
   let auth: VirtualAuthenticator;
 
@@ -62,53 +52,25 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     }
   });
 
-  test('returning user skips login page when device recognition is enabled (AM-5292)', async ({
+  test('AM-5292: returning user skips login page when device recognition is enabled', async ({
     page,
     waApp,
     waUser,
-    waAdminToken,
-    waDomain,
     gatewayUrl,
   }) => {
     const clientId = waApp.settings.oauth.clientId;
 
-    // Enable device recognition
-    await patchDomain(waDomain.id, waAdminToken, {
-      loginSettings: {
-        inherited: false,
-        passwordlessEnabled: true,
-        passwordlessDeviceNamingEnabled: false,
-        passwordlessRememberDeviceEnabled: true,
-      },
-    });
-    await waitForNextSync(waDomain.id);
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 300 });
-
-    // Phase 1: Register a WebAuthn credential (sets the remember-device cookie)
+    // Register a WebAuthn credential (sets the remember-device cookie).
+    // Device recognition is already enabled via waExtraLoginSettings before domain start.
     auth = await loginAndRegisterWebAuthn(page, gatewayUrl, clientId, waUser.username, API_USER_PASSWORD);
 
-    // Phase 2: Clear ONLY the session cookie — keep the device recognition cookie
-    await clearSessionOnly(page, gatewayUrl);
+    // Clear ONLY the session cookie — keep the device recognition cookie
+    await clearSessionOnly(page);
 
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
 
-    // Device recognition redirect depends on the patchDomain config being fully
-    // propagated to the gateway. Poll navigation until we land on webauthn/login
-    // rather than the normal login page.
-    const deadline = Date.now() + 30000;
-    while (true) {
-      await page.goto(authorizeUrl);
-      await page.waitForURL(/.*login.*/i, { timeout: 15000 });
-      if (page.url().includes('webauthn/login')) break;
-      if (Date.now() > deadline) {
-        throw new Error('Device recognition did not redirect to webauthn/login within 30s');
-      }
-      await page.waitForTimeout(1000);
-    }
+    // Device recognition should route us directly to WebAuthn login page
+    await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
 
     // Verify we're on the WebAuthn login page with the username field
     await expect(page.locator('#username')).toBeVisible();
@@ -126,10 +88,10 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toBeTruthy();
+    expect(url.searchParams.get('code')).toMatch(/^.+$/);
   });
 
-  test('disabling device recognition shows normal login page for returning user (AM-5292)', async ({
+  test('AM-5292: disabling device recognition shows normal login page for returning user', async ({
     page,
     waApp,
     waUser,
@@ -137,53 +99,37 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     waDomain,
     gatewayUrl,
   }) => {
+    test.setTimeout(120_000);
     const clientId = waApp.settings.oauth.clientId;
 
-    // First enable device recognition so we get the cookie
-    await patchDomain(waDomain.id, waAdminToken, {
-      loginSettings: {
-        inherited: false,
-        passwordlessEnabled: true,
-        passwordlessDeviceNamingEnabled: false,
-        passwordlessRememberDeviceEnabled: true,
-      },
-    });
-    await waitForNextSync(waDomain.id);
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 300 });
-
-    // Register a credential (sets the remember-device cookie)
+    // Register a credential (sets the remember-device cookie).
+    // Device recognition is already enabled via waExtraLoginSettings.
     auth = await loginAndRegisterWebAuthn(page, gatewayUrl, clientId, waUser.username, API_USER_PASSWORD);
 
     // Now disable device recognition
-    await patchDomain(waDomain.id, waAdminToken, {
-      loginSettings: {
-        inherited: false,
-        passwordlessEnabled: true,
-        passwordlessDeviceNamingEnabled: false,
-        passwordlessRememberDeviceEnabled: false,
-      },
-    });
-    await waitForNextSync(waDomain.id);
+    await waitForSyncAfter(waDomain.id, () =>
+      patchDomain(waDomain.id, waAdminToken, {
+        loginSettings: {
+          inherited: false,
+          passwordlessEnabled: true,
+          passwordlessDeviceNamingEnabled: false,
+          passwordlessRememberDeviceEnabled: false,
+        },
+      }),
+    );
     await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 300 });
 
     // Clear only the session cookie — device recognition cookie stays
-    await clearSessionOnly(page, gatewayUrl);
+    await clearSessionOnly(page);
 
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
-
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i, { timeout: 15000 });
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     // Should see the normal login form with both username AND password
     await expect(page.locator('#username')).toBeVisible();
     await expect(page.locator('#password')).toBeVisible();
 
     // The passwordless link should still be available for manual use
-    const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
-    await expect(passwordlessLink).toBeVisible();
+    await expect(page.locator(PASSWORDLESS_LINK_SELECTOR)).toBeVisible();
   });
 });

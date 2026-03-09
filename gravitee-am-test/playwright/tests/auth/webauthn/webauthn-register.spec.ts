@@ -21,6 +21,7 @@ import {
   getCredentials,
   removeVirtualAuthenticator,
   handleConsentIfPresent,
+  buildAuthorizeUrl,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { API_USER_PASSWORD } from '../../../utils/test-constants';
@@ -34,6 +35,7 @@ test.describe('WebAuthn Registration', () => {
   test.afterEach(async () => {
     if (auth) {
       await removeVirtualAuthenticator(auth);
+      auth = undefined;
     }
   });
 
@@ -44,15 +46,10 @@ test.describe('WebAuthn Registration', () => {
     gatewayUrl,
   }) => {
     const clientId = waApp.settings.oauth.clientId;
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
 
     // 1. Navigate to authorize — should redirect to login form
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     // 2. Log in with username/password
     await page.locator('#username').fill(waUser.username);
@@ -90,15 +87,10 @@ test.describe('WebAuthn Registration', () => {
     gatewayUrl,
   }) => {
     const clientId = waApp.settings.oauth.clientId;
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
 
     // 1. Login
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
     await page.locator('#username').fill(waUser.username);
     await page.locator('#password').fill(API_USER_PASSWORD);
     await page.locator('button[type="submit"], #submitBtn').click();
@@ -108,13 +100,11 @@ test.describe('WebAuthn Registration', () => {
 
     // 3. Click skip link (only visible when not enrolling a FIDO2 factor)
     const skipLink = page.locator('a[href*="skipAction"], a:has-text("skip"), a:has(span.icons:text("arrow_forward"))');
-    if (await skipLink.isVisible({ timeout: 3000 })) {
-      await skipLink.click();
+    await expect(skipLink).toBeVisible({ timeout: 3000 });
+    await skipLink.click();
 
-      // 4. May redirect to consent, then to callback with authorization code
-      await handleConsentIfPresent(page);
-      await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
-    }
-    // If skip is not visible (FIDO2 factor enrolled), test is N/A — pass silently
+    // 4. May redirect to consent, then to callback with authorization code
+    await handleConsentIfPresent(page);
+    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
   });
 });

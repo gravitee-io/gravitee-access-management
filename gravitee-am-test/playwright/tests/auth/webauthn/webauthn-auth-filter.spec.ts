@@ -16,10 +16,11 @@
 import {
   test,
   expect,
-  simulateWebAuthnGesture,
   handleConsentIfPresent,
   loginAndRegisterWebAuthn,
+  passwordlessLogin,
   removeVirtualAuthenticator,
+  buildAuthorizeUrl,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { API_USER_PASSWORD } from '../../../utils/test-constants';
@@ -45,20 +46,15 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     }
   });
 
-  test('non-registered user can login successfully with password (AM-4550)', async ({
+  test('AM-4550: non-registered user can login successfully with password', async ({
     page,
     waApp,
     waUser,
     gatewayUrl,
   }) => {
     const clientId = waApp.settings.oauth.clientId;
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
 
-    await page.goto(authorizeUrl);
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
     await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     // User has NOT registered for WebAuthn — standard password login
@@ -75,24 +71,19 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toBeTruthy();
+    expect(url.searchParams.get('code')).toMatch(/^.+$/);
   });
 
-  test('non-registered user fails login with wrong password (AM-4551)', async ({
+  test('AM-4551: non-registered user fails login with wrong password', async ({
     page,
     waApp,
     waUser,
     gatewayUrl,
   }) => {
     const clientId = waApp.settings.oauth.clientId;
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
 
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
+    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     await page.locator('#username').fill(waUser.username);
     await page.locator('#password').fill('wrong-password');
@@ -107,12 +98,13 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     expect(page.url()).not.toContain('callback?code=');
   });
 
-  test('registered user succeeds with passwordless login (AM-4552)', async ({
+  test('AM-4552: registered user succeeds with passwordless login', async ({
     page,
     waApp,
     waUser,
     gatewayUrl,
   }) => {
+    test.setTimeout(120_000);
     const clientId = waApp.settings.oauth.clientId;
 
     // Phase 1: Register a WebAuthn credential
@@ -120,30 +112,9 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
 
     // Phase 2: Clear session and do passwordless login
     await page.context().clearCookies();
-
-    const authorizeUrl =
-      `${gatewayUrl}/oauth/authorize?response_type=code` +
-      `&client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent('https://gravitee.io/callback')}` +
-      `&scope=openid`;
-
-    await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i);
-
-    const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
-    await passwordlessLink.click();
-    await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
-
-    await page.locator('#username').fill(waUser.username);
-
-    await simulateWebAuthnGesture(auth, async () => {
-      await page.locator('button.primary, button#login-button').click();
-    });
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+    await passwordlessLogin(page, auth, gatewayUrl, clientId, waUser.username);
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toBeTruthy();
+    expect(url.searchParams.get('code')).toMatch(/^.+$/);
   });
 });

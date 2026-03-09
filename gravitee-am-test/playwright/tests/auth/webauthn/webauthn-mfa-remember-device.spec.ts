@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test as base, expect, CDPSession, Page } from '@playwright/test';
+import { test as base, expect, Page } from '@playwright/test';
 
 import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
@@ -27,7 +27,6 @@ import {
   waitForOidcReady,
   patchDomain,
 } from '../../../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../../../api/commands/gateway/monitoring-commands';
 import { getAllIdps } from '../../../../api/commands/management/idp-management-commands';
 import { createUser, deleteUser } from '../../../../api/commands/management/user-management-commands';
 import { createTestApp } from '../../../../api/commands/utils/application-commands';
@@ -40,6 +39,8 @@ import {
   simulateWebAuthnGesture,
   handleConsentIfPresent,
   removeVirtualAuthenticator,
+  clearSessionOnly,
+  PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { quietly, uniqueTestName } from '../../../utils/fixture-helpers';
@@ -47,15 +48,6 @@ import { API_USER_PASSWORD } from '../../../utils/test-constants';
 
 const REDIRECT_URI = 'https://gravitee.io/callback';
 const MOCK_MFA_CODE = '1234';
-const SESSION_COOKIE = 'GRAVITEE_IO_AM_SESSION';
-
-async function clearSessionOnly(page: Page) {
-  const allCookies = await page.context().cookies();
-  const sessionCookies = allCookies.filter((c) => c.name === SESSION_COOKIE);
-  for (const cookie of sessionCookies) {
-    await page.context().clearCookies({ name: cookie.name, domain: cookie.domain });
-  }
-}
 
 /**
  * Fixture that sets up a domain with:
@@ -81,6 +73,8 @@ const test = base.extend<{
     const name = uniqueTestName('pw-mfa-wa');
     const domain = await quietly(() => createDomain(mfaAdminToken, name, 'MFA + WebAuthn + Remember Device test'));
 
+    // Domain is NOT started here — gatewayUrl starts it after app+user+factor
+    // are created so the initial sync picks up all resources in one pass.
     await quietly(() =>
       patchDomain(domain.id, mfaAdminToken, {
         loginSettings: {
@@ -99,9 +93,6 @@ const test = base.extend<{
         },
       }),
     );
-
-    await quietly(() => startDomain(domain.id, mfaAdminToken));
-    await quietly(() => waitForDomainSync(domain.id));
 
     await use(domain);
     await quietly(() => safeDeleteDomain(domain.id, mfaAdminToken));
@@ -203,10 +194,13 @@ const test = base.extend<{
     });
   },
 
-  gatewayUrl: async ({ mfaDomain, mfaApp, mfaUser }, use) => {
+  gatewayUrl: async ({ mfaAdminToken, mfaDomain, mfaApp, mfaUser }, use) => {
+    // All resources (domain config, app, user, factor, device) are created
+    // before starting the domain, so the initial sync picks up everything.
     void mfaApp;
     void mfaUser;
-    await waitForNextSync(mfaDomain.id);
+    await quietly(() => startDomain(mfaDomain.id, mfaAdminToken));
+    await quietly(() => waitForDomainSync(mfaDomain.id));
     await waitForOidcReady(mfaDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
     const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
     await use(`${baseUrl}/${mfaDomain.hrid}`);
@@ -299,12 +293,13 @@ test.describe('WebAuthn - MFA + Remember Device (AM-5333, AM-5334)', () => {
     }
   });
 
-  test('passwordless login skips MFA when device is remembered (AM-5334)', async ({
+  test('AM-5334: passwordless login skips MFA when device is remembered', async ({
     page,
     mfaApp,
     mfaUser,
     gatewayUrl,
   }) => {
+    test.setTimeout(120_000);
     const clientId = mfaApp.settings.oauth.clientId;
 
     // First login: full flow with MFA enrollment + WebAuthn + remember device checked
@@ -322,21 +317,16 @@ test.describe('WebAuthn - MFA + Remember Device (AM-5333, AM-5334)', () => {
 
     await page.goto(authorizeUrl);
 
-    // Should land on login page (or possibly webauthn login)
-    await page.waitForLoadState('networkidle');
+    // Should land on login page or webauthn login
+    await page.waitForURL(/.*(?:login|webauthn\/login).*/i, { timeout: 30000 });
 
-    const currentUrl = page.url();
-    if (currentUrl.includes('webauthn/login')) {
-      // Device recognition active — directly on WebAuthn login
-      await page.locator('#username').fill(mfaUser.username);
-    } else {
-      // Normal login page — click passwordless link
-      await page.waitForURL(/.*login.*/i, { timeout: 15000 });
-      const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
+    if (!page.url().includes('webauthn/login')) {
+      const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
       await passwordlessLink.click();
       await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
-      await page.locator('#username').fill(mfaUser.username);
     }
+
+    await page.locator('#username').fill(mfaUser.username);
 
     await simulateWebAuthnGesture(auth, async () => {
       await page.locator('button.primary, button#login-button').click();
@@ -347,15 +337,16 @@ test.describe('WebAuthn - MFA + Remember Device (AM-5333, AM-5334)', () => {
     await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toBeTruthy();
+    expect(url.searchParams.get('code')).toMatch(/^.+$/);
   });
 
-  test('passwordless login requires MFA when device is NOT remembered (AM-5333)', async ({
+  test('AM-5333: passwordless login requires MFA when device is NOT remembered', async ({
     page,
     mfaApp,
     mfaUser,
     gatewayUrl,
   }) => {
+    test.setTimeout(120_000);
     const clientId = mfaApp.settings.oauth.clientId;
 
     // First login: full flow with MFA enrollment + WebAuthn but WITHOUT checking remember device
@@ -372,10 +363,10 @@ test.describe('WebAuthn - MFA + Remember Device (AM-5333, AM-5334)', () => {
       `&scope=openid`;
 
     await page.goto(authorizeUrl);
-    await page.waitForURL(/.*login.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
     // Navigate to passwordless login
-    const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
+    const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
     await passwordlessLink.click();
     await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
 
@@ -397,6 +388,6 @@ test.describe('WebAuthn - MFA + Remember Device (AM-5333, AM-5334)', () => {
     await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toBeTruthy();
+    expect(url.searchParams.get('code')).toMatch(/^.+$/);
   });
 });
