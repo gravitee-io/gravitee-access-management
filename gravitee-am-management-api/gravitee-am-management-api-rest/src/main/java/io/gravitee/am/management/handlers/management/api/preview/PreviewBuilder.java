@@ -192,114 +192,119 @@ public class PreviewBuilder {
         variables.put(ConstantKeys.PARAM_CONTEXT_KEY, Map.of(USERNAME_PARAM_KEY, EMPTY_STRING, Parameters.CLIENT_ID, EMPTY_STRING));
         variables.put(ConstantKeys.ACTION_KEY, EMPTY_STRING);
 
-        switch (Template.parse(template)) {
-            case LOGIN:
-                variables.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, Collections.emptyList());
-                variables.put(ConstantKeys.TEMPLATE_KEY_FORGOT_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_CBA_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_MAGIC_LINK_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_REGISTER_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
-                variables.put(ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_HIDE_FORM_CONTEXT_KEY, Boolean.FALSE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY, Boolean.TRUE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY, Boolean.TRUE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_CBA_CONTEXT_KEY, Boolean.TRUE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_MAGIC_LINK_CONTEXT_KEY, Boolean.TRUE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, Boolean.TRUE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, Boolean.FALSE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
-                variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
-                break;
+        try {
+            switch (Template.parse(template)) {
+                case LOGIN:
+                    variables.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, Collections.emptyList());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_FORGOT_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_CBA_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_MAGIC_LINK_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_REGISTER_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
+                    variables.put(ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_HIDE_FORM_CONTEXT_KEY, Boolean.FALSE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY, Boolean.TRUE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY, Boolean.TRUE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_CBA_CONTEXT_KEY, Boolean.TRUE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_MAGIC_LINK_CONTEXT_KEY, Boolean.TRUE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, Boolean.TRUE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, Boolean.FALSE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
+                    variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
+                    break;
 
-            case REGISTRATION:
-                variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
-                variables.put(ConstantKeys.LOGIN_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
-                break;
+                case REGISTRATION:
+                    variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
+                    variables.put(ConstantKeys.LOGIN_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
+                    break;
 
-            case REGISTRATION_CONFIRMATION:
-                variables.put(ConstantKeys.TOKEN_CONTEXT_KEY, EMPTY_STRING);
-                break;
+                case REGISTRATION_CONFIRMATION:
+                    variables.put(ConstantKeys.TOKEN_CONTEXT_KEY, EMPTY_STRING);
+                    break;
 
-            case FORGOT_PASSWORD:
-                variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
-                variables.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
-                variables.put(ConstantKeys.LOGIN_ACTION_KEY, EMPTY_STRING);
-                variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
-                break;
+                case FORGOT_PASSWORD:
+                    variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
+                    variables.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
+                    variables.put(ConstantKeys.LOGIN_ACTION_KEY, EMPTY_STRING);
+                    variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
+                    break;
 
-            case MFA_ENROLL:
-            case MFA_CHALLENGE_ALTERNATIVES:
-                final Enrollment otpEnrollment = new Enrollment();
-                otpEnrollment.setBarCode("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAABuElEQVR4Xu2WWWoEMQwFDb6WwVc36FqGTpXCLAzJn5X8tGiGtmtA27Pc7frN2ufG025yE+0vyWqtr75GXzP2mC5LSPCsvtme1+65rCGrR6y528A17zxlZI1htpNMS8l17abvaxcSntgN749y1hAlES/70M45opEgAkGKoXftPFkzK3nFtpSI/hXbWdJtGwk2TtXgZ8wSEh7f5vkFjGxgCUHtnt6lRnCfMikh6d2WpeSbBa4gTgl6Rr7T0rouISxpGnvB4HPQPit6lviG4q0s7sU1xFKaXeSfmOmEUkIQIJ1ja3SS5vUZwVGCWwafVxOnC8W3WUSmOSJ6JyBlHYnOE66+ruCppH9x3NaQHgoju+eYWK8IjpLIGLYtW770SztPnOK2zVpmE58RHCare6xUh8G8TaSzhEKSLRE0QnBkvGnnJGGbSjqV8rJ1p4gs76O58iC7fijxLKGgXOYL5+EXkaGUEI1LI2cFT1a4giw/sUI9ZjBegyUkrKmKN4TUyqwhWVL2bVzk/V5GLpsH8ihT2zqS5yny20v/JYQnch7x6UVpvyVynqgQ9Q70gLF+ZHqW/Gw3uYn2/+QLiTKJ//OwuCgAAAAASUVORK5CYII=");
-                final Map<String, Object> factorOTP = Map.of(ID, "idotp" ,
-                        FACTOR_TYPE, FactorType.OTP.getType(),
-                        FACTOR_NAME, "OTP Factor name",
-                        ENROLLMENT, otpEnrollment);
+                case MFA_ENROLL:
+                case MFA_CHALLENGE_ALTERNATIVES:
+                    final Enrollment otpEnrollment = new Enrollment();
+                    otpEnrollment.setBarCode("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAABuElEQVR4Xu2WWWoEMQwFDb6WwVc36FqGTpXCLAzJn5X8tGiGtmtA27Pc7frN2ufG025yE+0vyWqtr75GXzP2mC5LSPCsvtme1+65rCGrR6y528A17zxlZI1htpNMS8l17abvaxcSntgN749y1hAlES/70M45opEgAkGKoXftPFkzK3nFtpSI/hXbWdJtGwk2TtXgZ8wSEh7f5vkFjGxgCUHtnt6lRnCfMikh6d2WpeSbBa4gTgl6Rr7T0rouISxpGnvB4HPQPit6lviG4q0s7sU1xFKaXeSfmOmEUkIQIJ1ja3SS5vUZwVGCWwafVxOnC8W3WUSmOSJ6JyBlHYnOE66+ruCppH9x3NaQHgoju+eYWK8IjpLIGLYtW770SztPnOK2zVpmE58RHCare6xUh8G8TaSzhEKSLRE0QnBkvGnnJGGbSjqV8rJ1p4gs76O58iC7fijxLKGgXOYL5+EXkaGUEI1LI2cFT1a4giw/sUI9ZjBegyUkrKmKN4TUyqwhWVL2bVzk/V5GLpsH8ihT2zqS5yny20v/JYQnch7x6UVpvyVynqgQ9Q70gLF+ZHqW/Gw3uYn2/+QLiTKJ//OwuCgAAAAASUVORK5CYII=");
+                    final Map<String, Object> factorOTP = Map.of(ID, "idotp",
+                            FACTOR_TYPE, FactorType.OTP.getType(),
+                            FACTOR_NAME, "OTP Factor name",
+                            ENROLLMENT, otpEnrollment);
 
-                final Enrollment smsEnrollment = new Enrollment();
-                smsEnrollment.setCountries(List.of("us", "en", "fr"));
-                final Map<String, Object> factorSms = Map.of(
-                        ID, "idsms" ,
-                        FACTOR_TYPE, FactorType.SMS.getType(),
-                        FACTOR_TARGET, "123456",
-                        FACTOR_NAME, "SMS Factor name",
-                        ENROLLMENT, smsEnrollment);
+                    final Enrollment smsEnrollment = new Enrollment();
+                    smsEnrollment.setCountries(List.of("us", "en", "fr"));
+                    final Map<String, Object> factorSms = Map.of(
+                            ID, "idsms",
+                            FACTOR_TYPE, FactorType.SMS.getType(),
+                            FACTOR_TARGET, "123456",
+                            FACTOR_NAME, "SMS Factor name",
+                            ENROLLMENT, smsEnrollment);
 
-                final Enrollment emailEnrollment = new Enrollment();
-                emailEnrollment.setKey(EMPTY_STRING);
-                final Map<String, Object> factorEmail = Map.of(ID, "idemail",
-                        FACTOR_TYPE, FactorType.EMAIL.getType(),
-                        FACTOR_TARGET, "john@doe.com",
-                        FACTOR_NAME, "EMAIL Factor name",
-                        ENROLLMENT, emailEnrollment);
+                    final Enrollment emailEnrollment = new Enrollment();
+                    emailEnrollment.setKey(EMPTY_STRING);
+                    final Map<String, Object> factorEmail = Map.of(ID, "idemail",
+                            FACTOR_TYPE, FactorType.EMAIL.getType(),
+                            FACTOR_TARGET, "john@doe.com",
+                            FACTOR_NAME, "EMAIL Factor name",
+                            ENROLLMENT, emailEnrollment);
 
-                variables.put(ConstantKeys.FACTORS_KEY, List.of(factorOTP, factorSms, factorEmail));
-                break;
+                    variables.put(ConstantKeys.FACTORS_KEY, List.of(factorOTP, factorSms, factorEmail));
+                    break;
 
-            case MFA_CHALLENGE:
-                final Factor factor = new Factor();
-                factor.setFactorType(FactorType.OTP);
-                variables.put(ConstantKeys.FACTOR_KEY, factor);
-                variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
-                variables.put(ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY, Boolean.TRUE.toString());
-                variables.put(ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY, EMPTY_STRING);
-                break;
+                case MFA_CHALLENGE:
+                    final Factor factor = new Factor();
+                    factor.setFactorType(FactorType.OTP);
+                    variables.put(ConstantKeys.FACTOR_KEY, factor);
+                    variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
+                    variables.put(ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY, Boolean.TRUE.toString());
+                    variables.put(ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY, EMPTY_STRING);
+                    break;
 
-            case WEBAUTHN_LOGIN:
-            case CBA_LOGIN:
-                variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
-                variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
-                break;
+                case WEBAUTHN_LOGIN:
+                case CBA_LOGIN:
+                    variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
+                    variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
+                    break;
 
-            case ERROR:
-                variables.put(ERROR_PARAM_KEY, "login_failed");
-                variables.put(ERROR_DESCRIPTION_PARAM_KEY, "Wrong user or password");
-                break;
+                case ERROR:
+                    variables.put(ERROR_PARAM_KEY, "login_failed");
+                    variables.put(ERROR_DESCRIPTION_PARAM_KEY, "Wrong user or password");
+                    break;
 
-            case MFA_RECOVERY_CODE:
-                variables.put(TEMPLATE_KEY_RECOVERY_CODES_KEY, IntStream.range(0, 6).mapToObj(i -> UUID.randomUUID().toString()).toList());
-                variables.put(TEMPLATE_KEY_RECOVERY_CODES_URL_KEY, EMPTY_STRING);
-                break;
+                case MFA_RECOVERY_CODE:
+                    variables.put(TEMPLATE_KEY_RECOVERY_CODES_KEY, IntStream.range(0, 6).mapToObj(i -> UUID.randomUUID().toString()).toList());
+                    variables.put(TEMPLATE_KEY_RECOVERY_CODES_URL_KEY, EMPTY_STRING);
+                    break;
 
-            case IDENTIFIER_FIRST_LOGIN:
-                variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
-                break;
+                case IDENTIFIER_FIRST_LOGIN:
+                    variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
+                    break;
 
-            // template without specific variables
-            case RESET_PASSWORD:
-            case OAUTH2_USER_CONSENT:
-            case BLOCKED_ACCOUNT:
-            case COMPLETE_PROFILE:
-            case WEBAUTHN_REGISTER:
-            case CERTIFICATE_EXPIRATION:
-            case CLIENT_SECRET_EXPIRATION:
-            default:
-                break;
+                // template without specific variables
+                case RESET_PASSWORD:
+                case OAUTH2_USER_CONSENT:
+                case BLOCKED_ACCOUNT:
+                case COMPLETE_PROFILE:
+                case WEBAUTHN_REGISTER:
+                case CERTIFICATE_EXPIRATION:
+                case CLIENT_SECRET_EXPIRATION:
+                default:
+                    break;
+            }
+        } catch (IllegalArgumentException e) {
+            // for custom form, no need to throw exception
+            logger.debug("No specific variables are needed for template '{}'", template);
         }
         return variables;
     }

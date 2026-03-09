@@ -1,0 +1,17 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:policy:user:action:example:UserActionPolicyConfiguration",
+  "properties" : {
+    "action" : {
+      "title": "Action",
+      "description": "The action to perform",
+      "type" : "string"
+    },
+    "template" : {
+      "title": "Template",
+      "description": "The template HTML to use",
+      "type" : "string",
+      "widget": "graviteeCustomForm"
+    }
+  }
+}

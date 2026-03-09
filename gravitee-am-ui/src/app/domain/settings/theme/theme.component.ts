@@ -16,8 +16,9 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { find } from 'lodash';
+import { MatDialog } from '@angular/material/dialog';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
@@ -25,6 +26,7 @@ import { ThemeService } from '../../../services/theme.service';
 import { DialogService } from '../../../services/dialog.service';
 import { FormService } from '../../../services/form.service';
 import { FormTemplateFactoryService } from '../../../services/form.template.factory.service';
+import { CreateCustomFormDialogComponent } from '../../components/forms/create-custom-form-dialog/create-custom-form-dialog.component';
 
 @Component({
   selector: 'app-theme',
@@ -166,6 +168,7 @@ export class DomainSettingsThemeComponent implements OnInit {
   private originalTemplateContent: string;
   private selectedForm: any;
   private preview: ElementRef;
+  private customForms: any[] = [];
 
   @ViewChild('preview') set content(content: ElementRef) {
     if (content) {
@@ -187,6 +190,7 @@ export class DomainSettingsThemeComponent implements OnInit {
     private dialogService: DialogService,
     private formService: FormService,
     private formTemplateFactoryService: FormTemplateFactoryService,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit() {
@@ -195,12 +199,41 @@ export class DomainSettingsThemeComponent implements OnInit {
     this.themes = this.route.snapshot.data['themes'] || [];
     this.theme = this.themes[0] || {};
 
-    this.forms = this.formTemplateFactoryService
-      .findAll()
-      .filter((form) => form.template !== 'MAGIC_LINK_LOGIN' || this.allowMagicLink())
-      .map((form) => {
-        form.enabled = true;
-        return form;
+    forkJoin({
+      templates: of(this.formTemplateFactoryService.findAll()),
+      customs: this.formService.findCustoms(this.domain.id, null),
+    })
+      .pipe(
+        map(({ templates, customs }) => {
+          const templateForms = templates
+            .filter((form) => form.template !== 'MAGIC_LINK_LOGIN' || this.allowMagicLink())
+            .map((form) => ({
+              ...form,
+              enabled: true,
+            }));
+
+          const customForms = Array.isArray(customs)
+            ? customs.map((form) => ({
+                ...form,
+                enabled: true,
+                isTemplate: false,
+                name: form.template || form.id,
+              }))
+            : [];
+
+          this.customForms = customForms;
+
+          return [...templateForms, ...customForms];
+        }),
+      )
+      .subscribe({
+        next: (forms) => {
+          this.forms = forms;
+        },
+        error: (error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          this.snackbarService.open(`Error loading forms: ${errorMessage}`);
+        },
       });
 
     if (this.theme.id && this.theme.primaryButtonColorHex) {
@@ -266,9 +299,20 @@ export class DomainSettingsThemeComponent implements OnInit {
         switchMap(() => this.formService.delete(this.domain.id, null, this.selectedForm.id, false)),
         tap(() => {
           this.snackbarService.open('Form deleted');
-          this.loadForm();
-          if (this.selectedMode === 'VIEW') {
-            this.renderPreview();
+          const isCustomForm = this.customForms.find((form) => form.id === this.selectedForm.id);
+          if (isCustomForm) {
+            // reload the page
+            this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
+            this.selectedTemplate = this.forms[0].template;
+            this.selectedMode = 'VIEW';
+            this.formChanged = false;
+            this.loadTheme();
+            this.loadForm();
+          } else {
+            this.loadForm();
+            if (this.selectedMode === 'VIEW') {
+              this.renderPreview();
+            }
           }
         }),
       )
@@ -321,6 +365,31 @@ export class DomainSettingsThemeComponent implements OnInit {
       this.formChanged = false;
       this.loadTheme();
       this.loadForm();
+    });
+  }
+
+  openCreateFormDialog() {
+    const dialogRef = this.dialog.open(CreateCustomFormDialogComponent, {
+      width: '700px',
+      data: {
+        domainId: this.domain.id,
+        applicationId: null,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.selectedTemplate = result.template;
+        const customForm = {
+          ...result,
+          enabled: true,
+          isTemplate: false,
+          name: result.template || result.id,
+        };
+        this.forms.push(customForm);
+        this.customForms.push(customForm);
+        this.loadForm();
+      }
     });
   }
 

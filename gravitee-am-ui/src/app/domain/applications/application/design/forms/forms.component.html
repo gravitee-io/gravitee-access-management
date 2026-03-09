@@ -22,7 +22,37 @@
       <span>Display custom web pages to fit your identity guidelines.</span>
     </div>
     <div>
-      <app-forms [forms]="getForms()"></app-forms>
+      <app-forms [forms]="templateForms"></app-forms>
+    </div>
+  </div>
+
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div fxLayout="column">
+          <h2>Custom Forms</h2>
+          <span>Create and manage custom forms for your application.</span>
+        </div>
+        <button mat-raised-button color="primary" (click)="openCreateFormDialog()" [disabled]="isLoading">
+          <mat-icon>add</mat-icon>
+          Create Custom Form
+        </button>
+      </div>
+    </div>
+    <div *ngIf="isLoading" fxLayout="row" fxLayoutAlign="center center" style="min-height: 100px">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+    <div *ngIf="!isLoading">
+      <app-forms
+        [forms]="customForms"
+        [isCustom]="true"
+        [canDelete]="true"
+        (formDeleted)="delete($event)"
+        *ngIf="customForms && customForms.length > 0"
+      ></app-forms>
+      <mat-card *ngIf="customForms && customForms.length === 0" class="no-data-card">
+        <p>No custom forms yet. Create one to get started.</p>
+      </mat-card>
     </div>
   </div>
 </div>

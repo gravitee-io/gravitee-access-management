@@ -270,6 +270,8 @@ import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exch
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { ApplicationOAuth2Service, McpServerOAuth2Service, OAUTH2_SETTINGS_SERVICE } from './services/oauth2-settings.service';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
+import { ApplicationCustomFormsResolver } from './resolvers/application-custom-forms.resolver';
+import { DomainCustomFormsResolver } from './resolvers/domain-custom-forms.resolver';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1126,6 +1128,7 @@ export const routes: Routes = [
                                   policies: PluginPoliciesResolver,
                                   flowSettingsForm: PlatformFlowSchemaResolver,
                                   factors: FactorsResolver,
+                                  customForms: ApplicationCustomFormsResolver,
                                 },
                                 data: {
                                   menu: {
@@ -1866,6 +1869,7 @@ export const routes: Routes = [
                           policies: PluginPoliciesResolver,
                           flowSettingsForm: PlatformFlowSchemaResolver,
                           factors: FactorsResolver,
+                          customForms: DomainCustomFormsResolver,
                         },
                         data: {
                           menu: {

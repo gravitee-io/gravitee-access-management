@@ -100,6 +100,10 @@
             <mat-button-toggle value="HTML">HTML</mat-button-toggle>
           </mat-button-toggle-group>
           <span fxFlex></span>
+          <button mat-raised-button color="primary" (click)="openCreateFormDialog()">
+            <mat-icon>add</mat-icon>
+            Create Custom Form
+          </button>
           <button mat-raised-button color="primary" (click)="publish()" [disabled]="!formChanged">PUBLISH</button>
         </div>
         <div class="gv-form-section" *ngIf="selectedMode === 'VIEW'">
