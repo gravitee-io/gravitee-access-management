@@ -15,6 +15,7 @@
  */
 
 import { getGroupApi } from './service/utils';
+import { UserPageFromJSON } from '../../management/models/UserPage';
 
 export const createGroup = (domainId, accessToken, group) =>
   getGroupApi(accessToken).createGroup({
@@ -79,4 +80,44 @@ export const revokeRoleToGroup = (domainId, accessToken, groupId, role) =>
     domain: domainId,
     group: groupId,
     role: role,
+  });
+
+export const getGroupMembers = async (domainId: string, accessToken: string, groupId: string, page?: number, size?: number) => {
+  const params: any = {
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+  };
+  if (page !== undefined) params.page = page;
+  if (size !== undefined) params.size = size;
+  // SDK incorrectly types this as User instead of UserPage — deserialize manually
+  const raw = await getGroupApi(accessToken).getGroupMembersRaw(params);
+  return UserPageFromJSON(await raw.raw.json());
+};
+
+export const addGroupMember = (domainId: string, accessToken: string, groupId: string, memberId: string) =>
+  getGroupApi(accessToken).addGroupMember({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+    member: memberId,
+  });
+
+export const removeGroupMember = (domainId: string, accessToken: string, groupId: string, memberId: string) =>
+  getGroupApi(accessToken).removeGroupMember({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
+    member: memberId,
+  });
+
+export const getGroupRoles = (domainId: string, accessToken: string, groupId: string) =>
+  getGroupApi(accessToken).findGroupRoles({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    group: groupId,
   });

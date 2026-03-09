@@ -238,3 +238,29 @@ export const listUserCredentials = async (domainId: string, accessToken: string,
   // The API returns an array but the generated SDK types it as singular Credential.
   return (await response.raw.json()) as Array<{ id?: string; credentialId?: string; userId?: string; username?: string }>;
 };
+
+export const addRolesToUser = (domainId: string, accessToken: string, userId: string, roles: Array<string>) =>
+  getUserApi(accessToken).assignRolesToUser({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    requestBody: roles,
+  });
+
+export const listUserRoles = (domainId: string, accessToken: string, userId: string) =>
+  getUserApi(accessToken).listUserRoles({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
+
+export const revokeUserRole = (domainId: string, accessToken: string, userId: string, roleId: string) =>
+  getUserApi(accessToken).revokeUserRole({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    role: roleId,
+  });
