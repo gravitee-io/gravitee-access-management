@@ -22,12 +22,13 @@ import {
   removeVirtualAuthenticator,
   clearSessionOnly,
   buildAuthorizeUrl,
-  PASSWORDLESS_LINK_SELECTOR,
+  navigateToWebAuthnLogin,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT, BRIEF_TIMEOUT } from '../../../utils/test-constants';
 import { patchDomain, waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
 import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
+import { linkJira } from '../../../utils/jira';
 
 /**
  * AM-2370: Enforce Password + Device Recognition - Within usage limit
@@ -64,7 +65,8 @@ test.describe('WebAuthn - Enforce Password + Device Recognition', () => {
       waApp,
       waUser,
       gatewayUrl,
-    }) => {
+    }, testInfo) => {
+      linkJira(testInfo, 'AM-2370');
       const clientId = waApp.settings.oauth.clientId;
 
       // Enforce password + device recognition configured via waExtraLoginSettings before domain start.
@@ -77,7 +79,7 @@ test.describe('WebAuthn - Enforce Password + Device Recognition', () => {
       await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
 
       // Device recognition should route us directly to WebAuthn login page
-      await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
+      await page.waitForURL(/.*webauthn\/login.*/i);
 
       await page.locator('#username').fill(waUser.username);
 
@@ -87,10 +89,10 @@ test.describe('WebAuthn - Enforce Password + Device Recognition', () => {
 
       // Within max age — passwordless should succeed
       await handleConsentIfPresent(page);
-      await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+      await page.waitForURL(/.*callback\?code=.*/i);
 
       const url = new URL(page.url());
-      expect(url.searchParams.get('code')).toMatch(/^.+$/);
+      expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
     });
   });
 
@@ -101,8 +103,9 @@ test.describe('WebAuthn - Enforce Password + Device Recognition', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
-    test.setTimeout(120_000);
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-2382');
+    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;
 
     // Register credential first (without enforce password)
@@ -121,24 +124,16 @@ test.describe('WebAuthn - Enforce Password + Device Recognition', () => {
         },
       }),
     );
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 15000, intervalMs: 300 });
+    await waitForOidcReady(waDomain.hrid);
 
     // Wait for the 1s max age to expire so the server enforces password re-auth
-    await new Promise((r) => setTimeout(r, 2000));
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(2000);
 
     // Clear session only — keep device recognition cookie
     await clearSessionOnly(page);
 
-    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-
-    // Device recognition may route us to WebAuthn login or normal login page
-    await page.waitForURL(/.*(?:login|webauthn\/login).*/i, { timeout: 30000 });
-
-    if (!page.url().includes('webauthn/login')) {
-      const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
-      await passwordlessLink.click();
-      await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
-    }
+    await navigateToWebAuthnLogin(page, gatewayUrl, clientId);
 
     await page.locator('#username').fill(waUser.username);
 
@@ -148,10 +143,10 @@ test.describe('WebAuthn - Enforce Password + Device Recognition', () => {
     });
 
     // Outside max age — server should reject and redirect with error
-    await page.waitForURL(/.*error=.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*error=.*/i);
 
     const serverError = page.locator('.item.error-text:not(.hide) .error');
-    await expect(serverError).toBeVisible({ timeout: 5000 });
+    await expect(serverError).toBeVisible({ timeout: BRIEF_TIMEOUT });
 
     expect(page.url()).not.toContain('callback?code=');
   });

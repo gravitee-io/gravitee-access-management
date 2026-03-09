@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test as base, CDPSession, Page } from '@playwright/test';
+import { test as base } from '@playwright/test';
 
 import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
@@ -34,212 +34,27 @@ import { Domain, Application, User } from '../../api/management/models';
 
 import { quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
+import { REDIRECT_URI } from '../utils/webauthn-helpers';
 
 /* ------------------------------------------------------------------ */
-/*  CDP virtual authenticator helpers                                   */
+/*  Re-export helpers so existing spec imports remain unchanged         */
 /* ------------------------------------------------------------------ */
 
-export interface VirtualAuthenticator {
-  cdpSession: CDPSession;
-  authenticatorId: string;
-}
-
-/**
- * Attach a CTAP2 virtual authenticator to the page via CDP.
- * Chromium only — this is the same mechanism Puppeteer and Selenium use.
- */
-export async function addVirtualAuthenticator(page: Page): Promise<VirtualAuthenticator> {
-  const cdpSession = await page.context().newCDPSession(page);
-  await cdpSession.send('WebAuthn.enable');
-
-  const result = await cdpSession.send('WebAuthn.addVirtualAuthenticator', {
-    options: {
-      protocol: 'ctap2',
-      transport: 'internal',
-      hasResidentKey: true,
-      hasUserVerification: true,
-      isUserVerified: true,
-      automaticPresenceSimulation: false,
-    },
-  });
-
-  return { cdpSession, authenticatorId: result.authenticatorId };
-}
-
-/**
- * Simulate a successful WebAuthn user gesture (register or login).
- *
- * Turns on automatic presence simulation, triggers the given action,
- * then waits for the credentialAdded or credentialAsserted CDP event.
- */
-export async function simulateWebAuthnGesture(
-  auth: VirtualAuthenticator,
-  triggerAction: () => Promise<void>,
-  timeoutMs = 15000,
-): Promise<void> {
-  const operationCompleted = new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      auth.cdpSession.off('WebAuthn.credentialAdded', onAdded);
-      auth.cdpSession.off('WebAuthn.credentialAsserted', onAsserted);
-      reject(new Error(`WebAuthn CDP event (credentialAdded/credentialAsserted) not received within ${timeoutMs}ms`));
-    }, timeoutMs);
-    const onAdded = () => {
-      clearTimeout(timer);
-      auth.cdpSession.off('WebAuthn.credentialAdded', onAdded);
-      auth.cdpSession.off('WebAuthn.credentialAsserted', onAsserted);
-      resolve();
-    };
-    const onAsserted = () => {
-      clearTimeout(timer);
-      auth.cdpSession.off('WebAuthn.credentialAdded', onAdded);
-      auth.cdpSession.off('WebAuthn.credentialAsserted', onAsserted);
-      resolve();
-    };
-    auth.cdpSession.on('WebAuthn.credentialAdded', onAdded);
-    auth.cdpSession.on('WebAuthn.credentialAsserted', onAsserted);
-  });
-
-  await auth.cdpSession.send('WebAuthn.setUserVerified', {
-    authenticatorId: auth.authenticatorId,
-    isUserVerified: true,
-  });
-  await auth.cdpSession.send('WebAuthn.setAutomaticPresenceSimulation', {
-    authenticatorId: auth.authenticatorId,
-    enabled: true,
-  });
-
-  await triggerAction();
-  await operationCompleted;
-
-  await auth.cdpSession.send('WebAuthn.setAutomaticPresenceSimulation', {
-    authenticatorId: auth.authenticatorId,
-    enabled: false,
-  });
-}
-
-/**
- * Get the list of credentials on the virtual authenticator.
- */
-export async function getCredentials(auth: VirtualAuthenticator) {
-  const result = await auth.cdpSession.send('WebAuthn.getCredentials', {
-    authenticatorId: auth.authenticatorId,
-  });
-  return result.credentials;
-}
-
-/**
- * Handle the OAuth consent page if present.
- * After WebAuthn registration/login the flow may land on /oauth/consent.
- * Clicks "Accept" and waits for redirect to the callback.
- */
-export async function handleConsentIfPresent(page: Page, timeoutMs = 5000): Promise<void> {
-  const currentUrl = page.url();
-  if (currentUrl.includes('/oauth/consent')) {
-    await page.locator('button:has-text("Accept"), input[value="Accept"], #submitBtn').click();
-    return;
-  }
-  // Maybe we haven't navigated there yet — wait briefly
-  try {
-    await page.waitForURL(/.*oauth\/consent.*/i, { timeout: timeoutMs });
-    await page.locator('button:has-text("Accept"), input[value="Accept"], #submitBtn').click();
-  } catch {
-    // No consent page appeared — that's fine
-  }
-}
-
-/**
- * Perform the full login-then-register-WebAuthn flow.
- * Returns the virtual authenticator (caller must clean up).
- *
- * Steps: goto authorize → login with password → WebAuthn register page →
- * create virtual authenticator → simulate gesture → handle consent → arrive at callback.
- */
-export async function loginAndRegisterWebAuthn(
-  page: Page,
-  gatewayUrl: string,
-  clientId: string,
-  username: string,
-  password: string,
-): Promise<VirtualAuthenticator> {
-  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-  await page.waitForURL(/.*login.*/i, { timeout: 30000 });
-
-  await page.locator('#username').fill(username);
-  await page.locator('#password').fill(password);
-  await page.locator('button[type="submit"], #submitBtn').click();
-
-  // forceRegistration=true → redirects to /webauthn/register
-  await page.waitForURL(/.*webauthn\/register.*/i, { timeout: 15000 });
-
-  const auth = await addVirtualAuthenticator(page);
-
-  await simulateWebAuthnGesture(auth, async () => {
-    await page.locator('button.primary, button#register-button').click();
-  });
-
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
-
-  return auth;
-}
-
-/**
- * Perform a passwordless WebAuthn login (assumes credential already registered on auth).
- * Navigates through: authorize → login page → passwordless link → WebAuthn login → consent → callback.
- */
-export async function passwordlessLogin(
-  page: Page,
-  auth: VirtualAuthenticator,
-  gatewayUrl: string,
-  clientId: string,
-  username: string,
-): Promise<void> {
-  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-  await page.waitForURL(/.*login.*/i, { timeout: 30000 });
-
-  const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
-  await passwordlessLink.click();
-  await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
-
-  await page.locator('#username').fill(username);
-
-  await simulateWebAuthnGesture(auth, async () => {
-    await page.locator('button.primary, button#login-button').click();
-  });
-
-  await handleConsentIfPresent(page);
-  await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
-}
-
-const SESSION_COOKIE = 'GRAVITEE_IO_AM_SESSION';
-
-/**
- * Clear only the gateway session cookie, preserving device recognition cookies.
- * Simulates a user returning after their session expired but their device
- * is still recognized.
- */
-export async function clearSessionOnly(page: Page): Promise<void> {
-  const allCookies = await page.context().cookies();
-  const sessionCookies = allCookies.filter((c) => c.name === SESSION_COOKIE);
-  for (const cookie of sessionCookies) {
-    await page.context().clearCookies({ name: cookie.name, domain: cookie.domain });
-  }
-}
-
-/**
- * Clean up the virtual authenticator.
- */
-export async function removeVirtualAuthenticator(auth: VirtualAuthenticator): Promise<void> {
-  try {
-    await auth.cdpSession.send('WebAuthn.removeVirtualAuthenticator', {
-      authenticatorId: auth.authenticatorId,
-    });
-    await auth.cdpSession.send('WebAuthn.disable');
-    await auth.cdpSession.detach();
-  } catch {
-    // Page/context may already be closed during teardown — safe to ignore
-  }
-}
+export {
+  VirtualAuthenticator,
+  addVirtualAuthenticator,
+  simulateWebAuthnGesture,
+  getCredentials,
+  removeVirtualAuthenticator,
+  handleConsentIfPresent,
+  buildAuthorizeUrl,
+  navigateToWebAuthnLogin,
+  loginAndRegisterWebAuthn,
+  passwordlessLogin,
+  clearSessionOnly,
+  PASSWORDLESS_LINK_SELECTOR,
+  REDIRECT_URI,
+} from '../utils/webauthn-helpers';
 
 /* ------------------------------------------------------------------ */
 /*  Fixture types                                                      */
@@ -256,26 +71,6 @@ export type WebAuthnFixtures = {
    *  Use test.use({ waExtraLoginSettings: { ... } }) to configure per-test. */
   waExtraLoginSettings: Record<string, unknown>;
 };
-
-const REDIRECT_URI = 'https://gravitee.io/callback';
-
-/* ------------------------------------------------------------------ */
-/*  Shared locators & helpers                                          */
-/* ------------------------------------------------------------------ */
-
-/** Locator string for the passwordless / "Sign in with fingerprint" link on the login page. */
-export const PASSWORDLESS_LINK_SELECTOR =
-  'a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]';
-
-/** Build the OAuth authorize URL for a given domain + app. */
-export function buildAuthorizeUrl(gatewayUrl: string, clientId: string): string {
-  return (
-    `${gatewayUrl}/oauth/authorize?response_type=code` +
-    `&client_id=${clientId}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-    `&scope=openid`
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /*  Fixture                                                            */

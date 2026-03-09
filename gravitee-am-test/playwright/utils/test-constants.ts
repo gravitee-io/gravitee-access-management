@@ -28,3 +28,20 @@ export const ADMIN_PASSWORD = 'adminadmin';
 
 /** Regex matching a valid JWT (three Base64url segments separated by dots) */
 export const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+
+/** Regex matching a valid OAuth authorization code (Base64url, no dots) */
+export const AUTH_CODE_FORMAT = /^[A-Za-z0-9_-]+$/;
+
+/* ------------------------------------------------------------------ */
+/*  Timeout constants                                                  */
+/*  Only define constants that DIFFER from playwright.config.ts        */
+/*  defaults (navigationTimeout: 30s, actionTimeout: 15s,              */
+/*  expect.timeout: 15s, test timeout: 60s). Omit timeout options      */
+/*  on waitForURL/expect calls when the config default is sufficient.  */
+/* ------------------------------------------------------------------ */
+
+/** Brief wait — consent page detection, element appearance checks (shorter than 15s expect default) */
+export const BRIEF_TIMEOUT = 5_000;
+
+/** Extended test timeout for multi-phase flows (longer than 60s test default) */
+export const MULTI_PHASE_TEST_TIMEOUT = 120_000;

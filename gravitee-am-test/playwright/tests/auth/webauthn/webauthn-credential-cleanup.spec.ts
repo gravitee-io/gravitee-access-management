@@ -20,13 +20,14 @@ import {
   removeVirtualAuthenticator,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, MULTI_PHASE_TEST_TIMEOUT } from '../../../utils/test-constants';
 import {
   createUser,
   deleteUser,
   listUserCredentials,
 } from '../../../../api/commands/management/user-management-commands';
 import { uniqueTestName } from '../../../utils/fixture-helpers';
+import { linkJira } from '../../../utils/jira';
 
 /**
  * AM-6085: WebAuthn credentials are not removed when a user is deleted.
@@ -53,7 +54,8 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-6085');
     const clientId = waApp.settings.oauth.clientId;
 
     // Register a WebAuthn credential
@@ -61,7 +63,7 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
 
     // Verify credentials exist via management API
     const credentials = await listUserCredentials(waDomain.id, waAdminToken, waUser.id);
-    expect(credentials.length).toBeGreaterThanOrEqual(1);
+    expect(credentials).toHaveLength(1);
   });
 
   test('AM-6085: recreated user with same username can register new passwordless credential', async ({
@@ -71,8 +73,9 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
-    test.setTimeout(120_000);
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-6085');
+    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;
     const originalUsername = waUser.username;
 
@@ -81,7 +84,7 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
 
     // Verify credential was created
     const credsBefore = await listUserCredentials(waDomain.id, waAdminToken, waUser.id);
-    expect(credsBefore.length).toBeGreaterThanOrEqual(1);
+    expect(credsBefore).toHaveLength(1);
 
     // Phase 2: Delete the user
     await deleteUser(waDomain.id, waAdminToken, waUser.id);
@@ -99,7 +102,7 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
     try {
       // Phase 4: The new user should have NO credentials
       const credsAfter = await listUserCredentials(waDomain.id, waAdminToken, newUser.id);
-      expect(credsAfter.length).toEqual(0);
+      expect(credsAfter).toHaveLength(0);
 
       // Phase 5: New user should be able to register a fresh credential
       await page.context().clearCookies();
