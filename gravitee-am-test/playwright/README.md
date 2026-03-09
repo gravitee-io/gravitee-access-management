@@ -43,6 +43,9 @@ npx playwright test --workers=1 playwright/tests/oauth/
 # Run with visible browser
 npm run pw:headed
 
+# Run with visible browser + slow motion (500ms between actions)
+SLOW_MO=500 npx playwright test --headed
+
 # Run with Playwright UI mode (interactive, best for developing tests)
 npm run pw:ui
 
@@ -79,6 +82,7 @@ Same variables as the Jest tests — configure once, use everywhere.
 | `AM_DEF_ORG_ID` | `DEFAULT` | Default organization ID |
 | `AM_DEF_ENV_ID` | `DEFAULT` | Default environment ID |
 | `AM_DEF_ENV_HRID` | `default` | Default environment hrid (used in Angular routes — **lowercase**) |
+| `SLOW_MO` | `0` | Milliseconds to wait between each Playwright action (useful with `--headed` for observing test behavior) |
 
 Override for a different environment:
 
@@ -406,8 +410,8 @@ Follow this checklist:
 ### Debugging Flaky Tests
 
 ```bash
-# Run with visible browser + slowmo
-npx playwright test --headed --workers=1
+# Run with visible browser + slow motion
+SLOW_MO=500 npx playwright test --headed --workers=1
 
 # Run single test with debug inspector
 npx playwright test -g "test name" --debug
