@@ -29,6 +29,7 @@ export class ApplicationFormComponent implements OnInit {
   private appId: string;
   private rawTemplate: string;
   private template: string;
+  isCustom: boolean;
   createMode: boolean;
   editMode: boolean;
   deleteMode: boolean;
@@ -41,6 +42,7 @@ export class ApplicationFormComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.appId = this.route.snapshot.params['appId'];
+    this.isCustom = this.route.snapshot.queryParams['isCustom'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['application_form_create']);

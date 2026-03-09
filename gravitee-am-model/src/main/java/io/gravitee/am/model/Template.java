@@ -81,4 +81,8 @@ public enum Template {
 
         throw new IllegalArgumentException("No template is matching");
     }
+
+    public static List<String> list() {
+        return Arrays.stream(values()).map(Template::template).toList();
+    }
 }

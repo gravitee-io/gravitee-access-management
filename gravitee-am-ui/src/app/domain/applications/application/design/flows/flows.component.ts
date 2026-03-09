@@ -168,6 +168,7 @@ export class ApplicationFlowsComponent implements OnInit {
 
   private initPolicies() {
     const factors = this.route.snapshot.data['factors'] || [];
+    const customForms = this.route.snapshot.data['customForms'] || [];
     const appFactorIds = this.application.factors || [];
     const filteredFactors = factors
       .filter((f) => appFactorIds.includes(f.id))
@@ -178,22 +179,27 @@ export class ApplicationFlowsComponent implements OnInit {
       }
       const policySchema = JSON.parse(policy.schema);
       if (policySchema.properties) {
-        for (const key in policySchema.properties) {
-          if ('graviteeFactor' === policySchema.properties[key].widget) {
-            policySchema.properties[key]['x-schema-form'] = { type: 'select' };
-            policySchema.properties[key].enum = [''];
-            policySchema.properties[key]['x-schema-form'].titleMap = { '': 'None' };
-            if (filteredFactors.length > 0) {
-              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map((f) => f.id));
-              filteredFactors.forEach((obj) => {
-                policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
-              });
-            }
+        Object.values(policySchema.properties).forEach((prop: any) => {
+          if (prop['widget'] === 'graviteeFactor') {
+            this.updateSelectWidget(prop, filteredFactors, 'id', 'name');
+          } else if (prop['widget'] === 'graviteeCustomForm') {
+            this.updateSelectWidget(prop, customForms, 'template', 'template');
           }
-        }
+        });
         policy.schema = JSON.stringify(policySchema);
       }
       return policy;
     });
   }
+
+  private updateSelectWidget = (property, data, idKey, labelKey) => {
+    property['x-schema-form'] = { type: 'select', titleMap: { '': 'None' } };
+    property.enum = [''];
+    if (data && data.length > 0) {
+      property.enum = property.enum.concat(data.map((item: any) => item[idKey]));
+      data.forEach((item: any) => {
+        property['x-schema-form'].titleMap[item[idKey]] = item[labelKey];
+      });
+    }
+  };
 }

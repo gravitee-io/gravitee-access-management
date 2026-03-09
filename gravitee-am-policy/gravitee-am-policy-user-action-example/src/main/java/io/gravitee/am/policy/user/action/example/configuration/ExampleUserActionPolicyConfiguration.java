@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+package io.gravitee.am.policy.user.action.example.configuration;
 
-import jakarta.validation.constraints.NotNull;
+import io.gravitee.policy.api.PolicyConfiguration;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class NewForm {
+public class ExampleUserActionPolicyConfiguration implements PolicyConfiguration {
 
-    private boolean enabled;
-    @NotNull
+    private String action;
     private String template;
-    @NotNull
-    private String content;
-    private String assets;
 
-    public boolean isEnabled() {
-        return enabled;
+    public String getAction() {
+        return action;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setAction(String action) {
+        this.action = action;
     }
 
     public String getTemplate() {
@@ -44,21 +36,5 @@ public class NewForm {
 
     public void setTemplate(String template) {
         this.template = template;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public String getAssets() {
-        return assets;
-    }
-
-    public void setAssets(String assets) {
-        this.assets = assets;
     }
 }
