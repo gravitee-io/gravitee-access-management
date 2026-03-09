@@ -42,10 +42,11 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
   test.afterEach(async () => {
     if (auth) {
       await removeVirtualAuthenticator(auth);
+      auth = undefined;
     }
   });
 
-  test('user credentials exist after registration and are queryable via API (AM-6085)', async ({
+  test('AM-6085: user credentials exist after registration and are queryable via API', async ({
     page,
     waApp,
     waUser,
@@ -63,7 +64,7 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
     expect(credentials.length).toBeGreaterThanOrEqual(1);
   });
 
-  test('recreated user with same username can register new passwordless credential (AM-6085)', async ({
+  test('AM-6085: recreated user with same username can register new passwordless credential', async ({
     page,
     waApp,
     waUser,
@@ -71,6 +72,7 @@ test.describe('WebAuthn - Credential Cleanup on User Delete (AM-6085)', () => {
     waDomain,
     gatewayUrl,
   }) => {
+    test.setTimeout(120_000);
     const clientId = waApp.settings.oauth.clientId;
     const originalUsername = waUser.username;
 

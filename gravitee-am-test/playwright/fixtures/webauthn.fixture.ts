@@ -75,14 +75,22 @@ export async function addVirtualAuthenticator(page: Page): Promise<VirtualAuthen
 export async function simulateWebAuthnGesture(
   auth: VirtualAuthenticator,
   triggerAction: () => Promise<void>,
+  timeoutMs = 15000,
 ): Promise<void> {
-  const operationCompleted = new Promise<void>((resolve) => {
+  const operationCompleted = new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      auth.cdpSession.off('WebAuthn.credentialAdded', onAdded);
+      auth.cdpSession.off('WebAuthn.credentialAsserted', onAsserted);
+      reject(new Error(`WebAuthn CDP event (credentialAdded/credentialAsserted) not received within ${timeoutMs}ms`));
+    }, timeoutMs);
     const onAdded = () => {
+      clearTimeout(timer);
       auth.cdpSession.off('WebAuthn.credentialAdded', onAdded);
       auth.cdpSession.off('WebAuthn.credentialAsserted', onAsserted);
       resolve();
     };
     const onAsserted = () => {
+      clearTimeout(timer);
       auth.cdpSession.off('WebAuthn.credentialAdded', onAdded);
       auth.cdpSession.off('WebAuthn.credentialAsserted', onAsserted);
       resolve();
@@ -153,14 +161,8 @@ export async function loginAndRegisterWebAuthn(
   username: string,
   password: string,
 ): Promise<VirtualAuthenticator> {
-  const authorizeUrl =
-    `${gatewayUrl}/oauth/authorize?response_type=code` +
-    `&client_id=${clientId}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-    `&scope=openid`;
-
-  await page.goto(authorizeUrl);
-  await page.waitForURL(/.*login.*/i);
+  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+  await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
   await page.locator('#username').fill(username);
   await page.locator('#password').fill(password);
@@ -192,16 +194,10 @@ export async function passwordlessLogin(
   clientId: string,
   username: string,
 ): Promise<void> {
-  const authorizeUrl =
-    `${gatewayUrl}/oauth/authorize?response_type=code` +
-    `&client_id=${clientId}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-    `&scope=openid`;
+  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+  await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 
-  await page.goto(authorizeUrl);
-  await page.waitForURL(/.*login.*/i);
-
-  const passwordlessLink = page.locator('a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]');
+  const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
   await passwordlessLink.click();
   await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
 
@@ -213,6 +209,21 @@ export async function passwordlessLogin(
 
   await handleConsentIfPresent(page);
   await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+}
+
+const SESSION_COOKIE = 'GRAVITEE_IO_AM_SESSION';
+
+/**
+ * Clear only the gateway session cookie, preserving device recognition cookies.
+ * Simulates a user returning after their session expired but their device
+ * is still recognized.
+ */
+export async function clearSessionOnly(page: Page): Promise<void> {
+  const allCookies = await page.context().cookies();
+  const sessionCookies = allCookies.filter((c) => c.name === SESSION_COOKIE);
+  for (const cookie of sessionCookies) {
+    await page.context().clearCookies({ name: cookie.name, domain: cookie.domain });
+  }
 }
 
 /**
@@ -241,33 +252,60 @@ export type WebAuthnFixtures = {
   waUser: User;
   /** Gateway URL for this domain (e.g. http://localhost:8092/domain-hrid) */
   gatewayUrl: string;
+  /** Extra loginSettings merged into the domain config before start.
+   *  Use test.use({ waExtraLoginSettings: { ... } }) to configure per-test. */
+  waExtraLoginSettings: Record<string, unknown>;
 };
 
 const REDIRECT_URI = 'https://gravitee.io/callback';
+
+/* ------------------------------------------------------------------ */
+/*  Shared locators & helpers                                          */
+/* ------------------------------------------------------------------ */
+
+/** Locator string for the passwordless / "Sign in with fingerprint" link on the login page. */
+export const PASSWORDLESS_LINK_SELECTOR =
+  'a:has-text("passwordless"), a:has-text("Sign in with fingerprint"), a[href*="webauthn/login"]';
+
+/** Build the OAuth authorize URL for a given domain + app. */
+export function buildAuthorizeUrl(gatewayUrl: string, clientId: string): string {
+  return (
+    `${gatewayUrl}/oauth/authorize?response_type=code` +
+    `&client_id=${clientId}` +
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&scope=openid`
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Fixture                                                            */
 /* ------------------------------------------------------------------ */
 
 export const test = base.extend<WebAuthnFixtures>({
+  waExtraLoginSettings: [{}, { option: true }],
+
   waAdminToken: async ({}, use) => {
     const token = await requestAdminAccessToken();
     await use(token);
   },
 
-  waDomain: async ({ waAdminToken }, use) => {
+  waDomain: async ({ waAdminToken, waExtraLoginSettings }, use) => {
     const name = uniqueTestName('pw-webauthn');
     const domain = await quietly(() => createDomain(waAdminToken, name, 'WebAuthn Playwright test domain'));
 
     // Enable passwordless (WebAuthn) on the domain.
     // Domain is NOT started here — gatewayUrl starts it after app+user are
     // created so the initial sync picks up all resources in one pass.
+    // waExtraLoginSettings is merged in so tests can configure features like
+    // device recognition or enforce password before the domain starts,
+    // avoiding a patchDomain on a running domain (which causes a redeploy gap).
     await quietly(() =>
       patchDomain(domain.id, waAdminToken, {
         loginSettings: {
           inherited: false,
           passwordlessEnabled: true,
           passwordlessDeviceNamingEnabled: false,
+          ...waExtraLoginSettings,
         },
         webAuthnSettings: {
           origin: process.env.AM_GATEWAY_URL || 'http://localhost:8092',
