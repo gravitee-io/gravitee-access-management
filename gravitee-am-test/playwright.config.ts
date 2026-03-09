@@ -57,6 +57,9 @@ export default defineConfig({
     video: 'on-first-retry',
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
+    launchOptions: {
+      slowMo: parseInt(process.env.SLOW_MO || '0'),
+    },
   },
 
   projects: [
