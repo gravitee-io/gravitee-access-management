@@ -24,7 +24,8 @@ import {
   buildAuthorizeUrl,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, BRIEF_TIMEOUT } from '../../../utils/test-constants';
+import { linkJira } from '../../../utils/jira';
 
 test.describe('WebAuthn Registration', () => {
   // No saved browser auth state — we're testing gateway login forms
@@ -39,17 +40,18 @@ test.describe('WebAuthn Registration', () => {
     }
   });
 
-  test('user can register a WebAuthn credential after password login', async ({
+  test('AM-2194: user can register a WebAuthn credential after password login', async ({
     page,
     waApp,
     waUser,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-2194');
     const clientId = waApp.settings.oauth.clientId;
 
     // 1. Navigate to authorize — should redirect to login form
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
+    await page.waitForURL(/.*login.*/i);
 
     // 2. Log in with username/password
     await page.locator('#username').fill(waUser.username);
@@ -57,7 +59,7 @@ test.describe('WebAuthn Registration', () => {
     await page.locator('button[type="submit"], #submitBtn').click();
 
     // 3. Should redirect to WebAuthn registration (forceRegistration=true)
-    await page.waitForURL(/.*webauthn\/register.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*webauthn\/register.*/i);
 
     // 4. Set up virtual authenticator BEFORE clicking register
     auth = await addVirtualAuthenticator(page);
@@ -77,34 +79,35 @@ test.describe('WebAuthn Registration', () => {
 
     // 7. May redirect to consent, then to callback with authorization code
     await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*callback\?code=.*/i);
   });
 
-  test('user can skip WebAuthn registration when not enrolling a FIDO2 factor', async ({
+  test('AM-2194: user can skip WebAuthn registration when not enrolling a FIDO2 factor', async ({
     page,
     waApp,
     waUser,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-2194');
     const clientId = waApp.settings.oauth.clientId;
 
     // 1. Login
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
+    await page.waitForURL(/.*login.*/i);
     await page.locator('#username').fill(waUser.username);
     await page.locator('#password').fill(API_USER_PASSWORD);
     await page.locator('button[type="submit"], #submitBtn').click();
 
     // 2. Should arrive at WebAuthn registration
-    await page.waitForURL(/.*webauthn\/register.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*webauthn\/register.*/i);
 
     // 3. Click skip link (only visible when not enrolling a FIDO2 factor)
     const skipLink = page.locator('a[href*="skipAction"], a:has-text("skip"), a:has(span.icons:text("arrow_forward"))');
-    await expect(skipLink).toBeVisible({ timeout: 3000 });
+    await expect(skipLink).toBeVisible({ timeout: BRIEF_TIMEOUT });
     await skipLink.click();
 
     // 4. May redirect to consent, then to callback with authorization code
     await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*callback\?code=.*/i);
   });
 });

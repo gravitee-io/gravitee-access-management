@@ -339,80 +339,13 @@ Convention: `data-testid="{feature}{element}{type}"` in camelCase. Examples: `do
 
 ## Best Practices
 
-### Test Independence
+For the full set of coding standards, assertion rules, patterns, and review checklists see **[GUIDELINES.md](GUIDELINES.md)**. Key highlights:
 
-Every test must be independent. Never rely on state from a previous test.
-
-```typescript
-// ✅ Good — each test gets its own domain via fixture
-test('test A', async ({ testDomain }) => { /* ... */ });
-test('test B', async ({ testDomain }) => { /* ... */ });
-
-// ❌ Bad — test B depends on test A's side effects
-let sharedDomain;
-test('test A', async () => { sharedDomain = await createDomain(...); });
-test('test B', async () => { /* uses sharedDomain */ });
-```
-
-### Avoid Hard Waits
-
-Never use `page.waitForTimeout()`. Use Playwright's auto-wait or explicit conditions:
-
-```typescript
-// ✅ Good — waits for the element to appear
-await expect(page.locator('text=Domain created')).toBeVisible();
-
-// ✅ Good — waits for a specific URL pattern
-await page.waitForURL(/.*domains.*/);
-
-// ❌ Bad — networkidle is unreliable for Angular SPAs with polling/charts
-await page.waitForLoadState('networkidle');
-
-// ❌ Bad — arbitrary delay, flaky
-await page.waitForTimeout(3000);
-```
-
-### Assertions
-
-Be specific. Test what the user sees, not internal state:
-
-```typescript
-// ✅ Good — verifies user-visible behavior
-await expect(page.getByRole('heading')).toContainText('My Domain');
-await expect(page.locator('mat-table')).toContainText('my-app');
-
-// ❌ Bad — tests internal state, brittle
-expect(await page.evaluate(() => window.__store.domains.length)).toBe(1);
-```
-
-### Test Naming
-
-Use descriptive names that explain what behavior is being verified:
-
-```typescript
-// ✅ Good
-test('should display error when creating domain with duplicate name', ...);
-test('should navigate to application settings after creation', ...);
-
-// ❌ Bad
-test('test 1', ...);
-test('domain works', ...);
-```
-
-### Error Recovery and Cleanup
-
-Fixtures handle cleanup automatically. For manual API calls within a test, use try/finally:
-
-```typescript
-test('manual cleanup example', async ({ adminToken }) => {
-  const domain = await createDomain(adminToken, 'temp', 'temp');
-  try {
-    // ... test logic
-  } finally {
-    await deleteDomain(domain.id, adminToken).catch(() => {});
-  }
-});
-```
+- Every test must be **independent** — no shared mutable state between tests.
+- Never use `page.waitForTimeout()` or `networkidle` — use Playwright auto-wait or explicit conditions.
+- Be specific in assertions — test user-visible behavior, not internal state.
+- Use descriptive test names that explain the behavior being verified.
+- Fixtures handle cleanup automatically. For manual API calls use `try/finally`.
 
 ### Screenshots and Traces
 

@@ -23,8 +23,9 @@ import {
   PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, MULTI_PHASE_TEST_TIMEOUT, BRIEF_TIMEOUT } from '../../../utils/test-constants';
 import { updateUserStatus } from '../../../../api/commands/management/user-management-commands';
+import { linkJira } from '../../../utils/jira';
 
 /**
  * AM-4553: Authentication filter - With webauthn registered user (Unsuccessful attempts)
@@ -51,8 +52,9 @@ test.describe('WebAuthn - Disabled User (AM-4553)', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
-    test.setTimeout(120_000);
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-4553');
+    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;
 
     // Phase 1: Register WebAuthn credential via normal login flow
@@ -65,11 +67,11 @@ test.describe('WebAuthn - Disabled User (AM-4553)', () => {
     await page.context().clearCookies();
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
+    await page.waitForURL(/.*login.*/i);
 
     const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
     await passwordlessLink.click();
-    await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*webauthn\/login.*/i);
 
     await page.locator('#username').fill(waUser.username);
 
@@ -79,10 +81,10 @@ test.describe('WebAuthn - Disabled User (AM-4553)', () => {
       await page.locator('button.primary, button#login-button').click();
     });
 
-    await page.waitForURL(/.*error=.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*error=.*/i);
 
     const serverError = page.locator('.item.error-text:not(.hide) .error');
-    await expect(serverError).toBeVisible({ timeout: 5000 });
+    await expect(serverError).toBeVisible({ timeout: BRIEF_TIMEOUT });
     await expect(serverError).toContainText('login_failed');
   });
 });

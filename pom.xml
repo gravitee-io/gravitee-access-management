@@ -723,6 +723,7 @@
                         <exclude>gravitee-am-test/playwright/**/*.md</exclude>
                         <exclude>gravitee-am-test/playwright/playwright-report/**</exclude>
                         <exclude>gravitee-am-test/playwright/test-results/**</exclude>
+                        <exclude>gravitee-am-test/playwright/junit-results/**</exclude>
                         <exclude>helm/**</exclude>
                         <exclude>node/**</exclude>
                         <exclude>scripts/**</exclude>

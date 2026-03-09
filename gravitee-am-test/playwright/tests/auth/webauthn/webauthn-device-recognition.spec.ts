@@ -25,7 +25,8 @@ import {
   PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../../utils/test-constants';
+import { linkJira } from '../../../utils/jira';
 import { patchDomain, waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
 import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
 
@@ -57,7 +58,8 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     waApp,
     waUser,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-5292');
     const clientId = waApp.settings.oauth.clientId;
 
     // Register a WebAuthn credential (sets the remember-device cookie).
@@ -70,12 +72,12 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
 
     // Device recognition should route us directly to WebAuthn login page
-    await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*webauthn\/login.*/i);
 
     // Verify we're on the WebAuthn login page with the username field
     await expect(page.locator('#username')).toBeVisible();
     // The password field should NOT be present
-    await expect(page.locator('#password')).not.toBeVisible();
+    await expect(page.locator('#password')).toBeHidden();
 
     // Complete the passwordless login
     await page.locator('#username').fill(waUser.username);
@@ -85,10 +87,10 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     });
 
     await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*callback\?code=.*/i);
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toMatch(/^.+$/);
+    expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 
   test('AM-5292: disabling device recognition shows normal login page for returning user', async ({
@@ -98,8 +100,9 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
-    test.setTimeout(120_000);
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-5292');
+    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;
 
     // Register a credential (sets the remember-device cookie).
@@ -117,13 +120,13 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
         },
       }),
     );
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 300 });
+    await waitForOidcReady(waDomain.hrid);
 
     // Clear only the session cookie — device recognition cookie stays
     await clearSessionOnly(page);
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
+    await page.waitForURL(/.*login.*/i);
 
     // Should see the normal login form with both username AND password
     await expect(page.locator('#username')).toBeVisible();

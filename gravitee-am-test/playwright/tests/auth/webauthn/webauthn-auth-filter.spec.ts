@@ -23,7 +23,8 @@ import {
   buildAuthorizeUrl,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT, BRIEF_TIMEOUT } from '../../../utils/test-constants';
+import { linkJira } from '../../../utils/jira';
 
 /**
  * AM-4550: Authentication filter - Without webauthn registered user (Successful attempts)
@@ -51,11 +52,12 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     waApp,
     waUser,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-4550');
     const clientId = waApp.settings.oauth.clientId;
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
+    await page.waitForURL(/.*login.*/i);
 
     // User has NOT registered for WebAuthn — standard password login
     await page.locator('#username').fill(waUser.username);
@@ -63,15 +65,15 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     await page.locator('button[type="submit"], #submitBtn').click();
 
     // forceRegistration is on, so we land on /webauthn/register — skip it
-    await page.waitForURL(/.*webauthn\/register.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*webauthn\/register.*/i);
     const skipLink = page.locator('a[href*="skipAction"], a:has-text("skip"), a:has(span.icons:text("arrow_forward"))');
     await skipLink.click();
 
     await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*callback\?code=.*/i);
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toMatch(/^.+$/);
+    expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 
   test('AM-4551: non-registered user fails login with wrong password', async ({
@@ -79,20 +81,21 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     waApp,
     waUser,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-4551');
     const clientId = waApp.settings.oauth.clientId;
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
+    await page.waitForURL(/.*login.*/i);
 
     await page.locator('#username').fill(waUser.username);
     await page.locator('#password').fill('wrong-password');
     await page.locator('button[type="submit"], #submitBtn').click();
 
     // Should stay on login page with an error
-    await page.waitForURL(/.*login.*error.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*login.*error.*/i);
     const errorText = page.locator('.error-text:not(.hide) .error, .notification-error');
-    await expect(errorText.first()).toBeVisible({ timeout: 5000 });
+    await expect(errorText.first()).toBeVisible({ timeout: BRIEF_TIMEOUT });
 
     // Should NOT have an authorization code
     expect(page.url()).not.toContain('callback?code=');
@@ -103,8 +106,9 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     waApp,
     waUser,
     gatewayUrl,
-  }) => {
-    test.setTimeout(120_000);
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-4552');
+    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;
 
     // Phase 1: Register a WebAuthn credential
@@ -115,6 +119,6 @@ test.describe('WebAuthn - Authentication Filter (AM-4550, AM-4551, AM-4552)', ()
     await passwordlessLogin(page, auth, gatewayUrl, clientId, waUser.username);
 
     const url = new URL(page.url());
-    expect(url.searchParams.get('code')).toMatch(/^.+$/);
+    expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
 });

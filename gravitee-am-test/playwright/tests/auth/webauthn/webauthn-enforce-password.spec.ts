@@ -24,9 +24,10 @@ import {
   PASSWORDLESS_LINK_SELECTOR,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT, BRIEF_TIMEOUT } from '../../../utils/test-constants';
 import { patchDomain, waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
 import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
+import { linkJira } from '../../../utils/jira';
 
 /**
  * AM-2376: Passwordless - Enforce Password Usage - Within usage limit
@@ -61,7 +62,8 @@ test.describe('WebAuthn - Enforce Password Usage', () => {
       waApp,
       waUser,
       gatewayUrl,
-    }) => {
+    }, testInfo) => {
+      linkJira(testInfo, 'AM-2376');
       const clientId = waApp.settings.oauth.clientId;
 
       // Enforce password is configured via waExtraLoginSettings before domain start.
@@ -75,7 +77,7 @@ test.describe('WebAuthn - Enforce Password Usage', () => {
       await passwordlessLogin(page, auth, gatewayUrl, clientId, waUser.username);
 
       const url = new URL(page.url());
-      expect(url.searchParams.get('code')).toMatch(/^.+$/);
+      expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
     });
   });
 
@@ -86,8 +88,9 @@ test.describe('WebAuthn - Enforce Password Usage', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
-    test.setTimeout(120_000);
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-2379');
+    test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
     const clientId = waApp.settings.oauth.clientId;
 
     // Register WebAuthn credential first (with enforce password disabled)
@@ -105,20 +108,21 @@ test.describe('WebAuthn - Enforce Password Usage', () => {
         },
       }),
     );
-    await waitForOidcReady(waDomain.hrid, { timeoutMs: 15000, intervalMs: 300 });
+    await waitForOidcReady(waDomain.hrid);
 
     // Wait for the 1s max age to expire so the server enforces password re-auth
-    await new Promise((r) => setTimeout(r, 2000));
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(2000);
 
     // Clear session and attempt passwordless login
     await page.context().clearCookies();
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i, { timeout: 30000 });
+    await page.waitForURL(/.*login.*/i);
 
     const passwordlessLink = page.locator(PASSWORDLESS_LINK_SELECTOR);
     await passwordlessLink.click();
-    await page.waitForURL(/.*webauthn\/login.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*webauthn\/login.*/i);
 
     await page.locator('#username').fill(waUser.username);
 
@@ -127,10 +131,10 @@ test.describe('WebAuthn - Enforce Password Usage', () => {
       await page.locator('button.primary, button#login-button').click();
     });
 
-    await page.waitForURL(/.*error=.*/i, { timeout: 15000 });
+    await page.waitForURL(/.*error=.*/i);
 
     const serverError = page.locator('.item.error-text:not(.hide) .error');
-    await expect(serverError).toBeVisible({ timeout: 5000 });
+    await expect(serverError).toBeVisible({ timeout: BRIEF_TIMEOUT });
 
     // Verify we did NOT get an authorization code
     expect(page.url()).not.toContain('callback?code=');
