@@ -33,7 +33,21 @@
 
     <properties>
         <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
+        <netty.version>4.1.131.Final</netty.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Override Netty to fix CVE-2025-58057, CVE-2025-67735, CVE-2025-58056 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -147,7 +161,7 @@
                         <image>gravitee-am-ciba-delegated-service</image>
                     </to>
                     <from>
-                        <image>eclipse-temurin:21</image>
+                        <image>eclipse-temurin:25.0.1_8-jdk</image>
                         <platforms>
                             <platform>
                                 <architecture>amd64</architecture>

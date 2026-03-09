@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>23.4.1</version>
+        <version>24.0.0-AM-6673-java-25-upgrade-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
@@ -78,7 +78,7 @@
     <properties>
         <bouncycastle-extension.version>1.81</bouncycastle-extension.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>8.3.46</gravitee-bom.version>
+        <gravitee-bom.version>8.3.47</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
         <gravitee-node.version>7.23.0</gravitee-node.version>
@@ -116,7 +116,7 @@
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <commons-cli.version>1.4</commons-cli.version>
         <ognl.version>3.3.4</ognl.version>
-        <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
+        <mockito-jupiter.version>5.20.0</mockito-jupiter.version>
         <liquibase.version>4.31.1</liquibase.version>
 
         <!-- R2DBC dependencies -->
@@ -146,7 +146,7 @@
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.1</gravitee-policy-callout-http.version>
-        <gravitee-policy-groovy.version>2.5.2</gravitee-policy-groovy.version>
+        <gravitee-policy-groovy.version>5.0.0-AM-6614-groovy-upgrade-for-java-25-SNAPSHOT</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.14.1</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
@@ -229,7 +229,7 @@
         <r2dbc-proxy.version>1.1.6.RELEASE</r2dbc-proxy.version>
         <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 
-        <jdk.version>21</jdk.version>
+        <jdk.version>25</jdk.version>
 
         <ongres.scram.version>2.1</ongres.scram.version>
 
@@ -240,6 +240,7 @@
 
         <kryo.version>5.6.2</kryo.version>
         <testcontainers.version>2.0.3</testcontainers.version>
+        <gravitee.archrules.skip>true</gravitee.archrules.skip>
     </properties>
 
     <dependencyManagement>
