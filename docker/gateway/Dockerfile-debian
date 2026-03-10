@@ -67,7 +67,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
+# jemalloc is installed but not active by default.
+# To enable: set LD_PRELOAD=/usr/lib/libjemalloc.so.2 via environment variable.
 
 COPY --from=build-env --chown=1001:1000 /gravitee-tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}/ ${GRAVITEE_AM_HOME}/
 COPY --from=build-jattach /usr/local/bin/jattach /usr/local/bin/jattach
