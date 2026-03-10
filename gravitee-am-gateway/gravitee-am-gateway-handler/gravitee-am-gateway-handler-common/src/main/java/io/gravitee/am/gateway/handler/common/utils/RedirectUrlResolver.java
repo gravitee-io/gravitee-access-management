@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.utils;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;

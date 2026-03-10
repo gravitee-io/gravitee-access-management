@@ -34,7 +34,7 @@ import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -205,7 +205,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                 .onErrorComplete()
                 .subscribe(
                         () -> {
-                            routingContext.clearUser();
+                            routingContext.userContext().logout();
                             if (routingContext.session() != null) {
                                 routingContext.session().destroy();
                             }

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.response;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.web.UriBuilder;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 
 import java.util.function.BiConsumer;
 

@@ -24,7 +24,7 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.mockito.Mockito;

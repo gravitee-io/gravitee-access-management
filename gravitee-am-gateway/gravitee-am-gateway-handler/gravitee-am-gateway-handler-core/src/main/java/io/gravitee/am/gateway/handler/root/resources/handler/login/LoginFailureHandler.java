@@ -35,7 +35,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpStatusCode;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -208,7 +208,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
                     .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
         }
-        context.clearUser();
+        context.userContext().logout();
         context.session().destroy();
     }
 }

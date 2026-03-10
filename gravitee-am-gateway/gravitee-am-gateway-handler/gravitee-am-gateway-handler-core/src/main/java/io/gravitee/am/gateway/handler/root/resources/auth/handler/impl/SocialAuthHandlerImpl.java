@@ -27,6 +27,7 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.HttpException;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -72,7 +73,7 @@ public class SocialAuthHandlerImpl implements SocialAuthHandler {
         getSocialAuthenticationProvider().authenticate(ctx, clientCredentials, authN -> {
             if (authN.succeeded()) {
                 final User authenticated = authN.result();
-                ctx.getDelegate().setUser(authenticated);
+                ((UserContextInternal) ctx.getDelegate().userContext()).setUser(authenticated);
                 ctx.put(ConstantKeys.USER_CONTEXT_KEY, authenticated.getUser());
                 ctx.next();
             } else {

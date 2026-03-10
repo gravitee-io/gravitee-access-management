@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.common.utils.UsernameHelper;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;

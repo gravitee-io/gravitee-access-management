@@ -20,7 +20,8 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CSRFHandlerI
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.impl.CookieImpl;
-import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.core.http.Cookie;
+import io.vertx.ext.web.impl.RoutingContextInternal;
 import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
 import org.junit.Test;
@@ -67,7 +68,7 @@ public class CSRFHandlerTest extends RxWebTestBase {
         io.vertx.ext.web.Session mockSession = mock(io.vertx.ext.web.Session.class);
         Session session = Session.newInstance(mockSession);
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setSession(session);
+            ((RoutingContextInternal) routingContext.getDelegate()).setSession(session.getDelegate());
             routingContext.next();
         });
 
@@ -86,10 +87,10 @@ public class CSRFHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             when(session.id()).thenReturn("sid");
             when(session.get(CSRF_HEADER)).thenReturn("sid/" + extractCookieValue(csrfToken.get()));
-            routingContext.setSession(session);
+            ((RoutingContextInternal) routingContext.getDelegate()).setSession(session.getDelegate());
             CookieImpl cookie = new CookieImpl(CSRF_COOKIE, extractCookieValue(csrfToken.get()));
             cookie.setPath("/");
-            routingContext.addCookie(Cookie.newInstance(cookie));
+            routingContext.response().addCookie(cookie);
             routingContext.next();
         });
         testRequest(
@@ -111,7 +112,7 @@ public class CSRFHandlerTest extends RxWebTestBase {
         io.vertx.ext.web.Session mockSession = mock(io.vertx.ext.web.Session.class);
         Session session = Session.newInstance(mockSession);
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setSession(session);
+            ((RoutingContextInternal) routingContext.getDelegate()).setSession(session.getDelegate());
             routingContext.next();
         });
 
@@ -132,10 +133,10 @@ public class CSRFHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             when(session.id()).thenReturn("sid");
             when(session.get(CSRF_HEADER)).thenReturn("sid/" + extractCookieValue(csrfToken.get()));
-            routingContext.setSession(session);
+            ((RoutingContextInternal) routingContext.getDelegate()).setSession(session.getDelegate());
             CookieImpl cookie = new CookieImpl(CSRF_COOKIE, extractCookieValue(csrfToken.get()));
             cookie.setPath("/");
-            routingContext.addCookie(Cookie.newInstance(cookie));
+            routingContext.response().addCookie(cookie);
             routingContext.next();
         });
         testRequest(
@@ -155,7 +156,7 @@ public class CSRFHandlerTest extends RxWebTestBase {
         io.vertx.ext.web.Session mockSession = mock(io.vertx.ext.web.Session.class);
         Session session = Session.newInstance(mockSession);
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setSession(session);
+            ((RoutingContextInternal) routingContext.getDelegate()).setSession(session.getDelegate());
             routingContext.next();
         });
 
@@ -176,10 +177,10 @@ public class CSRFHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             when(session.id()).thenReturn("sid");
             when(session.get(CSRF_HEADER)).thenReturn("sid/" + extractCookieValue(csrfToken.get()));
-            routingContext.setSession(session);
+            ((RoutingContextInternal) routingContext.getDelegate()).setSession(session.getDelegate());
             CookieImpl cookie = new CookieImpl(CSRF_COOKIE, extractCookieValue(csrfToken.get()));
             cookie.setPath("/");
-            routingContext.addCookie(Cookie.newInstance(cookie));
+            routingContext.response().addCookie(cookie);
             routingContext.next();
         });
         testRequest(
@@ -199,7 +200,7 @@ public class CSRFHandlerTest extends RxWebTestBase {
     @Test
     public void shouldGenerate_CSRFToken() throws Exception {
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setSession(Session.newInstance(mock(io.vertx.ext.web.Session.class)));
+            ((RoutingContextInternal) routingContext.getDelegate()).setSession(mock(io.vertx.ext.web.Session.class));
             routingContext.next();
         });
 

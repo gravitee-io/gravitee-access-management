@@ -98,7 +98,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
                             .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                             .subscribe();
 
-                    context.clearUser();
+                    context.userContext().logout();
                     context.session().destroy();
                 } else if (cause instanceof InvalidRequestException) {
                     context.fail(new HttpException(403, "Invalid request for the current SSO context"));

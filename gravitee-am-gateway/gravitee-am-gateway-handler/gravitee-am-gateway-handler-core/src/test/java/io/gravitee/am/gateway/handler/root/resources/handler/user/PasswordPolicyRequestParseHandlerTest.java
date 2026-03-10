@@ -31,7 +31,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,7 +41,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -109,7 +108,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
             assertTrue(location.contains("warning=invalid_password_value"));
         }, 302, "Found", null);
         
-        verify(auditService,atMostOnce()).report(any());
+        verify(auditService, org.mockito.Mockito.atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
         verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_RESET)));
     }

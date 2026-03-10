@@ -148,7 +148,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -178,7 +178,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -208,7 +208,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -243,7 +243,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -278,7 +278,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
         });
@@ -312,7 +312,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -340,7 +340,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
 
             // silent auth
             rc.put(SILENT_AUTH_CONTEXT_KEY, true);
@@ -368,7 +368,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -400,7 +400,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -428,7 +428,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -459,7 +459,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -493,7 +493,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -531,7 +531,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
@@ -578,7 +578,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
@@ -624,7 +624,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-id");
             rc.next();
@@ -669,7 +669,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -714,7 +714,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
             rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, false);
             rc.next();
@@ -758,7 +758,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
             rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, false);
             rc.next();
@@ -798,7 +798,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
             rc.next();
@@ -823,7 +823,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
             rc.next();
         });
@@ -858,7 +858,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -893,7 +893,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
@@ -939,7 +939,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -979,7 +979,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
             rc.next();
@@ -1011,7 +1011,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -1043,7 +1043,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
 
             // silent auth
             rc.put(SILENT_AUTH_CONTEXT_KEY, true);
@@ -1083,7 +1083,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -1117,7 +1117,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.next();
         });
 
@@ -1156,7 +1156,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -1191,7 +1191,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
@@ -1226,7 +1226,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             rc.next();
         });
@@ -1263,7 +1263,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             rc.next();
         });
@@ -1297,7 +1297,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
@@ -1334,7 +1334,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor, enrolledFactor2));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             rc.next();
         });
@@ -1372,7 +1372,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -1398,7 +1398,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -1440,7 +1440,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor, factorRecovery));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
 
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
@@ -1486,7 +1486,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor, factorRecovery));
-            rc.getDelegate().setUser(new User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new User(endUser));
 
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();

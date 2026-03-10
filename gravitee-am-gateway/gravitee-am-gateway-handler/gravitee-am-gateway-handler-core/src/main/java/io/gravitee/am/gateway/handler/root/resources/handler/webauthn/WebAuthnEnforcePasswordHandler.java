@@ -21,7 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

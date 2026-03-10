@@ -17,7 +17,8 @@ package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.common.http.HttpHeaders;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import org.junit.After;
 import org.junit.Before;
@@ -246,7 +247,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("forwarded-host:8888");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("9999");
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("original-host:8080");
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", 8080));
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("https://forwarded-host:9999/my/path?param1=value1", generatedUri);
@@ -261,7 +262,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("forwarded-host:443");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("original-host:80");
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", 80));
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("http://forwarded-host:443/my/path?param1=value1", generatedUri);
@@ -276,7 +277,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("forwarded-host:443");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("original-host:80");
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", 80));
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("http://forwarded-host:443/my/path?param1=value1", generatedUri);
@@ -291,7 +292,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("forwarded-host:443");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("original-host"); // No port in Host header
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", -1)); // No port in Host header
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("https://forwarded-host/my/path?param1=value1", generatedUri);
@@ -306,7 +307,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("forwarded-host:443");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("original-host"); // No port in Host header
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", -1)); // No port in Host header
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("https://forwarded-host:443/my/path?param1=value1", generatedUri);
@@ -340,7 +341,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("myhost:443");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
 
         final var generatedUri3 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         // Host header should use legacy behavior (include default ports) when legacy mode is enabled
@@ -358,13 +359,13 @@ public class UriBuilderRequestTest {
         
         // HTTP scheme with no port
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("myhost");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", -1));
         assertEquals("http://myhost/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
         // HTTPS scheme with no port
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("myhost");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", -1));
         assertEquals("https://myhost/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
@@ -378,13 +379,13 @@ public class UriBuilderRequestTest {
         
         // HTTP default port (80) - should be omitted
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("myhost:80");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 80));
         assertEquals("http://myhost/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
         // HTTPS default port (443) - should be omitted
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("myhost:443");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
         assertEquals("https://myhost/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
@@ -400,13 +401,13 @@ public class UriBuilderRequestTest {
         
         // HTTP default port (80) - should be included in legacy mode
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("myhost:80");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 80));
         assertEquals("http://myhost:80/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
         // HTTPS default port (443) - should be included in legacy mode
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("myhost:443");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
         assertEquals("https://myhost:443/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
@@ -420,13 +421,13 @@ public class UriBuilderRequestTest {
         
         // HTTP scheme with non-default port
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("myhost:8080");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 8080));
         assertEquals("http://myhost:8080/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
         // HTTPS scheme with non-default port
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("myhost:8080");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 8080));
         assertEquals("https://myhost:8080/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
@@ -440,13 +441,13 @@ public class UriBuilderRequestTest {
         
         // HTTP scheme with HTTPS default port (443) - should keep port
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("myhost:443");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
         assertEquals("http://myhost:443/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
         // HTTPS scheme with HTTP default port (80) - should keep port
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("myhost:80");
+        when(request.authority()).thenReturn(HostAndPort.create("myhost", 80));
         assertEquals("https://myhost:80/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
@@ -456,7 +457,7 @@ public class UriBuilderRequestTest {
     @Test
     public void shouldHandle_XForwardedHeaders_NoPortInHost_AllSchemes() {
         // Clear Host header to ensure X-Forwarded headers are used
-        when(request.host()).thenReturn(null);
+        when(request.authority()).thenReturn(null);
         
         // HTTP Scheme - No port in X-Forwarded-Host
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
@@ -510,7 +511,7 @@ public class UriBuilderRequestTest {
     @Test
     public void shouldHandle_XForwardedHeaders_DefaultPortInHost_AllSchemes() {
         // Clear Host header to ensure X-Forwarded headers are used
-        when(request.host()).thenReturn(null);
+        when(request.authority()).thenReturn(null);
         
         // HTTP Scheme - Default port (80) in X-Forwarded-Host
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
@@ -544,7 +545,7 @@ public class UriBuilderRequestTest {
     @Test
     public void shouldHandle_XForwardedHeaders_MismatchedDefaultPortInHost_AllSchemes() {
         // Clear Host header to ensure X-Forwarded headers are used
-        when(request.host()).thenReturn(null);
+        when(request.authority()).thenReturn(null);
         
         // HTTP Scheme - HTTPS default port (443) in X-Forwarded-Host (mismatched)
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
@@ -591,7 +592,7 @@ public class UriBuilderRequestTest {
         setupMockEnvironment(true, true); // Enable legacy mode
         
         // Clear Host header to ensure X-Forwarded headers are used
-        when(request.host()).thenReturn(null);
+        when(request.authority()).thenReturn(null);
         
         // Test with default port in X-Forwarded-Host - should be INCLUDED in legacy mode
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
@@ -625,7 +626,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:8080");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("original-host:8888");
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", 8888));
 
         final var generatedUri1 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("http://myhost:8080/my/path?param1=value1", generatedUri1);
@@ -635,7 +636,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:8888");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("original-host:8080");
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", 8080));
 
         final var generatedUri2 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("https://myhost:8888/my/path?param1=value1", generatedUri2);
@@ -652,7 +653,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:80");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
         when(request.scheme()).thenReturn("https");
-        when(request.host()).thenReturn("original-host:8888");
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", 8888));
 
         final var generatedUri1 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("http://myhost:80/my/path?param1=value1", generatedUri1);
@@ -662,7 +663,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:443");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("original-host:8080");
+        when(request.authority()).thenReturn(HostAndPort.create("original-host", 8080));
 
         final var generatedUri2 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("https://myhost:443/my/path?param1=value1", generatedUri2);

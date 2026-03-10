@@ -60,7 +60,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
 
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(context -> {
-                    context.setSession(new io.vertx.rxjava3.ext.web.Session(session));
+                    ((io.vertx.ext.web.impl.RoutingContextInternal) context.getDelegate()).setSession(session);
                     context.next();
                 })
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
@@ -112,7 +112,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
         when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.put("client", client);
             routingContext.put(CONTEXT_PATH, "/test");
             routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
@@ -179,7 +179,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
         authorizationRequest.setPrompts(Collections.singleton("consent"));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.put("client", client);
             routingContext.put(CONTEXT_PATH, "/test");
             routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
@@ -215,7 +215,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
         authorizationRequest.setPrompts(Collections.singleton("none"));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.put("client", client);
             routingContext.put(CONTEXT_PATH, "/test");
             routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
@@ -247,7 +247,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
         authorizationRequest.setApproved(false);
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.put("client", client);
             when(session.get("userConsentCompleted")).thenReturn(true);
             routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
@@ -279,7 +279,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
         authorizationRequest.setApproved(true);
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.put("client", client);
             routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
             routingContext.next();

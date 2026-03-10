@@ -116,7 +116,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
                         .allowedHeaders(settings.getAllowedHeaders())
                         .allowedMethods(getHttpMethods(settings.getAllowedMethods()))
                         .maxAgeSeconds(settings.getMaxAge())
-                        .addRelativeOrigins(List.copyOf(settings.getAllowedOrigins())))
+                        .addOriginsWithRegex(List.copyOf(settings.getAllowedOrigins())))
                 .allowCredentials(settings.isAllowCredentials());
     }
 }

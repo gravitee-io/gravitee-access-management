@@ -27,7 +27,7 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.apache.shiro.crypto.hash.Hash;

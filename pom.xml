@@ -78,7 +78,7 @@
     <properties>
         <bouncycastle-extension.version>1.81</bouncycastle-extension.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>8.3.47</gravitee-bom.version>
+        <gravitee-bom.version>9.0.0-beta.2</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
         <gravitee-node.version>7.23.0</gravitee-node.version>
@@ -255,6 +255,14 @@
                 <version>${testcontainers.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+
+            <!-- vertx-auth-webauthn was removed after 5.0.0.CR2 (replaced by vertx-auth-webauthn4j) -->
+            <!-- Pin to last available version until WebAuthn code is migrated -->
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-auth-webauthn</artifactId>
+                <version>5.0.0.CR2</version>
             </dependency>
 
             <!-- Gravitee.io -->
@@ -625,6 +633,13 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-codegen</artifactId>
+            <version>5.0.8</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Log -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -682,6 +697,27 @@
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                    <configuration>
+                        <parameters>true</parameters>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>1.18.42</version>
+                            </path>
+                            <path>
+                                <groupId>io.vertx</groupId>
+                                <artifactId>vertx-codegen</artifactId>
+                                <version>5.0.8</version>
+                                <classifier>processor</classifier>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

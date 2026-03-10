@@ -19,7 +19,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 
 /**
  * When using the Hybrid Flow, Authentication Responses are made in the same manner as for the Implicit Flow, as defined in Section 3.2.2.5, with the exception of the differences specified in this section.

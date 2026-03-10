@@ -60,7 +60,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
@@ -343,7 +343,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     FactorSettings factorSettings = new FactorSettings();
                     factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
                     client.setFactorSettings(factorSettings);
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ((io.vertx.ext.web.impl.UserContextInternal) ctx.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 });
@@ -367,7 +367,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     User user = createUser();
                     Client client = new Client();
                     client.setFactors(Collections.singleton("factorId"));
-                    ctx.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ((io.vertx.ext.web.impl.UserContextInternal) ctx.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 });

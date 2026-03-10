@@ -18,10 +18,11 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
 import io.gravitee.am.service.exception.NotImplementedException;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
     private void createCredentialRequestOptions(RoutingContext ctx) {
         try {
             // might throw runtime exception if there's no json or is bad formed
-            final JsonObject webauthnLogin = ctx.getBodyAsJson();
+            final JsonObject webauthnLogin = ctx.body().asJsonObject();
             final Session session = ctx.session();
 
             // input validation
@@ -83,7 +84,7 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
             final String username = webauthnLogin.getString("name");
 
             // STEP 18 Generate assertion
-            webAuthn.getCredentialsOptions(username)
+            Single.fromCompletionStage(webAuthn.getCredentialsOptions(username).toCompletionStage())
                     .subscribe(
                             entries -> {
                                 session

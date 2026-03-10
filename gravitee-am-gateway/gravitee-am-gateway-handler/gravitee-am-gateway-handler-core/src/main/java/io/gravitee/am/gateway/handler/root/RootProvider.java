@@ -136,7 +136,7 @@ import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -715,7 +715,7 @@ public class RootProvider extends AbstractProtocolProvider {
         errorHandler(rootRouter);
 
         // mount root router
-        router.mountSubRouter(path(), rootRouter);
+        router.route(path()).subRouter(rootRouter);
     }
 
     @Override

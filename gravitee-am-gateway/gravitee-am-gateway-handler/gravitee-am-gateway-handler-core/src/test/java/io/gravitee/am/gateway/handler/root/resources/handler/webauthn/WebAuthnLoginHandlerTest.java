@@ -32,13 +32,14 @@ import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.Credentials;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpClientRequest;
-import io.vertx.rxjava3.ext.auth.webauthn.MetaDataService;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.MetaDataService;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
@@ -98,7 +99,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         MetaDataService metaDataService = mock(MetaDataService.class);
         when(metaDataService.verify(any())).thenReturn(new JsonObject());
         when(webAuthn.metaDataService()).thenReturn(metaDataService);
-        when(webAuthn.rxAuthenticate(any(Credentials.class))).thenReturn(Single.just(io.vertx.rxjava3.ext.auth.User.fromName("username")));
+        when(webAuthn.authenticate(any(Credentials.class))).thenReturn(Future.succeededFuture(io.vertx.ext.auth.User.fromName("username")));
 
         webAuthnLoginHandler =
                 new WebAuthnLoginHandler(userService, factorManager, domainDataPlane, webAuthn, credentialService, userAuthenticationManager);

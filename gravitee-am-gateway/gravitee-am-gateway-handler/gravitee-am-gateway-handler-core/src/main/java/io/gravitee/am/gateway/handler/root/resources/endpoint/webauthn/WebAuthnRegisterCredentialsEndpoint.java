@@ -20,10 +20,11 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHa
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.NotImplementedException;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
@@ -62,7 +63,7 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
     private void createCredentialCreationOptions(RoutingContext ctx) {
         try {
             // might throw runtime exception if there's no json or is bad formed
-            final JsonObject webauthnRegister = ctx.getBodyAsJson();
+            final JsonObject webauthnRegister = ctx.body().asJsonObject();
             final Session session = ctx.session();
 
             // session validation
@@ -89,7 +90,7 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
             User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
 
             // register credentials
-            webAuthn.createCredentialsOptions(webauthnRegister)
+            Single.fromCompletionStage(webAuthn.createCredentialsOptions(webauthnRegister).toCompletionStage())
                     .subscribe(
                             entries -> {
                                 // force user id with our own user id

@@ -29,7 +29,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.junit.Test;
@@ -105,7 +105,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
     public void mustNotInvokeMFAChallengeAlternativesEndpoint_user_noFactor() throws Exception {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.next();
         });
 
@@ -122,7 +122,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setFactors(Collections.singletonList(new EnrolledFactor()));
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.next();
         });
 
@@ -144,7 +144,7 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
 
             User endUser = new User();
             endUser.setFactors(Arrays.asList(enrolledFactor1, enrolledFactor2));
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.next();
         });
 

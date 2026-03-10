@@ -23,7 +23,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.BotDetectedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
