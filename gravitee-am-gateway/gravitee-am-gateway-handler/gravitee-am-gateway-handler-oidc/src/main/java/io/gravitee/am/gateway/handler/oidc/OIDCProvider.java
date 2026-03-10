@@ -306,7 +306,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         // error handler
         errorHandler(oidcRouter);
 
-        router.route(path()).subRouter(oidcRouter);
+        router.route(subRouterPath()).subRouter(oidcRouter);
     }
 
     private void errorHandler(Router router) {

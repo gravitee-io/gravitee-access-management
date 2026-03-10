@@ -179,7 +179,7 @@ public class AccountProvider extends AbstractProtocolProvider {
             accountRouter.route().failureHandler(new ErrorHandler());
 
             // mount account router
-            router.route(path()).subRouter(accountRouter);
+            router.route(subRouterPath()).subRouter(accountRouter);
         }
     }
 

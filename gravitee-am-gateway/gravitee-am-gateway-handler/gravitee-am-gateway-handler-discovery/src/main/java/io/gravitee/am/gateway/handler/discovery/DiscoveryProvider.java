@@ -76,6 +76,6 @@ public class DiscoveryProvider extends AbstractProtocolProvider {
         // error handler
         discoveryRouter.route().failureHandler(new ErrorHandler());
 
-        router.route(path()).subRouter(discoveryRouter);
+        router.route(subRouterPath()).subRouter(discoveryRouter);
     }
 }

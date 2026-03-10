@@ -30,7 +30,7 @@ import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.monitoring.DomainReadinessService;
-import io.gravitee.common.event.EventManager;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -239,7 +239,7 @@ public class SyncManager implements InitializingBean {
             } else {
                 String eventId = event.getId();
                 if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
-                    eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+                    publishEventTypeSafe(eventManager, io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
                 } else {
                     logger.debug("Event id {} already processed", eventId);
                 }
@@ -394,6 +394,11 @@ public class SyncManager implements InitializingBean {
                 .filter(elt -> elt.startsWith("!"))
                 .map(elt -> elt.substring(1))
                 .collect(Collectors.toList());
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static <T extends Enum<T>, S> void publishEventTypeSafe(io.gravitee.am.common.event.EventManager eventManager, Enum<?> eventType, S content) {
+        eventManager.publishEvent((T) eventType, content);
     }
 
     private static boolean matchingString(final String a, final String b) {

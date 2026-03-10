@@ -134,7 +134,7 @@ public class SCIMProvider extends AbstractProtocolProvider {
             scimRouter.route().failureHandler(new ErrorHandler());
 
             // mount SCIM router
-            router.route(path()).subRouter(scimRouter);
+            router.route(subRouterPath()).subRouter(scimRouter);
         }
     }
 

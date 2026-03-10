@@ -132,12 +132,12 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     }
 
     private String sanitizePath(String path) {
-
+        // Vert.x 5 requires sub router mount paths to end with /*
         if(path.endsWith("/")) {
-            return path;
+            return path + "*";
         }
 
-        return path + "/";
+        return path + "/*";
     }
 
     @Override

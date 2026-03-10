@@ -205,7 +205,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                 .onErrorComplete()
                 .subscribe(
                         () -> {
-                            routingContext.userContext().logout();
+                            routingContext.userContext().clear();
                             if (routingContext.session() != null) {
                                 routingContext.session().destroy();
                             }

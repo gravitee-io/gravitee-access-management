@@ -45,7 +45,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
         if (context.failed()) {
             // logout the user
             // but keep the session intact with the original OAuth 2.0 authorization request in order to replay the whole login process
-            context.userContext().logout();
+            context.userContext().clear();
 
             // handle exception
             Throwable throwable = context.failure();
