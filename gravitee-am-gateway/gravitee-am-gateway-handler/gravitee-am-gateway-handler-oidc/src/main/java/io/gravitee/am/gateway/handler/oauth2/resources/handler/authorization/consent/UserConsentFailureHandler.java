@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -45,7 +45,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
         if (context.failed()) {
             // logout the user
             // but keep the session intact with the original OAuth 2.0 authorization request in order to replay the whole login process
-            context.clearUser();
+            context.userContext().logout();
 
             // handle exception
             Throwable throwable = context.failure();

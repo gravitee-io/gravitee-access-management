@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 
-import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.impl.jose.JWS;
 import io.vertx.ext.auth.webauthn.WebAuthnOptions;
@@ -204,7 +203,7 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
         }
     }
 
-    public @Nullable List<X509Certificate> getAdditionalRootCertificate(String key) {
+    public List<X509Certificate> getAdditionalRootCertificate(String key) {
         return this.additionalRootCertificates == null ? null : this.additionalRootCertificates.get(key);
     }
 

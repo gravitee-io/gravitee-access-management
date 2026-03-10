@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.botdetection.api;
 
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 
 import java.util.Optional;
 

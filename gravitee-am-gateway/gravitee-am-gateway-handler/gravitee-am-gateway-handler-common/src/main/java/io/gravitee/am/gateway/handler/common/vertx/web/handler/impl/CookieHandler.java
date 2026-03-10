@@ -21,7 +21,7 @@ import io.vertx.core.http.CookieSameSite;
 import io.vertx.core.http.impl.ServerCookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.Map;
+import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -47,8 +47,8 @@ public class CookieHandler implements Handler<RoutingContext> {
 
         context.addHeadersEndHandler(v -> {
             // save the cookies
-            Map<String, Cookie> cookies = context.getDelegate().cookieMap();
-            for (Cookie cookie: cookies.values()) {
+            Set<Cookie> cookies = context.request().cookies();
+            for (Cookie cookie: cookies) {
                 if (cookie instanceof ServerCookie && ((ServerCookie) cookie).isChanged()) {
                     finalizeCookie(context, (ServerCookie) cookie);
                 }

@@ -126,7 +126,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
     }
 
     private void clearUser(RoutingContext ctx) {
-        ctx.clearUser();
+        ctx.userContext().logout();
         ctx.session().remove(STRONG_AUTH_COMPLETED_KEY);
         ctx.session().remove(USER_ID_KEY);
         ctx.session().remove(GIO_INTERNAL_SUB);
@@ -206,7 +206,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         // check if the user doesn't come from the login page
         if (maxAgeValue < elapsedLoginTime && !returnFromLoginPage(context)) {
             // should we logout the user or just force it to go to the login page ?
-            context.clearUser();
+            context.userContext().logout();
 
             // check prompt parameter in case the user set 'none' option
             parsePromptParameter(context);

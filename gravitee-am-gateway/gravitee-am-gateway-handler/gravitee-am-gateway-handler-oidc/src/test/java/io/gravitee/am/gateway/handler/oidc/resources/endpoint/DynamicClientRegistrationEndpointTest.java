@@ -22,8 +22,10 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
+import io.vertx.rxjava3.ext.web.RequestBody;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,16 +62,20 @@ public class DynamicClientRegistrationEndpointTest {
     @Mock
     private RoutingContext routingContext;
 
+    @Mock
+    private RequestBody requestBody;
+
     @Before
     public void setUp() {
         when(json.mapTo(DynamicClientRegistrationRequest.class)).thenReturn(request);
-        when(routingContext.getBodyAsJson()).thenReturn(json);
+        when(routingContext.body()).thenReturn(requestBody);
+        when(requestBody.asJsonObject()).thenReturn(json);
     }
 
     @Test
     public void register_decodeException() {
         //Context
-        when(routingContext.getBodyAsJson()).thenThrow(new DecodeException());
+        when(requestBody.asJsonObject()).thenThrow(new DecodeException());
 
         //Test
         endpoint.handle(routingContext);
@@ -81,7 +87,7 @@ public class DynamicClientRegistrationEndpointTest {
     @Test
     public void register_invalidRequestFormat() {
         //Context
-        when(routingContext.getBodyAsJson()).thenReturn(null);
+        when(requestBody.asJsonObject()).thenReturn(null);
 
         //Test
         endpoint.handle(routingContext);
@@ -113,7 +119,7 @@ public class DynamicClientRegistrationEndpointTest {
         when(routingContext.request()).thenReturn(serverRequest);
         when(serverRequest.getHeader(any())).thenReturn(null);
         when(serverRequest.scheme()).thenReturn("https");
-        when(serverRequest.host()).thenReturn("host");
+        when(serverRequest.authority()).thenReturn(HostAndPort.create("host", -1));
         when(routingContext.response()).thenReturn(serverResponse);
         when(serverResponse.putHeader(anyString(),anyString())).thenReturn(serverResponse);
         when(serverResponse.setStatusCode(201)).thenReturn(serverResponse);

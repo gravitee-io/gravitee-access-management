@@ -18,7 +18,7 @@ package io.gravitee.am.service.nimbusds;
 import com.nimbusds.jose.util.Resource;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import io.vertx.rxjava3.ext.web.client.WebClient;

@@ -29,7 +29,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
-import io.vertx.core.impl.ConcurrentHashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.eventbus.MessageConsumer;
@@ -71,7 +71,7 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     public EventBusReporterWrapper(Vertx vertx,  Reporter<R,C> reporter, Collection<Reference> references) {
         Objects.requireNonNull(references, "references");
         this.vertx = vertx;
-        this.referenceFilter = new ConcurrentHashSet<>();
+        this.referenceFilter = ConcurrentHashMap.newKeySet();
         this.referenceFilter.addAll(references);
         this.reporter = reporter;
     }
@@ -132,12 +132,12 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     @Override
     public Reporter<R,C> start() throws Exception {
         // start the delegate reporter
-        vertx.rxExecuteBlocking(event -> {
+        vertx.rxExecuteBlocking(() -> {
                     try {
-                        event.complete(reporter);
+                        return reporter;
                     } catch (Exception ex) {
                         logger.error("Error while starting reporter", ex);
-                        event.fail(ex);
+                        throw ex;
                     }
                 })
                 .doOnSuccess(o -> messageConsumer = vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this))

@@ -116,7 +116,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setEnabled(false);
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -133,7 +133,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastPasswordReset(new Date(System.currentTimeMillis() - 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -150,7 +150,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastPasswordReset(new Date(System.currentTimeMillis() + 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -167,7 +167,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastUsernameReset(new Date(System.currentTimeMillis() - 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -184,7 +184,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastUsernameReset(new Date(System.currentTimeMillis() + 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -208,7 +208,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         when(clientSyncService.findByClientId(client.getClientId())).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -247,7 +247,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -290,7 +290,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -344,7 +344,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -408,7 +408,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -448,7 +448,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 

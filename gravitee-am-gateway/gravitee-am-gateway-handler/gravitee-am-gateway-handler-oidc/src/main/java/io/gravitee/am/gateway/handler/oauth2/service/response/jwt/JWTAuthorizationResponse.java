@@ -23,7 +23,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.ImplicitResponse;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 
 import static io.gravitee.am.common.oidc.Parameters.RESPONSE;
 

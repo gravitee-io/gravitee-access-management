@@ -28,7 +28,8 @@ import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.HashMap;
@@ -71,7 +72,7 @@ public class RegisterProcessHandler extends UserRequestHandler {
             RegistrationResponse registrationResponse = h.result();
             // if auto login option is enabled add the user to the session
             if (registrationResponse.isAutoLogin()) {
-                context.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())));
+                ((UserContextInternal) context.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser()));
             }
             // put response into the context and continue
             context.put(ConstantKeys.REGISTRATION_RESPONSE_KEY, registrationResponse);

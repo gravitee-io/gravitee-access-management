@@ -22,11 +22,14 @@ import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCreden
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.ext.auth.webauthn.Authenticator;
 import io.vertx.ext.auth.webauthn.AuthenticatorTransport;
 import io.vertx.ext.auth.webauthn.RelyingParty;
 import io.vertx.ext.auth.webauthn.WebAuthnOptions;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -77,9 +80,9 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
                     .forEach((k, v) -> webAuthnOptions.putRootCertificate(k, (String) v));
         }
 
-        return WebAuthn.create(vertx, webAuthnOptions)
-                .authenticatorFetcher(credentialStore::fetch)
-                .authenticatorUpdater(credentialStore::store);
+        return WebAuthn.create(vertx.getDelegate(), webAuthnOptions)
+                .authenticatorFetcher(this::fetchAuthenticator)
+                .authenticatorUpdater(this::storeAuthenticator);
     }
 
     @Override
@@ -130,10 +133,22 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
         }
     }
 
+    private Future<List<Authenticator>> fetchAuthenticator(Authenticator query) {
+        Promise<List<Authenticator>> promise = Promise.promise();
+        credentialStore.fetch(query).subscribe(promise::complete, promise::fail);
+        return promise.future();
+    }
+
+    private Future<Void> storeAuthenticator(Authenticator authenticator) {
+        Promise<Void> promise = Promise.promise();
+        credentialStore.store(authenticator).subscribe(promise::complete, promise::fail);
+        return promise.future();
+    }
+
     private WebAuthn defaultWebAuthn() {
         return WebAuthn.create(
-                vertx, new GraviteeWebAuthnOptions().setRelyingParty(getRelyingParty()))
-                .authenticatorFetcher(credentialStore::fetch)
-                .authenticatorUpdater(credentialStore::store);
+                vertx.getDelegate(), new GraviteeWebAuthnOptions().setRelyingParty(getRelyingParty()))
+                .authenticatorFetcher(this::fetchAuthenticator)
+                .authenticatorUpdater(this::storeAuthenticator);
     }
 }

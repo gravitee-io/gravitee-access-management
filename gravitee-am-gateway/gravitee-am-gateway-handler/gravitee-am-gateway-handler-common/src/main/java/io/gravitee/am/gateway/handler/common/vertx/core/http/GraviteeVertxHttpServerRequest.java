@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.vertx.core.http;
 
 import io.gravitee.gateway.api.Request;
 import io.netty.handler.codec.DecoderResult;
-import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -36,8 +35,6 @@ import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.impl.HostAndPortImpl;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.security.cert.X509Certificate;
 import java.util.Set;
 
 /**
@@ -101,7 +98,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable HostAndPort authority() {
+    public HostAndPort authority() {
         if (delegate instanceof HttpServerRequest) {
             return ((HttpServerRequest) delegate).authority();
         }
@@ -109,7 +106,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable HostAndPort authority(boolean real) {
+    public HostAndPort authority(boolean real) {
         if (delegate instanceof HttpServerRequest) {
             return ((HttpServerRequest) delegate).authority(real);
         }
@@ -137,7 +134,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String scheme() {
+    public String scheme() {
         return scheme;
     }
 
@@ -147,17 +144,16 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String path() {
+    public String path() {
         return path;
     }
 
     @Override
-    public @Nullable String query() {
+    public String query() {
         return null;
     }
 
-    @Override
-    public @Nullable String host() {
+    public String host() {
         return host;
     }
 
@@ -192,11 +188,6 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public X509Certificate[] peerCertificateChain() throws SSLPeerUnverifiedException {
-        return new X509Certificate[0];
-    }
-
-    @Override
     public String absoluteURI() {
         return null;
     }
@@ -228,7 +219,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public HttpServerRequest uploadHandler(@Nullable Handler<HttpServerFileUpload> handler) {
+    public HttpServerRequest uploadHandler(Handler<HttpServerFileUpload> handler) {
         return this;
     }
 
@@ -241,7 +232,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String getFormAttribute(String s) {
+    public String getFormAttribute(String s) {
         return formAttributes().get(s);
     }
 
@@ -276,12 +267,12 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable Cookie getCookie(String s) {
+    public Cookie getCookie(String s) {
         return null;
     }
 
     @Override
-    public @Nullable Cookie getCookie(String s, String s1, String s2) {
+    public Cookie getCookie(String s, String s1, String s2) {
         return null;
     }
 

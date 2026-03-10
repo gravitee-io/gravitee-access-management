@@ -88,7 +88,7 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
         router.route()
                 .handler(BodyHandler.create())
                 .handler(ctx -> {
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ((io.vertx.ext.web.impl.UserContextInternal) ctx.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 });

@@ -32,7 +32,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.auth.impl.UserImpl;
 import io.vertx.ext.web.Session;
-import io.vertx.rxjava3.ext.auth.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -414,8 +413,8 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
         client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
         router.route().order(-1)
                 .handler(context -> {
-                    context.setSession(new io.vertx.rxjava3.ext.web.Session(session));
-                    context.setUser(new User(new UserImpl()));
+                    ((io.vertx.ext.web.impl.RoutingContextInternal) context.getDelegate()).setSession(session);
+                    ((io.vertx.ext.web.impl.UserContextInternal) context.getDelegate().userContext()).setUser(new UserImpl());
                     context.next();
                 })
                 .handler(routingContext -> {

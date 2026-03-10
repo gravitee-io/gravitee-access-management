@@ -44,7 +44,7 @@ import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -207,7 +207,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                     .doOnError((error) -> logger.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
         }
-        context.clearUser();
+        context.userContext().logout();
         context.session().destroy();
     }
 

@@ -28,7 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
@@ -97,7 +97,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                     rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
                     User endUser = new User();
                     endUser.setUsername("username");
-                    rc.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     rc.next();
                 })
@@ -119,7 +119,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                     rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
                     User endUser = new User();
                     endUser.setUsername("username");
-                    rc.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     rc.next();
                 })
@@ -147,7 +147,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                     rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
                     User endUser = new User();
                     endUser.setUsername("username");
-                    rc.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     rc.next();
                 })

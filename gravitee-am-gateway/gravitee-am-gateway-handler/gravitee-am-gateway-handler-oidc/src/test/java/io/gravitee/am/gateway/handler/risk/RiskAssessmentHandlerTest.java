@@ -119,7 +119,7 @@ public class RiskAssessmentHandlerTest {
     @Test
     public void must_next_only_client_and_user_in_context() {
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
 
         handler.handle(routingContext);
         assertTrue(routingContext.verifyNext(1));
@@ -129,7 +129,7 @@ public class RiskAssessmentHandlerTest {
     public void must_next_only_client_and_user_with_risk_assessment_disabled() {
         client.setRiskAssessment(new RiskAssessmentSettings());
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
 
         handler.handle(routingContext);
         assertTrue(routingContext.verifyNext(1));
@@ -141,7 +141,7 @@ public class RiskAssessmentHandlerTest {
         riskAssessment.setEnabled(true);
         client.setRiskAssessment(riskAssessment);
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
 
         handler.handle(routingContext);
         verify(eventBus, times(1)).request(
@@ -162,7 +162,7 @@ public class RiskAssessmentHandlerTest {
         client.setMfaSettings(mfaSettings);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
         routingContext.session().put(DEVICE_ID, "deviceId");
 
         var mockMessage = Mockito.mock(Message.class);
@@ -192,7 +192,7 @@ public class RiskAssessmentHandlerTest {
         client.setMfaSettings(mfaSettings);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
         routingContext.session().put(DEVICE_ID, "deviceId");
 
         doReturn(Flowable.error(new IllegalArgumentException()))
@@ -212,7 +212,7 @@ public class RiskAssessmentHandlerTest {
         client.setRiskAssessment(riskAssessment);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
         routingContext.request().headers().set(X_FORWARDED_FOR, "192.168.0.1");
 
         var mockMessage = Mockito.mock(Message.class);
@@ -233,7 +233,7 @@ public class RiskAssessmentHandlerTest {
         client.setRiskAssessment(riskAssessment);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
 
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
@@ -258,7 +258,7 @@ public class RiskAssessmentHandlerTest {
         client.setRiskAssessment(riskAssessment);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
 
         doReturn(Flowable.error(new IllegalArgumentException())).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
@@ -276,7 +276,7 @@ public class RiskAssessmentHandlerTest {
         client.setRiskAssessment(riskAssessment);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
 
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
@@ -301,7 +301,7 @@ public class RiskAssessmentHandlerTest {
         client.setRiskAssessment(riskAssessment);
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-        routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
 
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),

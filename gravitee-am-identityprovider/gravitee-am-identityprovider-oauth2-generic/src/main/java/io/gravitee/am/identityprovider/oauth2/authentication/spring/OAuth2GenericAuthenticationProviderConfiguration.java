@@ -21,6 +21,7 @@ import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.gravitee.am.service.http.WebClientInitializer;
 import io.reactivex.rxjava3.core.Maybe;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -69,12 +70,14 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setIdleTimeout(configuration.getIdleTimeout())
                 .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
-                .setMaxPoolSize(configuration.getMaxPoolSize())
                 .setSsl(isTLS());
+        PoolOptions poolOptions = new PoolOptions()
+                .setHttp1MaxSize(configuration.getMaxPoolSize())
+                .setHttp2MaxSize(configuration.getMaxPoolSize());
         if (configuration.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.TLS_CLIENT_AUTH)) {
             return initializeMTlsWebClient(webClientBuilder, httpClientOptions);
         } else {
-            return createWebClient(webClientBuilder, httpClientOptions);
+            return createWebClient(webClientBuilder, httpClientOptions, poolOptions);
         }
     }
 
@@ -101,8 +104,8 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
         return new WebClient(delegate);
     }
 
-    private WebClient createWebClient(WebClientBuilder webClientBuilder, WebClientOptions options) {
-        return webClientBuilder.createWebClient(vertx, options, configuration.getUserAuthorizationUri());
+    private WebClient createWebClient(WebClientBuilder webClientBuilder, WebClientOptions options, PoolOptions poolOptions) {
+        return webClientBuilder.createWebClient(vertx, options, configuration.getUserAuthorizationUri(), poolOptions);
     }
 
 }

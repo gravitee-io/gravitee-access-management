@@ -34,7 +34,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.auth.impl.UserImpl;
-import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,7 +88,7 @@ public class TokenEndpointTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeTokenEndpoint_invalidClient() throws Exception {
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new User(new UserImpl()));
+            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.vertx.ext.auth.impl.UserImpl());
             routingContext.next();
         });
 

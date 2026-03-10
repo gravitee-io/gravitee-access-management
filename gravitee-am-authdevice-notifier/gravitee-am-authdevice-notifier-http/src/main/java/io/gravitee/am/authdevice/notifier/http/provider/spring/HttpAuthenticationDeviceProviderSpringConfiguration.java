@@ -17,6 +17,7 @@ package io.gravitee.am.authdevice.notifier.http.provider.spring;
 
 import io.gravitee.am.authdevice.notifier.http.HttpAuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.service.http.WebClientBuilder;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -61,9 +62,11 @@ public class HttpAuthenticationDeviceProviderSpringConfiguration {
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setIdleTimeout(configuration.getIdleTimeout())
                 .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
-                .setMaxPoolSize(configuration.getMaxPoolSize())
                 .setSsl(true); // require TLS.
+        PoolOptions poolOptions = new PoolOptions()
+                .setHttp1MaxSize(configuration.getMaxPoolSize())
+                .setHttp2MaxSize(configuration.getMaxPoolSize());
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getEndpoint());
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getEndpoint(), poolOptions);
     }
 }

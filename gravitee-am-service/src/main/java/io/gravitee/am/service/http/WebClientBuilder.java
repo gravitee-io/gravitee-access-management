@@ -20,6 +20,7 @@ import io.gravitee.common.util.EnvironmentUtils;
 import io.vertx.core.http.Http2Settings;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpVersion;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -58,13 +59,13 @@ public class WebClientBuilder {
     public WebClient createWebClient(Vertx vertx) {
         WebClientOptions options = new WebClientOptions()
                 .setKeepAlive(true)
-                .setMaxPoolSize(10)
                 .setTcpKeepAlive(true)
                 .setConnectTimeout(httpClientTimeout());
 
+        PoolOptions poolOptions = new PoolOptions().setHttp1MaxSize(10).setHttp2MaxSize(10);
         configureHttp2Settings(options);
 
-        return createWebClient(vertx, options);
+        return createWebClient(vertx, options, (String) null, poolOptions);
     }
 
     public WebClient createWebClient(Vertx vertx, URL url) {
@@ -75,40 +76,52 @@ public class WebClientBuilder {
                 .setDefaultPort(port)
                 .setDefaultHost(url.getHost())
                 .setKeepAlive(true)
-                .setMaxPoolSize(10)
                 .setTcpKeepAlive(true)
                 .setConnectTimeout(httpClientTimeout())
                 .setSsl(isSsl);
 
+        PoolOptions poolOptions = new PoolOptions().setHttp1MaxSize(10).setHttp2MaxSize(10);
         configureHttp2Settings(options);
 
-        return createWebClient(vertx, options);
+        return createWebClient(vertx, options, (String) null, poolOptions);
     }
 
     public WebClient createWebClient(Vertx vertx, WebClientOptions options) {
-        return createWebClient(vertx, options, null);
+        return createWebClient(vertx, options, (String) null);
+    }
+
+    public WebClient createWebClient(Vertx vertx, WebClientOptions options, PoolOptions poolOptions) {
+        return createWebClient(vertx, options, (String) null, poolOptions);
     }
 
     public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url, Boolean withSystemProxy){
+        return createWebClient(vertx, options, url, withSystemProxy, null);
+    }
+
+    public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url, Boolean withSystemProxy, PoolOptions poolOptions){
         var configurer = new WebClientOptionsConfigurer(environment);
         if (!isExcludedHost(url) && withSystemProxy) {
             configurer.setProxySettings(options);
         }
         configurer.setSSLSettings(options);
         configureHttp2Settings(options);
-        
-        return WebClient.create(vertx, options);
+
+        return WebClient.create(vertx, options, poolOptions != null ? poolOptions : new PoolOptions());
     }
 
     public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url) {
+        return createWebClient(vertx, options, url, (PoolOptions) null);
+    }
+
+    public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url, PoolOptions poolOptions) {
         var configurer = new WebClientOptionsConfigurer(environment);
         if (!isExcludedHost(url)) {
             configurer.setProxySettings(options);
         }
         configurer.setSSLSettings(options);
         configureHttp2Settings(options);
-        
-        return WebClient.create(vertx, options);
+
+        return WebClient.create(vertx, options, poolOptions != null ? poolOptions : new PoolOptions());
     }
 
     public WebClient createMTLSWebClient(Vertx vertx, WebClientOptions options, String url, Certificate clientCertificate) {
@@ -118,15 +131,14 @@ public class WebClientBuilder {
         }
         configurer.setMTLSSettings(options, clientCertificate);
         configureHttp2Settings(options);
-        
-        return WebClient.create(vertx, options);
+
+        return WebClient.create(vertx, options, new PoolOptions());
     }
 
     private void configureHttp2Settings(WebClientOptions options) {
         if (isHttp2Enabled()) {
             options.setUseAlpn(true);
             options.setAlpnVersions(Arrays.asList(HttpVersion.HTTP_2, HttpVersion.HTTP_1_1));
-            options.setHttp2MaxPoolSize(options.getMaxPoolSize());
             options.setHttp2ConnectionWindowSize(http2ConnectionWindowSize());
             options.setHttp2KeepAliveTimeout(http2KeepAliveTimeout());
             LOGGER.debug("HTTP/2 enabled with ALPN protocol negotiation");

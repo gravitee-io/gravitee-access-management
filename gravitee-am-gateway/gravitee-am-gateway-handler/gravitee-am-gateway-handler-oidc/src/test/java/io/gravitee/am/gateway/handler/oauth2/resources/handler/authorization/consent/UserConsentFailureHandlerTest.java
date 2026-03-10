@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
@@ -159,7 +158,7 @@ public class UserConsentFailureHandlerTest extends RxWebTestBase {
         AtomicReference<RoutingContext> contextRef = new AtomicReference<>();
 
         failingHandler = rc -> {
-            rc.setUser(mock(User.class));
+            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(mock(io.vertx.ext.auth.User.class));
             contextRef.set(rc);
             PolicyChainException exception = new PolicyChainException("policy_error");
             rc.fail(exception);

@@ -39,7 +39,7 @@ import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.util.Maps;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

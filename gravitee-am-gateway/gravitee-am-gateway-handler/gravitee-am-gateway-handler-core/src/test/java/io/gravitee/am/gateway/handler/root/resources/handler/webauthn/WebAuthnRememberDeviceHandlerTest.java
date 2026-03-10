@@ -25,7 +25,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
-import io.vertx.rxjava3.core.buffer.Buffer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -68,7 +67,7 @@ public class WebAuthnRememberDeviceHandlerTest extends RxWebTestBase {
                     // set user
                     User endUser = new User();
                     endUser.setId("user-id");
-                    rc.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
 
                     // set application
                     Client client = new Client();
@@ -162,7 +161,7 @@ public class WebAuthnRememberDeviceHandlerTest extends RxWebTestBase {
                 req -> {
                     req.headers().set("content-type", "application/json");
                     req.setChunked(true);
-                    req.write(Buffer.newInstance(Json.encodeToBuffer("{}")));
+                    req.write(Json.encodeToBuffer("{}"));
                 },
                 resp -> {
                     String cookie = resp.headers().get("set-cookie");

@@ -30,8 +30,8 @@ import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
-import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.core.MultiMap;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +85,7 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
 
                 if (redirectUri.isPresent()) {
                     var webAuthUser = new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(userToken.getUser());
-                    context.setUser(User.newInstance(webAuthUser));
+                    ((UserContextInternal) context.getDelegate().userContext()).setUser(webAuthUser);
                     context.response()
                             .putHeader(HttpHeaders.LOCATION, ParamUtils.appendQueryParameter(redirectUri.get(), queryParams))
                             .setStatusCode(302)

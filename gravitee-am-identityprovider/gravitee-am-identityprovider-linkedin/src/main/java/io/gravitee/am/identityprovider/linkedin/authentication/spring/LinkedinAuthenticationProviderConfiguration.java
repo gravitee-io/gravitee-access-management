@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.linkedin.authentication.spring;
 
 import io.gravitee.am.identityprovider.linkedin.LinkedinIdentityProviderConfiguration;
 import io.gravitee.am.service.http.WebClientBuilder;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -54,9 +55,11 @@ public class LinkedinAuthenticationProviderConfiguration {
                 .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setIdleTimeout(configuration.getIdleTimeout())
-                .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
-                .setMaxPoolSize(configuration.getMaxPoolSize());
+                .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT);
+        PoolOptions poolOptions = new PoolOptions()
+                .setHttp1MaxSize(configuration.getMaxPoolSize())
+                .setHttp2MaxSize(configuration.getMaxPoolSize());
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri(), poolOptions);
     }
 }

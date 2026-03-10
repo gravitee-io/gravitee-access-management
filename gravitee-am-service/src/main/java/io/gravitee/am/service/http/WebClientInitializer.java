@@ -21,9 +21,11 @@ import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
-import io.vertx.core.net.SSLOptions;
+import io.vertx.core.Handler;
+import io.vertx.core.net.ClientSSLOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.impl.HttpContext;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import io.vertx.uritemplate.UriTemplate;
 import lombok.experimental.Delegate;
@@ -106,7 +108,12 @@ public class WebClientInitializer {
         }
 
         @Override
-        public Future<Boolean> updateSSLOptions(SSLOptions sslOptions, boolean b) {
+        public Future<Boolean> updateSSLOptions(ClientSSLOptions clientSSLOptions, boolean b) {
+            return Future.succeededFuture(false);
+        }
+
+        @Override
+        public io.vertx.ext.web.client.WebClient addInterceptor(Handler<HttpContext<?>> handler) {
             throw new UnsupportedOperationException(MSG);
         }
 
