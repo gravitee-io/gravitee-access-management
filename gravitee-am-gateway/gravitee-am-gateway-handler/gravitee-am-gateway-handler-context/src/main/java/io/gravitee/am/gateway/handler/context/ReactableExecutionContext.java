@@ -22,7 +22,7 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.MutableExecutionContext;
-import io.gravitee.tracing.api.Tracer;
+import io.gravitee.gateway.reactive.api.tracing.Tracer;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;
@@ -131,5 +131,10 @@ public class ReactableExecutionContext implements MutableExecutionContext {
     @Override
     public Tracer getTracer() {
         throw new IllegalStateException();
+    }
+
+    @Override
+    public MutableExecutionContext tracer(Tracer tracer) {
+        return this;
     }
 }

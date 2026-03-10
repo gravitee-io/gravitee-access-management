@@ -161,7 +161,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
 
         errorHandler(cibaRouter);
 
-        router.route(path()).subRouter(cibaRouter);
+        router.route(subRouterPath()).subRouter(cibaRouter);
     }
 
     private void errorHandler(Router router) {

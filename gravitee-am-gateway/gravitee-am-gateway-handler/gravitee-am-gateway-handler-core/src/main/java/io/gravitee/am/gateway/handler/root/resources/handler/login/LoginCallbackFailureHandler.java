@@ -207,7 +207,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                     .doOnError((error) -> logger.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
         }
-        context.userContext().logout();
+        context.userContext().clear();
         context.session().destroy();
     }
 

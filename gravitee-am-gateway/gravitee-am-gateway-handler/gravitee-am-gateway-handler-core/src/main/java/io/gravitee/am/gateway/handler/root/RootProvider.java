@@ -715,7 +715,7 @@ public class RootProvider extends AbstractProtocolProvider {
         errorHandler(rootRouter);
 
         // mount root router
-        router.route(path()).subRouter(rootRouter);
+        router.route(subRouterPath()).subRouter(rootRouter);
     }
 
     @Override

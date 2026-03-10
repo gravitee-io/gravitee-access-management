@@ -30,6 +30,14 @@ public abstract class AbstractProtocolProvider extends AbstractService<ProtocolP
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Returns the path suitable for mounting a sub router (must end with /*).
+     */
+    protected String subRouterPath() {
+        String p = path();
+        return p.endsWith("/") ? p + "*" : p + "/*";
+    }
+
     @Override
     protected void doStop() throws Exception {
         super.doStop();

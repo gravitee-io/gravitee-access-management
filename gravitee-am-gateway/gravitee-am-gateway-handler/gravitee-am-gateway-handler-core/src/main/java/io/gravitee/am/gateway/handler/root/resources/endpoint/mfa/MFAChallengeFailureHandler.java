@@ -88,7 +88,7 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
                     .doOnError(error -> log.info("Deletion of authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
 
-            context.userContext().logout();
+            context.userContext().clear();
             context.session().destroy();
         }
     }

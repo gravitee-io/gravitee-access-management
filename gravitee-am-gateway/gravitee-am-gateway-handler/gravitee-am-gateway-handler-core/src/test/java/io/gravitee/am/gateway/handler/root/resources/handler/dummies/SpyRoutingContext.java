@@ -17,12 +17,16 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.ext.web.RequestBody;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.UserContext;
@@ -41,6 +45,7 @@ public class SpyRoutingContext extends RoutingContext {
     private final HttpServerRequest httpServerRequest;
     private final DummySession dummySession = new DummySession();
     private final DummyHttpResponse response = new DummyHttpResponse();
+    private final io.vertx.ext.web.RoutingContext coreRoutingContext = createCoreRoutingContext();
 
     private int next = 0;
     private Buffer body;
@@ -75,6 +80,56 @@ public class SpyRoutingContext extends RoutingContext {
 
     public JsonObject getBodyAsJson() {
         return this.body == null ? null : this.body.toJsonObject();
+    }
+
+    @Override
+    public RequestBody body() {
+        return RequestBody.newInstance(new io.vertx.ext.web.RequestBody() {
+            @Override
+            public String asString() {
+                return body != null ? body.toString() : null;
+            }
+
+            @Override
+            public String asString(String encoding) {
+                return body != null ? body.toString(encoding) : null;
+            }
+
+            @Override
+            public JsonObject asJsonObject(int maxAllowedLength) {
+                return body != null ? body.toJsonObject() : null;
+            }
+
+            @Override
+            public JsonArray asJsonArray(int maxAllowedLength) {
+                return body != null ? body.toJsonArray() : null;
+            }
+
+            @Override
+            public Buffer buffer() {
+                return body;
+            }
+
+            @Override
+            public <R> R asPojo(Class<R> clazz, int maxAllowedLength) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int length() {
+                return body != null ? body.length() : 0;
+            }
+
+            @Override
+            public boolean available() {
+                return body != null;
+            }
+        });
+    }
+
+    @Override
+    public io.vertx.core.MultiMap queryParams() {
+        return dummyHttpRequest.params();
     }
 
     @Override
@@ -214,5 +269,55 @@ public class SpyRoutingContext extends RoutingContext {
 
     public void setMethod(HttpMethod method) {
         this.dummyHttpRequest.setMethod(method);
+    }
+
+    @Override
+    public io.vertx.ext.web.RoutingContext getDelegate() {
+        return coreRoutingContext;
+    }
+
+    private static io.vertx.ext.web.RoutingContext createCoreRoutingContext() {
+        var userCtx = new UserContextInternal() {
+            private io.vertx.ext.auth.User coreUser;
+
+            @Override
+            public void setUser(io.vertx.ext.auth.User user) {
+                this.coreUser = user;
+            }
+
+            @Override
+            public io.vertx.ext.auth.User get() {
+                return coreUser;
+            }
+
+            @Override
+            public io.vertx.ext.web.UserContext loginHint(String hint) {
+                return this;
+            }
+
+            @Override
+            public Future<Void> refresh() { return Future.succeededFuture(); }
+            @Override
+            public Future<Void> refresh(String provider) { return Future.succeededFuture(); }
+            @Override
+            public Future<Void> impersonate() { return Future.succeededFuture(); }
+            @Override
+            public Future<Void> impersonate(String provider) { return Future.succeededFuture(); }
+            @Override
+            public Future<Void> restore() { return Future.succeededFuture(); }
+            @Override
+            public Future<Void> restore(String provider) { return Future.succeededFuture(); }
+            @Override
+            public Future<Void> logout(String provider) { coreUser = null; return Future.succeededFuture(); }
+            @Override
+            public Future<Void> logout() { coreUser = null; return Future.succeededFuture(); }
+            @Override
+            public void clear() { coreUser = null; }
+        };
+
+        var mock = org.mockito.Mockito.mock(io.vertx.ext.web.RoutingContext.class);
+        org.mockito.Mockito.lenient().when(mock.userContext()).thenReturn(userCtx);
+        org.mockito.Mockito.lenient().when(mock.queryParams()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+        return mock;
     }
 }
