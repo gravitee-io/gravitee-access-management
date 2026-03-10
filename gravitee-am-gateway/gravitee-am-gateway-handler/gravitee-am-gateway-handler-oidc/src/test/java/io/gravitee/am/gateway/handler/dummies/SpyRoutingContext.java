@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.dummies;
 
-import io.vertx.core.Future;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SpyUserContext;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.auth.User;
@@ -36,8 +36,8 @@ public class SpyRoutingContext extends RoutingContext {
     private final DummyHttpRequest dummyHttpRequest = new DummyHttpRequest();
     private final HttpServerRequest httpServerRequest = new HttpServerRequest(dummyHttpRequest);
     private final DummySession dummySession = new DummySession();
+    private final SpyUserContext sharedUserContext = new SpyUserContext();
     private int next = 0;
-    private User user;
 
     public SpyRoutingContext() {
         super(null);
@@ -62,73 +62,17 @@ public class SpyRoutingContext extends RoutingContext {
 
     @Override
     public User user() {
-        return user;
+        var coreUser = sharedUserContext.get();
+        return coreUser != null ? User.newInstance(coreUser) : null;
     }
 
     @Override
     public UserContext userContext() {
-        return new UserContext(new io.vertx.ext.web.UserContext() {
-            @Override
-            public io.vertx.ext.auth.User get() {
-                return user != null ? user.getDelegate() : null;
-            }
-
-            @Override
-            public io.vertx.ext.web.UserContext loginHint(String hint) {
-                return this;
-            }
-
-            @Override
-            public Future<Void> refresh() {
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public Future<Void> refresh(String provider) {
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public Future<Void> impersonate() {
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public Future<Void> impersonate(String provider) {
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public Future<Void> restore() {
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public Future<Void> restore(String provider) {
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public Future<Void> logout(String provider) {
-                user = null;
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public Future<Void> logout() {
-                user = null;
-                return Future.succeededFuture();
-            }
-
-            @Override
-            public void clear() {
-                user = null;
-            }
-        });
+        return new UserContext(sharedUserContext);
     }
 
     public void setUser(User user) {
-        this.user = user;
+        sharedUserContext.setUser(user != null ? user.getDelegate() : null);
     }
 
     @Override

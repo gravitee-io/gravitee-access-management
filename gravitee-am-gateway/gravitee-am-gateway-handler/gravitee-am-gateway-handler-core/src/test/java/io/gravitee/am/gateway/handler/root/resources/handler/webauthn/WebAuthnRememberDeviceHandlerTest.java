@@ -30,6 +30,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -67,7 +68,7 @@ public class WebAuthnRememberDeviceHandlerTest extends RxWebTestBase {
                     // set user
                     User endUser = new User();
                     endUser.setId("user-id");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
 
                     // set application
                     Client client = new Client();

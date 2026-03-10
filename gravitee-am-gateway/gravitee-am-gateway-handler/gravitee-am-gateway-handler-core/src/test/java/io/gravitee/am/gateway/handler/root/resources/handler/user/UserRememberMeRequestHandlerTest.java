@@ -38,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_ME_PARAM_KEY;
 import static org.mockito.ArgumentMatchers.any;
@@ -109,7 +110,7 @@ public class UserRememberMeRequestHandlerTest extends RxWebTestBase {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
                     endUser.setId("user-id");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.next();
                 })
                 .handler(handler)
@@ -151,7 +152,7 @@ public class UserRememberMeRequestHandlerTest extends RxWebTestBase {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
                     endUser.setId("user-id");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.next();
                 })
                 .handler(handler)
@@ -217,7 +218,7 @@ public class UserRememberMeRequestHandlerTest extends RxWebTestBase {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
                     endUser.setId("user-id");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, true);
                     rc.next();
                 })
@@ -247,7 +248,7 @@ public class UserRememberMeRequestHandlerTest extends RxWebTestBase {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
                     endUser.setId("user-id");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, false);
                     rc.next();
                 })

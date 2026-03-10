@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -87,7 +88,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.next();
         });
 
@@ -121,7 +122,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.next();
         });
 
