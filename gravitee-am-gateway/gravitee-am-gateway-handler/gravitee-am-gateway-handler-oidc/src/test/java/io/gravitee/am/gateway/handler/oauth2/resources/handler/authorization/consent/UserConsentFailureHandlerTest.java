@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_FAILED;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -158,7 +159,7 @@ public class UserConsentFailureHandlerTest extends RxWebTestBase {
         AtomicReference<RoutingContext> contextRef = new AtomicReference<>();
 
         failingHandler = rc -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(mock(io.vertx.ext.auth.User.class));
+            setUser(rc, mock(io.vertx.ext.auth.User.class));
             contextRef.set(rc);
             PolicyChainException exception = new PolicyChainException("policy_error");
             rc.fail(exception);

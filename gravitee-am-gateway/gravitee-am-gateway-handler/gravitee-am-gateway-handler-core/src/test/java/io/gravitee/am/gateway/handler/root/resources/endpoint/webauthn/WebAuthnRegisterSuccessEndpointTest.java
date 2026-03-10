@@ -43,6 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
@@ -97,7 +98,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                     rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
                     User endUser = new User();
                     endUser.setUsername("username");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     rc.next();
                 })
@@ -119,7 +120,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                     rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
                     User endUser = new User();
                     endUser.setUsername("username");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     rc.next();
                 })
@@ -147,7 +148,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                     rc.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, "credentialId");
                     User endUser = new User();
                     endUser.setUsername("username");
-                    ((io.vertx.ext.web.impl.UserContextInternal) rc.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    setUser(rc, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, new Client());
                     rc.next();
                 })

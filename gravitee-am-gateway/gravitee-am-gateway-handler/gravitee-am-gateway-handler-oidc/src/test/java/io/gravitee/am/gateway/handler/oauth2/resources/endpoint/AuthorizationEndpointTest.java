@@ -70,6 +70,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -241,7 +242,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -273,7 +274,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -417,7 +418,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -475,7 +476,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -514,7 +515,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setAccessToken(accessToken);
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -552,7 +553,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setAccessToken(accessToken);
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -591,7 +592,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setAccessToken(accessToken);
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -652,7 +653,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setLoggedAt(new Date(System.currentTimeMillis()-24*60*60*1000));
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.next();
         });
 
@@ -685,7 +686,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setLoggedAt(new Date(System.currentTimeMillis()-24*60*60*1000));
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.put(CLIENT_CONTEXT_KEY, client);
             routingContext.next();
         });
@@ -722,7 +723,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setLoggedAt(new Date(System.currentTimeMillis()- 60*1000));
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -838,7 +839,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -875,7 +876,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -905,7 +906,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -940,7 +941,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -978,7 +979,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -1047,7 +1048,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -1187,7 +1188,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         }
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -1235,7 +1236,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -1280,7 +1281,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -1323,7 +1324,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         jwtAuthorizationCodeResponse.setToken("my-jwt");
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -1381,7 +1382,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         client.setForcePKCE(true);
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
             routingContext.next();
         });
 
@@ -1601,7 +1602,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CLIENT_CONTEXT_KEY, client);
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -1639,7 +1640,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         authorizationResponse.setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             // Set transaction ID and auth flow version in the session
             routingContext.session().put(ConstantKeys.TRANSACTION_ID_KEY, "test-transaction-id");
             routingContext.session().put(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY, 2);

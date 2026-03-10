@@ -44,6 +44,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 
@@ -414,7 +415,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
         router.route().order(-1)
                 .handler(context -> {
                     ((io.vertx.ext.web.impl.RoutingContextInternal) context.getDelegate()).setSession(session);
-                    ((io.vertx.ext.web.impl.UserContextInternal) context.getDelegate().userContext()).setUser(new UserImpl());
+                    setUser(context, new UserImpl());
                     context.next();
                 })
                 .handler(routingContext -> {

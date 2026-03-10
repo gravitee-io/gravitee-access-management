@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
@@ -88,7 +89,7 @@ public class TokenEndpointTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeTokenEndpoint_invalidClient() throws Exception {
         router.route().order(-1).handler(routingContext -> {
-            ((io.vertx.ext.web.impl.UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.vertx.ext.auth.impl.UserImpl());
+            setUser(routingContext, new io.vertx.ext.auth.impl.UserImpl());
             routingContext.next();
         });
 

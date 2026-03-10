@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
@@ -139,7 +140,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     FactorSettings factorSettings = new FactorSettings();
                     factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings("factor-id")));
                     client.setFactorSettings(factorSettings);
-                    ((io.vertx.ext.web.impl.UserContextInternal) ctx.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
@@ -179,7 +180,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
 
                     Client client = new Client();
                     client.setFactorSettings(factorSettings);
-                    ((io.vertx.ext.web.impl.UserContextInternal) ctx.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
@@ -206,7 +207,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     Client client = new Client();
                     client.setFactorSettings(getFactorSettings(emailFactorId, smsFactorId));
                     client.setFactors(Set.of(emailFactorId, smsFactorId));
-                    ((io.vertx.ext.web.impl.UserContextInternal) ctx.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.session().put(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY, emailFactorId);
                     ctx.next();
