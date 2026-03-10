@@ -54,7 +54,8 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz
 
-ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
+# jemalloc is installed but not active by default.
+# To enable: set LD_PRELOAD=/usr/lib/libjemalloc.so.2 via environment variable.
 
 COPY --from=build-env --chown=1001:1000 /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
 
