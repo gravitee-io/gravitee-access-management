@@ -31,7 +31,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.11.0-alpha.3-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -80,7 +80,7 @@
         <awaitility.version>4.2.2</awaitility.version>
         <gravitee-bom.version>9.0.0-beta.2</gravitee-bom.version>
         <gravitee-common.version>5.0.0-beta.1</gravitee-common.version>
-        <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
+        <gravitee-plugin.version>4.11.1-alpha-SNAPSHOT</gravitee-plugin.version>
         <gravitee-node.version>8.0.0-beta.2</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>5.0.0-beta.2</gravitee-gateway-api.version>
@@ -168,9 +168,9 @@
         <!-- EE plugin included in default bundle -->
         <gravitee-am-idp-saml2.version>4.0.3</gravitee-am-idp-saml2.version>
         <gravitee-am-idp-ldap.version>2.2.2</gravitee-am-idp-ldap.version>
-        <gravitee-am-idp-azure-ad.version>3.0.0</gravitee-am-idp-azure-ad.version>
-        <gravitee-am-idp-franceconnect.version>3.1.1</gravitee-am-idp-franceconnect.version>
-        <gravitee-am-idp-salesforce.version>2.0.0</gravitee-am-idp-salesforce.version>
+        <gravitee-am-idp-azure-ad.version>3.0.1</gravitee-am-idp-azure-ad.version>
+        <gravitee-am-idp-franceconnect.version>3.1.2</gravitee-am-idp-franceconnect.version>
+        <gravitee-am-idp-salesforce.version>2.0.1</gravitee-am-idp-salesforce.version>
         <gravitee-am-factor-call.version>1.0.2</gravitee-am-factor-call.version>
         <gravitee-am-factor-sms.version>1.0.3</gravitee-am-factor-sms.version>
         <gravitee-am-factor-fido2.version>3.0.0</gravitee-am-factor-fido2.version>
@@ -182,19 +182,19 @@
         <gravitee-am-policy-account-linking.version>2.0.0</gravitee-am-policy-account-linking.version>
         <gravitee-am-certificate-aws.version>3.1.0</gravitee-am-certificate-aws.version>
         <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.6</gravitee-am-authorizationengine-openfga.version>
-        <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.7</gravitee-am-gateway-handler-authzen.version>
+        <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.8</gravitee-am-gateway-handler-authzen.version>
         <gravitee-am-authenticator-cba.version>1.0.0</gravitee-am-authenticator-cba.version>
         <gravitee-am-authenticator-magiclink.version>1.0.0-alpha.3</gravitee-am-authenticator-magiclink.version>
 
         <!-- Plugins included to full-bundle -->
         <gravitee-service-geoip.version>3.0.0</gravitee-service-geoip.version>
-        <gravitee-am-gateway-handler-saml2-idp.version>4.0.1</gravitee-am-gateway-handler-saml2-idp.version>
-        <gravitee-am-resource-sfr.version>1.0.2</gravitee-am-resource-sfr.version>
-        <gravitee-am-resource-http.version>1.0.1</gravitee-am-resource-http.version>
-        <gravitee-am-resource-orange-contact-everyone.version>1.3.0</gravitee-am-resource-orange-contact-everyone.version>
-        <gravitee-am-resource-http-factor.version>4.0.0</gravitee-am-resource-http-factor.version>
-        <gravitee-am-identityprovider-cas.version>4.0.0</gravitee-am-identityprovider-cas.version>
-        <gravitee-am-identityprovider-http-flow.version>4.0.0</gravitee-am-identityprovider-http-flow.version>
+        <gravitee-am-gateway-handler-saml2-idp.version>4.0.2</gravitee-am-gateway-handler-saml2-idp.version>
+        <gravitee-am-resource-sfr.version>1.0.3</gravitee-am-resource-sfr.version>
+        <gravitee-am-resource-http.version>1.0.2</gravitee-am-resource-http.version>
+        <gravitee-am-resource-orange-contact-everyone.version>1.3.1</gravitee-am-resource-orange-contact-everyone.version>
+        <gravitee-am-resource-http-factor.version>4.0.1</gravitee-am-resource-http-factor.version>
+        <gravitee-am-identityprovider-cas.version>4.0.1</gravitee-am-identityprovider-cas.version>
+        <gravitee-am-identityprovider-http-flow.version>4.0.1</gravitee-am-identityprovider-http-flow.version>
 
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
@@ -216,7 +216,12 @@
         <!-- R2DBC -->
         <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
         <r2dbc-mariadb.version>1.1.3</r2dbc-mariadb.version>
-        <r2dbc-mssql.version>1.0.4.RELEASE</r2dbc-mssql.version>
+        <!--
+        DO NOT use the 1.0.2.RELEASE as this version seems to be buggy
+        see https://github.com/r2dbc/r2dbc-mssql/issues/276
+        <r2dbc-mssql.version>1.0.2.RELEASE</r2dbc-mssql.version>
+        -->
+        <r2dbc-mssql.version>1.0.0.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>1.0.2</r2dbc-mysql.version>
         <oracle-r2dbc.version>1.1.1</oracle-r2dbc.version>
 
@@ -693,12 +698,6 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>io.gravitee.node</groupId>
-            <artifactId>gravitee-node-logging</artifactId>
-            <version>${gravitee-node.version}</version>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -766,7 +765,6 @@
                         <exclude>gravitee-am-test/playwright/**/*.md</exclude>
                         <exclude>gravitee-am-test/playwright/playwright-report/**</exclude>
                         <exclude>gravitee-am-test/playwright/test-results/**</exclude>
-                        <exclude>gravitee-am-test/playwright/junit-results/**</exclude>
                         <exclude>helm/**</exclude>
                         <exclude>node/**</exclude>
                         <exclude>scripts/**</exclude>
