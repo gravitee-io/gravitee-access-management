@@ -18,16 +18,6 @@ FROM alpine:3.22 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
-<<<<<<< HEAD
-=======
-ARG JATTACH_VERSION=2.2
-ENV GRAVITEEIO_HOME=/opt/graviteeio-am-management-api
-# jemalloc is installed but not active by default.
-# To enable: set LD_PRELOAD=/usr/lib/libjemalloc.so.2 via environment variable.
-
-RUN addgroup -g 1000 graviteeio \
-    && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
->>>>>>> 10e1add71 (fix: remove LD_PRELOAD settings to disable Jemalloc as default)
 
 RUN apk update \
 	&& apk add --update --no-cache unzip netcat-openbsd wget \
@@ -60,7 +50,8 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 ENV GRAVITEE_AM_HOME=/opt/graviteeio-am-management-api
-ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
+# jemalloc is installed but not active by default.
+# To enable: set LD_PRELOAD=/usr/lib/libjemalloc.so.2 via environment variable.
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
