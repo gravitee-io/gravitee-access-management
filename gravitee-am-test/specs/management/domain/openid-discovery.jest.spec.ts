@@ -27,7 +27,7 @@ import { createCertificate } from '@management-commands/certificate-management-c
 import { getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { Domain } from 'api/management/models';
 import { delay, uniqueName } from '@utils-commands/misc';
-import { setup } from '../test-fixture';
+import { setup } from '../../test-fixture';
 
 let accessToken: any;
 let domain: Domain;
