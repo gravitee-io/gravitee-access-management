@@ -88,42 +88,55 @@ public class TlsOptionsHelper {
 
     private static ConnectionFactoryOptions.Builder postgresOptions(ConnectionFactoryOptions.Builder builder, RepositoriesEnvironment environment, String prefix) {
         final String sslMode = environment.getProperty(prefix + SSL_MODE, "verify-ca");
-        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
-        return builder
+        builder
                 .option(SSL, true)
-                .option(Option.valueOf(SSL_MODE), sslMode)
-                .option(Option.valueOf("sslRootCert"), sslServerCert);
+                .option(Option.valueOf(SSL_MODE), sslMode);
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
+        if(sslServerCert != null) {
+            builder.option(Option.valueOf("sslRootCert"), sslServerCert);
+        }
+        return builder;
     }
 
     private static ConnectionFactoryOptions.Builder mysqlOptions(ConnectionFactoryOptions.Builder builder, RepositoriesEnvironment environment, String prefix) {
         final String sslMode = environment.getProperty(prefix + SSL_MODE, VERIFY_CA);
         final String tlsProtocol = environment.getProperty(prefix + "tlsProtocol", "TLSv1.2");
-        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
-        return builder
+        builder
                 .option(SSL, true)
                 .option(Option.valueOf(SSL_MODE), sslMode)
-                .option(Option.valueOf("sslCa"), sslServerCert)
                 .option(Option.valueOf("tlsVersion"), tlsProtocol);
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
+        if(sslServerCert != null) {
+            builder.option(Option.valueOf("sslCa"), sslServerCert);
+        }
+        return builder;
     }
 
     private static ConnectionFactoryOptions.Builder mariadbOptions(ConnectionFactoryOptions.Builder builder, RepositoriesEnvironment environment, String prefix) {
         final String sslMode = environment.getProperty(prefix + SSL_MODE, VERIFY_CA);
         final String tlsProtocol = environment.getProperty(prefix + "tlsProtocol", "TLSv1.2");
-        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
-        return builder
+        builder
                 .option(SSL, true)
                 .option(Option.valueOf(SSL_MODE), sslMode)
-                .option(Option.valueOf("serverSslCert"), sslServerCert)
                 .option(Option.valueOf("tlsVersion"), tlsProtocol);
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
+        if(sslServerCert != null) {
+            builder.option(Option.valueOf("serverSslCert"), sslServerCert);
+        }
+        return builder;
     }
 
     private static ConnectionFactoryOptions.Builder sqlServerOptions(ConnectionFactoryOptions.Builder builder, RepositoriesEnvironment environment, String prefix) {
         final String trustStore = environment.getProperty(prefix + TRUST_STORE_PATH);
         final String trustStorePassword = environment.getProperty(prefix + TRUST_STORE_PASSWORD);
-        return builder
-                .option(SSL, true)
-                .option(Option.valueOf("trustStore"), trustStore)
-                .option(Option.valueOf("trustStorePassword"), trustStorePassword);
+        builder.option(SSL, true);
+        if(trustStore != null) {
+            builder
+                    .option(Option.valueOf("trustStore"), trustStore)
+                    .option(Option.valueOf("trustStorePassword"), trustStorePassword);
+        }
+        return builder;
+
     }
 
     public static String setSSLOptions(String jdbcUrl, RepositoriesEnvironment environment, String prefix, String driver) {
