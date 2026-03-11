@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Configuration;
 public class JdbcAuthenticationProviderConfigurationTest_MSSQL extends JdbcAuthenticationProviderConfigurationTest {
 
     public String url() {
-        return "r2dbc:tc:sqlserver:///?TC_IMAGE_TAG=2022-latest&preferCursoredExecution=false";
+        return "r2dbc:tc:sqlserver:///?TC_IMAGE_TAG=2022-latest";
     }
 
     @Override
