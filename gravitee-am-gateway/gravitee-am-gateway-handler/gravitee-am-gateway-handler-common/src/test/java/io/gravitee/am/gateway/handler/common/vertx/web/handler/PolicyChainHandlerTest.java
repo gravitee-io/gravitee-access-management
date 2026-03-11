@@ -30,7 +30,6 @@ import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
