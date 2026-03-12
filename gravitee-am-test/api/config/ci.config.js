@@ -17,6 +17,20 @@ module.exports = {
   verbose: true,
   rootDir: '../..',
   setupFiles: ['./api/config/ci.setup.js'],
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: './jest-reports/junit',
+        outputName: process.env.JEST_JUNIT_OUTPUT_NAME || 'junit.xml',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+        ancestorSeparator: ' > ',
+        addFileAttribute: 'true',
+      },
+    ],
+  ],
   moduleNameMapper: {
     '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
     '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
