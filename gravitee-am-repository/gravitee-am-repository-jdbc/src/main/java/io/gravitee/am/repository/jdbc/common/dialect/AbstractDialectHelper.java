@@ -419,6 +419,29 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
+    public String buildSearchApplicationsQueryWithTypes(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc, List<String> types) {
+        StringBuilder builder = new StringBuilder("SELECT * FROM applications a WHERE ");
+        return buildSearchApplications(wildcard, withIds, builder, types)
+                .append(buildPagingClause(sort, asc, page, size))
+                .toString();
+    }
+
+    @Override
+    public String buildCountApplicationsQueryWithTypes(boolean wildcard, boolean withIds, List<String> types) {
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT a.id) FROM applications a WHERE ");
+        return buildSearchApplications(wildcard, withIds, builder, types)
+                .toString();
+    }
+
+    protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, StringBuilder builder, List<String> types) {
+        StringBuilder result = buildSearchApplications(wildcard, withIds, builder);
+        if (types != null && !types.isEmpty()) {
+            result.append(" AND a.type IN (:types)");
+        }
+        return result;
+    }
+
+    @Override
     public String buildFindApplicationByDomainAndClient() {
         return new StringBuilder("SELECT * FROM applications a WHERE ")
                 .append(" a.domain = :domain ")

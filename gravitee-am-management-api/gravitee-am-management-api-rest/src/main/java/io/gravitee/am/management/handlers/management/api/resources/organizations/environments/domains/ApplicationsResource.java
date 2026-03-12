@@ -22,6 +22,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -101,17 +102,19 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_APPLICATIONS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
+            @QueryParam("type") List<ApplicationType> types,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
+        final List<ApplicationType> typeFilter = (types != null && !types.isEmpty()) ? types : null;
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
                 .andThen(checkDomainExists(domain).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
                         .filter(hasPermission -> hasPermission)
-                        .flatMapSingle(__ -> listApplications(domain, page, size, query))
+                        .flatMapSingle(__ -> listApplications(domain, page, size, query, typeFilter))
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query))))
+                                        .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query, typeFilter))))
                 .map(apps ->
                         new ApplicationPage(
                                 apps.getData().stream().map(FilteredApplication::of).toList(),
@@ -121,19 +124,19 @@ public class ApplicationsResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
-    private Single<Page<Application>> listApplications(String domain, int page, int size, String query) {
+    private Single<Page<Application>> listApplications(String domain, int page, int size, String query, List<ApplicationType> types) {
         if (query != null) {
-            return applicationService.search(domain, query, page, size);
+            return applicationService.search(domain, query, page, size, types);
         } else {
-            return applicationService.findByDomain(domain, page, size);
+            return applicationService.findByDomain(domain, page, size, types);
         }
     }
 
-    private Single<Page<Application>> listApplicationsByIds(String domain, List<String> applicationIds, int page, int size, String query) {
+    private Single<Page<Application>> listApplicationsByIds(String domain, List<String> applicationIds, int page, int size, String query, List<ApplicationType> types) {
         if (query != null) {
-            return applicationService.search(domain, applicationIds, query, page, size);
+            return applicationService.search(domain, applicationIds, query, page, size, types);
         } else {
-            return applicationService.findByDomain(domain, applicationIds, page, size);
+            return applicationService.findByDomain(domain, applicationIds, page, size, types);
         }
     }
 
