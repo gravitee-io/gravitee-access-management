@@ -20,6 +20,7 @@ import {
   safeDeleteDomain,
   setupDomainForTest,
   patchDomain,
+  waitForOidcReady,
 } from '@management-commands/domain-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
@@ -156,8 +157,7 @@ describe('domain vhost mode - gateway routing after switching to vhost', () => {
   });
 
   it('should serve OIDC discovery at the vhost path with correct endpoint URLs', async () => {
-    const res = await performGet(process.env.AM_GATEWAY_URL, `${vhostPath}/oidc/.well-known/openid-configuration`);
-    expect(res.status).toBe(200);
+    const res = await waitForOidcReady(vhostPath.slice(1));
     const body = res.body;
     expect(body.issuer).toContain(vhostPath);
     expect(body.authorization_endpoint).toContain(vhostPath);
