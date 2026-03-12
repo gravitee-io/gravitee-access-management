@@ -50,6 +50,12 @@ docker/compose/mongo/data/
 
 # Playwright auth state
 gravitee-am-test/playwright/fixtures/.auth/
+gravitee-am-test/playwright/junit-results/
+gravitee-am-test/test-inventory/
+
+
+# Jest CI reports
+gravitee-am-test/jest-reports/
 
 # AI/Development documentation - plan files (temporary work files)
 docs/ai-guidelines
