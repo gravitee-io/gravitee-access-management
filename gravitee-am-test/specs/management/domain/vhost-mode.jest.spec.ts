@@ -26,6 +26,7 @@ import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import type { Domain } from '@management-models/Domain';
 import { setup } from '../../test-fixture';
+import { retryUntil } from '@utils-commands/retry';
 
 setup(200000);
 
@@ -156,7 +157,11 @@ describe('domain vhost mode - gateway routing after switching to vhost', () => {
   });
 
   it('should serve OIDC discovery at the vhost path with correct endpoint URLs', async () => {
-    const res = await performGet(process.env.AM_GATEWAY_URL, `${vhostPath}/oidc/.well-known/openid-configuration`);
+    const res = await retryUntil(
+      () => performGet(process.env.AM_GATEWAY_URL, `${vhostPath}/oidc/.well-known/openid-configuration`),
+      (response) => response.status === 200,
+      { timeoutMillis: 10000, intervalMillis: 500 }
+    );
     expect(res.status).toBe(200);
     const body = res.body;
     expect(body.issuer).toContain(vhostPath);
