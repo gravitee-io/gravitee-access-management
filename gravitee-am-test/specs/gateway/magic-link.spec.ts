@@ -227,16 +227,11 @@ describe('Should not authenticate user', () => {
             Cookie: magicLinkResponse.headers['set-cookie'],
         });
 
-        const rawUrl =
-            verifyTokenResponse.body?.url ??
-            verifyTokenResponse.headers?.location ??
-            (verifyTokenResponse as any).request?.url;
+        expect(verifyTokenResponse.status).toBe(200);
+        expect(verifyTokenResponse.statusCode).toBe(200);
 
-        expect(rawUrl).toBeDefined();
-
-        const url = new URL(String(rawUrl), 'http://localhost');
-        expect(url.searchParams.has('error')).toBe(true);
-        expect(url.searchParams.has('error_description')).toBe(true);
-        expect(url.searchParams.get('error_description')).toBe('Something went wrong, please try again');
+        const responseText = verifyTokenResponse.text;
+        expect(responseText).toContain('token_already_used');
+        expect(responseText).toContain('Magic link has already been used');
     });
 });
