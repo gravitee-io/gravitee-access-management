@@ -20,9 +20,9 @@ import {
   safeDeleteDomain,
   setupDomainForTest,
   patchDomain,
+  waitForOidcReady,
 } from '@management-commands/domain-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import type { Domain } from '@management-models/Domain';
 import { setup } from '../../test-fixture';
@@ -85,8 +85,7 @@ describe('domain context-path mode - path validation', () => {
 
 describe('domain context-path mode - OIDC endpoint URLs after path change', () => {
   it('should expose OIDC discovery endpoints relative to the updated context path', async () => {
-    const res = await performGet(process.env.AM_GATEWAY_URL, `${newPath}/oidc/.well-known/openid-configuration`);
-    expect(res.status).toBe(200);
+    const res = await waitForOidcReady(newPath.slice(1));
     const body = res.body;
     expect(body.issuer).toContain(newPath);
     expect(body.authorization_endpoint).toContain(newPath);

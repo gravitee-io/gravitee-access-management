@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { createIdp, deleteIdp, getAllIdps, getIdp, updateIdp } from '@management-commands/idp-management-commands';
-import { uniqueName } from '@utils-commands/misc';
-import { setup } from '../test-fixture';
+import { setup } from '../../test-fixture';
+import { IdpFixture, setupIdpFixture, buildInlineIdpBody } from './fixtures/idp-fixture';
 
 setup(200000);
 
-let accessToken;
-let domain;
+let fixture: IdpFixture;
 let idp;
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('idp', true), { accessToken }).then((it) => it.domain);
+  fixture = await setupIdpFixture();
+});
+
+afterAll(async () => {
+  if (fixture) {
+    await fixture.cleanUp();
+  }
 });
 
 function buildIdp(i: number) {
@@ -59,7 +61,7 @@ describe('when creating identity providers', () => {
     it('must create new idp: ' + i, async () => {
       const { idpConfig, newIdp } = buildIdp(i);
 
-      const createdIdp = await createIdp(domain.id, accessToken, newIdp);
+      const createdIdp = await createIdp(fixture.domain.id, fixture.accessToken, newIdp);
       expect(createdIdp).toBeDefined();
 
       expect(createdIdp.id).toBeDefined();
@@ -84,15 +86,15 @@ describe('when creating identity providers', () => {
 
 describe('after creating identity providers', () => {
   it('must find Identity provider', async () => {
-    const foundIdp = await getIdp(domain.id, accessToken, idp.id);
+    const foundIdp = await getIdp(fixture.domain.id, fixture.accessToken, idp.id);
     expect(foundIdp).toBeDefined();
     expect(idp.id).toEqual(foundIdp.id);
   });
 
   it('must update Identity Provider', async () => {
     const updatedIdp = await updateIdp(
-      domain.id,
-      accessToken,
+      fixture.domain.id,
+      fixture.accessToken,
       {
         name: faker.commerce.productName(),
         type: idp.type,
@@ -105,21 +107,13 @@ describe('after creating identity providers', () => {
   });
 
   it('must find all Identity providers', async () => {
-    const idpSet = await getAllIdps(domain.id, accessToken);
-
+    const idpSet = await getAllIdps(fixture.domain.id, fixture.accessToken);
     expect(idpSet.length).toEqual(11);
   });
 
   it('Must delete Identity Provider', async () => {
-    await deleteIdp(domain.id, accessToken, idp.id);
-    const idpSet = await getAllIdps(domain.id, accessToken);
-
+    await deleteIdp(fixture.domain.id, fixture.accessToken, idp.id);
+    const idpSet = await getAllIdps(fixture.domain.id, fixture.accessToken);
     expect(idpSet.length).toEqual(10);
   });
-});
-
-afterAll(async () => {
-  if (domain && domain.id) {
-    await safeDeleteDomain(domain.id, accessToken);
-  }
 });
