@@ -47,13 +47,13 @@
       "type": "string",
       "title": "Username",
       "description": "Username for basic authentication",
-      "condition": { "functionBody": "return model.authentication && model.authenticationType === 'basic';" }
+      "condition": { "functionBody": "return model.authentication && (!model.authenticationType || model.authenticationType === 'basic');" }
     },
     "password": {
       "type": "string",
       "title": "Password",
       "description": "Password for basic authentication",
-      "condition": { "functionBody": "return model.authentication && model.authenticationType === 'basic';" },
+      "condition": { "functionBody": "return model.authentication && (!model.authenticationType || model.authenticationType === 'basic');" },
       "widget": "password",
       "sensitive": true
     },
@@ -125,15 +125,19 @@
   ],
   "allOf": [
     {
-      "if": { "properties": { "authentication": { "const": true } } },
-      "then": { "required": ["authenticationType"] }
-    },
-    {
       "if": {
-        "properties": {
-          "authentication": { "const": true },
-          "authenticationType": { "const": "basic" }
-        }
+        "allOf": [
+          { "properties": { "authentication": { "const": true } } },
+          {
+            "anyOf": [
+              { "not": { "required": ["authenticationType"] } },
+              {
+                "properties": { "authenticationType": { "const": "basic" } },
+                "required": ["authenticationType"]
+              }
+            ]
+          }
+        ]
       },
       "then": { "required": ["username", "password"] }
     },
@@ -142,7 +146,8 @@
         "properties": {
           "authentication": { "const": true },
           "authenticationType": { "const": "oauth2" }
-        }
+        },
+        "required": ["authenticationType"]
       },
       "then": {
         "required": ["oauth2Configuration"],
