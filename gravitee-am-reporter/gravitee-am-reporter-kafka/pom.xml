@@ -31,7 +31,8 @@
 
     <properties>
         <commons-validator.version>1.7</commons-validator.version>
-        <confluent-kafka.version>7.6.2</confluent-kafka.version>
+        <confluent-kafka.version>7.6.9</confluent-kafka.version>
+        <avro.version>1.11.4</avro.version>
     </properties>
 
     <dependencies>
@@ -157,8 +158,18 @@
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry-client</artifactId>
             <version>${confluent-kafka.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>avro</artifactId>
+                    <groupId>org.apache.avro</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>${avro.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-json-schema-serializer</artifactId>
