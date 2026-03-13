@@ -27,6 +27,7 @@ let fixture: UserManagementAppFixture;
 
 beforeAll(async () => {
   fixture = await setupUserManagementAppFixture();
+  await fixture.startAndWaitForDomain();
 });
 
 afterAll(async () => {

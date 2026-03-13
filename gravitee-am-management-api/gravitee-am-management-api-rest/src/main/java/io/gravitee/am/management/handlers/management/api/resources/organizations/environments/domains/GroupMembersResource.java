@@ -78,7 +78,7 @@ public class GroupMembersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Group members successfully fetched",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = User.class))),
+                            schema = @Schema(implementation = UserPage.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,

@@ -15,9 +15,9 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { setup } from '../../test-fixture';
 import { waitForDomainSync } from '@management-commands/domain-management-commands';
 import { UserManagementAppFixture, setupUserManagementAppFixture, CONSTANTS } from './fixtures/user-management-app-fixture';
+import {setup} from '../../test-fixture';
 
 setup();
 
@@ -67,6 +67,8 @@ beforeAll(async () => {
   const app = await fixture.createAndConfigureApp(fixture.defaultIdpId);
   clientId = app.clientId;
   clientSecret = app.clientSecret;
+
+  await fixture.startAndWaitForDomain();
 });
 
 afterAll(async () => {
@@ -104,13 +106,7 @@ describe('Authenticate User', () => {
   });
 
   it('should disable user', async () => {
-    const updated = await fixture.updateUser(userId, {
-      firstName: 'Jensen',
-      lastName: 'Barbara',
-      email: 'jensen.barbara@mail.com',
-      additionalInformation: { profile: 'https://my.profile.com' },
-      enabled: false,
-    });
+    const updated = await fixture.updateUserStatus(userId, false);
     expect(updated.enabled).toBe(false);
     await waitForDomainSync(fixture.domain.id);
   });
@@ -123,13 +119,7 @@ describe('Authenticate User', () => {
   });
 
   it('should re-enable user', async () => {
-    const updated = await fixture.updateUser(userId, {
-      firstName: 'Jensen',
-      lastName: 'Barbara',
-      email: 'jensen.barbara@mail.com',
-      additionalInformation: { profile: 'https://my.profile.com' },
-      enabled: true,
-    });
+    const updated = await fixture.updateUserStatus(userId, true);
     expect(updated.enabled).toBe(true);
     await waitForDomainSync(fixture.domain.id);
   });
