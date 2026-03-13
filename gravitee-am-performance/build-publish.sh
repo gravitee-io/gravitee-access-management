@@ -17,11 +17,17 @@
 
 set -e
 
-VERSION=$(grep -m 1 "<version>" pom.xml | sed -e "s/.*<version>//" -e "s#</version>.*##")
-if [[ "$VERSION" == *-SNAPSHOT ]]; then
-  TIMESTAMP=$(date +%Y%m%d%H%M)
-  VERSION="${VERSION%-SNAPSHOT}-${TIMESTAMP}"
+VERSION=$1
+
+if [ -z "$VERSION" ]; then
+  VERSION=$(grep -m 1 "<version>" pom.xml | sed -e "s/.*<version>//" -e "s#</version>.*##")
+  
+  if [[ "$VERSION" == *-SNAPSHOT ]]; then
+    TIMESTAMP=$(date +%Y%m%d%H%M)
+    VERSION="${VERSION%-SNAPSHOT}-${TIMESTAMP}"
+  fi
 fi
-echo $VERSION
+
+echo "Setting tag: $VERSION"
 docker buildx build --push --platform linux/amd64,linux/arm64 -t graviteeio.azurecr.io/am-gatling-runner:$VERSION  .
-echo "Published Docker image in version $VERSION"
+echo "Published Docker image with tag version $VERSION"
