@@ -21,9 +21,18 @@ import { UserManagementAppFixture, setupUserManagementAppFixture } from './fixtu
 setup();
 
 let fixture: UserManagementAppFixture;
+let roleId: string;
+let role2Id: string;
 
 beforeAll(async () => {
   fixture = await setupUserManagementAppFixture();
+
+  // Create roles used across multiple describe blocks
+  const role = await fixture.createRole('role name', 'role description');
+  roleId = role.id;
+
+  const role2 = await fixture.createRole('role 2 name', 'role 2 description');
+  role2Id = role2.id;
 });
 
 afterAll(async () => {
@@ -32,9 +41,6 @@ afterAll(async () => {
 });
 
 describe('Roles - Create', () => {
-  let roleId: string;
-  let role2Id: string;
-
   it('should reject malformed JSON with 400', async () => {
     await expect(fixture.createRole(undefined, undefined)).rejects.toMatchObject({
       response: { status: 400 },
@@ -48,22 +54,20 @@ describe('Roles - Create', () => {
     });
   });
 
-  it('should create a role', async () => {
-    const role = await fixture.createRole('role name', 'role description');
+  it('should have created a role with correct properties', async () => {
+    const role = await fixture.getRole(roleId);
     expect(role).toBeDefined();
     expect(role.id).toBeDefined();
     expect(role.name).toEqual('role name');
     expect(role.description).toEqual('role description');
-    roleId = role.id;
   });
 
-  it('should create a second role', async () => {
-    const role = await fixture.createRole('role 2 name', 'role 2 description');
+  it('should have created a second role with correct properties', async () => {
+    const role = await fixture.getRole(role2Id);
     expect(role).toBeDefined();
     expect(role.id).toBeDefined();
     expect(role.name).toEqual('role 2 name');
     expect(role.description).toEqual('role 2 description');
-    role2Id = role.id;
   });
 
   it('should reject duplicate role name with 400', async () => {
@@ -72,87 +76,87 @@ describe('Roles - Create', () => {
       message: expect.stringContaining('A role [role name] already exists'),
     });
   });
+});
 
-  describe('Roles - Update', () => {
-    it('should reject unknown role with 404', async () => {
-      await expect(fixture.updateRole('wrong-id', { name: 'role name 2' })).rejects.toMatchObject({
-        response: { status: 404 },
-        message: expect.stringContaining('Role [wrong-id] can not be found'),
-      });
-    });
-
-    it('should reject empty body', async () => {
-      // SDK validates required params client-side; Postman sent empty body → 400
-      await expect(fixture.updateRole(roleId, undefined)).rejects.toThrow();
-    });
-
-    it('should update a role', async () => {
-      const updated = await fixture.updateRole(roleId, {
-        name: 'role name',
-        description: 'new description',
-        permissions: ['read'],
-      });
-      expect(updated.description).toEqual('new description');
-      expect(updated.permissions).toEqual(['read']);
-    });
-
-    it('should update the second role', async () => {
-      const updated = await fixture.updateRole(role2Id, {
-        name: 'role 2 name',
-        description: 'new description 2',
-        permissions: ['write'],
-      });
-      expect(updated.description).toEqual('new description 2');
-      expect(updated.permissions).toEqual(['write']);
+describe('Roles - Update', () => {
+  it('should reject unknown role with 404', async () => {
+    await expect(fixture.updateRole('wrong-id', { name: 'role name 2' })).rejects.toMatchObject({
+      response: { status: 404 },
+      message: expect.stringContaining('Role [wrong-id] can not be found'),
     });
   });
 
-  describe('Roles - Get Single', () => {
-    it('should reject unknown role with 404', async () => {
-      await expect(fixture.getRole('wrong-id')).rejects.toMatchObject({
-        response: { status: 404 },
-        message: expect.stringContaining('Role [wrong-id] can not be found'),
-      });
-    });
+  it('should reject empty body', async () => {
+    // SDK validates required params client-side; Postman sent empty body → 400
+    await expect(fixture.updateRole(roleId, undefined)).rejects.toThrow();
+  });
 
-    it('should get a single role', async () => {
-      const role = await fixture.getRole(roleId);
-      expect(role).toBeDefined();
-      expect(role.id).toEqual(roleId);
-      expect(role.name).toEqual('role name');
+  it('should update a role', async () => {
+    const updated = await fixture.updateRole(roleId, {
+      name: 'role name',
+      description: 'new description',
+      permissions: ['read'],
+    });
+    expect(updated.description).toEqual('new description');
+    expect(updated.permissions).toEqual(['read']);
+  });
+
+  it('should update the second role', async () => {
+    const updated = await fixture.updateRole(role2Id, {
+      name: 'role 2 name',
+      description: 'new description 2',
+      permissions: ['write'],
+    });
+    expect(updated.description).toEqual('new description 2');
+    expect(updated.permissions).toEqual(['write']);
+  });
+});
+
+describe('Roles - Get Single', () => {
+  it('should reject unknown role with 404', async () => {
+    await expect(fixture.getRole('wrong-id')).rejects.toMatchObject({
+      response: { status: 404 },
+      message: expect.stringContaining('Role [wrong-id] can not be found'),
     });
   });
 
-  describe('Roles - List', () => {
-    it('should list all roles', async () => {
-      const result = await fixture.listRoles();
-      expect(result).toBeDefined();
-      expect(result.data.length).toEqual(2);
+  it('should get a single role', async () => {
+    const role = await fixture.getRole(roleId);
+    expect(role).toBeDefined();
+    expect(role.id).toEqual(roleId);
+    expect(role.name).toEqual('role name');
+  });
+});
+
+describe('Roles - List', () => {
+  it('should list all roles', async () => {
+    const result = await fixture.listRoles();
+    expect(result).toBeDefined();
+    expect(result.data.length).toEqual(2);
+  });
+});
+
+describe('Roles - Delete', () => {
+  it('should reject deleting unknown role with 404', async () => {
+    await expect(fixture.deleteRole('wrong-id')).rejects.toMatchObject({
+      response: { status: 404 },
+      message: expect.stringContaining('Role [wrong-id] can not be found'),
     });
   });
 
-  describe('Roles - Delete', () => {
-    it('should reject deleting unknown role with 404', async () => {
-      await expect(fixture.deleteRole('wrong-id')).rejects.toMatchObject({
-        response: { status: 404 },
-        message: expect.stringContaining('Role [wrong-id] can not be found'),
-      });
-    });
+  it('should delete a role', async () => {
+    await fixture.deleteRole(role2Id);
+  });
 
-    it('should delete a role', async () => {
-      await fixture.deleteRole(role2Id);
+  it('should reject getting deleted role with 404', async () => {
+    await expect(fixture.getRole(role2Id)).rejects.toMatchObject({
+      response: { status: 404 },
     });
+  });
 
-    it('should reject getting deleted role with 404', async () => {
-      await expect(fixture.getRole(role2Id)).rejects.toMatchObject({
-        response: { status: 404 },
-      });
-    });
-
-    it('should list roles after deletion', async () => {
-      const result = await fixture.listRoles();
-      expect(result).toBeDefined();
-      expect(result.data.length).toEqual(1);
-    });
+  it('should list roles after deletion', async () => {
+    const result = await fixture.listRoles();
+    expect(result).toBeDefined();
+    expect(result.data.length).toEqual(1);
   });
 });

@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.11.0-alpha.2-SNAPSHOT
+  version: 4.11.0-alpha.3-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -5123,7 +5123,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/UserPage"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/groups/{group}/members/{member}:
@@ -14136,6 +14136,7 @@ components:
       type: object
       properties:
         certificatePem:
+          minLength: 1
           type: string
           description: The certificate in PEM format
           example: |-

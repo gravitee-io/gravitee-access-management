@@ -16,8 +16,14 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { setupDomainForTest, safeDeleteDomain, waitForDomainSync, patchDomain } from '@management-commands/domain-management-commands';
-import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+import {
+  createDomain,
+  startDomain,
+  waitForDomainStart,
+  safeDeleteDomain,
+  patchDomain,
+} from '@management-commands/domain-management-commands';
+import faker from 'faker';
 import { createRole, updateRole, getAllRoles, deleteRole, getRole } from '@management-commands/role-management-commands';
 import {
   createUser,
@@ -106,6 +112,9 @@ export interface UserManagementAppFixture extends Fixture {
   removeGroupMember: (groupId: string, memberId: string) => Promise<void>;
   getGroupRoles: (groupId: string) => Promise<Array<Role>>;
 
+  // Domain lifecycle helpers
+  startAndWaitForDomain: () => Promise<void>;
+
   // Application helpers
   createAndConfigureApp: (identityProviderId: string) => Promise<{ clientId: string; clientSecret: string }>;
 
@@ -139,11 +148,7 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
     accessToken = await requestAdminAccessToken();
     expect(accessToken).toBeDefined();
 
-    const { domain: createdDomain, oidcConfig } = await setupDomainForTest(uniqueName(CONSTANTS.DOMAIN_NAME_PREFIX, true), {
-      accessToken,
-      waitForStart: true,
-    });
-    domain = createdDomain;
+    domain = await createDomain(accessToken, uniqueName(CONSTANTS.DOMAIN_NAME_PREFIX, true), faker.company.catchPhraseDescriptor());
     expect(domain).toBeDefined();
     expect(domain.id).toBeDefined();
 
@@ -151,6 +156,8 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
     const defaultIdp = idpSet.values().next().value;
     expect(defaultIdp).toBeDefined();
     const defaultIdpId = defaultIdp.id;
+
+    let oidcConfig: any = null;
 
     const cleanUp = async () => {
       expect(domain).toBeDefined();
@@ -162,7 +169,9 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
       domain,
       accessToken,
       defaultIdpId,
-      openIdConfiguration: oidcConfig,
+      get openIdConfiguration() {
+        return oidcConfig;
+      },
 
       createRole: (name, description) => createRole(domain.id, accessToken, { name, description }),
       getRole: (roleId) => getRole(domain.id, accessToken, roleId),
@@ -197,6 +206,12 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
       removeGroupMember: (groupId, memberId) => removeGroupMember(domain.id, accessToken, groupId, memberId),
       getGroupRoles: (groupId) => getGroupRoles(domain.id, accessToken, groupId),
 
+      startAndWaitForDomain: async () => {
+        await startDomain(domain.id, accessToken);
+        const { oidcConfig: oidc } = await waitForDomainStart(domain);
+        oidcConfig = oidc;
+      },
+
       createAndConfigureApp: async (identityProviderId: string) => {
         const app = await createTestApp(uniqueName('client-um', true), domain, accessToken, 'WEB', {
           settings: {
@@ -209,8 +224,6 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
           },
           identityProviders: new Set([{ identity: identityProviderId, priority: -1 }]),
         });
-
-        await waitForNextSync(domain.id);
 
         return {
           clientId: app.settings.oauth.clientId,

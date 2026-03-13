@@ -39,8 +39,22 @@ export const getScopesPage = (domainId, accessToken, page: number = null, size: 
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
   };
-  if (page !== null && size != null) {
+  if (page !== null && size !== null) {
     return getScopeApi(accessToken).listScopes({ ...params, page: page, size: size });
+  }
+  return getScopeApi(accessToken).listScopes(params);
+};
+
+export const searchScopes = (domainId, accessToken, query: string, page: number = null, size: number = null) => {
+  const params: any = {
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    q: query,
+  };
+  if (page !== null && size !== null) {
+    params.page = page;
+    params.size = size;
   }
   return getScopeApi(accessToken).listScopes(params);
 };
