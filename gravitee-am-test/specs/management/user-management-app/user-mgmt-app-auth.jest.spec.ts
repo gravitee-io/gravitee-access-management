@@ -104,13 +104,7 @@ describe('Authenticate User', () => {
   });
 
   it('should disable user', async () => {
-    const updated = await fixture.updateUser(userId, {
-      firstName: 'Jensen',
-      lastName: 'Barbara',
-      email: 'jensen.barbara@mail.com',
-      additionalInformation: { profile: 'https://my.profile.com' },
-      enabled: false,
-    });
+    const updated = await fixture.updateUserStatus(userId, false);
     expect(updated.enabled).toBe(false);
     await waitForDomainSync(fixture.domain.id);
   });
@@ -123,13 +117,7 @@ describe('Authenticate User', () => {
   });
 
   it('should re-enable user', async () => {
-    const updated = await fixture.updateUser(userId, {
-      firstName: 'Jensen',
-      lastName: 'Barbara',
-      email: 'jensen.barbara@mail.com',
-      additionalInformation: { profile: 'https://my.profile.com' },
-      enabled: true,
-    });
+    const updated = await fixture.updateUserStatus(userId, true);
     expect(updated.enabled).toBe(true);
     await waitForDomainSync(fixture.domain.id);
   });
