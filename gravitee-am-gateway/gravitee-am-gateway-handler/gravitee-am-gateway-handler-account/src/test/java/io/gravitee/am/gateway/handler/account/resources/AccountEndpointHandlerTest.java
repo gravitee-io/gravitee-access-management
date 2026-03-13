@@ -157,7 +157,7 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
         resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
         this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
 
-        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC - 1, ChronoUnit.SECONDS).getEpochSecond());
+        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC - 5, ChronoUnit.SECONDS).getEpochSecond());
 
         when(accountService.resetPassword(any(), any(), any(), any(), any())).thenReturn(Single.just(new ResetPasswordResponse()));
 
@@ -286,7 +286,7 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
         resetPasswordSettings.setTokenAge(TOKEN_AGE_IN_SEC);
         this.domain.getSelfServiceAccountManagementSettings().setResetPassword(resetPasswordSettings);
 
-        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC - 1, ChronoUnit.SECONDS).getEpochSecond());
+        when(jwt.getIat()).thenReturn(Instant.now().minus(TOKEN_AGE_IN_SEC - 5, ChronoUnit.SECONDS).getEpochSecond());
 
         testRequest(HttpMethod.GET,
                 CHANGE_PWD_REQUEST_PATH,
