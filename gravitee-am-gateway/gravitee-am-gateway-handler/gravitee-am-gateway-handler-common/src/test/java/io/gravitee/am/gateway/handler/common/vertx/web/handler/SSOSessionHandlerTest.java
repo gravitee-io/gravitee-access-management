@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -116,7 +117,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setEnabled(false);
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -133,7 +134,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastPasswordReset(new Date(System.currentTimeMillis() - 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -150,7 +151,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastPasswordReset(new Date(System.currentTimeMillis() + 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -167,7 +168,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastUsernameReset(new Date(System.currentTimeMillis() - 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -184,7 +185,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         user.setLastUsernameReset(new Date(System.currentTimeMillis() + 1000 * 60));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -208,7 +209,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         when(clientSyncService.findByClientId(client.getClientId())).thenReturn(Maybe.just(client));
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -247,7 +248,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -290,7 +291,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -344,7 +345,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -408,7 +409,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 
@@ -448,7 +449,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         );
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
             routingContext.next();
         });
 

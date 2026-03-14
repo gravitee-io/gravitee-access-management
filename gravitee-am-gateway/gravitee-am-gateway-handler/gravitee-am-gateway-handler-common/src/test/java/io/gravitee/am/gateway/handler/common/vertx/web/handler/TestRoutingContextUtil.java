@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
-import io.gravitee.am.model.Domain;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.MultiMap;
+import io.vertx.ext.web.impl.UserContextInternal;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.List;
+public final class TestRoutingContextUtil {
 
-public interface DomainReadService {
-    Maybe<Domain> findById(String id);
-    String buildUrl(Domain domain, String path, MultiMap queryParams);
+    private TestRoutingContextUtil() {}
 
-    default String buildUrl(Domain domain, String path) {
-        return buildUrl(domain, path, MultiMap.caseInsensitiveMultiMap());
+    public static void setUser(RoutingContext rc, io.vertx.ext.auth.User user) {
+        ((UserContextInternal) rc.getDelegate().userContext()).setUser(user);
     }
-
-    Flowable<Domain> listAll();
 }

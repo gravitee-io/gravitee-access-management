@@ -56,7 +56,7 @@ import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

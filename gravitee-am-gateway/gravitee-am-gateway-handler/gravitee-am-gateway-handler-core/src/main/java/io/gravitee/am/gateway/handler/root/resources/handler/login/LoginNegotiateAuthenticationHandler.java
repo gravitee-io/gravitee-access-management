@@ -27,7 +27,8 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
@@ -112,7 +113,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                 // authentication success
                 // set user into the context and continue
                 final User result = res.result();
-                context.getDelegate().setUser(result);
+                ((UserContextInternal) context.getDelegate().userContext()).setUser(result);
                 context.put(ConstantKeys.USER_CONTEXT_KEY, result.getUser());
                 context.next();
             });

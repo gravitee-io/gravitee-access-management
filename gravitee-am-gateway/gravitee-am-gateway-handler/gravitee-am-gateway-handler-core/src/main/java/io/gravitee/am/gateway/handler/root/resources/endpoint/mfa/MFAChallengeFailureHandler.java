@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -88,7 +88,7 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
                     .doOnError(error -> log.info("Deletion of authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
 
-            context.clearUser();
+            context.userContext().clear();
             context.session().destroy();
         }
     }

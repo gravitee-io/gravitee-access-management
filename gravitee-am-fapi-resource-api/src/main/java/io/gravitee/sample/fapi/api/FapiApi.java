@@ -102,21 +102,21 @@ public class FapiApi {
             options.setClientAuth(ClientAuth.REQUEST);
 
             if (cmd.getOptionValue(CONF_TRUST_STORE_TYPE, "pkcs12").equalsIgnoreCase("pkcs12")) {
-                options.setPfxTrustOptions(new PfxOptions()
+                options.setTrustOptions(new PfxOptions()
                         .setPath(cmd.getOptionValue(CONF_TRUST_STORE_PATH))
                         .setPassword(cmd.getOptionValue(CONF_TRUST_STORE_PASSWORD)));
             } else {
-                options.setTrustStoreOptions(new JksOptions()
+                options.setTrustOptions(new JksOptions()
                         .setPath(cmd.getOptionValue(CONF_TRUST_STORE_PATH))
                         .setPassword(cmd.getOptionValue(CONF_TRUST_STORE_PASSWORD)));
             }
 
             if (cmd.getOptionValue(CONF_KEY_STORE_TYPE, "pkcs12").equalsIgnoreCase("pkcs12")) {
-                options.setPfxKeyCertOptions(new PfxOptions()
+                options.setKeyCertOptions(new PfxOptions()
                         .setPath(cmd.getOptionValue(CONF_KEY_STORE_PATH))
                         .setPassword(cmd.getOptionValue(CONF_KEY_STORE_PASSWORD)));
             } else {
-                options.setKeyStoreOptions(new JksOptions()
+                options.setKeyCertOptions(new JksOptions()
                         .setPath(cmd.getOptionValue(CONF_KEY_STORE_PATH))
                         .setPassword(cmd.getOptionValue(CONF_KEY_STORE_PASSWORD)));
             }

@@ -16,14 +16,19 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SpyUserContext;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.ext.web.RequestBody;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
+import io.vertx.rxjava3.ext.web.UserContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,10 +44,11 @@ public class SpyRoutingContext extends RoutingContext {
     private final HttpServerRequest httpServerRequest;
     private final DummySession dummySession = new DummySession();
     private final DummyHttpResponse response = new DummyHttpResponse();
+    private final SpyUserContext sharedUserContext = new SpyUserContext();
+    private final io.vertx.ext.web.RoutingContext coreRoutingContext;
 
     private int next = 0;
     private Buffer body;
-    private User user;
     private int statusCode;
     private boolean failed;
 
@@ -54,6 +60,7 @@ public class SpyRoutingContext extends RoutingContext {
         super(null);
         dummyHttpRequest = new DummyHttpRequest(path);
         httpServerRequest = new HttpServerRequest(dummyHttpRequest);
+        coreRoutingContext = createCoreRoutingContext(sharedUserContext);
     }
 
     @Override
@@ -67,14 +74,62 @@ public class SpyRoutingContext extends RoutingContext {
         return (T) data.remove(key);
     }
 
-    @Override
     public void setBody(Buffer body) {
         this.body = body;
     }
 
-    @Override
     public JsonObject getBodyAsJson() {
         return this.body == null ? null : this.body.toJsonObject();
+    }
+
+    @Override
+    public RequestBody body() {
+        return RequestBody.newInstance(new io.vertx.ext.web.RequestBody() {
+            @Override
+            public String asString() {
+                return body != null ? body.toString() : null;
+            }
+
+            @Override
+            public String asString(String encoding) {
+                return body != null ? body.toString(encoding) : null;
+            }
+
+            @Override
+            public JsonObject asJsonObject(int maxAllowedLength) {
+                return body != null ? body.toJsonObject() : null;
+            }
+
+            @Override
+            public JsonArray asJsonArray(int maxAllowedLength) {
+                return body != null ? body.toJsonArray() : null;
+            }
+
+            @Override
+            public Buffer buffer() {
+                return body;
+            }
+
+            @Override
+            public <R> R asPojo(Class<R> clazz, int maxAllowedLength) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int length() {
+                return body != null ? body.length() : 0;
+            }
+
+            @Override
+            public boolean available() {
+                return body != null;
+            }
+        });
+    }
+
+    @Override
+    public io.vertx.core.MultiMap queryParams() {
+        return dummyHttpRequest.params();
     }
 
     @Override
@@ -107,12 +162,17 @@ public class SpyRoutingContext extends RoutingContext {
 
     @Override
     public User user() {
-        return user;
+        var coreUser = sharedUserContext.get();
+        return coreUser != null ? User.newInstance(coreUser) : null;
     }
 
     @Override
+    public UserContext userContext() {
+        return new UserContext(sharedUserContext);
+    }
+
     public void setUser(User user) {
-        this.user = user;
+        sharedUserContext.setUser(user != null ? user.getDelegate() : null);
     }
 
     @Override
@@ -153,5 +213,17 @@ public class SpyRoutingContext extends RoutingContext {
 
     public void setMethod(HttpMethod method) {
         this.dummyHttpRequest.setMethod(method);
+    }
+
+    @Override
+    public io.vertx.ext.web.RoutingContext getDelegate() {
+        return coreRoutingContext;
+    }
+
+    private static io.vertx.ext.web.RoutingContext createCoreRoutingContext(SpyUserContext userCtx) {
+        var mock = org.mockito.Mockito.mock(io.vertx.ext.web.RoutingContext.class);
+        org.mockito.Mockito.lenient().when(mock.userContext()).thenReturn(userCtx);
+        org.mockito.Mockito.lenient().when(mock.queryParams()).thenReturn(MultiMap.caseInsensitiveMultiMap());
+        return mock;
     }
 }

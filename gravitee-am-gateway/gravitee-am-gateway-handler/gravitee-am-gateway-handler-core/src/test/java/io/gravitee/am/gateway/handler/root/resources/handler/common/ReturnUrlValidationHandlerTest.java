@@ -20,7 +20,7 @@ import io.gravitee.am.common.exception.oauth2.ReturnUrlMismatchException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.rxjava3.core.net.HostAndPort;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -79,7 +79,7 @@ public class ReturnUrlValidationHandlerTest {
         Mockito.when(ctx.request()).thenReturn(request);
         Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("/goto");
         Mockito.when(request.scheme()).thenReturn("http");
-        Mockito.when(request.host()).thenReturn("somedomain.com");
+        Mockito.when(request.authority()).thenReturn(HostAndPort.create("somedomain.com", -1));
         Mockito.when(request.getParam("return_url")).thenReturn("http://somedomain.com/goto/webauthn/register?redirect_uri=net.openid.appauthdemo:/oauth2redirect&client_id=native&response_type=code&state=fYrNK1BqE17pcTwko0D8Cw&nonce=V_QQb04qLbFGzsViv5exUA&scope=openid email profile&code_challenge=6CEk6Ksn4QYCjDnx7KbWHHintBYJFjakVdQGf3HHHys&code_challenge_method=S256");
 
         Client client = new Client();
@@ -138,7 +138,7 @@ public class ReturnUrlValidationHandlerTest {
         Mockito.when(ctx.request()).thenReturn(request);
         Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("/goto");
         Mockito.when(request.scheme()).thenReturn("http");
-        Mockito.when(request.host()).thenReturn("somedomain.com");
+        Mockito.when(request.authority()).thenReturn(HostAndPort.create("somedomain.com", -1));
         Mockito.when(request.getParam("return_url")).thenReturn("http://user@somedomain.com/goto");
 
         Client client = new Client();

@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-reporter</artifactId>
         <groupId>io.gravitee.am.reporter</groupId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.11.0-alpha.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -31,8 +31,7 @@
 
     <properties>
         <commons-validator.version>1.7</commons-validator.version>
-        <confluent-kafka.version>7.6.9</confluent-kafka.version>
-        <avro.version>1.11.4</avro.version>
+        <confluent-kafka.version>7.6.2</confluent-kafka.version>
     </properties>
 
     <dependencies>
@@ -158,18 +157,8 @@
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry-client</artifactId>
             <version>${confluent-kafka.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>avro</artifactId>
-                    <groupId>org.apache.avro</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-            <version>${avro.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-json-schema-serializer</artifactId>

@@ -23,12 +23,14 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Single;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.web.impl.UserContextInternal;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
@@ -95,13 +97,13 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
             final String credentialId = webauthnResp.getString("id");
 
             // authenticate the user
-            webAuthn.rxAuthenticate(
+            Single.fromCompletionStage(webAuthn.authenticate(
                     // authInfo
                     new WebAuthnCredentials()
                             .setOrigin(origin)
                             .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                             .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                            .setWebauthn(webauthnResp))
+                            .setWebauthn(webauthnResp)).toCompletionStage())
                     .doFinally(() -> {
                         // invalidate the challenge
                         session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
@@ -120,7 +122,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                     }
                                     final User user = h.result();
                                     // save the user into the context
-                                    ctx.getDelegate().setUser(user);
+                                    ((UserContextInternal) ctx.getDelegate().userContext()).setUser(user);
                                     ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
                                     // the user has upgraded from unauthenticated to authenticated
                                     // session should be upgraded as recommended by owasp

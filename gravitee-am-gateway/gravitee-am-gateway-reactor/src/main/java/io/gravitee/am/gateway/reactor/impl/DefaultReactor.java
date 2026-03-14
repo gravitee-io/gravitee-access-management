@@ -32,7 +32,7 @@ import io.gravitee.common.http.HttpHeadersValues;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.Router;
 import org.springframework.beans.factory.InitializingBean;
@@ -125,19 +125,19 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
                             .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
                     .toList();
 
-            sortedVhosts.forEach(virtualHost -> this.router.mountSubRouter(sanitizePath(virtualHost.getPath()), VHostRouter.router(domain, virtualHost, domainHandler.router())));
+            sortedVhosts.forEach(virtualHost -> this.router.route(sanitizePath(virtualHost.getPath())).subRouter(VHostRouter.router(domain, virtualHost, domainHandler.router())));
         } else {
-            this.router.mountSubRouter(sanitizePath(domain.getPath()), VHostRouter.router(domain, domainHandler.router()));
+            this.router.route(sanitizePath(domain.getPath())).subRouter(VHostRouter.router(domain, domainHandler.router()));
         }
     }
 
     private String sanitizePath(String path) {
-
+        // Vert.x 5 requires sub router mount paths to end with /*
         if(path.endsWith("/")) {
-            return path;
+            return path + "*";
         }
 
-        return path + "/";
+        return path + "/*";
     }
 
     @Override

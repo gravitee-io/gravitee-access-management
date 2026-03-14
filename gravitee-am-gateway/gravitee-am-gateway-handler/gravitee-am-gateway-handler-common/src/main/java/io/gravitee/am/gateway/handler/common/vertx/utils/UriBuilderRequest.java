@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.GraviteeVertxHttpSe
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.gateway.api.Request;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -146,7 +146,7 @@ public class UriBuilderRequest {
      * Resolves host and port with proper precedence: Host header port takes precedence over X-Forwarded headers
      */
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
-        String requestHost = request.host();
+        String requestHost = request.authority() != null ? request.authority().toString() : null;
         String xForwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
         String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))

@@ -19,7 +19,7 @@ package io.gravitee.am.gateway.handler.common.utils;
 
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import org.springframework.util.StringUtils;
 
 /**

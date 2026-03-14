@@ -15,12 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.user;
 
-import io.vertx.codegen.annotations.Nullable;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.auth.authorization.Authorization;
 import io.vertx.ext.auth.authorization.Authorizations;
 import lombok.Getter;
 
@@ -55,7 +50,7 @@ public class User implements io.vertx.ext.auth.User {
     }
 
     @Override
-    public <T> @Nullable T get(String key) {
+    public <T> T get(String key) {
         return io.vertx.ext.auth.User.super.get(key);
     }
 
@@ -70,17 +65,9 @@ public class User implements io.vertx.ext.auth.User {
     }
 
     @Override
-    public io.vertx.ext.auth.User isAuthorized(Authorization authorization, Handler<AsyncResult<Boolean>> handler) {
-        return null;
-    }
-
-    @Override
     public JsonObject principal() {
         return principal;
     }
-
-    @Override
-    public void setAuthProvider(AuthProvider authProvider) {}
 
     @Override
     public io.vertx.ext.auth.User merge(io.vertx.ext.auth.User other) {

@@ -147,7 +147,8 @@ public class EventManagerTest {
                         Arguments.of(event, predicateNull));
     }
 
-    public static class TestEventListener implements EventListener<Enum, Payload> {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static class TestEventListener implements EventListener {
         private Payload content;
 
 
@@ -156,8 +157,8 @@ public class EventManagerTest {
         }
 
         @Override
-        public void onEvent(Event<Enum, Payload> event) {
-            this.content = event.content();
+        public void onEvent(Event event) {
+            this.content = (Payload) event.content();
         }
     }
 }

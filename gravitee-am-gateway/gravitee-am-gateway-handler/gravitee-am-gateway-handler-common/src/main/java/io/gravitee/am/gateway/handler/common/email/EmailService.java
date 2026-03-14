@@ -21,7 +21,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;

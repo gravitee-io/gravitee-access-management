@@ -69,7 +69,7 @@ public class SAML2Provider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(new ServiceProviderMetadataEndpoint(serviceProviderService));
 
-        router.mountSubRouter(path(), saml2Router);
+        router.route(subRouterPath()).subRouter(saml2Router);
     }
 
 }

@@ -32,7 +32,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.auth.impl.UserImpl;
 import io.vertx.ext.web.Session;
-import io.vertx.rxjava3.ext.auth.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -45,6 +44,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 
@@ -414,8 +414,8 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
         client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
         router.route().order(-1)
                 .handler(context -> {
-                    context.setSession(new io.vertx.rxjava3.ext.web.Session(session));
-                    context.setUser(new User(new UserImpl()));
+                    ((io.vertx.ext.web.impl.RoutingContextInternal) context.getDelegate()).setSession(session);
+                    setUser(context, new UserImpl());
                     context.next();
                 })
                 .handler(routingContext -> {

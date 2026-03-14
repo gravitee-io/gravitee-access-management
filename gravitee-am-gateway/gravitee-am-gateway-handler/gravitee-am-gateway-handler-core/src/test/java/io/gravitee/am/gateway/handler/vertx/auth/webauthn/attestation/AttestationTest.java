@@ -49,7 +49,7 @@ public class AttestationTest {
                         .put("username", "gravitee")
                         .put("origin", "https://localhost:8443")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "Vu8uDqnkwOjd83KLj6Scn2BgFNLFbGR7Kq_XJJwQnnatztUR7XIBL7K8uMPCIaQmKw1MCVQ5aazNJFk7NakgqA")), u -> {
+                        .put("challenge", "Vu8uDqnkwOjd83KLj6Scn2BgFNLFbGR7Kq_XJJwQnnatztUR7XIBL7K8uMPCIaQmKw1MCVQ5aazNJFk7NakgqA"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));
@@ -75,7 +75,7 @@ public class AttestationTest {
                         .put("username", "gravitee")
                         .put("origin", "https://webauthn.org")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "pSG9z6Gd5m48WWw9e03AJixbKia0ynEqm7o_9KEkPY0zcaXhjmxoChC5QRnK4E6XIT2QFc_uGycO5lUMygeZgw")), u -> {
+                        .put("challenge", "pSG9z6Gd5m48WWw9e03AJixbKia0ynEqm7o_9KEkPY0zcaXhjmxoChC5QRnK4E6XIT2QFc_uGycO5lUMygeZgw"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));
@@ -100,7 +100,7 @@ public class AttestationTest {
                         .put("username", "gravitee")
                         .put("origin", "https://webauthn.org")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "wk6LqEXAMAZpqcTYlY2yor5DjiyI_b1gy9nDOtCB1yGYnm_4WG4Uk24FAr7AxTOFfQMeigkRxOTLZNrLxCvV_Q")), u -> {
+                        .put("challenge", "wk6LqEXAMAZpqcTYlY2yor5DjiyI_b1gy9nDOtCB1yGYnm_4WG4Uk24FAr7AxTOFfQMeigkRxOTLZNrLxCvV_Q"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));
@@ -126,7 +126,7 @@ public class AttestationTest {
                         .put("username", "gravitee")
                         .put("origin", "https://webauthn.org")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "uVX88IgRa0SSrMIRT_q7cRcdfgfRBxCgn_pkpUAnXJK2zOb307wd1OLXQ0AuNaMtBR3amk6HYzp-_VxJTPpwGw")), u -> {
+                        .put("challenge", "uVX88IgRa0SSrMIRT_q7cRcdfgfRBxCgn_pkpUAnXJK2zOb307wd1OLXQ0AuNaMtBR3amk6HYzp-_VxJTPpwGw"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));
@@ -151,7 +151,7 @@ public class AttestationTest {
                         .put("username", "gravitee")
                         .put("origin", "https://webauthn.org")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "YMWETf-P79iMb-BqdTkySNReOva7nK2iVC9fiC8iGvYypunEOCZGZ6-Y5OV1rvMiDgAjWfFi6UC0WyKGsjA-gA")), u -> {
+                        .put("challenge", "YMWETf-P79iMb-BqdTkySNReOva7nK2iVC9fiC8iGvYypunEOCZGZ6-Y5OV1rvMiDgAjWfFi6UC0WyKGsjA-gA"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));
@@ -176,7 +176,7 @@ public class AttestationTest {
                         .put("username", "gravitee")
                         .put("origin", "http://localhost:3000")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "AXkXWXPP3gLx8OLlpkJ3aRRhFWntnSENggnjDpBql1ngKol7xWwevUYvrpBDP3LEvdr2EOStOFpGGxnMvXk-Vw")), u -> {
+                        .put("challenge", "AXkXWXPP3gLx8OLlpkJ3aRRhFWntnSENggnjDpBql1ngKol7xWwevUYvrpBDP3LEvdr2EOStOFpGGxnMvXk-Vw"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));
@@ -201,7 +201,7 @@ public class AttestationTest {
                 new WebAuthnCredentials(new JsonObject()
                         .put("username", "gravitee")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "Tf65bS6D5temh2BwvptqgBPb25iZDRxjwC5ans91IIJDrcrOpnWTK4LVgFjeUV4GDMe44w8SI5NsZssIXTUvDg")), u -> {
+                        .put("challenge", "Tf65bS6D5temh2BwvptqgBPb25iZDRxjwC5ans91IIJDrcrOpnWTK4LVgFjeUV4GDMe44w8SI5NsZssIXTUvDg"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));
@@ -227,7 +227,7 @@ public class AttestationTest {
                 new WebAuthnCredentials(new JsonObject()
                         .put("username", "gravitee")
                         .put("webauthn", packedFullAttestationWebAuthnSample)
-                        .put("challenge", "h5xSyIRMx2IQPr1mQk6GD98XSQOBHgMHVpJIkMV9Nkc")), u -> {
+                        .put("challenge", "h5xSyIRMx2IQPr1mQk6GD98XSQOBHgMHVpJIkMV9Nkc"))).onComplete(u -> {
                     // process should not failed for an encoding issue
                     Assert.assertTrue(u.failed());
                     Assert.assertFalse(u.cause().getMessage().contains("Illegal base64 character"));

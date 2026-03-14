@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway.standalone</groupId>
         <artifactId>gravitee-am-gateway-standalone</artifactId>
-        <version>4.12.0-SNAPSHOT</version>
+        <version>4.11.0-alpha.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-standalone-container</artifactId>
@@ -73,6 +73,12 @@
         <dependency>
             <groupId>io.gravitee.node</groupId>
             <artifactId>gravitee-node-container</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-logging</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
