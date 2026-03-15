@@ -77,7 +77,11 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
             if (throwable instanceof PolicyChainException policyChainException) {
-                handlePolicyChainException(routingContext, policyChainException.key(), policyChainException.getMessage());
+                if (policyChainException.statusCode() == 302) {
+                    doRedirect(routingContext.response(), (String) policyChainException.parameters().get(ConstantKeys.RETURN_URL_KEY));
+                } else {
+                    handlePolicyChainException(routingContext, policyChainException.key(), policyChainException.getMessage());
+                }
             } else if (throwable instanceof AccountPasswordExpiredException) {
                 handleException(routingContext, ((AccountPasswordExpiredException) throwable).getErrorCode(), throwable.getMessage());
             } else if (throwable instanceof AccountEnforcePasswordException) {

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../services/auth.service';
+import { DialogService } from '../../../services/dialog.service';
 
 @Component({
   selector: 'app-forms',
@@ -25,14 +26,18 @@ import { AuthService } from '../../../services/auth.service';
   standalone: false,
 })
 export class FormsComponent implements OnInit {
-  @Input() forms: any[];
-  appId: string;
   private viewPermission: string;
+  appId: string;
+  @Input() forms: any[];
+  @Input() canDelete: boolean = false;
+  @Input() isCustom: boolean = false;
+  @Output() formDeleted = new EventEmitter<any>();
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
+    private dialogService: DialogService,
   ) {}
 
   ngOnInit() {
@@ -53,6 +58,15 @@ export class FormsComponent implements OnInit {
 
   canView(): boolean {
     return this.authService.hasPermissions([this.viewPermission]);
+  }
+
+  delete(id: string, event) {
+    event.preventDefault();
+    this.dialogService.confirm('Delete form', 'Are you sure you want to delete this form ?').subscribe((res) => {
+      if (res) {
+        this.formDeleted.emit(id);
+      }
+    });
   }
 
   getRowClass(row) {

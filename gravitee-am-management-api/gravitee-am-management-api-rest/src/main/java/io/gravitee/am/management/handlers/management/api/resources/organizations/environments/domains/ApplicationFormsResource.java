@@ -90,13 +90,13 @@ public class ApplicationFormsResource extends AbstractResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
-            @NotNull @QueryParam("template") Template emailTemplate,
+            @NotNull @QueryParam("template") String formTemplate,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.READ)
-                .andThen(formService.findByDomainAndClientAndTemplate(domain, application, emailTemplate.template()))
+                .andThen(formService.findByDomainAndClientAndTemplate(domain, application, formTemplate))
                 .map(form -> Response.ok(form).build())
-                .defaultIfEmpty(Response.ok(new Form(false, emailTemplate.template())).build())
+                .defaultIfEmpty(Response.ok(new Form(false, formTemplate)).build())
                 .subscribe(response::resume, response::resume);
     }
 
@@ -133,6 +133,34 @@ public class ApplicationFormsResource extends AbstractResource {
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/forms/" + form.getId()))
                                 .entity(form)
                                 .build()))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @Path("custom")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "findApplicationForm",
+            summary = "Find all custom forms for an application",
+            description = "User must have APPLICATION_FORM[READ] permission on the specified application " +
+                    "or APPLICATION_FORM[READ] permission on the specified domain " +
+                    "or APPLICATION_FORM[READ] permission on the specified environment " +
+                    "or APPLICATION_FORM[READ] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Form successfully fetched"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void customForms(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @Suspended final AsyncResponse response) {
+
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.READ)
+                .andThen(formService.findByDomainAndClient(domain, application))
+                .filter(form -> !Template.list().contains(form.getTemplate()))
+                .toList()
+                .map(forms -> Response.ok(forms).build())
                 .subscribe(response::resume, response::resume);
     }
 

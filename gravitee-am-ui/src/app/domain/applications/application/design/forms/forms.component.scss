@@ -1,3 +1,45 @@
 .gv-page-container {
   padding-top: 0;
 }
+
+.gv-form-section {
+  margin-bottom: 32px;
+}
+
+.gv-form-section-title {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0 0 8px;
+  }
+
+  > span {
+    color: black;
+    font-size: 12px;
+  }
+
+  > div {
+    align-items: flex-start;
+    justify-content: space-between;
+
+    > div {
+      flex: 1;
+    }
+
+    button {
+      margin-left: 16px;
+    }
+  }
+}
+
+.no-data-card {
+  padding: 24px;
+  color: black;
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}

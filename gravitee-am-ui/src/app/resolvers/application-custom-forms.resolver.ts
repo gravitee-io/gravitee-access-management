@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.policy;
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
 
-import java.util.Map;
+import { FormService } from '../services/form.service';
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface Policy {
+@Injectable()
+export class ApplicationCustomFormsResolver {
+  constructor(private formService: FormService) {}
 
-    String id();
-
-    Map<String, Object> metadata();
-
-    String condition();
-
-    default void setMetadata(Map<String, Object> metadata) {};
-
-    default void execute(Object ... args) throws PolicyException {}
-
-    default boolean isRunnable() { return true; }
-
-    void activate() throws Exception;
-
-    void deactivate() throws Exception;
-
-    Object policyInst();
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
+    const domainId = route.parent.data['domain'].id;
+    const appId = route.paramMap.get('appId');
+    return this.formService.findCustoms(domainId, appId);
+  }
 }
