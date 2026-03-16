@@ -90,6 +90,7 @@ final class TokenValidationUtils {
                 .domain(domain.getId())
                 .domain(Objects.toString(claims.get(Claims.DOMAIN), null))
                 .trustedIssuer(trustedIssuer)
+                .domainParentJtis(Set.of())
                 .build();
     }
 }

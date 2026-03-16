@@ -19,7 +19,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,18 +67,7 @@ public abstract class Token {
 
     private Date expireAt;
 
-    /**
-     * The parent subject JWT jti claim
-     */
-
-    private String parentSubjectJti;
-
-    /**
-     * The parent actor JWT jti claim
-     */
-
-    private String parentActorJti;
-
+    private Set<String> allParentJtis;
 
 
     @Override
@@ -90,5 +81,11 @@ public abstract class Token {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public Set<String> collectAllParentJtisWithCurrentJti() {
+        Set<String> all = allParentJtis == null ? new HashSet<>() :  new HashSet<>(allParentJtis);
+        all.add(token);
+        return all;
     }
 }

@@ -247,6 +247,7 @@ public class StrategyGranterAdapter implements TokenGranter {
                 oAuth2Request.setSubjectTokenId(data.subjectTokenId());
                 oAuth2Request.setSubjectTokenType(data.subjectTokenType());
                 oAuth2Request.setDelegation(data.isDelegation());
+                oAuth2Request.setAllParentJtis(data.allParentJtis() == null ? Set.of() : data.allParentJtis());
                 if (data.isDelegation()) {
                     oAuth2Request.setActorTokenId(data.actorTokenId());
                     oAuth2Request.setActorTokenType(data.actorTokenType());

@@ -25,19 +25,15 @@ import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Filters.gt;
@@ -60,6 +56,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         indexes.put(new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
         indexes.put(new Document(FIELD_PARENT_JTIS, 1), new IndexOptions().name("pj1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1s1"));
         // expire after index
         indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
 
@@ -121,65 +118,65 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
                 .observeOn(Schedulers.computation());
     }
 
-    private Completable deleteRecursivelyWithGraphLookup(Document matcher) {
-        var pipeline = List.<Bson>of(
-                matcher,
-                new Document("$graphLookup", new Document("from", COLLECTION_NAME)
-                        .append("startWith", "$" + FIELD_JTI)
-                        .append("connectFromField", FIELD_JTI)
-                        .append("connectToField", FIELD_PARENT_JTIS)
-                        .append("as", "descendants")));
+    @Override
+    public Completable deleteByJti(String jti) {
+        return deleteByJtis(Collections.singleton(jti));
+    }
 
-        return Observable.fromPublisher(tokenCollection.aggregate(pipeline, Document.class))
-                .collect(() -> new HashSet<>(),
-                        (Set<String> jtis, Document result) -> {
-                    String rootJti = result.getString(FIELD_JTI);
-                    if (rootJti != null) {
-                        jtis.add(rootJti);
-                    }
-
-                    var descendants = result.getList("descendants", Document.class, List.of());
-                    for (Document descendant : descendants) {
-                        String descendantJti = descendant.getString(FIELD_JTI);
-                        if (descendantJti != null) {
-                            jtis.add(descendantJti);
-                        }
-                    }
-                })
-                .flatMapCompletable(jtis -> {
-                    if (jtis.isEmpty()) {
-                        return Completable.complete();
-                    }
-
-                    return Completable.fromPublisher(tokenCollection.deleteMany(in(FIELD_JTI, jtis)));
-                })
+    private Completable deleteByJtis(Set<String> jtis) {
+        return Completable.fromPublisher(tokenCollection.deleteMany(or(in(FIELD_JTI, jtis), in(FIELD_PARENT_JTIS, jtis))))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
-    public Completable deleteByJti(String jti) {
-        return deleteRecursivelyWithGraphLookup(new Document("$match", eq(FIELD_JTI, jti)));
-    }
-
-    @Override
     public Completable deleteByUserId(String userId) {
-        return deleteRecursivelyWithGraphLookup(new Document("$match", eq(FIELD_SUBJECT, userId)));
+        return findAllJtis(eq(FIELD_SUBJECT, userId))
+                .reduceWith(HashSet<String>::new, (set, jti) -> {
+                    set.add(jti);
+                    return set;
+                })
+                .flatMapCompletable(this::deleteByJtis);
     }
 
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
-        return deleteRecursivelyWithGraphLookup(new Document("$match", and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))));
+        return findAllJtis(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id())))
+                .reduceWith(HashSet<String>::new, (set, jti) -> {
+                    set.add(jti);
+                    return set;
+                })
+                .flatMapCompletable(this::deleteByJtis);
     }
 
     @Override
     public Completable deleteByDomainIdAndClientId(String domainId, String clientId) {
-        return deleteRecursivelyWithGraphLookup(new Document("$match", and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))));
+        return findAllJtis(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId)))
+                .reduceWith(HashSet<String>::new, (set, jti) -> {
+                    set.add(jti);
+                    return set;
+                })
+                .flatMapCompletable(this::deleteByJtis);
     }
 
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
-        return deleteRecursivelyWithGraphLookup(new Document("$match", and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))));
+        return findAllJtis(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id())))
+                .reduceWith(HashSet<String>::new, (set, jti) -> {
+                    set.add(jti);
+                    return set;
+                })
+                .flatMapCompletable(this::deleteByJtis);
     }
+
+    private Observable<String> findAllJtis(Bson matcher) {
+        return Observable.fromPublisher(tokenCollection
+                        .withDocumentClass(Document.class)
+                        .find(matcher)
+                        .projection(new Document(FIELD_JTI, 1).append(FIELD_ID, 0)))
+                .map(document -> document.getString(FIELD_JTI));
+    }
+
+
 
     private TokenMongo convert(AccessToken token) {
         if (token == null) {
@@ -211,12 +208,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         tokenMongo.setSubject(token.getSubject());
         tokenMongo.setCreatedAt(token.getCreatedAt());
         tokenMongo.setExpireAt(token.getExpireAt());
-        tokenMongo.setParentSubjectJti(token.getParentSubjectJti());
-        tokenMongo.setParentActorJti(token.getParentActorJti());
-        tokenMongo.setParentJtis(Stream.of(token.getParentSubjectJti(), token.getParentActorJti())
-                .filter(parentJti -> parentJti != null && !parentJti.isBlank())
-                .distinct()
-                .toList());
+        tokenMongo.setParentJtis(token.getAllParentJtis());
         return tokenMongo;
     }
 
@@ -235,9 +227,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         accessToken.setRefreshToken(tokenMongo.getRefreshTokenJti());
         accessToken.setCreatedAt(tokenMongo.getCreatedAt());
         accessToken.setExpireAt(tokenMongo.getExpireAt());
-        accessToken.setParentSubjectJti(tokenMongo.getParentSubjectJti());
-        accessToken.setParentActorJti(tokenMongo.getParentActorJti());
-
+        accessToken.setAllParentJtis(tokenMongo.getParentJtis());
         return accessToken;
     }
 
@@ -254,9 +244,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         refreshToken.setSubject(tokenMongo.getSubject());
         refreshToken.setCreatedAt(tokenMongo.getCreatedAt());
         refreshToken.setExpireAt(tokenMongo.getExpireAt());
-        refreshToken.setParentSubjectJti(tokenMongo.getParentSubjectJti());
-        refreshToken.setParentActorJti(tokenMongo.getParentActorJti());
-
+        refreshToken.setAllParentJtis(tokenMongo.getParentJtis());
         return refreshToken;
     }
 }

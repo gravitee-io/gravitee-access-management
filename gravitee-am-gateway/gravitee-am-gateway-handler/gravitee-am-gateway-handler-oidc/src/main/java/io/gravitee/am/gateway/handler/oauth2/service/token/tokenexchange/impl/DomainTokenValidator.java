@@ -25,8 +25,6 @@ import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class DomainTokenValidator implements TokenValidator {
@@ -67,7 +65,7 @@ public class DomainTokenValidator implements TokenValidator {
                 default -> Maybe.empty();
             };
             return databaseToken
-                    .concatMapSingle(t -> Single.just(token))
+                    .concatMapSingle(t -> Single.just(token.withParents(t.collectAllParentJtisWithCurrentJti())))
                     .switchIfEmpty(Single.error(new InvalidGrantException("token has been revoked")));
         }
     }

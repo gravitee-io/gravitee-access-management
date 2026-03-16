@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
@@ -54,8 +55,8 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldCreateAndFindTokensByJti() {
-        AccessToken accessToken = newAccessToken("access-token", null, null, null, null);
-        RefreshToken refreshToken = newRefreshToken("refresh-token", null, null, null, null);
+        AccessToken accessToken = newAccessToken("access-token", null, null, null);
+        RefreshToken refreshToken = newRefreshToken("refresh-token", null, null, null);
 
         TestObserver<AccessToken> accessObserver = Completable.fromSingle(tokenRepository.create(accessToken))
                 .andThen(tokenRepository.findAccessTokenByJti(accessToken.getToken()))
@@ -78,7 +79,7 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldFindAccessTokenByAuthorizationCode() {
-        AccessToken accessToken = newAccessToken("access-token-auth", null, null, null, null);
+        AccessToken accessToken = newAccessToken("access-token-auth", null, null, null);
         accessToken.setAuthorizationCode("auth-code");
 
         TestObserver<AccessToken> observer = Completable.fromSingle(tokenRepository.create(accessToken))
@@ -93,8 +94,8 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldDeleteByJti() {
-        AccessToken accessToken = newAccessToken("access-token-delete", null, null, null, null);
-        RefreshToken refreshToken = newRefreshToken("refresh-token-delete", null, null, null, null);
+        AccessToken accessToken = newAccessToken("access-token-delete", null, null, null);
+        RefreshToken refreshToken = newRefreshToken("refresh-token-delete", null, null, null);
 
         tokenRepository.create(accessToken).ignoreElement()
                 .andThen(tokenRepository.create(refreshToken).ignoreElement())
@@ -110,15 +111,15 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldDeleteRecursivelyByParentSubjectJti() {
-        AccessToken rootToken = newAccessToken("root-token", null, null, null, null);
+        AccessToken rootToken = newAccessToken("root-token", null, null, null);
         AccessToken childTokenA = newAccessToken("child-token-a", null, null, null, rootToken.getToken());
         AccessToken childTokenB = newAccessToken("child-token-b", null, null, null, rootToken.getToken());
         AccessToken childTokenC = newAccessToken("child-token-c", null, null, null, rootToken.getToken());
-        RefreshToken grandChildTokenA1 = newRefreshToken("grand-child-token-a1", null, null, null, childTokenA.getToken());
-        AccessToken grandChildTokenA2 = newAccessToken("grand-child-token-a2", null, null, null, childTokenA.getToken());
-        RefreshToken grandChildTokenB1 = newRefreshToken("grand-child-token-b1", null, null, null, childTokenB.getToken());
-        AccessToken grandChildTokenC1 = newAccessToken("grand-child-token-c1", null, null, null, childTokenC.getToken());
-        AccessToken otherToken = newAccessToken("other-token", null, null, null, null);
+        RefreshToken grandChildTokenA1 = newRefreshToken("grand-child-token-a1", null, null, null,  rootToken.getToken(), childTokenA.getToken());
+        AccessToken grandChildTokenA2 = newAccessToken("grand-child-token-a2", null, null, null,  rootToken.getToken(), childTokenA.getToken());
+        RefreshToken grandChildTokenB1 = newRefreshToken("grand-child-token-b1", null, null, null,  rootToken.getToken(), childTokenB.getToken());
+        AccessToken grandChildTokenC1 = newAccessToken("grand-child-token-c1", null, null, null,  rootToken.getToken(), childTokenC.getToken());
+        AccessToken otherToken = newAccessToken("other-token", null, null, null);
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childTokenA).ignoreElement())
@@ -147,10 +148,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteRecursivelyByParentActorJti() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("root-actor-" + suffix, null, null, null, null, null);
-        AccessToken childToken = newAccessToken("child-actor-" + suffix, null, null, null, null, rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("grand-child-actor-" + suffix, null, null, null, childToken.getToken(), null);
-        AccessToken outsiderToken = newAccessToken("outsider-actor-" + suffix, null, null, null, null, null);
+        AccessToken rootToken = newAccessToken("root-actor-" + suffix, null, null, null);
+        AccessToken childToken = newAccessToken("child-actor-" + suffix, null, null, null, rootToken.getToken());
+        RefreshToken grandChildToken = newRefreshToken("grand-child-actor-" + suffix, null, null, null, rootToken.getToken(), childToken.getToken());
+        AccessToken outsiderToken = newAccessToken("outsider-actor-" + suffix, null, null, null);
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -167,9 +168,9 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldDeleteByUserId() {
-        AccessToken accessToken = newAccessToken("access-token-user", null, null, "user-id", null);
-        RefreshToken refreshToken = newRefreshToken("refresh-token-user", null, null, "user-id", null);
-        AccessToken otherAccessToken = newAccessToken("access-token-other-user", null, null, "other-user", null);
+        AccessToken accessToken = newAccessToken("access-token-user", null, null, "user-id");
+        RefreshToken refreshToken = newRefreshToken("refresh-token-user", null, null, "user-id");
+        AccessToken otherAccessToken = newAccessToken("access-token-other-user", null, null, "other-user");
 
         tokenRepository.create(accessToken).ignoreElement()
                 .andThen(tokenRepository.create(refreshToken).ignoreElement())
@@ -186,10 +187,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByUserIdRecursivelyByParentActorJti() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtuar-" + suffix, null, null, "user-id", null, null);
-        AccessToken childToken = newAccessToken("ctuar-" + suffix, null, null, "other-user", null, rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctuar-" + suffix, null, null, "another-user", childToken.getToken(), null);
-        AccessToken outsiderToken = newAccessToken("otuar-" + suffix, null, null, "other-user", null, null);
+        AccessToken rootToken = newAccessToken("rtuar-" + suffix, null, null, "user-id");
+        AccessToken childToken = newAccessToken("ctuar-" + suffix, null, null, "other-user", rootToken.getToken());
+        RefreshToken grandChildToken = newRefreshToken("gctuar-" + suffix, null, null, "another-user", rootToken.getToken(), childToken.getToken());
+        AccessToken outsiderToken = newAccessToken("otuar-" + suffix, null, null, "other-user");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -206,9 +207,9 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldDeleteByDomainIdClientIdAndUserId() {
-        AccessToken accessToken = newAccessToken("access-token-domain-client-user", "domain-id", "client-id", "user-id", null);
-        RefreshToken refreshToken = newRefreshToken("refresh-token-domain-client-user", "domain-id", "client-id", "user-id", null);
-        AccessToken otherAccessToken = newAccessToken("access-token-other-domain", "domain-id2", "client-id", "user-id", null);
+        AccessToken accessToken = newAccessToken("access-token-domain-client-user", "domain-id", "client-id", "user-id");
+        RefreshToken refreshToken = newRefreshToken("refresh-token-domain-client-user", "domain-id", "client-id", "user-id");
+        AccessToken otherAccessToken = newAccessToken("access-token-other-domain", "domain-id2", "client-id", "user-id");
 
         tokenRepository.create(accessToken).ignoreElement()
                 .andThen(tokenRepository.create(refreshToken).ignoreElement())
@@ -223,9 +224,9 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldDeleteByDomainIdAndUserId() {
-        AccessToken accessToken = newAccessToken("access-token-domain-user", "domain-id", "client-id", "user-id", null);
-        RefreshToken refreshToken = newRefreshToken("refresh-token-domain-user", "domain-id", "client-id", "user-id", null);
-        AccessToken otherAccessToken = newAccessToken("access-token-other-domain-user", "domain-id2", "client-id", "user-id", null);
+        AccessToken accessToken = newAccessToken("access-token-domain-user", "domain-id", "client-id", "user-id");
+        RefreshToken refreshToken = newRefreshToken("refresh-token-domain-user", "domain-id", "client-id", "user-id");
+        AccessToken otherAccessToken = newAccessToken("access-token-other-domain-user", "domain-id2", "client-id", "user-id");
 
         tokenRepository.create(accessToken).ignoreElement()
                 .andThen(tokenRepository.create(refreshToken).ignoreElement())
@@ -240,8 +241,8 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldDeleteByDomainIdAndClientId() {
-        AccessToken accessToken = newAccessToken("access-token-domain-client", "domain-id", "client-id", "user-id", null);
-        AccessToken otherAccessToken = newAccessToken("access-token-other-client", "domain-id", "client-id2", "user-id", null);
+        AccessToken accessToken = newAccessToken("access-token-domain-client", "domain-id", "client-id", "user-id");
+        AccessToken otherAccessToken = newAccessToken("access-token-other-client", "domain-id", "client-id2", "user-id");
 
         tokenRepository.create(accessToken).ignoreElement()
                 .andThen(tokenRepository.create(otherAccessToken).ignoreElement())
@@ -256,10 +257,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByUserIdRecursively() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtur-" + suffix, null, null, "user-id", null);
+        AccessToken rootToken = newAccessToken("rtur-" + suffix, null, null, "user-id");
         AccessToken childToken = newAccessToken("ctur-" + suffix, null, null, "other-user", rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctur-" + suffix, null, null, "another-user", childToken.getToken());
-        AccessToken otherTreeRoot = newAccessToken("otur-" + suffix, null, null, "other-user", null);
+        RefreshToken grandChildToken = newRefreshToken("gctur-" + suffix, null, null, "another-user", rootToken.getToken(), childToken.getToken());
+        AccessToken otherTreeRoot = newAccessToken("otur-" + suffix, null, null, "other-user");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -278,10 +279,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByDomainIdClientIdAndUserIdRecursively() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtdcur-" + suffix, "domain-id", "client-id", "user-id", null);
+        AccessToken rootToken = newAccessToken("rtdcur-" + suffix, "domain-id", "client-id", "user-id");
         AccessToken childToken = newAccessToken("ctdcur-" + suffix, "other-domain", "other-client", "other-user", rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctdcur-" + suffix, "third-domain", "third-client", "third-user", childToken.getToken());
-        AccessToken sameDomainClientDifferentUser = newAccessToken("sdcdu-" + suffix, "domain-id", "client-id", "other-user", null);
+        RefreshToken grandChildToken = newRefreshToken("gctdcur-" + suffix, "third-domain", "third-client", "third-user", rootToken.getToken(), childToken.getToken());
+        AccessToken sameDomainClientDifferentUser = newAccessToken("sdcdu-" + suffix, "domain-id", "client-id", "other-user");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -300,10 +301,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByDomainIdClientIdAndUserIdRecursivelyByParentActorJti() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtdcuar-" + suffix, "domain-id", "client-id", "user-id", null, null);
-        AccessToken childToken = newAccessToken("ctdcuar-" + suffix, "other-domain", "other-client", "other-user", null, rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctdcuar-" + suffix, "third-domain", "third-client", "third-user", childToken.getToken(), null);
-        AccessToken sameDomainClientDifferentUser = newAccessToken("sdcduar-" + suffix, "domain-id", "client-id", "other-user", null, null);
+        AccessToken rootToken = newAccessToken("rtdcuar-" + suffix, "domain-id", "client-id", "user-id");
+        AccessToken childToken = newAccessToken("ctdcuar-" + suffix, "other-domain", "other-client", "other-user", rootToken.getToken());
+        RefreshToken grandChildToken = newRefreshToken("gctdcuar-" + suffix, "third-domain", "third-client", "third-user",  rootToken.getToken(), childToken.getToken());
+        AccessToken sameDomainClientDifferentUser = newAccessToken("sdcduar-" + suffix, "domain-id", "client-id", "other-user");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -322,10 +323,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByDomainIdAndUserIdRecursively() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtdur-" + suffix, "domain-id", "client-id", "user-id", null);
+        AccessToken rootToken = newAccessToken("rtdur-" + suffix, "domain-id", "client-id", "user-id");
         AccessToken childToken = newAccessToken("ctdur-" + suffix, "other-domain", "other-client", "other-user", rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctdur-" + suffix, "another-domain", "another-client", "another-user", childToken.getToken());
-        AccessToken sameDomainDifferentUser = newAccessToken("sddu-" + suffix, "domain-id", "client-id", "other-user", null);
+        RefreshToken grandChildToken = newRefreshToken("gctdur-" + suffix, "another-domain", "another-client", "another-user",  rootToken.getToken(), childToken.getToken());
+        AccessToken sameDomainDifferentUser = newAccessToken("sddu-" + suffix, "domain-id", "client-id", "other-user");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -344,10 +345,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByDomainIdAndUserIdRecursivelyByParentActorJti() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtduar-" + suffix, "domain-id", "client-id", "user-id", null, null);
-        AccessToken childToken = newAccessToken("ctduar-" + suffix, "other-domain", "other-client", "other-user", null, rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctduar-" + suffix, "another-domain", "another-client", "another-user", childToken.getToken(), null);
-        AccessToken sameDomainDifferentUser = newAccessToken("sdduar-" + suffix, "domain-id", "client-id", "other-user", null, null);
+        AccessToken rootToken = newAccessToken("rtduar-" + suffix, "domain-id", "client-id", "user-id");
+        AccessToken childToken = newAccessToken("ctduar-" + suffix, "other-domain", "other-client", "other-user", rootToken.getToken());
+        RefreshToken grandChildToken = newRefreshToken("gctduar-" + suffix, "another-domain", "another-client", "another-user", rootToken.getToken(), childToken.getToken());
+        AccessToken sameDomainDifferentUser = newAccessToken("sdduar-" + suffix, "domain-id", "client-id", "other-user");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -366,10 +367,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByDomainIdAndClientIdRecursively() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtdcr-" + suffix, "domain-id", "client-id", "user-id", null);
+        AccessToken rootToken = newAccessToken("rtdcr-" + suffix, "domain-id", "client-id", "user-id");
         AccessToken childToken = newAccessToken("ctdcr-" + suffix, "other-domain", "other-client", "other-user", rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctdcr-" + suffix, "another-domain", "another-client", "another-user", childToken.getToken());
-        AccessToken sameDomainDifferentClient = newAccessToken("sddc-" + suffix, "domain-id", "client-id-2", "user-id", null);
+        RefreshToken grandChildToken = newRefreshToken("gctdcr-" + suffix, "another-domain", "another-client", "another-user", rootToken.getToken(), childToken.getToken());
+        AccessToken sameDomainDifferentClient = newAccessToken("sddc-" + suffix, "domain-id", "client-id-2", "user-id");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -388,10 +389,10 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteByDomainIdAndClientIdRecursivelyByParentActorJti() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtdcar-" + suffix, "domain-id", "client-id", "user-id", null, null);
-        AccessToken childToken = newAccessToken("ctdcar-" + suffix, "other-domain", "other-client", "other-user", null, rootToken.getToken());
-        RefreshToken grandChildToken = newRefreshToken("gctdcar-" + suffix, "another-domain", "another-client", "another-user", childToken.getToken(), null);
-        AccessToken sameDomainDifferentClient = newAccessToken("sddcar-" + suffix, "domain-id", "client-id-2", "user-id", null, null);
+        AccessToken rootToken = newAccessToken("rtdcar-" + suffix, "domain-id", "client-id", "user-id");
+        AccessToken childToken = newAccessToken("ctdcar-" + suffix, "other-domain", "other-client", "other-user", rootToken.getToken());
+        RefreshToken grandChildToken = newRefreshToken("gctdcar-" + suffix, "another-domain", "another-client", "another-user",  rootToken.getToken(), childToken.getToken());
+        AccessToken sameDomainDifferentClient = newAccessToken("sddcar-" + suffix, "domain-id", "client-id-2", "user-id");
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childToken).ignoreElement())
@@ -410,11 +411,11 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
     public void shouldDeleteRecursivelyAcrossParentSubjectAndParentActorJti() {
         final String suffix = shortSuffix();
 
-        AccessToken rootToken = newAccessToken("rtsa-" + suffix, null, null, null, null, null);
-        AccessToken childBySubject = newAccessToken("cts-" + suffix, null, null, null, rootToken.getToken(), null);
-        AccessToken childByActor = newAccessToken("cta-" + suffix, null, null, null, null, childBySubject.getToken());
-        RefreshToken grandChildBySubject = newRefreshToken("gcts-" + suffix, null, null, null, childByActor.getToken(), null);
-        AccessToken outsiderToken = newAccessToken("otsa-" + suffix, null, null, null, null, null);
+        AccessToken rootToken = newAccessToken("rtsa-" + suffix, null, null, null);
+        AccessToken childBySubject = newAccessToken("cts-" + suffix, null, null, null, rootToken.getToken());
+        AccessToken childByActor = newAccessToken("cta-" + suffix, null, null, null, rootToken.getToken(), childBySubject.getToken());
+        RefreshToken grandChildBySubject = newRefreshToken("gcts-" + suffix, null, null, null, rootToken.getToken(), childBySubject.getToken(), childByActor.getToken());
+        AccessToken outsiderToken = newAccessToken("otsa-" + suffix, null, null, null);
 
         tokenRepository.create(rootToken).ignoreElement()
                 .andThen(tokenRepository.create(childBySubject).ignoreElement())
@@ -431,37 +432,39 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
         assertNotNull(tokenRepository.findAccessTokenByJti(outsiderToken.getToken()).blockingGet());
     }
 
-    private AccessToken newAccessToken(String token, String domain, String client, String subject, String parentSubjectJti) {
-        return newAccessToken(token, domain, client, subject, parentSubjectJti, null);
-    }
 
-    private AccessToken newAccessToken(String token, String domain, String client, String subject, String parentSubjectJti, String parentActorJti) {
+
+
+
+    private AccessToken newAccessToken(String token, String domain, String client, String subject, String ... parentJtis) {
         AccessToken accessToken = new AccessToken();
         accessToken.setId(RandomString.generate());
         accessToken.setToken(token);
         accessToken.setDomain(domain);
         accessToken.setClient(client);
         accessToken.setSubject(subject);
-        accessToken.setParentSubjectJti(parentSubjectJti);
-        accessToken.setParentActorJti(parentActorJti);
+        accessToken.setAllParentJtis(new HashSet<>());
+        for(String jti : parentJtis){
+            accessToken.getAllParentJtis().add(jti);
+        }
         return accessToken;
     }
 
-    private RefreshToken newRefreshToken(String token, String domain, String client, String subject, String parentSubjectJti) {
-        return newRefreshToken(token, domain, client, subject, parentSubjectJti, null);
-    }
-
-    private RefreshToken newRefreshToken(String token, String domain, String client, String subject, String parentSubjectJti, String parentActorJti) {
+    private RefreshToken newRefreshToken(String token, String domain, String client, String subject, String ... parentJtis) {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setId(RandomString.generate());
         refreshToken.setToken(token);
         refreshToken.setDomain(domain);
         refreshToken.setClient(client);
         refreshToken.setSubject(subject);
-        refreshToken.setParentSubjectJti(parentSubjectJti);
-        refreshToken.setParentActorJti(parentActorJti);
+        refreshToken.setAllParentJtis(new HashSet<>());
+        for(String jti : parentJtis){
+            refreshToken.getAllParentJtis().add(jti);
+
+        }
         return refreshToken;
     }
+
 
     private String shortSuffix() {
         return RandomString.generate().substring(0, 8);

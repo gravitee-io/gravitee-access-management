@@ -17,3 +17,5 @@ databaseChangeLog:
       - file: liquibase/oauth/changelogs/v4_11_0/4.11.0-tokens-table.yml
   - include:
       - file: liquibase/oauth/changelogs/v4_11_0/4.11.0-add-tokens-parent-jti.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_11_0/4.11.0-add-tokens-parent-jtis.yml

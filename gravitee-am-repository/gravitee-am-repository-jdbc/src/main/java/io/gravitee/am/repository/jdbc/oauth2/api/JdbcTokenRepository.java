@@ -18,7 +18,6 @@ package io.gravitee.am.repository.jdbc.oauth2.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcBaseToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
@@ -36,6 +35,9 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import static io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcBaseToken.SUBJECT;
 import static java.time.ZoneOffset.UTC;
@@ -184,8 +186,13 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
-        result.setParentSubjectJti(entity.getParentSubjectJti());
-        result.setParentActorJti(entity.getParentActorJti());
+        result.setAllParentJtis(new HashSet<>());
+        if (entity.getParentJti1() != null) {
+            result.getAllParentJtis().add(entity.getParentJti1());
+        }
+        if (entity.getParentJti2() != null) {
+            result.getAllParentJtis().add(entity.getParentJti2());
+        }
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
         }
@@ -202,8 +209,13 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
-        result.setParentSubjectJti(entity.getParentSubjectJti());
-        result.setParentActorJti(entity.getParentActorJti());
+        result.setAllParentJtis(new HashSet<>());
+        if (entity.getParentJti1() != null) {
+            result.getAllParentJtis().add(entity.getParentJti1());
+        }
+        if (entity.getParentJti2() != null) {
+            result.getAllParentJtis().add(entity.getParentJti2());
+        }
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
         }
@@ -222,8 +234,19 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setClient(token.getClient());
         result.setDomain(token.getDomain());
         result.setSubject(token.getSubject());
-        result.setParentSubjectJti(token.getParentSubjectJti());
-        result.setParentActorJti(token.getParentActorJti());
+
+        Set<String> allParentJtis = token.getAllParentJtis();
+        if(allParentJtis != null && !allParentJtis.isEmpty()) {
+            Iterator<String> it = token.getAllParentJtis().iterator();
+
+            // adds only two as for JBDC hierarchy is maintained
+            if(it.hasNext()) {
+                result.setParentJti1(it.next());
+            }
+            if(it.hasNext()) {
+                result.setParentJti2(it.next());
+            }
+        }
         if (token.getCreatedAt() != null) {
             result.setCreatedAt(LocalDateTime.ofInstant(token.getCreatedAt().toInstant(), UTC));
         }

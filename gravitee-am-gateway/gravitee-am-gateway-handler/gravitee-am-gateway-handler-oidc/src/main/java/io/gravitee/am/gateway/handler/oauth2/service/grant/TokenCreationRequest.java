@@ -114,14 +114,15 @@ public record TokenCreationRequest(
             String subjectTokenType,
             String actorTokenId,
             String actorTokenType,
-            ActorTokenInfo actorInfo) {
+            ActorTokenInfo actorInfo,
+            Set<String> allParentJtis) {
 
         return new TokenCreationRequest(
                 original.getClientId(),
                 GrantType.TOKEN_EXCHANGE,
                 original.getScopes(),
                 user,
-                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo),
+                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, allParentJtis),
                 false, // token exchange doesn't support refresh
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),

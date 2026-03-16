@@ -413,7 +413,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                             parsedRequest.requestedTokenType(),
                             subjectToken.getExpiration(),
                             subjectToken.getTokenId(),
-                            parsedRequest.subjectTokenType());
+                            parsedRequest.subjectTokenType(),
+                            subjectToken.getDomainParentJtis());
                 }));
     }
 
@@ -441,7 +442,9 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                             parsedRequest.subjectTokenType(),
                             actorToken.getTokenId(),
                             parsedRequest.actorTokenType(),
-                            actorInfo);
+                            actorInfo,
+                            subjectToken.getDomainParentJtis(),
+                            actorToken.getDomainParentJtis());
                 }));
     }
 

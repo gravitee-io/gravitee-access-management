@@ -18,11 +18,9 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 import io.gravitee.am.model.TrustedIssuer;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Singular;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a validated token with its extracted claims and metadata.
@@ -97,6 +95,8 @@ public class ValidatedToken {
      */
     private final String domain;
 
+    private final Set<String> domainParentJtis;
+
     /**
      * The trusted issuer config used to validate this token when it was validated via an external issuer.
      * Null when validated with the domain certificate. Used for scope mapping and user binding (EL context and criteria).
@@ -121,49 +121,34 @@ public class ValidatedToken {
         return claims != null ? claims.get(claimName) : null;
     }
 
-    /**
-     * Get a specific claim by name with type casting.
-     *
-     * @param claimName the name of the claim
-     * @param claimType the expected type of the claim
-     * @param <T> the type parameter
-     * @return the claim value, or null if not present or wrong type
-     */
-    @SuppressWarnings("unchecked")
-    public <T> T getClaim(String claimName, Class<T> claimType) {
-        Object value = getClaim(claimName);
-        if (value != null && claimType.isInstance(value)) {
-            return (T) value;
-        }
-        return null;
+    public ValidatedToken withParents(Set<String> parentJtis) {
+        return ValidatedToken.builder()
+                .subject(subject)
+                .issuer(issuer)
+                .claims(claims)
+                .scopes(scopes)
+                .expiration(expiration)
+                .issuedAt(issuedAt)
+                .notBefore(notBefore)
+                .tokenId(tokenId)
+                .audience(audience)
+                .clientId(clientId)
+                .tokenType(tokenType)
+                .domain(domain)
+                .trustedIssuer(trustedIssuer)
+                .domainParentJtis(parentJtis)
+                .build();
     }
 
-    /**
-     * Check if a specific claim exists.
-     *
-     * @param claimName the name of the claim
-     * @return true if the claim exists
-     */
-    public boolean hasClaim(String claimName) {
-        return claims != null && claims.containsKey(claimName);
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ValidatedToken that = (ValidatedToken) o;
+        return Objects.equals(subject, that.subject) && Objects.equals(issuer, that.issuer) && Objects.equals(claims, that.claims) && Objects.equals(scopes, that.scopes) && Objects.equals(expiration, that.expiration) && Objects.equals(issuedAt, that.issuedAt) && Objects.equals(notBefore, that.notBefore) && Objects.equals(tokenId, that.tokenId) && Objects.equals(audience, that.audience) && Objects.equals(clientId, that.clientId) && Objects.equals(tokenType, that.tokenType) && Objects.equals(domain, that.domain) && Objects.equals(domainParentJtis, that.domainParentJtis) && Objects.equals(trustedIssuer, that.trustedIssuer);
     }
 
-    /**
-     * Check if the token has any scopes.
-     *
-     * @return true if scopes are present
-     */
-    public boolean hasScopes() {
-        return scopes != null && !scopes.isEmpty();
-    }
-
-    /**
-     * Check if the token has a specific scope.
-     *
-     * @param scope the scope to check
-     * @return true if the scope is present
-     */
-    public boolean hasScope(String scope) {
-        return scopes != null && scopes.contains(scope);
+    @Override
+    public int hashCode() {
+        return Objects.hash(subject, issuer, claims, scopes, expiration, issuedAt, notBefore, tokenId, audience, clientId, tokenType, domain, domainParentJtis, trustedIssuer);
     }
 }

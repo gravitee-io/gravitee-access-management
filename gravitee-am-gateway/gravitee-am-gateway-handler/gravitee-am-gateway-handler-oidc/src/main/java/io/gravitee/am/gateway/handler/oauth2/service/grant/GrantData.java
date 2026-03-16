@@ -58,7 +58,8 @@ public sealed interface GrantData permits
             String subjectTokenType,
             String actorTokenId,
             String actorTokenType,
-            ActorTokenInfo actorInfo
+            ActorTokenInfo actorInfo,
+            Set<String> allParentJtis
     ) implements GrantData {
         public boolean isDelegation() {
             return actorInfo != null;
