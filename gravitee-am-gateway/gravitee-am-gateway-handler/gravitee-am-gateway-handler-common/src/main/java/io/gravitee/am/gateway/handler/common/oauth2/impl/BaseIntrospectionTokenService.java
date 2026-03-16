@@ -83,15 +83,28 @@ abstract class BaseIntrospectionTokenService {
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof JWTException) {
-                        LOGGER.debug("An error occurs while decoding JWT access token : {}", token, ex);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.warn("An error occurs while decoding JWT access token : {}", token, ex);
+                        } else {
+                            LOGGER.warn("An error occurs while decoding JWT access token", ex);
+                        }
                         return Maybe.error(new InvalidTokenException(ex.getMessage(), ex));
-                    }
-                    if (ex instanceof InvalidTokenException) {
+                    } else if (ex instanceof InvalidTokenException) {
                         InvalidTokenException invalidTokenException = (InvalidTokenException) ex;
                         String details = invalidTokenException.getDetails();
                         JWT jwt = invalidTokenException.getJwt();
-                        LOGGER.debug("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
-                                token, details != null ? details : "none", jwt != null ? jwt.toString() : "{}", invalidTokenException);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.warn("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
+                                    token, details != null ? details : "none", jwt != null ? jwt.toString() : "{}", invalidTokenException);
+                        } else {
+                            LOGGER.warn("An error occurs while checking JWT access token validity", invalidTokenException);
+                        }
+                    } else {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.warn("An unexpected error occurred while introspecting JWT access token: {}", token, ex);
+                        } else {
+                            LOGGER.warn("An unexpected error occurred while introspecting JWT access token", ex);
+                        }
                     }
                     return Maybe.error(ex);
                 });
