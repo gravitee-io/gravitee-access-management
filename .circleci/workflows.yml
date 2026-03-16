@@ -584,6 +584,7 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
@@ -637,6 +638,7 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
