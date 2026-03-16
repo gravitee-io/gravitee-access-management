@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
 import io.gravitee.am.model.User;
 
-import java.util.Date;
+import java.util.*;
 
 /**
  * Result of token exchange validation containing all data needed for token creation.
@@ -39,7 +39,8 @@ public record TokenExchangeResult(
         String subjectTokenType,
         String actorTokenId,
         String actorTokenType,
-        ActorTokenInfo actorInfo
+        ActorTokenInfo actorInfo,
+        Set<String> jtisOfParents
 ) {
 
     public boolean isDelegation() {
@@ -54,9 +55,10 @@ public record TokenExchangeResult(
             String issuedTokenType,
             Date exchangeExpiration,
             String subjectTokenId,
-            String subjectTokenType) {
+            String subjectTokenType,
+            Set<String> parentJtisOfSubjectToken) {
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
-                subjectTokenId, subjectTokenType, null, null, null);
+                subjectTokenId, subjectTokenType, null, null, null, parentJtisOfSubjectToken == null ? Set.of() : Set.copyOf(parentJtisOfSubjectToken));
     }
 
     /**
@@ -70,8 +72,14 @@ public record TokenExchangeResult(
             String subjectTokenType,
             String actorTokenId,
             String actorTokenType,
-            ActorTokenInfo actorInfo) {
+            ActorTokenInfo actorInfo,
+            Set<String> parentJtisOfSubjectToken,
+            Set<String> parentJtisOfActorToken) {
+        Set<String> allParents = parentJtisOfSubjectToken == null ? new HashSet<>() : new HashSet<>(parentJtisOfSubjectToken);
+        if(parentJtisOfActorToken != null){
+            allParents.addAll(parentJtisOfActorToken);
+        }
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
-                subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo);
+                subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, allParents);
     }
 }

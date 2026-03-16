@@ -112,7 +112,8 @@ class TokenExchangeStrategyTest {
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 expiration,
                 "subject-token-id",
-                TokenTypeHint.ACCESS_TOKEN.name()
+                TokenTypeHint.ACCESS_TOKEN.name(),
+                Set.of()
         );
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain), eq(userGatewayService)))
@@ -171,7 +172,8 @@ class TokenExchangeStrategyTest {
                 TokenTypeHint.ID_TOKEN.name(),
                 expiration,
                 "subject-token-id",
-                TokenTypeHint.ACCESS_TOKEN.name()
+                TokenTypeHint.ACCESS_TOKEN.name(),
+                Set.of()
         );
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain), eq(userGatewayService)))

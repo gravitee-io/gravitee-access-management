@@ -447,7 +447,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 SELECT token FROM tokens WHERE %s
                 UNION ALL
                 SELECT t.token FROM tokens t
-                JOIN token_tree tt ON (t.parent_subject_jti = tt.token OR t.parent_actor_jti = tt.token)
+                JOIN token_tree tt ON (t.parent_jti_1 = tt.token OR t.parent_jti_2 = tt.token)
                 ) DELETE FROM tokens WHERE token IN (SELECT token FROM token_tree)
                 """.formatted(whereClause);
     }
