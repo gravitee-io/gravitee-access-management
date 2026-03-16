@@ -80,7 +80,8 @@ public class TokenExchangeStrategy implements GrantStrategy {
                         result.subjectTokenType(),
                         result.actorTokenId(),
                         result.actorTokenType(),
-                        result.actorInfo()
+                        result.actorInfo(),
+                        result.jtisOfParents()
                 ));
     }
 }
