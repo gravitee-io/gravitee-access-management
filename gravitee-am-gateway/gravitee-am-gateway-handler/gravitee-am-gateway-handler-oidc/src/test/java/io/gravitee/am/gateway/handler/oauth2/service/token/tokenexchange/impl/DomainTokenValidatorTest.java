@@ -32,6 +32,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Set;
+
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -95,8 +97,9 @@ class DomainTokenValidatorTest {
     @Test
     void shouldValidateAccessTokenWhenPresentInRepositoryForDomain() {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.ACCESS_TOKEN);
-        ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, DOMAIN_ID);
+        ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, DOMAIN_ID, Set.of("token1"));
         AccessToken storedToken = new AccessToken();
+        storedToken.setToken("token1");
         storedToken.setDomain(DOMAIN_ID);
 
         when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
@@ -106,7 +109,7 @@ class DomainTokenValidatorTest {
                 .test()
                 .assertComplete()
                 .assertNoErrors()
-                .assertValue(token -> token == validatedToken);
+                .assertValue(token -> token.equals(validatedToken));
 
         verify(tokenRepository).findAccessTokenByJti(TOKEN_VALUE);
         verify(tokenRepository, never()).findRefreshTokenByJti(TOKEN_VALUE);
@@ -132,8 +135,10 @@ class DomainTokenValidatorTest {
     @Test
     void shouldValidateRefreshTokenWhenPresentInRepositoryForDomain() {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.REFRESH_TOKEN);
-        ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, DOMAIN_ID);
+        ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, DOMAIN_ID, Set.of("token1"));
         RefreshToken storedToken = new RefreshToken();
+        storedToken.setAllParentJtis(Set.of());
+        storedToken.setToken("token1");
         storedToken.setDomain(DOMAIN_ID);
 
         when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
@@ -143,7 +148,7 @@ class DomainTokenValidatorTest {
                 .test()
                 .assertComplete()
                 .assertNoErrors()
-                .assertValue(token -> token == validatedToken);
+                .assertValue(token -> token.equals(validatedToken));
 
         verify(tokenRepository).findRefreshTokenByJti(TOKEN_VALUE);
         verify(tokenRepository, never()).findAccessTokenByJti(TOKEN_VALUE);
@@ -201,9 +206,14 @@ class DomainTokenValidatorTest {
     }
 
     private static ValidatedToken validatedToken(String tokenId, String tokenDomain) {
+        return validatedToken(tokenId, tokenDomain, Set.of());
+    }
+
+    private static ValidatedToken validatedToken(String tokenId, String tokenDomain, Set<String> domainParentJtis) {
         return ValidatedToken.builder()
                 .tokenId(tokenId)
                 .domain(tokenDomain)
+                .domainParentJtis(domainParentJtis)
                 .build();
     }
 }

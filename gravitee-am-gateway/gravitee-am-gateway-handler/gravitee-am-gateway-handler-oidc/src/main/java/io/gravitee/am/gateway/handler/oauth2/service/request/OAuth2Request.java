@@ -187,6 +187,8 @@ public class OAuth2Request extends BaseRequest {
      */
     private String actorTokenId;
 
+    private Set<String> allParentJtis;
+
     public OAuth2Request(OAuth2Request other){
         this.clientId = other.clientId;
         this.grantType = other.grantType;
@@ -211,6 +213,7 @@ public class OAuth2Request extends BaseRequest {
         this.subjectTokenType = other.subjectTokenType;
         this.actorTokenType = other.actorTokenType;
         this.actorTokenId = other.actorTokenId;
+        this.allParentJtis = other.allParentJtis;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
         this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
 

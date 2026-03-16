@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.11.1-add-tokens-parent-jtis
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: tokens
+            columnName: parent_subject_jti
+      changes:
+        - renameColumn:
+            tableName: tokens
+            columnDataType: nvarchar(64)
+            newColumnName: parent_jti_1
+            oldColumnName: parent_subject_jti
+
+        - renameColumn:
+            tableName: tokens
+            columnDataType: nvarchar(64)
+            newColumnName: parent_jti_2
+            oldColumnName: parent_actor_jti
