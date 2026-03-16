@@ -49,7 +49,6 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
@@ -340,32 +339,24 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
-        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convertCommon(new io.gravitee.am.repository.oauth2.model.AccessToken(), token, user, oAuth2Request.getClientId());
+        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convertCommon(new io.gravitee.am.repository.oauth2.model.AccessToken(), token, user, oAuth2Request);
         // set authorization code
         accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
         accessToken.setRefreshToken(refreshToken != null ? refreshToken.getJti() : null);
-        accessToken.setParentSubjectJti(oAuth2Request.getSubjectTokenId());
-        if (oAuth2Request.isDelegation() && oAuth2Request.getActorTokenId() != null) {
-            accessToken.setParentActorJti(oAuth2Request.getActorTokenId());
-        }
         return accessToken;
     }
 
     private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user, OAuth2Request request) {
-        io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken =  convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, request.getClientId());
-        refreshToken.setParentSubjectJti(request.getSubjectTokenId());
-        if (request.isDelegation() && request.getActorTokenId() != null) {
-            refreshToken.setParentActorJti(request.getActorTokenId());
-        }
-        return refreshToken;
+        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, request);
     }
 
-    private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user, String clientId) {
+    private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user, OAuth2Request request) {
         newToken.setId(RandomString.generate());
         newToken.setToken(sourceToken.getJti());
         newToken.setDomain(sourceToken.getDomain());
-        newToken.setClient(clientId);
+        newToken.setClient(request.getClientId());
+        newToken.setAllParentJtis(request.getAllParentJtis());
         // keep reference to userId in the storage, only outside world has to see the sub which maybe based on source+extId
         newToken.setSubject(user == null ? sourceToken.getSub() : user.getId());
         newToken.setCreatedAt(new Date(sourceToken.getIat() * 1000));
