@@ -26,7 +26,10 @@ import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderGroupMapperFactoryImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderMapperFactoryImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderPluginManagerImpl;
+import io.gravitee.am.plugins.idp.core.impl.IdentityProviderPluginValidatorImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderRoleMapperFactoryImpl;
+import io.gravitee.am.plugins.idp.core.impl.NoOpCertificateManager;
+import io.gravitee.am.service.validators.idp.IdentityProviderPluginValidator;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.vertx.rxjava3.core.Vertx;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -83,6 +86,13 @@ public class IdentityProviderSpringConfiguration {
     @Bean
     public IdentityProviderGroupMapperFactory identityProviderGroupMapperFactory() {
         return new IdentityProviderGroupMapperFactoryImpl();
+    }
+
+    @Bean
+    public IdentityProviderPluginValidator identityProviderPluginValidator(
+            IdentityProviderPluginManager identityProviderPluginManager
+    ) {
+        return new IdentityProviderPluginValidatorImpl(identityProviderPluginManager, new NoOpCertificateManager());
     }
 
 }
