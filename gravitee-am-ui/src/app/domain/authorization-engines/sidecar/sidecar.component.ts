@@ -21,6 +21,7 @@ import { finalize } from 'rxjs/operators';
 import { SidecarService } from '../../../services/sidecar.service';
 import { AuthorizationEngineService } from '../../../services/authorization-engine.service';
 import { AuthorizationBundleService } from '../../../services/authorization-bundle.service';
+import { AuthorizationSchemaService } from '../../../services/authorization-schema.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 
@@ -43,6 +44,12 @@ interface Bundle {
   name: string;
 }
 
+interface Schema {
+  id: string;
+  name: string;
+  latestVersion: number;
+}
+
 @Component({
   selector: 'app-sidecar',
   standalone: false,
@@ -59,9 +66,20 @@ export class SidecarComponent implements OnInit, OnDestroy {
   configuration: Record<string, any> = {};
   draftConfiguration: Record<string, any> = {};
   originalName: string = '';
+
+  // Bundle
   selectedBundleId: string = '';
   originalBundleId: string = '';
   bundles: Bundle[] = [];
+
+  // Schema (independent from bundle)
+  schemas: Schema[] = [];
+  schemaVersions: any[] = [];
+  selectedSchemaId: string = '';
+  originalSchemaId: string = '';
+  selectedSchemaVersion: number = 0;
+  selectedSchemaPinToLatest: boolean = true;
+
   configurationSchema: Record<string, any> = {};
   configurationIsValid = false;
   isSaving = false;
@@ -81,6 +99,7 @@ export class SidecarComponent implements OnInit, OnDestroy {
     private sidecarService: SidecarService,
     private authorizationEngineService: AuthorizationEngineService,
     private authorizationBundleService: AuthorizationBundleService,
+    private authorizationSchemaService: AuthorizationSchemaService,
     private organizationService: OrganizationService,
     private snackbarService: SnackbarService,
   ) {}
@@ -92,6 +111,7 @@ export class SidecarComponent implements OnInit, OnDestroy {
     this.authorizationEnginePlugins = this.toPluginMap(this.route.snapshot.data['authorizationEnginePlugins']);
 
     this.loadBundles();
+    this.loadSchemas();
     this.load();
   }
 
@@ -110,8 +130,20 @@ export class SidecarComponent implements OnInit, OnDestroy {
           this.configuration = { ...config };
           this.draftConfiguration = { ...config };
           this.originalName = engine.name;
+
+          // Bundle
           this.selectedBundleId = config.bundleId || '';
           this.originalBundleId = config.bundleId || '';
+
+          // Schema
+          this.selectedSchemaId = config.schemaId || '';
+          this.originalSchemaId = config.schemaId || '';
+          this.selectedSchemaVersion = config.schemaVersion || 0;
+          this.selectedSchemaPinToLatest = config.schemaPinToLatest !== false;
+
+          if (this.selectedSchemaId) {
+            this.loadSchemaVersions(this.selectedSchemaId);
+          }
 
           this.loadAuthorizationEngineSchema(engine.type);
           this.checkHealth();
@@ -132,6 +164,32 @@ export class SidecarComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.bundles = [];
+        },
+      }),
+    );
+  }
+
+  loadSchemas() {
+    this.subscriptions.add(
+      this.authorizationSchemaService.findByDomain(this.domainId).subscribe({
+        next: (schemas) => {
+          this.schemas = schemas || [];
+        },
+        error: () => {
+          this.schemas = [];
+        },
+      }),
+    );
+  }
+
+  loadSchemaVersions(schemaId: string) {
+    this.subscriptions.add(
+      this.authorizationSchemaService.getVersions(this.domainId, schemaId).subscribe({
+        next: (v) => {
+          this.schemaVersions = v.sort((a: any, b: any) => b.version - a.version);
+        },
+        error: () => {
+          this.schemaVersions = [];
         },
       }),
     );
@@ -178,16 +236,43 @@ export class SidecarComponent implements OnInit, OnDestroy {
     this.draftConfiguration = { ...this.draftConfiguration, bundleId: this.selectedBundleId };
   }
 
+  onSchemaChanged() {
+    this.draftConfiguration = {
+      ...this.draftConfiguration,
+      schemaId: this.selectedSchemaId,
+      schemaVersion: this.selectedSchemaVersion,
+      schemaPinToLatest: this.selectedSchemaPinToLatest,
+    };
+    if (this.selectedSchemaId) {
+      this.loadSchemaVersions(this.selectedSchemaId);
+      // Set default version from schema metadata
+      const schema = this.schemas.find((s) => s.id === this.selectedSchemaId);
+      if (schema) {
+        this.selectedSchemaVersion = schema.latestVersion;
+      }
+    } else {
+      this.schemaVersions = [];
+      this.selectedSchemaVersion = 0;
+    }
+  }
+
   isConfigurationDirty(): boolean {
     const configChanged = JSON.stringify(this.draftConfiguration) !== JSON.stringify(this.configuration);
     const nameChanged = this.authorizationEngine?.name !== this.originalName;
     const bundleChanged = this.selectedBundleId !== this.originalBundleId;
-    return configChanged || nameChanged || bundleChanged;
+    const schemaChanged = this.selectedSchemaId !== this.originalSchemaId;
+    return configChanged || nameChanged || bundleChanged || schemaChanged;
   }
 
   onConfigurationChanged(configurationWrapper: { isValid: boolean; configuration: Record<string, any> }) {
     this.configurationIsValid = configurationWrapper.isValid;
-    this.draftConfiguration = { ...(configurationWrapper.configuration || {}), bundleId: this.selectedBundleId };
+    this.draftConfiguration = {
+      ...(configurationWrapper.configuration || {}),
+      bundleId: this.selectedBundleId,
+      schemaId: this.selectedSchemaId,
+      schemaVersion: this.selectedSchemaVersion,
+      schemaPinToLatest: this.selectedSchemaPinToLatest,
+    };
   }
 
   saveConfiguration() {
@@ -197,7 +282,13 @@ export class SidecarComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
 
-    const finalConfig = { ...this.draftConfiguration, bundleId: this.selectedBundleId };
+    const finalConfig = {
+      ...this.draftConfiguration,
+      bundleId: this.selectedBundleId,
+      schemaId: this.selectedSchemaId,
+      schemaVersion: this.selectedSchemaVersion,
+      schemaPinToLatest: this.selectedSchemaPinToLatest,
+    };
 
     const updatedEngine: AuthorizationEngine = {
       ...this.authorizationEngine,
@@ -222,6 +313,10 @@ export class SidecarComponent implements OnInit, OnDestroy {
             this.originalName = engine.name;
             this.selectedBundleId = config.bundleId || '';
             this.originalBundleId = config.bundleId || '';
+            this.selectedSchemaId = config.schemaId || '';
+            this.originalSchemaId = config.schemaId || '';
+            this.selectedSchemaVersion = config.schemaVersion || 0;
+            this.selectedSchemaPinToLatest = config.schemaPinToLatest !== false;
             this.snackbarService.open('Configuration saved successfully');
 
             this.checkHealth();

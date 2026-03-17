@@ -18,6 +18,8 @@ package io.gravitee.am.authorizationengine.api.ws;
 import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditEvent;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -51,30 +53,50 @@ class WsMessageCodecTest {
 
     @Test
     void roundTrip_bundleUpdate() {
-        var original = new WsMessage.BundleUpdate(5, "permit(p,a,r);", "[{\"id\":1}]", "{\"schema\":true}");
+        var original = new WsMessage.BundleUpdate(5,
+                List.of("permit(p,a,r);", "forbid(p,a,r);"),
+                List.of("[{\"id\":1}]", "[{\"id\":2}]"),
+                "{\"schema\":true}");
         String json = codec.encode(original);
 
         assertThat(json).contains("\"type\":\"bundle_update\"");
         assertThat(json).contains("\"version\":5");
+        assertThat(json).contains("\"policies\"");
+        assertThat(json).contains("\"entityStores\"");
 
         WsMessage decoded = codec.decode(json);
         assertThat(decoded).isInstanceOf(WsMessage.BundleUpdate.class);
         var bu = (WsMessage.BundleUpdate) decoded;
         assertThat(bu.version()).isEqualTo(5);
-        assertThat(bu.policy()).isEqualTo("permit(p,a,r);");
-        assertThat(bu.data()).isEqualTo("[{\"id\":1}]");
+        assertThat(bu.policies()).containsExactly("permit(p,a,r);", "forbid(p,a,r);");
+        assertThat(bu.entityStores()).containsExactly("[{\"id\":1}]", "[{\"id\":2}]");
         assertThat(bu.schema()).isEqualTo("{\"schema\":true}");
     }
 
     @Test
     void roundTrip_bundleUpdate_nullSchema() {
-        var original = new WsMessage.BundleUpdate(1, "policy", "data", null);
+        var original = new WsMessage.BundleUpdate(1, List.of("policy"), List.of("data"), null);
         String json = codec.encode(original);
         WsMessage decoded = codec.decode(json);
 
         assertThat(decoded).isInstanceOf(WsMessage.BundleUpdate.class);
         var bu = (WsMessage.BundleUpdate) decoded;
         assertThat(bu.schema()).isNull();
+        assertThat(bu.policies()).containsExactly("policy");
+        assertThat(bu.entityStores()).containsExactly("data");
+    }
+
+    @Test
+    void decode_bundleUpdate_backwardCompat_oldSingleFields() {
+        // Old format with "policy" and "data" single string fields
+        String oldJson = "{\"type\":\"bundle_update\",\"version\":3,\"policy\":\"permit(p,a,r);\",\"data\":\"[{\\\"id\\\":1}]\",\"schema\":null}";
+        WsMessage decoded = codec.decode(oldJson);
+
+        assertThat(decoded).isInstanceOf(WsMessage.BundleUpdate.class);
+        var bu = (WsMessage.BundleUpdate) decoded;
+        assertThat(bu.version()).isEqualTo(3);
+        assertThat(bu.policies()).containsExactly("permit(p,a,r);");
+        assertThat(bu.entityStores()).containsExactly("[{\"id\":1}]");
     }
 
     @Test

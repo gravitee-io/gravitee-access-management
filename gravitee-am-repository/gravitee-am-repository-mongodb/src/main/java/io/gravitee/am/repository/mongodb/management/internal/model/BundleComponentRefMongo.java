@@ -13,40 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.model.BundleComponentRef;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 /**
  * @author GraviteeSource Team
  */
 @Getter
 @Setter
-public class NewAuthorizationBundle {
-
-    @NotNull
-    private String name;
-
-    private String description;
-
-    @NotBlank
-    private String engineType;
-
-    // Component references (lists)
-    private List<BundleComponentRef> policySets;
-    private List<BundleComponentRef> entityStores;
-
-    @Override
-    public String toString() {
-        return "NewAuthorizationBundle{" +
-                "name='" + name + '\'' +
-                ", engineType='" + engineType + '\'' +
-                '}';
-    }
+public class BundleComponentRefMongo {
+    private String id;
+    private int version;
+    private boolean pinToLatest;
 }

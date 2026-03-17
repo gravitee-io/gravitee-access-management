@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+package io.gravitee.am.model;
 
-import io.gravitee.am.model.BundleComponentRef;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 /**
- * @author GraviteeSource Team
+ * A versioned reference to a component (policy set or entity store) within an authorization bundle.
+ * Preserves insertion order — the order in which the user selected components in the UI.
  */
 @Getter
 @Setter
-public class UpdateAuthorizationBundle {
-
-    private String name;
-
-    private String description;
-
-    // Component references (lists)
-    private List<BundleComponentRef> policySets;
-    private List<BundleComponentRef> entityStores;
+@NoArgsConstructor
+@AllArgsConstructor
+public class BundleComponentRef {
+    private String id;
+    private int version;
+    private boolean pinToLatest;
 }

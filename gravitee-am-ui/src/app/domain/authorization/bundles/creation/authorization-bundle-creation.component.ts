@@ -18,7 +18,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthorizationBundleService } from '../../../../services/authorization-bundle.service';
 import { PolicySetService } from '../../../../services/policy-set.service';
-import { AuthorizationSchemaService } from '../../../../services/authorization-schema.service';
 import { EntityStoreService } from '../../../../services/entity-store.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 
@@ -31,24 +30,20 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 export class AuthorizationBundleCreationComponent implements OnInit {
   bundle: any = {
     engineType: 'cedar',
-    policySetPinToLatest: true,
-    schemaPinToLatest: true,
-    entityStorePinToLatest: true,
+    policySets: [],
+    entityStores: [],
   };
   domainId: string;
 
   policySets: any[] = [];
-  schemas: any[] = [];
   entityStores: any[] = [];
 
-  policySetVersions: any[] = [];
-  schemaVersions: any[] = [];
-  entityStoreVersions: any[] = [];
+  policySetVersionsMap: Record<string, any[]> = {};
+  entityStoreVersionsMap: Record<string, any[]> = {};
 
   constructor(
     private authorizationBundleService: AuthorizationBundleService,
     private policySetService: PolicySetService,
-    private authorizationSchemaService: AuthorizationSchemaService,
     private entityStoreService: EntityStoreService,
     private snackbarService: SnackbarService,
     private router: Router,
@@ -62,52 +57,50 @@ export class AuthorizationBundleCreationComponent implements OnInit {
 
   loadComponents() {
     this.policySetService.findByDomain(this.domainId).subscribe((ps) => (this.policySets = ps));
-    this.authorizationSchemaService.findByDomain(this.domainId).subscribe((s) => (this.schemas = s));
     this.entityStoreService.findByDomain(this.domainId).subscribe((es) => (this.entityStores = es));
   }
 
-  onPolicySetChange(policySetId: string) {
-    this.bundle.policySetId = policySetId;
+  addPolicySet() {
+    this.bundle.policySets.push({ id: '', version: 0, pinToLatest: true });
+  }
+
+  removePolicySet(index: number) {
+    this.bundle.policySets.splice(index, 1);
+  }
+
+  onPolicySetSelected(index: number, policySetId: string) {
+    const entry = this.bundle.policySets[index];
+    entry.id = policySetId;
     if (policySetId) {
       const ps = this.policySets.find((p) => p.id === policySetId);
       if (ps) {
-        this.bundle.policySetVersion = ps.latestVersion;
+        entry.version = ps.latestVersion;
       }
       this.policySetService.getVersions(this.domainId, policySetId).subscribe((v) => {
-        this.policySetVersions = v.sort((a: any, b: any) => b.version - a.version);
+        this.policySetVersionsMap[policySetId] = v.sort((a: any, b: any) => b.version - a.version);
       });
-    } else {
-      this.policySetVersions = [];
     }
   }
 
-  onSchemaChange(schemaId: string) {
-    this.bundle.schemaId = schemaId;
-    if (schemaId) {
-      const s = this.schemas.find((sc) => sc.id === schemaId);
-      if (s) {
-        this.bundle.schemaVersion = s.latestVersion;
-      }
-      this.authorizationSchemaService.getVersions(this.domainId, schemaId).subscribe((v) => {
-        this.schemaVersions = v.sort((a: any, b: any) => b.version - a.version);
-      });
-    } else {
-      this.schemaVersions = [];
-    }
+  addEntityStore() {
+    this.bundle.entityStores.push({ id: '', version: 0, pinToLatest: true });
   }
 
-  onEntityStoreChange(entityStoreId: string) {
-    this.bundle.entityStoreId = entityStoreId;
+  removeEntityStore(index: number) {
+    this.bundle.entityStores.splice(index, 1);
+  }
+
+  onEntityStoreSelected(index: number, entityStoreId: string) {
+    const entry = this.bundle.entityStores[index];
+    entry.id = entityStoreId;
     if (entityStoreId) {
       const es = this.entityStores.find((e) => e.id === entityStoreId);
       if (es) {
-        this.bundle.entityStoreVersion = es.latestVersion;
+        entry.version = es.latestVersion;
       }
       this.entityStoreService.getVersions(this.domainId, entityStoreId).subscribe((v) => {
-        this.entityStoreVersions = v.sort((a: any, b: any) => b.version - a.version);
+        this.entityStoreVersionsMap[entityStoreId] = v.sort((a: any, b: any) => b.version - a.version);
       });
-    } else {
-      this.entityStoreVersions = [];
     }
   }
 

@@ -43,75 +43,76 @@
         </div>
       </div>
 
+      <!-- Policy Sets (multi) -->
       <div class="gv-form-section">
         <div class="gv-form-section-title">
-          <h5>Components</h5>
+          <h5>Policy Sets</h5>
         </div>
         <div fxLayout="column">
-          <!-- Policy Set -->
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Policy Set</mat-label>
-            <mat-select name="policySetId" (selectionChange)="onPolicySetChange($event.value)">
-              <mat-option [value]="null">-- None --</mat-option>
-              <mat-option *ngFor="let ps of policySets" [value]="ps.id"> {{ ps.name }} (v{{ ps.latestVersion }}) </mat-option>
-            </mat-select>
-            <mat-hint>Select the policy set containing authorization policies.</mat-hint>
-          </mat-form-field>
-
-          <div class="component-version-row" *ngIf="bundle.policySetId">
-            <mat-checkbox name="policySetPinToLatest" [(ngModel)]="bundle.policySetPinToLatest">
-              Always use latest version
-            </mat-checkbox>
-            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.policySetPinToLatest" class="version-select">
-              <mat-label>Version</mat-label>
-              <mat-select name="policySetVersion" [(ngModel)]="bundle.policySetVersion">
-                <mat-option *ngFor="let v of policySetVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
-              </mat-select>
-            </mat-form-field>
+          <div *ngFor="let ps of bundle.policySets; let i = index" class="component-row" fxLayout="column">
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex>
+                <mat-label>Policy Set {{ i + 1 }}</mat-label>
+                <mat-select [value]="ps.id" (selectionChange)="onPolicySetSelected(i, $event.value)">
+                  <mat-option *ngFor="let opt of policySets" [value]="opt.id">{{ opt.name }} (v{{ opt.latestVersion }})</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-icon-button type="button" (click)="removePolicySet(i)" matTooltip="Remove">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            <div class="component-version-row" *ngIf="ps.id">
+              <mat-checkbox [(ngModel)]="ps.pinToLatest" [name]="'psPinToLatest' + i">Always use latest version</mat-checkbox>
+              <mat-form-field appearance="outline" floatLabel="always" *ngIf="!ps.pinToLatest" class="version-select">
+                <mat-label>Version</mat-label>
+                <mat-select [(ngModel)]="ps.version" [name]="'psVersion' + i">
+                  <mat-option *ngFor="let v of policySetVersionsMap[ps.id]" [value]="v.version">v{{ v.version }} — {{ v.commitMessage }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
           </div>
-
-          <!-- Schema -->
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Schema</mat-label>
-            <mat-select name="schemaId" (selectionChange)="onSchemaChange($event.value)">
-              <mat-option [value]="null">-- None --</mat-option>
-              <mat-option *ngFor="let s of schemas" [value]="s.id"> {{ s.name }} (v{{ s.latestVersion }}) </mat-option>
-            </mat-select>
-            <mat-hint>Select the authorization schema definition.</mat-hint>
-          </mat-form-field>
-
-          <div class="component-version-row" *ngIf="bundle.schemaId">
-            <mat-checkbox name="schemaPinToLatest" [(ngModel)]="bundle.schemaPinToLatest">
-              Always use latest version
-            </mat-checkbox>
-            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.schemaPinToLatest" class="version-select">
-              <mat-label>Version</mat-label>
-              <mat-select name="schemaVersion" [(ngModel)]="bundle.schemaVersion">
-                <mat-option *ngFor="let v of schemaVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
-              </mat-select>
-            </mat-form-field>
+          <div>
+            <button mat-stroked-button type="button" (click)="addPolicySet()">
+              <mat-icon>add</mat-icon>
+              Add Policy Set
+            </button>
           </div>
+        </div>
+      </div>
 
-          <!-- Entity Store -->
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Entity Store</mat-label>
-            <mat-select name="entityStoreId" (selectionChange)="onEntityStoreChange($event.value)">
-              <mat-option [value]="null">-- None --</mat-option>
-              <mat-option *ngFor="let es of entityStores" [value]="es.id"> {{ es.name }} (v{{ es.latestVersion }}) </mat-option>
-            </mat-select>
-            <mat-hint>Select the entity store containing authorization entities.</mat-hint>
-          </mat-form-field>
-
-          <div class="component-version-row" *ngIf="bundle.entityStoreId">
-            <mat-checkbox name="entityStorePinToLatest" [(ngModel)]="bundle.entityStorePinToLatest">
-              Always use latest version
-            </mat-checkbox>
-            <mat-form-field appearance="outline" floatLabel="always" *ngIf="!bundle.entityStorePinToLatest" class="version-select">
-              <mat-label>Version</mat-label>
-              <mat-select name="entityStoreVersion" [(ngModel)]="bundle.entityStoreVersion">
-                <mat-option *ngFor="let v of entityStoreVersions" [value]="v.version"> v{{ v.version }} — {{ v.commitMessage }} </mat-option>
-              </mat-select>
-            </mat-form-field>
+      <!-- Entity Stores (multi) -->
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Entity Stores</h5>
+        </div>
+        <div fxLayout="column">
+          <div *ngFor="let es of bundle.entityStores; let i = index" class="component-row" fxLayout="column">
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex>
+                <mat-label>Entity Store {{ i + 1 }}</mat-label>
+                <mat-select [value]="es.id" (selectionChange)="onEntityStoreSelected(i, $event.value)">
+                  <mat-option *ngFor="let opt of entityStores" [value]="opt.id">{{ opt.name }} (v{{ opt.latestVersion }})</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-icon-button type="button" (click)="removeEntityStore(i)" matTooltip="Remove">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            <div class="component-version-row" *ngIf="es.id">
+              <mat-checkbox [(ngModel)]="es.pinToLatest" [name]="'esPinToLatest' + i">Always use latest version</mat-checkbox>
+              <mat-form-field appearance="outline" floatLabel="always" *ngIf="!es.pinToLatest" class="version-select">
+                <mat-label>Version</mat-label>
+                <mat-select [(ngModel)]="es.version" [name]="'esVersion' + i">
+                  <mat-option *ngFor="let v of entityStoreVersionsMap[es.id]" [value]="v.version">v{{ v.version }} — {{ v.commitMessage }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div>
+            <button mat-stroked-button type="button" (click)="addEntityStore()">
+              <mat-icon>add</mat-icon>
+              Add Entity Store
+            </button>
           </div>
         </div>
       </div>

@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationBundle;
+import io.gravitee.am.model.BundleComponentRef;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
@@ -40,12 +41,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.never;
@@ -121,12 +121,8 @@ class AuthorizationBundleServiceImplTest {
         NewAuthorizationBundle request = new NewAuthorizationBundle();
         request.setName("my-bundle");
         request.setEngineType("cedar");
-        request.setPolicySetId("ps-1");
-        request.setPolicySetVersion(1);
-        request.setSchemaId("schema-1");
-        request.setSchemaVersion(1);
-        request.setEntityStoreId("es-1");
-        request.setEntityStoreVersion(1);
+        request.setPolicySets(List.of(new BundleComponentRef("ps-1", 1, true)));
+        request.setEntityStores(List.of(new BundleComponentRef("es-1", 1, false)));
 
         when(authorizationBundleRepository.create(any(AuthorizationBundle.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
@@ -141,10 +137,10 @@ class AuthorizationBundleServiceImplTest {
         testObserver.assertValue(b -> {
             assertEquals("my-bundle", b.getName());
             assertEquals("cedar", b.getEngineType());
-            assertEquals("ps-1", b.getPolicySetId());
-            assertEquals(1, b.getPolicySetVersion());
-            assertEquals("schema-1", b.getSchemaId());
-            assertEquals("es-1", b.getEntityStoreId());
+            assertEquals(1, b.getPolicySets().size());
+            assertEquals("ps-1", b.getPolicySets().get(0).getId());
+            assertEquals(1, b.getEntityStores().size());
+            assertEquals("es-1", b.getEntityStores().get(0).getId());
             assertNotNull(b.getId());
             assertNotNull(b.getCreatedAt());
             return true;
@@ -155,20 +151,12 @@ class AuthorizationBundleServiceImplTest {
     }
 
     @Test
-    void shouldCreateWithPinToLatest() {
+    void shouldCreateWithEmptyLists() {
         Domain domain = createMockDomain("domain-1");
         NewAuthorizationBundle request = new NewAuthorizationBundle();
         request.setName("my-bundle");
         request.setEngineType("cedar");
-        request.setPolicySetId("ps-1");
-        request.setPolicySetVersion(1);
-        request.setPolicySetPinToLatest(true);
-        request.setSchemaId("schema-1");
-        request.setSchemaVersion(1);
-        request.setSchemaPinToLatest(true);
-        request.setEntityStoreId("es-1");
-        request.setEntityStoreVersion(1);
-        request.setEntityStorePinToLatest(false);
+        // No policySets or entityStores set — should default to empty lists
 
         when(authorizationBundleRepository.create(any(AuthorizationBundle.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
@@ -180,9 +168,10 @@ class AuthorizationBundleServiceImplTest {
         testObserver.assertComplete();
 
         testObserver.assertValue(b -> {
-            assertTrue(b.isPolicySetPinToLatest());
-            assertTrue(b.isSchemaPinToLatest());
-            assertFalse(b.isEntityStorePinToLatest());
+            assertNotNull(b.getPolicySets());
+            assertEquals(0, b.getPolicySets().size());
+            assertNotNull(b.getEntityStores());
+            assertEquals(0, b.getEntityStores().size());
             return true;
         });
     }
@@ -197,18 +186,15 @@ class AuthorizationBundleServiceImplTest {
         existingBundle.setDomainId("domain-1");
         existingBundle.setName("old-name");
         existingBundle.setEngineType("cedar");
-        existingBundle.setPolicySetId("ps-1");
-        existingBundle.setPolicySetVersion(1);
-        existingBundle.setSchemaId("schema-1");
-        existingBundle.setSchemaVersion(1);
-        existingBundle.setEntityStoreId("es-1");
-        existingBundle.setEntityStoreVersion(1);
+        existingBundle.setPolicySets(List.of(new BundleComponentRef("ps-1", 1, true)));
+        existingBundle.setEntityStores(List.of(new BundleComponentRef("es-1", 1, false)));
         existingBundle.setCreatedAt(new Date());
 
         UpdateAuthorizationBundle request = new UpdateAuthorizationBundle();
         request.setName("new-name");
-        request.setPolicySetId("ps-2");
-        request.setPolicySetVersion(3);
+        request.setPolicySets(List.of(
+                new BundleComponentRef("ps-1", 1, true),
+                new BundleComponentRef("ps-2", 3, false)));
 
         when(authorizationBundleRepository.findByDomainAndId("domain-1", "bundle-1"))
                 .thenReturn(Maybe.just(existingBundle));
@@ -223,12 +209,11 @@ class AuthorizationBundleServiceImplTest {
 
         testObserver.assertValue(b -> {
             assertEquals("new-name", b.getName());
-            assertEquals("ps-2", b.getPolicySetId());
-            assertEquals(3, b.getPolicySetVersion());
-            // Schema and entity store unchanged (null in request = keep existing)
-            assertEquals("schema-1", b.getSchemaId());
-            assertEquals(1, b.getSchemaVersion());
-            assertEquals("es-1", b.getEntityStoreId());
+            assertEquals(2, b.getPolicySets().size());
+            assertEquals("ps-2", b.getPolicySets().get(1).getId());
+            // Entity stores unchanged (null in request = keep existing)
+            assertEquals(1, b.getEntityStores().size());
+            assertEquals("es-1", b.getEntityStores().get(0).getId());
             return true;
         });
 
@@ -236,49 +221,10 @@ class AuthorizationBundleServiceImplTest {
     }
 
     @Test
-    void shouldUpdatePinToLatest() {
-        Domain domain = createMockDomain("domain-1");
-        AuthorizationBundle existingBundle = new AuthorizationBundle();
-        existingBundle.setId("bundle-1");
-        existingBundle.setDomainId("domain-1");
-        existingBundle.setName("my-bundle");
-        existingBundle.setEngineType("cedar");
-        existingBundle.setPolicySetId("ps-1");
-        existingBundle.setPolicySetVersion(1);
-        existingBundle.setPolicySetPinToLatest(false);
-        existingBundle.setSchemaPinToLatest(false);
-        existingBundle.setEntityStorePinToLatest(false);
-        existingBundle.setCreatedAt(new Date());
-
-        UpdateAuthorizationBundle request = new UpdateAuthorizationBundle();
-        request.setPolicySetPinToLatest(true);
-        request.setSchemaPinToLatest(true);
-
-        when(authorizationBundleRepository.findByDomainAndId("domain-1", "bundle-1"))
-                .thenReturn(Maybe.just(existingBundle));
-        when(authorizationBundleRepository.update(any(AuthorizationBundle.class)))
-                .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(eventService.create(any(Event.class), any(Domain.class)))
-                .thenReturn(Single.just(new Event()));
-
-        TestObserver<AuthorizationBundle> testObserver = service.update(domain, "bundle-1", request, principal).test();
-        testObserver.awaitDone(5, TimeUnit.SECONDS);
-        testObserver.assertComplete();
-
-        testObserver.assertValue(b -> {
-            assertTrue(b.isPolicySetPinToLatest());
-            assertTrue(b.isSchemaPinToLatest());
-            // entityStorePinToLatest not in request, should remain false
-            assertFalse(b.isEntityStorePinToLatest());
-            return true;
-        });
-    }
-
-    @Test
     void shouldNotUpdateWhenBundleNotFound() {
         Domain domain = createMockDomain("domain-1");
         UpdateAuthorizationBundle request = new UpdateAuthorizationBundle();
-        request.setPolicySetId("ps-2");
+        request.setPolicySets(List.of(new BundleComponentRef("ps-2", 1, true)));
 
         when(authorizationBundleRepository.findByDomainAndId("domain-1", "unknown"))
                 .thenReturn(Maybe.empty());

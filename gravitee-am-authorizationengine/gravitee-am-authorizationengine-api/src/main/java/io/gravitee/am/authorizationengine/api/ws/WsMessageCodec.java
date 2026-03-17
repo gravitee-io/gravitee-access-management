@@ -21,6 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Encodes and decodes {@link WsMessage} instances to/from JSON strings.
  * <p>
@@ -70,8 +73,8 @@ public final class WsMessageCodec {
                 case WsMessage.BundleUpdate bu -> {
                     node.put("type", TYPE_BUNDLE_UPDATE);
                     node.put("version", bu.version());
-                    node.put("policy", bu.policy());
-                    node.put("data", bu.data());
+                    node.set("policies", objectMapper.valueToTree(bu.policies()));
+                    node.set("entityStores", objectMapper.valueToTree(bu.entityStores()));
                     node.put("schema", bu.schema());
                 }
                 case WsMessage.AuditEvent ae -> {
@@ -102,12 +105,41 @@ public final class WsMessageCodec {
             return switch (type) {
                 case TYPE_BUNDLE_CHECK -> new WsMessage.BundleCheck(root.path("version").asInt(0));
                 case TYPE_BUNDLE_CURRENT -> new WsMessage.BundleCurrent();
-                case TYPE_BUNDLE_UPDATE -> new WsMessage.BundleUpdate(
-                        root.path("version").asInt(0),
-                        textOrNull(root, "policy"),
-                        textOrNull(root, "data"),
-                        textOrNull(root, "schema")
-                );
+                case TYPE_BUNDLE_UPDATE -> {
+                    int version = root.path("version").asInt(0);
+
+                    // Decode policies list (with backward compat for old single "policy" field)
+                    List<String> policies = new ArrayList<>();
+                    JsonNode policiesNode = root.path("policies");
+                    if (policiesNode.isArray()) {
+                        for (JsonNode p : policiesNode) {
+                            policies.add(p.asText());
+                        }
+                    }
+                    if (policies.isEmpty()) {
+                        String oldPolicy = textOrNull(root, "policy");
+                        if (oldPolicy != null) {
+                            policies.add(oldPolicy);
+                        }
+                    }
+
+                    // Decode entityStores list (with backward compat for old single "data" field)
+                    List<String> entityStores = new ArrayList<>();
+                    JsonNode entityStoresNode = root.path("entityStores");
+                    if (entityStoresNode.isArray()) {
+                        for (JsonNode e : entityStoresNode) {
+                            entityStores.add(e.asText());
+                        }
+                    }
+                    if (entityStores.isEmpty()) {
+                        String oldData = textOrNull(root, "data");
+                        if (oldData != null) {
+                            entityStores.add(oldData);
+                        }
+                    }
+
+                    yield new WsMessage.BundleUpdate(version, policies, entityStores, textOrNull(root, "schema"));
+                }
                 case TYPE_AUDIT_EVENT -> {
                     JsonNode eventNode = root.path("event");
                     if (eventNode.isMissingNode() || eventNode.isNull()) {

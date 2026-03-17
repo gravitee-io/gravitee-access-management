@@ -22,10 +22,12 @@ import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
 import io.gravitee.am.authorizationengine.api.ws.ResolvedBundleSnapshot;
 import io.gravitee.am.common.event.AuthorizationBundleEvent;
 import io.gravitee.am.common.event.AuthorizationEngineEvent;
+import io.gravitee.am.common.event.AuthorizationSchemaEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.authorizationengine.AuthorizationEngineManager;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.BundleComponentRef;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -46,6 +48,7 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.ext.web.Router;
@@ -54,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -102,10 +106,14 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, String> engineBundleBindings = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, SchemaRef> engineSchemaBindings = new ConcurrentHashMap<>();
     private final AtomicInteger bundleVersionCounter = new AtomicInteger(0);
 
     private final EventListener<AuthorizationBundleEvent, Payload> bundleEventListener =
             event -> handleBundleEvent(event);
+
+    private final EventListener<AuthorizationSchemaEvent, Payload> schemaEventListener =
+            event -> handleSchemaEvent(event);
 
     @Override
     public Maybe<AuthorizationEngineProvider> get(String id) {
@@ -159,6 +167,9 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
 
         logger.info("Register event listener for authorization bundle events for domain {}", domain.getName());
         eventManager.subscribeForEvents(bundleEventListener, AuthorizationBundleEvent.class, domain.getId());
+
+        logger.info("Register event listener for authorization schema events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(schemaEventListener, AuthorizationSchemaEvent.class, domain.getId());
     }
 
     @Override
@@ -168,6 +179,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         logger.info("Dispose event listener for authorization engine events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, AuthorizationEngineEvent.class, domain.getId());
         eventManager.unsubscribeForEvents(bundleEventListener, AuthorizationBundleEvent.class, domain.getId());
+        eventManager.unsubscribeForEvents(schemaEventListener, AuthorizationSchemaEvent.class, domain.getId());
         clearProviders();
     }
 
@@ -234,6 +246,13 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                     engineBundleBindings.remove(authorizationEngine.getId());
                 }
 
+                SchemaRef schemaRef = extractSchemaRef(authorizationEngine.getConfiguration());
+                if (schemaRef != null) {
+                    engineSchemaBindings.put(authorizationEngine.getId(), schemaRef);
+                } else {
+                    engineSchemaBindings.remove(authorizationEngine.getId());
+                }
+
                 logger.info("Authorization engine {} deployed for domain {}", authorizationEngine.getId(), domain.getName());
                 domainReadinessService.pluginLoaded(domain.getId(), authorizationEngine.getId());
 
@@ -261,6 +280,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     private void clearProvider(String authorizationEngineId) {
         AuthorizationEngineProvider provider = providers.remove(authorizationEngineId);
         engineBundleBindings.remove(authorizationEngineId);
+        engineSchemaBindings.remove(authorizationEngineId);
 
         if (provider != null) {
             try {
@@ -284,9 +304,11 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
             return;
         }
 
+        SchemaRef schemaRef = extractSchemaRef(authorizationEngine.getConfiguration());
+
         logger.info("Pushing bundle {} to engine {} for domain {}", bundleId, authorizationEngine.getId(), domain.getName());
         authorizationBundleRepository.findById(bundleId)
-                .flatMap(this::resolveBundleContent)
+                .flatMap(bundle -> resolveBundleContent(bundle, schemaRef))
                 .subscribe(
                         snapshot -> {
                             try {
@@ -319,6 +341,30 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         }
     }
 
+    private record SchemaRef(String schemaId, Integer schemaVersion, Boolean schemaPinToLatest) {}
+
+    private SchemaRef extractSchemaRef(String configuration) {
+        if (configuration == null || configuration.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(configuration);
+            JsonNode schemaIdNode = node.get("schemaId");
+            if (schemaIdNode == null || schemaIdNode.isNull() || schemaIdNode.asText().isBlank()) {
+                return null;
+            }
+            String schemaId = schemaIdNode.asText();
+            Integer version = node.has("schemaVersion") && !node.get("schemaVersion").isNull()
+                    ? node.get("schemaVersion").asInt() : null;
+            Boolean pinToLatest = node.has("schemaPinToLatest") && !node.get("schemaPinToLatest").isNull()
+                    ? node.get("schemaPinToLatest").asBoolean() : true;
+            return new SchemaRef(schemaId, version, pinToLatest);
+        } catch (Exception e) {
+            logger.warn("Failed to parse engine configuration for schemaRef", e);
+            return null;
+        }
+    }
+
     /**
      * Handle authorization bundle events (create/update/delete).
      * Fetches the bundle by ID and pushes its content atomically to all providers.
@@ -331,7 +377,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 case UNDEPLOY -> {
                     String removedBundleId = payload.getId();
                     logger.info("Authorization bundle {} undeployed for domain {}", removedBundleId, domain.getName());
-                    ResolvedBundleSnapshot clearSnapshot = new ResolvedBundleSnapshot(0, null, null, null);
+                    ResolvedBundleSnapshot clearSnapshot = new ResolvedBundleSnapshot(0, List.of(), List.of(), null);
                     engineBundleBindings.forEach((engineId, bId) -> {
                         if (removedBundleId.equals(bId)) {
                             AuthorizationEngineProvider provider = providers.get(engineId);
@@ -353,9 +399,32 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     /**
+     * Handle authorization schema events.
+     * When a schema changes, re-push the full resolved config to all engines referencing that schema.
+     */
+    private void handleSchemaEvent(Event<AuthorizationSchemaEvent, Payload> event) {
+        Payload payload = event.content();
+        if (payload.getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(payload.getReferenceId())) {
+            String schemaId = payload.getId();
+            logger.info("Authorization schema {} event received for domain {}", schemaId, domain.getName());
+            engineSchemaBindings.forEach((engineId, boundSchemaRef) -> {
+                if (schemaId.equals(boundSchemaRef.schemaId())) {
+                    AuthorizationEngineProvider provider = providers.get(engineId);
+                    if (provider != null) {
+                        // Re-resolve and push by reloading the engine config
+                        authorizationEngineRepository.findById(engineId)
+                                .subscribe(
+                                        engine -> pushBundleToProvider(engine, provider),
+                                        error -> logger.error("Error reloading engine {} after schema change", engineId, error)
+                                );
+                    }
+                }
+            });
+        }
+    }
+
+    /**
      * Report an authorization evaluation event received from a provider (e.g., sidecar audit callback).
-     * Converts the provider-agnostic {@link AuthorizationAuditEvent} into a
-     * {@link PermissionEvaluatedAuditBuilder} and delegates to the gateway's audit pipeline.
      */
     private void reportAuditEvent(AuthorizationAuditEvent event) {
         try {
@@ -395,7 +464,17 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         }
 
         authorizationBundleRepository.findById(bundleId)
-                .flatMap(this::resolveBundleContent)
+                .flatMap(bundle -> {
+                    // Find the schema ref from the cached bindings for an engine referencing this bundle
+                    SchemaRef schemaRef = null;
+                    for (var entry : engineBundleBindings.entrySet()) {
+                        if (bundleId.equals(entry.getValue())) {
+                            schemaRef = engineSchemaBindings.get(entry.getKey());
+                            break;
+                        }
+                    }
+                    return resolveBundleContent(bundle, schemaRef);
+                })
                 .subscribe(
                         snapshot -> {
                             logger.info("Hot-reloading bundle {} for domain {}", bundleId, domain.getName());
@@ -422,19 +501,25 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     /**
      * Resolves a bundle's component references into an immutable {@link ResolvedBundleSnapshot}.
      * Each call increments the version counter so providers can track staleness.
-     * Supports pinToLatest: if true, resolves the latest version; otherwise uses the specific version from the bundle.
      */
-    private Maybe<ResolvedBundleSnapshot> resolveBundleContent(AuthorizationBundle bundle) {
-        Single<String> policiesSingle = bundle.getPolicySetId() != null
-                ? resolvePolicySetContent(bundle)
-                : Single.just("");
+    private Maybe<ResolvedBundleSnapshot> resolveBundleContent(AuthorizationBundle bundle, SchemaRef schemaRef) {
+        // Resolve multiple policy sets (preserving order)
+        Single<List<String>> policiesSingle = bundle.getPolicySets() != null && !bundle.getPolicySets().isEmpty()
+                ? Flowable.fromIterable(bundle.getPolicySets())
+                    .concatMapSingle(this::resolvePolicySetContent)
+                    .toList()
+                : Single.just(List.of());
 
-        Single<String> entitiesSingle = bundle.getEntityStoreId() != null
-                ? resolveEntityStoreContent(bundle)
-                : Single.just("");
+        // Resolve multiple entity stores (preserving order)
+        Single<List<String>> entitiesSingle = bundle.getEntityStores() != null && !bundle.getEntityStores().isEmpty()
+                ? Flowable.fromIterable(bundle.getEntityStores())
+                    .concatMapSingle(this::resolveEntityStoreContent)
+                    .toList()
+                : Single.just(List.of());
 
-        Single<String> schemaSingle = bundle.getSchemaId() != null
-                ? resolveSchemaContent(bundle)
+        // Resolve schema from engine config (not from bundle)
+        Single<String> schemaSingle = schemaRef != null
+                ? resolveSchemaContent(schemaRef)
                 : Single.just("");
 
         return Single.zip(policiesSingle, entitiesSingle, schemaSingle,
@@ -443,35 +528,36 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
                 .toMaybe();
     }
 
-    private Single<String> resolvePolicySetContent(AuthorizationBundle bundle) {
-        if (bundle.isPolicySetPinToLatest()) {
-            return policySetVersionRepository.findLatestByPolicySetId(bundle.getPolicySetId())
+    private Single<String> resolvePolicySetContent(BundleComponentRef ref) {
+        if (ref.isPinToLatest()) {
+            return policySetVersionRepository.findLatestByPolicySetId(ref.getId())
                     .map(v -> v.getContent())
                     .defaultIfEmpty("");
         }
-        return policySetVersionRepository.findByPolicySetIdAndVersion(bundle.getPolicySetId(), bundle.getPolicySetVersion())
+        return policySetVersionRepository.findByPolicySetIdAndVersion(ref.getId(), ref.getVersion())
                 .map(v -> v.getContent())
                 .defaultIfEmpty("");
     }
 
-    private Single<String> resolveEntityStoreContent(AuthorizationBundle bundle) {
-        if (bundle.isEntityStorePinToLatest()) {
-            return entityStoreVersionRepository.findLatestByEntityStoreId(bundle.getEntityStoreId())
+    private Single<String> resolveEntityStoreContent(BundleComponentRef ref) {
+        if (ref.isPinToLatest()) {
+            return entityStoreVersionRepository.findLatestByEntityStoreId(ref.getId())
                     .map(v -> v.getContent())
                     .defaultIfEmpty("");
         }
-        return entityStoreVersionRepository.findByEntityStoreIdAndVersion(bundle.getEntityStoreId(), bundle.getEntityStoreVersion())
+        return entityStoreVersionRepository.findByEntityStoreIdAndVersion(ref.getId(), ref.getVersion())
                 .map(v -> v.getContent())
                 .defaultIfEmpty("");
     }
 
-    private Single<String> resolveSchemaContent(AuthorizationBundle bundle) {
-        if (bundle.isSchemaPinToLatest()) {
-            return authorizationSchemaVersionRepository.findLatestBySchemaId(bundle.getSchemaId())
+    private Single<String> resolveSchemaContent(SchemaRef ref) {
+        if (Boolean.TRUE.equals(ref.schemaPinToLatest())) {
+            return authorizationSchemaVersionRepository.findLatestBySchemaId(ref.schemaId())
                     .map(v -> v.getContent())
                     .defaultIfEmpty("");
         }
-        return authorizationSchemaVersionRepository.findBySchemaIdAndVersion(bundle.getSchemaId(), bundle.getSchemaVersion())
+        return authorizationSchemaVersionRepository.findBySchemaIdAndVersion(ref.schemaId(),
+                ref.schemaVersion() != null ? ref.schemaVersion() : 0)
                 .map(v -> v.getContent())
                 .defaultIfEmpty("");
     }

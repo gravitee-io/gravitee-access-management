@@ -15,19 +15,21 @@
  */
 package io.gravitee.am.authorizationengine.api.ws;
 
+import java.util.List;
+
 /**
  * Immutable snapshot of a resolved authorization bundle with a monotonically increasing version number.
  * Cached by the gateway and served to sidecars over WebSocket when their local version is stale.
  *
- * @param version monotonically increasing version counter (starts at 1)
- * @param policy  resolved policy text (engine-specific)
- * @param data    resolved entity/tuple data (JSON string)
- * @param schema  resolved schema definition (JSON string, may be null)
+ * @param version      monotonically increasing version counter (starts at 1)
+ * @param policies     resolved policy texts (one per policy set, engine-specific)
+ * @param entityStores resolved entity/tuple data (one JSON string per entity store)
+ * @param schema       resolved schema definition (JSON string, may be null)
  * @author GraviteeSource Team
  */
 public record ResolvedBundleSnapshot(
         int version,
-        String policy,
-        String data,
+        List<String> policies,
+        List<String> entityStores,
         String schema
 ) {}

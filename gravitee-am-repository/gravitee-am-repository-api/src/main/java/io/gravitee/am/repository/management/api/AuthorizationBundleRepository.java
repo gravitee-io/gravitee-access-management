@@ -30,5 +30,11 @@ public interface AuthorizationBundleRepository extends CrudRepository<Authorizat
 
     Maybe<AuthorizationBundle> findByDomainAndId(String domainId, String id);
 
+    /**
+     * Find bundles in a domain that reference the given component ID in their
+     * policySets or entityStores lists.
+     */
+    Flowable<AuthorizationBundle> findByDomainAndComponentId(String domainId, String componentId);
+
     Completable deleteByDomain(String domainId);
 }

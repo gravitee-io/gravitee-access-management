@@ -126,8 +126,34 @@
                 <mat-option value="">-- None --</mat-option>
                 <mat-option *ngFor="let bundle of bundles" [value]="bundle.id">{{ bundle.name }}</mat-option>
               </mat-select>
-              <mat-hint>Select the Authorization Bundle whose policies, entities, and schema will be served to connected sidecars.</mat-hint>
+              <mat-hint>Select the Authorization Bundle whose policies and entities will be served to connected sidecars.</mat-hint>
             </mat-form-field>
+          </div>
+
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Authorization Schema</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Authorization Schema</mat-label>
+              <mat-select [(ngModel)]="selectedSchemaId" (ngModelChange)="onSchemaChanged()">
+                <mat-option value="">-- None --</mat-option>
+                <mat-option *ngFor="let schema of schemas" [value]="schema.id">{{ schema.name }} (v{{ schema.latestVersion }})</mat-option>
+              </mat-select>
+              <mat-hint>Select the Cedar schema definition. This is independent of the bundle.</mat-hint>
+            </mat-form-field>
+            <div class="component-version-row" *ngIf="selectedSchemaId">
+              <mat-checkbox [(ngModel)]="selectedSchemaPinToLatest" (ngModelChange)="onSchemaChanged()">
+                Always use latest version
+              </mat-checkbox>
+              <mat-form-field appearance="outline" *ngIf="!selectedSchemaPinToLatest" class="version-select">
+                <mat-label>Version</mat-label>
+                <mat-select [(ngModel)]="selectedSchemaVersion" (ngModelChange)="onSchemaChanged()">
+                  <mat-option *ngFor="let v of schemaVersions" [value]="v.version">v{{ v.version }} — {{ v.commitMessage }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
           </div>
 
           <info-banner
@@ -173,7 +199,8 @@
             <ul>
               <li><strong>Domain Path</strong> - Routes the WebSocket to the correct security domain</li>
               <li><strong>API Key</strong> - Authenticates the sidecar connection</li>
-              <li><strong>Bundle</strong> - Determines which policies are served</li>
+              <li><strong>Bundle</strong> - Determines which policies and entities are served</li>
+              <li><strong>Schema</strong> - Determines the Cedar schema (independent from bundle)</li>
             </ul>
             <small>Sidecar Environment Variables</small>
             <ul>

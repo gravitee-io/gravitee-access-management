@@ -20,6 +20,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonId;
 
+import java.util.List;
+
 /**
  * @author GraviteeSource Team
  */
@@ -38,16 +40,9 @@ public class AuthorizationBundleMongo extends Auditable {
 
     private String engineType;
 
-    // Component references
-    private String policySetId;
-    private int policySetVersion;
-    private boolean policySetPinToLatest;
-    private String schemaId;
-    private int schemaVersion;
-    private boolean schemaPinToLatest;
-    private String entityStoreId;
-    private int entityStoreVersion;
-    private boolean entityStorePinToLatest;
+    // Component references (embedded lists)
+    private List<BundleComponentRefMongo> policySets;
+    private List<BundleComponentRefMongo> entityStores;
 
     @Override
     public boolean equals(Object o) {

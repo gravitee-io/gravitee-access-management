@@ -19,8 +19,10 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.AuthorizationBundle;
+import io.gravitee.am.model.BundleComponentRef;
 import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.AuthorizationBundleMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.BundleComponentRefMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -31,10 +33,12 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author GraviteeSource Team
@@ -72,6 +76,15 @@ public class MongoAuthorizationBundleRepository extends AbstractManagementMongoR
     public Maybe<AuthorizationBundle> findByDomainAndId(String domainId, String id) {
         return Observable.fromPublisher(collection.find(and(eq(FIELD_DOMAIN_ID, domainId), eq(FIELD_ID, id))).first())
                 .firstElement()
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<AuthorizationBundle> findByDomainAndComponentId(String domainId, String componentId) {
+        return Flowable.fromPublisher(withMaxTime(collection.find(
+                and(eq(FIELD_DOMAIN_ID, domainId),
+                    or(eq("policySets.id", componentId), eq("entityStores.id", componentId))))))
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
     }
@@ -119,15 +132,12 @@ public class MongoAuthorizationBundleRepository extends AbstractManagementMongoR
         bundle.setName(mongo.getName());
         bundle.setDescription(mongo.getDescription());
         bundle.setEngineType(mongo.getEngineType());
-        bundle.setPolicySetId(mongo.getPolicySetId());
-        bundle.setPolicySetVersion(mongo.getPolicySetVersion());
-        bundle.setPolicySetPinToLatest(mongo.isPolicySetPinToLatest());
-        bundle.setSchemaId(mongo.getSchemaId());
-        bundle.setSchemaVersion(mongo.getSchemaVersion());
-        bundle.setSchemaPinToLatest(mongo.isSchemaPinToLatest());
-        bundle.setEntityStoreId(mongo.getEntityStoreId());
-        bundle.setEntityStoreVersion(mongo.getEntityStoreVersion());
-        bundle.setEntityStorePinToLatest(mongo.isEntityStorePinToLatest());
+        bundle.setPolicySets(mongo.getPolicySets() != null
+                ? mongo.getPolicySets().stream().map(this::convertRef).toList()
+                : List.of());
+        bundle.setEntityStores(mongo.getEntityStores() != null
+                ? mongo.getEntityStores().stream().map(this::convertRef).toList()
+                : List.of());
         bundle.setCreatedAt(mongo.getCreatedAt());
         bundle.setUpdatedAt(mongo.getUpdatedAt());
 
@@ -145,18 +155,27 @@ public class MongoAuthorizationBundleRepository extends AbstractManagementMongoR
         mongo.setName(bundle.getName());
         mongo.setDescription(bundle.getDescription());
         mongo.setEngineType(bundle.getEngineType());
-        mongo.setPolicySetId(bundle.getPolicySetId());
-        mongo.setPolicySetVersion(bundle.getPolicySetVersion());
-        mongo.setPolicySetPinToLatest(bundle.isPolicySetPinToLatest());
-        mongo.setSchemaId(bundle.getSchemaId());
-        mongo.setSchemaVersion(bundle.getSchemaVersion());
-        mongo.setSchemaPinToLatest(bundle.isSchemaPinToLatest());
-        mongo.setEntityStoreId(bundle.getEntityStoreId());
-        mongo.setEntityStoreVersion(bundle.getEntityStoreVersion());
-        mongo.setEntityStorePinToLatest(bundle.isEntityStorePinToLatest());
+        mongo.setPolicySets(bundle.getPolicySets() != null
+                ? bundle.getPolicySets().stream().map(this::convertRefToMongo).toList()
+                : List.of());
+        mongo.setEntityStores(bundle.getEntityStores() != null
+                ? bundle.getEntityStores().stream().map(this::convertRefToMongo).toList()
+                : List.of());
         mongo.setCreatedAt(bundle.getCreatedAt());
         mongo.setUpdatedAt(bundle.getUpdatedAt());
 
+        return mongo;
+    }
+
+    private BundleComponentRef convertRef(BundleComponentRefMongo mongo) {
+        return new BundleComponentRef(mongo.getId(), mongo.getVersion(), mongo.isPinToLatest());
+    }
+
+    private BundleComponentRefMongo convertRefToMongo(BundleComponentRef ref) {
+        BundleComponentRefMongo mongo = new BundleComponentRefMongo();
+        mongo.setId(ref.getId());
+        mongo.setVersion(ref.getVersion());
+        mongo.setPinToLatest(ref.isPinToLatest());
         return mongo;
     }
 }

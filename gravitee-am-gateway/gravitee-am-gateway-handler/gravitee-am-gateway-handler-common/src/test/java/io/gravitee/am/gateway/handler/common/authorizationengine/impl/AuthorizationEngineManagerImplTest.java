@@ -571,12 +571,8 @@ class AuthorizationEngineManagerImplTest {
         AuthorizationBundle bundle = new AuthorizationBundle();
         bundle.setId("bundle-1");
         bundle.setDomainId("domain-id");
-        bundle.setPolicySetId("ps-1");
-        bundle.setPolicySetPinToLatest(true);
-        bundle.setSchemaId("schema-1");
-        bundle.setSchemaPinToLatest(true);
-        bundle.setEntityStoreId("es-1");
-        bundle.setEntityStorePinToLatest(true);
+        bundle.setPolicySets(java.util.List.of(new io.gravitee.am.model.BundleComponentRef("ps-1", 1, true)));
+        bundle.setEntityStores(java.util.List.of(new io.gravitee.am.model.BundleComponentRef("es-1", 1, true)));
 
         PolicySetVersion psVersion = new PolicySetVersion();
         psVersion.setContent("permit(principal, action, resource);");
@@ -584,17 +580,12 @@ class AuthorizationEngineManagerImplTest {
         EntityStoreVersion esVersion = new EntityStoreVersion();
         esVersion.setContent("[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]");
 
-        AuthorizationSchemaVersion schemaVersion = new AuthorizationSchemaVersion();
-        schemaVersion.setContent("{\"entityTypes\":{}}");
-
         when(authorizationBundleRepository.findById("bundle-1"))
                 .thenReturn(Maybe.just(bundle));
         when(policySetVersionRepository.findLatestByPolicySetId("ps-1"))
                 .thenReturn(Maybe.just(psVersion));
         when(entityStoreVersionRepository.findLatestByEntityStoreId("es-1"))
                 .thenReturn(Maybe.just(esVersion));
-        when(authorizationSchemaVersionRepository.findLatestBySchemaId("schema-1"))
-                .thenReturn(Maybe.just(schemaVersion));
         when(authorizationEngineRepository.findByDomain("domain-id"))
                 .thenReturn(Flowable.just(testEngine));
         when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
@@ -625,9 +616,8 @@ class AuthorizationEngineManagerImplTest {
         verify(mockProvider, timeout(1000).atLeast(2)).updateConfig(snapshotCaptor.capture());
 
         ResolvedBundleSnapshot snapshot = snapshotCaptor.getAllValues().get(0);
-        assertEquals("permit(principal, action, resource);", snapshot.policy());
-        assertEquals("[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]", snapshot.data());
-        assertEquals("{\"entityTypes\":{}}", snapshot.schema());
+        assertEquals("permit(principal, action, resource);", snapshot.policies().get(0));
+        assertEquals("[{\"uid\":{\"type\":\"User\",\"id\":\"alice\"}}]", snapshot.entityStores().get(0));
     }
 
     @Test
@@ -639,12 +629,8 @@ class AuthorizationEngineManagerImplTest {
         AuthorizationBundle bundle = new AuthorizationBundle();
         bundle.setId("bundle-1");
         bundle.setDomainId("domain-id");
-        bundle.setPolicySetId("ps-1");
-        bundle.setPolicySetPinToLatest(true);
-        bundle.setEntityStoreId("es-1");
-        bundle.setEntityStorePinToLatest(true);
-        bundle.setSchemaId("schema-1");
-        bundle.setSchemaPinToLatest(true);
+        bundle.setPolicySets(java.util.List.of(new io.gravitee.am.model.BundleComponentRef("ps-1", 1, true)));
+        bundle.setEntityStores(java.util.List.of(new io.gravitee.am.model.BundleComponentRef("es-1", 1, true)));
 
         PolicySetVersion psVersion = new PolicySetVersion();
         psVersion.setContent("permit(principal, action, resource);");
@@ -652,17 +638,12 @@ class AuthorizationEngineManagerImplTest {
         EntityStoreVersion esVersion = new EntityStoreVersion();
         esVersion.setContent("[]");
 
-        AuthorizationSchemaVersion schemaVersion = new AuthorizationSchemaVersion();
-        schemaVersion.setContent("{}");
-
         when(authorizationBundleRepository.findById("bundle-1"))
                 .thenReturn(Maybe.just(bundle));
         when(policySetVersionRepository.findLatestByPolicySetId("ps-1"))
                 .thenReturn(Maybe.just(psVersion));
         when(entityStoreVersionRepository.findLatestByEntityStoreId("es-1"))
                 .thenReturn(Maybe.just(esVersion));
-        when(authorizationSchemaVersionRepository.findLatestBySchemaId("schema-1"))
-                .thenReturn(Maybe.just(schemaVersion));
         when(authorizationEngineRepository.findByDomain("domain-id"))
                 .thenReturn(Flowable.just(testEngine));
         when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
@@ -686,7 +667,7 @@ class AuthorizationEngineManagerImplTest {
         capturedListener.onEvent(event);
 
         // then - should push a clear snapshot (version=0, nulls) to clear engine state
-        verify(mockProvider, timeout(1000)).updateConfig(new ResolvedBundleSnapshot(0, null, null, null));
+        verify(mockProvider, timeout(1000)).updateConfig(new ResolvedBundleSnapshot(0, java.util.List.of(), java.util.List.of(), null));
     }
 
     // --- Audit callback tests ---

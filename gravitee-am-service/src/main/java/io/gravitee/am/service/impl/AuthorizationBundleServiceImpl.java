@@ -47,6 +47,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author GraviteeSource Team
@@ -112,15 +113,8 @@ public class AuthorizationBundleServiceImpl implements AuthorizationBundleServic
         bundle.setName(request.getName());
         bundle.setDescription(request.getDescription());
         bundle.setEngineType(request.getEngineType());
-        bundle.setPolicySetId(request.getPolicySetId());
-        bundle.setPolicySetVersion(request.getPolicySetVersion());
-        bundle.setPolicySetPinToLatest(request.isPolicySetPinToLatest());
-        bundle.setSchemaId(request.getSchemaId());
-        bundle.setSchemaVersion(request.getSchemaVersion());
-        bundle.setSchemaPinToLatest(request.isSchemaPinToLatest());
-        bundle.setEntityStoreId(request.getEntityStoreId());
-        bundle.setEntityStoreVersion(request.getEntityStoreVersion());
-        bundle.setEntityStorePinToLatest(request.isEntityStorePinToLatest());
+        bundle.setPolicySets(request.getPolicySets() != null ? request.getPolicySets() : List.of());
+        bundle.setEntityStores(request.getEntityStores() != null ? request.getEntityStores() : List.of());
         bundle.setCreatedAt(new Date());
         bundle.setUpdatedAt(bundle.getCreatedAt());
 
@@ -154,32 +148,11 @@ public class AuthorizationBundleServiceImpl implements AuthorizationBundleServic
                     if (request.getDescription() != null) {
                         bundleToUpdate.setDescription(request.getDescription());
                     }
-                    if (request.getPolicySetId() != null) {
-                        bundleToUpdate.setPolicySetId(request.getPolicySetId());
+                    if (request.getPolicySets() != null) {
+                        bundleToUpdate.setPolicySets(request.getPolicySets());
                     }
-                    if (request.getPolicySetVersion() != null) {
-                        bundleToUpdate.setPolicySetVersion(request.getPolicySetVersion());
-                    }
-                    if (request.getSchemaId() != null) {
-                        bundleToUpdate.setSchemaId(request.getSchemaId());
-                    }
-                    if (request.getSchemaVersion() != null) {
-                        bundleToUpdate.setSchemaVersion(request.getSchemaVersion());
-                    }
-                    if (request.getEntityStoreId() != null) {
-                        bundleToUpdate.setEntityStoreId(request.getEntityStoreId());
-                    }
-                    if (request.getEntityStoreVersion() != null) {
-                        bundleToUpdate.setEntityStoreVersion(request.getEntityStoreVersion());
-                    }
-                    if (request.getPolicySetPinToLatest() != null) {
-                        bundleToUpdate.setPolicySetPinToLatest(request.getPolicySetPinToLatest());
-                    }
-                    if (request.getSchemaPinToLatest() != null) {
-                        bundleToUpdate.setSchemaPinToLatest(request.getSchemaPinToLatest());
-                    }
-                    if (request.getEntityStorePinToLatest() != null) {
-                        bundleToUpdate.setEntityStorePinToLatest(request.getEntityStorePinToLatest());
+                    if (request.getEntityStores() != null) {
+                        bundleToUpdate.setEntityStores(request.getEntityStores());
                     }
                     bundleToUpdate.setUpdatedAt(new Date());
 

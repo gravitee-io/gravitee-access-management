@@ -38,24 +38,10 @@ public class JdbcAuthorizationBundle {
     private String description;
     @Column("engine_type")
     private String engineType;
-    @Column("policy_set_id")
-    private String policySetId;
-    @Column("policy_set_version")
-    private int policySetVersion;
-    @Column("policy_set_pin_to_latest")
-    private boolean policySetPinToLatest;
-    @Column("schema_id")
-    private String schemaId;
-    @Column("schema_version")
-    private int schemaVersion;
-    @Column("schema_pin_to_latest")
-    private boolean schemaPinToLatest;
-    @Column("entity_store_id")
-    private String entityStoreId;
-    @Column("entity_store_version")
-    private int entityStoreVersion;
-    @Column("entity_store_pin_to_latest")
-    private boolean entityStorePinToLatest;
+    @Column("policy_sets_json")
+    private String policySetsJson;
+    @Column("entity_stores_json")
+    private String entityStoresJson;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")

@@ -16,15 +16,22 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EntityStore;
 import io.gravitee.am.model.EntityStoreVersion;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.management.api.EntityStoreRepository;
 import io.gravitee.am.repository.management.api.EntityStoreVersionRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntityStoreService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.EntityStoreNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -56,13 +63,19 @@ public class EntityStoreServiceImpl implements EntityStoreService {
     private final EntityStoreRepository entityStoreRepository;
     private final EntityStoreVersionRepository entityStoreVersionRepository;
     private final AuditService auditService;
+    private final EventService eventService;
+    private final AuthorizationBundleRepository authorizationBundleRepository;
 
     public EntityStoreServiceImpl(@Lazy EntityStoreRepository entityStoreRepository,
                                   @Lazy EntityStoreVersionRepository entityStoreVersionRepository,
-                                  AuditService auditService) {
+                                  AuditService auditService,
+                                  EventService eventService,
+                                  @Lazy AuthorizationBundleRepository authorizationBundleRepository) {
         this.entityStoreRepository = entityStoreRepository;
         this.entityStoreVersionRepository = entityStoreVersionRepository;
         this.auditService = auditService;
+        this.eventService = eventService;
+        this.authorizationBundleRepository = authorizationBundleRepository;
     }
 
     @Override
@@ -161,6 +174,7 @@ public class EntityStoreServiceImpl implements EntityStoreService {
                                 }
                                 return createVersionRecord(updated, newVersion, content, request.getCommitMessage(), principal);
                             })
+                            .flatMap(es -> fireBundleEventsForComponent(domain, id).toSingleDefault(es))
                             .doOnSuccess(es -> auditService.report(AuditBuilder.builder(EntityStoreAuditBuilder.class).principal(principal).type(EventType.ENTITY_STORE_UPDATED).entityStore(es)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntityStoreAuditBuilder.class).principal(principal).type(EventType.ENTITY_STORE_UPDATED).throwable(throwable)));
                 })
@@ -239,6 +253,15 @@ public class EntityStoreServiceImpl implements EntityStoreService {
                     LOGGER.error("An error occurs while trying to get version {} for entity store: {}", version, entityStoreId, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to get version %d for entity store: %s", version, entityStoreId), ex));
+                });
+    }
+
+    private Completable fireBundleEventsForComponent(Domain domain, String componentId) {
+        return authorizationBundleRepository.findByDomainAndComponentId(domain.getId(), componentId)
+                .flatMapCompletable(bundle -> {
+                    Event event = new Event(Type.AUTHORIZATION_BUNDLE,
+                            new Payload(bundle.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
+                    return eventService.create(event, domain).ignoreElement();
                 });
     }
 

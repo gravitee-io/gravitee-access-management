@@ -20,7 +20,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -50,29 +52,15 @@ public class AuthorizationBundle {
 
     // --- Component references ---
 
-    private String policySetId;
-    private int policySetVersion;
     /**
-     * When true, the gateway always resolves the latest version of the policy set,
-     * ignoring {@link #policySetVersion}.
+     * Ordered list of policy set references. Order is preserved from the UI.
      */
-    private boolean policySetPinToLatest;
+    private List<BundleComponentRef> policySets = new ArrayList<>();
 
-    private String schemaId;
-    private int schemaVersion;
     /**
-     * When true, the gateway always resolves the latest version of the schema,
-     * ignoring {@link #schemaVersion}.
+     * Ordered list of entity store references. Order is preserved from the UI.
      */
-    private boolean schemaPinToLatest;
-
-    private String entityStoreId;
-    private int entityStoreVersion;
-    /**
-     * When true, the gateway always resolves the latest version of the entity store,
-     * ignoring {@link #entityStoreVersion}.
-     */
-    private boolean entityStorePinToLatest;
+    private List<BundleComponentRef> entityStores = new ArrayList<>();
 
     @Schema(type = "java.lang.Long")
     private Date createdAt;
@@ -86,15 +74,8 @@ public class AuthorizationBundle {
         this.name = other.name;
         this.description = other.description;
         this.engineType = other.engineType;
-        this.policySetId = other.policySetId;
-        this.policySetVersion = other.policySetVersion;
-        this.policySetPinToLatest = other.policySetPinToLatest;
-        this.schemaId = other.schemaId;
-        this.schemaVersion = other.schemaVersion;
-        this.schemaPinToLatest = other.schemaPinToLatest;
-        this.entityStoreId = other.entityStoreId;
-        this.entityStoreVersion = other.entityStoreVersion;
-        this.entityStorePinToLatest = other.entityStorePinToLatest;
+        this.policySets = other.policySets != null ? new ArrayList<>(other.policySets) : new ArrayList<>();
+        this.entityStores = other.entityStores != null ? new ArrayList<>(other.entityStores) : new ArrayList<>();
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }

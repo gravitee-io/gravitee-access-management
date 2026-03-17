@@ -17,6 +17,8 @@ package io.gravitee.am.authorizationengine.api.ws;
 
 import io.gravitee.am.authorizationengine.api.audit.AuthorizationAuditEvent;
 
+import java.util.List;
+
 /**
  * Sealed message hierarchy for the gateway ↔ sidecar WebSocket protocol.
  * <p>
@@ -33,8 +35,8 @@ public sealed interface WsMessage {
     /** Gateway → Sidecar: sidecar is already up to date. */
     record BundleCurrent() implements WsMessage {}
 
-    /** Gateway → Sidecar: new bundle content. */
-    record BundleUpdate(int version, String policy, String data, String schema) implements WsMessage {}
+    /** Gateway → Sidecar: new bundle content with multiple policies and entity stores. */
+    record BundleUpdate(int version, List<String> policies, List<String> entityStores, String schema) implements WsMessage {}
 
     /** Sidecar → Gateway: audit event from a policy evaluation. */
     record AuditEvent(AuthorizationAuditEvent event) implements WsMessage {}

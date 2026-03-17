@@ -15,8 +15,11 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.AuthorizationBundle;
+import io.gravitee.am.model.BundleComponentRef;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthorizationBundle;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringAuthorizationBundleRepository;
@@ -51,15 +54,8 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
     public static final String COL_NAME = "name";
     public static final String COL_DESCRIPTION = "description";
     public static final String COL_ENGINE_TYPE = "engine_type";
-    public static final String COL_POLICY_SET_ID = "policy_set_id";
-    public static final String COL_POLICY_SET_VERSION = "policy_set_version";
-    public static final String COL_POLICY_SET_PIN_TO_LATEST = "policy_set_pin_to_latest";
-    public static final String COL_SCHEMA_ID = "schema_id";
-    public static final String COL_SCHEMA_VERSION = "schema_version";
-    public static final String COL_SCHEMA_PIN_TO_LATEST = "schema_pin_to_latest";
-    public static final String COL_ENTITY_STORE_ID = "entity_store_id";
-    public static final String COL_ENTITY_STORE_VERSION = "entity_store_version";
-    public static final String COL_ENTITY_STORE_PIN_TO_LATEST = "entity_store_pin_to_latest";
+    public static final String COL_POLICY_SETS_JSON = "policy_sets_json";
+    public static final String COL_ENTITY_STORES_JSON = "entity_stores_json";
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_UPDATED_AT = "updated_at";
 
@@ -69,18 +65,13 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
             COL_NAME,
             COL_DESCRIPTION,
             COL_ENGINE_TYPE,
-            COL_POLICY_SET_ID,
-            COL_POLICY_SET_VERSION,
-            COL_POLICY_SET_PIN_TO_LATEST,
-            COL_SCHEMA_ID,
-            COL_SCHEMA_VERSION,
-            COL_SCHEMA_PIN_TO_LATEST,
-            COL_ENTITY_STORE_ID,
-            COL_ENTITY_STORE_VERSION,
-            COL_ENTITY_STORE_PIN_TO_LATEST,
+            COL_POLICY_SETS_JSON,
+            COL_ENTITY_STORES_JSON,
             COL_CREATED_AT,
             COL_UPDATED_AT
     );
+
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     private String insertStatement;
     private String updateStatement;
@@ -89,11 +80,31 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
     private SpringAuthorizationBundleRepository authorizationBundleRepository;
 
     protected AuthorizationBundle toEntity(JdbcAuthorizationBundle entity) {
-        return mapper.map(entity, AuthorizationBundle.class);
+        AuthorizationBundle bundle = new AuthorizationBundle();
+        bundle.setId(entity.getId());
+        bundle.setDomainId(entity.getDomainId());
+        bundle.setName(entity.getName());
+        bundle.setDescription(entity.getDescription());
+        bundle.setEngineType(entity.getEngineType());
+        bundle.setPolicySets(deserializeRefs(entity.getPolicySetsJson()));
+        bundle.setEntityStores(deserializeRefs(entity.getEntityStoresJson()));
+        bundle.setCreatedAt(dateConverter.convertFrom(entity.getCreatedAt(), null));
+        bundle.setUpdatedAt(dateConverter.convertFrom(entity.getUpdatedAt(), null));
+        return bundle;
     }
 
-    protected JdbcAuthorizationBundle toJdbcEntity(AuthorizationBundle entity) {
-        return mapper.map(entity, JdbcAuthorizationBundle.class);
+    protected JdbcAuthorizationBundle toJdbcEntity(AuthorizationBundle bundle) {
+        JdbcAuthorizationBundle jdbc = new JdbcAuthorizationBundle();
+        jdbc.setId(bundle.getId());
+        jdbc.setDomainId(bundle.getDomainId());
+        jdbc.setName(bundle.getName());
+        jdbc.setDescription(bundle.getDescription());
+        jdbc.setEngineType(bundle.getEngineType());
+        jdbc.setPolicySetsJson(serializeRefs(bundle.getPolicySets()));
+        jdbc.setEntityStoresJson(serializeRefs(bundle.getEntityStores()));
+        jdbc.setCreatedAt(dateConverter.convertTo(bundle.getCreatedAt(), null));
+        jdbc.setUpdatedAt(dateConverter.convertTo(bundle.getUpdatedAt(), null));
+        return jdbc;
     }
 
     @Override
@@ -124,6 +135,35 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
     }
 
     @Override
+    public Flowable<AuthorizationBundle> findByDomainAndComponentId(String domainId, String componentId) {
+        LOGGER.debug("findByDomainAndComponentId({}, {})", domainId, componentId);
+        // POC: use LIKE on JSON columns to find bundles referencing this component
+        String query = "SELECT * FROM authorization_bundles WHERE domain_id = :domainId " +
+                "AND (policy_sets_json LIKE :pattern OR entity_stores_json LIKE :pattern)";
+        String pattern = "%" + componentId + "%";
+        return Flowable.fromPublisher(
+                getTemplate().getDatabaseClient().sql(query)
+                        .bind("domainId", domainId)
+                        .bind("pattern", pattern)
+                        .map((row, metadata) -> {
+                            JdbcAuthorizationBundle jdbc = new JdbcAuthorizationBundle();
+                            jdbc.setId(row.get(COL_ID, String.class));
+                            jdbc.setDomainId(row.get(COL_DOMAIN_ID, String.class));
+                            jdbc.setName(row.get(COL_NAME, String.class));
+                            jdbc.setDescription(row.get(COL_DESCRIPTION, String.class));
+                            jdbc.setEngineType(row.get(COL_ENGINE_TYPE, String.class));
+                            jdbc.setPolicySetsJson(row.get(COL_POLICY_SETS_JSON, String.class));
+                            jdbc.setEntityStoresJson(row.get(COL_ENTITY_STORES_JSON, String.class));
+                            jdbc.setCreatedAt(row.get(COL_CREATED_AT, LocalDateTime.class));
+                            jdbc.setUpdatedAt(row.get(COL_UPDATED_AT, LocalDateTime.class));
+                            return jdbc;
+                        })
+                        .all())
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<AuthorizationBundle> create(AuthorizationBundle item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create authorizationBundle with id {}", item.getId());
@@ -135,15 +175,8 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_DESCRIPTION, item.getDescription(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_ENGINE_TYPE, item.getEngineType(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_POLICY_SET_ID, item.getPolicySetId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_POLICY_SET_VERSION, item.getPolicySetVersion(), Integer.class);
-        insertSpec = addQuotedField(insertSpec, COL_POLICY_SET_PIN_TO_LATEST, item.isPolicySetPinToLatest(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, COL_SCHEMA_ID, item.getSchemaId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_SCHEMA_VERSION, item.getSchemaVersion(), Integer.class);
-        insertSpec = addQuotedField(insertSpec, COL_SCHEMA_PIN_TO_LATEST, item.isSchemaPinToLatest(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, COL_ENTITY_STORE_ID, item.getEntityStoreId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_ENTITY_STORE_VERSION, item.getEntityStoreVersion(), Integer.class);
-        insertSpec = addQuotedField(insertSpec, COL_ENTITY_STORE_PIN_TO_LATEST, item.isEntityStorePinToLatest(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, COL_POLICY_SETS_JSON, serializeRefs(item.getPolicySets()), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_ENTITY_STORES_JSON, serializeRefs(item.getEntityStores()), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
@@ -163,15 +196,8 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
         updateSpec = addQuotedField(updateSpec, COL_NAME, item.getName(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_DESCRIPTION, item.getDescription(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_ENGINE_TYPE, item.getEngineType(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_POLICY_SET_ID, item.getPolicySetId(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_POLICY_SET_VERSION, item.getPolicySetVersion(), Integer.class);
-        updateSpec = addQuotedField(updateSpec, COL_POLICY_SET_PIN_TO_LATEST, item.isPolicySetPinToLatest(), Boolean.class);
-        updateSpec = addQuotedField(updateSpec, COL_SCHEMA_ID, item.getSchemaId(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_SCHEMA_VERSION, item.getSchemaVersion(), Integer.class);
-        updateSpec = addQuotedField(updateSpec, COL_SCHEMA_PIN_TO_LATEST, item.isSchemaPinToLatest(), Boolean.class);
-        updateSpec = addQuotedField(updateSpec, COL_ENTITY_STORE_ID, item.getEntityStoreId(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_ENTITY_STORE_VERSION, item.getEntityStoreVersion(), Integer.class);
-        updateSpec = addQuotedField(updateSpec, COL_ENTITY_STORE_PIN_TO_LATEST, item.isEntityStorePinToLatest(), Boolean.class);
+        updateSpec = addQuotedField(updateSpec, COL_POLICY_SETS_JSON, serializeRefs(item.getPolicySets()), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_ENTITY_STORES_JSON, serializeRefs(item.getEntityStores()), String.class);
         updateSpec = addQuotedField(updateSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         updateSpec = addQuotedField(updateSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
@@ -193,5 +219,22 @@ public class JdbcAuthorizationBundleRepository extends AbstractJdbcRepository im
                 .matching(Query.query(where("domain_id").is(domainId)))
                 .all())
                 .observeOn(Schedulers.computation());
+    }
+
+    private static String serializeRefs(List<BundleComponentRef> refs) {
+        try {
+            return refs != null ? JSON_MAPPER.writeValueAsString(refs) : "[]";
+        } catch (JsonProcessingException e) {
+            return "[]";
+        }
+    }
+
+    private static List<BundleComponentRef> deserializeRefs(String json) {
+        try {
+            return json != null ? JSON_MAPPER.readValue(json, JSON_MAPPER.getTypeFactory()
+                    .constructCollectionType(List.class, BundleComponentRef.class)) : List.of();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 }

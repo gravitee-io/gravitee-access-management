@@ -16,14 +16,21 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PolicySet;
 import io.gravitee.am.model.PolicySetVersion;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.management.api.AuthorizationBundleRepository;
 import io.gravitee.am.repository.management.api.PolicySetRepository;
 import io.gravitee.am.repository.management.api.PolicySetVersionRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PolicySetService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.PolicySetNotFoundException;
@@ -56,13 +63,19 @@ public class PolicySetServiceImpl implements PolicySetService {
     private final PolicySetRepository policySetRepository;
     private final PolicySetVersionRepository policySetVersionRepository;
     private final AuditService auditService;
+    private final EventService eventService;
+    private final AuthorizationBundleRepository authorizationBundleRepository;
 
     public PolicySetServiceImpl(@Lazy PolicySetRepository policySetRepository,
                                 @Lazy PolicySetVersionRepository policySetVersionRepository,
-                                AuditService auditService) {
+                                AuditService auditService,
+                                EventService eventService,
+                                @Lazy AuthorizationBundleRepository authorizationBundleRepository) {
         this.policySetRepository = policySetRepository;
         this.policySetVersionRepository = policySetVersionRepository;
         this.auditService = auditService;
+        this.eventService = eventService;
+        this.authorizationBundleRepository = authorizationBundleRepository;
     }
 
     @Override
@@ -167,6 +180,7 @@ public class PolicySetServiceImpl implements PolicySetService {
                                 }
                                 return createVersionRecord(updated, newVersion, content, request.getCommitMessage(), principal);
                             })
+                            .flatMap(ps -> fireBundleEventsForComponent(domain, id).toSingleDefault(ps))
                             .doOnSuccess(ps -> auditService.report(AuditBuilder.builder(PolicySetAuditBuilder.class).principal(principal).type(EventType.POLICY_SET_UPDATED).oldValue(oldValue).policySet(ps)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(PolicySetAuditBuilder.class).principal(principal).type(EventType.POLICY_SET_UPDATED).throwable(throwable)));
                 })
@@ -245,6 +259,15 @@ public class PolicySetServiceImpl implements PolicySetService {
                     LOGGER.error("An error occurs while trying to get version {} for policy set: {}", version, policySetId, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to get version %d for policy set: %s", version, policySetId), ex));
+                });
+    }
+
+    private Completable fireBundleEventsForComponent(Domain domain, String componentId) {
+        return authorizationBundleRepository.findByDomainAndComponentId(domain.getId(), componentId)
+                .flatMapCompletable(bundle -> {
+                    Event event = new Event(Type.AUTHORIZATION_BUNDLE,
+                            new Payload(bundle.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
+                    return eventService.create(event, domain).ignoreElement();
                 });
     }
 

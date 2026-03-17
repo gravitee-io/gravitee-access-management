@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
-
-import io.gravitee.am.model.BundleComponentRef;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.List;
+package io.gravitee.am.common.event;
 
 /**
  * @author GraviteeSource Team
  */
-@Getter
-@Setter
-public class UpdateAuthorizationBundle {
+public enum AuthorizationSchemaEvent {
 
-    private String name;
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
 
-    private String description;
-
-    // Component references (lists)
-    private List<BundleComponentRef> policySets;
-    private List<BundleComponentRef> entityStores;
+    public static AuthorizationSchemaEvent actionOf(Action action) {
+        return switch (action) {
+            case CREATE -> AuthorizationSchemaEvent.DEPLOY;
+            case UPDATE -> AuthorizationSchemaEvent.UPDATE;
+            case DELETE -> AuthorizationSchemaEvent.UNDEPLOY;
+            default -> null;
+        };
+    }
 }

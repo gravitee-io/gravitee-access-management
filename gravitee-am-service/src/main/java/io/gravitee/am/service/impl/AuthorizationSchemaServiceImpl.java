@@ -16,15 +16,21 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationSchema;
 import io.gravitee.am.model.AuthorizationSchemaVersion;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.AuthorizationSchemaRepository;
 import io.gravitee.am.repository.management.api.AuthorizationSchemaVersionRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthorizationSchemaService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthorizationSchemaNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -56,13 +62,16 @@ public class AuthorizationSchemaServiceImpl implements AuthorizationSchemaServic
     private final AuthorizationSchemaRepository authorizationSchemaRepository;
     private final AuthorizationSchemaVersionRepository authorizationSchemaVersionRepository;
     private final AuditService auditService;
+    private final EventService eventService;
 
     public AuthorizationSchemaServiceImpl(@Lazy AuthorizationSchemaRepository authorizationSchemaRepository,
                                           @Lazy AuthorizationSchemaVersionRepository authorizationSchemaVersionRepository,
-                                          AuditService auditService) {
+                                          AuditService auditService,
+                                          EventService eventService) {
         this.authorizationSchemaRepository = authorizationSchemaRepository;
         this.authorizationSchemaVersionRepository = authorizationSchemaVersionRepository;
         this.auditService = auditService;
+        this.eventService = eventService;
     }
 
     @Override
@@ -124,6 +133,10 @@ public class AuthorizationSchemaServiceImpl implements AuthorizationSchemaServic
                     return authorizationSchemaVersionRepository.create(version)
                             .map(v -> created);
                 })
+                .flatMap(created -> {
+                    Event event = new Event(Type.AUTHORIZATION_SCHEMA, new Payload(created.getId(), ReferenceType.DOMAIN, domain.getId(), Action.CREATE));
+                    return eventService.create(event, domain).map(__ -> created);
+                })
                 .doOnSuccess(s -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_CREATED).authorizationSchema(s)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_CREATED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
@@ -161,6 +174,10 @@ public class AuthorizationSchemaServiceImpl implements AuthorizationSchemaServic
                                 }
                                 return createVersionRecord(updated, newVersion, content, request.getCommitMessage(), principal);
                             })
+                            .flatMap(updatedSchema -> {
+                                Event event = new Event(Type.AUTHORIZATION_SCHEMA, new Payload(updatedSchema.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
+                                return eventService.create(event, domain).map(__ -> updatedSchema);
+                            })
                             .doOnSuccess(s -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_UPDATED).authorizationSchema(s)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_UPDATED).throwable(throwable)));
                 })
@@ -193,10 +210,14 @@ public class AuthorizationSchemaServiceImpl implements AuthorizationSchemaServic
 
         return authorizationSchemaRepository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new AuthorizationSchemaNotFoundException(id)))
-                .flatMapCompletable(s -> authorizationSchemaVersionRepository.deleteBySchemaId(id)
+                .flatMapCompletable(s -> {
+                    Event event = new Event(Type.AUTHORIZATION_SCHEMA, new Payload(id, ReferenceType.DOMAIN, domain.getId(), Action.DELETE));
+                    return authorizationSchemaVersionRepository.deleteBySchemaId(id)
                         .andThen(authorizationSchemaRepository.delete(id))
+                        .andThen(eventService.create(event, domain).ignoreElement())
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_DELETED).authorizationSchema(s)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_DELETED).throwable(throwable))))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_DELETED).throwable(throwable)));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

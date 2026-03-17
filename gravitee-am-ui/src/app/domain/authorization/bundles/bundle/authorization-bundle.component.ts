@@ -19,7 +19,6 @@ import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { AuthorizationBundleService } from '../../../../services/authorization-bundle.service';
 import { PolicySetService } from '../../../../services/policy-set.service';
-import { AuthorizationSchemaService } from '../../../../services/authorization-schema.service';
 import { EntityStoreService } from '../../../../services/entity-store.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
@@ -38,17 +37,14 @@ export class AuthorizationBundleComponent implements OnInit {
   editMode: boolean;
 
   policySets: any[] = [];
-  schemas: any[] = [];
   entityStores: any[] = [];
 
-  policySetVersions: any[] = [];
-  schemaVersions: any[] = [];
-  entityStoreVersions: any[] = [];
+  policySetVersionsMap: Record<string, any[]> = {};
+  entityStoreVersionsMap: Record<string, any[]> = {};
 
   constructor(
     private authorizationBundleService: AuthorizationBundleService,
     private policySetService: PolicySetService,
-    private authorizationSchemaService: AuthorizationSchemaService,
     private entityStoreService: EntityStoreService,
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
@@ -60,6 +56,13 @@ export class AuthorizationBundleComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.bundle = this.route.snapshot.data['bundle'];
+    // Ensure lists exist
+    if (!this.bundle.policySets) {
+      this.bundle.policySets = [];
+    }
+    if (!this.bundle.entityStores) {
+      this.bundle.entityStores = [];
+    }
     this.editMode = this.authService.hasPermissions(['domain_authorization_bundle_update']);
     this.loadComponents();
   }
@@ -67,58 +70,100 @@ export class AuthorizationBundleComponent implements OnInit {
   loadComponents() {
     this.policySetService.findByDomain(this.domainId).subscribe((ps) => {
       this.policySets = ps;
-      if (this.bundle.policySetId) {
-        this.loadPolicySetVersions(this.bundle.policySetId);
-      }
-    });
-    this.authorizationSchemaService.findByDomain(this.domainId).subscribe((s) => {
-      this.schemas = s;
-      if (this.bundle.schemaId) {
-        this.loadSchemaVersions(this.bundle.schemaId);
+      // Load versions for existing selections
+      for (const ref of this.bundle.policySets) {
+        if (ref.id) {
+          this.loadPolicySetVersions(ref.id);
+        }
       }
     });
     this.entityStoreService.findByDomain(this.domainId).subscribe((es) => {
       this.entityStores = es;
-      if (this.bundle.entityStoreId) {
-        this.loadEntityStoreVersions(this.bundle.entityStoreId);
+      for (const ref of this.bundle.entityStores) {
+        if (ref.id) {
+          this.loadEntityStoreVersions(ref.id);
+        }
       }
     });
   }
 
   loadPolicySetVersions(policySetId: string) {
     this.policySetService.getVersions(this.domainId, policySetId).subscribe((v) => {
-      this.policySetVersions = v.sort((a: any, b: any) => b.version - a.version);
-    });
-  }
-
-  loadSchemaVersions(schemaId: string) {
-    this.authorizationSchemaService.getVersions(this.domainId, schemaId).subscribe((v) => {
-      this.schemaVersions = v.sort((a: any, b: any) => b.version - a.version);
+      this.policySetVersionsMap[policySetId] = v.sort((a: any, b: any) => b.version - a.version);
     });
   }
 
   loadEntityStoreVersions(entityStoreId: string) {
     this.entityStoreService.getVersions(this.domainId, entityStoreId).subscribe((v) => {
-      this.entityStoreVersions = v.sort((a: any, b: any) => b.version - a.version);
+      this.entityStoreVersionsMap[entityStoreId] = v.sort((a: any, b: any) => b.version - a.version);
     });
+  }
+
+  addPolicySet() {
+    this.bundle.policySets.push({ id: '', version: 0, pinToLatest: true });
+    this.formChanged = true;
+  }
+
+  removePolicySet(index: number) {
+    this.bundle.policySets.splice(index, 1);
+    this.formChanged = true;
+  }
+
+  onPolicySetSelected(index: number, policySetId: string) {
+    const entry = this.bundle.policySets[index];
+    entry.id = policySetId;
+    if (policySetId) {
+      const ps = this.policySets.find((p) => p.id === policySetId);
+      if (ps) {
+        entry.version = ps.latestVersion;
+      }
+      this.loadPolicySetVersions(policySetId);
+    }
+    this.formChanged = true;
+  }
+
+  addEntityStore() {
+    this.bundle.entityStores.push({ id: '', version: 0, pinToLatest: true });
+    this.formChanged = true;
+  }
+
+  removeEntityStore(index: number) {
+    this.bundle.entityStores.splice(index, 1);
+    this.formChanged = true;
+  }
+
+  onEntityStoreSelected(index: number, entityStoreId: string) {
+    const entry = this.bundle.entityStores[index];
+    entry.id = entityStoreId;
+    if (entityStoreId) {
+      const es = this.entityStores.find((e) => e.id === entityStoreId);
+      if (es) {
+        entry.version = es.latestVersion;
+      }
+      this.loadEntityStoreVersions(entityStoreId);
+    }
+    this.formChanged = true;
+  }
+
+  onPinToLatestChange() {
+    this.formChanged = true;
   }
 
   update() {
     const updatePayload = {
       name: this.bundle.name,
       description: this.bundle.description,
-      policySetId: this.bundle.policySetId,
-      policySetVersion: this.bundle.policySetVersion,
-      policySetPinToLatest: this.bundle.policySetPinToLatest,
-      schemaId: this.bundle.schemaId,
-      schemaVersion: this.bundle.schemaVersion,
-      schemaPinToLatest: this.bundle.schemaPinToLatest,
-      entityStoreId: this.bundle.entityStoreId,
-      entityStoreVersion: this.bundle.entityStoreVersion,
-      entityStorePinToLatest: this.bundle.entityStorePinToLatest,
+      policySets: this.bundle.policySets,
+      entityStores: this.bundle.entityStores,
     };
     this.authorizationBundleService.update(this.domainId, this.bundle.id, updatePayload).subscribe((data) => {
       this.bundle = data;
+      if (!this.bundle.policySets) {
+        this.bundle.policySets = [];
+      }
+      if (!this.bundle.entityStores) {
+        this.bundle.entityStores = [];
+      }
       this.formChanged = false;
       this.snackbarService.open('Authorization bundle updated');
     });
@@ -137,54 +182,5 @@ export class AuthorizationBundleComponent implements OnInit {
         }),
       )
       .subscribe();
-  }
-
-  onPolicySetChange(policySetId: string) {
-    this.bundle.policySetId = policySetId;
-    if (policySetId) {
-      const ps = this.policySets.find((p) => p.id === policySetId);
-      if (ps) {
-        this.bundle.policySetVersion = ps.latestVersion;
-      }
-      this.loadPolicySetVersions(policySetId);
-    } else {
-      this.policySetVersions = [];
-      this.bundle.policySetVersion = 0;
-    }
-    this.formChanged = true;
-  }
-
-  onSchemaChange(schemaId: string) {
-    this.bundle.schemaId = schemaId;
-    if (schemaId) {
-      const s = this.schemas.find((sc) => sc.id === schemaId);
-      if (s) {
-        this.bundle.schemaVersion = s.latestVersion;
-      }
-      this.loadSchemaVersions(schemaId);
-    } else {
-      this.schemaVersions = [];
-      this.bundle.schemaVersion = 0;
-    }
-    this.formChanged = true;
-  }
-
-  onEntityStoreChange(entityStoreId: string) {
-    this.bundle.entityStoreId = entityStoreId;
-    if (entityStoreId) {
-      const es = this.entityStores.find((e) => e.id === entityStoreId);
-      if (es) {
-        this.bundle.entityStoreVersion = es.latestVersion;
-      }
-      this.loadEntityStoreVersions(entityStoreId);
-    } else {
-      this.entityStoreVersions = [];
-      this.bundle.entityStoreVersion = 0;
-    }
-    this.formChanged = true;
-  }
-
-  onPinToLatestChange() {
-    this.formChanged = true;
   }
 }
