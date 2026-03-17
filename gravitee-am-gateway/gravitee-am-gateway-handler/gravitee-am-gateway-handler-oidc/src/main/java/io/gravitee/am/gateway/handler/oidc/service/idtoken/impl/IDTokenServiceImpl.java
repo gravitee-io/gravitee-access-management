@@ -102,7 +102,7 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Value("${legacy.openid.openid_scope_full_profile:false}")
     private boolean legacyOpenidScope;
 
-    @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":true}")
+    @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":false}")
     private Boolean fallbackToHmacSignature;
 
     @Override

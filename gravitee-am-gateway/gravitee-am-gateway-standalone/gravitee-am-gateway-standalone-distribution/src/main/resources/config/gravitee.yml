@@ -641,7 +641,7 @@ liquibase:
 
 #applications:
 #  signing:
-#    fallback-to-hmac-signature: true
+#    fallback-to-hmac-signature: false
 #  secret:
 #    # Algorithms used to hash the client secret.
 #    # Can be one of :
