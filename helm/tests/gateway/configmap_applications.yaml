@@ -7,7 +7,7 @@ tests:
     set:
       applications:
         signing:
-          fallback-to-hmac-signature: true
+          fallback-to-hmac-signature: false
         secret:
           algorithm: None
           properties:
@@ -27,4 +27,4 @@ tests:
                 properties:
                   rounds: 10
               signing:
-                fallback-to-hmac-signature: true
+                fallback-to-hmac-signature: false
