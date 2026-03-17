@@ -212,7 +212,7 @@ public class CommonConfiguration {
     public JWTService jwtService(
             CertificateManager certificateManager,
             ObjectMapper objectMapper,
-            @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":true}") Boolean fallbackToHmacSignature) {
+            @Value("${" + FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY + ":false}") Boolean fallbackToHmacSignature) {
         return new JWTServiceImpl(certificateManager, objectMapper, fallbackToHmacSignature);
     }
 
