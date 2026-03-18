@@ -63,6 +63,10 @@
                 <mat-icon>save</mat-icon>
                 {{ saving ? 'Saving...' : 'Save' }}
               </button>
+              <button mat-stroked-button [disabled]="!policy?.trim()" (click)="download()">
+                <mat-icon>download</mat-icon>
+                Download
+              </button>
               <button mat-stroked-button color="warn" [disabled]="!hasPolicy" (click)="clear()" data-testid="clearButton">
                 <mat-icon>delete_outline</mat-icon>
                 Clear

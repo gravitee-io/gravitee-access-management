@@ -641,6 +641,16 @@ export class OpenShellPolicyComponent implements OnInit {
     });
   }
 
+  download(): void {
+    const blob = new Blob([this.policy], { type: 'text/yaml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'policy.yaml';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   applyTemplate(templateId: string): void {
     const tpl = POLICY_TEMPLATES.find(t => t.id === templateId);
     if (!tpl) return;
