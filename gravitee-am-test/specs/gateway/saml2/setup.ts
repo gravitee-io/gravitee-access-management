@@ -21,10 +21,9 @@ import {
   startDomain,
   waitForDomainStart,
   patchDomain,
-  waitFor,
 } from '@management-commands/domain-management-commands';
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
-import { createCertificate } from '@management-commands/certificate-management-commands';
+import { createCertificate, getPublicKeys } from '@management-commands/certificate-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
@@ -35,6 +34,13 @@ import { getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/o
 import { BasicResponse, followRedirect, followRedirectTag } from '@utils-commands/misc';
 import cheerio from 'cheerio';
 import faker from 'faker';
+
+const SAML_JKS_CERTIFICATE_CONFIG = JSON.stringify({
+  jks: '{"name":"server.jks","type":"","size":2237,"content":"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"}',
+  storepass: 'letmein',
+  alias: 'mytestkey',
+  keypass: 'changeme',
+});
 
 export const TEST_USER = {
   firstname: faker.name.firstName(),
@@ -61,7 +67,12 @@ export interface SamlFixture {
   cleanup: () => Promise<void>;
 }
 
-export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTestDomains> {
+type IdpCreatorFn = (clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, providerCertificatePem: string) => Promise<any>;
+
+async function setupSamlTestDomainsWithIdpCreator(
+  domainSuffix: string,
+  createIdpFn: IdpCreatorFn,
+): Promise<SamlTestDomains> {
   let providerDomain: Domain;
   let clientDomain: Domain;
 
@@ -85,16 +96,11 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
   // Replace default IDP with inline IDP in provider domain
   const inlineIdp = await replaceDefaultIdpWithInline(providerDomain, accessToken, domainSuffix);
 
-  // Create certificate for SAML signing
+  // Create certificate for SAML signing in provider domain (used by saml2-idp to sign assertions)
   const certificate = await createCertificate(providerDomain.id, accessToken, {
     name: `saml-certificate-${domainSuffix}`,
     type: 'javakeystore-am-certificate',
-    configuration: JSON.stringify({
-      jks: '{"name":"server.jks","type":"","size":2237,"content":"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"}',
-      storepass: 'letmein',
-      alias: 'mytestkey',
-      keypass: 'changeme',
-    }),
+    configuration: SAML_JKS_CERTIFICATE_CONFIG,
   });
 
   // Enable SAML 2.0 IdP support on provider domain
@@ -106,11 +112,13 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
     },
   });
 
+  const providerCertificatePem = await fetchCertificatePem(providerDomain.id, accessToken, certificate.id);
+
   // Restart provider domain to activate SAML IdP endpoints
   await doStartDomain(providerDomain, accessToken);
 
   // Create SAML identity provider in client domain first to get entity ID
-  const samlIdp = await createSamlProvider(clientDomain, providerDomain, accessToken, domainSuffix);
+  const samlIdp = await createIdpFn(clientDomain, providerDomain, accessToken, domainSuffix, providerCertificatePem);
 
   // Create provider application with client ID that matches SAML entity ID
   const samlEntityId = JSON.parse(samlIdp.configuration).entityId;
@@ -120,8 +128,9 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
     clientDomain,
     accessToken,
     inlineIdp.id,
-    certificate.id,
     samlEntityId,
+    true,
+    providerCertificatePem,
   );
 
   // Create client application
@@ -141,6 +150,18 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
   };
 }
 
+export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTestDomains> {
+  return setupSamlTestDomainsWithIdpCreator(domainSuffix, createSamlProvider);
+}
+
+export async function setupSamlTestDomainsViaMetadataUrl(domainSuffix: string): Promise<SamlTestDomains> {
+  return setupSamlTestDomainsWithIdpCreator(domainSuffix, createSamlProviderViaMetadataUrl);
+}
+
+export async function setupSamlTestDomainsViaMetadataFile(domainSuffix: string): Promise<SamlTestDomains> {
+  return setupSamlTestDomainsWithIdpCreator(domainSuffix, createSamlProviderViaMetadataFile);
+}
+
 async function replaceDefaultIdpWithInline(domain: Domain, accessToken: string, domainSuffix: string) {
   await ensureDefaultIdpIsDeleted(domain, accessToken);
 
@@ -158,7 +179,14 @@ async function replaceDefaultIdpWithInline(domain: Domain, accessToken: string, 
   });
 }
 
-async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string) {
+async function fetchCertificatePem(domainId: string, accessToken: string, certificateId: string): Promise<string> {
+  const keys = await getPublicKeys(domainId, accessToken, certificateId);
+  const pem = keys.find((k) => k.fmt === 'PEM')?.payload;
+  expect(pem).toBeDefined();
+  return pem;
+}
+
+async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, providerCertificatePem: string) {
   const samlIdpConfig = {
     entityId: `saml-idp-${domainSuffix}`,
     signInUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/SSO`,
@@ -166,10 +194,82 @@ async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, 
     singleLogoutServiceUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/logout`,
     wantAssertionsSigned: false,
     wantResponsesSigned: false,
-    protocolBinding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+    protocolBinding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
     signatureAlgorithm: 'RSA_SHA256',
     digestAlgorithm: 'SHA256',
     nameIDFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+    signingCertificate: providerCertificatePem,
+    attributeMapping: {
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'email',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': 'firstname',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': 'lastname',
+    },
+  };
+
+  return createIdp(clientDomain.id, accessToken, {
+    name: `saml-idp-${domainSuffix}`,
+    type: 'saml2-generic-am-idp',
+    configuration: JSON.stringify(samlIdpConfig),
+    external: true,
+  }).then((newIdp) => {
+    expect(newIdp).toBeDefined();
+    return newIdp;
+  });
+}
+
+export function getProviderMetadataUrl(providerDomain: Domain): string {
+  return `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/metadata`;
+}
+
+async function createSamlProviderViaMetadataUrl(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, _providerCertificatePem: string) {
+  // Create certificate in client domain for signing AuthnRequests (required when WantAuthnRequestsSigned=true in IdP metadata)
+  const clientCertificate = await createCertificate(clientDomain.id, accessToken, {
+    name: `saml-sign-cert-${domainSuffix}`,
+    type: 'javakeystore-am-certificate',
+    configuration: SAML_JKS_CERTIFICATE_CONFIG,
+  });
+
+  const samlIdpConfig = {
+    idpMetadataProvider: 'METADATA_URL',
+    entityId: `saml-idp-${domainSuffix}`,
+    idpMetadataUrl: getProviderMetadataUrl(providerDomain),
+    graviteeCertificate: clientCertificate.id,
+    requestSigningAlgorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+    attributeMapping: {
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'email',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': 'firstname',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': 'lastname',
+    },
+  };
+
+  return createIdp(clientDomain.id, accessToken, {
+    name: `saml-idp-${domainSuffix}`,
+    type: 'saml2-generic-am-idp',
+    configuration: JSON.stringify(samlIdpConfig),
+    external: true,
+  }).then((newIdp) => {
+    expect(newIdp).toBeDefined();
+    return newIdp;
+  });
+}
+
+async function createSamlProviderViaMetadataFile(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, _providerCertificatePem: string) {
+  // Create certificate in client domain for signing AuthnRequests (required when WantAuthnRequestsSigned=true in IdP metadata)
+  const clientCertificate = await createCertificate(clientDomain.id, accessToken, {
+    name: `saml-sign-cert-${domainSuffix}`,
+    type: 'javakeystore-am-certificate',
+    configuration: SAML_JKS_CERTIFICATE_CONFIG,
+  });
+
+  const metadataUrl = getProviderMetadataUrl(providerDomain);
+  const metadataXml = (await performGet(metadataUrl, '').expect(200)).text;
+
+  const samlIdpConfig = {
+    idpMetadataProvider: 'METADATA_FILE',
+    entityId: `saml-idp-${domainSuffix}`,
+    idpMetadataFile: metadataXml,
+    graviteeCertificate: clientCertificate.id,
+    requestSigningAlgorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
     attributeMapping: {
       'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'email',
       'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': 'firstname',
@@ -194,8 +294,9 @@ async function createProviderApp(
   clientDomain: Domain,
   accessToken: string,
   idpId: string,
-  certificateId: string,
   clientId: string,
+  signAssertions: boolean,
+  spCertificatePem: string,
 ): Promise<Application> {
   const appName = 'saml-provider-app-' + Math.random().toString(36).substring(7);
   const redirectUri = process.env.AM_GATEWAY_URL + '/' + clientDomain.hrid + '/login/callback';
@@ -213,9 +314,10 @@ async function createProviderApp(
       singleLogoutServiceUrl: `${process.env.AM_GATEWAY_URL}/${domain.hrid}/logout`,
       entityId: clientId,
       wantResponseSigned: false,
-      wantAssertionsSigned: false,
+      wantAssertionsSigned: signAssertions,
       responseBinding: 'HTTP-POST',
-      certificate: certificateId,
+      // X.509 PEM certificate of the SP; saml2-idp uses this to verify signed AuthnRequests.
+      certificate: spCertificatePem,
     },
   };
 
@@ -259,11 +361,14 @@ async function doStartDomain(domain: Domain, accessToken: string) {
   return started;
 }
 
-export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlFixture> {
+export async function setupSamlProviderTest(
+  domainSuffix: string,
+  setupFn: (suffix: string) => Promise<SamlTestDomains> = setupSamlTestDomains,
+): Promise<SamlFixture> {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const domains = await setupSamlTestDomains(domainSuffix);
+  const domains = await setupFn(domainSuffix);
 
   // Wait for domains to be fully ready and get OIDC configuration
   let clientOpenIdConfiguration: any;
@@ -278,7 +383,8 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
 
   const navigateToSamlProviderLogin = async (response: BasicResponse) => {
     const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
-    const result = await performGet(response.headers['location'], '', headers).expect(200);
+    const loginPageUrl = response.headers['location'];
+    const result = await performGet(loginPageUrl, '', headers).expect(200);
     const dom = cheerio.load(result.text);
 
     // Find the SAML IDP login button/link
@@ -329,6 +435,14 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
       ]).then(() => {});
     },
   };
+}
+
+export function setupSamlProviderTestViaMetadataUrl(domainSuffix: string): Promise<SamlFixture> {
+  return setupSamlProviderTest(domainSuffix, setupSamlTestDomainsViaMetadataUrl);
+}
+
+export function setupSamlProviderTestViaMetadataFile(domainSuffix: string): Promise<SamlFixture> {
+  return setupSamlProviderTest(domainSuffix, setupSamlTestDomainsViaMetadataFile);
 }
 
 export async function cleanupSamlTestDomains(accessToken: string, domains: SamlTestDomains): Promise<void> {
