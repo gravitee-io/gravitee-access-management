@@ -38,7 +38,7 @@
                 matInput
                 [(ngModel)]="policy"
                 class="policy-editor-textarea"
-                placeholder="version: 1&#10;network_policies:&#10;  github:&#10;    endpoints:&#10;      - host: api.github.com&#10;        port: 443"
+                placeholder="version: 1&#10;&#10;filesystem_policy:&#10;  include_workdir: true&#10;  read_only: [/usr, /lib, /proc]&#10;  read_write: [/sandbox, /tmp]&#10;&#10;process:&#10;  run_as_user: sandbox&#10;  run_as_group: sandbox&#10;&#10;network_policies:&#10;  github_api:&#10;    name: github-api-readonly&#10;    endpoints:&#10;      - host: api.github.com&#10;        port: 443&#10;        protocol: rest&#10;        enforcement: enforce&#10;        access: read-only&#10;    binaries:&#10;      - { path: /usr/bin/curl }"
                 rows="20"
                 spellcheck="false"
                 data-testid="policyEditor"

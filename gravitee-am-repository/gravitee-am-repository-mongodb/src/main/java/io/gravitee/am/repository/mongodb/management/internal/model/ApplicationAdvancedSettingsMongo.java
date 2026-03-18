@@ -25,6 +25,7 @@ public class ApplicationAdvancedSettingsMongo {
     private boolean flowsInherited;
     private String mfaSelectionRule;
     private String agentCardUrl;
+    private String openShellPolicy;
 
     public boolean isSkipConsent() {
         return skipConsent;
@@ -56,5 +57,13 @@ public class ApplicationAdvancedSettingsMongo {
 
     public void setAgentCardUrl(String agentCardUrl) {
         this.agentCardUrl = agentCardUrl;
+    }
+
+    public String getOpenShellPolicy() {
+        return openShellPolicy;
+    }
+
+    public void setOpenShellPolicy(String openShellPolicy) {
+        this.openShellPolicy = openShellPolicy;
     }
 }

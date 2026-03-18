@@ -723,6 +723,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationAdvancedSettings.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettings.setFlowsInherited(other.isFlowsInherited());
         applicationAdvancedSettings.setAgentCardUrl(other.getAgentCardUrl());
+        applicationAdvancedSettings.setOpenShellPolicy(other.getOpenShellPolicy());
         return applicationAdvancedSettings;
     }
 
@@ -735,6 +736,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
         applicationAdvancedSettingsMongo.setAgentCardUrl(other.getAgentCardUrl());
+        applicationAdvancedSettingsMongo.setOpenShellPolicy(other.getOpenShellPolicy());
         return applicationAdvancedSettingsMongo;
     }
 
