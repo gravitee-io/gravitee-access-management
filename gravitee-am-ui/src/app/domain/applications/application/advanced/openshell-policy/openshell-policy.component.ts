@@ -18,7 +18,10 @@ import { ActivatedRoute } from '@angular/router';
 import { parse as parseYaml } from 'yaml';
 import 'codemirror/mode/yaml/yaml';
 
+
 import { ApplicationService } from '../../../../../services/application.service';
+import { AuthorizationEngineService } from '../../../../../services/authorization-engine.service';
+import { OpenFGAService } from '../../../../../services/openfga.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 
 interface NetworkEndpoint {
@@ -48,11 +51,16 @@ interface ProcessPolicy {
   runAsGroup?: string;
 }
 
+interface LanklockPolicy {
+  compatibility?: string;
+}
+
 interface ParsedPolicy {
   version?: number;
   network: NetworkPolicy[];
   filesystem: FilesystemPolicy | null;
   process: ProcessPolicy | null;
+  landlock: LanklockPolicy | null;
 }
 
 interface PolicyTemplate {
@@ -544,8 +552,14 @@ export class OpenShellPolicyComponent implements OnInit {
   savedPolicy: string = '';
   loading = false;
   saving = false;
+  syncing = false;
+  syncStatus: 'idle' | 'success' | 'error' = 'idle';
+  syncMessage: string | null = null;
   parseError: string | null = null;
   parsed: ParsedPolicy | null = null;
+
+  authorizationEngines: any[] = [];
+  selectedEngineId: string | null = null;
 
   templates = POLICY_TEMPLATES;
   selectedTemplateId: string | null = null;
@@ -580,6 +594,8 @@ export class OpenShellPolicyComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private applicationService: ApplicationService,
+    private authorizationEngineService: AuthorizationEngineService,
+    private openFGAService: OpenFGAService,
     private snackbarService: SnackbarService,
   ) {}
 
@@ -587,6 +603,170 @@ export class OpenShellPolicyComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.loadPolicy();
+    this.loadAuthorizationEngines();
+  }
+
+  loadAuthorizationEngines(): void {
+    this.authorizationEngineService.findByDomain(this.domainId).subscribe({
+      next: (engines: any[]) => {
+        this.authorizationEngines = engines ?? [];
+        if (this.authorizationEngines.length === 1) {
+          this.selectedEngineId = this.authorizationEngines[0].id;
+        }
+      },
+      error: () => {
+        this.authorizationEngines = [];
+      },
+    });
+  }
+
+  syncWithOpenFGA(): void {
+    if (!this.selectedEngineId || this.syncing) return;
+
+    const clientId = this.application?.settings?.oauth?.clientId;
+    if (!clientId) {
+      this.snackbarService.open('Cannot sync: application has no client_id');
+      return;
+    }
+
+    const agentUser = `agent:${clientId}`;
+
+    this.syncing = true;
+    this.syncMessage = null;
+    this.syncStatus = 'idle';
+
+    this.openFGAService.readAllTuples(this.domainId, this.selectedEngineId).subscribe({
+      next: (allTuples: any[]) => {
+        const normalize = (t: any) => ({
+          user: t.key?.user ?? t.user,
+          relation: t.key?.relation ?? t.relation,
+          object: t.key?.object ?? t.object,
+        });
+
+        const agentTuples = allTuples
+          .filter((t: any) => (t.key?.user ?? t.user) === agentUser)
+          .map(normalize);
+
+        const updatedYaml = this.tuplesToYaml(agentTuples, this.policy);
+
+        this.policy = updatedYaml;
+        this.reparsePolicySummary(updatedYaml);
+        this.syncing = false;
+        this.syncStatus = 'success';
+        this.syncMessage = `Synced from OpenFGA: ${agentTuples.length} tuple(s) merged. Review and save when ready.`;
+      },
+      error: () => {
+        this.syncing = false;
+        this.syncStatus = 'error';
+        this.syncMessage = 'Could not read tuples from OpenFGA. Check engine connectivity.';
+      },
+    });
+  }
+
+  private tuplesToYaml(tuples: { user: string; relation: string; object: string }[], existingYaml: string): string {
+    // Parse existing policy as the base — tuples only add, never remove
+    let raw: any = {};
+    try {
+      raw = parseYaml(existingYaml ?? '') ?? {};
+    } catch {
+      // start from empty if existing YAML is unparseable
+    }
+
+    const fs = raw.filesystem_policy ?? {};
+    const existingReadOnly: string[] = fs.read_only ?? [];
+    const existingReadWrite: string[] = fs.read_write ?? [];
+    const existingNetworkPolicies: Record<string, any> = raw.network_policies ?? {};
+
+    const readOnlySet = new Set<string>(existingReadOnly);
+    const readWriteSet = new Set<string>(existingReadWrite);
+    let includeWorkdir: boolean = fs.include_workdir ?? false;
+    let lanklockCompatibility: string | null = raw.landlock?.compatibility ?? null;
+    let runAsUser: string | null = raw.process?.run_as_user ?? null;
+    let runAsGroup: string | null = raw.process?.run_as_group ?? null;
+    const networkPolicyKeys = new Set<string>(Object.keys(existingNetworkPolicies));
+
+    // Merge: add entries from OpenFGA that are not already present
+    for (const t of tuples) {
+      if (t.relation === 'reader' && t.object.startsWith('directory:')) {
+        readOnlySet.add(t.object.slice('directory:'.length));
+      } else if (t.relation === 'writer' && t.object.startsWith('directory:')) {
+        readWriteSet.add(t.object.slice('directory:'.length));
+      } else if (t.relation === 'enabled' && t.object === 'agent_flag:include_workdir') {
+        includeWorkdir = true;
+      } else if (t.relation === 'enabled' && t.object.startsWith('agent_flag:landlock_')) {
+        lanklockCompatibility = t.object.slice('agent_flag:landlock_'.length).replace(/_/g, '-');
+      } else if (t.relation === 'runner' && t.object.startsWith('system_user:')) {
+        runAsUser = t.object.slice('system_user:'.length);
+      } else if (t.relation === 'runner' && t.object.startsWith('system_group:')) {
+        runAsGroup = t.object.slice('system_group:'.length);
+      } else if (t.relation === 'accessible' && t.object.startsWith('network_policy:')) {
+        networkPolicyKeys.add(t.object.slice('network_policy:'.length));
+      }
+    }
+
+    const readOnly = [...readOnlySet];
+    const readWrite = [...readWriteSet];
+
+    const lines: string[] = [`version: ${raw.version ?? 1}`, ''];
+
+    if (readOnly.length > 0 || readWrite.length > 0) {
+      lines.push('filesystem_policy:');
+      lines.push(`  include_workdir: ${includeWorkdir}`);
+      if (readOnly.length > 0) {
+        lines.push('  read_only:');
+        readOnly.forEach(p => lines.push(`    - ${p}`));
+      }
+      if (readWrite.length > 0) {
+        lines.push('  read_write:');
+        readWrite.forEach(p => lines.push(`    - ${p}`));
+      }
+      lines.push('');
+    }
+
+    if (lanklockCompatibility) {
+      lines.push('landlock:');
+      lines.push(`  compatibility: ${lanklockCompatibility}`);
+      lines.push('');
+    }
+
+    if (runAsUser || runAsGroup) {
+      lines.push('process:');
+      if (runAsUser) lines.push(`  run_as_user: ${runAsUser}`);
+      if (runAsGroup) lines.push(`  run_as_group: ${runAsGroup}`);
+      lines.push('');
+    }
+
+    if (networkPolicyKeys.size > 0) {
+      lines.push('network_policies:');
+      for (const key of networkPolicyKeys) {
+        lines.push(this.serializeNetworkPolicy(key, existingNetworkPolicies[key] ?? { name: key }));
+      }
+    } else {
+      lines.push('network_policies: {}');
+    }
+
+    return lines.join('\n');
+  }
+
+  private serializeNetworkPolicy(key: string, policy: any): string {
+    const lines: string[] = [`  ${key}:`];
+    if (policy.name) lines.push(`    name: ${policy.name}`);
+    if (Array.isArray(policy.endpoints) && policy.endpoints.length > 0) {
+      lines.push('    endpoints:');
+      for (const ep of policy.endpoints) {
+        const parts = Object.entries(ep)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(', ');
+        lines.push(`      - { ${parts} }`);
+      }
+    }
+    if (Array.isArray(policy.binaries) && policy.binaries.length > 0) {
+      lines.push('    binaries:');
+      for (const b of policy.binaries) {
+        lines.push(`      - { path: ${b.path} }`);
+      }
+    }
+    return lines.join('\n');
   }
 
   loadPolicy(): void {
@@ -702,6 +882,7 @@ export class OpenShellPolicyComponent implements OnInit {
 
       const fs = raw?.filesystem_policy ?? null;
       const proc = raw?.process ?? null;
+      const lk = raw?.landlock ?? null;
 
       this.parsed = {
         version: raw?.version,
@@ -719,6 +900,7 @@ export class OpenShellPolicyComponent implements OnInit {
               runAsGroup: proc.run_as_group,
             }
           : null,
+        landlock: lk ? { compatibility: lk.compatibility } : null,
       };
       this.parseError = null;
     } catch (e: any) {

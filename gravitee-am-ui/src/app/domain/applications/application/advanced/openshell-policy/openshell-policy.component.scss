@@ -65,6 +65,8 @@
 
 .policy-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   margin-top: 8px;
   gap: 12px;
 
@@ -73,6 +75,50 @@
     height: 18px;
     margin-right: 4px;
     font-size: 18px;
+  }
+}
+
+.policy-actions-spacer {
+  flex: 1;
+}
+
+.engine-select-field {
+  width: 200px;
+  // Shrink the form-field height to match button height
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  gap: 6px;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+
+  &.sync-status-success {
+    background: #e8f5e9;
+    color: #1b5e20;
+  }
+
+  &.sync-status-error {
+    background: #ffebee;
+    color: #b71c1c;
+  }
+
+  &.sync-status-warn {
+    background: #e3f2fd;
+    color: rgb(0 0 0 / 70%);
   }
 }
 

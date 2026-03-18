@@ -71,6 +71,39 @@
                 <mat-icon>delete_outline</mat-icon>
                 Clear
               </button>
+
+              <span class="policy-actions-spacer"></span>
+
+              <mat-form-field
+                *ngIf="authorizationEngines.length > 1"
+                appearance="outline"
+                class="engine-select-field"
+              >
+                <mat-label>OpenFGA Engine</mat-label>
+                <mat-select [(ngModel)]="selectedEngineId">
+                  <mat-option *ngFor="let e of authorizationEngines" [value]="e.id">{{ e.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button
+                mat-stroked-button
+                [disabled]="syncing || !selectedEngineId"
+                (click)="syncWithOpenFGA()"
+                data-testid="syncOpenFGAButton"
+              >
+                <mat-icon>sync</mat-icon>
+                {{ syncing ? 'Syncing...' : 'Sync with OpenFGA' }}
+              </button>
+            </div>
+
+            <div *ngIf="syncMessage" class="sync-status" [ngClass]="syncStatus === 'error' ? 'sync-status-error' : 'sync-status-success'">
+              <mat-icon>{{ syncStatus === 'error' ? 'error_outline' : 'check_circle_outline' }}</mat-icon>
+              {{ syncMessage }}
+            </div>
+
+            <div *ngIf="authorizationEngines.length === 0" class="sync-status sync-status-warn">
+              <mat-icon>info_outline</mat-icon>
+              No OpenFGA authorization engine configured for this domain. Create one to enable sync.
             </div>
           </div>
         </mat-tab>

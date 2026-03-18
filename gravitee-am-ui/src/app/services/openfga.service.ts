@@ -15,8 +15,8 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, timer } from 'rxjs';
-import { retry, catchError } from 'rxjs/operators';
+import { Observable, of, throwError, timer } from 'rxjs';
+import { catchError, map, retry, switchMap } from 'rxjs/operators';
 import { SKIP_404_REDIRECT } from 'app/interceptors/http-request.interceptor';
 
 import type { AuthorizationModel } from '@openfga/sdk';
@@ -82,6 +82,23 @@ export class OpenFGAService {
 
   checkPermission(domainId: string, engineId: string, permissionRequest: any): Observable<any> {
     return this.http.post<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/check`, permissionRequest);
+  }
+
+  /** Fetches every tuple in the store, paginating through all continuation tokens. */
+  readAllTuples(domainId: string, engineId: string): Observable<any[]> {
+    const fetchPage = (token?: string): Observable<any[]> => {
+      return this.listTuples(domainId, engineId, 100, token).pipe(
+        switchMap((response: any) => {
+          const tuples: any[] = response.data ?? [];
+          const nextToken: string | null = response.info?.continuationToken ?? null;
+          if (nextToken) {
+            return fetchPage(nextToken).pipe(map(next => [...tuples, ...next]));
+          }
+          return of(tuples);
+        }),
+      );
+    };
+    return fetchPage();
   }
 
   private retryOnServerError<T>(source: Observable<T>): Observable<T> {
