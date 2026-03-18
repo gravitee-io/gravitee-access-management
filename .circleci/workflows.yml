@@ -1809,7 +1809,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["4.4", "8.0"]
+              mongo_version: ["4.4", "8.2"]
       - run_postman_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -1823,7 +1823,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["4.4", "8.0"]
+              mongo_version: ["4.4", "8.2"]
       - run_jest_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -1831,7 +1831,7 @@ workflows:
           matrix:
             parameters:
               psql_version: ["11.18-bullseye", "17.2"]
-
+  
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>
     jobs:
