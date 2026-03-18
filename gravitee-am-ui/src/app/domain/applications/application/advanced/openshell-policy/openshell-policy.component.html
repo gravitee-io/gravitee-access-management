@@ -32,6 +32,18 @@
         <!-- Editor tab -->
         <mat-tab label="Editor">
           <div class="gv-form-section-content">
+            <div class="template-selector">
+              <mat-form-field appearance="outline" class="template-select-field">
+                <mat-label>Start from template</mat-label>
+                <mat-select [(ngModel)]="selectedTemplateId" (selectionChange)="applyTemplate($event.value)">
+                  <mat-option *ngFor="let tpl of templates" [value]="tpl.id">
+                    <strong>{{ tpl.name }}</strong>
+                    <span class="template-desc"> — {{ tpl.description }}</span>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
             <div class="policy-editor-wrapper">
               <ngx-codemirror
                 [(ngModel)]="policy"
@@ -181,28 +193,23 @@
         <mat-tab label="How to use">
           <div class="gv-form-section-content">
             <p class="how-to-intro">
-              Use the following commands to fetch this policy and pass it to OpenShell when creating a sandbox. The agent authenticates with
-              its own <code>client_credentials</code> before fetching.
+              The sandbox policy is served publicly from the gateway — no authentication required.
+              Use the URL below to fetch it directly or pass it to OpenShell at sandbox creation time.
             </p>
 
-            <p class="how-to-step-label">1. Get an access token</p>
-            <pre class="policy-code-block">
-TOKEN=$(curl -s -X POST {{ gatewayUrl }}/{{ application?.domain }}/oauth/token \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials&amp;client_id={{ application?.settings?.oauth?.clientId }}&amp;client_secret=YOUR_CLIENT_SECRET" \
-  | jq -r '.access_token')</pre
-            >
+            <p class="how-to-step-label">Policy URL</p>
+            <pre class="policy-code-block">{{ gatewayUrl }}/{{ application?.domain }}/openshell-policy/{{ application?.id }}</pre>
 
-            <p class="how-to-step-label">2. Start sandbox with policy from AM</p>
-            <pre class="policy-code-block">
-openshell sandbox create \
-  --policy "{{ gatewayUrl }}/{{ application?.domain }}/openshell-policy" \
-  --policy-bearer "$TOKEN"</pre
-            >
+            <p class="how-to-step-label">Fetch with curl</p>
+            <pre class="policy-code-block">curl {{ gatewayUrl }}/{{ application?.domain }}/openshell-policy/{{ application?.id }}</pre>
+
+            <p class="how-to-step-label">Start sandbox with policy from AM</p>
+            <pre class="policy-code-block">openshell sandbox create \
+  --policy "{{ gatewayUrl }}/{{ application?.domain }}/openshell-policy/{{ application?.id }}"</pre>
 
             <p class="how-to-note">
               <mat-icon class="how-to-note-icon">info_outline</mat-icon>
-              The policy is served directly from the gateway. The agent's token is validated before the policy is returned.
+              The policy endpoint is public — it describes sandbox constraints, not secrets. No token is needed.
             </p>
           </div>
         </mat-tab>
