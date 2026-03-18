@@ -16,6 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { parse as parseYaml } from 'yaml';
+import 'codemirror/mode/yaml/yaml';
 
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -69,6 +70,17 @@ export class OpenShellPolicyComponent implements OnInit {
   saving = false;
   parseError: string | null = null;
   parsed: ParsedPolicy | null = null;
+
+  editorOptions = {
+    lineNumbers: true,
+    mode: 'yaml',
+    theme: 'default',
+    lineWrapping: false,
+    indentWithTabs: false,
+    tabSize: 2,
+    indentUnit: 2,
+    extraKeys: { Tab: (cm: any) => cm.replaceSelection('  ') },
+  };
 
   get isDirty(): boolean {
     return this.policy !== this.savedPolicy;

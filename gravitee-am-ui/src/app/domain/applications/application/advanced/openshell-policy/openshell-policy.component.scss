@@ -32,15 +32,21 @@
   gap: 8px;
 }
 
-.policy-editor-field {
-  width: 100%;
-}
+.policy-editor-wrapper {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
 
-.policy-editor-textarea {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  resize: vertical;
+  ngx-codemirror {
+    display: block;
+
+    ::ng-deep .CodeMirror {
+      height: 420px;
+      font-size: 13px;
+      font-family: 'Roboto Mono', 'Courier New', monospace;
+    }
+  }
 }
 
 .policy-actions {
