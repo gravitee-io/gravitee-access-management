@@ -32,6 +32,8 @@ import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.PatchApplication;
+import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
+import io.gravitee.am.service.model.PatchApplicationSettings;
 import io.gravitee.am.service.model.PatchApplicationType;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
@@ -306,6 +308,125 @@ public class ApplicationResource extends AbstractResource {
                             return agentCardService.fetchAgentCard(agentCardUrl);
                         })
                         .map(json -> Response.ok(json).build()))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @GET
+    @Path("openshell-policy")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Operation(
+            operationId = "getApplicationOpenShellPolicy",
+            summary = "Get the OpenShell policy for an agent application",
+            description = "User must have APPLICATION[READ] permission on the specified application. " +
+                    "Returns the stored OpenShell sandbox policy YAML.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OpenShell policy YAML"),
+            @ApiResponse(responseCode = "400", description = "No OpenShell policy configured for this application"),
+            @ApiResponse(responseCode = "404", description = "Application not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void getOpenShellPolicy(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @Suspended final AsyncResponse response) {
+
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ)
+                .andThen(applicationService.findById(application)
+                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                        .flatMapSingle(app -> {
+                            final String policy = Optional.ofNullable(app.getSettings())
+                                    .map(ApplicationSettings::getAdvanced)
+                                    .map(ApplicationAdvancedSettings::getOpenShellPolicy)
+                                    .orElse(null);
+                            if (policy == null || policy.isBlank()) {
+                                return Single.error(new InvalidParameterException("No openShellPolicy configured for this application"));
+                            }
+                            return Single.just(policy);
+                        })
+                        .map(policy -> Response.ok(policy).type(MediaType.TEXT_PLAIN).build()))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @PUT
+    @Path("openshell-policy")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Operation(
+            operationId = "putApplicationOpenShellPolicy",
+            summary = "Set the OpenShell policy for an agent application",
+            description = "User must have APPLICATION[UPDATE] permission on the specified application. " +
+                    "Stores the provided YAML as the OpenShell sandbox policy for this agent.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "OpenShell policy updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid or empty policy body"),
+            @ApiResponse(responseCode = "404", description = "Application or domain not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void putOpenShellPolicy(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @NotNull String policy,
+            @Suspended final AsyncResponse response) {
+
+        if (policy == null || policy.isBlank()) {
+            response.resume(new BadRequestException("Policy body must not be empty"));
+            return;
+        }
+        try {
+            new org.yaml.snakeyaml.Yaml().load(policy);
+        } catch (Exception e) {
+            response.resume(new BadRequestException("Invalid YAML: " + e.getMessage()));
+            return;
+        }
+
+        final User authenticatedUser = getAuthenticatedUser();
+        PatchApplicationAdvancedSettings advancedPatch = new PatchApplicationAdvancedSettings();
+        advancedPatch.setOpenShellPolicy(Optional.of(policy));
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setAdvanced(Optional.of(advancedPatch));
+        PatchApplication patchApplication = new PatchApplication();
+        patchApplication.setSettings(Optional.of(settingsPatch));
+
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.UPDATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(d -> applicationService.patch(d, application, patchApplication, authenticatedUser, revokeTokenManagementService::deleteByApplication)))
+                .map(app -> Response.noContent().build())
+                .subscribe(response::resume, response::resume);
+    }
+
+    @DELETE
+    @Path("openshell-policy")
+    @Operation(
+            operationId = "deleteApplicationOpenShellPolicy",
+            summary = "Delete the OpenShell policy for an agent application",
+            description = "User must have APPLICATION[UPDATE] permission on the specified application. " +
+                    "Clears the stored OpenShell sandbox policy.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "OpenShell policy deleted"),
+            @ApiResponse(responseCode = "404", description = "Application or domain not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void deleteOpenShellPolicy(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @Suspended final AsyncResponse response) {
+
+        final User authenticatedUser = getAuthenticatedUser();
+        PatchApplicationAdvancedSettings advancedPatch = new PatchApplicationAdvancedSettings();
+        advancedPatch.setOpenShellPolicy(Optional.empty());
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setAdvanced(Optional.of(advancedPatch));
+        PatchApplication patchApplication = new PatchApplication();
+        patchApplication.setSettings(Optional.of(settingsPatch));
+
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.UPDATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(d -> applicationService.patch(d, application, patchApplication, authenticatedUser, revokeTokenManagementService::deleteByApplication)))
+                .map(app -> Response.noContent().build())
                 .subscribe(response::resume, response::resume);
     }
 

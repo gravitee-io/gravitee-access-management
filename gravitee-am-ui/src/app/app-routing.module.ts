@@ -145,6 +145,7 @@ import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-
 import { DomainMcpServerMembershipsComponent } from './domain/mcp-servers/mcp-server/advanced/memberships/memberships.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { AgentMetadataComponent } from './domain/applications/application/advanced/agent-metadata/agent-metadata.component';
+import { OpenShellPolicyComponent } from './domain/applications/application/advanced/openshell-policy/openshell-policy.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
@@ -1165,6 +1166,24 @@ export const routes: Routes = [
                             data: {
                               menu: {
                                 label: 'Agent Metadata',
+                                section: 'Agent',
+                                level: 'level2',
+                              },
+                              perms: {
+                                only: ['application_settings_read'],
+                              },
+                              types: {
+                                only: ['AGENT'],
+                              },
+                            },
+                          },
+                          {
+                            path: 'openshell-policy',
+                            component: OpenShellPolicyComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              menu: {
+                                label: 'OpenShell Policy',
                                 section: 'Agent',
                                 level: 'level2',
                               },

@@ -292,6 +292,7 @@ import { ApplicationSaml2Component } from './domain/applications/application/adv
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { AgentMetadataComponent } from './domain/applications/application/advanced/agent-metadata/agent-metadata.component';
+import { OpenShellPolicyComponent } from './domain/applications/application/advanced/openshell-policy/openshell-policy.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
@@ -686,6 +687,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
 
     ApplicationMetadataComponent,
     AgentMetadataComponent,
+    OpenShellPolicyComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,
     ApplicationResourcesComponent,

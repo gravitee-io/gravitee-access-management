@@ -1,0 +1,217 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column" class="gv-page-container">
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h2>OpenShell Policy</h2>
+      <span>Define the sandbox policy applied when this agent creates an OpenShell sandbox.</span>
+    </div>
+
+    <div *ngIf="loading" class="policy-state">
+      <mat-progress-spinner mode="indeterminate" diameter="24"></mat-progress-spinner>
+      <span>Loading policy...</span>
+    </div>
+
+    <div *ngIf="!loading">
+      <mat-tab-group>
+        <!-- Editor tab -->
+        <mat-tab label="Editor">
+          <div class="gv-form-section-content">
+            <mat-form-field class="policy-editor-field" appearance="outline">
+              <mat-label>Policy YAML</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="policy"
+                class="policy-editor-textarea"
+                placeholder="version: 1&#10;network_policies:&#10;  github:&#10;    endpoints:&#10;      - host: api.github.com&#10;        port: 443"
+                rows="20"
+                spellcheck="false"
+                data-testid="policyEditor"
+              ></textarea>
+            </mat-form-field>
+
+            <div class="policy-actions">
+              <button
+                mat-raised-button
+                color="primary"
+                [disabled]="saving || !isDirty || !policy?.trim()"
+                (click)="save()"
+                data-testid="saveButton"
+              >
+                <mat-icon>save</mat-icon>
+                {{ saving ? 'Saving...' : 'Save' }}
+              </button>
+              <button mat-stroked-button color="warn" [disabled]="!hasPolicy" (click)="clear()" data-testid="clearButton">
+                <mat-icon>delete_outline</mat-icon>
+                Clear
+              </button>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Summary tab -->
+        <mat-tab label="Summary">
+          <div class="gv-form-section-content">
+            <!-- No policy saved -->
+            <div *ngIf="!hasPolicy" class="policy-state">
+              <mat-icon>info_outline</mat-icon>
+              <span>No policy saved yet. Use the Editor tab to define one.</span>
+            </div>
+
+            <!-- Parse error -->
+            <div *ngIf="hasPolicy && parseError" class="policy-state policy-parse-error">
+              <mat-icon color="warn">error_outline</mat-icon>
+              <span>Could not parse policy YAML: {{ parseError }}</span>
+            </div>
+
+            <!-- Summary content -->
+            <ng-container *ngIf="hasPolicy && parsed && !parseError">
+              <!-- Network policies -->
+              <div class="summary-section">
+                <h3 class="summary-section-title">
+                  <mat-icon class="summary-section-icon">lan</mat-icon>
+                  Network Policies
+                  <span class="summary-count">{{ parsed.network.length }}</span>
+                </h3>
+
+                <div *ngIf="parsed.network.length === 0" class="summary-empty">No network policies defined.</div>
+
+                <mat-card *ngFor="let np of parsed.network" class="network-card">
+                  <mat-card-header>
+                    <mat-card-title class="network-card-title">
+                      {{ np.name || np.key }}
+                      <code *ngIf="np.name" class="network-card-key">{{ np.key }}</code>
+                    </mat-card-title>
+                    <mat-card-subtitle *ngIf="np.binaryCount > 0"
+                      >{{ np.binaryCount }} allowed {{ np.binaryCount === 1 ? 'binary' : 'binaries' }}</mat-card-subtitle
+                    >
+                  </mat-card-header>
+                  <mat-card-content>
+                    <table *ngIf="np.endpoints.length > 0" class="endpoints-table" mat-table [dataSource]="np.endpoints">
+                      <ng-container matColumnDef="host">
+                        <th mat-header-cell *matHeaderCellDef>Host</th>
+                        <td mat-cell *matCellDef="let e">
+                          <code>{{ e.host }}</code>
+                        </td>
+                      </ng-container>
+                      <ng-container matColumnDef="ports">
+                        <th mat-header-cell *matHeaderCellDef>Port(s)</th>
+                        <td mat-cell *matCellDef="let e">{{ displayPorts(e) }}</td>
+                      </ng-container>
+                      <ng-container matColumnDef="protocol">
+                        <th mat-header-cell *matHeaderCellDef>Protocol</th>
+                        <td mat-cell *matCellDef="let e">{{ e.protocol || '—' }}</td>
+                      </ng-container>
+                      <ng-container matColumnDef="enforcement">
+                        <th mat-header-cell *matHeaderCellDef>Enforcement</th>
+                        <td mat-cell *matCellDef="let e">
+                          <span *ngIf="e.enforcement" class="enforcement-chip" [ngClass]="'chip-' + e.enforcement">{{
+                            e.enforcement
+                          }}</span>
+                          <span *ngIf="!e.enforcement">—</span>
+                        </td>
+                      </ng-container>
+                      <ng-container matColumnDef="access">
+                        <th mat-header-cell *matHeaderCellDef>Access</th>
+                        <td mat-cell *matCellDef="let e">{{ e.access || '—' }}</td>
+                      </ng-container>
+                      <tr mat-header-row *matHeaderRowDef="['host', 'ports', 'protocol', 'enforcement', 'access']"></tr>
+                      <tr mat-row *matRowDef="let row; columns: ['host', 'ports', 'protocol', 'enforcement', 'access']"></tr>
+                    </table>
+                    <div *ngIf="np.endpoints.length === 0" class="summary-empty">No endpoints defined.</div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+
+              <!-- Filesystem policy -->
+              <div *ngIf="parsed.filesystem" class="summary-section">
+                <h3 class="summary-section-title">
+                  <mat-icon class="summary-section-icon">folder_open</mat-icon>
+                  Filesystem Policy
+                </h3>
+                <div class="fs-meta">
+                  <span class="fs-meta-chip" [ngClass]="parsed.filesystem.includeWorkdir ? 'chip-true' : 'chip-false'">
+                    Workdir: {{ parsed.filesystem.includeWorkdir ? 'included' : 'excluded' }}
+                  </span>
+                </div>
+                <div *ngIf="parsed.filesystem.readOnly.length > 0" class="fs-section">
+                  <p class="fs-label">Read-only paths ({{ parsed.filesystem.readOnly.length }})</p>
+                  <div class="fs-paths">
+                    <code *ngFor="let p of parsed.filesystem.readOnly" class="fs-path-chip">{{ p }}</code>
+                  </div>
+                </div>
+                <div *ngIf="parsed.filesystem.readWrite.length > 0" class="fs-section">
+                  <p class="fs-label">Read-write paths ({{ parsed.filesystem.readWrite.length }})</p>
+                  <div class="fs-paths">
+                    <code *ngFor="let p of parsed.filesystem.readWrite" class="fs-path-chip fs-path-rw">{{ p }}</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Process identity -->
+              <div *ngIf="parsed.process" class="summary-section">
+                <h3 class="summary-section-title">
+                  <mat-icon class="summary-section-icon">person_outline</mat-icon>
+                  Process Identity
+                </h3>
+                <div class="process-fields">
+                  <span class="process-field"
+                    ><strong>User:</strong> <code>{{ parsed.process.runAsUser || '—' }}</code></span
+                  >
+                  <span class="process-field"
+                    ><strong>Group:</strong> <code>{{ parsed.process.runAsGroup || '—' }}</code></span
+                  >
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </mat-tab>
+
+        <!-- How to use tab -->
+        <mat-tab label="How to use">
+          <div class="gv-form-section-content">
+            <p class="how-to-intro">
+              Use the following commands to fetch this policy and pass it to OpenShell when creating a sandbox. The agent authenticates with
+              its own <code>client_credentials</code> before fetching.
+            </p>
+
+            <p class="how-to-step-label">1. Get an access token</p>
+            <pre class="policy-code-block">
+TOKEN=$(curl -s -X POST {{ gatewayUrl }}/{{ application?.domain }}/oauth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&amp;client_id={{ application?.settings?.oauth?.clientId }}&amp;client_secret=YOUR_CLIENT_SECRET" \
+  | jq -r '.access_token')</pre
+            >
+
+            <p class="how-to-step-label">2. Start sandbox with policy from AM</p>
+            <pre class="policy-code-block">
+openshell sandbox create \
+  --policy "{{ gatewayUrl }}/{{ application?.domain }}/openshell-policy" \
+  --policy-bearer "$TOKEN"</pre
+            >
+
+            <p class="how-to-note">
+              <mat-icon class="how-to-note-icon">info_outline</mat-icon>
+              The policy is served directly from the gateway. The agent's token is validated before the policy is returned.
+            </p>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </div>
+</div>

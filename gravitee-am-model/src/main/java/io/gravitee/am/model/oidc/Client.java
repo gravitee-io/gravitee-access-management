@@ -245,6 +245,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean flowsInherited;
 
+    private String openShellPolicy;
+
     private MFASettings mfaSettings;
 
     private CookieSettings cookieSettings;
@@ -358,6 +360,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.forcePKCE = other.forcePKCE;
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.flowsInherited = other.flowsInherited;
+        this.openShellPolicy = other.openShellPolicy;
         this.mfaSettings = other.mfaSettings;
         this.cookieSettings = other.cookieSettings;
         this.riskAssessment = other.riskAssessment;
@@ -985,6 +988,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setFlowsInherited(boolean flowsInherited) {
         this.flowsInherited = flowsInherited;
+    }
+
+    public String getOpenShellPolicy() {
+        return openShellPolicy;
+    }
+
+    public void setOpenShellPolicy(String openShellPolicy) {
+        this.openShellPolicy = openShellPolicy;
     }
 
     public MFASettings getMfaSettings() {

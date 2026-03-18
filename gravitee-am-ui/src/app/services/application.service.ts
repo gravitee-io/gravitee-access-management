@@ -163,4 +163,21 @@ export class ApplicationService {
       context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
     });
   }
+
+  getOpenShellPolicy(domainId: string, appId: string): Observable<string> {
+    return this.http.get(this.appsURL + domainId + '/applications/' + appId + '/openshell-policy', {
+      responseType: 'text',
+      context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
+    });
+  }
+
+  setOpenShellPolicy(domainId: string, appId: string, yaml: string): Observable<void> {
+    return this.http.put<void>(this.appsURL + domainId + '/applications/' + appId + '/openshell-policy', yaml, {
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
+
+  deleteOpenShellPolicy(domainId: string, appId: string): Observable<void> {
+    return this.http.delete<void>(this.appsURL + domainId + '/applications/' + appId + '/openshell-policy');
+  }
 }

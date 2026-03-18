@@ -29,6 +29,7 @@ public class PatchApplicationAdvancedSettings {
     private Optional<Boolean> skipConsent;
     private Optional<Boolean> flowsInherited;
     private Optional<String> agentCardUrl;
+    private Optional<String> openShellPolicy;
 
     public Optional<Boolean> getSkipConsent() {
         return skipConsent;
@@ -54,12 +55,21 @@ public class PatchApplicationAdvancedSettings {
         this.agentCardUrl = agentCardUrl;
     }
 
+    public Optional<String> getOpenShellPolicy() {
+        return openShellPolicy;
+    }
+
+    public void setOpenShellPolicy(Optional<String> openShellPolicy) {
+        this.openShellPolicy = openShellPolicy;
+    }
+
     public ApplicationAdvancedSettings patch(ApplicationAdvancedSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationAdvancedSettings toPatch = _toPatch == null ? new ApplicationAdvancedSettings() : new ApplicationAdvancedSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setSkipConsent, this.getSkipConsent(), boolean.class);
         SetterUtils.safeSet(toPatch::setFlowsInherited, this.getFlowsInherited(), boolean.class);
         SetterUtils.safeSet(toPatch::setAgentCardUrl, this.getAgentCardUrl(), String.class);
+        SetterUtils.safeSet(toPatch::setOpenShellPolicy, this.getOpenShellPolicy(), String.class);
 
         return toPatch;
     }

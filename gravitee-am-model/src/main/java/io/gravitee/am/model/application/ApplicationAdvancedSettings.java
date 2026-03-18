@@ -32,6 +32,12 @@ public class ApplicationAdvancedSettings {
      * This setting is only applicable to Agentic applications.
      */
     private String agentCardUrl;
+    /**
+     * Optional OpenShell sandbox policy YAML for this agent application.
+     * When set, the agent can fetch this policy from AM using its client credentials
+     * to configure its OpenShell sandbox at creation time.
+     */
+    private String openShellPolicy;
 
     public ApplicationAdvancedSettings() {
     }
@@ -40,6 +46,7 @@ public class ApplicationAdvancedSettings {
         this.skipConsent = other.skipConsent;
         this.flowsInherited = other.flowsInherited;
         this.agentCardUrl = other.agentCardUrl;
+        this.openShellPolicy = other.openShellPolicy;
     }
 
     public boolean isSkipConsent() {
@@ -66,8 +73,17 @@ public class ApplicationAdvancedSettings {
         this.agentCardUrl = agentCardUrl;
     }
 
+    public String getOpenShellPolicy() {
+        return openShellPolicy;
+    }
+
+    public void setOpenShellPolicy(String openShellPolicy) {
+        this.openShellPolicy = openShellPolicy;
+    }
+
     public void copyTo(Client client) {
         client.setAutoApproveScopes(this.skipConsent ? Collections.singletonList("true") : null);
         client.setFlowsInherited(this.flowsInherited);
+        client.setOpenShellPolicy(this.openShellPolicy);
     }
 }
