@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "grantType": {
+      "type": "string",
+      "enum": ["authorization_code", "client_credentials"]
+    }
+  }
+}

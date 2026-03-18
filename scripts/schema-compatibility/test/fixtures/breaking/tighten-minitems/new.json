@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "scopes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  }
+}

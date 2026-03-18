@@ -996,6 +996,16 @@ jobs:
           key: gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
           when: always
 
+  schema-compat-check:
+    executor:
+      name: node-lts
+      class: small
+    steps:
+      - checkout
+      - run:
+          name: Check schema backwards compatibility
+          command: bash .circleci/scripts/schema-compat-check.sh
+
   junit_tests:
     executor:
       name: openjdk
@@ -1884,6 +1894,15 @@ workflows:
           context: cicd-orchestrator
       - pull_requests_ce:
           name: process_pull_request
+          requires:
+            - setup
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^[0-999].[0-999].x/
+      - schema-compat-check:
+          name: Check schema backwards compatibility
           requires:
             - setup
           filters:
