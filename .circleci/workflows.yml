@@ -1952,7 +1952,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["4.4", "8.0"]
+              mongo_version: ["4.4", "8.2"]
       - run_postman_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -1966,7 +1966,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["4.4", "8.0"]
+              mongo_version: ["4.4", "8.2"]
       - run_jest_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -1980,7 +1980,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.0"]
+              mongo_version: ["8.2"]
       - run_playwright_tests_psql:
           context: cicd-orchestrator
           requires:
