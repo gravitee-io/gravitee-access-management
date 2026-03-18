@@ -8,20 +8,26 @@ export PAGER=cat
 # ---------------------------------------------------------------------------
 # Schema Backwards-Compatibility Check
 #
-# Compares every schema-form.json changed between a baseline ref and HEAD.
+# Compares every schema-form.json changed between a baseline ref and HEAD
+# (or the working tree when --use-head=false).
 #
 # Usage:
-#   bash schema-compat-check.sh [--base <ref>]
+#   bash schema-compat-check.sh [--base <ref>] [--use-head <true|false>]
 #
-#   --base <ref>   Any git ref to use as the comparison baseline.
-#                  Examples:
-#                    --base origin/master          (merge-base with a branch)
-#                    --base 4.11.0                 (tag — changes since a release)
-#                    --base abc1234                (specific commit SHA)
-#                    --base HEAD~10                (relative to current HEAD)
-#                  When omitted, the baseline is determined automatically:
-#                    - master / x.y.x branches → HEAD~1
-#                    - all other branches       → git merge-base HEAD origin/master
+#   --base <ref>         Any git ref to use as the comparison baseline.
+#                        Examples:
+#                          --base origin/master          (merge-base with a branch)
+#                          --base 4.11.0                 (tag — changes since a release)
+#                          --base abc1234                (specific commit SHA)
+#                          --base HEAD~10                (relative to current HEAD)
+#                        When omitted, the baseline is determined automatically:
+#                          - master / x.y.x branches → HEAD~1
+#                          - all other branches       → git merge-base HEAD origin/master
+#
+#   --use-head <bool>    true  (default): compare baseline → HEAD (committed changes only).
+#                               Used by CI where all changes are committed.
+#                        false: compare baseline → working tree (includes staged and
+#                               unstaged changes). Useful locally before committing.
 #
 # Exits 0 if no breaking changes; exits 1 if any plugin has breaking changes.
 # Breaking changes are downgraded to warnings when a major version bump is detected.
@@ -38,12 +44,21 @@ trap cleanup EXIT
 # ---------------------------------------------------------------------------
 
 BASE_REF=""
+USE_HEAD="true"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --base)
       BASE_REF="${2:-}"
       if [[ -z "$BASE_REF" ]]; then
         echo "Error: --base requires a git ref argument" >&2
+        exit 2
+      fi
+      shift 2
+      ;;
+    --use-head)
+      USE_HEAD="${2:-}"
+      if [[ "$USE_HEAD" != "true" && "$USE_HEAD" != "false" ]]; then
+        echo "Error: --use-head requires 'true' or 'false'" >&2
         exit 2
       fi
       shift 2
@@ -56,6 +71,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo "=== Schema Backwards-Compatibility Check ==="
+if [[ "$USE_HEAD" == "false" ]]; then
+  echo "(comparing against working tree)"
+fi
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -94,28 +112,33 @@ echo ""
 
 ALLOW_BREAKING=""
 
-extract_major_version() {
-  local commit="$1"
-  # In Gravitee AM, the version is x.y.z and the "major" for compat purposes
-  # is the y component (e.g. "11" in "4.11.3").
-  # Single awk pass: skip the <parent> block (whose <version> appears first),
-  # then extract the y component from the first project <version> tag found.
-  # A single process avoids SIGPIPE from grep -m1 closing the pipe early.
-  git show "${commit}:pom.xml" 2>/dev/null \
-    | awk '
-        /<parent>/   { skip=1 }
-        /<\/parent>/ { skip=0; next }
-        skip         { next }
-        /<version>/  {
-          gsub(/.*<version>/, "")
-          gsub(/<\/version>.*/, "")
-          n = split($0, a, ".")
-          if (n >= 2) { print a[2]; exit }
-        }
-      '
+# Read the y component of the project version from a pom.xml on stdin.
+# Skips the <parent> block to avoid matching the parent artifact's version.
+# A single awk process avoids SIGPIPE caused by grep -m1 closing the pipe early.
+parse_major_from_pom() {
+  awk '
+    /<parent>/   { skip=1 }
+    /<\/parent>/ { skip=0; next }
+    skip         { next }
+    /<version>/  {
+      gsub(/.*<version>/, "")
+      gsub(/<\/version>.*/, "")
+      n = split($0, a, ".")
+      if (n >= 2) { print a[2]; exit }
+    }
+  '
 }
 
-HEAD_MAJOR="$(extract_major_version HEAD)"
+extract_major_version() {
+  local commit="$1"
+  git show "${commit}:pom.xml" 2>/dev/null | parse_major_from_pom
+}
+
+if [[ "$USE_HEAD" == "true" ]]; then
+  HEAD_MAJOR="$(extract_major_version HEAD)"
+else
+  HEAD_MAJOR="$(parse_major_from_pom < "$REPO_ROOT/pom.xml" 2>/dev/null || true)"
+fi
 BASE_MAJOR="$(extract_major_version "$MERGE_BASE")"
 
 if [[ -n "$HEAD_MAJOR" && -n "$BASE_MAJOR" ]]; then
@@ -138,9 +161,16 @@ fi
 # ---------------------------------------------------------------------------
 
 CHANGED_SCHEMAS=()
+if [[ "$USE_HEAD" == "true" ]]; then
+  # Committed changes only: baseline → HEAD
+  GIT_DIFF_TARGET="HEAD"
+else
+  # Include staged and unstaged working tree changes
+  GIT_DIFF_TARGET=""
+fi
 while IFS= read -r line; do
   [[ -n "$line" ]] && CHANGED_SCHEMAS+=("$line")
-done < <(git diff --name-only "$MERGE_BASE" HEAD -- '**/schema-form.json' 2>/dev/null || true)
+done < <(git diff --name-only "$MERGE_BASE" $GIT_DIFF_TARGET -- '**/schema-form.json' 2>/dev/null || true)
 
 if [[ ${#CHANGED_SCHEMAS[@]} -eq 0 ]]; then
   echo "✅  No schema-form.json files changed in this diff. Nothing to check."
