@@ -29,8 +29,8 @@ export PAGER=cat
 #                        false: compare baseline → working tree (includes staged and
 #                               unstaged changes). Useful locally before committing.
 #
-# Exits 0 if no breaking changes; exits 1 if any plugin has breaking changes.
-# Breaking changes are downgraded to warnings when a major version bump is detected.
+# Exits 0 if no breaking changes (or minor version bump detected).
+# Exits 1 if any EE plugin has breaking changes.
 # ---------------------------------------------------------------------------
 
 REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
@@ -107,15 +107,16 @@ fi
 echo ""
 
 # ---------------------------------------------------------------------------
-# Detect major version bump (permits breaking changes)
+# Detect minor version bump (permits breaking changes)
 # ---------------------------------------------------------------------------
 
 ALLOW_BREAKING=""
 
-# Read the y component of the project version from a pom.xml on stdin.
+# Read the y and z components of the project version from a pom.xml on stdin.
+# Prints "y z" (space-separated) on a single line.
 # Skips the <parent> block to avoid matching the parent artifact's version.
 # A single awk process avoids SIGPIPE caused by grep -m1 closing the pipe early.
-parse_major_from_pom() {
+parse_version_from_pom() {
   awk '
     /<parent>/   { skip=1 }
     /<\/parent>/ { skip=0; next }
@@ -124,31 +125,39 @@ parse_major_from_pom() {
       gsub(/.*<version>/, "")
       gsub(/<\/version>.*/, "")
       n = split($0, a, ".")
-      if (n >= 2) { print a[2]; exit }
+      if (n >= 3) {
+        split(a[3], p, "-")   # strip -SNAPSHOT suffix from patch
+        print a[2], p[1]; exit
+      }
     }
   '
 }
 
-extract_major_version() {
+extract_version() {
   local commit="$1"
-  git show "${commit}:pom.xml" 2>/dev/null | parse_major_from_pom
+  git show "${commit}:pom.xml" 2>/dev/null | parse_version_from_pom
 }
 
 if [[ "$USE_HEAD" == "true" ]]; then
-  HEAD_MAJOR="$(extract_major_version HEAD)"
+  read -r HEAD_MINOR HEAD_PATCH <<< "$(extract_version HEAD)"
 else
-  HEAD_MAJOR="$(parse_major_from_pom < "$REPO_ROOT/pom.xml" 2>/dev/null || true)"
+  read -r HEAD_MINOR HEAD_PATCH <<< "$(parse_version_from_pom < "$REPO_ROOT/pom.xml" 2>/dev/null || true)"
 fi
-BASE_MAJOR="$(extract_major_version "$MERGE_BASE")"
+read -r BASE_MINOR BASE_PATCH <<< "$(extract_version "$MERGE_BASE")"
 
-if [[ -n "$HEAD_MAJOR" && -n "$BASE_MAJOR" ]]; then
-  if [[ "$HEAD_MAJOR" != "$BASE_MAJOR" ]]; then
-    echo "⚠️   Major version bump detected: $BASE_MAJOR → $HEAD_MAJOR"
+if [[ -n "$HEAD_MINOR" && -n "$BASE_MINOR" ]]; then
+  if [[ "$HEAD_MINOR" != "$BASE_MINOR" ]]; then
+    echo "⚠️   Minor version bump detected: $BASE_MINOR → $HEAD_MINOR"
+    echo "    Breaking schema changes will be reported but will NOT fail the build."
+    echo ""
+    ALLOW_BREAKING="--allow-breaking"
+  elif [[ "$HEAD_PATCH" == "0" ]]; then
+    echo "⚠️   Minor version $HEAD_MINOR patch is 0 — no release of this minor version exists yet."
     echo "    Breaking schema changes will be reported but will NOT fail the build."
     echo ""
     ALLOW_BREAKING="--allow-breaking"
   else
-    echo "Version: major=$HEAD_MAJOR (no bump)"
+    echo "Version: minor=$HEAD_MINOR patch=$HEAD_PATCH (no bump)"
     echo ""
   fi
 else
@@ -236,7 +245,7 @@ echo "=== Summary ==="
 if [[ $FAILURES -gt 0 ]]; then
   echo "❌  $FAILURES plugin(s) have breaking schema changes."
   echo "    To fix: ensure no required fields are added, no fields removed, no types changed."
-  echo "    If this is intentional for a major version, bump the major version component of pom.xml <version>."
+  echo "    If this is intentional for a new minor version, bump the minor version (y in x.y.z) of pom.xml <version>."
   exit 1
 else
   echo "✅  All schema checks passed."

@@ -1006,6 +1006,31 @@ jobs:
           name: Check schema backwards compatibility
           command: bash .circleci/scripts/schema-compat-check.sh
 
+  ee-schema-compat-check:
+    executor:
+      name: openjdk
+      class: medium
+      version: "21.0.6"
+      with_node: true
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore-maven-job-cache:
+          jobName: pull_requests
+      - run:
+          name: Copy Maven settings
+          command: mkdir -p ~/.m2 && cp /tmp/.gravitee.settings.xml ~/.m2/settings.xml
+      - run:
+          name: Assemble distribution plugin ZIPs
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml install \
+              -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution \
+              -am -P full-bundle -DskipTests -Dlicense.skip=true --no-transfer-progress -q
+      - run:
+          name: Check EE plugin schema backwards compatibility
+          command: bash .circleci/scripts/ee-schema-compat-check.sh
+
   junit_tests:
     executor:
       name: openjdk
@@ -1905,6 +1930,16 @@ workflows:
           name: Check schema backwards compatibility
           requires:
             - setup
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^[0-999].[0-999].x/
+      - ee-schema-compat-check:
+          name: Check EE plugin schema backwards compatibility
+          requires:
+            - process_pull_request
+            - Check schema backwards compatibility
           filters:
             branches:
               ignore:
