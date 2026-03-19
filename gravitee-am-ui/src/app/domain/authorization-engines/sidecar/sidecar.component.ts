@@ -18,7 +18,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { SidecarService } from '../../../services/sidecar.service';
 import { AuthorizationEngineService } from '../../../services/authorization-engine.service';
 import { AuthorizationBundleService } from '../../../services/authorization-bundle.service';
 import { AuthorizationSchemaService } from '../../../services/authorization-schema.service';
@@ -84,19 +83,11 @@ export class SidecarComponent implements OnInit, OnDestroy {
   configurationIsValid = false;
   isSaving = false;
 
-  healthStatus: string | null = null;
-  healthReady: boolean | null = null;
-  connectedSidecars: number | null = null;
-  bundleVersion: number | null = null;
-  isCheckingHealth = false;
-  hasLoadError = false;
-
   private authorizationEnginePlugins: Record<string, Plugin> = {};
   private subscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
-    private sidecarService: SidecarService,
     private authorizationEngineService: AuthorizationEngineService,
     private authorizationBundleService: AuthorizationBundleService,
     private authorizationSchemaService: AuthorizationSchemaService,
@@ -146,11 +137,9 @@ export class SidecarComponent implements OnInit, OnDestroy {
           }
 
           this.loadAuthorizationEngineSchema(engine.type);
-          this.checkHealth();
         },
         error: () => {
           this.snackbarService.open('Failed to load authorization engine');
-          this.hasLoadError = true;
         },
       }),
     );
@@ -208,30 +197,6 @@ export class SidecarComponent implements OnInit, OnDestroy {
     );
   }
 
-  checkHealth() {
-    this.isCheckingHealth = true;
-    this.subscriptions.add(
-      this.sidecarService.health(this.domainId, this.engineId).subscribe({
-        next: (response) => {
-          this.healthStatus = response.status;
-          this.healthReady = response.status === 'UP';
-          this.connectedSidecars = response.connectedSidecars ?? null;
-          this.bundleVersion = response.bundleVersion ?? null;
-          this.isCheckingHealth = false;
-          this.hasLoadError = false;
-        },
-        error: () => {
-          this.healthStatus = 'UNREACHABLE';
-          this.healthReady = false;
-          this.connectedSidecars = null;
-          this.bundleVersion = null;
-          this.isCheckingHealth = false;
-          this.hasLoadError = true;
-        },
-      }),
-    );
-  }
-
   onBundleChanged() {
     this.draftConfiguration = { ...this.draftConfiguration, bundleId: this.selectedBundleId };
   }
@@ -245,7 +210,6 @@ export class SidecarComponent implements OnInit, OnDestroy {
     };
     if (this.selectedSchemaId) {
       this.loadSchemaVersions(this.selectedSchemaId);
-      // Set default version from schema metadata
       const schema = this.schemas.find((s) => s.id === this.selectedSchemaId);
       if (schema) {
         this.selectedSchemaVersion = schema.latestVersion;
@@ -318,8 +282,6 @@ export class SidecarComponent implements OnInit, OnDestroy {
             this.selectedSchemaVersion = config.schemaVersion || 0;
             this.selectedSchemaPinToLatest = config.schemaPinToLatest !== false;
             this.snackbarService.open('Configuration saved successfully');
-
-            this.checkHealth();
           },
         }),
     );

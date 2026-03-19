@@ -87,19 +87,6 @@ class WsMessageCodecTest {
     }
 
     @Test
-    void decode_bundleUpdate_backwardCompat_oldSingleFields() {
-        // Old format with "policy" and "data" single string fields
-        String oldJson = "{\"type\":\"bundle_update\",\"version\":3,\"policy\":\"permit(p,a,r);\",\"data\":\"[{\\\"id\\\":1}]\",\"schema\":null}";
-        WsMessage decoded = codec.decode(oldJson);
-
-        assertThat(decoded).isInstanceOf(WsMessage.BundleUpdate.class);
-        var bu = (WsMessage.BundleUpdate) decoded;
-        assertThat(bu.version()).isEqualTo(3);
-        assertThat(bu.policies()).containsExactly("permit(p,a,r);");
-        assertThat(bu.entityStores()).containsExactly("[{\"id\":1}]");
-    }
-
-    @Test
     void roundTrip_auditEvent() {
         var event = new AuthorizationAuditEvent(
                 "dec-1", "2025-01-01T00:00:00Z", true,

@@ -135,10 +135,21 @@ public class AuthorizationSchemaServiceImpl implements AuthorizationSchemaServic
                 })
                 .flatMap(created -> {
                     Event event = new Event(Type.AUTHORIZATION_SCHEMA, new Payload(created.getId(), ReferenceType.DOMAIN, domain.getId(), Action.CREATE));
-                    return eventService.create(event, domain).map(__ -> created);
+                    return eventService.create(event, domain)
+                            .map(__ -> created)
+                            .onErrorResumeNext(err -> {
+                                LOGGER.warn("Failed to publish AUTHORIZATION_SCHEMA event for schema {}: {}", created.getId(), err.getMessage());
+                                return Single.just(created);
+                            });
                 })
                 .doOnSuccess(s -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_CREATED).authorizationSchema(s)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_CREATED).throwable(throwable)))
+                .doOnError(throwable -> {
+                    try {
+                        auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_CREATED).throwable(throwable));
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to report audit for schema creation error: {}", e.getMessage());
+                    }
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -176,10 +187,21 @@ public class AuthorizationSchemaServiceImpl implements AuthorizationSchemaServic
                             })
                             .flatMap(updatedSchema -> {
                                 Event event = new Event(Type.AUTHORIZATION_SCHEMA, new Payload(updatedSchema.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
-                                return eventService.create(event, domain).map(__ -> updatedSchema);
+                                return eventService.create(event, domain)
+                                        .map(__ -> updatedSchema)
+                                        .onErrorResumeNext(err -> {
+                                            LOGGER.warn("Failed to publish AUTHORIZATION_SCHEMA event for schema {}: {}", updatedSchema.getId(), err.getMessage());
+                                            return Single.just(updatedSchema);
+                                        });
                             })
                             .doOnSuccess(s -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_UPDATED).authorizationSchema(s)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> {
+                                try {
+                                    auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_UPDATED).throwable(throwable));
+                                } catch (Exception e) {
+                                    LOGGER.warn("Failed to report audit for schema update error: {}", e.getMessage());
+                                }
+                            });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -214,9 +236,19 @@ public class AuthorizationSchemaServiceImpl implements AuthorizationSchemaServic
                     Event event = new Event(Type.AUTHORIZATION_SCHEMA, new Payload(id, ReferenceType.DOMAIN, domain.getId(), Action.DELETE));
                     return authorizationSchemaVersionRepository.deleteBySchemaId(id)
                         .andThen(authorizationSchemaRepository.delete(id))
-                        .andThen(eventService.create(event, domain).ignoreElement())
+                        .andThen(eventService.create(event, domain).ignoreElement()
+                                .onErrorComplete(err -> {
+                                    LOGGER.warn("Failed to publish AUTHORIZATION_SCHEMA delete event: {}", err.getMessage());
+                                    return true;
+                                }))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_DELETED).authorizationSchema(s)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_DELETED).throwable(throwable)));
+                        .doOnError(throwable -> {
+                            try {
+                                auditService.report(AuditBuilder.builder(AuthorizationSchemaAuditBuilder.class).principal(principal).type(EventType.AUTHORIZATION_SCHEMA_DELETED).throwable(throwable));
+                            } catch (Exception e) {
+                                LOGGER.warn("Failed to report audit for schema delete error: {}", e.getMessage());
+                            }
+                        });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

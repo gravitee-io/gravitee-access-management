@@ -108,7 +108,6 @@ public final class WsMessageCodec {
                 case TYPE_BUNDLE_UPDATE -> {
                     int version = root.path("version").asInt(0);
 
-                    // Decode policies list (with backward compat for old single "policy" field)
                     List<String> policies = new ArrayList<>();
                     JsonNode policiesNode = root.path("policies");
                     if (policiesNode.isArray()) {
@@ -116,25 +115,12 @@ public final class WsMessageCodec {
                             policies.add(p.asText());
                         }
                     }
-                    if (policies.isEmpty()) {
-                        String oldPolicy = textOrNull(root, "policy");
-                        if (oldPolicy != null) {
-                            policies.add(oldPolicy);
-                        }
-                    }
 
-                    // Decode entityStores list (with backward compat for old single "data" field)
                     List<String> entityStores = new ArrayList<>();
                     JsonNode entityStoresNode = root.path("entityStores");
                     if (entityStoresNode.isArray()) {
                         for (JsonNode e : entityStoresNode) {
                             entityStores.add(e.asText());
-                        }
-                    }
-                    if (entityStores.isEmpty()) {
-                        String oldData = textOrNull(root, "data");
-                        if (oldData != null) {
-                            entityStores.add(oldData);
                         }
                     }
 
