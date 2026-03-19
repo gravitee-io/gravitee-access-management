@@ -730,7 +730,8 @@ export class OpenShellPolicyComponent implements OnInit {
         existingEpMap.set(`${ep.host}_${ep.port}_${ep.protocol}`, ep);
       }
       for (const [key, entry] of fgaEndpoints) {
-        existingEpMap.set(key, { ...(existingEpMap.get(key) ?? {}), ...entry, enforcement: 'enforce' });
+        const tls = entry.port === 443 ? { tls: 'terminate' } : {};
+        existingEpMap.set(key, { ...(existingEpMap.get(key) ?? {}), ...entry, ...tls, enforcement: 'enforce' });
       }
       existingNetworkPolicies['fga_policy'] = { ...existingFgaPolicy, endpoints: [...existingEpMap.values()] };
       networkPolicyKeys.add('fga_policy');
