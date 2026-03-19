@@ -15,9 +15,8 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import 'codemirror/mode/yaml/yaml';
-
 
 import { ApplicationService } from '../../../../../services/application.service';
 import { AuthorizationEngineService } from '../../../../../services/authorization-engine.service';
@@ -643,9 +642,7 @@ export class OpenShellPolicyComponent implements OnInit {
           object: t.key?.object ?? t.object,
         });
 
-        const agentTuples = allTuples
-          .filter((t: any) => (t.key?.user ?? t.user) === agentUser)
-          .map(normalize);
+        const agentTuples = allTuples.filter((t: any) => (t.key?.user ?? t.user) === agentUser).map(normalize);
 
         const updatedYaml = this.tuplesToYaml(agentTuples, this.policy);
 
@@ -707,66 +704,34 @@ export class OpenShellPolicyComponent implements OnInit {
     const readOnly = [...readOnlySet];
     const readWrite = [...readWriteSet];
 
-    const lines: string[] = [`version: ${raw.version ?? 1}`, ''];
+    const networkPoliciesObj: Record<string, any> = {};
+    for (const key of networkPolicyKeys) {
+      networkPoliciesObj[key] = existingNetworkPolicies[key] ?? { name: key };
+    }
+
+    const doc: any = { version: raw.version ?? 1 };
 
     if (readOnly.length > 0 || readWrite.length > 0) {
-      lines.push('filesystem_policy:');
-      lines.push(`  include_workdir: ${includeWorkdir}`);
-      if (readOnly.length > 0) {
-        lines.push('  read_only:');
-        readOnly.forEach(p => lines.push(`    - ${p}`));
-      }
-      if (readWrite.length > 0) {
-        lines.push('  read_write:');
-        readWrite.forEach(p => lines.push(`    - ${p}`));
-      }
-      lines.push('');
+      const fsPolicy: any = { include_workdir: includeWorkdir };
+      if (readOnly.length > 0) fsPolicy.read_only = readOnly;
+      if (readWrite.length > 0) fsPolicy.read_write = readWrite;
+      doc.filesystem_policy = fsPolicy;
     }
 
     if (lanklockCompatibility) {
-      lines.push('landlock:');
-      lines.push(`  compatibility: ${lanklockCompatibility}`);
-      lines.push('');
+      doc.landlock = { compatibility: lanklockCompatibility };
     }
 
     if (runAsUser || runAsGroup) {
-      lines.push('process:');
-      if (runAsUser) lines.push(`  run_as_user: ${runAsUser}`);
-      if (runAsGroup) lines.push(`  run_as_group: ${runAsGroup}`);
-      lines.push('');
+      const proc: any = {};
+      if (runAsUser) proc.run_as_user = runAsUser;
+      if (runAsGroup) proc.run_as_group = runAsGroup;
+      doc.process = proc;
     }
 
-    if (networkPolicyKeys.size > 0) {
-      lines.push('network_policies:');
-      for (const key of networkPolicyKeys) {
-        lines.push(this.serializeNetworkPolicy(key, existingNetworkPolicies[key] ?? { name: key }));
-      }
-    } else {
-      lines.push('network_policies: {}');
-    }
+    doc.network_policies = networkPolicyKeys.size > 0 ? networkPoliciesObj : {};
 
-    return lines.join('\n');
-  }
-
-  private serializeNetworkPolicy(key: string, policy: any): string {
-    const lines: string[] = [`  ${key}:`];
-    if (policy.name) lines.push(`    name: ${policy.name}`);
-    if (Array.isArray(policy.endpoints) && policy.endpoints.length > 0) {
-      lines.push('    endpoints:');
-      for (const ep of policy.endpoints) {
-        const parts = Object.entries(ep)
-          .map(([k, v]) => `${k}: ${v}`)
-          .join(', ');
-        lines.push(`      - { ${parts} }`);
-      }
-    }
-    if (Array.isArray(policy.binaries) && policy.binaries.length > 0) {
-      lines.push('    binaries:');
-      for (const b of policy.binaries) {
-        lines.push(`      - { path: ${b.path} }`);
-      }
-    }
-    return lines.join('\n');
+    return stringifyYaml(doc, { lineWidth: 0 });
   }
 
   loadPolicy(): void {
@@ -832,7 +797,7 @@ export class OpenShellPolicyComponent implements OnInit {
   }
 
   applyTemplate(templateId: string): void {
-    const tpl = POLICY_TEMPLATES.find(t => t.id === templateId);
+    const tpl = POLICY_TEMPLATES.find((t) => t.id === templateId);
     if (!tpl) return;
     if (this.policy?.trim() && this.isDirty) {
       if (!confirm('Replace current editor content with template? Unsaved changes will be lost.')) {

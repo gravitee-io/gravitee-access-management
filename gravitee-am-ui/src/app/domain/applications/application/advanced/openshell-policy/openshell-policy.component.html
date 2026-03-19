@@ -45,11 +45,7 @@
             </div>
 
             <div class="policy-editor-wrapper">
-              <ngx-codemirror
-                [(ngModel)]="policy"
-                [options]="editorOptions"
-                data-testid="policyEditor"
-              ></ngx-codemirror>
+              <ngx-codemirror [(ngModel)]="policy" [options]="editorOptions" data-testid="policyEditor"></ngx-codemirror>
             </div>
 
             <div class="policy-actions">
@@ -74,11 +70,7 @@
 
               <span class="policy-actions-spacer"></span>
 
-              <mat-form-field
-                *ngIf="authorizationEngines.length > 1"
-                appearance="outline"
-                class="engine-select-field"
-              >
+              <mat-form-field *ngIf="authorizationEngines.length > 1" appearance="outline" class="engine-select-field">
                 <mat-label>OpenFGA Engine</mat-label>
                 <mat-select [(ngModel)]="selectedEngineId">
                   <mat-option *ngFor="let e of authorizationEngines" [value]="e.id">{{ e.name }}</mat-option>
@@ -97,12 +89,12 @@
             </div>
 
             <div *ngIf="syncMessage" class="sync-status" [ngClass]="syncStatus === 'error' ? 'sync-status-error' : 'sync-status-success'">
-              <mat-icon>{{ syncStatus === 'error' ? 'error_outline' : 'check_circle_outline' }}</mat-icon>
+              <mat-icon class="sync-status-icon">{{ syncStatus === 'error' ? 'error_outline' : 'check_circle_outline' }}</mat-icon>
               {{ syncMessage }}
             </div>
 
             <div *ngIf="authorizationEngines.length === 0" class="sync-status sync-status-warn">
-              <mat-icon>info_outline</mat-icon>
+              <mat-icon class="sync-status-icon">info_outline</mat-icon>
               No OpenFGA authorization engine configured for this domain. Create one to enable sync.
             </div>
           </div>
@@ -230,8 +222,8 @@
         <mat-tab label="How to use">
           <div class="gv-form-section-content">
             <p class="how-to-intro">
-              The sandbox policy is served publicly from the gateway — no authentication required.
-              Use the URL below to fetch it directly or pass it to OpenShell at sandbox creation time.
+              The sandbox policy is served publicly from the gateway — no authentication required. Use the URL below to fetch it directly or
+              pass it to OpenShell at sandbox creation time.
             </p>
 
             <p class="how-to-step-label">Policy URL</p>
@@ -241,8 +233,10 @@
             <pre class="policy-code-block">curl {{ gatewayUrl }}/{{ application?.domain }}/openshell-policy/{{ application?.id }}</pre>
 
             <p class="how-to-step-label">Start sandbox with policy from AM</p>
-            <pre class="policy-code-block">openshell sandbox create \
-  --policy "{{ gatewayUrl }}/{{ application?.domain }}/openshell-policy/{{ application?.id }}"</pre>
+            <pre class="policy-code-block">
+openshell sandbox create \
+  --policy "{{ gatewayUrl }}/{{ application?.domain }}/openshell-policy/{{ application?.id }}"</pre
+            >
 
             <p class="how-to-note">
               <mat-icon class="how-to-note-icon">info_outline</mat-icon>

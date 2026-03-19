@@ -41,15 +41,15 @@
 }
 
 .template-desc {
-  font-weight: normal;
-  color: rgba(0, 0, 0, 0.54);
+  color: rgb(0 0 0 / 54%);
   font-size: 0.85em;
+  font-weight: normal;
 }
 
 .policy-editor-wrapper {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
   overflow: hidden;
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: 4px;
   margin-bottom: 8px;
 
   ngx-codemirror {
@@ -57,8 +57,8 @@
 
     ::ng-deep .CodeMirror {
       height: 420px;
-      font-size: 13px;
       font-family: 'Roboto Mono', 'Courier New', monospace;
+      font-size: 13px;
     }
   }
 }
@@ -84,6 +84,7 @@
 
 .engine-select-field {
   width: 200px;
+
   // Shrink the form-field height to match button height
   ::ng-deep .mat-mdc-form-field-subscript-wrapper {
     display: none;
@@ -94,12 +95,12 @@
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  margin-top: 8px;
   border-radius: 4px;
+  margin-top: 8px;
   font-size: 13px;
   gap: 6px;
 
-  mat-icon {
+  .sync-status-icon {
     width: 18px;
     height: 18px;
     flex-shrink: 0;

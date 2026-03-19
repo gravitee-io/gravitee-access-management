@@ -92,7 +92,7 @@ export class OpenFGAService {
           const tuples: any[] = response.data ?? [];
           const nextToken: string | null = response.info?.continuationToken ?? null;
           if (nextToken) {
-            return fetchPage(nextToken).pipe(map(next => [...tuples, ...next]));
+            return fetchPage(nextToken).pipe(map((next) => [...tuples, ...next]));
           }
           return of(tuples);
         }),
