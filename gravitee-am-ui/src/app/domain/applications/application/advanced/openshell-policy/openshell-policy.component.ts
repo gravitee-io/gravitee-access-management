@@ -682,6 +682,14 @@ export class OpenShellPolicyComponent implements OnInit {
     let runAsGroup: string | null = raw.process?.run_as_group ?? null;
     const networkPolicyKeys = new Set<string>(Object.keys(existingNetworkPolicies));
 
+    const endpointAccessMap: Record<string, string> = {
+      accessible: 'full',
+      read_only: 'read-only',
+      forbidden: 'none',
+    };
+    // keyed by "host_port_protocol" to deduplicate
+    const fgaEndpoints = new Map<string, { host: string; port: number; protocol: string; access: string }>();
+
     // Merge: add entries from OpenFGA that are not already present
     for (const t of tuples) {
       if (t.relation === 'reader' && t.object.startsWith('directory:')) {
@@ -698,7 +706,34 @@ export class OpenShellPolicyComponent implements OnInit {
         runAsGroup = t.object.slice('system_group:'.length);
       } else if (t.relation === 'accessible' && t.object.startsWith('network_policy:')) {
         networkPolicyKeys.add(t.object.slice('network_policy:'.length));
+      } else if (t.object.startsWith('endpoint_') && t.relation in endpointAccessMap) {
+        const colonIdx = t.object.indexOf(':');
+        const objectType = t.object.slice(0, colonIdx);              // e.g. "endpoint_rest"
+        const objectId = t.object.slice(colonIdx + 1);               // e.g. "api.example.com_443"
+        const protocol = objectType.slice('endpoint_'.length);       // e.g. "rest"
+        const lastUnderscore = objectId.lastIndexOf('_');
+        if (lastUnderscore !== -1) {
+          const host = objectId.slice(0, lastUnderscore);
+          const port = Number(objectId.slice(lastUnderscore + 1));
+          if (!isNaN(port)) {
+            fgaEndpoints.set(`${host}_${port}_${protocol}`, { host, port, protocol, access: endpointAccessMap[t.relation] });
+          }
+        }
       }
+    }
+
+    // Merge fgaEndpoints into the 'fga_policy' block
+    if (fgaEndpoints.size > 0) {
+      const existingFgaPolicy = existingNetworkPolicies['fga_policy'] ?? { name: 'fga_policy', endpoints: [] };
+      const existingEpMap = new Map<string, any>();
+      for (const ep of (existingFgaPolicy.endpoints ?? [])) {
+        existingEpMap.set(`${ep.host}_${ep.port}_${ep.protocol}`, ep);
+      }
+      for (const [key, entry] of fgaEndpoints) {
+        existingEpMap.set(key, { ...(existingEpMap.get(key) ?? {}), ...entry, enforcement: 'enforce' });
+      }
+      existingNetworkPolicies['fga_policy'] = { ...existingFgaPolicy, endpoints: [...existingEpMap.values()] };
+      networkPolicyKeys.add('fga_policy');
     }
 
     const readOnly = [...readOnlySet];
