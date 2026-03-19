@@ -201,9 +201,8 @@ FAILURES=0
 for SCHEMA_PATH in "${CHANGED_SCHEMAS[@]}"; do
   PLUGIN_NAME="$(echo "$SCHEMA_PATH" | awk -F/ '{
     for (i=1; i<=NF; i++) {
-      if ($i ~ /^gravitee-am-/) { print $i; exit }
+      if ($(i+1) == "src") { print $i; exit }
     }
-    print $(NF-2)
   }')"
 
   echo "── Checking: $SCHEMA_PATH ($PLUGIN_NAME) ──"
