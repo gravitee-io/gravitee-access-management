@@ -271,10 +271,10 @@ console.log('');
 
 if (errors.length > 0) {
   if (allowBreaking) {
-    console.log(`⚠️   Breaking changes found but --allow-breaking is set (major version bump detected). Exiting 0.`);
+    console.log(`⚠️   Breaking changes found but --allow-breaking is set. Exiting 0.`);
     process.exit(0);
   } else {
-    console.log(`❌  Breaking changes found. If this is intentional (major version bump), ensure pom.xml major version is incremented.`);
+    console.log(`❌  Breaking changes found. If this is intentional, ensure pom.xml minor version (y in x.y.z) is incremented.`);
     process.exit(1);
   }
 }

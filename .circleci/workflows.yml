@@ -1024,9 +1024,9 @@ jobs:
       - run:
           name: Assemble distribution plugin ZIPs
           command: |
-            mvn -s /tmp/.gravitee.settings.xml install \
+            mvn -B -V -ntp -s /tmp/.gravitee.settings.xml install \
               -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution \
-              -am -P full-bundle -DskipTests -Dlicense.skip=true --no-transfer-progress -q
+              -am -P full-bundle -DskipTests -Dlicense.skip=true
       - run:
           name: Check EE plugin schema backwards compatibility
           command: bash .circleci/scripts/ee-schema-compat-check.sh
