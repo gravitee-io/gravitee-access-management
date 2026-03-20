@@ -35,6 +35,8 @@ import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.impl.HostAndPortImpl;
 
+import jakarta.annotation.Nullable;
+
 import java.util.Set;
 
 /**
@@ -97,6 +99,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return this;
     }
 
+    @Nullable
     @Override
     public HostAndPort authority() {
         if (delegate instanceof HttpServerRequest) {
@@ -133,6 +136,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return method;
     }
 
+    @Nullable
     @Override
     public String scheme() {
         return scheme;
@@ -143,16 +147,19 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return uri;
     }
 
+    @Nullable
     @Override
     public String path() {
         return path;
     }
 
+    @Nullable
     @Override
     public String query() {
         return null;
     }
 
+    @Nullable
     public String host() {
         return host;
     }
@@ -162,6 +169,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return 0;
     }
 
+    @Nullable
     @Override
     public HttpServerResponse response() {
         return null;
@@ -177,6 +185,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return null;
     }
 
+    @Nullable
     @Override
     public String getParamsCharset() {
         return null;
@@ -187,6 +196,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return params;
     }
 
+    @Nullable
     @Override
     public String absoluteURI() {
         return null;
@@ -231,6 +241,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return attributes;
     }
 
+    @Nullable
     @Override
     public String getFormAttribute(String s) {
         return formAttributes().get(s);
@@ -251,6 +262,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return this;
     }
 
+    @Nullable
     @Override
     public HttpConnection connection() {
         return null;
@@ -261,21 +273,25 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return this;
     }
 
+    @Nullable
     @Override
     public DecoderResult decoderResult() {
         return null;
     }
 
+    @Nullable
     @Override
     public Cookie getCookie(String s) {
         return null;
     }
 
+    @Nullable
     @Override
     public Cookie getCookie(String s, String s1, String s2) {
         return null;
     }
 
+    @Nullable
     @Override
     public Set<Cookie> cookies(String s) {
         return null;

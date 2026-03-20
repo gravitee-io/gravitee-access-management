@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.auth.user;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authorization.Authorizations;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 
 /**
@@ -34,6 +35,7 @@ public class User implements io.vertx.ext.auth.User {
         this.principal = JsonObject.mapFrom(user);
     }
 
+    @Nullable
     @Override
     public JsonObject attributes() {
         return null;
@@ -49,6 +51,7 @@ public class User implements io.vertx.ext.auth.User {
         return io.vertx.ext.auth.User.super.expired(leeway);
     }
 
+    @Nullable
     @Override
     public <T> T get(String key) {
         return io.vertx.ext.auth.User.super.get(key);
@@ -69,6 +72,7 @@ public class User implements io.vertx.ext.auth.User {
         return principal;
     }
 
+    @Nullable
     @Override
     public io.vertx.ext.auth.User merge(io.vertx.ext.auth.User other) {
         return null;
