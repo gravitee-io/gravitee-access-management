@@ -22,13 +22,13 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.Cookie;
-import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
 /**
  * @author Aurélien PACAUD (aurelien.pacaud at graviteesource.com)
@@ -68,7 +68,7 @@ public class RememberMeStep extends AuthenticationFlowStep {
         extractUserFormRememberMeCookie(routingContext.request().getCookie(cookieName))
                 .subscribe(
                         user -> {
-                            ((UserContextInternal) routingContext.getDelegate().userContext()).setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+                            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                             flow.exit(this);
                         },
                         throwable -> {

@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 

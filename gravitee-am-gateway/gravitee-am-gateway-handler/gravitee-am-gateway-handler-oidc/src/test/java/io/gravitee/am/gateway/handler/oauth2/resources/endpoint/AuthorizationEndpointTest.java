@@ -70,7 +70,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;

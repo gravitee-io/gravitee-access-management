@@ -31,13 +31,13 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
-import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static java.util.function.Predicate.not;
 
 /**
@@ -85,7 +85,7 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
 
                 if (redirectUri.isPresent()) {
                     var webAuthUser = new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(userToken.getUser());
-                    ((UserContextInternal) context.getDelegate().userContext()).setUser(webAuthUser);
+                    setUser(context, webAuthUser);
                     context.response()
                             .putHeader(HttpHeaders.LOCATION, ParamUtils.appendQueryParameter(redirectUri.get(), queryParams))
                             .setStatusCode(302)

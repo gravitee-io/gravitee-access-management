@@ -44,7 +44,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 

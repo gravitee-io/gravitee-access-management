@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 

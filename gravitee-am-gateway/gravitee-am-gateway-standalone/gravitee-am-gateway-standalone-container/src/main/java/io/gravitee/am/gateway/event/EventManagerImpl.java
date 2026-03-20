@@ -186,7 +186,7 @@ public class EventManagerImpl implements EventManager {
 
         public EventListenerWrapper(EventListener<T, ?> eventListener, Collection<T> events) {
             this.eventListener = eventListener;
-            this.events = new HashSet(events);
+            this.events = new HashSet<>(events);
         }
 
         public EventListener<T, ?> eventListener() {

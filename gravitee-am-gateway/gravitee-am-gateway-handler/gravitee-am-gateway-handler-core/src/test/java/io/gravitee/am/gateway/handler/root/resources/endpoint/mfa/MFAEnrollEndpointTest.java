@@ -65,7 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;

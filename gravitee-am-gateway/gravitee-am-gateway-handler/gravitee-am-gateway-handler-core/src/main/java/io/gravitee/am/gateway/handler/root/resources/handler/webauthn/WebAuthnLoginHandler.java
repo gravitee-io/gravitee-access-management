@@ -30,7 +30,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.vertx.ext.web.impl.UserContextInternal;
+import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
@@ -52,6 +52,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -205,7 +206,8 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             // save the user and credential id into the context
                             final Credential credential = tuple.getT1();
                             final User user = tuple.getT2();
-                            ((UserContextInternal) ctx.getDelegate().userContext()).setUser(user);
+                            setUser(ctx, user);
+
                             ctx.put(ConstantKeys.USER_CONTEXT_KEY, user.getUser());
                             ctx.put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
                             ctx.put(WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY, credential.getId());

@@ -19,10 +19,11 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.service.AuditService;
 import io.vertx.core.Handler;
-import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,7 +47,7 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
     }
 
     private RoutingContext setupUserSession(RoutingContext ctx, User user) {
-        ((UserContextInternal) ctx.getDelegate().userContext()).setUser(user);
+        setUser(ctx, user);
         ctx.put(ConstantKeys.USER_CONTEXT_KEY, user.getUser());
         return ctx;
     }

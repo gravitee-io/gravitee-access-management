@@ -28,7 +28,6 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.MultiMap;
-import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
@@ -40,6 +39,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.NEGOTIATE_CONTINUE_TOKEN_
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static io.gravitee.common.http.HttpStatusCode.UNAUTHORIZED_401;
@@ -113,7 +113,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                 // authentication success
                 // set user into the context and continue
                 final User result = res.result();
-                ((UserContextInternal) context.getDelegate().userContext()).setUser(result);
+                setUser(context, result);
                 context.put(ConstantKeys.USER_CONTEXT_KEY, result.getUser());
                 context.next();
             });

@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_ME_PARAM_KEY;
 import static org.mockito.ArgumentMatchers.any;

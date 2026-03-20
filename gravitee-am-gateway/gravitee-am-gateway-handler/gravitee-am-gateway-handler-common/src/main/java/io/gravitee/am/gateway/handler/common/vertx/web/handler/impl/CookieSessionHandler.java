@@ -32,8 +32,6 @@ import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.Cookie;
-import io.vertx.ext.web.impl.RoutingContextInternal;
-import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +41,8 @@ import org.springframework.util.StringUtils;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setSession;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 import static java.util.Objects.nonNull;
 import static java.util.function.Predicate.not;
@@ -124,7 +124,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
                             jwt.setSub(userSub);
                             jwt.setInternalSub(userSub);
                             return subjectManager.findUserBySub(jwt)
-                                    .doOnSuccess(user -> ((UserContextInternal) context.getDelegate().userContext()).setUser(new User(user)))
+                                    .doOnSuccess(user -> setUser(context, new User(user)))
                                     .flatMap(user -> userEnhancer.enhance(user).toMaybe())
                                     .map(user -> currentSession)
                                     .switchIfEmpty(cleanupSession(currentSession))
@@ -171,7 +171,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     private void registerSession(RoutingContext context, CookieSession session) {
 
         // Register the session to the current context.
-        ((RoutingContextInternal) context.getDelegate()).setSession(session);
+        setSession(context, session);
 
         // Add handler to flush session to cookie when done.
         context.addHeadersEndHandler(v -> flush(context, session));

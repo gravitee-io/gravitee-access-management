@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.TestRoutingContextUtil.setUser;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Mockito.doAnswer;
