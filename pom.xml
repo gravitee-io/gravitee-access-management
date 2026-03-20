@@ -80,7 +80,7 @@
         <awaitility.version>4.2.2</awaitility.version>
         <gravitee-bom.version>9.0.0-beta.2</gravitee-bom.version>
         <gravitee-common.version>5.0.0-beta.1</gravitee-common.version>
-        <gravitee-plugin.version>4.11.1-alpha-SNAPSHOT</gravitee-plugin.version>
+        <gravitee-plugin.version>5.0.0</gravitee-plugin.version>
         <gravitee-node.version>8.0.0-beta.2</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>5.0.0-beta.2</gravitee-gateway-api.version>
