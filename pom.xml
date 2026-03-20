@@ -152,9 +152,9 @@
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
         <gravitee-cockpit-connectors.version>5.0.30</gravitee-cockpit-connectors.version>
         <gravitee-ae-connectors.version>3.0.0-beta.1</gravitee-ae-connectors.version>
-        <gravitee-notifier-webhook.version>1.1.3</gravitee-notifier-webhook.version>
-        <gravitee-notifier-email.version>2.0.0</gravitee-notifier-email.version>
-        <gravitee-notifier-slack.version>1.3.0</gravitee-notifier-slack.version>
+        <gravitee-notifier-webhook.version>2.0.0</gravitee-notifier-webhook.version>
+        <gravitee-notifier-email.version>3.0.0</gravitee-notifier-email.version>
+        <gravitee-notifier-slack.version>2.0.0</gravitee-notifier-slack.version>
         <gravitee-alert-api.version>2.0.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.3</gravitee-notifier-api.version>
         <gravitee-risk-assessment-api.version>2.0.0</gravitee-risk-assessment-api.version>
