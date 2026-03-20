@@ -72,7 +72,7 @@ public class VertxHttpServerRequest implements Request {
         this.metrics.setHttpMethod(method());
         this.metrics.setLocalAddress(localAddress());
         this.metrics.setRemoteAddress(remoteAddress());
-        this.metrics.setHost(httpServerRequest.authority() != null ? httpServerRequest.authority().toString() : null);
+        this.metrics.setHost(httpServerRequest.authority() != null ? httpServerRequest.authority().host() : null);
         this.metrics.setUri(uri());
         this.metrics.setUserAgent(httpServerRequest.getHeader(io.vertx.core.http.HttpHeaders.USER_AGENT));
     }
@@ -281,7 +281,7 @@ public class VertxHttpServerRequest implements Request {
 
     @Override
     public String host() {
-        return this.httpServerRequest.authority() != null ? this.httpServerRequest.authority().toString() : null;
+        return this.httpServerRequest.authority() != null ? this.httpServerRequest.authority().host() : null;
     }
 
 }

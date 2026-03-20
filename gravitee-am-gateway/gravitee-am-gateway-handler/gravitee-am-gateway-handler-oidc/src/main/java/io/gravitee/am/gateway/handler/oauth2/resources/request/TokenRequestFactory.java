@@ -71,7 +71,7 @@ public final class TokenRequestFactory {
         tokenRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         tokenRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
         tokenRequest.setHttpResponse(new VertxHttpServerResponse(request.getDelegate(), new VertxHttpServerRequest(request.getDelegate()).metrics()));
-        tokenRequest.setHost(request.authority() != null ? request.authority().toString() : null);
+        tokenRequest.setHost(request.authority() != null ? request.authority().host() : null);
 
         // set OAuth 2.0 information
         tokenRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
