@@ -2044,6 +2044,7 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - AM-6611-vertx5-migration
       - build:
           requires:
             - setup
@@ -2052,6 +2053,7 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - AM-6611-vertx5-migration
 
       - deploy-snapshot-on-nexus:
           context: cicd-orchestrator
@@ -2062,6 +2064,7 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - AM-6611-vertx5-migration
 
       - publish-images-azure-registry:
           context: cicd-orchestrator
