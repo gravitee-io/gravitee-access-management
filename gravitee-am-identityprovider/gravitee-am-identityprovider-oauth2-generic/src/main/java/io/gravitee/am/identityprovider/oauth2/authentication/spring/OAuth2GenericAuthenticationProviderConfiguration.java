@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.oauth2.authentication.spring;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.http.PoolOptionsBuilder;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.gravitee.am.service.http.WebClientInitializer;
 import io.reactivex.rxjava3.core.Maybe;
@@ -71,17 +72,13 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
                 .setIdleTimeout(configuration.getIdleTimeout())
                 .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
                 .setSsl(isTLS());
-        PoolOptions poolOptions = new PoolOptions()
-                .setHttp1MaxSize(configuration.getMaxPoolSize())
-                .setHttp2MaxSize(configuration.getMaxPoolSize());
+
         if (configuration.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.TLS_CLIENT_AUTH)) {
             return initializeMTlsWebClient(webClientBuilder, httpClientOptions);
         } else {
-            return createWebClient(webClientBuilder, httpClientOptions, poolOptions);
+            return createWebClient(webClientBuilder, httpClientOptions, PoolOptionsBuilder.build(configuration.getMaxPoolSize()));
         }
     }
-
-
 
     /**
      * Check if all defined oauth2 urls are secured or not.

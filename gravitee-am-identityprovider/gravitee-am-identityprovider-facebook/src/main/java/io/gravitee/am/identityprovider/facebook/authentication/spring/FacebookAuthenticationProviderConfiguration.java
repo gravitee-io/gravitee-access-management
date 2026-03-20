@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.facebook.authentication.spring;
 
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
+import io.gravitee.am.service.http.PoolOptionsBuilder;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -62,10 +63,7 @@ public class FacebookAuthenticationProviderConfiguration {
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setIdleTimeout(configuration.getIdleTimeout())
                 .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT);
-        PoolOptions poolOptions = new PoolOptions()
-                .setHttp1MaxSize(configuration.getMaxPoolSize())
-                .setHttp2MaxSize(configuration.getMaxPoolSize());
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri(), poolOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri(), PoolOptionsBuilder.build(configuration.getMaxPoolSize()));
     }
 }

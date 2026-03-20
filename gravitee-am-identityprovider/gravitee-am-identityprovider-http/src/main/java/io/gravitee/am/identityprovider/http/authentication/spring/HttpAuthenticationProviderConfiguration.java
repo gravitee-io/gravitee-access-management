@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.http.authentication.spring;
 
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.spring.HttpCommonProviderConfiguration;
+import io.gravitee.am.service.http.PoolOptionsBuilder;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -60,9 +61,6 @@ public class HttpAuthenticationProviderConfiguration {
         httpClientOptions
                 .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(configuration.getConnectTimeout());
-        PoolOptions poolOptions = new PoolOptions()
-                .setHttp1MaxSize(configuration.getMaxPoolSize())
-                .setHttp2MaxSize(configuration.getMaxPoolSize());
 
         final boolean ssl = configuration.getAuthenticationResource().getBaseURL() != null
                 && configuration.getAuthenticationResource().getBaseURL().startsWith("https://");
@@ -71,6 +69,6 @@ public class HttpAuthenticationProviderConfiguration {
             httpClientOptions.setTrustAll(true);
         }
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getAuthenticationResource().getBaseURL(), poolOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getAuthenticationResource().getBaseURL(), PoolOptionsBuilder.build(configuration.getMaxPoolSize()));
     }
 }

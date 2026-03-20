@@ -16,6 +16,7 @@
 package io.gravitee.am.service.http;
 
 import io.gravitee.common.util.EnvironmentUtils;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;

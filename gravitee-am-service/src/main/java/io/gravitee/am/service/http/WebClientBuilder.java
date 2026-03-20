@@ -62,7 +62,7 @@ public class WebClientBuilder {
                 .setTcpKeepAlive(true)
                 .setConnectTimeout(httpClientTimeout());
 
-        PoolOptions poolOptions = new PoolOptions().setHttp1MaxSize(10).setHttp2MaxSize(10);
+        PoolOptions poolOptions = PoolOptionsBuilder.build(10);
         configureHttp2Settings(options);
 
         return createWebClient(vertx, options, (String) null, poolOptions);
@@ -80,7 +80,7 @@ public class WebClientBuilder {
                 .setConnectTimeout(httpClientTimeout())
                 .setSsl(isSsl);
 
-        PoolOptions poolOptions = new PoolOptions().setHttp1MaxSize(10).setHttp2MaxSize(10);
+        PoolOptions poolOptions = PoolOptionsBuilder.build(10);
         configureHttp2Settings(options);
 
         return createWebClient(vertx, options, (String) null, poolOptions);
