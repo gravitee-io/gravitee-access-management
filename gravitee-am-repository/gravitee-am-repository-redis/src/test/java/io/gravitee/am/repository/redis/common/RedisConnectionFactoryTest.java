@@ -147,8 +147,12 @@ public class RedisConnectionFactoryTest {
 
         assertThat(options).isNotNull();
         assertThat(options.getNetClientOptions().getHostnameVerificationAlgorithm()).isEqualTo("HTTPS");
-//        assertThat(options.getNetClientOptions().getPemKeyCertOptions()).usingRecursiveComparison().isEqualTo(pemKeyCertOptions);
-//        assertThat(options.getNetClientOptions().getPemTrustOptions()).usingRecursiveComparison().isEqualTo(pemTrustOptions);
+        assertThat(options.getNetClientOptions().getKeyCertOptions())
+                .isInstanceOf(PemKeyCertOptions.class)
+                .usingRecursiveComparison().isEqualTo(pemKeyCertOptions);
+        assertThat(options.getNetClientOptions().getTrustOptions())
+                .isInstanceOf(PemTrustOptions.class)
+                .usingRecursiveComparison().isEqualTo(pemTrustOptions);
     }
 
     @Test
@@ -174,8 +178,12 @@ public class RedisConnectionFactoryTest {
         truststorePfxOptions.setPath(truststorePath);
 
         assertThat(options).isNotNull();
-//        assertThat(options.getNetClientOptions().getPfxKeyCertOptions()).usingRecursiveComparison().isEqualTo(keystorePfxOptions);
-//        assertThat(options.getNetClientOptions().getPfxTrustOptions()).usingRecursiveComparison().isEqualTo(truststorePfxOptions);
+        assertThat(options.getNetClientOptions().getKeyCertOptions())
+                .isInstanceOf(PfxOptions.class)
+                .usingRecursiveComparison().isEqualTo(keystorePfxOptions);
+        assertThat(options.getNetClientOptions().getTrustOptions())
+                .isInstanceOf(PfxOptions.class)
+                .usingRecursiveComparison().isEqualTo(truststorePfxOptions);
     }
 
     @Test
@@ -201,8 +209,12 @@ public class RedisConnectionFactoryTest {
         truststoreJksOptions.setPath(truststorePath);
 
         assertThat(options).isNotNull();
-//        assertThat(options.getNetClientOptions().getKeyStoreOptions()).usingRecursiveComparison().isEqualTo(keystoreJksOptions);
-//        assertThat(options.getNetClientOptions().getTrustStoreOptions()).usingRecursiveComparison().isEqualTo(truststoreJksOptions);
+        assertThat(options.getNetClientOptions().getKeyCertOptions())
+                .isInstanceOf(JksOptions.class)
+                .usingRecursiveComparison().isEqualTo(keystoreJksOptions);
+        assertThat(options.getNetClientOptions().getTrustOptions())
+                .isInstanceOf(JksOptions.class)
+                .usingRecursiveComparison().isEqualTo(truststoreJksOptions);
     }
 
     @ParameterizedTest
