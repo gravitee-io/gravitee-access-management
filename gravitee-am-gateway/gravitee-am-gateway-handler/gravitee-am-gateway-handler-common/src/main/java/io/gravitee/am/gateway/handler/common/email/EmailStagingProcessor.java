@@ -33,6 +33,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Manages the lifecycle of the email staging batch processor.
@@ -65,6 +66,7 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
     private UserRepository userRepository;
     private BulkEmailExecutor bulkEmailExecutor;
     private AtomicBoolean running = new AtomicBoolean(false);
+    private AtomicLong leaseExpiry = new AtomicLong(0);
 
     private Disposable scheduledJob;
 
@@ -128,7 +130,7 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
      * </p>
      */
     public void processBatchOfStagingEmails() {
-        if (noOngoingBatch()) {
+        if (leaseDurationExpired() && noOngoingBatch()) {
             log.debug("Start processing batch of {} staging emails for domain {}", batchSize, domain.getName());
             emailStagingService.acquireLeaseAndFetch(domain.asReference(), batchSize)
                     .flatMapMaybe(stagingEmail ->
@@ -160,14 +162,20 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
                                 }
                             },
                             error -> {
-                                if (error instanceof ActionLeaseException) {
-                                    log.debug("Lease on emailStaging rejected, will retry in {} seconds", batchPeriod);
+                                if (error instanceof ActionLeaseException leaseException) {
+                                    long leaseDurationInMillis = leaseException.getLeaseDuration().toMillis();
+                                    leaseExpiry.set(System.currentTimeMillis() + leaseDurationInMillis);
+                                    log.debug("Lease on emailStaging rejected, will retry in {} milliseconds", leaseDurationInMillis);
                                 } else {
                                     log.error("An error occurs while trying to process staging emails", error);
                                 }
                             }
                     );
         }
+    }
+
+    private boolean leaseDurationExpired() {
+        return System.currentTimeMillis() > leaseExpiry.get();
     }
 
     private boolean noOngoingBatch() {
