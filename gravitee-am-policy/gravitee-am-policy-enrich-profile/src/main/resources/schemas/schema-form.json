@@ -4,7 +4,13 @@
   "properties" : {
       "enableObjectClaimSupport": {
         "title": "Enable Object claim parsing",
-        "description": "When enabled, the parsed Expression Language returns an Object. Returns a String otherwise",
+        "description": "When enabled, the parsed Expression Language returns an Object. Returns a String otherwise. Useful when mapping nested JSON attributes from an external identity provider.",
+        "type": "boolean",
+        "default": false
+      },
+      "continueOnError": {
+        "title": "Continue on error",
+        "description": "Continue policy execution even if a claim expression fails to evaluate.",
         "type": "boolean",
         "default": false
       },

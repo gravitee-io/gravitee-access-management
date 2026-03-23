@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "auth": { "type": "object" }
+  },
+  "anyOf": [
+    { "required": ["auth"] }
+  ]
+}
