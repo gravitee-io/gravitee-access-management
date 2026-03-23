@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "description": "Plugin configuration",
+  "properties": {
+    "host": {
+      "type": "string",
+      "title": "Host",
+      "description": "The hostname or IP address of the server"
+    }
+  }
+}

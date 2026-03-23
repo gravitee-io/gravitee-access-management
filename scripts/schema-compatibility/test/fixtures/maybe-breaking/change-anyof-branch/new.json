@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "uri": { "type": "string" },
+    "host": { "type": "string" },
+    "port": { "type": "integer" },
+    "database": { "type": "string" }
+  },
+  "anyOf": [
+    { "required": ["uri"] },
+    { "required": ["host", "port", "database"] }
+  ]
+}

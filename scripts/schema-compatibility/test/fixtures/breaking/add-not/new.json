@@ -1,0 +1,7 @@
+{
+  "type": "object",
+  "properties": {
+    "status": { "type": "string" }
+  },
+  "not": { "required": ["legacyField"] }
+}

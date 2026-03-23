@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "properties": {
+    "clientId": { "type": "string" },
+    "clientSecret": { "type": "string" }
+  },
+  "required": ["clientId"]
+}
