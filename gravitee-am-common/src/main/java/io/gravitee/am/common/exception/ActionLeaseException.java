@@ -15,12 +15,21 @@
  */
 package io.gravitee.am.common.exception;
 
+import java.time.Duration;
+
 /**
  * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ActionLeaseException extends RuntimeException {
-    public ActionLeaseException(String message) {
+    private final Duration leaseDuration;
+
+    public ActionLeaseException(String message,  Duration leaseDuration) {
         super(message);
+        this.leaseDuration = leaseDuration;
+    }
+
+    public Duration getLeaseDuration() {
+        return leaseDuration;
     }
 }

@@ -96,8 +96,9 @@ public class EmailStagingServiceImpl implements EmailStagingService, Initializin
 
     @Override
     public Flowable<EmailStaging> acquireLeaseAndFetch(Reference reference, int batchSize) {
-        return actionLeaseRepository.acquireLease(this.actionId, this.workerId, Duration.of(leaseDuration, ChronoUnit.SECONDS))
-                .switchIfEmpty(Maybe.error(() -> new ActionLeaseException("Unable to acquire action lease for " + ACTION_EMAIL_STAGING_PROCESS + " action")))
+        Duration duration = Duration.of(leaseDuration, ChronoUnit.SECONDS);
+        return actionLeaseRepository.acquireLease(this.actionId, this.workerId, duration)
+                .switchIfEmpty(Maybe.error(() -> new ActionLeaseException("Unable to acquire action lease for " + ACTION_EMAIL_STAGING_PROCESS + " action", duration)))
                 .flatMapPublisher(lease ->
                         emailStagingRepository.findOldestByUpdateDate(reference, batchSize)
                 );

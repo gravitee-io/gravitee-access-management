@@ -40,6 +40,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -330,14 +332,25 @@ class EmailStagingProcessorTest {
 
         @Test
         @DisplayName("should silently skip batch when lease cannot be acquired")
-        void processBatch_shouldSkipWhenLeaseNotAcquired() {
+        void processBatch_shouldSkipWhenLeaseNotAcquired() throws Exception {
             when(emailStagingService.acquireLeaseAndFetch(any(), anyInt()))
-                    .thenReturn(Flowable.error(new ActionLeaseException("lease rejected")));
+                    .thenReturn(Flowable.error(new ActionLeaseException("lease rejected", Duration.of(2, ChronoUnit.SECONDS))));
 
             var processor = buildProcessor(false);
             processor.afterPropertiesSet();
             // Should complete without throwing
             processor.processBatchOfStagingEmails();
+            verify(emailStagingService, times(1)).acquireLeaseAndFetch(any(), anyInt());
+
+           Thread.sleep(Duration.of(500, ChronoUnit.MILLIS));
+
+            processor.processBatchOfStagingEmails();
+            verify(emailStagingService, times(1)).acquireLeaseAndFetch(any(), anyInt());
+
+            Thread.sleep(Duration.of(1600, ChronoUnit.MILLIS));
+
+            processor.processBatchOfStagingEmails();
+            verify(emailStagingService, times(2)).acquireLeaseAndFetch(any(), anyInt());
 
             verify(emailService, never()).batch(any(), anyInt());
         }
