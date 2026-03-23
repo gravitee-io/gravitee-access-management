@@ -240,6 +240,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${json-version}</version>
+            </dependency>
             <!-- Import bom to properly inherit all dependencies -->
             <dependency>
                 <groupId>io.gravitee</groupId>
