@@ -46,9 +46,11 @@ import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.validators.idp.IdentityProviderPluginValidator;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -89,6 +91,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private final ObjectMapper objectMapper;
     private final PluginConfigurationValidationService validationService;
     private final DatasourceValidator datasourceValidator;
+    private final IdentityProviderPluginValidator idpPluginValidator;
 
     public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
                                        ApplicationService applicationService,
@@ -96,7 +99,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                                        AuditService auditService,
                                        ObjectMapper objectMapper,
                                        PluginConfigurationValidationService validationService,
-                                       DatasourceValidator datasourceValidator) {
+                                       DatasourceValidator datasourceValidator,
+                                       IdentityProviderPluginValidator idpPluginValidator) {
         this.identityProviderRepository = identityProviderRepository;
         this.applicationService = applicationService;
         this.eventService = eventService;
@@ -104,6 +108,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         this.objectMapper = objectMapper;
         this.validationService = validationService;
         this.datasourceValidator = datasourceValidator;
+        this.idpPluginValidator = idpPluginValidator;
     }
 
     @Override
@@ -177,6 +182,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
+        validateProvider(identityProvider);
+
         return datasourceValidator.validate(identityProvider.getConfiguration())
                 .andThen(identityProviderRepository.create(identityProvider))
                 .flatMap(identityProvider1 -> {
@@ -228,6 +235,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     // for update validate config against schema here instead of the resource
                     // as idp may be system idp so on the UI config is empty.
                     validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
+
+                    validateProvider(identityToUpdate);
 
                     return datasourceValidator.validate(identityToUpdate.getConfiguration())
                             .andThen(identityProviderRepository.update(identityToUpdate))
@@ -385,4 +394,14 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return false;
     }
 
+
+    /**
+     * plugin-level validation: instantiates the provider and calls its own validate() logic
+     */
+    private void validateProvider(IdentityProvider identityProvider) {
+        var pluginValidationResult = idpPluginValidator.validate(identityProvider.getType(), identityProvider.getConfiguration());
+        if (pluginValidationResult.failed()) {
+            throw InvalidPluginConfigurationException.fromValidationError(pluginValidationResult.failedMessage());
+        }
+    }
 }

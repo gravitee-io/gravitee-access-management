@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -53,6 +54,7 @@ import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.validators.idp.DatasourceValidator;
+import io.gravitee.am.service.validators.idp.IdentityProviderPluginValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -78,9 +80,10 @@ public class IdentityProviderServiceTest {
     private final ApplicationService applicationService = mock();
     private final DatasourceValidator datasourceValidator = mock();
     private PluginConfigurationValidationService validationService = mock();
+    private final IdentityProviderPluginValidator idpPluginValidator = mock();
 
     private final IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
-            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(),validationService, datasourceValidator
+            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(), validationService, datasourceValidator, idpPluginValidator
     );
 
     private final static String DOMAIN = "domain1";
@@ -187,6 +190,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -206,6 +210,7 @@ public class IdentityProviderServiceTest {
         idp.setReferenceId("domain#1");
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(datasourceValidator.validate(any())).thenReturn(Completable.error(new Exception("a failure")));
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
 
@@ -213,11 +218,20 @@ public class IdentityProviderServiceTest {
         testObserver.assertNotComplete();
     }
 
+    @Test(expected = InvalidPluginConfigurationException.class)
+    public void shouldNotCreate_WhenPluginValidationFails() {
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.invalid("plugin validation error"));
+
+        identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null);
+    }
+
     @Test
     public void shouldCreate_technicalException() {
         NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.error(TechnicalException::new));
         when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
         identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).subscribe(testObserver);
@@ -257,6 +271,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -276,14 +291,32 @@ public class IdentityProviderServiceTest {
         idp.setReferenceType(ReferenceType.DOMAIN);
         idp.setReferenceId("domain#1");
 
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        when(identityProviderRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(datasourceValidator.validate(any())).thenReturn(Completable.error(new Exception("a failure")));
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldNotUpdate_WhenPluginValidationFails() {
+        UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.invalid("plugin validation error"));
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+        testObserver.awaitDone(2, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidPluginConfigurationException.class);
+        testObserver.assertNotComplete();
+
+        verify(identityProviderRepository, never()).update(any(IdentityProvider.class));
+        verify(eventService, never()).create(any());
     }
 
     @Test
@@ -295,6 +328,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, true).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -317,6 +351,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -340,6 +375,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+        when(idpPluginValidator.validate(any(), any())).thenReturn(ValidationResult.SUCCEEDED);
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -504,7 +540,7 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldUpdatePasswordPolicy_technicalException() {
         AssignPasswordPolicy assignPasswordPolicy = mock(AssignPasswordPolicy.class);
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.error(TechnicalException::new));
+        when(identityProviderRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-identity-provider")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
         identityProviderService.updatePasswordPolicy(DOMAIN, "my-identity-provider", assignPasswordPolicy).subscribe(testObserver);
@@ -565,22 +601,6 @@ public class IdentityProviderServiceTest {
                           "%s",
                           "yet-another-cert"
                         ]
-                      }
-                    }
-                  }
-                }""".formatted(certId));
-        return idp;
-    }
-
-    private IdentityProvider idpWithDeeplyNestedCertConfig_field(Reference domainRef, String certId) {
-        var idp = minimalIdentityProvider(domainRef);
-        idp.setType("custom-test-idp");
-        idp.setConfiguration("""
-                {
-                  "very": {
-                    "deeply": {
-                      "nested": {
-                        "certificateId":"%s"
                       }
                     }
                   }
