@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "host": { "type": "string" }
+  },
+  "definitions": {
+    "ConnectionOptions": {
+      "type": "object",
+      "properties": {
+        "timeout": { "type": "integer" }
+      }
+    }
+  }
+}

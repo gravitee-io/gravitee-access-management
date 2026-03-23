@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "definitions": {
+    "ServerConfig": {
+      "type": "object",
+      "properties": {
+        "host": { "type": "string" }
+      },
+      "required": ["host"]
+    }
+  }
+}

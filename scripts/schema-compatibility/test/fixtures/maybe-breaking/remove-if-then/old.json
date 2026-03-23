@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "ssl": { "type": "boolean" },
+    "certificate": { "type": "string" }
+  },
+  "if": { "properties": { "ssl": { "const": true } } },
+  "then": { "required": ["certificate"] }
+}

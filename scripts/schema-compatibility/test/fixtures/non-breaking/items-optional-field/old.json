@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pattern": { "type": "string" }
+        }
+      }
+    }
+  }
+}
