@@ -1,0 +1,71 @@
+= Example User Action Policy
+
+== Description
+
+This is an example implementation of a custom User Action Policy.
+It demonstrates how to extend `AbstractUserActionPolicy` to create a policy that can be loaded as a plugin in Gravitee AM.
+
+== Features
+
+- Extends `AbstractUserActionPolicy` for consistent behavior
+- Supports multiple action types: log, track, update
+- Demonstrates logging of user information
+- Can be packaged and deployed as a standalone plugin
+
+== Configuration
+
+=== Properties
+
+[cols="1,2,3,1"]
+|===
+|Name|Description|Type|Default
+
+|action|The action to perform (log, track, or update)|string|log
+|logMessage|The message to log when action is 'log'|string|User action executed
+|redirectUri|Optional URI to redirect the user to after the action|string|
+|exitOnError|Terminate the request if the policy fails|boolean|false
+|===
+
+== Example Configuration
+
+[source,json]
+----
+{
+  "action": "log",
+  "logMessage": "User accessed protected resource",
+  "redirectUri": "https://example.com/after-action",
+  "exitOnError": false
+}
+----
+
+== Building and Deploying
+
+=== Build the plugin:
+
+[source,bash]
+----
+mvn clean package
+----
+
+This generates a ZIP file in the target directory.
+
+=== Deploy to Gravitee AM:
+
+1. Stop Gravitee AM
+2. Unzip the generated ZIP file in the plugins directory
+3. Restart Gravitee AM
+
+The policy will be available in the policy list once loaded.
+
+== Use Cases
+
+This example policy demonstrates:
+
+1. **Logging user actions**: Track when users perform certain operations
+2. **Analytics integration**: Send user action events to analytics services
+3. **User profile updates**: Update user attributes based on actions
+4. **Conditional redirects**: Redirect users to different pages based on their actions
+
+## For Developers
+
+See the main [User Action Policy README](../gravitee-am-policy-user-action/README.adoc) for detailed information on how to extend this policy with your own custom logic.

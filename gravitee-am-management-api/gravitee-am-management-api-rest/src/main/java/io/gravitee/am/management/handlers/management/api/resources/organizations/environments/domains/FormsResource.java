@@ -16,9 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
@@ -27,6 +27,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -66,9 +67,6 @@ public class FormsResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
-    @Autowired
-    private PreviewService previewService;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -84,13 +82,13 @@ public class FormsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @NotNull @QueryParam("template") Template formTemplate,
+            @NotNull @QueryParam("template") String formTemplate,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FORM, Acl.READ)
                 .andThen(
-                        formService.findByDomainAndTemplate(domain, formTemplate.template())
-                                .switchIfEmpty(formService.getDefaultByDomainAndTemplate(domain, formTemplate.template()))
+                        formService.findByDomainAndTemplate(domain, Template.parseTemplateValue(formTemplate))
+                                .switchIfEmpty(Single.defer(() -> formService.getDefaultByDomainAndTemplate(domain, Template.parseTemplateValue(formTemplate))))
                                 .map(form -> Response.ok(form).build())
 
                 ).subscribe(response::resume, response::resume);
@@ -129,10 +127,38 @@ public class FormsResource extends AbstractResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    @Path("custom")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "findDomainForm",
+            summary = "Find all custom forms for a security domain",
+            description = "User must have DOMAIN_FORM[READ] permission on the specified security domain " +
+                    "or DOMAIN_FORM[READ] permission on the specified environment " +
+                    "or DOMAIN_FORM[READ] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Form successfully fetched"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void customForms(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @Suspended final AsyncResponse response) {
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FORM, Acl.READ)
+                .andThen(formService.findByDomain(domain))
+                .filter(form -> form.getClient() == null)
+                .filter(form -> !Template.contains(form.getTemplate()))
+                .toList()
+                .map(forms -> Response.ok(forms).build())
+                .subscribe(response::resume, response::resume);
+    }
+
     @Path("{form}")
     public FormResource getFormResource() {
         return resourceContext.getResource(FormResource.class);
     }
+
     @Path("preview")
     public PreviewResource getPreviewResource() {
         return resourceContext.getResource(PreviewResource.class);

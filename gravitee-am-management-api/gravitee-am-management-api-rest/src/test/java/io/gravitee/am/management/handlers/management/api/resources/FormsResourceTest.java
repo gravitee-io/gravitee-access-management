@@ -115,7 +115,7 @@ public class FormsResourceTest extends JerseySpringTest {
     @Test
     public void shouldCreate() {
         NewForm newForm = new NewForm();
-        newForm.setTemplate(Template.LOGIN);
+        newForm.setTemplate(Template.LOGIN.template());
         newForm.setContent("content");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);

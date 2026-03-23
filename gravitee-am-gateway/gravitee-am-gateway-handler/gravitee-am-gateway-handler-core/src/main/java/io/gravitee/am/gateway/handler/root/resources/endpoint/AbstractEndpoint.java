@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.utils.RedirectUrlResolver;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.NotImplementedException;
@@ -41,7 +39,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_ENABLED;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_RETENTION_TIME;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static java.lang.Boolean.TRUE;
 
 /**
@@ -68,26 +65,28 @@ public abstract class AbstractEndpoint {
     }
 
     protected final String getTemplateFileName(Client client) {
-        return getTemplateSuffix() +
-                Optional.ofNullable(client).map(c -> FormManager.TEMPLATE_NAME_SEPARATOR + c.getId()).orElse("");
+        return getTemplateFileName0(client, null);
     }
 
     protected final void copyValue(HttpServerRequest request, RoutingContext routingContext, String paramKey) {
         routingContext.put(paramKey, request.getParam(paramKey));
     }
 
-    protected void renderPage(RoutingContext routingContext, Map<String, Object> data, Client client, Logger logger, String errorMessage) {
-        this.renderPage(data, client)
-                .subscribe(
-                        buffer -> {
-                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                            routingContext.response().end(buffer);
-                        },
-                        throwable -> {
-                            logger.error(errorMessage, throwable);
-                            routingContext.fail(throwable.getCause());
-                        }
-                );
+    protected void renderPage(RoutingContext routingContext,
+                              Map<String, Object> data,
+                              Client client,
+                              String templateName,
+                              Logger logger,
+                              String errorMessage) {
+        renderPage0(routingContext, data, getTemplateFileName0(client, templateName), logger, errorMessage);
+    }
+
+    protected void renderPage(RoutingContext routingContext,
+                              Map<String, Object> data,
+                              Client client,
+                              Logger logger,
+                              String errorMessage) {
+        renderPage0(routingContext, data, getTemplateFileName(client), logger, errorMessage);
     }
 
     protected Single<Buffer> renderPage(Map<String, Object> data, Client client) {
@@ -114,5 +113,28 @@ public abstract class AbstractEndpoint {
             routingContext.put(USER_CONSENT_IP_LOCATION, TRUE.equals(session.get(USER_CONSENT_IP_LOCATION)));
             routingContext.put(USER_CONSENT_USER_AGENT, TRUE.equals(session.get(USER_CONSENT_USER_AGENT)));
         }
+    }
+
+    private void renderPage0(RoutingContext routingContext,
+                             Map<String, Object> data,
+                             String template,
+                             Logger logger,
+                             String errorMessage) {
+        templateEngine.render(data, template)
+                .subscribe(
+                        buffer -> {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(buffer);
+                        },
+                        throwable -> {
+                            logger.error(errorMessage, throwable);
+                            routingContext.fail(throwable.getCause());
+                        }
+                );
+    }
+
+    private String getTemplateFileName0(Client client, String templateName) {
+        return (templateName != null ? templateName : getTemplateSuffix()) +
+                Optional.ofNullable(client).map(c -> FormManager.TEMPLATE_NAME_SEPARATOR + c.getId()).orElse("");
     }
 }
