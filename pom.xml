@@ -151,7 +151,7 @@
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
         <gravitee-cockpit-connectors.version>5.0.30</gravitee-cockpit-connectors.version>
-        <gravitee-ae-connectors.version>2.1.0</gravitee-ae-connectors.version>
+        <gravitee-ae-connectors.version>3.0.0-beta.1</gravitee-ae-connectors.version>
         <gravitee-notifier-webhook.version>3.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-notifier-webhook.version>
         <gravitee-notifier-email.version>4.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-notifier-email.version>
         <gravitee-notifier-slack.version>3.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-notifier-slack.version>
