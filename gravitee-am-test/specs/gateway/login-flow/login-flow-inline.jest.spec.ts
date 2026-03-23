@@ -15,17 +15,20 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { loginUserNameAndPassword, initiateLoginFlow, login, getHeaderLocation } from '@gateway-commands/login-commands';
+import { getHeaderLocation, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { performGet, performPost, logoutUser, requestToken } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { patchDomain } from '@management-commands/domain-management-commands';
 import { createUser, deleteUser, lockUser, updateUserStatus } from '@management-commands/user-management-commands';
+import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { LoginFlowInlineFixture, INLINE_USER, REDIRECT_URI, setupInlineFixture } from './fixture/login-flow-inline-fixture';
+import { INLINE_USER, LoginFlowInlineFixture, REDIRECT_URI, setupInlineFixture } from './fixture/login-flow-inline-fixture';
 
 const cheerio = require('cheerio');
 import { setup } from '../../test-fixture';
+import { withRetry } from "@utils-commands/retry";
+import { patchApplication } from '@management-commands/application-management-commands';
 
 setup(200000);
 
@@ -41,13 +44,6 @@ afterAll(async () => {
     await fixture.cleanUp();
   }
 });
-
-// Performs the initial login POST and returns the redirect without following it.
-// Used for failure cases where the gateway redirects to the login error page (200) rather than issuing a code (302).
-async function attemptLogin(clientId: string, username: string, password: string): Promise<any> {
-  const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain, 'code', REDIRECT_URI);
-  return login(authResponse, username, clientId, password);
-}
 
 describe('SSO', () => {
   it('should complete login with app using inmemory IDP', async () => {
@@ -320,74 +316,61 @@ describe('Account Disabled', () => {
   });
 
   it('should reject login for a disabled user', async () => {
-    await waitForSyncAfter(fixture.domain.id, () =>
-      updateUserStatus(fixture.domain.id, fixture.accessToken, userId, false),
-    );
+    await waitForSyncAfter(fixture.domain.id, () => updateUserStatus(fixture.domain.id, fixture.accessToken, userId, false));
 
     const clientId = fixture.appAccountTests.settings.oauth.clientId;
-    const postLogin = await attemptLogin(clientId, testUsername, testPassword);
+    const postLogin = await fixture.attemptLogin(clientId, testUsername, testPassword);
     expect(postLogin.headers['location']).toContain('error=login_failed');
   });
 });
 
 describe('Account Locked - Login Attempt', () => {
-  let userId: string;
-  const testUsername = uniqueName('locked-attempt', true);
-  const testPassword = '#CoMpL3X-P@SsW0Rd';
+  const testEmail = INLINE_USER.email;
+  const testUsername = INLINE_USER.username;
 
   beforeAll(async () => {
-    const user = await createUser(fixture.domain.id, fixture.accessToken, {
-      firstName: 'Locked',
-      lastName: 'Attempt',
-      username: testUsername,
-      email: `${testUsername}@example.com`,
-      password: testPassword,
-      preRegistration: false,
-    });
-    expect(user.id).toBeDefined();
-    userId = user.id;
+    await clearEmails(testEmail);
 
     await waitForSyncAfter(fixture.domain.id, () =>
-      patchDomain(fixture.domain.id, fixture.accessToken, {
-        accountSettings: {
-          inherited: false,
-          loginAttemptsDetectionEnabled: true,
-          maxLoginAttempts: 1,
-          loginAttemptsResetTime: 60,
-          accountBlockedDuration: 120,
+      patchApplication(
+        fixture.domain.id,
+        fixture.accessToken,
+        {
+          settings: {
+            account: {
+              inherited: false,
+              loginAttemptsDetectionEnabled: true,
+              maxLoginAttempts: 1,
+              loginAttemptsResetTime: 60,
+              accountBlockedDuration: 120,
+              sendRecoverAccountEmail: true,
+            },
+          },
         },
-      }),
+        fixture.appSso1.id,
+      ),
     );
   });
 
-  afterAll(async () => {
-    try {
-      await patchDomain(fixture.domain.id, fixture.accessToken, {
-        accountSettings: { inherited: false, loginAttemptsDetectionEnabled: false },
-      });
-    } catch (e) {
-      console.warn('Failed to reset account settings after locked-attempt tests:', e);
-    }
-    if (userId) {
-      try {
-        await deleteUser(fixture.domain.id, fixture.accessToken, userId);
-      } catch (e) {
-        console.warn('Failed to delete locked-attempt test user:', e);
-      }
-    }
+  it('should fail on first login attempt with wrong password and lock account', async () => {
+    const clientId = fixture.appSso1.settings.oauth.clientId;
+    const postLogin = await fixture.attemptLogin(clientId, testUsername, 'wrong-password');
+    expect(postLogin.headers['location']).toContain('error=login_failed');
+
+    const nestPostLogin = await fixture.attemptLogin(clientId, testUsername, INLINE_USER.password);
+    expect(nestPostLogin.headers['location']).toContain('error=login_failed');
   });
 
-  it('should fail on first login attempt with wrong password', async () => {
-    const clientId = fixture.appAccountTests.settings.oauth.clientId;
-    const postLogin = await attemptLogin(clientId, testUsername, 'wrong-password');
-    expect(postLogin.headers['location']).toContain('error=login_failed');
-  });
 
-  it('should lock the account after exceeding max login attempts', async () => {
-    // maxLoginAttempts=1 — the first failed attempt above already triggered the lock
-    const clientId = fixture.appAccountTests.settings.oauth.clientId;
-    const postLogin = await attemptLogin(clientId, testUsername, 'wrong-password');
+  it('should lock the account after exceeding max login attempts and send recovery email', async () => {
+    const clientId = fixture.appSso1.settings.oauth.clientId;
+    const postLogin = await fixture.attemptLogin(clientId, testUsername, 'wrong-password');
     expect(postLogin.headers['location']).toContain('error=login_failed');
+
+    await withRetry(async () => {
+      const email = await getLastEmail(3000, testEmail);
+      expect(email.subject).toContain('Account has been locked');
+    });
   });
 });
 
@@ -408,9 +391,7 @@ describe('Account Locked - REST API', () => {
     expect(user.id).toBeDefined();
     userId = user.id;
 
-    await waitForSyncAfter(fixture.domain.id, () =>
-      lockUser(fixture.domain.id, fixture.accessToken, userId),
-    );
+    await waitForSyncAfter(fixture.domain.id, () => lockUser(fixture.domain.id, fixture.accessToken, userId));
   });
 
   afterAll(async () => {
@@ -425,7 +406,7 @@ describe('Account Locked - REST API', () => {
 
   it('should reject login for a user locked via the management REST API', async () => {
     const clientId = fixture.appAccountTests.settings.oauth.clientId;
-    const postLogin = await attemptLogin(clientId, testUsername, testPassword);
+    const postLogin = await fixture.attemptLogin(clientId, testUsername, testPassword);
     expect(postLogin.headers['location']).toContain('error=login_failed');
   });
 });

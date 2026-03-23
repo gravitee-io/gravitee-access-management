@@ -47,6 +47,7 @@ import {
   performPost,
   performFormPost,
 } from '@gateway-commands/oauth-oidc-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { extractDomValue } from './fixture/mfa-extract-fixture';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
@@ -395,8 +396,7 @@ beforeAll(async () => {
     post: [],
   });
 
-  await updateApplicationFlows(domain.id, accessToken, application.id, flows);
-  await waitForDomainSync(domain.id);
+  await waitForSyncAfter(domain.id, () => updateApplicationFlows(domain.id, accessToken, application.id, flows));
 
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
   const tokenResponse = await performPost(openIdConfiguration.body.token_endpoint, '', 'grant_type=client_credentials', {
