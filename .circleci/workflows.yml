@@ -436,9 +436,10 @@ jobs:
       - restore-maven-job-cache:
           jobName: build_branch
       - run:
-          name: Maven Package
+          name: Maven Package & deploy on artifactory
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P full-bundle clean install
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean deploy -pl \!gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,\!gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
+            mvn -s /tmp/.gravitee.settings.xml -P full-bundle package -DskipTests -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
@@ -1078,7 +1079,7 @@ jobs:
       - run:
           name: "Maven Package Install (no tests)"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P full-bundle clean install -DskipTests
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean install -DskipTests
       - save-maven-job-cache:
           jobName: pull_requests
       - run:
