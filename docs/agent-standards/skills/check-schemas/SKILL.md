@@ -72,6 +72,7 @@ is a concrete example the checker is tested against.
 | `maxItems` decreased or added | ERROR |
 | `uniqueItems: true` added | ERROR |
 | `allOf` entry added | ERROR |
+| `anyOf`/`oneOf` added from scratch | ERROR |
 | `anyOf`/`oneOf` branch removed | ERROR |
 | `if`/`then`/`else` added | ERROR |
 | `not` added | ERROR |

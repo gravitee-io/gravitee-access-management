@@ -229,7 +229,7 @@ function compareSchemas(oldSub, newSub, prefix) {
     }
   }
 
-  // anyOf/oneOf: removing a branch is breaking; changed branch content warns
+  // anyOf/oneOf: adding the combiner is breaking; removing a branch is breaking; changed branch content recurses
   compareCombiners(oldSub.anyOf, newSub.anyOf, path('anyOf'), 'anyOf');
   compareCombiners(oldSub.oneOf, newSub.oneOf, path('oneOf'), 'oneOf');
 
@@ -358,11 +358,17 @@ function compareNumericConstraintMax(oldVal, newVal, pathStr, constraintName, di
 }
 
 /**
- * anyOf/oneOf: removing a branch is breaking; content changes in same-count branches warn.
+ * anyOf/oneOf: adding the combiner from scratch is breaking; removing a branch is breaking;
+ * content changes in same-count branches are recursed for breaking changes.
  */
 function compareCombiners(oldList, newList, pathStr, keyword) {
-  if (!oldList || oldList.length === 0) return;
   const newLen = newList ? newList.length : 0;
+  if (!oldList || oldList.length === 0) {
+    if (newLen > 0) {
+      error(pathStr, `${keyword} constraint added — data must now match one of the defined branches; previously valid data may fail`);
+    }
+    return;
+  }
   if (newLen < oldList.length) {
     error(pathStr, `${keyword} branch removed (${oldList.length} → ${newLen}) — data matching the removed branch(es) will fail`);
   } else if (newLen === oldList.length) {
