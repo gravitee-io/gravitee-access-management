@@ -15,7 +15,6 @@
  */
 
 import { getGroupApi } from './service/utils';
-import { UserPageFromJSON } from '../../management/models/UserPage';
 
 export const createGroup = (domainId, accessToken, group) =>
   getGroupApi(accessToken).createGroup({
@@ -82,7 +81,7 @@ export const revokeRoleToGroup = (domainId, accessToken, groupId, role) =>
     role: role,
   });
 
-export const getGroupMembers = async (domainId: string, accessToken: string, groupId: string, page?: number, size?: number) => {
+export const getGroupMembers = (domainId: string, accessToken: string, groupId: string, page?: number, size?: number) => {
   const params: any = {
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -91,9 +90,7 @@ export const getGroupMembers = async (domainId: string, accessToken: string, gro
   };
   if (page !== undefined) params.page = page;
   if (size !== undefined) params.size = size;
-  // SDK incorrectly types this as User instead of UserPage — deserialize manually
-  const raw = await getGroupApi(accessToken).getGroupMembersRaw(params);
-  return UserPageFromJSON(await raw.raw.json());
+  return getGroupApi(accessToken).getGroupMembers(params);
 };
 
 export const addGroupMember = (domainId: string, accessToken: string, groupId: string, memberId: string) =>
