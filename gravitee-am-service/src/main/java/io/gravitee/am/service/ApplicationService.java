@@ -51,6 +51,14 @@ public interface ApplicationService {
 
     Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size);
 
+    Single<Page<Application>> findByDomain(String domain, int page, int size, List<ApplicationType> types);
+
+    Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size, List<ApplicationType> types);
+
+    Single<Page<Application>> search(String domain, String query, int page, int size, List<ApplicationType> types);
+
+    Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size, List<ApplicationType> types);
+
     Flowable<Application> findByCertificate(String certificate);
 
     Flowable<Application> findByIdentityProvider(String identityProvider);
