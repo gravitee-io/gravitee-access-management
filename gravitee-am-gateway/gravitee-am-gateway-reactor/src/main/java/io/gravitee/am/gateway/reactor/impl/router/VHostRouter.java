@@ -123,7 +123,7 @@ public class VHostRouter implements Router {
 
     private boolean hostMatches(RoutingContext context) {
 
-        return vhostPattern == null || vhostPattern.matcher(context.request().authority().host()).matches();
+        return vhostPattern == null || vhostPattern.matcher(context.request().authority().toString()).matches();
     }
 
     private void setContextPath(RoutingContext context, String contextPath) {
