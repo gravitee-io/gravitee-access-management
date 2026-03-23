@@ -989,6 +989,41 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldResetPassword_not_delete_passwordless_devices_when_disabled() {
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isDeletePasswordlessDevicesAfterResetPassword()).thenReturn(false);
+
+        Client client = mock(Client.class);
+        when(client.getAccountSettings()).thenReturn(accountSettings);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.isInactive()).thenReturn(false);
+        when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn(IDP_ID);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
+
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
+
+        var testObserver = userService.resetPassword(client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialService, never()).deleteByUserId(any(), any());
+        verify(tokenService, never()).deleteByUser(any());
+    }
+
+    @Test
     public void shouldResetPassword_Invalidate_Tokens() {
         AccountSettings accountSettings = mock(AccountSettings.class);
         when(accountSettings.isResetPasswordInvalidateTokens()).thenReturn(true);

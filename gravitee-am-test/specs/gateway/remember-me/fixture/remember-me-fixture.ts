@@ -109,3 +109,30 @@ export const initEnv = async (applicationConfiguration, domainConfiguration = nu
     },
   };
 };
+
+export async function validateCookieNotExists(cookieName: string, tokenResponse: any) {
+  expect(tokenResponse.request.header.Cookie.filter((cookie) => cookie.includes(cookieName))).toHaveLength(0);
+}
+
+export async function validateMaxAgeCookie(cookieName: string, maxAgeExpected: string, tokenResponse: any) {
+  expect(tokenResponse.request.header.Cookie.filter((cookie) => cookie.includes(cookieName))[0]).toContain(`Max-Age=${maxAgeExpected}`);
+}
+
+export function cookieValueIfNotExpired(setCookieHeader: string, issuedAtMillis: number): string | undefined {
+  const maxAgePart = setCookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.toLowerCase().startsWith('max-age='));
+
+  if (!maxAgePart) {
+    return setCookieHeader.split(';')[0];
+  }
+
+  const maxAgeSeconds = Number(maxAgePart.split('=')[1]);
+  if (Number.isNaN(maxAgeSeconds)) {
+    return setCookieHeader.split(';')[0];
+  }
+
+  return Date.now() - issuedAtMillis <= maxAgeSeconds * 1000 ? setCookieHeader.split(';')[0] : undefined;
+}
+

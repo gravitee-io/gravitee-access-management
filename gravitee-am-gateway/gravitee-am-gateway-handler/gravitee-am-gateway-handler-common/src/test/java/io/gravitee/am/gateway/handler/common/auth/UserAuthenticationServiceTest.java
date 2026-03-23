@@ -21,20 +21,25 @@ import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserIdentity;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
@@ -63,6 +68,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,6 +97,12 @@ public class UserAuthenticationServiceTest {
 
     @Mock
     private RulesEngine rulesEngine;
+
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private EmailService emailService;
 
     @Test
     public void shouldConnect_unknownUser() {
@@ -1190,6 +1202,74 @@ public class UserAuthenticationServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(AccountLockedException.class);
+    }
+
+    @Test
+    public void shouldLockAccountAndSendRecoveryEmailWhenEnabled() {
+        final AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setAccountBlockedDuration(120);
+        accountSettings.setSendRecoverAccountEmail(true);
+
+        final Client client = new Client();
+        client.setId("client-id");
+
+        final User user = new User();
+        user.setUsername("username");
+        user.setEmail("username@example.com");
+
+        final LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                .domain("domain-id")
+                .client("client-id")
+                .identityProvider("idp-id")
+                .username("username")
+                .build();
+
+        when(userService.update(any())).thenReturn(Single.just(user));
+
+        TestObserver<Void> testObserver = userAuthenticationService.lockAccount(criteria, accountSettings, client, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userService).update(argThat(updatedUser -> !updatedUser.isAccountNonLocked()
+                && updatedUser.getAccountLockedAt() != null
+                && updatedUser.getAccountLockedUntil() != null));
+        verify(emailService, timeout(1000)).send(eq(Template.BLOCKED_ACCOUNT), eq(user), eq(client));
+    }
+
+    @Test
+    public void shouldLockAccountAndNotSendRecoveryEmailWhenDisabled() {
+        final AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setAccountBlockedDuration(120);
+        accountSettings.setSendRecoverAccountEmail(false);
+
+        final Client client = new Client();
+        client.setId("client-id");
+
+        final User user = new User();
+        user.setUsername("username");
+        user.setEmail("username@example.com");
+
+        final LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                .domain("domain-id")
+                .client("client-id")
+                .identityProvider("idp-id")
+                .username("username")
+                .build();
+
+        when(userService.update(any())).thenReturn(Single.just(user));
+
+        TestObserver<Void> testObserver = userAuthenticationService.lockAccount(criteria, accountSettings, client, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userService).update(argThat(updatedUser -> !updatedUser.isAccountNonLocked()
+                && updatedUser.getAccountLockedAt() != null
+                && updatedUser.getAccountLockedUntil() != null));
+        verify(emailService, never()).send(eq(Template.BLOCKED_ACCOUNT), eq(user), eq(client));
     }
 
     private Client initClient() {

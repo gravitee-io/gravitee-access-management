@@ -15,9 +15,15 @@
  */
 
 import { expect } from '@jest/globals';
-import { logoutUser } from '@gateway-commands/oauth-oidc-commands';
-import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
-import { initEnv, RememberMeFixture } from './fixture/remember-me-fixture';
+import { logoutUser, performGet } from '@gateway-commands/oauth-oidc-commands';
+import { initiateLoginFlow, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
+import {
+  cookieValueIfNotExpired,
+  initEnv,
+  RememberMeFixture,
+  validateCookieNotExists,
+  validateMaxAgeCookie,
+} from './fixture/remember-me-fixture';
 import { setup } from '../../test-fixture';
 
 let fixture: RememberMeFixture;
@@ -286,6 +292,51 @@ describe('remember me', () => {
       await logoutUser(fixture.openIdConfiguration.end_session_endpoint, loginResponse);
     });
 
+    it('remember-me cookie should stop authenticating after duration expires', async () => {
+      fixture = await initEnv({
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: true,
+            rememberMeDuration: 5,
+          },
+          cookieSettings: {
+            inherited: false,
+            session: {
+              persistent: false,
+            },
+          },
+        },
+      });
+
+      const clientId = fixture.app.settings.oauth.clientId;
+      const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain);
+      const postLogin = await login(authResponse, fixture.user.username, clientId, fixture.userPassword, true);
+      const rememberMeCookie = postLogin.headers['set-cookie'].find((cookie) => cookie.startsWith('GRAVITEE_IO_REMEMBER_ME='));
+
+      expect(rememberMeCookie).toBeDefined();
+      const rememberMeCookieIssuedAt = Date.now();
+
+      const authorizeParams = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+      const beforeExpiryCookieHeader = cookieValueIfNotExpired(rememberMeCookie, rememberMeCookieIssuedAt);
+
+      expect(beforeExpiryCookieHeader).toBeDefined();
+
+      const beforeExpiry = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
+        Cookie: beforeExpiryCookieHeader,
+      }).expect(302);
+      expect(beforeExpiry.headers['location']).toContain('/rememberedLogin');
+
+      await new Promise((resolve) => setTimeout(resolve, 6000));
+
+      const afterExpiryCookieHeader = cookieValueIfNotExpired(rememberMeCookie, rememberMeCookieIssuedAt);
+
+      expect(afterExpiryCookieHeader).toBeUndefined();
+
+      const afterExpiry = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams).expect(302);
+      expect(afterExpiry.headers['location']).toContain('/login');
+    });
+
     afterEach(async () => {
       if (fixture) {
         await fixture.cleanUp();
@@ -294,10 +345,3 @@ describe('remember me', () => {
   });
 });
 
-async function validateCookieNotExists(cookieName: string, tokenResponse: any) {
-  expect(tokenResponse.request.header.Cookie.filter((cookie) => cookie.includes(cookieName))).toHaveLength(0);
-}
-
-async function validateMaxAgeCookie(cookieName: string, maxAgeExpected: string, tokenResponse: any) {
-  expect(tokenResponse.request.header.Cookie.filter((cookie) => cookie.includes(cookieName))[0]).toContain(`Max-Age=${maxAgeExpected}`);
-}

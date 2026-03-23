@@ -14,7 +14,16 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, it } from '@jest/globals';
-import { Domain, enableDomain, initClient, initDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
+import {
+  defaultApplicationSettings,
+  Domain,
+  enableDomain,
+  getMfaRateLimitConfiguration,
+  initClient,
+  initDomain,
+  removeDomain,
+  TestSuiteContext,
+} from './fixture/mfa-setup-fixture';
 import { withRetry } from '@utils-commands/retry';
 import { extractXsrfTokenAndActionResponse, getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { extractDomValue } from './fixture/mfa-extract-fixture';
@@ -26,6 +35,7 @@ import {
   processMfaEndToEnd,
   processMfaEnrollment,
 } from './fixture/mfa-flow-fixture';
+import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
 import { waitFor } from '@management-commands/domain-management-commands';
 import { setup } from '../../test-fixture';
 
@@ -42,29 +52,8 @@ const domain: Domain = {
   },
 } as Domain;
 
-function defaultApplicationSettings() {
-  return {
-    factors: [],
-    settings: {
-      mfa: {
-        factor: {
-          defaultFactorId: null,
-          applicationFactors: [],
-        },
-        stepUpAuthenticationRule: '',
-        stepUpAuthentication: { active: false, stepUpAuthenticationRule: '' },
-        adaptiveAuthenticationRule: '',
-        rememberDevice: { active: false, skipRememberDevice: false },
-        enrollment: { forceEnrollment: false },
-        enroll: { active: false, enrollmentSkipActive: false, forceEnrollment: false, type: 'required' },
-        challenge: { active: false, challengeRule: '', type: 'required' },
-      },
-    },
-  };
-}
-
 beforeAll(async () => {
-  await initDomain(domain, 9);
+  await initDomain(domain, 10);
 
   let settings;
 
@@ -165,12 +154,35 @@ beforeAll(async () => {
         mfaChallengeAttemptsDetectionEnabled: true,
         mfaChallengeMaxAttempts: 2,
         mfaChallengeAttemptsResetTime: mfaChallengeAttemptsResetTime,
+        mfaChallengeSendVerifyAlertEmail: true,
       },
     },
   };
   const rateLimitClient = await initClient(domain, 'rate-limit-1', settings);
 
   const bruteForceClient = await initClient(domain, 'brut-force-1', settings);
+
+  settings = {
+    ...defaultApplicationSettings(),
+    settings: {
+      mfa: {
+        factor: {
+          defaultFactorId: domain.domain.factors[0].id,
+          applicationFactors: [{ id: domain.domain.factors[0].id, selectionRule: '{{ false }}' }],
+        },
+        enroll: { active: true, enrollmentSkipActive: false, forceEnrollment: true, type: 'required' },
+        challenge: { active: true, challengeRule: '', type: 'required' },
+      },
+      account: {
+        inherited: false,
+        mfaChallengeAttemptsDetectionEnabled: true,
+        mfaChallengeMaxAttempts: 2,
+        mfaChallengeAttemptsResetTime: mfaChallengeAttemptsResetTime,
+        mfaChallengeSendVerifyAlertEmail: false,
+      },
+    },
+  };
+  const bruteForceNoAlertClient = await initClient(domain, 'brut-force-no-alert-1', settings);
 
   settings = defaultApplicationSettings();
   settings.settings.mfa.factor = {
@@ -199,6 +211,7 @@ beforeAll(async () => {
   );
   rateLimitCtx = new TestSuiteContext(domain, rateLimitClient, domain.domain.users[7], oidc.body.authorization_endpoint);
   bruteForceCtx = new TestSuiteContext(domain, bruteForceClient, domain.domain.users[8], oidc.body.authorization_endpoint);
+  bruteForceNoAlertCtx = new TestSuiteContext(domain, bruteForceNoAlertClient, domain.domain.users[9], oidc.body.authorization_endpoint);
 });
 
 let noFactorsCtx: TestSuiteContext;
@@ -210,6 +223,7 @@ let enrollmentTrueCtx: TestSuiteContext;
 let stepUpPositiveChallengeDisabledCtx: TestSuiteContext;
 let rateLimitCtx: TestSuiteContext;
 let bruteForceCtx: TestSuiteContext;
+let bruteForceNoAlertCtx: TestSuiteContext;
 
 afterAll(async () => {
   await removeDomain(domain);
@@ -295,9 +309,9 @@ describe('With active session, when stepUp is true, with challenge disabled, on 
 });
 
 describe('MFA rate limit test', () => {
-  //To run this test locally, change mfa_rate in gravitee.yml to 2 attempts in 1 minute.
-  it('Should throw mfa_request_limit_exceed after 2 request', async () => {
+  it('Should throw mfa_request_limit_exceed once request limit is reached', async () => {
     const ctx = rateLimitCtx;
+    const mfaRateLimitConfiguration = await getMfaRateLimitConfiguration();
     const enrollMFA = await processMfaEnrollment(ctx);
     const authorize2 = await performGet(enrollMFA.location, '', {
       Cookie: enrollMFA.cookie,
@@ -306,28 +320,37 @@ describe('MFA rate limit test', () => {
     expect(authorize2.headers['location']).toBeDefined();
     expect(authorize2.headers['location']).toContain('/mfa/challenge');
 
-    /**
-     * The number of the get requests is based on the gateway gravtitee.yml 'mfa_rate' configuration
-     * These assertions will fail or need to be updated if 'mfa_rate' configuration is changed
-     */
-    const expectedCode = [200, 200, 302];
+    const maxChallengeRequests = mfaRateLimitConfiguration.enabled
+      ? Number(process.env.MFA_RATE_LIMIT_MAX_CHECKS ?? mfaRateLimitConfiguration.limit + 2)
+      : 3;
+    let rateLimitException;
 
-    for (const responseCode of expectedCode) {
-      const rateLimitException = await performGet(authorize2.headers['location'], '', {
+    for (let attempt = 1; attempt <= maxChallengeRequests; attempt++) {
+      const response = await performGet(authorize2.headers['location'], '', {
         Cookie: authorize2.headers['set-cookie'],
       });
-      expect(rateLimitException.status).toBe(responseCode);
 
-      if (responseCode === 302) {
-        expect(rateLimitException.headers['location']).toBeDefined();
-        expect(rateLimitException.headers['location']).toContain('request_limit_error=mfa_request_limit_exceed');
+      if (response.status === 302) {
+        rateLimitException = response;
+        break;
       }
+
+      expect(response.status).toBe(200);
+    }
+
+    if (mfaRateLimitConfiguration.enabled) {
+      expect(rateLimitException).toBeDefined();
+      expect(rateLimitException.headers['location']).toBeDefined();
+      expect(rateLimitException.headers['location']).toContain('request_limit_error=mfa_request_limit_exceed');
+    } else {
+      expect(rateLimitException).toBeUndefined();
     }
   });
 });
 describe('Brute force test', () => {
-  it('Should throw brute force exception', async () => {
+  it('Should throw brute force exception and send alert email when enabled', async () => {
     const ctx = bruteForceCtx;
+    await clearEmails(ctx.user.email);
 
     const enrollMFA = await processMfaEnrollment(ctx);
 
@@ -357,7 +380,52 @@ describe('Brute force test', () => {
       expect(failedVerification.headers['location']).toContain(expectedErrorMessage[i].expected);
     }
 
+    const alertEmail = await getLastEmail(5000, ctx.user.email);
+    expect(alertEmail).toBeDefined();
+    expect(alertEmail.toAddress).toBe(ctx.user.email);
+    await clearEmails(ctx.user.email);
+
     //now wait 1 second as per the configuration
+    await waitFor(mfaChallengeAttemptsResetTime * 1000);
+
+    const successfulVerification = await postMfaChallenge(ctx, authResult2, 1234);
+    expect(successfulVerification.headers['location']).toBeDefined();
+    expect(successfulVerification.headers['location']).not.toContain('error');
+  });
+
+  it('Should throw brute force exception and not send alert email when disabled', async () => {
+    const ctx = bruteForceNoAlertCtx;
+    await clearEmails(ctx.user.email);
+
+    const enrollMFA = await processMfaEnrollment(ctx);
+
+    const authorize2 = await performGet(enrollMFA.location, '', {
+      Cookie: enrollMFA.cookie,
+    }).expect(302);
+
+    expect(authorize2.headers['location']).toBeDefined();
+    expect(authorize2.headers['location']).toContain('/mfa/challenge');
+
+    await performGet(authorize2.headers['location'], '', {
+      Cookie: authorize2.headers['set-cookie'],
+    }).expect(200);
+
+    const expectedErrorMessage = [
+      { expected: 'mfa_challenge_failed' },
+      { expected: 'mfa_challenge_failed' },
+      { expected: 'verify_attempt_error=maximum_verify_limit' },
+    ];
+
+    const authResult2 = await extractXsrfTokenAndActionResponse(authorize2);
+    const invalidCode = 999;
+    for (let i = 0; i < expectedErrorMessage.length; i++) {
+      const failedVerification = await postMfaChallenge(ctx, authResult2, invalidCode);
+      expect(failedVerification.headers['location']).toBeDefined();
+      expect(failedVerification.headers['location']).toContain(expectedErrorMessage[i].expected);
+    }
+
+    expect(await hasEmail(2000, ctx.user.email)).toBeFalsy();
+
     await waitFor(mfaChallengeAttemptsResetTime * 1000);
 
     const successfulVerification = await postMfaChallenge(ctx, authResult2, 1234);

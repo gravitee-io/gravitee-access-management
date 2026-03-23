@@ -15,10 +15,8 @@
  */
 import * as faker from 'faker';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { patchDomain } from '@management-commands/domain-management-commands';
 import {
-  createApplication,
   deleteApplication,
   getApplication,
   listApplications,
@@ -31,7 +29,8 @@ import { Application } from '@management-models/Application';
 import { NewApplicationTypeEnum } from '@management-models/NewApplication';
 import { uniqueName } from '@utils-commands/misc';
 import { ClientSecret } from '@management-models/ClientSecret';
-import { setup } from '../test-fixture';
+import { setup } from '../../test-fixture';
+import { ApplicationsFixture, setupApplicationsFixture } from './fixtures/applications-fixture';
 
 setup(200000);
 
@@ -49,71 +48,28 @@ const UNIQUE_APP_NAME = `${RUN_PREFIX}-unique123`;
 const UNIQUE_CLIENT_ID = `${RUN_PREFIX}-client-unique123`;
 const CLIENT_ID_WILDCARD_PREFIX = `${RUN_PREFIX}-client-shared`;
 
+let fixture: ApplicationsFixture;
 let accessToken: string;
 let primaryDomain: Domain;
 let secondaryDomain: Domain;
-const createdApplicationIds: { [domainId: string]: string[] } = {};
 const smallBatch: Application[] = [];
 const largeBatch: Application[] = [];
 const wildcardBatch: Application[] = [];
 const clientIdWildcardBatch: Application[] = [];
 let uniqueClientIdApp: Application | undefined;
 
-const recordApplicationForCleanup = (app?: Application, domainId?: string) => {
-  if (app?.id && domainId) {
-    if (!createdApplicationIds[domainId]) {
-      createdApplicationIds[domainId] = [];
-    }
-    createdApplicationIds[domainId].push(app.id);
-  }
-};
-
-const createApp = async (domainId: string, name?: string, clientId?: string): Promise<Application> => {
-  const app: any = {
-    name: name ?? faker.commerce.productName(),
-    type: 'service',
-    description: faker.lorem.paragraph(),
-    metadata: {
-      key1: faker.lorem.paragraph(),
-      key2: faker.lorem.paragraph(),
-      key3: faker.lorem.paragraph(),
-      key4: faker.lorem.paragraph(),
-    },
-  };
-  if (clientId) {
-    app.clientId = clientId;
-  }
-  const createdApp = await createApplication(domainId, accessToken, app);
-  recordApplicationForCleanup(createdApp, domainId);
-  return createdApp;
-};
-
-type BatchOptions = {
-  buildName?: (index: number) => string;
-  onAppCreated?: (app: Application, index: number) => void;
-};
-
-const seedBatch = async (domainId: string, count: number, store: Application[], options: BatchOptions = {}) => {
-  for (let i = 0; i < count; i++) {
-    const name = options?.buildName?.(i);
-    expect(name).toBeDefined();
-    const createdApp = await createApp(domainId, name!);
-    store.push(createdApp);
-    options?.onAppCreated?.(createdApp, i);
-  }
-};
-
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken();
-  primaryDomain = await setupDomainForTest(uniqueName('applications-primary', true), { accessToken }).then((it) => it.domain);
-  secondaryDomain = await setupDomainForTest(uniqueName('applications-secondary', true), { accessToken }).then((it) => it.domain);
+  fixture = await setupApplicationsFixture();
+  accessToken = fixture.accessToken;
+  primaryDomain = fixture.primaryDomain;
+  secondaryDomain = fixture.secondaryDomain;
 
   // Seed primary domain with applications
-  await seedBatch(primaryDomain.id!, SMALL_BATCH_SIZE, smallBatch, {
+  await fixture.seedBatch(primaryDomain.id!, SMALL_BATCH_SIZE, smallBatch, {
     buildName: (index) => `${SMALL_PREFIX}-${index}-${uniqueName('app', true)}`,
   });
 
-  await seedBatch(primaryDomain.id!, LARGE_BATCH_SIZE, largeBatch, {
+  await fixture.seedBatch(primaryDomain.id!, LARGE_BATCH_SIZE, largeBatch, {
     buildName: (index) =>
       index < WILDCARD_BATCH_SIZE
         ? `${WILDCARD_PREFIX}-${index}-${uniqueName('app', true)}`
@@ -126,20 +82,20 @@ beforeAll(async () => {
   });
 
   // Create unique app in primary domain
-  await createApp(primaryDomain.id!, UNIQUE_APP_NAME);
+  await fixture.createApp(primaryDomain.id!, UNIQUE_APP_NAME);
 
   // Create applications with specific client IDs for client ID search testing
-  uniqueClientIdApp = await createApp(primaryDomain.id!, `${RUN_PREFIX}-app-for-client-id`, UNIQUE_CLIENT_ID);
+  uniqueClientIdApp = await fixture.createApp(primaryDomain.id!, `${RUN_PREFIX}-app-for-client-id`, UNIQUE_CLIENT_ID);
 
   // Create applications with wildcard client ID prefix
   for (let i = 0; i < WILDCARD_BATCH_SIZE; i++) {
     const clientId = `${CLIENT_ID_WILDCARD_PREFIX}-${i}-${uniqueName('client', true)}`;
-    const app = await createApp(primaryDomain.id!, `${RUN_PREFIX}-app-client-${i}`, clientId);
+    const app = await fixture.createApp(primaryDomain.id!, `${RUN_PREFIX}-app-client-${i}`, clientId);
     clientIdWildcardBatch.push(app);
   }
 
   // Create applications in secondary domain with matching names to test domain-scoped filtering
-  await seedBatch(secondaryDomain.id!, SECOND_DOMAIN_BATCH_SIZE, [], {
+  await fixture.seedBatch(secondaryDomain.id!, SECOND_DOMAIN_BATCH_SIZE, [], {
     buildName: (index) => {
       if (index === 0) {
         return UNIQUE_APP_NAME; // Same name as primary domain's unique app
@@ -154,7 +110,7 @@ describe('after creating applications', () => {
   let secret: ClientSecret;
 
   beforeAll(async () => {
-    application = await createApp(primaryDomain.id!);
+    application = await fixture.createApp(primaryDomain.id!);
     secret = application.secrets[0];
   });
 
@@ -258,7 +214,7 @@ describe('application search and pagination', () => {
 });
 
 describe('Entrypoints: User accounts', () => {
-  it('should define the "remember me" amount of time', async () => {
+  it('should persist remember me, login attempts and MFA alert settings when enabled', async () => {
     const app = {
       name: faker.commerce.productName(),
       type: 'browser' as NewApplicationTypeEnum,
@@ -266,8 +222,7 @@ describe('Entrypoints: User accounts', () => {
       redirectUris: ['https://callback'],
     };
 
-    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
-    recordApplicationForCleanup(createdApp, primaryDomain.id!);
+    const createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app);
 
     const patchedApplication = await patchApplication(
       primaryDomain.id!,
@@ -278,6 +233,18 @@ describe('Entrypoints: User accounts', () => {
             inherited: false,
             rememberMe: true,
             rememberMeDuration: 7200,
+            loginAttemptsDetectionEnabled: true,
+            maxLoginAttempts: 3,
+            loginAttemptsResetTime: 120,
+            accountBlockedDuration: 60,
+            sendRecoverAccountEmail: true,
+            useBotDetection: true,
+            botDetectionPlugin: 'google-recaptcha-v3-am-bot-detection',
+            deletePasswordlessDevicesAfterResetPassword: true,
+            mfaChallengeAttemptsDetectionEnabled: true,
+            mfaChallengeMaxAttempts: 2,
+            mfaChallengeAttemptsResetTime: 30,
+            mfaChallengeSendVerifyAlertEmail: true,
           },
         },
       },
@@ -285,8 +252,74 @@ describe('Entrypoints: User accounts', () => {
     );
 
     const accountSettings = patchedApplication.settings.account;
+    expect(accountSettings.inherited).toBe(false);
     expect(accountSettings.rememberMe).toBe(true);
     expect(accountSettings.rememberMeDuration).toBe(7200);
+    expect(accountSettings.loginAttemptsDetectionEnabled).toBe(true);
+    expect(accountSettings.maxLoginAttempts).toBe(3);
+    expect(accountSettings.loginAttemptsResetTime).toBe(120);
+    expect(accountSettings.accountBlockedDuration).toBe(60);
+    expect(accountSettings.sendRecoverAccountEmail).toBe(true);
+    expect(accountSettings.useBotDetection).toBe(true);
+    expect(accountSettings.botDetectionPlugin).toBe('google-recaptcha-v3-am-bot-detection');
+    expect(accountSettings.deletePasswordlessDevicesAfterResetPassword).toBe(true);
+    expect(accountSettings.mfaChallengeAttemptsDetectionEnabled).toBe(true);
+    expect(accountSettings.mfaChallengeMaxAttempts).toBe(2);
+    expect(accountSettings.mfaChallengeAttemptsResetTime).toBe(30);
+    expect(accountSettings.mfaChallengeSendVerifyAlertEmail).toBe(true);
+  });
+
+  it('should persist remember me, login attempts and MFA alert settings when disabled', async () => {
+    const app = {
+      name: faker.commerce.productName(),
+      type: 'browser' as NewApplicationTypeEnum,
+      description: faker.lorem.paragraph(),
+      redirectUris: ['https://callback'],
+    };
+
+    const createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app);
+
+    const patchedApplication = await patchApplication(
+      primaryDomain.id!,
+      accessToken,
+      {
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: false,
+            rememberMeDuration: 7200,
+            loginAttemptsDetectionEnabled: false,
+            maxLoginAttempts: 3,
+            loginAttemptsResetTime: 120,
+            accountBlockedDuration: 60,
+            sendRecoverAccountEmail: false,
+            useBotDetection: false,
+            deletePasswordlessDevicesAfterResetPassword: false,
+            mfaChallengeAttemptsDetectionEnabled: false,
+            mfaChallengeMaxAttempts: 2,
+            mfaChallengeAttemptsResetTime: 30,
+            mfaChallengeSendVerifyAlertEmail: false,
+          },
+        },
+      },
+      createdApp.id,
+    );
+
+    const accountSettings = patchedApplication.settings.account;
+    expect(accountSettings.inherited).toBe(false);
+    expect(accountSettings.rememberMe).toBe(false);
+    expect(accountSettings.rememberMeDuration).toBe(7200);
+    expect(accountSettings.loginAttemptsDetectionEnabled).toBe(false);
+    expect(accountSettings.maxLoginAttempts).toBe(3);
+    expect(accountSettings.loginAttemptsResetTime).toBe(120);
+    expect(accountSettings.accountBlockedDuration).toBe(60);
+    expect(accountSettings.sendRecoverAccountEmail).toBe(false);
+    expect(accountSettings.useBotDetection).toBe(false);
+    expect(accountSettings.deletePasswordlessDevicesAfterResetPassword).toBe(false);
+    expect(accountSettings.mfaChallengeAttemptsDetectionEnabled).toBe(false);
+    expect(accountSettings.mfaChallengeMaxAttempts).toBe(2);
+    expect(accountSettings.mfaChallengeAttemptsResetTime).toBe(30);
+    expect(accountSettings.mfaChallengeSendVerifyAlertEmail).toBe(false);
   });
 });
 
@@ -300,8 +333,7 @@ describe('Redirect URI', () => {
       redirectUris: ['https://callback/?param=test', 'https://callback/?param2=test2'],
     };
 
-    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
-    recordApplicationForCleanup(createdApp, primaryDomain.id!);
+    const createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app);
 
     await expect(
       patchDomain(primaryDomain.id!, accessToken, {
@@ -339,8 +371,7 @@ describe('Redirect URI', () => {
       redirectUris: ["https://callback/?param={#context.attributes['test']}"],
     };
 
-    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
-    recordApplicationForCleanup(createdApp, primaryDomain.id!);
+    const createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app);
     expect(createdApp.settings.oauth.redirectUris).toStrictEqual(["https://callback/?param={#context.attributes['test']}"]);
   });
 
@@ -360,8 +391,7 @@ describe('Redirect URI', () => {
       },
     };
 
-    const createdApp = await createApplication(primaryDomain.id!, accessToken, app).then((app) => {
-      recordApplicationForCleanup(app, primaryDomain.id!);
+    const createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app).then((app) => {
       return patchApplication(primaryDomain.id!, accessToken, patch, app.id);
     });
 
@@ -390,8 +420,7 @@ describe('Redirect URI', () => {
       },
     };
 
-    const createdApp = await createApplication(primaryDomain.id!, accessToken, app).then((app) => {
-      recordApplicationForCleanup(app, primaryDomain.id!);
+    const createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app).then((app) => {
       return patchApplication(primaryDomain.id!, accessToken, patch, app.id);
     });
 
@@ -420,8 +449,7 @@ describe('Redirect URI', () => {
       },
     };
 
-    let createdApp = await createApplication(primaryDomain.id!, accessToken, app);
-    recordApplicationForCleanup(createdApp, primaryDomain.id!);
+    let createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app);
 
     try {
       createdApp = await patchApplication(primaryDomain.id!, accessToken, patch, createdApp.id);
@@ -448,8 +476,7 @@ describe('Redirect URI', () => {
       },
     };
 
-    const createdApp = await createApplication(primaryDomain.id!, accessToken, app);
-    recordApplicationForCleanup(createdApp, primaryDomain.id!);
+    const createdApp = await fixture.createAndTrackApplication(primaryDomain.id!, app);
 
     try {
       await patchApplication(primaryDomain.id!, accessToken, patch, createdApp.id);
@@ -474,11 +501,10 @@ describe('Token Exchange scope handling', () => {
   let testApp: Application;
 
   beforeAll(async () => {
-    testApp = await createApplication(primaryDomain.id!, accessToken, {
+    testApp = await fixture.createAndTrackApplication(primaryDomain.id!, {
       name: uniqueName('te-scope-app'),
       type: 'SERVICE',
     });
-    recordApplicationForCleanup(testApp, primaryDomain.id!);
   });
 
   it('defaults to null tokenExchangeOAuthSettings when not set (inherits domain default of downscoping)', async () => {
@@ -532,17 +558,7 @@ describe('Token Exchange scope handling', () => {
 });
 
 afterAll(async () => {
-  for (const domainId of Object.keys(createdApplicationIds)) {
-    for (const appId of createdApplicationIds[domainId]) {
-      try {
-        await deleteApplication(domainId, accessToken, appId);
-      } catch (err) {}
-    }
-  }
-  if (primaryDomain?.id) {
-    await safeDeleteDomain(primaryDomain.id, accessToken);
-  }
-  if (secondaryDomain?.id) {
-    await safeDeleteDomain(secondaryDomain.id, accessToken);
+  if (fixture) {
+    await fixture.cleanUp();
   }
 });

@@ -35,7 +35,7 @@ export interface Domain {
     defaultIdpId: string;
     factors: { id: string }[];
     devices: { id: string }[];
-    users: { username: string; password: string }[];
+    users: { username: string; password: string; email: string }[];
   };
 }
 
@@ -50,6 +50,63 @@ export interface Application {
 export interface User {
   username: string;
   password: string;
+  email: string;
+}
+
+export type MfaRateLimitConfiguration = {
+  enabled: boolean;
+  limit: number;
+};
+
+export async function getMfaRateLimitConfiguration(): Promise<MfaRateLimitConfiguration> {
+  const nodeMonitoringUrl = process.env.AM_GATEWAY_NODE_MONITORING_URL;
+  const adminUsername = process.env.AM_ADMIN_USERNAME;
+  const adminPassword = process.env.AM_ADMIN_PASSWORD;
+
+  if (!nodeMonitoringUrl || !adminUsername || !adminPassword) {
+    return { enabled: false, limit: 5 };
+  }
+
+  const response = await fetch(`${nodeMonitoringUrl}/configuration`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${adminUsername}:${adminPassword}`).toString('base64')}`,
+    },
+  });
+
+  if (!response.ok) {
+    return { enabled: false, limit: 5 };
+  }
+
+  const configuration = await response.json();
+  const enabledValue = configuration['mfa_rate.enabled'] ?? configuration['MFA_RATE_ENABLED'] ?? 'false';
+  const limitValue = Number(configuration['mfa_rate.limit'] ?? configuration['MFA_RATE_LIMIT'] ?? 5);
+
+  return {
+    enabled: String(enabledValue).toLowerCase() === 'true',
+    limit: Number.isNaN(limitValue) ? 5 : limitValue,
+  };
+}
+
+export function defaultApplicationSettings() {
+  return {
+    factors: [],
+    settings: {
+      mfa: {
+        factor: {
+          defaultFactorId: null,
+          applicationFactors: [],
+        },
+        stepUpAuthenticationRule: '',
+        stepUpAuthentication: { active: false, stepUpAuthenticationRule: '' },
+        adaptiveAuthenticationRule: '',
+        rememberDevice: { active: false, skipRememberDevice: false },
+        enrollment: { forceEnrollment: false },
+        enroll: { active: false, enrollmentSkipActive: false, forceEnrollment: false, type: 'required' },
+        challenge: { active: false, challengeRule: '', type: 'required' },
+      },
+    },
+  };
 }
 
 export class TestSuiteContext {
@@ -104,6 +161,7 @@ export async function createTestUser(ctx: Domain): Promise<any> {
     return {
       username: user.username,
       password: password,
+      email: user.email,
     };
   });
 }
