@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.authdevice.notifier.api.model;
 
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import lombok.Getter;
 
 /**

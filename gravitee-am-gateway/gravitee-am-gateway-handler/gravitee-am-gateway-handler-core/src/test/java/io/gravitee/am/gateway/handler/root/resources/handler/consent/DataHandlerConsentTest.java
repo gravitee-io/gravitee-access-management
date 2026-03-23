@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.root.resources.handler.consent;
 
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.buffer.Buffer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -118,7 +117,7 @@ public class DataHandlerConsentTest {
     @Test
     public void must_have_user_ip_location_when_no_request_param_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
-        routingContext.setBody(new Buffer(new JsonObject(Map.of(USER_CONSENT_IP_LOCATION, "on")).toBuffer()));
+        routingContext.setBody(new JsonObject(Map.of(USER_CONSENT_IP_LOCATION, "on")).toBuffer());
         handler.handle(routingContext);
         assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertFalse(routingContext.session().get(USER_CONSENT_USER_AGENT));
@@ -127,7 +126,7 @@ public class DataHandlerConsentTest {
     @Test
     public void must_have_user_agent_when_no_request_param_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
-        routingContext.setBody(new Buffer(new JsonObject(Map.of(USER_CONSENT_USER_AGENT, "on")).toBuffer()));
+        routingContext.setBody(new JsonObject(Map.of(USER_CONSENT_USER_AGENT, "on")).toBuffer());
         handler.handle(routingContext);
         assertFalse(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));
@@ -136,10 +135,10 @@ public class DataHandlerConsentTest {
     @Test
     public void must_have_both_consent_true_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
-        routingContext.setBody(new Buffer(new JsonObject(Map.of(
+        routingContext.setBody(new JsonObject(Map.of(
                 USER_CONSENT_IP_LOCATION, "on",
                 USER_CONSENT_USER_AGENT, "on"
-        )).toBuffer()));
+        )).toBuffer());
         handler.handle(routingContext);
         assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));
@@ -148,10 +147,10 @@ public class DataHandlerConsentTest {
     @Test
     public void must_have_both_consent_false_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
-        routingContext.setBody(new Buffer(new JsonObject(Map.of(
+        routingContext.setBody(new JsonObject(Map.of(
                 USER_CONSENT_IP_LOCATION, "somethingElse",
                 USER_CONSENT_USER_AGENT, "off"
-        )).toBuffer()));
+        )).toBuffer());
         handler.handle(routingContext);
         assertFalse(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertFalse(routingContext.session().get(USER_CONSENT_USER_AGENT));
@@ -160,10 +159,10 @@ public class DataHandlerConsentTest {
     @Test
     public void must_have_ip_location_true_and_user_agent_false_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
-        routingContext.setBody(new Buffer(new JsonObject(Map.of(
+        routingContext.setBody(new JsonObject(Map.of(
                 USER_CONSENT_IP_LOCATION, "on",
                 USER_CONSENT_USER_AGENT, "off"
-        )).toBuffer()));
+        )).toBuffer());
         handler.handle(routingContext);
         assertTrue(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertFalse(routingContext.session().get(USER_CONSENT_USER_AGENT));
@@ -172,10 +171,10 @@ public class DataHandlerConsentTest {
     @Test
     public void must_have_ip_location_false_and_user_agent_true_body() {
         routingContext.request().headers().set("Content-type", APPLICATION_JSON);
-        routingContext.setBody(new Buffer(new JsonObject(Map.of(
+        routingContext.setBody(new JsonObject(Map.of(
                 USER_CONSENT_IP_LOCATION, "off",
                 USER_CONSENT_USER_AGENT, "on"
-        )).toBuffer()));
+        )).toBuffer());
         handler.handle(routingContext);
         assertFalse(routingContext.session().get(USER_CONSENT_IP_LOCATION));
         assertTrue(routingContext.session().get(USER_CONSENT_USER_AGENT));

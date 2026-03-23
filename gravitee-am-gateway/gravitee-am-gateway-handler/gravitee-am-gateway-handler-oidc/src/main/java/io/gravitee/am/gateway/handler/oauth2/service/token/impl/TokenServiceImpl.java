@@ -59,7 +59,6 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.codegen.annotations.Nullable;
 import lombok.Setter;
 import net.minidev.json.JSONArray;
 import org.slf4j.Logger;
@@ -372,7 +371,7 @@ public class TokenServiceImpl implements TokenService {
      * @param oAuth2Request oauth2 token or authorization request
      * @return object containing: Access Token Response Format and Certificate Info
      */
-    private TokenWithCertificateInfo convert(JWT accessToken, EncodedJWT encodedAccessToken, @Nullable EncodedJWT encodedRefreshToken, OAuth2Request oAuth2Request) {
+    private TokenWithCertificateInfo convert(JWT accessToken, EncodedJWT encodedAccessToken, EncodedJWT encodedRefreshToken, OAuth2Request oAuth2Request) {
         AccessToken token = new AccessToken(encodedAccessToken.encodedToken());
         token.setSubject(accessToken.getSub());
         token.setExpiresIn(Instant.ofEpochSecond(accessToken.getExp()).minusMillis(System.currentTimeMillis()).getEpochSecond());

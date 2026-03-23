@@ -77,7 +77,7 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         cibaRequest.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
         cibaRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         cibaRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
-        cibaRequest.setHost(request.host());
+        cibaRequest.setHost(request.authority() != null ? request.authority().host() : null);
 
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         cibaRequest.setClientId(client.getClientId());

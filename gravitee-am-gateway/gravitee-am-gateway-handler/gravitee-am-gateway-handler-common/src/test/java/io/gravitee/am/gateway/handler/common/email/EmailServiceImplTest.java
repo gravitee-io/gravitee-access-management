@@ -35,7 +35,7 @@ import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.exception.BatchEmailException;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

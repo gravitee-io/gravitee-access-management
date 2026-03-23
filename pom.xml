@@ -31,7 +31,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.12.0-vertx-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -78,16 +78,16 @@
     <properties>
         <bouncycastle-extension.version>1.81</bouncycastle-extension.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>8.3.47</gravitee-bom.version>
-        <gravitee-common.version>4.2.0</gravitee-common.version>
-        <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
-        <gravitee-node.version>7.23.0</gravitee-node.version>
+        <gravitee-bom.version>9.0.0-beta.2</gravitee-bom.version>
+        <gravitee-common.version>5.0.0-beta.1</gravitee-common.version>
+        <gravitee-plugin.version>5.0.0</gravitee-plugin.version>
+        <gravitee-node.version>8.0.0-beta.2</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
-        <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
+        <gravitee-gateway-api.version>5.0.0-beta.2</gravitee-gateway-api.version>
         <gravitee-expression-language.version>4.3.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>3.0.51</gravitee-cockpit-api.version>
-        <gravitee-kubernetes-client-version>3.1.0</gravitee-kubernetes-client-version>
+        <gravitee-kubernetes-client-version>4.0.0-beta.1</gravitee-kubernetes-client-version>
         <gravitee-plugin-validator.version>2.0.2</gravitee-plugin-validator.version>
         <nimbus.version>10.4</nimbus.version>
         <json-smart.version>2.5.2</json-smart.version>
@@ -216,7 +216,12 @@
         <!-- R2DBC -->
         <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
         <r2dbc-mariadb.version>1.1.3</r2dbc-mariadb.version>
-        <r2dbc-mssql.version>1.0.4.RELEASE</r2dbc-mssql.version>
+        <!--
+        DO NOT use the 1.0.2.RELEASE as this version seems to be buggy
+        see https://github.com/r2dbc/r2dbc-mssql/issues/276
+        <r2dbc-mssql.version>1.0.2.RELEASE</r2dbc-mssql.version>
+        -->
+        <r2dbc-mssql.version>1.0.0.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>1.0.2</r2dbc-mysql.version>
         <oracle-r2dbc.version>1.1.1</oracle-r2dbc.version>
 
@@ -255,6 +260,14 @@
                 <version>${testcontainers.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+
+            <!-- vertx-auth-webauthn was removed after 5.0.0.CR2 (replaced by vertx-auth-webauthn4j) -->
+            <!-- Pin to last available version until WebAuthn code is migrated -->
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-auth-webauthn</artifactId>
+                <version>5.0.0.CR2</version>
             </dependency>
 
             <!-- Gravitee.io -->
@@ -625,6 +638,13 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-codegen</artifactId>
+            <version>5.0.8</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Log -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -673,6 +693,11 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -682,6 +707,27 @@
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                    <configuration>
+                        <parameters>true</parameters>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>1.18.42</version>
+                            </path>
+                            <path>
+                                <groupId>io.vertx</groupId>
+                                <artifactId>vertx-codegen</artifactId>
+                                <version>5.0.8</version>
+                                <classifier>processor</classifier>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -719,7 +765,6 @@
                         <exclude>gravitee-am-test/playwright/**/*.md</exclude>
                         <exclude>gravitee-am-test/playwright/playwright-report/**</exclude>
                         <exclude>gravitee-am-test/playwright/test-results/**</exclude>
-                        <exclude>gravitee-am-test/playwright/junit-results/**</exclude>
                         <exclude>helm/**</exclude>
                         <exclude>node/**</exclude>
                         <exclude>scripts/**</exclude>

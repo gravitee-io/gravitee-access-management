@@ -17,7 +17,9 @@ package io.gravitee.am.identityprovider.http.user.spring;
 
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.spring.HttpCommonProviderConfiguration;
+import io.gravitee.am.service.http.PoolOptionsBuilder;
 import io.gravitee.am.service.http.WebClientBuilder;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -58,8 +60,7 @@ public class HttpUserProviderConfiguration {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
                 .setUserAgent(DEFAULT_USER_AGENT)
-                .setConnectTimeout(configuration.getConnectTimeout())
-                .setMaxPoolSize(configuration.getMaxPoolSize());
+                .setConnectTimeout(configuration.getConnectTimeout());
 
         if (configuration.getUsersResource().getBaseURL() != null
                 && configuration.getUsersResource().getBaseURL().startsWith("https://")) {
@@ -67,7 +68,7 @@ public class HttpUserProviderConfiguration {
             httpClientOptions.setTrustAll(true);
         }
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUsersResource().getBaseURL());
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUsersResource().getBaseURL(), PoolOptionsBuilder.build(configuration.getMaxPoolSize()));
     }
 
 }

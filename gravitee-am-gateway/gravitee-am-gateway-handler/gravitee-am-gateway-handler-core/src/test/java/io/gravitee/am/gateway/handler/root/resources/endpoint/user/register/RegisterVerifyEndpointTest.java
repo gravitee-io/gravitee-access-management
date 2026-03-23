@@ -19,9 +19,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingC
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
@@ -86,7 +85,7 @@ public class RegisterVerifyEndpointTest {
     @Test
     @DisplayName("Must render page with success")
     public void must_render_page_with_success() {
-        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(new Buffer(BufferImpl.buffer())));
+        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(Buffer.buffer()));
         registerVerifyEndpoint.handle(context);
 
         Awaitility.await().until(() -> context.ended());
@@ -103,7 +102,7 @@ public class RegisterVerifyEndpointTest {
         final LoginSettings loginSettings = new LoginSettings();
         loginSettings.setIdentifierFirstEnabled(true);
         when(domain.getLoginSettings()).thenReturn(loginSettings);
-        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(new Buffer(BufferImpl.buffer())));
+        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(Buffer.buffer()));
 
         registerVerifyEndpoint.handle(context);
 
@@ -118,7 +117,7 @@ public class RegisterVerifyEndpointTest {
     @Test
     @DisplayName("Must render page with error")
     public void must_render_page_with_error() {
-        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(new Buffer(BufferImpl.buffer())));
+        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(Buffer.buffer()));
         context.put(ERROR_PARAM_KEY, INVALID_TOKEN);
         context.put(ERROR_DESCRIPTION_PARAM_KEY, "there was an error");
 
@@ -134,7 +133,7 @@ public class RegisterVerifyEndpointTest {
     @Test
     @DisplayName("Must render page with error from request params")
     public void must_render_page_with_error_from_request_params() {
-        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(new Buffer(BufferImpl.buffer())));
+        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(Buffer.buffer()));
         context.request().params().add(ERROR_PARAM_KEY, "invalid_token");
         context.request().params().add(ERROR_DESCRIPTION_PARAM_KEY, "there was an error");
 

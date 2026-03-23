@@ -16,7 +16,8 @@
 package io.gravitee.am.gateway.handler.common.utils;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
@@ -63,7 +64,7 @@ public class RedirectUrlResolverTest {
         Mockito.when(ctx.session()).thenReturn(session);
         Mockito.when(ctx.request()).thenReturn(request);
         Mockito.when(request.scheme()).thenReturn("https");
-        Mockito.when(request.host()).thenReturn("www.gravitee.io");
+        Mockito.when(request.authority()).thenReturn(HostAndPort.create("www.gravitee.io", -1));
         Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("");
         String path = redirectUrlResolver.resolveRedirectUrl(ctx, MultiMap.caseInsensitiveMultiMap());
         assertEquals("https://www.gravitee.io/oauth/authorize", path);

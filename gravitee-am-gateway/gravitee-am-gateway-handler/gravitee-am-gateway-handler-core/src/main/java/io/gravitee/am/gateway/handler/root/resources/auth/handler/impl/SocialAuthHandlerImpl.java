@@ -27,11 +27,13 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.HttpException;
+import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,7 +74,7 @@ public class SocialAuthHandlerImpl implements SocialAuthHandler {
         getSocialAuthenticationProvider().authenticate(ctx, clientCredentials, authN -> {
             if (authN.succeeded()) {
                 final User authenticated = authN.result();
-                ctx.getDelegate().setUser(authenticated);
+                setUser(ctx, authenticated);
                 ctx.put(ConstantKeys.USER_CONTEXT_KEY, authenticated.getUser());
                 ctx.next();
             } else {

@@ -71,7 +71,7 @@ public class GraviteeVertxHttpServerRequestTest {
         Assert.assertEquals(graviteeVertxHttpServerRequest, graviteeVertxHttpServerRequest.resume());
         Assert.assertEquals(graviteeVertxHttpServerRequest, graviteeVertxHttpServerRequest.fetch(0l));
         Assert.assertEquals(graviteeVertxHttpServerRequest, graviteeVertxHttpServerRequest.endHandler(null));
-        Assert.assertEquals(0, graviteeVertxHttpServerRequest.peerCertificateChain().length);
+
         Assert.assertEquals(0l, graviteeVertxHttpServerRequest.bytesRead());
         Assert.assertNull(graviteeVertxHttpServerRequest.query());
         Assert.assertNull(graviteeVertxHttpServerRequest.response());

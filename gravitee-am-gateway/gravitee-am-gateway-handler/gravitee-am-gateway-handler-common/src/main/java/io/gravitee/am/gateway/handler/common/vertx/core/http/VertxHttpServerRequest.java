@@ -58,7 +58,7 @@ public class VertxHttpServerRequest implements Request {
     private boolean decoded;
     private MultiValueMap<String, String> pathParameters = null;
 
-    private io.vertx.rxjava3.core.MultiMap originalParams;
+    private MultiMap originalParams;
 
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest) {
         this.httpServerRequest = httpServerRequest;
@@ -72,7 +72,7 @@ public class VertxHttpServerRequest implements Request {
         this.metrics.setHttpMethod(method());
         this.metrics.setLocalAddress(localAddress());
         this.metrics.setRemoteAddress(remoteAddress());
-        this.metrics.setHost(httpServerRequest.host());
+        this.metrics.setHost(httpServerRequest.authority() != null ? httpServerRequest.authority().host() : null);
         this.metrics.setUri(uri());
         this.metrics.setUserAgent(httpServerRequest.getHeader(io.vertx.core.http.HttpHeaders.USER_AGENT));
     }
@@ -84,7 +84,7 @@ public class VertxHttpServerRequest implements Request {
      * @param httpServerRequest
      * @param originalParams
      */
-    public VertxHttpServerRequest(HttpServerRequest httpServerRequest, io.vertx.rxjava3.core.MultiMap originalParams) {
+    public VertxHttpServerRequest(HttpServerRequest httpServerRequest, MultiMap originalParams) {
         this(httpServerRequest);
         this.originalParams = originalParams;
     }
@@ -213,7 +213,7 @@ public class VertxHttpServerRequest implements Request {
     public Request bodyHandler(Handler<Buffer> bodyHandler) {
         if (! httpServerRequest.isEnded()) {
             httpServerRequest.handler(event -> {
-                bodyHandler.handle(Buffer.buffer(event.getBytes()));
+                bodyHandler.handle(Buffer.buffer(event));
                 metrics.setRequestContentLength(metrics.getRequestContentLength() + event.length());
             });
         }
@@ -281,7 +281,7 @@ public class VertxHttpServerRequest implements Request {
 
     @Override
     public String host() {
-        return this.httpServerRequest.host();
+        return this.httpServerRequest.authority() != null ? this.httpServerRequest.authority().host() : null;
     }
 
 }

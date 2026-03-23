@@ -18,7 +18,7 @@ package io.gravitee.am.service.spring.email;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.validation.constraints.NotBlank;

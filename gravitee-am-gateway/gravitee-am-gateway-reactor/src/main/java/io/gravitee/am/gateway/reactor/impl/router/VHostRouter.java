@@ -123,7 +123,7 @@ public class VHostRouter implements Router {
 
     private boolean hostMatches(RoutingContext context) {
 
-        return vhostPattern == null || vhostPattern.matcher(context.request().host()).matches();
+        return vhostPattern == null || vhostPattern.matcher(context.request().authority().host()).matches();
     }
 
     private void setContextPath(RoutingContext context, String contextPath) {
@@ -319,11 +319,6 @@ public class VHostRouter implements Router {
     @Override
     public Router clear() {
         return delegate.clear();
-    }
-
-    @Override
-    public Route mountSubRouter(String mountPoint, Router subRouter) {
-        return delegate.mountSubRouter(mountPoint, subRouter);
     }
 
     @Override

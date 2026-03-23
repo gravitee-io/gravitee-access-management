@@ -30,6 +30,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
@@ -37,7 +38,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.webauthn.AttestationCertificates;
 import io.vertx.ext.auth.webauthn.Authenticator;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -103,7 +105,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
     }
 
     private void authenticateV0(RoutingContext ctx) {
-        final JsonObject webauthnLogin = ctx.getBodyAsJson();
+        final JsonObject webauthnLogin = ctx.body().asJsonObject();
         final Session session = ctx.session();
 
         // input validation
@@ -123,7 +125,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         final String username = webauthnLogin.getString("name");
 
         // STEP 18 Generate assertion
-        webAuthn.getCredentialsOptions(username)
+        Single.fromCompletionStage(webAuthn.getCredentialsOptions(username).toCompletionStage())
                 .subscribe(
                         entries -> {
                             session
@@ -174,13 +176,13 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
 
         // authenticate the user with its webauthn credential id
-        webAuthn.rxAuthenticate(
+        Single.fromCompletionStage(webAuthn.authenticate(
                         // authInfo
                         new WebAuthnCredentials()
                                 .setOrigin(origin)
                                 .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                                 .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                                .setWebauthn(webauthnResp)).onErrorResumeNext(throwable -> {
+                                .setWebauthn(webauthnResp)).toCompletionStage()).onErrorResumeNext(throwable -> {
                                     if (throwable.getCause() != null) {
                                         logger.error("Unexpected exception", throwable.getCause());
                                         return Single.error(throwable.getCause());
@@ -204,7 +206,8 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             // save the user and credential id into the context
                             final Credential credential = tuple.getT1();
                             final User user = tuple.getT2();
-                            ctx.getDelegate().setUser(user);
+                            setUser(ctx, user);
+
                             ctx.put(ConstantKeys.USER_CONTEXT_KEY, user.getUser());
                             ctx.put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
                             ctx.put(WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY, credential.getId());

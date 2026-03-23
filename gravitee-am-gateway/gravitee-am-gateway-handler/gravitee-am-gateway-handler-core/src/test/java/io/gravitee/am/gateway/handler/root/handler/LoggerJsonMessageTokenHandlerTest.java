@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.handler;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;

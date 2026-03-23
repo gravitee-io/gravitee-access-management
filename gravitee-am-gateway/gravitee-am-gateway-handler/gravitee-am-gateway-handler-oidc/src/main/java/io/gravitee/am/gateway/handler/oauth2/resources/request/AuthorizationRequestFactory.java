@@ -78,7 +78,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         authorizationRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
         authorizationRequest.setHttpResponse(new VertxHttpServerResponse(request.getDelegate(), new VertxHttpServerRequest(request.getDelegate()).metrics()));
-        authorizationRequest.setHost(request.host());
+        authorizationRequest.setHost(request.authority() != null ? request.authority().host() : null);
 
         // set OAuth 2.0 information
         authorizationRequest.setClientId(request.params().get(Parameters.CLIENT_ID));

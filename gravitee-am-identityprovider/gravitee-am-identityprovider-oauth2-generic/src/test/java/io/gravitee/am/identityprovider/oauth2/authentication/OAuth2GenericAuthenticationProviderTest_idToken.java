@@ -28,13 +28,15 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyAuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseMode;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.text.ParseException;
 import java.util.Collections;
@@ -48,7 +50,7 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 class OAuth2GenericAuthenticationProviderTest_idToken {
 
   @InjectMocks
@@ -66,6 +68,8 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
     JWTClaimsSet claims = new JWTClaimsSet.Builder().subject("bob").build();
 
     when(configuration.getResponseType()).thenReturn(ResponseType.ID_TOKEN);
+    when(configuration.getResponseMode()).thenReturn(ProviderResponseMode.FRAGMENT);
+    when(configuration.getProviderResponseType()).thenReturn(ProviderResponseType.ID_TOKEN);
     when(jwtProcessor.process("test", null)).thenReturn(claims);
 
     TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(
@@ -90,6 +94,7 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
           }
         }).test();
 
+    testObserver.awaitDone(10, TimeUnit.SECONDS);
     testObserver.assertComplete();
     testObserver.assertNoErrors();
     testObserver.assertValue(u -> "bob".equals(u.getUsername()));
@@ -109,6 +114,8 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
         .build();
 
     when(configuration.getResponseType()).thenReturn(ResponseType.ID_TOKEN);
+    when(configuration.getResponseMode()).thenReturn(ProviderResponseMode.FRAGMENT);
+    when(configuration.getProviderResponseType()).thenReturn(ProviderResponseType.ID_TOKEN);
     when(jwtProcessor.process("test", null)).thenReturn(claims);
 
     TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(
@@ -133,6 +140,7 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
           }
         }).test();
 
+    testObserver.awaitDone(10, TimeUnit.SECONDS);
     testObserver.assertComplete();
     testObserver.assertNoErrors();
     testObserver.assertValue(u -> "bob".equals(u.getUsername()));
@@ -158,6 +166,8 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
     when(jwtProcessor.process("test", null)).thenThrow(new JOSEException("jose exception"));
 
     when(configuration.getResponseType()).thenReturn(ResponseType.ID_TOKEN);
+    when(configuration.getResponseMode()).thenReturn(ProviderResponseMode.FRAGMENT);
+    when(configuration.getProviderResponseType()).thenReturn(ProviderResponseType.ID_TOKEN);
     TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(
         new Authentication() {
           @Override

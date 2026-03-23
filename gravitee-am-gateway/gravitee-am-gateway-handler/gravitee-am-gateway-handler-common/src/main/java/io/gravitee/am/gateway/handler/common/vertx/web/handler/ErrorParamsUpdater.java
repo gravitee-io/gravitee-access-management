@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;

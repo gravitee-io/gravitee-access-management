@@ -16,6 +16,11 @@
 package io.gravitee.am.service.http;
 
 import io.gravitee.common.util.EnvironmentUtils;
+import io.vertx.core.http.PoolOptions;
+import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.PemTrustOptions;
+import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +37,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -90,8 +96,6 @@ class WebClientBuilderTest {
 
         assertFalse(webClientOptions.isTrustAll());
         assertNull(webClientOptions.getTrustOptions());
-        assertNull(webClientOptions.getPfxTrustOptions());
-        assertNull(webClientOptions.getPemTrustOptions());
     }
 
     @Test
@@ -106,8 +110,7 @@ class WebClientBuilderTest {
 
         assertFalse(webClientOptions.isTrustAll());
         assertNotNull(webClientOptions.getTrustOptions());
-        assertNull(webClientOptions.getPfxTrustOptions());
-        assertNull(webClientOptions.getPemTrustOptions());
+        assertInstanceOf(JksOptions.class, webClientOptions.getTrustOptions());
     }
 
     @Test
@@ -122,8 +125,7 @@ class WebClientBuilderTest {
 
         assertFalse(webClientOptions.isTrustAll());
         assertNotNull(webClientOptions.getTrustOptions());
-        assertNotNull(webClientOptions.getPfxTrustOptions());
-        assertNull(webClientOptions.getPemTrustOptions());
+        assertInstanceOf(PfxOptions.class, webClientOptions.getTrustOptions());
     }
 
     @Test
@@ -137,8 +139,7 @@ class WebClientBuilderTest {
 
         assertFalse(webClientOptions.isTrustAll());
         assertNotNull(webClientOptions.getTrustOptions());
-        assertNull(webClientOptions.getPfxTrustOptions());
-        assertNotNull(webClientOptions.getPemTrustOptions());
+        assertInstanceOf(PemTrustOptions.class, webClientOptions.getTrustOptions());
     }
 
     @Test
@@ -151,8 +152,6 @@ class WebClientBuilderTest {
 
         assertFalse(webClientOptions.isTrustAll());
         assertNull(webClientOptions.getTrustOptions());
-        assertNull(webClientOptions.getPfxTrustOptions());
-        assertNull(webClientOptions.getPemTrustOptions());
     }
 
     @Test
@@ -166,9 +165,8 @@ class WebClientBuilderTest {
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
         assertFalse(webClientOptions.isTrustAll());
-        assertNotNull(webClientOptions.getKeyStoreOptions());
-        assertNull(webClientOptions.getPfxKeyCertOptions());
-        assertNull(webClientOptions.getPemKeyCertOptions());
+        assertNotNull(webClientOptions.getKeyCertOptions());
+        assertInstanceOf(JksOptions.class, webClientOptions.getKeyCertOptions());
     }
 
     @Test
@@ -182,9 +180,8 @@ class WebClientBuilderTest {
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
         assertFalse(webClientOptions.isTrustAll());
-        assertNull(webClientOptions.getKeyStoreOptions());
-        assertNotNull(webClientOptions.getPfxKeyCertOptions());
-        assertNull(webClientOptions.getPemKeyCertOptions());
+        assertNotNull(webClientOptions.getKeyCertOptions());
+        assertInstanceOf(PfxOptions.class, webClientOptions.getKeyCertOptions());
     }
 
     @Test
@@ -198,9 +195,8 @@ class WebClientBuilderTest {
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
         assertFalse(webClientOptions.isTrustAll());
-        assertNull(webClientOptions.getKeyStoreOptions());
-        assertNull(webClientOptions.getPfxKeyCertOptions());
-        assertNotNull(webClientOptions.getPemKeyCertOptions());
+        assertNotNull(webClientOptions.getKeyCertOptions());
+        assertInstanceOf(PemKeyCertOptions.class, webClientOptions.getKeyCertOptions());
     }
 
     @Test
@@ -279,19 +275,6 @@ class WebClientBuilderTest {
         webClientBuilder.createWebClient(vertx, webClientOptions);
 
         assertFalse(webClientOptions.isUseAlpn());
-    }
-
-    @Test
-    void shouldApplyMaxPoolSizeToHttp2() {
-        WebClientOptions webClientOptions = new WebClientOptions().setMaxPoolSize(50);
-        when(environment.getProperty("httpClient.http2.enabled", Boolean.class, true)).thenReturn(true);
-        when(environment.getProperty("httpClient.http2.connectionWindowSize", Integer.class, 65535)).thenReturn(65535);
-        when(environment.getProperty("httpClient.http2.keepAliveTimeout", Integer.class, 60)).thenReturn(60);
-
-        webClientBuilder.createWebClient(vertx, webClientOptions);
-
-        assertTrue(webClientOptions.isUseAlpn());
-        assertEquals(50, webClientOptions.getHttp2MaxPoolSize());
     }
 
     @Test

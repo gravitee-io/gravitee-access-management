@@ -176,7 +176,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     }
 
     private Single<NewResource> extractRequest(RoutingContext context) {
-        return Single.just(context.getBodyAsJson())
+        return Single.just(context.body().asJsonObject())
                 .flatMap(this::bodyValidation)
                 .map(body -> body.mapTo(NewResource.class));
     }

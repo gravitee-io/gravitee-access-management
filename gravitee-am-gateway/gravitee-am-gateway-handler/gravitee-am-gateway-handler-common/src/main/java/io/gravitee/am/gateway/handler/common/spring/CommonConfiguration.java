@@ -116,8 +116,10 @@ import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
+import io.gravitee.am.service.http.PoolOptionsBuilder;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.node.api.cache.CacheManager;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -167,10 +169,10 @@ public class CommonConfiguration {
     public WebClient webClient() {
         WebClientOptions options = new WebClientOptions()
                 .setConnectTimeout(Integer.parseInt(environment.getProperty("oidc.http.connectionTimeout", "10")) * 1000)
-                .setMaxPoolSize(Integer.parseInt(environment.getProperty("oidc.http.pool.maxTotalConnection", "200")))
                 .setTrustAll(Boolean.parseBoolean(environment.getProperty("oidc.http.client.trustAll", "true")));
 
-        return WebClient.create(vertx, options);
+        int maxPoolSize = Integer.parseInt(environment.getProperty("oidc.http.pool.maxTotalConnection", "200"));
+        return WebClient.create(vertx, options, PoolOptionsBuilder.build(maxPoolSize));
     }
 
     @Bean

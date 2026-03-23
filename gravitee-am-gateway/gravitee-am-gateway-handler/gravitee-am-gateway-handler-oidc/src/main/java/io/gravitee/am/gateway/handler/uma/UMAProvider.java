@@ -207,7 +207,7 @@ public class UMAProvider extends AbstractProtocolProvider {
         // error handler
         errorHandler(umaRouter);
 
-        router.mountSubRouter(path(), umaRouter);
+        router.route(subRouterPath()).subRouter(umaRouter);
     }
 
     private void errorHandler(Router router) {
