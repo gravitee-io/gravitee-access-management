@@ -1,0 +1,7 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": { "type": "string" }
+  },
+  "not": { "properties": { "mode": { "const": "disabled" } } }
+}
