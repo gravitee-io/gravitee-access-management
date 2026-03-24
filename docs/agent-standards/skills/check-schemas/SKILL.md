@@ -174,9 +174,8 @@ unzip -p /tmp/plugins/<artifactId>-<version>.zip 'schemas/schema-form.json' > /t
 
 ### Gravitee AM — EE (Enterprise) plugin schemas
 
-The automated `schema-compat-check.sh` only covers schemas tracked in this git repository. EE
-plugins are distributed as closed-source ZIPs and are **not checked automatically**. Use the
-dedicated script instead.
+- The automated `schema-compat-check.sh` covers schemas tracked in this git repository.
+- The automated `ee-schema-compat-check.sh` covers schemas in EE plugins that are distributed as closed-source ZIPs.
 
 > **Prerequisite:** run `mvn install -P full-bundle` first. The EE script locates new plugin
 > ZIPs from the local build output; it will error with a clear message if they are absent.
