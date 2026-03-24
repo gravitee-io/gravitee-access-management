@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "properties": {
+    "host": { "type": "string" },
+    "port": { "type": "integer" }
+  },
+  "required": ["host", "port"]
+}
