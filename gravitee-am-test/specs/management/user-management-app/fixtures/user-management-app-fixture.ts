@@ -17,7 +17,7 @@
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { setupDomainForTest, safeDeleteDomain, waitForDomainSync, patchDomain } from '@management-commands/domain-management-commands';
-import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { createRole, updateRole, getAllRoles, deleteRole, getRole } from '@management-commands/role-management-commands';
 import {
   createUser,
@@ -198,19 +198,19 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
       getGroupRoles: (groupId) => getGroupRoles(domain.id, accessToken, groupId),
 
       createAndConfigureApp: async (identityProviderId: string) => {
-        const app = await createTestApp(uniqueName('client-um', true), domain, accessToken, 'WEB', {
-          settings: {
-            oauth: {
-              redirectUris: [CONSTANTS.REDIRECT_URI],
-              grantTypes: ['password'],
-              scopeSettings: [{ scope: 'openid', defaultScope: true }],
-              enhanceScopesWithUserPermissions: true,
+        const app = await waitForSyncAfter(domain.id, () =>
+          createTestApp(uniqueName('client-um', true), domain, accessToken, 'WEB', {
+            settings: {
+              oauth: {
+                redirectUris: [CONSTANTS.REDIRECT_URI],
+                grantTypes: ['password'],
+                scopeSettings: [{ scope: 'openid', defaultScope: true }],
+                enhanceScopesWithUserPermissions: true,
+              },
             },
-          },
-          identityProviders: new Set([{ identity: identityProviderId, priority: -1 }]),
-        });
-
-        await waitForNextSync(domain.id);
+            identityProviders: new Set([{ identity: identityProviderId, priority: -1 }]),
+          }),
+        );
 
         return {
           clientId: app.settings.oauth.clientId,

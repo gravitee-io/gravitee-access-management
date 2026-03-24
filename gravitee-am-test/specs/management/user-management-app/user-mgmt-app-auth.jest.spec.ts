@@ -16,7 +16,6 @@
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
-import { waitForDomainSync } from '@management-commands/domain-management-commands';
 import { UserManagementAppFixture, setupUserManagementAppFixture, CONSTANTS } from './fixtures/user-management-app-fixture';
 
 setup();
@@ -112,7 +111,6 @@ describe('Authenticate User', () => {
       enabled: false,
     });
     expect(updated.enabled).toBe(false);
-    await waitForDomainSync(fixture.domain.id);
   });
 
   it('should reject authentication for disabled user', async () => {
@@ -131,7 +129,6 @@ describe('Authenticate User', () => {
       enabled: true,
     });
     expect(updated.enabled).toBe(true);
-    await waitForDomainSync(fixture.domain.id);
   });
 
   it('should reset user password', async () => {
@@ -153,7 +150,6 @@ describe('Authenticate User', () => {
 
   it('should delete the user', async () => {
     await fixture.deleteUser(userId);
-    await waitForDomainSync(fixture.domain.id);
   });
 
   it('should reject authentication for deleted user', async () => {
