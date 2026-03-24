@@ -32,7 +32,8 @@ afterAll(async () => {
     }
 });
 
-describe('Magic Link Authentication - Domain Settings', () => {
+// TODO: re-enable once platform team adds am-authenticator-magic-link to the license
+describe.skip('Magic Link Authentication - Domain Settings', () => {
     it('should enable Magic Link', async () => {
         // Given: A domain exists
         expect(fixture.domain).toBeDefined();
