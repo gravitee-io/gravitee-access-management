@@ -59,7 +59,6 @@ export class ApplicationCreationComponent implements OnInit {
     app.clientId = this.application.clientId;
     app.clientSecret = this.application.clientSecret;
     app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
-    app.agentCardUrl = this.application.agentCardUrl ?? undefined;
 
     this.applicationService
       .create(this.application.domain, app)

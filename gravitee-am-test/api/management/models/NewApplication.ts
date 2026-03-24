@@ -37,12 +37,6 @@ export interface NewApplication {
    * @type {string}
    * @memberof NewApplication
    */
-  agentCardUrl?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewApplication
-   */
   clientId?: string;
   /**
    *
@@ -91,7 +85,6 @@ export const NewApplicationTypeEnum = {
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
-  Agent: 'AGENT',
 } as const;
 export type NewApplicationTypeEnum = typeof NewApplicationTypeEnum[keyof typeof NewApplicationTypeEnum];
 
@@ -113,7 +106,6 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
     description: json['description'] == null ? undefined : json['description'],
@@ -134,7 +126,6 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
   }
 
   return {
-    agentCardUrl: value['agentCardUrl'],
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
     description: value['description'],

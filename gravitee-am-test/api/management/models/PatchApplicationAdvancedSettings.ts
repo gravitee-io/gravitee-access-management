@@ -34,12 +34,6 @@ import { mapValues } from '../runtime';
 export interface PatchApplicationAdvancedSettings {
   /**
    *
-   * @type {string}
-   * @memberof PatchApplicationAdvancedSettings
-   */
-  agentCardUrl?: string;
-  /**
-   *
    * @type {boolean}
    * @memberof PatchApplicationAdvancedSettings
    */
@@ -68,7 +62,6 @@ export function PatchApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreD
     return json;
   }
   return {
-    agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
     flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
     skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
   };
@@ -87,7 +80,6 @@ export function PatchApplicationAdvancedSettingsToJSONTyped(
   }
 
   return {
-    agentCardUrl: value['agentCardUrl'],
     flowsInherited: value['flowsInherited'],
     skipConsent: value['skipConsent'],
   };

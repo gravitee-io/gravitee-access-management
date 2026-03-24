@@ -55,8 +55,4 @@ public class WebClientsConfiguration {
         return webClientBuilder.createWebClient(vertx, URI.create(newsletterURL).toURL());
     }
 
-    @Bean("agentCardWebClient")
-    protected WebClient agentCardWebClient(Vertx vertx, WebClientBuilder webClientBuilder) {
-        return webClientBuilder.createWebClient(vertx);
-    }
 }

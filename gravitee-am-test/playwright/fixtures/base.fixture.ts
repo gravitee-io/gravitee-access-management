@@ -40,8 +40,6 @@ export type AmFixtures = {
   testDomain: Domain;
   /** Fresh application in testDomain, cleaned up after test. */
   testApplication: Application;
-  /** Fresh AGENT-type application in testDomain, cleaned up after test. */
-  testAgenticApp: Application;
   /** Fresh user in testDomain, cleaned up after test. */
   testUser: User;
 };
@@ -87,27 +85,6 @@ export const test = base.extend<AmFixtures>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- error shape is unknown SDK type
         if (e && typeof e === 'object' && 'response' in e && (e as any).response?.status !== 404) {
           console.warn(`testApplication teardown: ${e}`);
-        }
-      }
-    });
-  },
-
-  testAgenticApp: async ({ adminToken, testDomain }, use) => {
-    const app = await createApplication(testDomain.id, adminToken, {
-      name: uniqueName('pw-agent'),
-      type: 'AGENT',
-      redirectUris: ['https://gravitee.io/callback'],
-    });
-
-    await use(app);
-
-    await quietly(async () => {
-      try {
-        await deleteApplication(testDomain.id, adminToken, app.id);
-      } catch (e: unknown) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- error shape is unknown SDK type
-        if (e && typeof e === 'object' && 'response' in e && (e as any).response?.status !== 404) {
-          console.warn(`testAgenticApp teardown: ${e}`);
         }
       }
     });

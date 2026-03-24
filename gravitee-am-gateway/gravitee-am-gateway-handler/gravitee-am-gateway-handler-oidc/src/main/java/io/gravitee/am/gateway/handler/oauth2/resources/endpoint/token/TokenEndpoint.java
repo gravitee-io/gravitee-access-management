@@ -78,13 +78,6 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
         }
 
-        if (ApplicationType.AGENT == client.getAppType()) {
-            String grantType = tokenRequest.getGrantType();
-            if (PASSWORD.equals(grantType) || REFRESH_TOKEN.equals(grantType) || IMPLICIT.equals(grantType)) {
-                throw new UnauthorizedClientException("Grant type '" + grantType + "' is not allowed for agent applications");
-            }
-        }
-
         if (context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT) != null) {
             // preserve certificate thumbprint to add the information into the access token
             tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
