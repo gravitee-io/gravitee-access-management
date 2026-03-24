@@ -1,0 +1,5 @@
+{
+  "type": "object",
+  "properties": { "mode": { "type": "string" }, "token": { "type": "string" } },
+  "if": { "properties": { "mode": { "const": "secure" } } }
+}

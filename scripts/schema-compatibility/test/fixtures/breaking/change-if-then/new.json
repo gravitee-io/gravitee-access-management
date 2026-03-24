@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "protocol": { "type": "string" },
+    "certificate": { "type": "string" },
+    "cipherSuite": { "type": "string" }
+  },
+  "if": { "properties": { "protocol": { "const": "https" } } },
+  "then": { "required": ["certificate", "cipherSuite"] }
+}

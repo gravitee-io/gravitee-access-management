@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "retries": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}
