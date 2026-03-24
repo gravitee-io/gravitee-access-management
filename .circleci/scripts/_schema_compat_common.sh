@@ -73,11 +73,21 @@ schema_compat_resolve_merge_base() {
       echo "Running on release/master branch — comparing HEAD vs HEAD~1"
       MERGE_BASE="HEAD~1"
     else
-      # PR branch: use merge-base with origin/master
-      if git fetch origin master --depth=50 2>/dev/null; then
-        MERGE_BASE="$(git merge-base HEAD origin/master)"
+      # PR/branch: resolve target from git tracking branch (@{u}).
+      local tracking remote target_branch
+      tracking="$(git rev-parse --abbrev-ref "@{u}" 2>/dev/null)" || true
+      if [[ -n "$tracking" ]]; then
+        remote="${tracking%%/*}"
+        target_branch="${tracking#*/}"
+        echo "PR branch — tracking: $tracking"
+        git fetch "$remote" "$target_branch" --depth=50 2>/dev/null || true
+        MERGE_BASE="$(git merge-base HEAD "$tracking")" || true
+        if [[ -z "$MERGE_BASE" ]]; then
+          echo "Warning: no common ancestor with $tracking; falling back to HEAD~1"
+          MERGE_BASE="HEAD~1"
+        fi
       else
-        echo "Warning: could not fetch origin/master; falling back to HEAD~1"
+        echo "Warning: no tracking branch set; falling back to HEAD~1"
         MERGE_BASE="HEAD~1"
       fi
       echo "PR branch — merge-base: $MERGE_BASE"
