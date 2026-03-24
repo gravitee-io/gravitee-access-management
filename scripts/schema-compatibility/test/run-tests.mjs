@@ -7,6 +7,9 @@
  *   non-breaking/*  → expects exit code 0 with no WARN output (clean pass)
  *   maybe-breaking/ → expects exit code 0 with at least one WARN in stdout
  *
+ * Also: one breaking fixture (remove-field) is run with --allow-breaking — expect exit 0 and
+ * the allow-breaking success line in stdout.
+ *
  * Special case: if no old.json exists (new plugin), the test is skipped.
  *
  * Usage: node scripts/schema-compatibility/test/run-tests.mjs
@@ -22,12 +25,14 @@ const __dirname = dirname(__filename);
 
 const SCRIPT = resolve(__dirname, '..', 'check-schema-compatibility.mjs');
 const FIXTURES_DIR = join(__dirname, 'fixtures');
+/** Representative breaking fixture for --allow-breaking (must produce ERROR findings, not WARN-only). */
+const ALLOW_BREAKING_CASE = 'remove-field';
 
 let passed = 0;
 let failed = 0;
 let skipped = 0;
 
-function invoke(category, caseName) {
+function invoke(category, caseName, extraArgs = []) {
   const dir = join(FIXTURES_DIR, category, caseName);
   const oldJson = join(dir, 'old.json');
   const newJson = join(dir, 'new.json');
@@ -45,7 +50,9 @@ function invoke(category, caseName) {
   }
   return {
     label,
-    result: spawnSync(process.execPath, [SCRIPT, '--old', oldJson, '--new', newJson, '--plugin', caseName], { encoding: 'utf8' }),
+    result: spawnSync(process.execPath, [SCRIPT, '--old', oldJson, '--new', newJson, '--plugin', caseName, ...extraArgs], {
+      encoding: 'utf8',
+    }),
   };
 }
 
@@ -123,6 +130,30 @@ function runMaybeBreaking(caseName) {
   }
 }
 
+/** breaking fixture + --allow-breaking — expect exit 0 and confirmation in stdout */
+function runAllowBreakingOnce() {
+  const label = `[breaking/${ALLOW_BREAKING_CASE} + --allow-breaking]`;
+  const run = invoke('breaking', ALLOW_BREAKING_CASE, ['--allow-breaking']);
+  if (!run) {
+    console.log(`  FAIL  ${label} — fixture missing`);
+    failed++;
+    return;
+  }
+  const { result } = run;
+  if (handleSpawnFailure(label, result)) return;
+  const okMessage = result.stdout.includes('--allow-breaking') && result.stdout.includes('Exiting 0');
+  if (result.status === 0 && okMessage) {
+    console.log(`  PASS  ${label}`);
+    passed++;
+  } else {
+    console.log(
+      `  FAIL  ${label} — expected exit 0 and allow-breaking message, got exit ${result.status}, okMessage=${okMessage}`,
+    );
+    printFailDetail(result);
+    failed++;
+  }
+}
+
 function listSubdirs(dir) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true })
@@ -138,6 +169,12 @@ console.log('\nBreaking change fixtures (expect exit 1):');
 for (const c of listSubdirs(join(FIXTURES_DIR, 'breaking'))) {
   runBreaking(c);
 }
+
+// ---------------------------------------------------------------------------
+// --allow-breaking on one breaking fixture - expect exit 0
+// ---------------------------------------------------------------------------
+console.log('\n--allow-breaking flag (breaking/remove-field, expect exit 0):');
+runAllowBreakingOnce();
 
 // ---------------------------------------------------------------------------
 // Run non-breaking fixtures — expect exit 0, no WARN output
