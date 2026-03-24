@@ -49,13 +49,6 @@ export class ApplicationCreationStep1Component implements OnInit {
       subDescription: 'e.g : iOS, Android',
     },
     {
-      name: 'Agentic Application',
-      icon: 'memory',
-      type: 'AGENT',
-      description: 'Agentic apps',
-      subDescription: 'e.g : AI assistants, autonomous agents',
-    },
-    {
       name: 'Backend to Backend',
       icon: 'storage',
       type: 'SERVICE',

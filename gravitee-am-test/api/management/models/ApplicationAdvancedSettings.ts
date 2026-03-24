@@ -34,12 +34,6 @@ import { mapValues } from '../runtime';
 export interface ApplicationAdvancedSettings {
   /**
    *
-   * @type {string}
-   * @memberof ApplicationAdvancedSettings
-   */
-  agentCardUrl?: string;
-  /**
-   *
    * @type {boolean}
    * @memberof ApplicationAdvancedSettings
    */
@@ -68,7 +62,6 @@ export function ApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreDiscri
     return json;
   }
   return {
-    agentCardUrl: json['agentCardUrl'] == null ? undefined : json['agentCardUrl'],
     flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
     skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
   };
@@ -87,7 +80,6 @@ export function ApplicationAdvancedSettingsToJSONTyped(
   }
 
   return {
-    agentCardUrl: value['agentCardUrl'],
     flowsInherited: value['flowsInherited'],
     skipConsent: value['skipConsent'],
   };

@@ -385,7 +385,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateScopes)
                 .flatMap(this::validateGrantType)
                 .flatMap(this::validateResponseType)
-                .flatMap(this::validateAgentConstraints)
                 .flatMap(this::validateSubjectType)
                 .flatMap(this::validateRequestUri)
                 .flatMap(this::validateSectorIdentifierUri)
@@ -538,65 +537,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             // Request omits application_type — carry forward existing value so constraints apply
             request.setApplicationType(Optional.of(existingType));
         }
-        return Single.just(request);
-    }
-
-    /**
-     * When application_type is "agent", enforce agent constraints (see {@link AgentApplicationConstraints}):
-     * - Strip forbidden grant types (implicit, password, refresh_token)
-     * - If no grant types remain (or none were provided), default to authorization_code with response type "code"
-     * - Otherwise, strip implicit response types (token, id_token, id_token token),
-     *   falling back to "code" if the list becomes empty and authorization_code is granted
-     * - Default to client_secret_basic auth method if not explicitly set
-     */
-    private Single<DynamicClientRegistrationRequest> validateAgentConstraints(DynamicClientRegistrationRequest request) {
-        boolean isAgent = request.getApplicationType() != null
-                && request.getApplicationType().filter(io.gravitee.am.common.oidc.ApplicationType.AGENT::equals).isPresent();
-        if (!isAgent) {
-            return Single.just(request);
-        }
-
-        // Strip forbidden grant types, keeping only allowed ones
-        List<String> grantTypes = request.getGrantTypes() != null
-                ? request.getGrantTypes().orElse(Collections.emptyList()).stream()
-                    .filter(g -> !AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES.contains(g)).toList()
-                : Collections.emptyList();
-
-        if (request.getGrantTypes() != null && request.getGrantTypes().isPresent()) {
-            List<String> stripped = request.getGrantTypes().get().stream()
-                    .filter(AgentApplicationConstraints.FORBIDDEN_GRANT_TYPES::contains).toList();
-            if (!stripped.isEmpty()) {
-                LOGGER.warn("Agent application registration: stripped forbidden grant types {} from request", stripped);
-            }
-        }
-
-        if (grantTypes.isEmpty()) {
-            // Default to authorization_code when no allowed grant types remain
-            request.setGrantTypes(Optional.of(List.of(GrantType.AUTHORIZATION_CODE)));
-            request.setResponseTypes(Optional.of(List.of("code")));
-        } else {
-            request.setGrantTypes(Optional.of(grantTypes));
-
-            // Strip forbidden response types
-            List<String> responseTypes = new ArrayList<>(
-                    request.getResponseTypes() != null ? request.getResponseTypes().orElse(Collections.emptyList()) : Collections.emptyList());
-            List<String> strippedResponseTypes = responseTypes.stream()
-                    .filter(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES::contains).toList();
-            if (!strippedResponseTypes.isEmpty()) {
-                LOGGER.warn("Agent application registration: stripped forbidden response types {} from request", strippedResponseTypes);
-            }
-            responseTypes.removeAll(AgentApplicationConstraints.FORBIDDEN_RESPONSE_TYPES);
-            if (responseTypes.isEmpty() && grantTypes.contains(GrantType.AUTHORIZATION_CODE)) {
-                responseTypes.add("code");
-            }
-            request.setResponseTypes(Optional.of(responseTypes));
-        }
-
-        // Default to client_secret_basic if no auth method specified
-        if (request.getTokenEndpointAuthMethod() == null || request.getTokenEndpointAuthMethod().isEmpty()) {
-            request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.CLIENT_SECRET_BASIC));
-        }
-
         return Single.just(request);
     }
 

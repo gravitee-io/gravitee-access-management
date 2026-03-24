@@ -41,10 +41,6 @@ export class ApplicationCreationStep2Component implements OnInit {
       type: 'NATIVE',
     },
     {
-      icon: 'memory',
-      type: 'AGENT',
-    },
-    {
       icon: 'storage',
       type: 'SERVICE',
     },
