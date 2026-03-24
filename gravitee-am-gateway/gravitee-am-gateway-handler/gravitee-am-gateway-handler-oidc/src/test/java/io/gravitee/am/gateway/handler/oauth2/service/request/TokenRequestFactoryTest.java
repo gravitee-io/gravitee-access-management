@@ -19,7 +19,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Assert;
@@ -49,11 +49,8 @@ public class TokenRequestFactoryTest {
         entries.add(new Parameter<>(Parameters.GRANT_TYPE, "grant_type"));
         entries.add(new Parameter<>("custom", "additional-parameter"));
 
-        io.vertx.core.MultiMap multiMap = mock(io.vertx.core.MultiMap.class);
+        MultiMap multiMap = mock(MultiMap.class);
         when(multiMap.entries()).thenReturn(entries);
-
-        MultiMap rxMultiMap = mock(MultiMap.class);
-        when(rxMultiMap.getDelegate()).thenReturn(multiMap);
 
         io.vertx.core.http.HttpServerRequest httpServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
         when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
@@ -61,7 +58,7 @@ public class TokenRequestFactoryTest {
         HttpServerResponse httpServerResponse = mock(HttpServerResponse.class);
 
         HttpServerRequest rxHttpServerRequest = mock(HttpServerRequest.class);
-        when(rxHttpServerRequest.params()).thenReturn(rxMultiMap);
+        when(rxHttpServerRequest.params()).thenReturn(multiMap);
         when(rxHttpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
         when(rxHttpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
         when(rxHttpServerRequest.params().get(Parameters.GRANT_TYPE)).thenReturn("grant_type");

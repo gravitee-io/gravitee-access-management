@@ -30,7 +30,7 @@ import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.common.event.EventManager;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;

@@ -22,9 +22,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
 import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.impl.headers.HeadersMultiMap;
-import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Assert;
@@ -80,9 +79,9 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecrets()).thenReturn(of(clientSecret));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlkOm15LWNsaWVudC1zZWNyZXQ=");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
@@ -118,9 +117,9 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecrets()).thenReturn(of(clientSecret));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlkOm15LWNsaWVudC1zZWNyZXQ=");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
@@ -143,9 +142,9 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecret()).thenReturn("my-client-secret");
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlkOm15LWNsaWVudC1zZWNyZXQ=");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
@@ -180,9 +179,9 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecrets()).thenReturn(of(clientSecret));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXl8JS1+dG90c2RmJCohwqcwOm15fCUtfnRvdHNkZiQqIcKnMA==");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
@@ -217,9 +216,9 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecrets()).thenReturn(of(clientSecret));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXklMjJjbGllbnQtaWQ6bXklMjJjbGllbnQtc2VjcmV0");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
@@ -254,9 +253,9 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecrets()).thenReturn(of(clientSecret));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXkiY2xpZW50LWlkOm15ImNsaWVudC1zZWNyZXQ=");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
@@ -278,9 +277,9 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecret()).thenReturn("my-client-secret");
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlkOm15LW90aGVyLWNsaWVudC1zZWNyZXQ=");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);

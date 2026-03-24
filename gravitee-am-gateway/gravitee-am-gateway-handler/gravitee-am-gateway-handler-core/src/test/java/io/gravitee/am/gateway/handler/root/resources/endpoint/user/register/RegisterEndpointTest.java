@@ -24,9 +24,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingC
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,7 +84,7 @@ public class RegisterEndpointTest {
         final AccountSettings accountSettings = new AccountSettings();
         accountSettings.setSendVerifyRegistrationAccountEmail(true);
 
-        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(new Buffer(BufferImpl.buffer())));
+        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(Buffer.buffer()));
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
         registerEndpoint.handle(context);
@@ -98,7 +97,7 @@ public class RegisterEndpointTest {
     @Test
     @DisplayName("Must successfully go through RegisterEndpoint with no configuration")
     public void must_go_through_RegisterEndpoint_with_configuration() {
-        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(new Buffer(BufferImpl.buffer())));
+        when(templateEngine.render(anyMap(), anyString())).thenReturn(Single.just(Buffer.buffer()));
 
         registerEndpoint.handle(context);
 

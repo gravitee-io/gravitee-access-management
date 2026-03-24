@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;

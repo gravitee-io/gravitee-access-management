@@ -30,7 +30,6 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
-import io.gravitee.am.gateway.handler.context.ReactableExecutionContext;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -420,7 +419,7 @@ public class TokenServiceTest {
         client.setClientId("my-client-id");
         client.setTokenCustomClaims(Arrays.asList(customClaim, customClaim2));
 
-        ReactableExecutionContext executionContext = mock(ReactableExecutionContext.class);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         TemplateEngine templateEngine = mock(TemplateEngine.class);
         when(templateEngine.getValue("https://custom-iss", Object.class)).thenReturn("https://custom-iss");
         when(templateEngine.getValue("my-api", Object.class)).thenReturn("my-api");

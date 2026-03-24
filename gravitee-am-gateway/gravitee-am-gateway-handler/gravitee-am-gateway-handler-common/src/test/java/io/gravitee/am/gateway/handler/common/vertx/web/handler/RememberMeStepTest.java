@@ -24,7 +24,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.core.http.Cookie;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.auth.User;
@@ -66,6 +67,12 @@ public class RememberMeStepTest {
     @Mock
     private HttpServerResponse httpServerResponse;
 
+    @Mock
+    private io.vertx.ext.web.RoutingContext delegateRoutingContext;
+
+    @Mock
+    private UserContextInternal userContextInternal;
+
     private AuthenticationFlowChain authenticationFlowChain;
 
     private RememberMeStep step;
@@ -78,6 +85,8 @@ public class RememberMeStepTest {
 
         when(routingContext.request()).thenReturn(httpServerRequest);
         when(routingContext.response()).thenReturn(httpServerResponse);
+        when(routingContext.getDelegate()).thenReturn(delegateRoutingContext);
+        when(delegateRoutingContext.userContext()).thenReturn(userContextInternal);
         doNothing().when(authenticationFlowChain).exit(Mockito.any());
         doNothing().when(authenticationFlowChain).doNext(Mockito.any());
     }
@@ -150,7 +159,7 @@ public class RememberMeStepTest {
 
         step.execute(routingContext, authenticationFlowChain);
 
-        verify(routingContext, times(1)).setUser(any(io.vertx.rxjava3.ext.auth.User.class));
+        verify(userContextInternal, times(1)).setUser(any(io.vertx.ext.auth.User.class));
         verify(authenticationFlowChain, times(1)).exit(step);
         verify(authenticationFlowChain, times(0)).doNext(routingContext);
     }

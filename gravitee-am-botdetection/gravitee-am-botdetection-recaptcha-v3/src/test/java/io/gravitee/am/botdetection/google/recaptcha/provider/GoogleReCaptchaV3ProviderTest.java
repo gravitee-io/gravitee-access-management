@@ -19,12 +19,11 @@ import io.gravitee.am.botdetection.api.BotDetectionContext;
 import io.gravitee.am.botdetection.google.recaptcha.GoogleReCaptchaV3Configuration;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.observers.TestObserver;
-import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.WebClientInternal;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.Before;
@@ -87,7 +86,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
     @Test
     public void shouldValidate() {
-        MultiMap multiMap = new MultiMap(new HeadersMultiMap());
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
         multiMap.add(TOKEN_PARAM_NAME, "token-value");
 
         when(configuration.getMinScore()).thenReturn(0.5f);
@@ -109,7 +108,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
     @Test
     public void shouldNotValidate_LowScore() {
-        MultiMap multiMap = new MultiMap(new HeadersMultiMap());
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
         multiMap.add(TOKEN_PARAM_NAME, "token-value");
 
         when(configuration.getMinScore()).thenReturn(0.5f);
@@ -131,7 +130,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
     @Test
     public void shouldNotValidate_NotSuccessful() {
-        MultiMap multiMap = new MultiMap(new HeadersMultiMap());
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
         multiMap.add(TOKEN_PARAM_NAME, "token-value");
 
         when(httpResponse.statusCode())
@@ -151,7 +150,7 @@ public class GoogleReCaptchaV3ProviderTest {
 
     @Test
     public void shouldNotValidate_RequestError() {
-        MultiMap multiMap = new MultiMap(new HeadersMultiMap());
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
         multiMap.add(TOKEN_PARAM_NAME, "token-value");
 
         when(httpResponse.statusCode())

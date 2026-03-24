@@ -22,7 +22,7 @@ import io.vertx.core.net.*;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.rxjava3.core.AbstractVerticle;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.impl.AsyncResultSingle;
+
 import io.vertx.test.core.AsyncTestBase;
 import io.vertx.test.core.RepeatRule;
 import io.vertx.test.core.VertxTestBase;
@@ -128,13 +128,8 @@ public class RxVertxTestBase extends AsyncTestBase {
             created = Collections.synchronizedList(new ArrayList<>());
         }
 
-        return AsyncResultSingle.toSingle(resultHandler -> io.vertx.core.Vertx.clusteredVertx(options, ar -> {
-            if (ar.succeeded()) {
-                resultHandler.handle(io.vertx.core.Future.succeededFuture(Vertx.newInstance(ar.result())));
-            } else {
-                resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-            }
-        }));
+        return Single.fromCompletionStage(io.vertx.core.Vertx.clusteredVertx(options).toCompletionStage())
+                .map(Vertx::newInstance);
     }
 
     protected ClusterManager getClusterManager() {
@@ -149,13 +144,9 @@ public class RxVertxTestBase extends AsyncTestBase {
         CountDownLatch latch = new CountDownLatch(numNodes);
         vertices = new Vertx[numNodes];
         for (int i = 0; i < numNodes; i++) {
-            AsyncResultSingle.toSingle(resultHandler -> io.vertx.core.Vertx.clusteredVertx(options, ar -> {
-                if (ar.succeeded()) {
-                    resultHandler.handle(io.vertx.core.Future.succeededFuture(Vertx.newInstance(ar.result())));
-                } else {
-                    resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-                }
-            })).subscribe();
+            Single.fromCompletionStage(io.vertx.core.Vertx.clusteredVertx(options).toCompletionStage())
+                    .map(Vertx::newInstance)
+                    .subscribe();
         }
         try {
             assertTrue(latch.await(2, TimeUnit.MINUTES));
@@ -166,13 +157,7 @@ public class RxVertxTestBase extends AsyncTestBase {
 
 
     protected static void setOptions(TCPSSLOptions sslOptions, KeyCertOptions options) {
-        if (options instanceof JksOptions) {
-            sslOptions.setKeyStoreOptions((JksOptions) options);
-        } else if (options instanceof PfxOptions) {
-            sslOptions.setPfxKeyCertOptions((PfxOptions) options);
-        } else {
-            sslOptions.setPemKeyCertOptions((PemKeyCertOptions) options);
-        }
+        sslOptions.setKeyCertOptions(options);
     }
 
     protected static final String[] ENABLED_CIPHER_SUITES =
@@ -257,7 +242,7 @@ public class RxVertxTestBase extends AsyncTestBase {
      * @throws Exception anything preventing the creation of the worker
      */
     protected String createWorker() {
-        return vertx.deployVerticle(AbstractVerticle.class.getName(), new DeploymentOptions().setWorker(true))
+        return vertx.deployVerticle(AbstractVerticle.class.getName(), new DeploymentOptions().setThreadingModel(io.vertx.core.ThreadingModel.WORKER))
                 .blockingGet();
     }
 

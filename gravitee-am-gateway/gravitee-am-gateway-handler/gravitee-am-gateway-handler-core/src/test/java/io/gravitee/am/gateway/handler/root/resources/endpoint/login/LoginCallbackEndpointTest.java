@@ -31,7 +31,8 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
+import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -61,7 +62,8 @@ public class LoginCallbackEndpointTest extends RxWebTestBase {
 
         router.route(HttpMethod.GET, "/login/callback")
                 .handler(ctx -> {
-                    ctx.setSession(new DummySession());
+                    var dummySession = new DummySession();
+                    RoutingContextHelper.setSession(ctx, dummySession.getDelegate());
                     ctx.next();
                 })
                 .handler(new LoginCallbackEndpoint(jwtService, certificateManager));

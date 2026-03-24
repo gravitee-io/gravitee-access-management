@@ -35,7 +35,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.http.impl.headers.HeadersMultiMap;
+import io.vertx.core.MultiMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -95,7 +95,7 @@ class ExtensionGrantStrategyTest {
 
         tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
-        tokenRequest.setParameters(new VertxHttpHeaders(new HeadersMultiMap()));
+        tokenRequest.setParameters(new VertxHttpHeaders(MultiMap.caseInsensitiveMultiMap()));
 
         // V1 mode (without SubjectManager)
         strategy = new ExtensionGrantStrategy(
