@@ -1,0 +1,7 @@
+{
+  "type": "object",
+  "properties": { "mode": { "type": "string" }, "fallback": { "type": "string" } },
+  "if": { "properties": { "mode": { "const": "strict" } } },
+  "then": { "required": ["mode"] },
+  "else": { "required": ["fallback"] }
+}
