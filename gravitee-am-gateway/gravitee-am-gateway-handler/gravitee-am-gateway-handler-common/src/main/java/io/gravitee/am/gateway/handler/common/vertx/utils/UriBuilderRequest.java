@@ -147,6 +147,10 @@ public class UriBuilderRequest {
      */
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
         String requestHost = request.getHeader(HttpHeaders.HOST);
+        if (requestHost == null && request.authority() != null) {
+            requestHost = request.authority().toString();
+        }
+
         String xForwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
         String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))

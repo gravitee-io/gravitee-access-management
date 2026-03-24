@@ -119,7 +119,6 @@ public class DynamicClientRegistrationEndpointTest {
         when(routingContext.request()).thenReturn(serverRequest);
         when(serverRequest.getHeader(any())).thenReturn(null);
         when(serverRequest.scheme()).thenReturn("https");
-        when(serverRequest.authority()).thenReturn(HostAndPort.create("host", -1));
         when(routingContext.response()).thenReturn(serverResponse);
         when(serverResponse.putHeader(anyString(),anyString())).thenReturn(serverResponse);
         when(serverResponse.setStatusCode(201)).thenReturn(serverResponse);
