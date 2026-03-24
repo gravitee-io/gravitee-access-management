@@ -217,6 +217,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         client.setClientId(SecureRandomString.generate());
         client.setClientName(ClientServiceImpl.DEFAULT_CLIENT_NAME);
         client.setDomain(domain.getId());
+        client.setFlowsInherited(true);
 
         return this.validateClientRegistrationRequest(request)
                 .map(req -> req.patch(client))
