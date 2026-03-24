@@ -281,7 +281,7 @@ public class VertxHttpServerRequest implements Request {
 
     @Override
     public String host() {
-        return this.httpServerRequest.authority() != null ? this.httpServerRequest.authority().host() : null;
+        return this.httpServerRequest.getHeader(io.vertx.core.http.HttpHeaders.HOST);
     }
 
 }

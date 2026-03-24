@@ -342,6 +342,7 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
         when(request.scheme()).thenReturn("https");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:443");
 
         final var generatedUri3 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         // Host header should use legacy behavior (include default ports) when legacy mode is enabled
@@ -356,17 +357,19 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
-        
+
         // HTTP scheme with no port
         when(request.scheme()).thenReturn("http");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", -1));
-        assertEquals("http://myhost/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost");
+        assertEquals("http://myhost/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
-        
+
         // HTTPS scheme with no port
         when(request.scheme()).thenReturn("https");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", -1));
-        assertEquals("https://myhost/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost");
+        assertEquals("https://myhost/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
 
@@ -376,39 +379,43 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
-        
+
         // HTTP default port (80) - should be omitted
         when(request.scheme()).thenReturn("http");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 80));
-        assertEquals("http://myhost/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:80");
+        assertEquals("http://myhost/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
-        
+
         // HTTPS default port (443) - should be omitted
         when(request.scheme()).thenReturn("https");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
-        assertEquals("https://myhost/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:443");
+        assertEquals("https://myhost/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
 
     @Test
     public void shouldHandle_HostHeader_DefaultPorts_LegacyMode() {
         setupMockEnvironment(true, true); // Enable legacy mode
-        
+
         // Clear X-Forwarded headers to ensure Host header is used
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
-        
+
         // HTTP default port (80) - should be included in legacy mode
         when(request.scheme()).thenReturn("http");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 80));
-        assertEquals("http://myhost:80/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:80");
+        assertEquals("http://myhost:80/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
-        
+
         // HTTPS default port (443) - should be included in legacy mode
         when(request.scheme()).thenReturn("https");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
-        assertEquals("https://myhost:443/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:443");
+        assertEquals("https://myhost:443/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
 
@@ -418,17 +425,19 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
-        
+
         // HTTP scheme with non-default port
         when(request.scheme()).thenReturn("http");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 8080));
-        assertEquals("http://myhost:8080/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:8080");
+        assertEquals("http://myhost:8080/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
-        
+
         // HTTPS scheme with non-default port
         when(request.scheme()).thenReturn("https");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 8080));
-        assertEquals("https://myhost:8080/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:8080");
+        assertEquals("https://myhost:8080/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
 
@@ -438,17 +447,19 @@ public class UriBuilderRequestTest {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn(null);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
-        
+
         // HTTP scheme with HTTPS default port (443) - should keep port
         when(request.scheme()).thenReturn("http");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 443));
-        assertEquals("http://myhost:443/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:443");
+        assertEquals("http://myhost:443/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
-        
+
         // HTTPS scheme with HTTP default port (80) - should keep port
         when(request.scheme()).thenReturn("https");
         when(request.authority()).thenReturn(HostAndPort.create("myhost", 80));
-        assertEquals("https://myhost:80/my/path?param1=value1", 
+        when(request.getHeader(eq(HttpHeaders.HOST))).thenReturn("myhost:80");
+        assertEquals("https://myhost:80/my/path?param1=value1",
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
 

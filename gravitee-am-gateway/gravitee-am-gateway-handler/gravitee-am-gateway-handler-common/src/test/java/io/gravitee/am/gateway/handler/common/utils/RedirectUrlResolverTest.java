@@ -65,6 +65,7 @@ public class RedirectUrlResolverTest {
         Mockito.when(ctx.request()).thenReturn(request);
         Mockito.when(request.scheme()).thenReturn("https");
         Mockito.when(request.authority()).thenReturn(HostAndPort.create("www.gravitee.io", -1));
+        Mockito.when(request.getHeader("Host")).thenReturn("www.gravitee.io");
         Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("");
         String path = redirectUrlResolver.resolveRedirectUrl(ctx, MultiMap.caseInsensitiveMultiMap());
         assertEquals("https://www.gravitee.io/oauth/authorize", path);

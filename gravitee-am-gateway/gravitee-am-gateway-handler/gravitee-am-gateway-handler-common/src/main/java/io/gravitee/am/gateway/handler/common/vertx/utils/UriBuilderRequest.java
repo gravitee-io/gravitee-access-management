@@ -146,7 +146,7 @@ public class UriBuilderRequest {
      * Resolves host and port with proper precedence: Host header port takes precedence over X-Forwarded headers
      */
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
-        String requestHost = request.authority() != null ? request.authority().toString() : null;
+        String requestHost = request.getHeader(HttpHeaders.HOST);
         String xForwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
         String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))
