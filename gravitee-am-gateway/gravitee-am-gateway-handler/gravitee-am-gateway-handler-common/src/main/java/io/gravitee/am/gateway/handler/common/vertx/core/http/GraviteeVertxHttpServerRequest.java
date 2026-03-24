@@ -105,7 +105,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         if (delegate instanceof HttpServerRequest) {
             return ((HttpServerRequest) delegate).authority();
         }
-        return HostAndPort.create(this.host, -1);
+        return this.authority;
     }
 
     @Override
@@ -113,7 +113,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         if (delegate instanceof HttpServerRequest) {
             return ((HttpServerRequest) delegate).authority(real);
         }
-        return authority();
+        return this.authority;
     }
 
     @Override
