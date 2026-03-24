@@ -175,7 +175,7 @@ public class ResourceAccessPoliciesEndpoint {
     private AccessPolicy extractRequest(RoutingContext context) {
         try {
             // get body request
-            JsonObject body = context.getBodyAsJson();
+            JsonObject body = context.body().asJsonObject();
             // check missing values
             Arrays.asList("name", "type", "description", "condition").forEach(key -> {
                 if (!body.containsKey(key)) {

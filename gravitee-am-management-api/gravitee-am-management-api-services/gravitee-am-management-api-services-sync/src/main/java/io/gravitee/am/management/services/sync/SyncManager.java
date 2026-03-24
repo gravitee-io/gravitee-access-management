@@ -129,12 +129,17 @@ public class SyncManager implements InitializingBean {
                 if (commonEvent == null) {
                     logger.debug("Cannot publish event {} as type is null", event.getId());
                 } else {
-                    eventManager.publishEvent(commonEvent, event.getPayload());
+                    publishEventTypeSafe(eventManager, commonEvent, event.getPayload());
                 }
                 processedEventIds.put(event.getId(), event.getPayload().toString());
             } else {
                 logger.debug("Event id {} already processed", event.getId());
             }
         });
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static <T extends Enum<T>, S> void publishEventTypeSafe(EventManager eventManager, Enum<?> eventType, S content) {
+        eventManager.publishEvent((T) eventType, content);
     }
 }

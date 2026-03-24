@@ -21,7 +21,7 @@ import io.gravitee.am.botdetection.google.recaptcha.GoogleReCaptchaV3Configurati
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;

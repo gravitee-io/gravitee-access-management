@@ -25,7 +25,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractError
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;

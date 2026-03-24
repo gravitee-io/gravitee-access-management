@@ -25,7 +25,7 @@ import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;

@@ -17,7 +17,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.consent;
 
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.core.env.Environment;
@@ -75,7 +75,7 @@ public class DataConsentHandler implements Handler<RoutingContext> {
 
     private void handleBody(RoutingContext context, String key) {
         if (isContentTypeJson(context.request().headers())) {
-            var body = context.getBodyAsJson();
+            var body = context.body().asJsonObject();
             if (body != null && body.containsKey(key)) {
                 context.session().put(key, DATA_CONSENT_ON.equalsIgnoreCase(body.getString(key)));
             }

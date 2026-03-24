@@ -19,7 +19,7 @@ package io.gravitee.am.gateway.handler.common.service;
 
 import io.gravitee.common.event.EventListener;
 
-public interface DomainAwareListener<T extends Enum, S> extends EventListener<T, S> {
+public interface DomainAwareListener<T extends Enum<T>, S> extends EventListener<T, S> {
     String getDomainId();
 
 }

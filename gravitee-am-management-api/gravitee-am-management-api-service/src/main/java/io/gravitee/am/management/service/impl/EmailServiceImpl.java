@@ -49,7 +49,7 @@ import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;

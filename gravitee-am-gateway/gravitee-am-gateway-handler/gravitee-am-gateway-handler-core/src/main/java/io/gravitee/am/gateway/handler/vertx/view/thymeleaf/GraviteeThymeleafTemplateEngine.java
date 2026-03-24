@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 
 import java.util.Map;

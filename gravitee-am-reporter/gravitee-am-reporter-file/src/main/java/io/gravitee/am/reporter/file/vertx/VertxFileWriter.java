@@ -177,24 +177,24 @@ public class VertxFileWriter<T extends ReportEntry> {
                 vertx.fileSystem().open(filename, new OpenOptions()
                                 .setAppend(true)
                                 .setCreate(true)
-                                .setDsync(true), event -> {
-                            if (event.succeeded()) {
-                                asyncFile = event.result();
+                                .setDsync(true)) // open() now returns Future<AsyncFile>
+                        .onSuccess(f -> {
+                            this.asyncFile = f;
 
-                                if (oldAsyncFile != null) {
-                                    // Now we can close previous file safely
-                                    close(oldAsyncFile).onFailure(throwable -> {
-                                        LOGGER.error("An error occurs while closing file writer [{}]", this.filename, throwable);
-                                    });
-                                }
-
-                                promise.complete();
-                            } else {
-                                LOGGER.error("An error occurs while starting file writer [{}]", this.filename, event.cause());
-                                promise.fail(event.cause());
+                            if (oldAsyncFile != null) {
+                                // Close previous file safely using the Future-based close()
+                                oldAsyncFile.close()
+                                        .onFailure(throwable -> {
+                                            LOGGER.error("An error occurs while closing file writer [{}]", this.filename, throwable);
+                                        });
                             }
-                        }
-                );
+
+                            promise.complete();
+                        })
+                        .onFailure(throwable -> {
+                            LOGGER.error("An error occurs while starting file writer [{}]", this.filename, throwable);
+                            promise.fail(throwable);
+                        });
             } catch (IOException ioe) {
                 promise.fail(ioe);
             }
@@ -210,26 +210,6 @@ public class VertxFileWriter<T extends ReportEntry> {
                 asyncFile.write(payload.appendBytes(END_OF_LINE));
             }
         }
-    }
-
-    private Future<Void> close(AsyncFile asyncFile) {
-        Promise<Void> promise = Promise.promise();
-
-        if (asyncFile != null) {
-            asyncFile.close(event -> {
-                if (event.succeeded()) {
-                    LOGGER.info("File writer is now closed [{}]", this.filename);
-                    promise.complete();
-                } else {
-                    LOGGER.error("An error occurs while closing file writer [{}]", this.filename, event.cause());
-                    promise.fail(event.cause());
-                }
-            });
-        } else {
-            promise.complete();
-        }
-
-        return promise.future();
     }
 
     private void scheduleNextRollover(ZonedDateTime now) {

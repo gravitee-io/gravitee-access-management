@@ -24,7 +24,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
 
 /**
@@ -104,7 +104,7 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
             // set user in context and continue
             io.gravitee.am.model.User endUser = h.result();
             if (routingContext.user() == null) {
-                routingContext.setUser(User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser)));
+                setUser(routingContext, endUser);
                 succeeded(routingContext);
                 return;
             }

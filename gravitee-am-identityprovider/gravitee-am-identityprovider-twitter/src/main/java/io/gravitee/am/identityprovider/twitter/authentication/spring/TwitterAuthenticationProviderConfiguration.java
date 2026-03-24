@@ -16,7 +16,9 @@
 package io.gravitee.am.identityprovider.twitter.authentication.spring;
 
 import io.gravitee.am.identityprovider.twitter.TwitterIdentityProviderConfiguration;
+import io.gravitee.am.service.http.PoolOptionsBuilder;
 import io.gravitee.am.service.http.WebClientBuilder;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -60,9 +62,8 @@ public class TwitterAuthenticationProviderConfiguration {
                 .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setIdleTimeout(configuration.getIdleTimeout())
-                .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
-                .setMaxPoolSize(configuration.getMaxPoolSize());
+                .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT);
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri(), PoolOptionsBuilder.build(configuration.getMaxPoolSize()));
     }
 }

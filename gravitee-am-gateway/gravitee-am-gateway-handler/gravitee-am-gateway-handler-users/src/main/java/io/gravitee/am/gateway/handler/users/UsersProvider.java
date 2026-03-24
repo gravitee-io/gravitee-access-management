@@ -85,7 +85,7 @@ public class UsersProvider extends AbstractProtocolProvider {
         // error handler
         usersRouter.route().failureHandler(new ErrorHandler());
 
-        router.mountSubRouter(path(), usersRouter);
+        router.route(subRouterPath()).subRouter(usersRouter);
     }
 
     @Override

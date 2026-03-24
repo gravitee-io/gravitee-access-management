@@ -80,10 +80,10 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
 
     protected Single<DynamicClientRegistrationRequest> extractRequest(RoutingContext context) {
         try {
-            if (context.getBodyAsJson() == null) {
+            if (context.body().asJsonObject() == null) {
                 throw new InvalidClientMetadataException("no content");
             }
-            return Single.just(context.getBodyAsJson().mapTo(DynamicClientRegistrationRequest.class));
+            return Single.just(context.body().asJsonObject().mapTo(DynamicClientRegistrationRequest.class));
         } catch (Exception ex) {
             if (ex instanceof DecodeException) {
                 return Single.error(new InvalidClientMetadataException(ex.getMessage()));

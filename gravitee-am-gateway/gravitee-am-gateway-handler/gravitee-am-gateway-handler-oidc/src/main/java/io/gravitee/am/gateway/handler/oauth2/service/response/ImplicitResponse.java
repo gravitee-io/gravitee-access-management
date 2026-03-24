@@ -19,7 +19,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import lombok.Getter;
 
 /**

@@ -19,7 +19,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.common.http.HttpHeaders;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.vertx.core.net.SocketAddress;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

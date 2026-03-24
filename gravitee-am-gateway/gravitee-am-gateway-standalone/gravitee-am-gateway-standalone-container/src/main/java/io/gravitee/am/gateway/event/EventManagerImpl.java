@@ -52,12 +52,12 @@ public class EventManagerImpl implements EventManager {
     private ConcurrentMap<ComparableEventType, List<EventListenerWrapper>> listenersMap = new ConcurrentHashMap<>();
 
     @Override
-    public void publishEvent(Enum type, Object content) {
-        this.publishEvent(new SimpleEvent(type, content));
+    public <T extends Enum<T>, S> void publishEvent(T type, S content) {
+        this.publishEvent(new SimpleEvent<>(type, content));
     }
 
     @Override
-    public void publishEvent(Event event) {
+    public <T extends Enum<T>, S> void publishEvent(Event<T, S> event) {
         if(event == null){
             LOGGER.debug("Cannot publish event with event null");
             return;
@@ -97,31 +97,45 @@ public class EventManagerImpl implements EventManager {
     }
 
     @Override
-    public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, T... events) {
+    public <T extends Enum<T>> void subscribeForEvents(EventListener<T, ?> eventListener, T... events) {
         for( T event : events) {
             addEventListener(eventListener, (Class<T>) event.getClass(), Arrays.asList(events), null);
         }
     }
 
     @Override
-    public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events) {
+    public <T extends Enum<T>> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events) {
         addEventListener(eventListener, events, EnumSet.allOf(events), null);
     }
 
     @Override
-    public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
+    public <T extends Enum<T>> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
         addEventListener(eventListener, events, EnumSet.allOf(events), domain);
     }
 
     @Override
-    public <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> eventType, String domainId) {
+    @SafeVarargs
+    public final <T extends Enum<T>> void unsubscribeForEvents(EventListener<T, ?> eventListener, T... events) {
+        if (events.length > 0) {
+            Class<T> eventType = (Class<T>) events[0].getClass();
+            this.listenersMap.remove(new ComparableEventType(eventType, null));
+        }
+    }
+
+    @Override
+    public <T extends Enum<T>> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> eventType) {
+        this.listenersMap.remove(new ComparableEventType(eventType, null));
+    }
+
+    @Override
+    public <T extends Enum<T>> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> eventType, String domainId) {
         if (eventType.equals(DomainEvent.class) || eventType.equals(ReporterEvent.class)) {
             unsubscribeForEvents(eventType, domainId);
         } else {
             this.listenersMap.remove(new ComparableEventType(eventType, domainId));
         }
     }
-    private <T extends Enum> void unsubscribeForEvents(Class<T> eventType, String domainId) {
+    private <T extends Enum<T>> void unsubscribeForEvents(Class<T> eventType, String domainId) {
         getEventListeners(eventType, null)
                 .removeIf(wrapper -> {
                     if (wrapper.eventListener() instanceof DomainAwareListener del) {
@@ -133,7 +147,7 @@ public class EventManagerImpl implements EventManager {
     }
 
     @Override
-    public <T extends Enum> void unsubscribeForCrossEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
+    public <T extends Enum<T>> void unsubscribeForCrossEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
         List<EventListenerWrapper> listeners = this.listenersMap.get(new ComparableEventType(events, domain));
         if (listeners != null) {
             List<EventListenerWrapper> filteredList = listeners
@@ -144,14 +158,14 @@ public class EventManagerImpl implements EventManager {
         }
     }
 
-    private <T extends Enum> void addEventListener(EventListener<T, ?> eventListener, Class<T> enumClass, Collection<T> events, String domain) {
+    private <T extends Enum<T>> void addEventListener(EventListener<T, ?> eventListener, Class<T> enumClass, Collection<T> events, String domain) {
         LOGGER.info("Register new listener {} for event type {}", eventListener.getClass().getSimpleName(), enumClass);
 
         List<EventListenerWrapper> listeners = getEventListeners(enumClass, domain);
         listeners.add(new EventListenerWrapper(eventListener, events));
     }
 
-    private <T extends Enum> List<EventListenerWrapper> getEventListeners(Class<T> eventType, String domain) {
+    private <T extends Enum<T>> List<EventListenerWrapper> getEventListeners(Class<T> eventType, String domain) {
         ComparableEventType key = eventType.equals(DomainEvent.class) || eventType.equals(ReporterEvent.class) ?
                 new ComparableEventType(eventType, null) :
                 new ComparableEventType(eventType, domain) ;
@@ -166,13 +180,13 @@ public class EventManagerImpl implements EventManager {
         return listeners;
     }
 
-    private class EventListenerWrapper<T extends Enum> {
+    private class EventListenerWrapper<T extends Enum<T>> {
         private final EventListener<T, ?> eventListener;
         private final Set<T> events;
 
         public EventListenerWrapper(EventListener<T, ?> eventListener, Collection<T> events) {
             this.eventListener = eventListener;
-            this.events = new HashSet(events);
+            this.events = new HashSet<>(events);
         }
 
         public EventListener<T, ?> eventListener() {

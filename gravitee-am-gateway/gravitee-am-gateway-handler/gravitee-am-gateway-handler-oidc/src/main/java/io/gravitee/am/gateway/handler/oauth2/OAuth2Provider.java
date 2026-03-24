@@ -377,7 +377,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         errorHandler(oauth2Router);
 
         // mount OAuth 2.0 router
-        router.mountSubRouter(path(), oauth2Router);
+        router.route(subRouterPath()).subRouter(oauth2Router);
     }
 
     @Override

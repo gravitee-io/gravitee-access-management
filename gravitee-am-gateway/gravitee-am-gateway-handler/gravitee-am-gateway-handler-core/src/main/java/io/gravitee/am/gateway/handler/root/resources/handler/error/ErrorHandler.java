@@ -27,7 +27,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
 import io.vertx.ext.web.handler.HttpException;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
