@@ -15,7 +15,17 @@
  */
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { followRedirectTag, uniqueName } from '@utils-commands/misc';
-import { setupSamlTestDomains, cleanupSamlTestDomains, SamlTestDomains, SamlFixture, setupSamlProviderTest, TEST_USER } from './setup';
+import {
+  setupSamlTestDomains,
+  cleanupSamlTestDomains,
+  SamlTestDomains,
+  SamlFixture,
+  setupSamlProviderTest,
+  setupSamlProviderTestViaMetadataUrl,
+  setupSamlProviderTestViaMetadataFile,
+  getProviderMetadataUrl,
+  TEST_USER,
+} from './setup';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { performGet, performFormPost, requestToken } from '@gateway-commands/oauth-oidc-commands';
 import * as zlib from 'zlib';
@@ -230,7 +240,7 @@ describe('SAML Attribute Mapping', () => {
 
 describe('SAML Security Configuration', () => {
   it('should have valid signing configuration', async () => {
-    // Verify current configuration uses unsigned assertions
+    // Verify client IDP does not require signed assertions
     const samlConfig = JSON.parse(samlFixture.domains.samlIdp.configuration);
     expect(samlConfig.wantAssertionsSigned).toBe(false);
     expect(samlConfig.wantResponsesSigned).toBe(false);
@@ -294,6 +304,95 @@ describe('SAML Security Configuration', () => {
     // Should point to the correct provider domain
     expect(samlConfig.singleSignOnServiceUrl).toContain(samlFixture.domains.providerDomain.hrid);
     expect(samlConfig.singleLogoutServiceUrl).toContain(samlFixture.domains.providerDomain.hrid);
+  });
+});
+
+describe('SAML IdP configured via METADATA_URL', () => {
+  let metadataUrlFixture: SamlFixture;
+
+  beforeAll(async () => {
+    metadataUrlFixture = await setupSamlProviderTestViaMetadataUrl(uniqueName('saml-meta-url', true).toLowerCase());
+  });
+
+  afterAll(async () => {
+    if (metadataUrlFixture) {
+      await metadataUrlFixture.cleanup();
+    }
+  });
+
+  it('should have SAML IDP with idpMetadataProvider=METADATA_URL', async () => {
+    expect(metadataUrlFixture.domains.samlIdp).toBeDefined();
+    expect(metadataUrlFixture.domains.samlIdp.type).toBe('saml2-generic-am-idp');
+
+    const config = JSON.parse(metadataUrlFixture.domains.samlIdp.configuration);
+    expect(config.idpMetadataProvider).toBe('METADATA_URL');
+    expect(config.idpMetadataUrl).toContain(metadataUrlFixture.domains.providerDomain.hrid);
+    expect(config.idpMetadataUrl).toContain('/saml2/idp/metadata');
+    expect(config.entityId).toContain('saml-idp-');
+  });
+
+  it('should successfully login using SAML IDP configured from metadata URL', async () => {
+    const loginResponse = await metadataUrlFixture.login(TEST_USER.username, TEST_USER.password);
+    expect(loginResponse.status).toBe(302);
+
+    const authCode = await metadataUrlFixture.expectRedirectToClient(loginResponse);
+    expect(authCode).toBeDefined();
+    expect(authCode).toMatch(/^[a-zA-Z0-9_-]+$/);
+  });
+
+  it('should have metadata URL pointing to a valid IdP metadata endpoint', async () => {
+    const config = JSON.parse(metadataUrlFixture.domains.samlIdp.configuration);
+    const expectedMetadataUrl = getProviderMetadataUrl(metadataUrlFixture.domains.providerDomain);
+
+    expect(config.idpMetadataUrl).toBe(expectedMetadataUrl);
+    expect(config.idpMetadataUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/metadata$/);
+
+    const metadataResponse = await performGet(config.idpMetadataUrl, '').expect(200);
+    expect(metadataResponse.text).toContain('IDPSSODescriptor');
+    expect(metadataResponse.text).toContain('SingleSignOnService');
+  });
+});
+
+describe('SAML IdP configured via METADATA_FILE', () => {
+  let metadataFileFixture: SamlFixture;
+
+  beforeAll(async () => {
+    metadataFileFixture = await setupSamlProviderTestViaMetadataFile(uniqueName('saml-meta-file', true).toLowerCase());
+  });
+
+  afterAll(async () => {
+    if (metadataFileFixture) {
+      await metadataFileFixture.cleanup();
+    }
+  });
+
+  it('should have SAML IDP with idpMetadataProvider=METADATA_FILE', async () => {
+    expect(metadataFileFixture.domains.samlIdp).toBeDefined();
+    expect(metadataFileFixture.domains.samlIdp.type).toBe('saml2-generic-am-idp');
+
+    const config = JSON.parse(metadataFileFixture.domains.samlIdp.configuration);
+    expect(config.idpMetadataProvider).toBe('METADATA_FILE');
+    expect(config.idpMetadataFile).toBeDefined();
+    expect(config.idpMetadataFile.trim()).toMatch(/^<[?]?xml|^<[A-Za-z]/);
+    expect(config.entityId).toContain('saml-idp-');
+  });
+
+  it('should successfully login using SAML IDP configured from metadata file', async () => {
+    const loginResponse = await metadataFileFixture.login(TEST_USER.username, TEST_USER.password);
+    expect(loginResponse.status).toBe(302);
+
+    const authCode = await metadataFileFixture.expectRedirectToClient(loginResponse);
+    expect(authCode).toBeDefined();
+    expect(authCode).toMatch(/^[a-zA-Z0-9_-]+$/);
+  });
+
+  it('should have metadata file containing valid IdP SSO descriptor', async () => {
+    const config = JSON.parse(metadataFileFixture.domains.samlIdp.configuration);
+    const metadataXml = config.idpMetadataFile;
+
+    expect(metadataXml).toContain('IDPSSODescriptor');
+    expect(metadataXml).toContain('SingleSignOnService');
+    expect(metadataXml).toContain(metadataFileFixture.domains.providerDomain.hrid);
   });
 });
 
