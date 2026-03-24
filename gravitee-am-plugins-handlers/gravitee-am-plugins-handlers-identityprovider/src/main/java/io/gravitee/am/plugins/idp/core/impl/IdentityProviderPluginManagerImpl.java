@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.plugins.idp.core.impl;
 
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
@@ -82,6 +83,12 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
     public boolean hasUserProvider(String pluginType) {
         logger.debug("Looking for an user provider for [{}]", pluginType);
         return ofNullable(get(pluginType)).map(IdentityProvider::userProvider).isPresent();
+    }
+
+    @Override
+    public ValidationResult validate(AuthenticationProviderConfiguration providerConfig) {
+        var identityProvider = getOrThrow(providerConfig);
+        return validateProvider(identityProvider, getBeanFactoryPostProcessors(providerConfig, identityProvider));
     }
 
     @Override
