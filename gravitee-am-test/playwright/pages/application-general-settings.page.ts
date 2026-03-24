@@ -27,20 +27,10 @@ export class ApplicationGeneralSettingsPage extends BasePage {
     return this.page.locator('input[name="name"]');
   }
 
-  get agentCardUrlInput(): Locator {
-    return this.page.locator('input[name="agentCardUrl"]');
-  }
-
   /** Update the application name. */
   async fillName(name: string): Promise<void> {
     await this.nameInput.clear();
     await this.nameInput.fill(name);
-  }
-
-  /** Update the agent card URL. */
-  async fillAgentCardUrl(url: string): Promise<void> {
-    await this.agentCardUrlInput.clear();
-    await this.agentCardUrlInput.fill(url);
   }
 
   /** Click the DELETE button in the danger zone. */

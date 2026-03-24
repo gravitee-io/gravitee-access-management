@@ -17,26 +17,22 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.AgentCardService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationType;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -45,15 +41,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -62,7 +50,6 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -83,9 +70,6 @@ public class ApplicationResource extends AbstractResource {
 
     @Autowired
     private RevokeTokenManagementService revokeTokenManagementService;
-
-    @Autowired
-    private AgentCardService agentCardService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -269,44 +253,6 @@ public class ApplicationResource extends AbstractResource {
     @Path("flows")
     public ApplicationFlowsResource getFlowsResource() {
         return resourceContext.getResource(ApplicationFlowsResource.class);
-    }
-
-    @GET
-    @Path("agent-card")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            operationId = "getApplicationAgentCard",
-            summary = "Fetch the agent card for an application",
-            description = "User must have APPLICATION[READ] permission on the specified application. " +
-                    "Fetches and proxies the agent card JSON from the application's configured agentCardUrl.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Agent card JSON successfully fetched"),
-            @ApiResponse(responseCode = "400", description = "No agentCardUrl configured or invalid URL"),
-            @ApiResponse(responseCode = "404", description = "Application not found"),
-            @ApiResponse(responseCode = "502", description = "Agent card fetch failed (upstream unreachable, invalid response, or non-200 status)"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
-    public void getAgentCard(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("application") String application,
-            @Suspended final AsyncResponse response) {
-
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ)
-                .andThen(applicationService.findById(application)
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(app -> {
-                            final String agentCardUrl = Optional.ofNullable(app.getSettings())
-                                    .map(ApplicationSettings::getAdvanced)
-                                    .map(ApplicationAdvancedSettings::getAgentCardUrl)
-                                    .orElse(null);
-                            if (agentCardUrl == null || agentCardUrl.isBlank()) {
-                                return Single.error(new InvalidParameterException("No agentCardUrl configured for this application"));
-                            }
-                            return agentCardService.fetchAgentCard(agentCardUrl);
-                        })
-                        .map(json -> Response.ok(json).build()))
-                .subscribe(response::resume, response::resume);
     }
 
     public void updateInternal(String organizationId, String environmentId, String domainId, String application, PatchApplication patchApplication, final AsyncResponse response) {

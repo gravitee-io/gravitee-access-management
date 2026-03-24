@@ -49,7 +49,6 @@ export const PatchApplicationTypeTypeEnum = {
   Browser: 'BROWSER',
   Service: 'SERVICE',
   ResourceServer: 'RESOURCE_SERVER',
-  Agent: 'AGENT',
 } as const;
 export type PatchApplicationTypeTypeEnum = typeof PatchApplicationTypeTypeEnum[keyof typeof PatchApplicationTypeTypeEnum];
 

@@ -144,7 +144,6 @@ import { ApplicationSecretsCertificatesComponent } from './domain/applications/a
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/advanced/client-secrets/domain-mcp-server-client-secrets.component';
 import { DomainMcpServerMembershipsComponent } from './domain/mcp-servers/mcp-server/advanced/memberships/memberships.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
-import { AgentMetadataComponent } from './domain/applications/application/advanced/agent-metadata/agent-metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
@@ -1016,7 +1015,7 @@ export const routes: Routes = [
                                 only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                               },
                             },
                           },
@@ -1038,7 +1037,7 @@ export const routes: Routes = [
                                 ],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                               },
                             },
                             children: [
@@ -1154,25 +1153,7 @@ export const routes: Routes = [
                                 only: ['application_analytics_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
-                              },
-                            },
-                          },
-                          {
-                            path: 'agent-metadata',
-                            component: AgentMetadataComponent,
-                            canActivate: [AuthGuard],
-                            data: {
-                              menu: {
-                                label: 'Agent Metadata',
-                                section: 'Agent',
-                                level: 'level2',
-                              },
-                              perms: {
-                                only: ['application_settings_read'],
-                              },
-                              types: {
-                                only: ['AGENT'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                               },
                             },
                           },
@@ -1298,7 +1279,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                                   },
                                 },
                               },
@@ -1337,7 +1318,7 @@ export const routes: Routes = [
                                     only: ['application_factor_list'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                                   },
                                 },
                               },
@@ -1355,7 +1336,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                                   },
                                 },
                               },

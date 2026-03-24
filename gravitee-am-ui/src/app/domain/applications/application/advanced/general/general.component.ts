@@ -39,7 +39,6 @@ export class ApplicationGeneralComponent implements OnInit {
   singleSignOut: boolean;
   silentReAuthentication: boolean;
   skipConsent: boolean;
-  agentCardUrl: string;
   requestUri: string;
   redirectUri: string;
   logoutRedirectUri: string;
@@ -62,10 +61,6 @@ export class ApplicationGeneralComponent implements OnInit {
     {
       name: 'Native',
       type: 'NATIVE',
-    },
-    {
-      name: 'Agentic Application',
-      type: 'AGENT',
     },
     {
       name: 'Backend to Backend',
@@ -97,7 +92,6 @@ export class ApplicationGeneralComponent implements OnInit {
     this.singleSignOut = this.application.settings.oauth.singleSignOut;
     this.silentReAuthentication = this.application.settings.oauth.silentReAuthentication;
     this.skipConsent = this.application.settings.advanced.skipConsent;
-    this.agentCardUrl = this.application.settings.advanced.agentCardUrl;
     this.application.factors = this.application.factors || [];
     this.redirectUris = map(this.redirectUris, function (item) {
       return { value: item };
@@ -127,10 +121,7 @@ export class ApplicationGeneralComponent implements OnInit {
       singleSignOut: this.singleSignOut,
       silentReAuthentication: this.silentReAuthentication,
     };
-    data.settings.advanced = {
-      skipConsent: this.skipConsent,
-      agentCardUrl: this.agentCardUrl?.trim() ?? '',
-    };
+    data.settings.advanced = { skipConsent: this.skipConsent };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(() => {
       this.formChanged = false;
       this.snackbarService.open('Application updated');

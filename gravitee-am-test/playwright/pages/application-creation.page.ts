@@ -53,17 +53,8 @@ export class ApplicationCreationPage extends BasePage {
     await this.page.getByLabel('Redirect URI').fill(uri);
   }
 
-  /** Fill the agent card URL input (visible only for AGENT type in step 2). */
-  async fillAgentCardUrl(url: string): Promise<void> {
-    await this.page.locator('input[name="agentCardUrl"]').fill(url);
-  }
-
   get createButton(): Locator {
     return this.page.getByRole('button', { name: /create/i });
-  }
-
-  get agentCardUrlInput(): Locator {
-    return this.page.locator('input[name="agentCardUrl"]');
   }
 
   /** Click the Create button to submit the wizard. */

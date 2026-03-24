@@ -1262,49 +1262,6 @@ paths:
                 $ref: "#/components/schemas/Application"
         "500":
           description: Internal server error
-  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/agent-card:
-    get:
-      tags:
-      - application
-      - domain
-      summary: Fetch the agent card for an application
-      description: "User must have APPLICATION[READ] permission on the specified application.\
-        \ Fetches and proxies the agent card JSON from the application's configured\
-        \ agentCardUrl."
-      operationId: getApplicationAgentCard
-      parameters:
-      - name: organizationId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: environmentId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: domain
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: application
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Agent card JSON successfully fetched
-        "400":
-          description: No agentCardUrl configured or invalid URL
-        "404":
-          description: Application not found
-        "502":
-          description: "Agent card fetch failed (upstream unreachable, invalid response,\
-            \ or non-200 status)"
-        "500":
-          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics:
     get:
       tags:
@@ -12213,15 +12170,12 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
         updatedAt:
           type: string
           format: date-time
     ApplicationAdvancedSettings:
       type: object
       properties:
-        agentCardUrl:
-          type: string
         flowsInherited:
           type: boolean
         skipConsent:
@@ -13544,7 +13498,6 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
         updatedAt:
           type: string
           format: date-time
@@ -14040,8 +13993,6 @@ components:
       - type
       type: object
       properties:
-        agentCardUrl:
-          type: string
         clientId:
           type: string
         clientSecret:
@@ -14066,7 +14017,6 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -15051,8 +15001,6 @@ components:
     PatchApplicationAdvancedSettings:
       type: object
       properties:
-        agentCardUrl:
-          type: string
         flowsInherited:
           type: boolean
         skipConsent:
@@ -15346,7 +15294,6 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
     PatchCIBASettings:
       type: object
       properties:
