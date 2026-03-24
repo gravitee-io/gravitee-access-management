@@ -23,7 +23,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**

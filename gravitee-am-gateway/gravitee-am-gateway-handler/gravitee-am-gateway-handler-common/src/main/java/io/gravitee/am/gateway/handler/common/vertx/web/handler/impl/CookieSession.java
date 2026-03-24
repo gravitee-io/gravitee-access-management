@@ -21,7 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.ext.auth.VertxContextPRNG;
+import io.vertx.ext.auth.prng.VertxContextPRNG;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.sstore.AbstractSession;
 import org.springframework.util.StringUtils;

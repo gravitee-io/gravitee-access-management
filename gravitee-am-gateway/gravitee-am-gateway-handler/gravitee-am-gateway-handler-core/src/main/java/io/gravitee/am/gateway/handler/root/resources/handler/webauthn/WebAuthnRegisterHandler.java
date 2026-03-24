@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Single;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
@@ -30,7 +31,7 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
@@ -117,7 +118,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
 
         // register credentials
-        webAuthn.createCredentialsOptions(webauthnRegister)
+        Single.fromCompletionStage(webAuthn.createCredentialsOptions(webauthnRegister).toCompletionStage())
                 .subscribe(
                         entries -> {
                             // force user id with our own user id
@@ -180,13 +181,13 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         final String credentialId = webauthnResp.getString("id");
 
         // authenticate the user
-        webAuthn.authenticate(
+        Single.fromCompletionStage(webAuthn.authenticate(
                 // authInfo
                 new WebAuthnCredentials()
                         .setOrigin(origin)
                         .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                         .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                        .setWebauthn(webauthnResp))
+                        .setWebauthn(webauthnResp)).toCompletionStage())
                 .doFinally(() -> {
                     // invalidate the challenge
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);

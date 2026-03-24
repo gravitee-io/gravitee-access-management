@@ -22,19 +22,20 @@ import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
-import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Single;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
@@ -95,13 +96,13 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
             final String credentialId = webauthnResp.getString("id");
 
             // authenticate the user
-            webAuthn.rxAuthenticate(
+            Single.fromCompletionStage(webAuthn.authenticate(
                     // authInfo
                     new WebAuthnCredentials()
                             .setOrigin(origin)
                             .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
                             .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                            .setWebauthn(webauthnResp))
+                            .setWebauthn(webauthnResp)).toCompletionStage())
                     .doFinally(() -> {
                         // invalidate the challenge
                         session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
@@ -120,7 +121,8 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                     }
                                     final User user = h.result();
                                     // save the user into the context
-                                    ctx.getDelegate().setUser(user);
+                                    setUser(ctx, user);
+
                                     ctx.put(ConstantKeys.USER_CONTEXT_KEY, ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser());
                                     // the user has upgraded from unauthenticated to authenticated
                                     // session should be upgraded as recommended by owasp

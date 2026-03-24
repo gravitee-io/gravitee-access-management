@@ -38,7 +38,7 @@ import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

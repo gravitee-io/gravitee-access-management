@@ -23,6 +23,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+
 @Slf4j
 @RequiredArgsConstructor
 public class AuthenticatorHandler implements Handler<RoutingContext> {
@@ -45,7 +47,7 @@ public class AuthenticatorHandler implements Handler<RoutingContext> {
     }
 
     private RoutingContext setupUserSession(RoutingContext ctx, User user) {
-        ctx.getDelegate().setUser(user);
+        setUser(ctx, user);
         ctx.put(ConstantKeys.USER_CONTEXT_KEY, user.getUser());
         return ctx;
     }

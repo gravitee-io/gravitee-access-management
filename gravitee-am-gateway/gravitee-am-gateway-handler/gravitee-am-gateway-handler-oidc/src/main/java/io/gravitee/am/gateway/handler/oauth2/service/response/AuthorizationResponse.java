@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.response;
 
 import io.gravitee.am.common.web.UriBuilder;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 
 import java.io.Serializable;
 

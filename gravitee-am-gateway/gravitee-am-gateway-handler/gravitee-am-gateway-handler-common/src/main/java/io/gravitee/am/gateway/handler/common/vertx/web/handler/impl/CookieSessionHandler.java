@@ -31,7 +31,7 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.http.Cookie;
+import io.vertx.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +41,8 @@ import org.springframework.util.StringUtils;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setSession;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 import static java.util.Objects.nonNull;
 import static java.util.function.Predicate.not;
@@ -104,7 +106,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
             }
         }
 
-        Cookie sessionCookie = context.getCookie(cookieName);
+        Cookie sessionCookie = context.request().getCookie(cookieName);
         CookieSession session = new CookieSession(jwtService, certificateManager, timeout);
 
         registerSession(context, session);
@@ -122,7 +124,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
                             jwt.setSub(userSub);
                             jwt.setInternalSub(userSub);
                             return subjectManager.findUserBySub(jwt)
-                                    .doOnSuccess(user -> context.getDelegate().setUser(new User(user)))
+                                    .doOnSuccess(user -> setUser(context, new User(user)))
                                     .flatMap(user -> userEnhancer.enhance(user).toMaybe())
                                     .map(user -> currentSession)
                                     .switchIfEmpty(cleanupSession(currentSession))
@@ -169,7 +171,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     private void registerSession(RoutingContext context, CookieSession session) {
 
         // Register the session to the current context.
-        context.getDelegate().setSession(session);
+        setSession(context, session);
 
         // Add handler to flush session to cookie when done.
         context.addHeadersEndHandler(v -> flush(context, session));
@@ -177,7 +179,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
     private void flush(RoutingContext context, CookieSession session) {
         if (session.isDestroyed()) {
-            context.addCookie(Cookie.cookie(cookieName, "").setMaxAge(0));
+            context.response().addCookie(Cookie.cookie(cookieName, "").setMaxAge(0));
         } else {
             final int currentStatusCode = context.response().getStatusCode();
             // Regenerate session cookie only if there was no error.
@@ -202,7 +204,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         }
 
         // All other cookie's properties are managed by a dedicated CookieHandler.
-        context.addCookie(cookie);
+        context.response().addCookie(cookie);
     }
 
     private Boolean persistentSession(RoutingContext context) {

@@ -24,7 +24,7 @@ import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
@@ -95,7 +96,7 @@ public class LoginFormHandler implements Handler<RoutingContext> {
                     // authentication success
                     // set user into the context and continue
                     final User result = res.result();
-                    context.getDelegate().setUser(result);
+                    setUser(context, result);
                     final io.gravitee.am.model.User user = result.getUser();
                     context.put(ConstantKeys.USER_CONTEXT_KEY, user);
 

@@ -49,7 +49,7 @@ import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.DisposableBean;

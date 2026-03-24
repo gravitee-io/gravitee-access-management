@@ -78,12 +78,12 @@ class WebClientOptionsConfigurer {
                 .setPassword((String) cfg.get("storepass"))
                 .setAliasPassword((String) cfg.get("keypass"));
 
-        options.setKeyStoreOptions(keyStoreOptions);
+        options.setKeyCertOptions(keyStoreOptions);
 
         JksOptions trustOptions = new JksOptions();
         trustOptions.setPassword(DefaultTrustStoreProvider.getDefaultTrustStorePassword());
         trustOptions.setPath(DefaultTrustStoreProvider.getDefaultTrustStorePath());
-        options.setTrustStoreOptions(trustOptions);
+        options.setTrustOptions(trustOptions);
     }
 
     void setSSLSettings(WebClientOptions options) {
@@ -113,41 +113,41 @@ class WebClientOptionsConfigurer {
         JksOptions jksOptions = new JksOptions();
         jksOptions.setPath(environment.getProperty(SSL_TRUST_STORE_PATH));
         jksOptions.setPassword(environment.getProperty(SSL_TRUST_STORE_PASSWORD));
-        options.setTrustStoreOptions(jksOptions);
+        options.setTrustOptions(jksOptions);
     }
 
     private void setPemTrustOptions(WebClientOptions options) {
         PemTrustOptions pemOptions = new PemTrustOptions();
         pemOptions.addCertPath(environment.getProperty(SSL_TRUST_STORE_PATH));
-        options.setPemTrustOptions(pemOptions);
+        options.setTrustOptions(pemOptions);
     }
 
     private void setPfxTrustOptions(WebClientOptions options) {
         PfxOptions pfxOptions = new PfxOptions();
         pfxOptions.setPath(environment.getProperty(SSL_TRUST_STORE_PATH));
         pfxOptions.setPassword(environment.getProperty(SSL_TRUST_STORE_PASSWORD));
-        options.setPfxTrustOptions(pfxOptions);
+        options.setTrustOptions(pfxOptions);
     }
 
     private void setJksKeyOptions(WebClientOptions options) {
         JksOptions jksOptions = new JksOptions();
         jksOptions.setPath(environment.getProperty(SSL_KEYSTORE_STORE_PATH));
         jksOptions.setPassword(environment.getProperty(SSL_KEYSTORE_STORE_PASSWORD));
-        options.setKeyStoreOptions(jksOptions);
+        options.setKeyCertOptions(jksOptions);
     }
 
     private void setPemKeyOptions(WebClientOptions options) {
         PemKeyCertOptions pemOptions = new PemKeyCertOptions();
         pemOptions.setCertPath(environment.getProperty(SSL_KEYSTORE_STORE_PATH));
         pemOptions.setKeyPath(environment.getProperty(SSL_KEYSTORE_STORE_KEY_PATH));
-        options.setPemKeyCertOptions(pemOptions);
+        options.setKeyCertOptions(pemOptions);
     }
 
     private void setPfxKeyOptions(WebClientOptions options) {
         PfxOptions pfxOptions = new PfxOptions();
         pfxOptions.setPath(environment.getProperty(SSL_KEYSTORE_STORE_PATH));
         pfxOptions.setPassword(environment.getProperty(SSL_KEYSTORE_STORE_PASSWORD));
-        options.setPfxKeyCertOptions(pfxOptions);
+        options.setKeyCertOptions(pfxOptions);
     }
 
     private String httpClientProxyType() {

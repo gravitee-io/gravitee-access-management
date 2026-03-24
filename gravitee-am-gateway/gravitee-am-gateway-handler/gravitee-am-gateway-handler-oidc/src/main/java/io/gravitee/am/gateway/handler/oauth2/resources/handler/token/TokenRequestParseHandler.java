@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.token;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.List;

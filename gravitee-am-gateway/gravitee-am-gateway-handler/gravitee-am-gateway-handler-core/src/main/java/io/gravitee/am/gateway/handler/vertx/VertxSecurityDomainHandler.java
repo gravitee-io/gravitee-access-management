@@ -49,7 +49,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpHeadersValues;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.service.AbstractService;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;

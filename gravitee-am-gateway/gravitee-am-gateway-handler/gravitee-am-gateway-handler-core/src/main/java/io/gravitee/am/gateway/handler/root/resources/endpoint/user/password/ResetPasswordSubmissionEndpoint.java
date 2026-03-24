@@ -28,7 +28,8 @@ import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
+import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.jsoup.internal.StringUtil;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -82,7 +84,7 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
             ResetPasswordResponse resetPasswordResponse = h.result();
             // if auto login option is enabled add the user to the session
             if (resetPasswordResponse.isAutoLogin()) {
-                context.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(resetPasswordResponse.getUser())));
+                setUser(context, resetPasswordResponse.getUser());
             } else {
                 // Clear session to prevent interference with subsequent flows
                 if (context.session() != null) {
