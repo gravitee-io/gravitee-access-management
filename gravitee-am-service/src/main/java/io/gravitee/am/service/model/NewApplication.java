@@ -43,8 +43,6 @@ public class NewApplication {
 
     private Map<String, Object> metadata;
 
-    private String agentCardUrl;
-
     public String getName() {
         return name;
     }
@@ -99,14 +97,6 @@ public class NewApplication {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
-    }
-
-    public String getAgentCardUrl() {
-        return agentCardUrl;
-    }
-
-    public void setAgentCardUrl(String agentCardUrl) {
-        this.agentCardUrl = agentCardUrl;
     }
 
     @Override

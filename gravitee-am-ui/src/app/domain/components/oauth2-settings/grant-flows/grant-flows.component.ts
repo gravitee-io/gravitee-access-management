@@ -104,16 +104,11 @@ export class GrantFlowsComponent implements OnInit {
     return this.customGrantTypes.filter((grantType) => grantType.checked).map((grantType) => grantType.value);
   }
 
-  private AGENT_FORBIDDEN_GRANT_TYPES = ['implicit', 'password', 'refresh_token'];
-
   get filteredGrantTypes() {
     if (this.context === this.MCP_SERVER_CONTEXT) {
       return this.grantTypes.filter(
         (grantType) => grantType.value === this.CLIENT_CREDENTIALS_GRANT_TYPE || grantType.value === this.TOKEN_EXCHANGE_GRANT_TYPE,
       );
-    }
-    if (this.applicationType?.toLowerCase() === 'agent') {
-      return this.grantTypes.filter((grantType) => !this.AGENT_FORBIDDEN_GRANT_TYPES.includes(grantType.value));
     }
     return this.grantTypes;
   }
@@ -227,9 +222,6 @@ export class GrantFlowsComponent implements OnInit {
         (gt) => gt === this.CLIENT_CREDENTIALS_GRANT_TYPE || gt === this.TOKEN_EXCHANGE_GRANT_TYPE,
       );
     }
-    if (this.applicationType?.toLowerCase() === 'agent') {
-      selectedGrantTypes = selectedGrantTypes.filter((gt) => !this.AGENT_FORBIDDEN_GRANT_TYPES.includes(gt));
-    }
     const updatedSettings = {
       ...this.oauthSettings,
       grantTypes: selectedGrantTypes.concat(this.selectedCustomGrantTypes),
@@ -238,7 +230,7 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   private initTokenEndpointAuthMethods() {
-    if (this.applicationType === 'service' || this.applicationType?.toLowerCase() === 'agent') {
+    if (this.applicationType === 'service') {
       this.tokenEndpointAuthMethods = this.tokenEndpointAuthMethods.map((item) => {
         if (item.value === 'none') {
           item.disabled = true;
@@ -262,9 +254,6 @@ export class GrantFlowsComponent implements OnInit {
         (gt) =>
           gt.toLowerCase() === this.CLIENT_CREDENTIALS_GRANT_TYPE || gt.toLowerCase() === this.TOKEN_EXCHANGE_GRANT_TYPE.toLowerCase(),
       );
-    }
-    if (this.applicationType?.toLowerCase() === 'agent') {
-      filteredGrantTypesList = grantTypesList.filter((gt) => !this.AGENT_FORBIDDEN_GRANT_TYPES.includes(gt.toLowerCase()));
     }
     this.grantTypes.forEach((grantType) => {
       grantType.checked = some(

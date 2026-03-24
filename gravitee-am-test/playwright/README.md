@@ -204,7 +204,6 @@ test('my test', async ({ adminToken }) => {
 | `loginPage` | `LoginPage` | Login page object (for auth-specific tests) |
 | `testDomain` | `Domain` | Fresh domain, started and synced, auto-cleaned |
 | `testApplication` | `Application` | Fresh SERVICE-type application in `testDomain`, auto-cleaned |
-| `testAgenticApp` | `Application` | Fresh AGENT-type application in `testDomain`, auto-cleaned |
 | `testUser` | `User` | Fresh user in `testDomain`, auto-cleaned |
 
 ### Adding a New Fixture

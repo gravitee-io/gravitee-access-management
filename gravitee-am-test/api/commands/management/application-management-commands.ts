@@ -116,12 +116,3 @@ export const updateApplicationType = (domainId: string, accessToken: string, app
     patchApplicationType: { type },
   });
 
-export const getApplicationAgentCard = async (domainId: string, accessToken: string, applicationId: string): Promise<any> => {
-  const response = await getApplicationApi(accessToken).getApplicationAgentCardRaw({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    application: applicationId,
-  });
-  return response.raw.json();
-};

@@ -24,7 +24,6 @@ public class ApplicationAdvancedSettingsMongo {
     private boolean skipConsent;
     private boolean flowsInherited;
     private String mfaSelectionRule;
-    private String agentCardUrl;
 
     public boolean isSkipConsent() {
         return skipConsent;
@@ -50,11 +49,4 @@ public class ApplicationAdvancedSettingsMongo {
         this.mfaSelectionRule = mfaSelectionRule;
     }
 
-    public String getAgentCardUrl() {
-        return agentCardUrl;
-    }
-
-    public void setAgentCardUrl(String agentCardUrl) {
-        this.agentCardUrl = agentCardUrl;
-    }
 }
