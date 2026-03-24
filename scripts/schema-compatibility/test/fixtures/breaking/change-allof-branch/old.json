@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": { "type": "string" },
+    "threshold": { "type": "integer" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "strict" } } },
+      "then": { "required": ["threshold"] }
+    }
+  ]
+}

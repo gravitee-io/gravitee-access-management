@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "algorithm": {
+      "type": "string",
+      "enum": ["RS256", "RS384", "RS512"]
+    }
+  }
+}
