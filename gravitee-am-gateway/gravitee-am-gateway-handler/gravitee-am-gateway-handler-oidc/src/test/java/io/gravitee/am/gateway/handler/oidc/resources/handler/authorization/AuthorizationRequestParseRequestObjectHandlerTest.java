@@ -42,8 +42,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.http.impl.headers.HeadersMultiMap;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
@@ -110,7 +109,7 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
 
         when(request.getParam(Parameters.REQUEST)).thenReturn(null);
         when(request.getParam(Parameters.REQUEST_URI)).thenReturn(PushedAuthorizationRequestService.PAR_URN_PREFIX+"somevalue");
-        when(request.params()).thenReturn(new MultiMap(HeadersMultiMap.httpHeaders()));
+        when(request.params()).thenReturn(MultiMap.caseInsensitiveMultiMap());
         when(context.request()).thenReturn(request);
 
         when(parService.readFromURI(any(), any(), any())).thenReturn(Single.just(new PlainJWT(new JWTClaimsSet.Builder().claim("parParam1", "parValue1").build())));
@@ -133,7 +132,7 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
 
         when(request.getParam(Parameters.REQUEST)).thenReturn(null);
         when(request.getParam(Parameters.REQUEST_URI)).thenReturn(PushedAuthorizationRequestService.PAR_URN_PREFIX+"somevalue");
-        when(request.params()).thenReturn(new MultiMap(HeadersMultiMap.httpHeaders()));
+        when(request.params()).thenReturn(MultiMap.caseInsensitiveMultiMap());
         when(context.request()).thenReturn(request);
 
         final Session session = mock(Session.class);

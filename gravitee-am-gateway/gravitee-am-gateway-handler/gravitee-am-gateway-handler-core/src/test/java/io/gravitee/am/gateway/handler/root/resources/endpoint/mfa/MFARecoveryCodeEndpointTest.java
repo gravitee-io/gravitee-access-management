@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Mockito.doAnswer;
@@ -88,7 +89,7 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
         router.route()
                 .handler(BodyHandler.create())
                 .handler(ctx -> {
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 });

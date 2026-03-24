@@ -72,7 +72,7 @@ public class TokenRequestResourceValidationHandlerTest {
         when(routingContext.request()).thenReturn(httpRequest);
         
         // Setup RxJava MultiMap
-        io.vertx.rxjava3.core.MultiMap rxMultiMap = mock(io.vertx.rxjava3.core.MultiMap.class);
+        MultiMap rxMultiMap = mock(MultiMap.class);
         when(httpRequest.params()).thenReturn(rxMultiMap);
         
         // Setup core delegate mocks - only what TokenRequestFactory actually needs

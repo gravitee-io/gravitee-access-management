@@ -27,8 +27,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.impl.headers.HeadersMultiMap;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -84,7 +83,7 @@ public class LoginFailureHandlerTest extends RxWebTestBase {
         when(mockClient.getIdentityProviders()).thenReturn(idps);
 
 
-        MultiMap multiMap = new MultiMap(new HeadersMultiMap());
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
         multiMap.add("redirect_uri", "http://myhost/login/callback");
 
         when(policyChainException.key()).thenReturn("CALLOUT_EXIT_ON_ERROR");
@@ -128,7 +127,7 @@ public class LoginFailureHandlerTest extends RxWebTestBase {
         when(mockClient.getIdentityProviders()).thenReturn(idps);
 
 
-        MultiMap multiMap = new MultiMap(new HeadersMultiMap());
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
         multiMap.add("redirect_uri", "http://myhost/login/callback");
 
         when(policyChainException.key()).thenReturn("CALLOUT_EXIT_ON_ERROR");

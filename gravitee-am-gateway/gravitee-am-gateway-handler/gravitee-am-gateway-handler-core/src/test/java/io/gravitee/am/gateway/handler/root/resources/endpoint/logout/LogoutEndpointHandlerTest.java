@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
@@ -52,6 +53,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -164,7 +166,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -196,7 +198,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -228,7 +230,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -254,7 +256,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -279,7 +281,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -304,7 +306,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -329,7 +331,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -356,7 +358,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -383,7 +385,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -408,7 +410,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -434,7 +436,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -466,7 +468,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -499,7 +501,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, clientParam);
             routingContext.next();
         });
@@ -562,7 +564,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
             final HashMap<String, Object> additionalInformation = new HashMap<>();
             additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "opidtokenvalue");
             endUser.setAdditionalInformation(additionalInformation);
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -608,7 +610,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
             additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "opidtokenvalue");
             endUser.setAdditionalInformation(additionalInformation);
             routingContext.put(UriBuilderRequest.CONTEXT_PATH, "/domain");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -648,7 +650,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
             additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "opidtokenvalue");
             endUser.setAdditionalInformation(additionalInformation);
             routingContext.put(UriBuilderRequest.CONTEXT_PATH, "/domain");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 
@@ -688,8 +690,8 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         when(authProvider.closeSessionAfterSignIn()).thenReturn(CloseSessionMode.KEEP_ACTIVE);
         when(identityProviderManager.get(any())).thenReturn(Maybe.just(authProvider));
 
-        io.vertx.rxjava3.ext.web.client.HttpRequest<io.vertx.rxjava3.core.buffer.Buffer> httpRequest = mock(io.vertx.rxjava3.ext.web.client.HttpRequest.class);
-        io.vertx.ext.web.client.HttpResponse<io.vertx.rxjava3.core.buffer.Buffer> httpResponse = mock(io.vertx.ext.web.client.HttpResponse.class);
+        io.vertx.rxjava3.ext.web.client.HttpRequest<io.vertx.core.buffer.Buffer> httpRequest = mock(io.vertx.rxjava3.ext.web.client.HttpRequest.class);
+        io.vertx.ext.web.client.HttpResponse<io.vertx.core.buffer.Buffer> httpResponse = mock(io.vertx.ext.web.client.HttpResponse.class);
         when(httpResponse.statusCode()).thenReturn(200);
         when(httpRequest.rxSend()).thenReturn(Single.just(new HttpResponse<>(httpResponse)));
         when(webClient.getAbs(anyString())).thenReturn(httpRequest);
@@ -703,7 +705,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
             additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "opidtokenvalue");
             endUser.setAdditionalInformation(additionalInformation);
             routingContext.put(UriBuilderRequest.CONTEXT_PATH, "/domain");
-            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            setUser(routingContext, endUser);
             routingContext.next();
         });
 

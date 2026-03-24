@@ -16,20 +16,18 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
 
-import io.vertx.codegen.annotations.Nullable;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.Cookie;
-import io.vertx.core.http.HttpFrame;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.StreamPriority;
 import io.vertx.core.net.HostAndPort;
-import io.vertx.core.streams.ReadStream;
 
+import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
 import java.util.Set;
 
 /**
@@ -57,12 +55,7 @@ public class DummyHttpResponse implements HttpServerResponse {
 
     @Override
     public Future<Void> write(Buffer data) {
-        return null;
-    }
-
-    @Override
-    public void write(Buffer data, Handler<AsyncResult<Void>> handler) {
-
+        return Future.succeededFuture();
     }
 
     @Override
@@ -166,54 +159,39 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public HttpServerResponse closeHandler(@Nullable Handler<Void> handler) {
+    public HttpServerResponse closeHandler(Handler<Void> handler) {
         return null;
     }
 
     @Override
-    public HttpServerResponse endHandler(@Nullable Handler<Void> handler) {
+    public HttpServerResponse endHandler(Handler<Void> handler) {
         this.endHandler = handler;
         return this;
     }
 
     @Override
     public Future<Void> writeHead() {
-        return null;
+        return Future.succeededFuture();
     }
 
     @Override
     public Future<Void> write(String chunk, String enc) {
-        return null;
-    }
-
-    @Override
-    public void write(String chunk, String enc, Handler<AsyncResult<Void>> handler) {
-
+        return Future.succeededFuture();
     }
 
     @Override
     public Future<Void> write(String chunk) {
-        return null;
+        return Future.succeededFuture();
     }
 
     @Override
-    public void write(String chunk, Handler<AsyncResult<Void>> handler) {
-
-    }
-
-    @Override
-    public HttpServerResponse writeContinue() {
-        return null;
+    public Future<Void> writeContinue() {
+        return Future.succeededFuture();
     }
 
     @Override
     public Future<Void> writeEarlyHints(MultiMap multiMap) {
-        return null;
-    }
-
-    @Override
-    public void writeEarlyHints(MultiMap multiMap, Handler<AsyncResult<Void>> handler) {
-
+        return Future.succeededFuture();
     }
 
     @Override
@@ -223,19 +201,9 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public void end(String chunk, Handler<AsyncResult<Void>> handler) {
-        markEnded();
-    }
-
-    @Override
     public Future<Void> end(String chunk, String enc) {
         markEnded();
         return Future.succeededFuture();
-    }
-
-    @Override
-    public void end(String chunk, String enc, Handler<AsyncResult<Void>> handler) {
-        markEnded();
     }
 
     @Override
@@ -245,13 +213,8 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public void end(Buffer chunk, Handler<AsyncResult<Void>> handler) {
-        markEnded();
-    }
-
-    @Override
     public Future<HttpServerResponse> push(HttpMethod method, HostAndPort authority, String path, MultiMap headers) {
-        return null;
+        return Future.succeededFuture();
     }
 
     @Override
@@ -261,83 +224,18 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public void end(Handler<AsyncResult<Void>> handler) {
-        markEnded();
-    }
-
-    @Override
-    public void send(Handler<AsyncResult<Void>> handler) {
-        HttpServerResponse.super.send(handler);
-    }
-
-    @Override
-    public Future<Void> send() {
-        return HttpServerResponse.super.send();
-    }
-
-    @Override
-    public void send(String body, Handler<AsyncResult<Void>> handler) {
-        HttpServerResponse.super.send(body, handler);
-    }
-
-    @Override
-    public Future<Void> send(String body) {
-        return HttpServerResponse.super.send(body);
-    }
-
-    @Override
-    public void send(Buffer body, Handler<AsyncResult<Void>> handler) {
-        HttpServerResponse.super.send(body, handler);
-    }
-
-    @Override
-    public Future<Void> send(Buffer body) {
-        return HttpServerResponse.super.send(body);
-    }
-
-    @Override
-    public void send(ReadStream<Buffer> body, Handler<AsyncResult<Void>> handler) {
-        HttpServerResponse.super.send(body, handler);
-    }
-
-    @Override
-    public Future<Void> send(ReadStream<Buffer> body) {
-        return HttpServerResponse.super.send(body);
-    }
-
-    @Override
-    public Future<Void> sendFile(String filename) {
-        return HttpServerResponse.super.sendFile(filename);
-    }
-
-    @Override
-    public Future<Void> sendFile(String filename, long offset) {
-        return HttpServerResponse.super.sendFile(filename, offset);
-    }
-
-    @Override
     public Future<Void> sendFile(String filename, long offset, long length) {
-        return null;
+        return Future.succeededFuture();
     }
 
     @Override
-    public HttpServerResponse sendFile(String filename, Handler<AsyncResult<Void>> resultHandler) {
-        return HttpServerResponse.super.sendFile(filename, resultHandler);
+    public Future<Void> sendFile(FileChannel file, long offset, long length) {
+        return Future.succeededFuture();
     }
 
     @Override
-    public HttpServerResponse sendFile(String filename, long offset, Handler<AsyncResult<Void>> resultHandler) {
-        return HttpServerResponse.super.sendFile(filename, offset, resultHandler);
-    }
-
-    @Override
-    public HttpServerResponse sendFile(String filename, long offset, long length, Handler<AsyncResult<Void>> resultHandler) {
-        return null;
-    }
-
-    @Override
-    public void close() {
-
+    public Future<Void> sendFile(RandomAccessFile file, long offset, long length) {
+        return Future.succeededFuture();
     }
 
     @Override
@@ -356,12 +254,12 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public HttpServerResponse headersEndHandler(@Nullable Handler<Void> handler) {
+    public HttpServerResponse headersEndHandler(Handler<Void> handler) {
         return null;
     }
 
     @Override
-    public HttpServerResponse bodyEndHandler(@Nullable Handler<Void> handler) {
+    public HttpServerResponse bodyEndHandler(Handler<Void> handler) {
         return null;
     }
 
@@ -376,68 +274,13 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public HttpServerResponse push(HttpMethod method, String host, String path, Handler<AsyncResult<HttpServerResponse>> handler) {
-        return HttpServerResponse.super.push(method, host, path, handler);
+    public Future<Void> reset(long code) {
+        return Future.succeededFuture();
     }
 
     @Override
-    public Future<HttpServerResponse> push(HttpMethod method, String host, String path) {
-        return HttpServerResponse.super.push(method, host, path);
-    }
-
-    @Override
-    public HttpServerResponse push(HttpMethod method, String path, MultiMap headers, Handler<AsyncResult<HttpServerResponse>> handler) {
-        return HttpServerResponse.super.push(method, path, headers, handler);
-    }
-
-    @Override
-    public Future<HttpServerResponse> push(HttpMethod method, String path, MultiMap headers) {
-        return HttpServerResponse.super.push(method, path, headers);
-    }
-
-    @Override
-    public HttpServerResponse push(HttpMethod method, String path, Handler<AsyncResult<HttpServerResponse>> handler) {
-        return HttpServerResponse.super.push(method, path, handler);
-    }
-
-    @Override
-    public Future<HttpServerResponse> push(HttpMethod method, String path) {
-        return HttpServerResponse.super.push(method, path);
-    }
-
-    @Override
-    public HttpServerResponse push(HttpMethod method, String host, String path, MultiMap headers, Handler<AsyncResult<HttpServerResponse>> handler) {
-        return HttpServerResponse.super.push(method, host, path, headers, handler);
-    }
-
-    @Override
-    public Future<HttpServerResponse> push(HttpMethod method, String host, String path, MultiMap headers) {
-        return null;
-    }
-
-    @Override
-    public boolean reset() {
-        return HttpServerResponse.super.reset();
-    }
-
-    @Override
-    public boolean reset(long code) {
-        return false;
-    }
-
-    @Override
-    public HttpServerResponse writeCustomFrame(int type, int flags, Buffer payload) {
-        return null;
-    }
-
-    @Override
-    public HttpServerResponse writeCustomFrame(HttpFrame frame) {
-        return HttpServerResponse.super.writeCustomFrame(frame);
-    }
-
-    @Override
-    public HttpServerResponse setStreamPriority(StreamPriority streamPriority) {
-        return HttpServerResponse.super.setStreamPriority(streamPriority);
+    public Future<Void> writeCustomFrame(int type, int flags, Buffer payload) {
+        return Future.succeededFuture();
     }
 
     @Override
@@ -446,18 +289,8 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public @Nullable Cookie removeCookie(String name) {
-        return HttpServerResponse.super.removeCookie(name);
-    }
-
-    @Override
-    public @Nullable Cookie removeCookie(String name, boolean invalidate) {
+    public Cookie removeCookie(String name, boolean invalidate) {
         return null;
-    }
-
-    @Override
-    public Set<Cookie> removeCookies(String name) {
-        return HttpServerResponse.super.removeCookies(name);
     }
 
     @Override
@@ -466,12 +299,7 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
-    public @Nullable Cookie removeCookie(String name, String domain, String path) {
-        return HttpServerResponse.super.removeCookie(name, domain, path);
-    }
-
-    @Override
-    public @Nullable Cookie removeCookie(String name, String domain, String path, boolean invalidate) {
+    public Cookie removeCookie(String name, String domain, String path, boolean invalidate) {
         return null;
     }
 }

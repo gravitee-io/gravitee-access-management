@@ -33,8 +33,10 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
+import io.vertx.rxjava3.ext.web.RequestBody;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Before;
@@ -74,6 +76,8 @@ public class ResourceRegistrationEndpointTest {
     @Mock
     private HttpServerRequest request;
 
+    @Mock
+    private RequestBody requestBody;
 
     private ResourceRegistrationEndpoint endpoint = new ResourceRegistrationEndpoint(domain, service, subjectManager);
 
@@ -95,6 +99,7 @@ public class ResourceRegistrationEndpointTest {
         when(response.setStatusCode(anyInt())).thenReturn(response);
         when(context.request()).thenReturn(request);
         when(request.getParam("resource_id")).thenReturn(RESOURCE_ID);
+        when(context.body()).thenReturn(requestBody);
         when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal(USER_ID)));
     }
 
@@ -127,7 +132,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void create_invalidResourceBody() {
-        when(context.getBodyAsJson()).thenReturn(new JsonObject(Json.encode(new Resource().setId(RESOURCE_ID))));
+        when(requestBody.asJsonObject()).thenReturn(new JsonObject(Json.encode(new Resource().setId(RESOURCE_ID))));
         endpoint.create(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof InvalidRequestException);
@@ -135,7 +140,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void create_noResource() {
-        when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
+        when(requestBody.asJsonObject()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
         when(service.create(any(), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
         endpoint.create(context);
         verify(context).fail(errCaptor.capture());
@@ -146,9 +151,9 @@ public class ResourceRegistrationEndpointTest {
     public void create_withResource() {
         ArgumentCaptor<String> strCaptor = ArgumentCaptor.forClass(String.class);
         when(context.get(CONTEXT_PATH)).thenReturn(DOMAIN_PATH);
-        when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
+        when(requestBody.asJsonObject()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
         when(service.create(any(), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(new Resource().setId(RESOURCE_ID)));
-        when(request.host()).thenReturn("host");
+        when(request.authority()).thenReturn(HostAndPort.create("host", -1));
         when(request.scheme()).thenReturn("http");
         endpoint.create(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
@@ -177,7 +182,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void update_invalidResourceBody() {
-        when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"description\":\"mydescription\"}"));
+        when(requestBody.asJsonObject()).thenReturn(new JsonObject("{\"description\":\"mydescription\"}"));
         endpoint.update(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof InvalidRequestException);
@@ -185,7 +190,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void update_noResource() {
-        when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
+        when(requestBody.asJsonObject()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
         when(service.update(any(), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
         endpoint.update(context);
         verify(context).fail(errCaptor.capture());
@@ -194,7 +199,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void update_withResource() {
-        when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
+        when(requestBody.asJsonObject()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
         when(service.update(any(), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.just(new Resource()));
         endpoint.update(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);

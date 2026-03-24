@@ -40,7 +40,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.core.MultiMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

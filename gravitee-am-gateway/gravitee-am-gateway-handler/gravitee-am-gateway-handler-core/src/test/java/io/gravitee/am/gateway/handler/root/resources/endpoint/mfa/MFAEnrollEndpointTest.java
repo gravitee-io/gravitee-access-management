@@ -44,7 +44,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
@@ -139,7 +140,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     FactorSettings factorSettings = new FactorSettings();
                     factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings("factor-id")));
                     client.setFactorSettings(factorSettings);
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
@@ -179,7 +180,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
 
                     Client client = new Client();
                     client.setFactorSettings(factorSettings);
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
@@ -206,7 +207,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     Client client = new Client();
                     client.setFactorSettings(getFactorSettings(emailFactorId, smsFactorId));
                     client.setFactors(Set.of(emailFactorId, smsFactorId));
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.session().put(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY, emailFactorId);
                     ctx.next();

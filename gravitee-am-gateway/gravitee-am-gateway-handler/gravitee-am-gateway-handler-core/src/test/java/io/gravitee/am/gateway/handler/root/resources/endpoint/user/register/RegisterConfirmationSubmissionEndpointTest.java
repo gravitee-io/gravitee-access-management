@@ -25,7 +25,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
-import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -153,7 +153,7 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
         Session session = mock(Session.class);
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.getDelegate().setSession(session);
+            ((io.vertx.ext.web.impl.RoutingContextInternal) routingContext.getDelegate()).setSession(session);
             routingContext.put("client", client);
             routingContext.put("user", user);
             routingContext.next();

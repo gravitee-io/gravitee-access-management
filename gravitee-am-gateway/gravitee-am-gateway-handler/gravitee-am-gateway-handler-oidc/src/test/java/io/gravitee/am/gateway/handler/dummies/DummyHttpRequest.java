@@ -17,8 +17,6 @@
 package io.gravitee.am.gateway.handler.dummies;
 
 import io.netty.handler.codec.DecoderResult;
-import io.vertx.codegen.annotations.Nullable;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -36,12 +34,8 @@ import io.vertx.core.http.StreamPriority;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.SocketAddress;
-import io.vertx.core.streams.Pipe;
-import io.vertx.core.streams.WriteStream;
 
 import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -85,21 +79,6 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public Pipe<Buffer> pipe() {
-        return HttpServerRequest.super.pipe();
-    }
-
-    @Override
-    public Future<Void> pipeTo(WriteStream<Buffer> dst) {
-        return HttpServerRequest.super.pipeTo(dst);
-    }
-
-    @Override
-    public void pipeTo(WriteStream<Buffer> dst, Handler<AsyncResult<Void>> handler) {
-        HttpServerRequest.super.pipeTo(dst, handler);
-    }
-
-    @Override
     public HttpVersion version() {
         return null;
     }
@@ -119,7 +98,7 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String scheme() {
+    public String scheme() {
         return null;
     }
 
@@ -129,27 +108,22 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String path() {
+    public String path() {
         return null;
     }
 
     @Override
-    public @Nullable String query() {
+    public String query() {
         return null;
     }
 
     @Override
-    public @Nullable String host() {
+    public HostAndPort authority() {
         return null;
     }
 
     @Override
-    public @Nullable HostAndPort authority() {
-        return null;
-    }
-
-    @Override
-    public @Nullable HostAndPort authority(boolean real) {
+    public HostAndPort authority(boolean real) {
         return null;
     }
 
@@ -169,7 +143,7 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String getHeader(String headerName) {
+    public String getHeader(String headerName) {
         return HttpServerRequest.super.getHeader(headerName);
     }
 
@@ -198,7 +172,7 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String getParam(String paramName) {
+    public String getParam(String paramName) {
         return params.get(paramName);
     }
 
@@ -223,23 +197,13 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public X509Certificate[] peerCertificateChain() {
-        return new X509Certificate[0];
-    }
-
-    @Override
     public String absoluteURI() {
         return null;
     }
 
     @Override
-    public HttpServerRequest bodyHandler(@Nullable Handler<Buffer> bodyHandler) {
+    public HttpServerRequest bodyHandler(Handler<Buffer> bodyHandler) {
         return HttpServerRequest.super.bodyHandler(bodyHandler);
-    }
-
-    @Override
-    public HttpServerRequest body(Handler<AsyncResult<Buffer>> handler) {
-        return HttpServerRequest.super.body(handler);
     }
 
     @Override
@@ -248,18 +212,8 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public void end(Handler<AsyncResult<Void>> handler) {
-        HttpServerRequest.super.end(handler);
-    }
-
-    @Override
     public Future<Void> end() {
         return null;
-    }
-
-    @Override
-    public void toNetSocket(Handler<AsyncResult<NetSocket>> handler) {
-        HttpServerRequest.super.toNetSocket(handler);
     }
 
     @Override
@@ -278,7 +232,7 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public HttpServerRequest uploadHandler(@Nullable Handler<HttpServerFileUpload> uploadHandler) {
+    public HttpServerRequest uploadHandler(Handler<HttpServerFileUpload> uploadHandler) {
         return null;
     }
 
@@ -288,18 +242,13 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable String getFormAttribute(String attributeName) {
+    public String getFormAttribute(String attributeName) {
         return null;
     }
 
     @Override
     public int streamId() {
         return HttpServerRequest.super.streamId();
-    }
-
-    @Override
-    public void toWebSocket(Handler<AsyncResult<ServerWebSocket>> handler) {
-        HttpServerRequest.super.toWebSocket(handler);
     }
 
     @Override
@@ -338,23 +287,18 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public @Nullable Cookie getCookie(String name) {
+    public Cookie getCookie(String name) {
         return getCookie(name, null, null);
     }
 
     @Override
-    public @Nullable Cookie getCookie(String name, String domain, String path) {
+    public Cookie getCookie(String name, String domain, String path) {
         return null;
     }
 
     @Override
     public int cookieCount() {
         return HttpServerRequest.super.cookieCount();
-    }
-
-    @Override
-    public Map<String, Cookie> cookieMap() {
-        return null;
     }
 
     @Override
