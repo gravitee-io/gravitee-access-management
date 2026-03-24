@@ -1,0 +1,6 @@
+{
+  "type": "object",
+  "properties": { "protocol": { "type": "string" }, "cert": { "type": "string" } },
+  "if": { "properties": { "protocol": { "const": "https" } } },
+  "then": { "required": ["cert"] }
+}
