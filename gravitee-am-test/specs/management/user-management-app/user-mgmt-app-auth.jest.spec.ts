@@ -26,7 +26,19 @@ let clientId: string;
 let clientSecret: string;
 
 beforeAll(async () => {
-  fixture = await setupUserManagementAppFixture();
+  // Create the app before domain start so the initial gateway sync picks it up.
+  // This avoids a race condition where post-start waitForSyncAfter could see a stale
+  // sync from other management API mutations (roles/users/groups), causing 401 in CI.
+  fixture = await setupUserManagementAppFixture({
+    beforeStart: async (f) => {
+      const app = await f.createAndConfigureApp(f.defaultIdpId);
+      clientId = app.clientId;
+      clientSecret = app.clientSecret;
+    },
+  });
+
+  // Roles, users, and groups are looked up at runtime (not part of domain sync),
+  // so they can be created after domain start without sync concerns.
 
   // Create a role with 'read' permission — will be assigned directly to user
   const readRole = await fixture.createRole('auth-read-role', 'Role with read permission');
@@ -61,11 +73,6 @@ beforeAll(async () => {
   const group = await fixture.createGroup('auth-test-group');
   await fixture.updateGroup(group.id, { name: 'auth-test-group', members: [userId] });
   await fixture.addRolesToGroup(group.id, [writeRole.id]);
-
-  // Create and configure the application with password grant + enhanceScopesWithUserPermissions
-  const app = await fixture.createAndConfigureApp(fixture.defaultIdpId);
-  clientId = app.clientId;
-  clientSecret = app.clientSecret;
 });
 
 afterAll(async () => {

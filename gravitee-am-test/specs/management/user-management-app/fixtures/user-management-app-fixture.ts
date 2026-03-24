@@ -16,8 +16,14 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { setupDomainForTest, safeDeleteDomain, waitForDomainSync, patchDomain } from '@management-commands/domain-management-commands';
-import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import {
+  createDomain,
+  startDomain,
+  waitForDomainStart,
+  safeDeleteDomain,
+  patchDomain,
+} from '@management-commands/domain-management-commands';
+import faker from 'faker';
 import { createRole, updateRole, getAllRoles, deleteRole, getRole } from '@management-commands/role-management-commands';
 import {
   createUser,
@@ -50,7 +56,7 @@ import {
 } from '@management-commands/group-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
-import { performPost, performGet } from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Domain } from '@management-models/Domain';
@@ -131,7 +137,17 @@ export const CONSTANTS = {
   REDIRECT_URI: 'https://callback',
 } as const;
 
-export const setupUserManagementAppFixture = async (): Promise<UserManagementAppFixture> => {
+/**
+ * Options for fixture setup.
+ * @param beforeStart - Callback invoked after domain creation but before domain start.
+ *   Use this to create resources (e.g. applications) that should be picked up by the
+ *   initial gateway sync, avoiding post-start sync race conditions.
+ */
+interface SetupOptions {
+  beforeStart?: (fixture: UserManagementAppFixture) => Promise<void>;
+}
+
+export const setupUserManagementAppFixture = async (options?: SetupOptions): Promise<UserManagementAppFixture> => {
   let domain: Domain | null = null;
   let accessToken: string | null = null;
 
@@ -139,11 +155,7 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
     accessToken = await requestAdminAccessToken();
     expect(accessToken).toBeDefined();
 
-    const { domain: createdDomain, oidcConfig } = await setupDomainForTest(uniqueName(CONSTANTS.DOMAIN_NAME_PREFIX, true), {
-      accessToken,
-      waitForStart: true,
-    });
-    domain = createdDomain;
+    domain = await createDomain(accessToken, uniqueName(CONSTANTS.DOMAIN_NAME_PREFIX, true), faker.company.catchPhraseDescriptor());
     expect(domain).toBeDefined();
     expect(domain.id).toBeDefined();
 
@@ -152,17 +164,22 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
     expect(defaultIdp).toBeDefined();
     const defaultIdpId = defaultIdp.id;
 
+    // oidcConfig is set after domain start; requestPasswordGrant closes over this variable
+    let oidcConfig: any = null;
+
     const cleanUp = async () => {
       expect(domain).toBeDefined();
       expect(accessToken).toBeDefined();
       await safeDeleteDomain(domain.id, accessToken);
     };
 
-    return {
+    const fixture: UserManagementAppFixture = {
       domain,
       accessToken,
       defaultIdpId,
-      openIdConfiguration: oidcConfig,
+      get openIdConfiguration() {
+        return oidcConfig;
+      },
 
       createRole: (name, description) => createRole(domain.id, accessToken, { name, description }),
       getRole: (roleId) => getRole(domain.id, accessToken, roleId),
@@ -198,19 +215,17 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
       getGroupRoles: (groupId) => getGroupRoles(domain.id, accessToken, groupId),
 
       createAndConfigureApp: async (identityProviderId: string) => {
-        const app = await waitForSyncAfter(domain.id, () =>
-          createTestApp(uniqueName('client-um', true), domain, accessToken, 'WEB', {
-            settings: {
-              oauth: {
-                redirectUris: [CONSTANTS.REDIRECT_URI],
-                grantTypes: ['password'],
-                scopeSettings: [{ scope: 'openid', defaultScope: true }],
-                enhanceScopesWithUserPermissions: true,
-              },
+        const app = await createTestApp(uniqueName('client-um', true), domain, accessToken, 'WEB', {
+          settings: {
+            oauth: {
+              redirectUris: [CONSTANTS.REDIRECT_URI],
+              grantTypes: ['password'],
+              scopeSettings: [{ scope: 'openid', defaultScope: true }],
+              enhanceScopesWithUserPermissions: true,
             },
-            identityProviders: new Set([{ identity: identityProviderId, priority: -1 }]),
-          }),
-        );
+          },
+          identityProviders: new Set([{ identity: identityProviderId, priority: -1 }]),
+        });
 
         return {
           clientId: app.settings.oauth.clientId,
@@ -219,6 +234,7 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
       },
 
       requestPasswordGrant: async (clientId, clientSecret, username, password, scope?) => {
+        expect(oidcConfig).toBeDefined();
         const tokenEndpoint = oidcConfig.token_endpoint;
         let body = `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
         if (scope) {
@@ -234,6 +250,19 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
 
       cleanUp,
     };
+
+    // Allow callers to create resources before domain start (e.g. apps that need to be
+    // picked up by the initial sync, avoiding post-start sync race conditions).
+    if (options?.beforeStart) {
+      await options.beforeStart(fixture);
+    }
+
+    // Start domain and wait for gateway readiness
+    await startDomain(domain.id, accessToken);
+    const { oidcConfig: startedOidcConfig } = await waitForDomainStart(domain);
+    oidcConfig = startedOidcConfig;
+
+    return fixture;
   } catch (error) {
     if (domain?.id && accessToken) {
       try {
