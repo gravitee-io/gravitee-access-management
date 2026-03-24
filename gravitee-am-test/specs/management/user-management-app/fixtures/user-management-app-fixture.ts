@@ -56,7 +56,7 @@ import {
 } from '@management-commands/group-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
-import { performPost, performGet } from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Domain } from '@management-models/Domain';
@@ -140,7 +140,17 @@ export const CONSTANTS = {
   REDIRECT_URI: 'https://callback',
 } as const;
 
-export const setupUserManagementAppFixture = async (): Promise<UserManagementAppFixture> => {
+/**
+ * Options for fixture setup.
+ * @param beforeStart - Callback invoked after domain creation but before domain start.
+ *   Use this to create resources (e.g. applications) that should be picked up by the
+ *   initial gateway sync, avoiding post-start sync race conditions.
+ */
+interface SetupOptions {
+  beforeStart?: (fixture: UserManagementAppFixture) => Promise<void>;
+}
+
+export const setupUserManagementAppFixture = async (options?: SetupOptions): Promise<UserManagementAppFixture> => {
   let domain: Domain | null = null;
   let accessToken: string | null = null;
 
@@ -157,6 +167,7 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
     expect(defaultIdp).toBeDefined();
     const defaultIdpId = defaultIdp.id;
 
+    // oidcConfig is set after domain start; requestPasswordGrant closes over this variable
     let oidcConfig: any = null;
 
     const cleanUp = async () => {
@@ -165,7 +176,7 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
       await safeDeleteDomain(domain.id, accessToken);
     };
 
-    return {
+    const fixture: UserManagementAppFixture = {
       domain,
       accessToken,
       defaultIdpId,
@@ -232,6 +243,7 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
       },
 
       requestPasswordGrant: async (clientId, clientSecret, username, password, scope?) => {
+        expect(oidcConfig).toBeDefined();
         const tokenEndpoint = oidcConfig.token_endpoint;
         let body = `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
         if (scope) {
@@ -247,6 +259,19 @@ export const setupUserManagementAppFixture = async (): Promise<UserManagementApp
 
       cleanUp,
     };
+
+    // Allow callers to create resources before domain start (e.g. apps that need to be
+    // picked up by the initial sync, avoiding post-start sync race conditions).
+    if (options?.beforeStart) {
+      await options.beforeStart(fixture);
+    }
+
+    // Start domain and wait for gateway readiness
+    await startDomain(domain.id, accessToken);
+    const { oidcConfig: startedOidcConfig } = await waitForDomainStart(domain);
+    oidcConfig = startedOidcConfig;
+
+    return fixture;
   } catch (error) {
     if (domain?.id && accessToken) {
       try {

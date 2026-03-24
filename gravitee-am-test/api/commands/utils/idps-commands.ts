@@ -24,7 +24,7 @@ export const createMongoIdp = async (domainId, accessToken) => {
     type: 'mongo-am-idp',
     domainWhitelist: [],
     configuration: JSON.stringify({
-      uri: process.env.AM_MONGODB_URI,
+      uri: process.env.AM_INTERNAL_MONGODB_URI || process.env.AM_MONGODB_URI,
       enableCredentials: false,
       databaseCredentials: 'gravitee-am',
       database: 'gravitee-am',
@@ -46,11 +46,12 @@ export const createJdbcIdp = async (domainId, accessToken) => {
   const password = 'postgres';
   const database = 'postgres';
 
+  const pgHost = process.env.AM_INTERNAL_POSTGRES_HOST || process.env.AM_POSTGRES_HOST;
   return await createIdp(domainId, accessToken, {
     external: false,
     type: 'jdbc-am-idp',
     domainWhitelist: [],
-    configuration: `{\"host\":\"${process.env.AM_POSTGRES_HOST}\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
+    configuration: `{\"host\":\"${pgHost}\",\"port\":5432,\"protocol\":\"postgresql\",\"database\":\"${database}\",\"usersTable\":\"test_users\",\"user\":\"postgres\",\"password\":\"${password}\",\"autoProvisioning\":\"true\",\"selectUserByUsernameQuery\":\"SELECT * FROM test_users WHERE username = %s\",\"selectUserByMultipleFieldsQuery\":\"SELECT * FROM test_users WHERE username = %s or email = %s\",\"selectUserByEmailQuery\":\"SELECT * FROM test_users WHERE email = %s\",\"identifierAttribute\":\"id\",\"usernameAttribute\":\"username\",\"emailAttribute\":\"email\",\"passwordAttribute\":\"password\",\"passwordEncoder\":\"None\",\"useDedicatedSalt\":false,\"passwordSaltLength\":32}`,
     name: 'other-jdbc-idp',
   });
 };
