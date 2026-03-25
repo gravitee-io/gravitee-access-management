@@ -28,12 +28,14 @@ import { AuthService } from '../../../../services/auth.service';
 })
 export class ApplicationDesignComponent implements OnDestroy {
   private subscription: Subscription;
+  private application: any;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
   ) {
+    this.application = this.route.snapshot.data['application'];
     this.subscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((next: NavigationEnd) => {
       if (next.url.endsWith('design')) {
         this.loadPermissions();
@@ -45,13 +47,17 @@ export class ApplicationDesignComponent implements OnDestroy {
     this.subscription.unsubscribe();
   }
 
+  private isServiceApp(): boolean {
+    return this.application?.type?.toUpperCase() === 'SERVICE';
+  }
+
   private loadPermissions(): void {
-    if (this.canNavigate(['application_form_list', 'application_form_read'])) {
+    if (!this.isServiceApp() && this.canNavigate(['application_form_list', 'application_form_read'])) {
       this.router.navigate(['forms'], { relativeTo: this.route });
-    } else if (this.canNavigate(['application_email_template_list', 'application_email_template_read'])) {
+    } else if (!this.isServiceApp() && this.canNavigate(['application_email_template_list', 'application_email_template_read'])) {
       this.router.navigate(['emails'], { relativeTo: this.route });
     } else if (this.canNavigate(['application_flow_list', 'application_flow_read'])) {
-      this.router.navigate(['design', 'flows'], { relativeTo: this.route });
+      this.router.navigate(['flows'], { relativeTo: this.route });
     }
   }
 

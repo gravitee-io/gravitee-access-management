@@ -1038,7 +1038,7 @@ export const routes: Routes = [
                                 ],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT', 'SERVICE'],
                               },
                             },
                             children: [
@@ -1053,6 +1053,9 @@ export const routes: Routes = [
                                   },
                                   perms: {
                                     only: ['application_form_list', 'application_form_read'],
+                                  },
+                                  types: {
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                                 children: [
@@ -1089,6 +1092,9 @@ export const routes: Routes = [
                                   },
                                   perms: {
                                     only: ['application_email_template_list', 'application_email_template_read'],
+                                  },
+                                  types: {
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                                 children: [

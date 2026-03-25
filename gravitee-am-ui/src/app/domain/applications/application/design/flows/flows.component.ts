@@ -17,7 +17,6 @@ import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import '@gravitee/ui-components/wc/gv-design';
 import { filter, switchMap, tap } from 'rxjs/operators';
-import _ from 'lodash';
 
 import { OrganizationService } from '../../../../../services/organization.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -50,12 +49,23 @@ export class ApplicationFlowsComponent implements OnInit {
     private dialogService: DialogService,
   ) {}
 
+  private static readonly SERVICE_APP_FLOW_TYPES = ['token'];
+
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
-    this.definition.flows = this.route.snapshot.data['flows'] || [];
+    const flows = this.route.snapshot.data['flows'] || [];
+    this.definition.flows = this.filterAllowedFlows(flows);
     this.initPolicies();
+  }
+
+  private isServiceApp(): boolean {
+    return this.application?.type?.toUpperCase() === 'SERVICE';
+  }
+
+  private filterAllowedFlows(flows: any[]): any[] {
+    return this.isServiceApp() ? flows.filter((f) => ApplicationFlowsComponent.SERVICE_APP_FLOW_TYPES.includes(f.type)) : flows;
   }
 
   @HostListener(':gv-design:fetch-documentation', ['$event.detail'])
@@ -96,8 +106,9 @@ export class ApplicationFlowsComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
+    const flows = structuredClone(this.route.snapshot.data['flows'] || []);
     this.definition = {
-      flows: _.cloneDeep(this.route.snapshot.data['flows'] || []),
+      flows: this.filterAllowedFlows(flows),
     };
     this.initPolicies();
     this.isDirty = false;
