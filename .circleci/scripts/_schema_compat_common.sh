@@ -67,30 +67,61 @@ schema_compat_resolve_merge_base() {
     fi
     echo "Baseline: $BASE_REF ($MERGE_BASE)"
   else
-    local current_branch
+    local current_branch tracking
     current_branch="$(git rev-parse --abbrev-ref HEAD)"
     if [[ "$current_branch" == "master" || "$current_branch" =~ ^[0-9]+\.[0-9]+\.x$ ]]; then
       echo "Running on release/master branch — comparing HEAD vs HEAD~1"
       MERGE_BASE="HEAD~1"
     else
-      # PR/branch: resolve target from git tracking branch (@{u}).
-      local tracking remote target_branch
+      # PR branch: determine the merge-base target.
+      # Priority:
+      #   1. Git tracking branch (@{u}) if it points to a different branch — works locally
+      #      when the branch was set up with an upstream branch.
+      #   2. GitHub API.
+      #   3. HEAD~1 fallback.
       tracking="$(git rev-parse --abbrev-ref "@{u}" 2>/dev/null)" || true
-      if [[ -n "$tracking" ]]; then
+
+      if [[ -n "$tracking" && "$tracking" != "origin/$current_branch" ]]; then
+        # Tracking points to a genuine base (not just the remote copy of this branch
+        # compared by conventional naming)
+        local remote target_branch
         remote="${tracking%%/*}"
         target_branch="${tracking#*/}"
-        echo "PR branch — tracking: $tracking"
+        echo "Base branch (tracking): $tracking"
         git fetch "$remote" "$target_branch" --depth=50 2>/dev/null || true
         MERGE_BASE="$(git merge-base HEAD "$tracking")" || true
         if [[ -z "$MERGE_BASE" ]]; then
           echo "Warning: no common ancestor with $tracking; falling back to HEAD~1"
           MERGE_BASE="HEAD~1"
         fi
+
+      elif [[ -n "${CIRCLECI:-}" && -n "${CIRCLE_PULL_REQUEST:-}" && -n "${GITHUB_TOKEN:-}" ]]; then
+        # CircleCI PR build: resolve the exact base branch via the GitHub API
+        local pr_number base_branch
+        pr_number="${CIRCLE_PULL_REQUEST##*/}"
+        base_branch="$(curl -sf \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls/${pr_number}" \
+          | jq -r '.base.ref // empty' 2>/dev/null)" || true
+        if [[ -n "$base_branch" ]]; then
+          echo "Base branch (GitHub API): $base_branch"
+          git fetch origin "$base_branch" --depth=50 2>/dev/null || true
+          MERGE_BASE="$(git merge-base HEAD "origin/$base_branch")" || true
+          if [[ -z "$MERGE_BASE" ]]; then
+            echo "Warning: no common ancestor with origin/$base_branch; falling back to HEAD~1"
+            MERGE_BASE="HEAD~1"
+          fi
+        else
+          echo "Warning: GitHub API did not return a base branch; falling back to HEAD~1"
+          MERGE_BASE="HEAD~1"
+        fi
+
       else
-        echo "Warning: no tracking branch set; falling back to HEAD~1"
+        echo "Warning: could not determine base branch automatically; falling back to HEAD~1"
+        echo "         Use --base <ref> for accurate results (e.g. --base origin/master)"
         MERGE_BASE="HEAD~1"
       fi
-      echo "PR branch — merge-base: $MERGE_BASE"
+      echo "Baseline: $MERGE_BASE"
     fi
   fi
 }
