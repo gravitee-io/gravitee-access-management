@@ -15,9 +15,8 @@ export PAGER=cat
 #   bash ee-schema-compat-check.sh [--base <ref>] [--use-head <true|false>]
 #
 #   --base <ref>         Any git ref to use as the comparison baseline.
-#                        When omitted, uses the same auto-detection logic as
-#                        schema-compat-check.sh (merge-base with origin/master
-#                        for PR branches; HEAD~1 for master/release branches).
+#                        When omitted, uses auto-detection: merge-base with the tracking
+#                        branch (@{u}), then GitHub API for PRs, with fallback to HEAD~1.
 #
 #   --use-head <bool>    true  (default): read plugin versions and project version
 #                               from HEAD (committed state). Used by CI.
