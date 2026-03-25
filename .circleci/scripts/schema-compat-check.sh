@@ -22,8 +22,7 @@ export PAGER=cat
 #                          --base HEAD~10                (relative to current HEAD)
 #                        When omitted, the baseline is determined automatically:
 #                          - master / x.y.x branches → HEAD~1
-#                          - all other branches       → git merge-base HEAD origin/master
-#
+#                          - all other branches       → auto-detects (tracking branch, GitHub API, HEAD~1 fallback)
 #   --use-head <bool>    true  (default): compare baseline → HEAD (committed changes only).
 #                               Used by CI where all changes are committed.
 #                        false: compare baseline → working tree (includes staged and
