@@ -1002,6 +1002,9 @@ jobs:
       class: small
     steps:
       - checkout
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
       - run:
           name: Run schema checker test suite
           command: node scripts/schema-compatibility/test/run-tests.mjs
@@ -1019,6 +1022,9 @@ jobs:
       - attach_workspace:
           at: /tmp
       - checkout
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
       - restore-maven-job-cache:
           jobName: pull_requests
       - run:
@@ -1931,6 +1937,7 @@ workflows:
                 - /^[0-999].[0-999].x/
       - schema-compat-check:
           name: Check schema backwards compatibility
+          context: cicd-orchestrator
           requires:
             - setup
           filters:
@@ -1940,6 +1947,7 @@ workflows:
                 - /^[0-999].[0-999].x/
       - ee-schema-compat-check:
           name: Check EE plugin schema backwards compatibility
+          context: cicd-orchestrator
           requires:
             - process_pull_request
             - Check schema backwards compatibility

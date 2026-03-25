@@ -12,10 +12,12 @@ below use Gravitee AM conventions but the tooling is generic.
 
 ## Quick usage
 
-When `--base` is omitted the baseline is resolved automatically
-(see `.circleci/scripts/_schema_compat_common.sh`):
+When `--base` is omitted the baseline is resolved automatically:
 - `master` or `x.y.x` release branches → `HEAD~1`
-- All other branches → `git merge-base HEAD origin/master`
+- All other branches → git tracking branch (`@{u}`) if set to a different branch, else `HEAD~1`
+
+Auto-detection may only reach back one commit if tracking is not set up. For reliable results,
+always pass `--base` explicitly.
 
 ```bash
 # Check all schema-form.json files changed since merge-base (what CI does):
