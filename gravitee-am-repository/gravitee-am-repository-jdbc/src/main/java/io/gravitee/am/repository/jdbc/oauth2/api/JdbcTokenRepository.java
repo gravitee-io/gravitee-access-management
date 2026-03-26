@@ -38,9 +38,12 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcBaseToken.SUBJECT;
 import static java.time.ZoneOffset.UTC;
+import static java.util.stream.Collectors.toSet;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.*;
 
@@ -181,48 +184,29 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         var result = new AccessToken();
         result.setAuthorizationCode(entity.getAuthorizationCode());
         result.setRefreshToken(entity.getRefreshToken());
-        result.setToken(entity.getToken());
-        result.setId(entity.getId());
-        result.setClient(entity.getClient());
-        result.setDomain(entity.getDomain());
-        result.setSubject(entity.getSubject());
-        result.setAllParentJtis(new HashSet<>());
-        if (entity.getParentJti1() != null) {
-            result.getAllParentJtis().add(entity.getParentJti1());
-        }
-        if (entity.getParentJti2() != null) {
-            result.getAllParentJtis().add(entity.getParentJti2());
-        }
-        if (entity.getCreatedAt() != null) {
-            result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
-        }
-        if (entity.getExpireAt() != null) {
-            result.setExpireAt(Date.from(entity.getExpireAt().atZone(UTC).toInstant()));
-        }
+        updateToken(result, entity);
         return result;
     }
 
     private RefreshToken toRefreshToken(JdbcToken entity) {
         var result = new RefreshToken();
+        updateToken(result, entity);
+        return result;
+    }
+
+    private void updateToken(Token result, JdbcToken entity) {
         result.setToken(entity.getToken());
         result.setId(entity.getId());
         result.setClient(entity.getClient());
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
-        result.setAllParentJtis(new HashSet<>());
-        if (entity.getParentJti1() != null) {
-            result.getAllParentJtis().add(entity.getParentJti1());
-        }
-        if (entity.getParentJti2() != null) {
-            result.getAllParentJtis().add(entity.getParentJti2());
-        }
+        result.setAllParentJtis(new HashSet<>()); // parentIds are only needed to perform RECURSIVE delete
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
         }
         if (entity.getExpireAt() != null) {
             result.setExpireAt(Date.from(entity.getExpireAt().atZone(UTC).toInstant()));
         }
-        return result;
     }
 
     private JdbcToken toJdbcEntity(Token token, TokenType tokenType) {
@@ -235,17 +219,16 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setDomain(token.getDomain());
         result.setSubject(token.getSubject());
 
-        Set<String> allParentJtis = token.getAllParentJtis();
-        if(allParentJtis != null && !allParentJtis.isEmpty()) {
-            Iterator<String> it = token.getAllParentJtis().iterator();
+        Iterator<String> it = (token.getAllParentJtis() == null ? Stream.<String>empty() : token.getAllParentJtis().stream())
+                .filter(jti -> !jti.equals(result.getToken()))
+                .iterator();
 
-            // adds only two as for JBDC hierarchy is maintained
-            if(it.hasNext()) {
-                result.setParentJti1(it.next());
-            }
-            if(it.hasNext()) {
-                result.setParentJti2(it.next());
-            }
+        // adds only two as for JBDC hierarchy is maintained
+        if(it.hasNext()) {
+            result.setParentJti1(it.next());
+        }
+        if(it.hasNext()) {
+            result.setParentJti2(it.next());
         }
         if (token.getCreatedAt() != null) {
             result.setCreatedAt(LocalDateTime.ofInstant(token.getCreatedAt().toInstant(), UTC));
