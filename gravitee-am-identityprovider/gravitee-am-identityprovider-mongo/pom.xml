@@ -52,6 +52,7 @@
             <groupId>io.gravitee.am.repository</groupId>
             <artifactId>gravitee-am-repository-mongodb-api</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Unit tests -->

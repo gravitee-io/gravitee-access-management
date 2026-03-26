@@ -91,6 +91,7 @@
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
             <version>${reactor-core.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.projectreactor.addons/reactor-adapter -->
@@ -103,6 +104,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-unix-common</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Liquibase -->
@@ -241,6 +243,7 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Test dependencies -->
