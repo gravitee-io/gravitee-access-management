@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.repository.mongodb.gateway;
 
+import com.mongodb.ReadPreference;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
 import io.gravitee.am.repository.mongodb.gateway.internal.model.EmailStagingMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -28,12 +31,15 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -44,8 +50,10 @@ import static com.mongodb.client.model.Filters.in;
  * @author GraviteeSource Team
  */
 @Component
+@Slf4j
 public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository implements EmailStagingRepository {
 
+    private static final Long DEFAULT_MAX_READ_PREFERENCE_STALENESS = 90000L;
     private static final String COLLECTION_NAME = "dp_email_staging";
     private static final String FIELD_ID = "_id";
     private static final String FIELD_USER_ID = "userId";
@@ -55,6 +63,12 @@ public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository 
     private static final String FIELD_UPDATED_AT = "updatedAt";
 
     private MongoCollection<EmailStagingMongo> emailStagingCollection;
+
+    @Value("${repositories.gateway.mongodb.readPreference:SECONDARY}")
+    private String readPreference = "SECONDARY";
+
+    @Value("${repositories.gateway.mongodb.readPreferenceMaxStaleness:90000}")
+    private Long readPreferenceMaxStalenessMs = DEFAULT_MAX_READ_PREFERENCE_STALENESS;
 
     @PostConstruct
     public void init() {
@@ -134,6 +148,24 @@ public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository 
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Flowable<Reference> listReferences() {
+        return Observable.fromPublisher(
+                withMaxTime(withReadPreferenceCollection().aggregate(
+                        List.of(
+                                Aggregates.group(new Document(FIELD_REFERENCE_TYPE, "$" + FIELD_REFERENCE_TYPE)
+                                        .append(FIELD_REFERENCE_ID, "$" + FIELD_REFERENCE_ID))
+                        ), Document.class
+                ))
+        )
+        .map(doc -> {
+            Document id = doc.get("_id", Document.class);
+            return new Reference(ReferenceType.valueOf(id.getString(FIELD_REFERENCE_TYPE)), id.getString(FIELD_REFERENCE_ID));
+        })
+        .toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER)
+        .observeOn(Schedulers.computation());
+    }
+
     private EmailStaging convert(EmailStagingMongo emailStagingMongo) {
         if (emailStagingMongo == null) {
             return null;
@@ -168,5 +200,29 @@ public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository 
         emailStagingMongo.setCreatedAt(emailStaging.getCreatedAt());
         emailStagingMongo.setUpdatedAt(emailStaging.getUpdatedAt());
         return emailStagingMongo;
+    }
+
+    private MongoCollection<EmailStagingMongo> withReadPreferenceCollection() {
+        if (this.readPreference == null) {
+            return this.emailStagingCollection;
+        }
+
+        ReadPreference readPreferenceValue;
+        try {
+            readPreferenceValue = ReadPreference.valueOf(this.readPreference);
+        } catch (IllegalArgumentException ex) {
+            log.error("Invalid read preference value: {}", this.readPreference, ex);
+            return this.emailStagingCollection;
+        }
+
+        // Max staleness is only compatible with NON-PRIMARY read preference
+        if (readPreferenceValue != ReadPreference.primary()) {
+            if (this.readPreferenceMaxStalenessMs < DEFAULT_MAX_READ_PREFERENCE_STALENESS) {
+                this.readPreferenceMaxStalenessMs = DEFAULT_MAX_READ_PREFERENCE_STALENESS;
+            }
+            readPreferenceValue = readPreferenceValue.withMaxStalenessMS(this.readPreferenceMaxStalenessMs, TimeUnit.MILLISECONDS);
+        }
+
+        return this.emailStagingCollection.withReadPreference(readPreferenceValue);
     }
 }
