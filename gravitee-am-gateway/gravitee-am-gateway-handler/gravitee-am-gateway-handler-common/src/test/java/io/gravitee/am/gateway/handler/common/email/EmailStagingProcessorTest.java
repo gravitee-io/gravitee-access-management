@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.email;
 import io.gravitee.am.common.exception.ActionLeaseException;
 import io.gravitee.am.common.utils.BulkEmailExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.gateway.core.email.EmailStagingStateProvider;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EmailStaging;
@@ -50,6 +51,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -72,6 +74,9 @@ class EmailStagingProcessorTest {
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
+    private EmailStagingStateProvider emailStagingStateProvider;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -87,6 +92,7 @@ class EmailStagingProcessorTest {
         domain.setId("domain-id");
         domain.setName("test-domain");
         when(dataPlaneRegistry.getUserRepository(domain)).thenReturn(userRepository);
+       lenient().when(emailStagingStateProvider.hasEmailsToProcess(domain.getId())).thenReturn(true);
     }
 
     @AfterAll
@@ -103,9 +109,10 @@ class EmailStagingProcessorTest {
                 dataPlaneRegistry,
                 applicationService,
                 executor,
+                emailStagingStateProvider,
                 domain,
                 EmailStagingProcessor.DEFAULT_BATCH_SIZE,
-                EmailStagingProcessor.DEFAULT_PERIOD_IN_SECONDS,
+                EmailStagingStateProvider.DEFAULT_PERIOD_IN_SECONDS,
                 EmailStagingProcessor.DEFAULT_MAX_ATTEMPTS,
                 enabled);
     }
@@ -173,6 +180,7 @@ class EmailStagingProcessorTest {
                     dataPlaneRegistry,
                     applicationService,
                     executor,
+                    emailStagingStateProvider,
                     domain,
                     EmailStagingProcessor.DEFAULT_BATCH_SIZE,
                     1, // 1 second period for test speed

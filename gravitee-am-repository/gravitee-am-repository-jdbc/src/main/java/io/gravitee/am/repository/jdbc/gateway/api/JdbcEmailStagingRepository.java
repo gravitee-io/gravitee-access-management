@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.gateway.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
 import io.gravitee.am.repository.jdbc.gateway.api.model.JdbcEmailStaging;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -123,6 +124,21 @@ public class JdbcEmailStagingRepository extends AbstractJdbcRepository implement
         )
         .map(this::toEntity)
         .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<Reference> listReferences() {
+        LOGGER.debug("List distinct References in EmailStaging");
+
+        return fluxToFlowable(
+                getTemplate().getDatabaseClient()
+                        .sql("SELECT DISTINCT reference_type, reference_id FROM dp_email_staging")
+                        .map((row, rowMetadata) -> new Reference(
+                                ReferenceType.valueOf(row.get("reference_type", String.class)),
+                                row.get("reference_id", String.class)
+                        ))
+                        .all()
+        ).observeOn(Schedulers.computation());
     }
 
     protected EmailStaging toEntity(JdbcEmailStaging jdbcEntity) {
