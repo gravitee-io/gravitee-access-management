@@ -86,7 +86,7 @@
         <gravitee-gateway-api.version>5.0.0-beta.2</gravitee-gateway-api.version>
         <gravitee-expression-language.version>4.3.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
-        <gravitee-cockpit-api.version>3.0.51</gravitee-cockpit-api.version>
+        <gravitee-cockpit-api.version>4.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-cockpit-api.version>
         <gravitee-kubernetes-client-version>4.0.0-feat-migrate-vertx5-SNAPSHOT</gravitee-kubernetes-client-version>
         <gravitee-plugin-validator.version>2.3.0</gravitee-plugin-validator.version>
         <nimbus.version>10.4</nimbus.version>
@@ -150,7 +150,7 @@
         <gravitee-policy-ipfiltering.version>3.0.0-AM-6611-vertx5-migration-SNAPSHOT</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
-        <gravitee-cockpit-connectors.version>5.0.30</gravitee-cockpit-connectors.version>
+        <gravitee-cockpit-connectors.version>6.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-cockpit-connectors.version>
         <gravitee-ae-connectors.version>3.0.0-beta.1</gravitee-ae-connectors.version>
         <gravitee-notifier-webhook.version>3.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-notifier-webhook.version>
         <gravitee-notifier-email.version>4.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-notifier-email.version>
@@ -164,6 +164,8 @@
         <gravitee-factor-mock.version>1.0.0</gravitee-factor-mock.version>
         <gravitee-policy-ratelimit.version>2.1.3</gravitee-policy-ratelimit.version>
         <gravitee-gateway-services-ratelimit.version>2.1.3</gravitee-gateway-services-ratelimit.version>
+        <gravitee-exchange-api.version>3.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-exchange-api.version>
+        <gravitee-spec-gen-api.version>1.1.0</gravitee-spec-gen-api.version>
 
         <!-- EE plugin included in default bundle -->
         <gravitee-am-idp-ldap.version>3.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-am-idp-ldap.version>
@@ -319,6 +321,13 @@
                 <artifactId>gravitee-platform-repository-api</artifactId>
                 <version>${gravitee-platform-repository-api.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>io.gravitee.exchange</groupId>
+                <artifactId>gravitee-exchange-api</artifactId>
+                <version>${gravitee-exchange-api.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>io.gravitee.alert</groupId>
                 <artifactId>gravitee-alert-api</artifactId>
@@ -570,6 +579,11 @@
                 <groupId>io.gravitee.cockpit</groupId>
                 <artifactId>gravitee-cockpit-api</artifactId>
                 <version>${gravitee-cockpit-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.spec.gen.api</groupId>
+                <artifactId>gravitee-spec-gen-api</artifactId>
+                <version>${gravitee-spec-gen-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.hazelcast</groupId>
