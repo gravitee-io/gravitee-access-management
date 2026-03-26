@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.spring;
 
 import io.gravitee.am.common.utils.BulkEmailExecutor;
+import io.gravitee.am.gateway.core.email.EmailStagingStateProvider;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.email.EmailStagingProcessor;
@@ -58,10 +59,11 @@ public class SCIMConfiguration implements ProtocolConfiguration {
             ApplicationService applicationService,
             BulkEmailExecutor bulkEmailExecutor,
             Domain domain,
+            EmailStagingStateProvider emailStagingStateProvider,
             @Value("${email.enabled:false}") boolean emailEnabled,
             @Value("${email.bulk.enabled:false}") boolean bulkEnabled,
             @Value("${email.bulk.batch:" + EmailStagingProcessor.DEFAULT_BATCH_SIZE + "}") int batchSize,
-            @Value("${email.bulk.period:" + EmailStagingProcessor.DEFAULT_PERIOD_IN_SECONDS + "}") int batchPeriod,
+            @Value("${email.bulk.period:" + EmailStagingStateProvider.DEFAULT_PERIOD_IN_SECONDS + "}") int batchPeriod,
             @Value("${email.bulk.attempts:" + EmailStagingProcessor.DEFAULT_MAX_ATTEMPTS + "}") int maxAttempts) {
         return new EmailStagingProcessor(
                 emailStagingService,
@@ -69,6 +71,7 @@ public class SCIMConfiguration implements ProtocolConfiguration {
                 dataPlaneRegistry,
                 applicationService,
                 bulkEmailExecutor,
+                emailStagingStateProvider,
                 domain,
                 batchSize,
                 batchPeriod,
