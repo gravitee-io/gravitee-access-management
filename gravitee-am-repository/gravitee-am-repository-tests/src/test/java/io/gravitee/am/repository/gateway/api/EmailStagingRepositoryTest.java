@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -247,6 +249,41 @@ public class EmailStagingRepositoryTest extends AbstractGatewayTest {
 
         observer.assertNoErrors();
         observer.assertValue(obj -> obj.getApplicationId() == null);
+    }
+
+    @Test
+    public void shouldListReferences() {
+        final var domainId1 = "domain-id-" + UUID.randomUUID().toString();
+        final var domainId2 = "domain-id-" + UUID.randomUUID().toString();
+
+        repository.create(createEmailStaging(domainId1)).blockingGet();
+        repository.create(createEmailStaging(domainId1)).blockingGet();
+        repository.create(createEmailStaging(domainId2)).blockingGet();
+
+        TestSubscriber<Reference> observer = repository.listReferences().test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertNoErrors();
+        List<Reference> references = observer.values();
+        assertThat(references).hasSize(2);
+        assertThat(references).extracting(Reference::id).containsExactlyInAnyOrder(domainId1, domainId2);
+    }
+
+    @Test
+    public void shouldListReferencesWithNoDuplicates() {
+        final var domainId = "domain-id-" + UUID.randomUUID().toString();
+
+        repository.create(createEmailStaging(domainId)).blockingGet();
+        repository.create(createEmailStaging(domainId)).blockingGet();
+        repository.create(createEmailStaging(domainId)).blockingGet();
+
+        TestSubscriber<Reference> observer = repository.listReferences().test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertNoErrors();
+        assertThat(observer.values()).hasSize(1);
+        assertThat(observer.values().get(0).id()).isEqualTo(domainId);
+        assertThat(observer.values().get(0).type()).isEqualTo(ReferenceType.DOMAIN);
     }
 
     private void assertEqualsTo(EmailStaging emailStaging, TestObserver<EmailStaging> observer) {

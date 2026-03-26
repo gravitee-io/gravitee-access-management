@@ -20,9 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.common.utils.BulkEmailExecutor;
+import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
+import io.gravitee.am.gateway.core.email.EmailStagingStateProvider;
+import io.gravitee.am.gateway.core.email.impl.EmailStagingStateProviderImpl;
 import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
 import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
@@ -197,4 +199,10 @@ public class StandaloneConfiguration {
         log.info("Initializing executor for Bulk email processing with {} threads", nbOfThreads);
         return new BulkEmailExecutor(nbOfThreads, RxHelper.scheduler(vertx));
     }
+
+    @Bean
+    public EmailStagingStateProvider emailStagingStateProvider() {
+        return new EmailStagingStateProviderImpl();
+    }
+
 }
