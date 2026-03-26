@@ -133,7 +133,9 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
 
                 "password_policies",
                 "account_access_tokens",
-                "upgraders"
+                "upgraders",
+
+                "dp_email_staging"
         );
 
         // in seconds

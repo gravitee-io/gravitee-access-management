@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.email;
 import io.gravitee.am.common.exception.ActionLeaseException;
 import io.gravitee.am.common.utils.BulkEmailExecutor;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.gateway.core.email.EmailStagingStateProvider;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
@@ -50,7 +51,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class EmailStagingProcessor implements InitializingBean, DisposableBean {
 
     public static final int DEFAULT_BATCH_SIZE = 100;
-    public static final int DEFAULT_PERIOD_IN_SECONDS = 5;
     public static final int DEFAULT_MAX_ATTEMPTS = 2;
 
     private final EmailStagingService emailStagingService;
@@ -70,12 +70,15 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
 
     private Disposable scheduledJob;
 
+    private EmailStagingStateProvider emailStagingStateProvider;
+
     public EmailStagingProcessor(
             EmailStagingService emailStagingService,
             EmailService emailService,
             DataPlaneRegistry dataPlaneRegistry,
             ApplicationService applicationService,
             BulkEmailExecutor bulkEmailExecutor,
+            EmailStagingStateProvider emailStagingStateProvider,
             Domain domain,
             int batchSize,
             int batchPeriod,
@@ -86,6 +89,7 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
         this.dataPlaneRegistry = dataPlaneRegistry;
         this.applicationService = applicationService;
         this.bulkEmailExecutor = bulkEmailExecutor;
+        this.emailStagingStateProvider = emailStagingStateProvider;
         this.domain = domain;
         this.batchSize = batchSize;
         this.batchPeriod = batchPeriod;
@@ -130,7 +134,7 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
      * </p>
      */
     public void processBatchOfStagingEmails() {
-        if (leaseDurationExpired() && noOngoingBatch()) {
+        if (leaseDurationExpired() && hasEmailsToProcess() && noOngoingBatch()) {
             log.debug("Start processing batch of {} staging emails for domain {}", batchSize, domain.getName());
             emailStagingService.acquireLeaseAndFetch(domain.asReference(), batchSize)
                     .flatMapMaybe(stagingEmail ->
@@ -182,6 +186,10 @@ public class EmailStagingProcessor implements InitializingBean, DisposableBean {
         // flag the processor as running to not start another task for this domain
         // until the current on is released
         return this.running.compareAndSet(false, true);
+    }
+
+    private boolean hasEmailsToProcess() {
+        return this.emailStagingStateProvider.hasEmailsToProcess(domain.getId());
     }
 
     /**
