@@ -64,4 +64,10 @@ public interface EmailStagingRepository {
      * @return the updated email staging
      */
     Single<EmailStaging> updateAttempts(String id, int attempts);
+
+    /**
+     * List all distinct references present in the email staging collection
+     * @return flowable of distinct references
+     */
+    Flowable<Reference> listReferences();
 }
