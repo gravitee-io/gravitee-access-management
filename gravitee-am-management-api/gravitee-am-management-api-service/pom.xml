@@ -141,6 +141,11 @@
             <groupId>io.gravitee.cockpit</groupId>
             <artifactId>gravitee-cockpit-api</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>io.gravitee.spec.gen.api</groupId>
+            <artifactId>gravitee-spec-gen-api</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.gravitee.alert</groupId>
@@ -160,6 +165,11 @@
         <dependency>
             <groupId>io.gravitee.node.services</groupId>
             <artifactId>gravitee-node-services-upgrader</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.exchange</groupId>
+            <artifactId>gravitee-exchange-api</artifactId>
         </dependency>
 
         <!-- Spring dependencies -->
