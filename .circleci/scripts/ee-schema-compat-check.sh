@@ -6,9 +6,9 @@ export GIT_PAGER=cat
 export PAGER=cat
 
 # ---------------------------------------------------------------------------
-# EE Plugin Schema Backwards-Compatibility Check
+# EE Plugin Schema Backward-Compatibility Check
 #
-# Checks schema-form.json backwards compatibility for Enterprise (EE) plugins
+# Checks schema-form.json backward compatibility for Enterprise (EE) plugins
 # that are distributed as ZIPs and not tracked in this git repository.
 #
 # Usage:
@@ -19,9 +19,9 @@ export PAGER=cat
 #                        branch (@{u}), then GitHub API for PRs, with fallback to HEAD~1.
 #
 #   --use-head <bool>    true  (default): read plugin versions and project version
-#                               from HEAD (committed state). Used by CI.
+#                               from HEAD (committed state).
 #                        false: read from the working tree pom.xml instead.
-#                               Useful locally when version changes are uncommitted.
+#                               Useful locally before committing.
 #                               Note: new plugin ZIPs are always sourced from
 #                               target/ regardless of this flag.
 #
@@ -35,12 +35,12 @@ export PAGER=cat
 #   - Maven can resolve artifacts from the Gravitee Artifactory (i.e. you are
 #     authenticated and settings.xml is configured)
 #
-# Shared CLI, merge-base, and POM version helpers: _schema_compat_common.sh
+# Shared CLI, merge-base, and POM version helpers: _compat_common.sh
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=_schema_compat_common.sh
-source "$SCRIPT_DIR/_schema_compat_common.sh"
+# shellcheck source=_compat_common.sh
+source "$SCRIPT_DIR/_compat_common.sh"
 
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 SCRIPT="$REPO_ROOT/scripts/schema-compatibility/check-schema-compatibility.mjs"
@@ -62,15 +62,15 @@ PLUGINS_DIRS=(
   "$REPO_ROOT/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/distribution/plugins"
 )
 
-schema_compat_parse_args "$@"
+compat_parse_args "$@"
 
-echo "=== EE Plugin Schema Backwards-Compatibility Check ==="
+echo "=== EE Plugin Schema Backward-Compatibility Check ==="
 if [[ "$USE_HEAD" == "false" ]]; then
   echo "(comparing against working tree)"
 fi
 echo ""
 
-schema_compat_resolve_merge_base
+compat_resolve_merge_base
 
 echo ""
 
@@ -88,7 +88,7 @@ BASE_POM_CONTENT="$(git show "${MERGE_BASE}:pom.xml" 2>/dev/null || true)"
 read -r HEAD_MINOR HEAD_PATCH <<< "$(echo "$HEAD_POM_CONTENT" | parse_version_from_pom || true)"
 read -r BASE_MINOR BASE_PATCH <<< "$(echo "$BASE_POM_CONTENT" | parse_version_from_pom || true)"
 
-schema_compat_evaluate_minor_bump_allow_breaking
+compat_evaluate_minor_bump_allow_breaking
 
 # ---------------------------------------------------------------------------
 # Discover EE plugin coordinates from distribution pom.xml files
