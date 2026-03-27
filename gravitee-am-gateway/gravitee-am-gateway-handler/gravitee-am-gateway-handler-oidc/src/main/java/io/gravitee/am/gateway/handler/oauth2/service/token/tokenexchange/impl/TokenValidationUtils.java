@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TrustedIssuer;
@@ -63,10 +63,10 @@ final class TokenValidationUtils {
     static void validateTemporalClaims(long exp, long nbf, String tokenType) {
         long currentTime = System.currentTimeMillis() / 1000;
         if (exp > 0 && exp < currentTime) {
-            throw new InvalidGrantException(tokenType + " has expired");
+            throw new InvalidRequestException(tokenType + " has expired");
         }
         if (nbf > 0 && nbf > currentTime) {
-            throw new InvalidGrantException(tokenType + " is not yet valid");
+            throw new InvalidRequestException(tokenType + " is not yet valid");
         }
     }
 
