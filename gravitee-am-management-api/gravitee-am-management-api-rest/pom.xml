@@ -156,4 +156,51 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <!--
+            generate-oas: Regenerates docs/mapi/openapi.yaml at build time using
+            classpath scanning (no running server required).
+
+            Usage (from repo root):
+              mvn -pl gravitee-am-management-api/gravitee-am-management-api-rest \
+                  process-classes -Pgenerate-oas -DskipTests - -also-make
+
+            Or use the convenience script which also patches info.version:
+              bash scripts/regen-oas.sh
+        -->
+        <profile>
+            <id>generate-oas</id>
+            <properties>
+                <!-- Override on the command line to redirect output, e.g. -Doas.outputPath=/tmp/oas-gen -->
+                <oas.outputPath>${project.basedir}/../../docs/mapi</oas.outputPath>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.swagger.core.v3</groupId>
+                        <artifactId>swagger-maven-plugin-jakarta</artifactId>
+                        <version>${swagger.version}</version>
+                        <configuration>
+                            <outputFileName>openapi</outputFileName>
+                            <outputPath>${oas.outputPath}</outputPath>
+                            <outputFormat>YAML</outputFormat>
+                            <resourcePackages>
+                                <resourcePackage>io.gravitee.am.management.handlers.management.api.resources</resourcePackage>
+                            </resourcePackages>
+                            <prettyPrint>TRUE</prettyPrint>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>process-classes</phase>
+                                <goals>
+                                    <goal>resolve</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
