@@ -180,8 +180,9 @@ unzip -p /tmp/plugins/<artifactId>-<version>.zip 'schemas/schema-form.json' > /t
 - The automated `schema-compat-check.sh` covers schemas tracked in this git repository.
 - The automated `ee-schema-compat-check.sh` covers schemas in EE plugins that are distributed as closed-source ZIPs.
 
-> **Prerequisite:** run `mvn install -P full-bundle` first. The EE script locates new plugin
-> ZIPs from the local build output; it will error with a clear message if they are absent.
+> **Prerequisite:** run `mvn install` of the gateway and management-api standalone distribution
+> modules with `-am` (see `.circleci/workflows.yml`, `ee-schema-compat-check` job). The EE script
+> locates new plugin ZIPs from the local build output; it will error with a clear message if they are absent.
 
 ```bash
 # Run OSS check first — only proceed to EE check if OSS passes:
