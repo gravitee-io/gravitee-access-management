@@ -33,7 +33,6 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.certificate.api.X509CertUtils;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TrustedIssuer;
@@ -80,15 +79,15 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
         try {
             return processor.process(rawToken, null);
         } catch (BadJWSException e) {
-            throw new InvalidGrantException("JWT signature verification failed for trusted issuer: " + trustedIssuer.getIssuer());
+            throw new SecurityException("JWT signature verification failed for trusted issuer: " + trustedIssuer.getIssuer());
         } catch (BadJWTException e) {
-            throw new InvalidGrantException("JWT claims validation failed: " + e.getMessage());
+            throw new SecurityException("JWT claims validation failed: " + e.getMessage());
         } catch (BadJOSEException e) {
-            throw new InvalidGrantException("JWT processing failed: " + e.getMessage());
+            throw new SecurityException("JWT processing failed: " + e.getMessage());
         } catch (JOSEException e) {
-            throw new InvalidGrantException("JWT cryptographic error: " + e.getMessage());
+            throw new SecurityException("JWT cryptographic error: " + e.getMessage());
         } catch (ParseException e) {
-            throw new InvalidGrantException("Malformed JWT from trusted issuer: " + trustedIssuer.getIssuer());
+            throw new SecurityException("Malformed JWT from trusted issuer: " + trustedIssuer.getIssuer());
         }
     }
 

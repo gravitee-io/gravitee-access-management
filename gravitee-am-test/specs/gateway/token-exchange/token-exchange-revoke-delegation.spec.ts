@@ -67,7 +67,7 @@ describe('Token Exchange revoke delegation', () => {
         },
       ).expect(400);
 
-      expect(response.body.error).toBe('invalid_grant');
+      expect(response.body.error).toBe('invalid_request');
       expect(response.body.error_description).toBeDefined();
     };
 

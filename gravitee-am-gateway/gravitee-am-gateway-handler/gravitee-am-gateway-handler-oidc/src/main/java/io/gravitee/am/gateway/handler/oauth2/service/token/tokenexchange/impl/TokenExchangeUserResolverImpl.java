@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
@@ -63,10 +63,10 @@ public class TokenExchangeUserResolverImpl implements TokenExchangeUserResolver 
                 .flatMap(filterCriteria -> userGatewayService.findByCriteria(filterCriteria)
                         .map(users -> {
                             if (users.isEmpty()) {
-                                throw new InvalidGrantException("No domain user found for token binding");
+                                throw new InvalidRequestException("No domain user found for token binding");
                             }
                             if (users.size() > 1) {
-                                throw new InvalidGrantException("Multiple domain users match token binding");
+                                throw new InvalidRequestException("Multiple domain users match token binding");
                             }
                             return Optional.of(users.getFirst());
                         }));
@@ -78,7 +78,7 @@ public class TokenExchangeUserResolverImpl implements TokenExchangeUserResolver 
     private FilterCriteria buildCriteria(ValidatedToken subjectToken, List<UserBindingCriterion> criteria) {
         Map<String, Object> claims = subjectToken.getClaims();
         if (claims == null) {
-            throw new InvalidGrantException("Token binding: no claims available for evaluation");
+            throw new InvalidRequestException("Token binding: no claims available for evaluation");
         }
 
         TemplateEngine engine = TemplateEngine.templateEngine();
@@ -98,14 +98,14 @@ public class TokenExchangeUserResolverImpl implements TokenExchangeUserResolver 
                 value = engine.getValue(expression, Object.class);
             } catch (ExpressionEvaluationException e) {
                 LOGGER.debug("Token binding: EL evaluation failed for expression '{}'", expression, e);
-                throw new InvalidGrantException("Token binding: expression evaluation failed: " + e.getMessage());
+                throw new InvalidRequestException("Token binding: expression evaluation failed: " + e.getMessage());
             }
             if (value == null) {
-                throw new InvalidGrantException("Token binding: expression '" + expression + "' evaluated to null");
+                throw new InvalidRequestException("Token binding: expression '" + expression + "' evaluated to null");
             }
             String filterValue = value.toString().trim();
             if (filterValue.isEmpty()) {
-                throw new InvalidGrantException("Token binding: expression '" + expression + "' evaluated to empty value");
+                throw new InvalidRequestException("Token binding: expression '" + expression + "' evaluated to empty value");
             }
             FilterCriteria eq = new FilterCriteria();
             eq.setFilterName(attribute.trim());
@@ -116,7 +116,7 @@ public class TokenExchangeUserResolverImpl implements TokenExchangeUserResolver 
         }
 
         if (components.isEmpty()) {
-            throw new InvalidGrantException("Token binding: no valid criteria (attribute and expression required)");
+            throw new InvalidRequestException("Token binding: no valid criteria (attribute and expression required)");
         }
 
         if (components.size() == 1) {

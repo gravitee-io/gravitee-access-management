@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.TrustedIssuer;
@@ -96,7 +96,7 @@ class TokenExchangeUserResolverImplTest {
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of()));
 
         assertThatThrownBy(() -> resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("No domain user found for token binding");
     }
 
@@ -133,13 +133,13 @@ class TokenExchangeUserResolverImplTest {
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(u1, u2)));
 
         assertThatThrownBy(() -> resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Multiple domain users match token binding");
     }
 
     @Test
     void resolve_throwsWhenNullClaims() {
-        // T3: ValidatedToken with null claims should produce InvalidGrantException
+        // T3: ValidatedToken with null claims should produce InvalidRequestException
         ValidatedToken noClaims = ValidatedToken.builder()
                 .subject("sub-1")
                 .claims(null)
@@ -153,13 +153,13 @@ class TokenExchangeUserResolverImplTest {
         trusted.setUserBindingCriteria(List.of(c));
 
         assertThatThrownBy(() -> resolver.resolve(noClaims, trusted, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("no claims available");
     }
 
     @Test
     void resolve_throwsWhenExpressionEvaluatesToWhitespace() {
-        // T4: EL expression evaluating to whitespace should produce InvalidGrantException
+        // T4: EL expression evaluating to whitespace should produce InvalidRequestException
         ValidatedToken whitespaceToken = ValidatedToken.builder()
                 .subject("sub-1")
                 .claims(Map.of("email", "   "))
@@ -173,7 +173,7 @@ class TokenExchangeUserResolverImplTest {
         trusted.setUserBindingCriteria(List.of(c));
 
         assertThatThrownBy(() -> resolver.resolve(whitespaceToken, trusted, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("evaluated to empty value");
     }
 
@@ -187,7 +187,7 @@ class TokenExchangeUserResolverImplTest {
         trusted.setUserBindingCriteria(List.of(c));
 
         assertThatThrownBy(() -> resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("evaluated to null");
     }
 }

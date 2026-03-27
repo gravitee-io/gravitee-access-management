@@ -31,7 +31,7 @@ public interface TrustedIssuerResolver {
      * @param rawToken the raw JWT string
      * @param trustedIssuer the trusted issuer configuration
      * @return the verified JWT claims set
-     * @throws io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException if verification fails
+     * @throws SecurityException if JWT signature verification or claims validation fails
      * @throws IllegalArgumentException if the issuer configuration is invalid
      */
     JWTClaimsSet resolve(String rawToken, TrustedIssuer trustedIssuer);

@@ -20,7 +20,6 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
@@ -108,7 +107,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                     // Reject JWT actor tokens when subject is from an external trusted issuer.
                     // This prevents transitive trust chains across external issuers.
                     if (subjectToken.isTrustedIssuerValidated() && TokenType.JWT.equals(request.actorTokenType())) {
-                        return Single.error(new InvalidGrantException(
+                        return Single.error(new InvalidRequestException(
                                 "Actor token type JWT not allowed with external subject token"));
                     }
                     return validateActorToken(request.actorToken(), request.actorTokenType(), domain, client)
@@ -260,7 +259,10 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return validators.stream()
                 .filter(v -> v.supports(tokenType))
                 .findFirst()
-                .orElseThrow(() -> new InvalidGrantException("No validator found for token type: " + tokenType));
+                .orElseThrow(() -> {
+                    LOGGER.error("No validator registered for token type '{}'", tokenType);
+                    return new InvalidRequestException("No validator registered for token type: " + tokenType);
+                });
     }
 
     /**
