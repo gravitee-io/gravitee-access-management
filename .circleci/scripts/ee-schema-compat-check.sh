@@ -240,7 +240,7 @@ for entry in "${TO_CHECK[@]}"; do
     fi
   else
     echo "  ❌  New ZIP not found in any distribution target directory."
-    echo "      Run 'mvn install -P full-bundle' first to build the distributions."
+    echo "      Run 'mvn install -am' first to build the distributions."
     echo ""
     MISSING_ZIPS=$((MISSING_ZIPS + 1))
     continue
@@ -285,7 +285,7 @@ done
 
 echo "=== Summary ==="
 if [[ $MISSING_ZIPS -gt 0 ]]; then
-  echo "❌  $MISSING_ZIPS plugin ZIP(s) were not found. Run 'mvn install -P full-bundle' first."
+  echo "❌  $MISSING_ZIPS plugin ZIP(s) were not found. Run 'mvn install -am' first."
   exit 1
 elif [[ $DOWNLOAD_FAILURES -gt 0 ]]; then
   echo "❌  $DOWNLOAD_FAILURES old plugin ZIP(s) could not be downloaded from Maven."
