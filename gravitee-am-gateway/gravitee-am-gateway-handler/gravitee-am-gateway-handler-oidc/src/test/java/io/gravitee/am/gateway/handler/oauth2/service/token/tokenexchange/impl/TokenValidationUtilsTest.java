@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TrustedIssuer;
@@ -116,7 +116,7 @@ public class TokenValidationUtilsTest {
         TokenValidationUtils.validateTemporalClaims(0, 0, "test-token");
     }
 
-    @Test(expected = InvalidGrantException.class)
+    @Test(expected = InvalidRequestException.class)
     public void validateTemporalClaims_expired_throws() {
         long past = (System.currentTimeMillis() / 1000) - 3600;
         TokenValidationUtils.validateTemporalClaims(past, 0, "test-token");
@@ -127,14 +127,14 @@ public class TokenValidationUtilsTest {
         long past = (System.currentTimeMillis() / 1000) - 3600;
         try {
             TokenValidationUtils.validateTemporalClaims(past, 0, "my-token-type");
-        } catch (InvalidGrantException e) {
+        } catch (InvalidRequestException e) {
             assertEquals("my-token-type has expired", e.getMessage());
             return;
         }
-        throw new AssertionError("Expected InvalidGrantException");
+        throw new AssertionError("Expected InvalidRequestException");
     }
 
-    @Test(expected = InvalidGrantException.class)
+    @Test(expected = InvalidRequestException.class)
     public void validateTemporalClaims_notYetValid_throws() {
         long future = (System.currentTimeMillis() / 1000) + 3600;
         TokenValidationUtils.validateTemporalClaims(0, future, "test-token");
@@ -145,11 +145,11 @@ public class TokenValidationUtilsTest {
         long future = (System.currentTimeMillis() / 1000) + 3600;
         try {
             TokenValidationUtils.validateTemporalClaims(0, future, "my-token-type");
-        } catch (InvalidGrantException e) {
+        } catch (InvalidRequestException e) {
             assertEquals("my-token-type is not yet valid", e.getMessage());
             return;
         }
-        throw new AssertionError("Expected InvalidGrantException");
+        throw new AssertionError("Expected InvalidRequestException");
     }
 
     // --- buildValidatedToken ---
