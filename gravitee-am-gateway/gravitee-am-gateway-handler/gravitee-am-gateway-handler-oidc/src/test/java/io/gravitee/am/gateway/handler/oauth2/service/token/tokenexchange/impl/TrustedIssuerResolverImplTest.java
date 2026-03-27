@@ -23,7 +23,6 @@ import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.certificate.api.X509CertUtils;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TrustedIssuer;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -120,7 +119,7 @@ public class TrustedIssuerResolverImplTest {
         assertEquals("https://trusted.example.com", claims.getIssuer());
     }
 
-    @Test(expected = InvalidGrantException.class)
+    @Test(expected = SecurityException.class)
     public void shouldRejectJwtSignedWithWrongKey() throws Exception {
         TrustedIssuer issuer = pemIssuer("https://trusted.example.com", trustedCertPem);
 
@@ -164,7 +163,7 @@ public class TrustedIssuerResolverImplTest {
         assertEquals("user-2", claims2.getSubject());
     }
 
-    @Test(expected = InvalidGrantException.class)
+    @Test(expected = SecurityException.class)
     public void shouldRejectMalformedTokenString() {
         TrustedIssuer issuer = pemIssuer("https://trusted.example.com", trustedCertPem);
 

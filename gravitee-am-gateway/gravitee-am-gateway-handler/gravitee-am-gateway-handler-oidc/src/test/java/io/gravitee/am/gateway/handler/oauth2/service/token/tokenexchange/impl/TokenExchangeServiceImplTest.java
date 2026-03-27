@@ -20,7 +20,6 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
@@ -574,8 +573,8 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
 
         assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
-                .hasMessageContaining("No validator found");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("No validator registered");
     }
 
     @Test
@@ -584,7 +583,7 @@ public class TokenExchangeServiceImplTest {
         TokenValidator failingValidator = new TokenValidator() {
             @Override
             public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
-                return Single.error(new InvalidGrantException("Token validation failed"));
+                return Single.error(new InvalidRequestException("Token validation failed"));
             }
 
             @Override
@@ -604,7 +603,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
 
         assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Token validation failed");
     }
 
@@ -1387,7 +1386,7 @@ public class TokenExchangeServiceImplTest {
         service = createService(List.of(trustedValidator));
 
         when(userResolver.resolve(any(), any(), any()))
-                .thenReturn(Single.error(new InvalidGrantException("No domain user found for token binding")));
+                .thenReturn(Single.error(new InvalidRequestException("No domain user found for token binding")));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1398,7 +1397,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
 
         assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("No domain user found");
     }
 
@@ -1410,7 +1409,7 @@ public class TokenExchangeServiceImplTest {
         service = createService(List.of(trustedValidator));
 
         when(userResolver.resolve(any(), any(), any()))
-                .thenReturn(Single.error(new InvalidGrantException("Multiple domain users match token binding")));
+                .thenReturn(Single.error(new InvalidRequestException("Multiple domain users match token binding")));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1421,7 +1420,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
 
         assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Multiple domain users match");
     }
 
@@ -1533,7 +1532,7 @@ public class TokenExchangeServiceImplTest {
         service = createService(List.of(trustedValidator));
 
         when(userResolver.resolve(any(), any(), any()))
-                .thenReturn(Single.error(new InvalidGrantException("Token binding: expression evaluation failed")));
+                .thenReturn(Single.error(new InvalidRequestException("Token binding: expression evaluation failed")));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1544,7 +1543,7 @@ public class TokenExchangeServiceImplTest {
         client.setClientId("client-id");
 
         assertThatThrownBy(() -> service.exchange(tokenRequest, client, domain, userGatewayService).blockingGet())
-                .isInstanceOf(InvalidGrantException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("expression evaluation failed");
     }
 
