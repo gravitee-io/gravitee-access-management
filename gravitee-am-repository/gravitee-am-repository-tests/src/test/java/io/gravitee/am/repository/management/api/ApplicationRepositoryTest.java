@@ -36,11 +36,13 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.repository.management.AbstractManagementTest;
+import io.gravitee.am.repository.management.test.IncompatibleDataTestUtils;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,6 +63,8 @@ import static java.util.stream.Collectors.toCollection;
  * @author GraviteeSource Team
  */
 public class ApplicationRepositoryTest extends AbstractManagementTest {
+
+    private static final String FUTURE_APPLICATION_TYPE = "FUTURE_APPLICATION_TYPE";
 
     @Autowired
     private ApplicationRepository applicationRepository;
@@ -776,5 +780,114 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(page -> page.getData().size() == 1);
         testObserver.assertValue(page -> page.getData().iterator().next().getName().equals("app[test]"));
+    }
+
+    @Test
+    public void testMapUnknownApplicationTypeToNull_findByDomain() throws Exception {
+        String domain = "domain-future-application-type";
+
+        Application normalApplication = new Application();
+        normalApplication.setName("normal-application");
+        normalApplication.setDomain(domain);
+        normalApplication.setType(ApplicationType.NATIVE);
+        Application createdApplication = applicationRepository.create(normalApplication).blockingGet();
+
+        String incompatibleApplicationId = insertIncompatibleApplicationDirectly("incompatible-application", FUTURE_APPLICATION_TYPE, domain);
+
+        TestObserver<Page<Application>> observer = applicationRepository.findByDomain(domain, 0, Integer.MAX_VALUE).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(page -> page.getData().stream().anyMatch(application -> application.getId().equals(createdApplication.getId())));
+        observer.assertValue(page -> page.getData().stream().anyMatch(application -> application.getId().equals(incompatibleApplicationId)));
+        observer.assertValue(page -> page.getData().stream()
+                .filter(application -> application.getId().equals(incompatibleApplicationId))
+                .findFirst()
+                .map(application -> application.getType() == null)
+                .orElse(false));
+    }
+
+    @Test
+    public void testMapUnknownApplicationTypeToNull_findById() throws Exception {
+        String domain = "domain-future-application-type-find-by-id";
+        String incompatibleApplicationId = insertIncompatibleApplicationDirectly("incompatible-find-by-id", FUTURE_APPLICATION_TYPE, domain);
+
+        TestObserver<Application> observer = applicationRepository.findById(incompatibleApplicationId).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(application -> application.getId().equals(incompatibleApplicationId));
+        observer.assertValue(application -> application.getType() == null);
+    }
+
+    @Test
+    public void testMapUnknownApplicationTypeToNull_noCrash() throws Exception {
+        String domain = "domain-future-application-type-no-crash";
+        String incompatibleApplicationId = insertIncompatibleApplicationDirectly("incompatible-no-crash", FUTURE_APPLICATION_TYPE, domain);
+
+        TestObserver<Page<Application>> observer = applicationRepository.findByDomain(domain, 0, Integer.MAX_VALUE).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(page -> page.getData().stream().anyMatch(application -> application.getId().equals(incompatibleApplicationId)));
+        observer.assertValue(page -> page.getData().stream()
+                .filter(application -> application.getId().equals(incompatibleApplicationId))
+                .findFirst()
+                .map(application -> application.getType() == null)
+                .orElse(false));
+    }
+
+    private String insertIncompatibleApplicationDirectly(String name, String type, String domain) throws Exception {
+        String repoClassName = applicationRepository.getClass().getSimpleName();
+        String repoFullName = applicationRepository.getClass().getName();
+
+        if (repoClassName.contains("Mongo") || repoFullName.contains("mongodb")) {
+            return insertIncompatibleApplicationMongoDB(name, type, domain);
+        }
+
+        if (repoClassName.contains("Jdbc") || repoFullName.contains("jdbc")) {
+            return insertIncompatibleApplicationJDBC(name, type, domain);
+        }
+
+        throw new UnsupportedOperationException("Unknown repository type: " + repoClassName + " (" + repoFullName + ")");
+    }
+
+    private String insertIncompatibleApplicationMongoDB(String name, String type, String domain) throws Exception {
+        return IncompatibleDataTestUtils.insertIncompatibleEntityMongoDB(
+                applicationRepository,
+                "applications",
+                "io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo",
+                applicationMongo -> {
+                    ReflectionTestUtils.setField(applicationMongo, "name", name);
+                    ReflectionTestUtils.setField(applicationMongo, "type", type);
+                    ReflectionTestUtils.setField(applicationMongo, "domain", domain);
+                    ReflectionTestUtils.setField(applicationMongo, "enabled", true);
+                    ReflectionTestUtils.setField(applicationMongo, "template", false);
+                }
+        );
+    }
+
+    private String insertIncompatibleApplicationJDBC(String name, String type, String domain) throws Exception {
+        return IncompatibleDataTestUtils.insertIncompatibleEntityJDBC(
+                applicationRepository,
+                "io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication",
+                jdbcApplication -> {
+                    ReflectionTestUtils.setField(jdbcApplication, "name", name);
+                    ReflectionTestUtils.setField(jdbcApplication, "type", type);
+                    ReflectionTestUtils.setField(jdbcApplication, "domain", domain);
+                    ReflectionTestUtils.setField(jdbcApplication, "enabled", true);
+                    ReflectionTestUtils.setField(jdbcApplication, "template", false);
+                    ReflectionTestUtils.setField(jdbcApplication, "description", null);
+                    ReflectionTestUtils.setField(jdbcApplication, "certificate", null);
+                    ReflectionTestUtils.setField(jdbcApplication, "metadata", null);
+                    ReflectionTestUtils.setField(jdbcApplication, "settings", null);
+                    ReflectionTestUtils.setField(jdbcApplication, "secretSettings", null);
+                    ReflectionTestUtils.setField(jdbcApplication, "createdAt", null);
+                    ReflectionTestUtils.setField(jdbcApplication, "updatedAt", null);
+                }
+        );
     }
 }
