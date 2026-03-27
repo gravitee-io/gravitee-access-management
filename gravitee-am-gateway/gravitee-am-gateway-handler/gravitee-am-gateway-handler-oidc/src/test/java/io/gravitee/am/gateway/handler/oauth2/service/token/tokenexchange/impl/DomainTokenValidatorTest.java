@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
@@ -56,6 +57,9 @@ class DomainTokenValidatorTest {
     @Mock
     private TokenExchangeSettings settings;
 
+    @Mock
+    private Client client;
+
     private Domain domain;
 
     @BeforeEach
@@ -68,9 +72,9 @@ class DomainTokenValidatorTest {
     void shouldSkipRepositoryCheckWhenValidatedTokenDomainIsNull() {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.ACCESS_TOKEN);
         ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, null);
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.just(validatedToken));
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertComplete()
                 .assertNoErrors()
@@ -83,9 +87,9 @@ class DomainTokenValidatorTest {
     void shouldSkipRepositoryCheckWhenValidatedTokenDomainDiffers() {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.ACCESS_TOKEN);
         ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, ANOTHER_DOMAIN_ID);
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.just(validatedToken));
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertComplete()
                 .assertNoErrors()
@@ -102,10 +106,10 @@ class DomainTokenValidatorTest {
         storedToken.setToken("token1");
         storedToken.setDomain(DOMAIN_ID);
 
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.just(validatedToken));
         when(tokenRepository.findAccessTokenByJti(TOKEN_VALUE)).thenReturn(Maybe.just(storedToken));
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertComplete()
                 .assertNoErrors()
@@ -120,10 +124,10 @@ class DomainTokenValidatorTest {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.ACCESS_TOKEN);
         ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, DOMAIN_ID);
 
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.just(validatedToken));
         when(tokenRepository.findAccessTokenByJti(TOKEN_VALUE)).thenReturn(Maybe.empty());
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertNotComplete()
                 .assertError(error -> error instanceof InvalidGrantException && error.getMessage().contains("token has been revoked"));
@@ -141,10 +145,10 @@ class DomainTokenValidatorTest {
         storedToken.setToken("token1");
         storedToken.setDomain(DOMAIN_ID);
 
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.just(validatedToken));
         when(tokenRepository.findRefreshTokenByJti(TOKEN_VALUE)).thenReturn(Maybe.just(storedToken));
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertComplete()
                 .assertNoErrors()
@@ -159,10 +163,10 @@ class DomainTokenValidatorTest {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.REFRESH_TOKEN);
         ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, DOMAIN_ID);
 
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.just(validatedToken));
         when(tokenRepository.findRefreshTokenByJti(TOKEN_VALUE)).thenReturn(Maybe.empty());
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertNotComplete()
                 .assertError(error -> error instanceof InvalidGrantException && error.getMessage().contains("token has been revoked"));
@@ -175,9 +179,9 @@ class DomainTokenValidatorTest {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.ID_TOKEN);
         ValidatedToken validatedToken = validatedToken(TOKEN_VALUE, DOMAIN_ID);
 
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.just(validatedToken));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.just(validatedToken));
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertNotComplete()
                 .assertError(error -> error instanceof InvalidGrantException && error.getMessage().contains("token has been revoked"));
@@ -191,9 +195,9 @@ class DomainTokenValidatorTest {
         DomainTokenValidator validator = createValidator(JWTService.TokenType.ACCESS_TOKEN);
         InvalidGrantException validationError = new InvalidGrantException("validation failed");
 
-        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain)).thenReturn(Single.error(validationError));
+        when(defaultTokenValidator.validate(TOKEN_VALUE, settings, domain, client)).thenReturn(Single.error(validationError));
 
-        validator.validate(TOKEN_VALUE, settings, domain)
+        validator.validate(TOKEN_VALUE, settings, domain, client)
                 .test()
                 .assertNotComplete()
                 .assertError(error -> error == validationError);

@@ -15,14 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.TokenVerificationException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +60,8 @@ public class DefaultTokenValidator implements TokenValidator {
     }
 
     @Override
-    public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
-        return jwtService.decodeAndVerify(token, () -> null, jwtTokenType)
+    public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
+        return jwtService.decodeAndVerify(token, client::getCertificate, jwtTokenType)
                 .map(jwt -> {
                     TokenValidationUtils.validateTemporalClaims(jwt.getExp(), jwt.getNbf(), supportedTokenType);
 
@@ -76,12 +77,11 @@ public class DefaultTokenValidator implements TokenValidator {
                             supportedTokenType, domain, null);
                 })
                 .onErrorResumeNext(error -> {
-                    if (error instanceof InvalidGrantException) {
+                    if (error instanceof InvalidRequestException) {
                         return Single.error(error);
                     }
                     LOGGER.debug("Failed to validate {}: {}", supportedTokenType, error.getMessage());
-                    return Single.error(new TokenVerificationException(
-                            "Invalid " + supportedTokenType + ": " + error.getMessage()));
+                    return Single.error(new TokenVerificationException("The presented token is invalid"));
                 });
     }
 }

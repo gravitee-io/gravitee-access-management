@@ -428,6 +428,61 @@ describe('Token Exchange grant', () => {
   });
 });
 
+describe('Token Exchange with invalid tokens', () => {
+  it('should reject a subject token with a tampered signature', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+
+    // Given: obtain a valid subject token, then corrupt its signature.
+    const { accessToken: validToken } = await obtainSubjectToken('openid%20profile');
+    const parts = validToken.split('.');
+    const tamperedToken = `${parts[0]}.${parts[1]}.invalidsignatureXXXXXXXXXXX`;
+
+    // When: present the tampered token for exchange.
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${tamperedToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(400);
+
+    // Then: invalid_request with a generic description.
+    expect(response.body.error).toBe('invalid_request');
+    expect(response.body.error_description).toBe('The presented token is invalid');
+  });
+
+  it('should reject a tampered actor token in delegation', async () => {
+    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+
+    // Given: valid subject and actor tokens; tamper the actor token's signature.
+    const { accessToken: subjectToken } = await obtainSubjectToken('openid%20profile');
+    const { accessToken: validActorToken } = await obtainActorToken('openid%20profile');
+    const parts = validActorToken.split('.');
+    const tamperedActorToken = `${parts[0]}.${parts[1]}.invalidsignatureXXXXXXXXXXX`;
+
+    // When: present the tampered actor token for delegation exchange.
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+      `&subject_token=${subjectToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${tamperedActorToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(400);
+
+    // Then: invalid_request with a generic description.
+    expect(response.body.error).toBe('invalid_request');
+    expect(response.body.error_description).toBe('The presented token is invalid');
+  });
+});
+
 describe('Token Exchange with restricted subject token types', () => {
   it('should reject access token when domain only allows id tokens', async () => {
     const { oidc, basicAuth, obtainSubjectToken } = restrictedFixture;

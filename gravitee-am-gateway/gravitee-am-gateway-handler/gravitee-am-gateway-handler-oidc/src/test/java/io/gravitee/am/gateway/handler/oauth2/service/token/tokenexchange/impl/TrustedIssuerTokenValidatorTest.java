@@ -20,7 +20,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.TokenVerificationException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
@@ -28,6 +28,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -67,6 +68,9 @@ public class TrustedIssuerTokenValidatorTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private Client client;
+
     private TrustedIssuerTokenValidator validator;
 
     private static final String TOKEN = "test.jwt.token";
@@ -91,7 +95,7 @@ public class TrustedIssuerTokenValidatorTest {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -110,10 +114,10 @@ public class TrustedIssuerTokenValidatorTest {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error ->
             error.getMessage().contains("has expired")
         );
@@ -124,12 +128,12 @@ public class TrustedIssuerTokenValidatorTest {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TokenVerificationException.class);
         testObserver.assertError(error ->
-            error.getMessage().contains("Invalid " + TOKEN_TYPE_URN)
+            error.getMessage().equals("The presented token is invalid")
         );
     }
 
@@ -138,17 +142,17 @@ public class TrustedIssuerTokenValidatorTest {
     @Test
     public void testExpiredDomainToken_propagatesEvenWithTrustedIssuers() {
         // Domain token — signature matches but token is expired
-        // InvalidGrantException (not TokenVerificationException) propagates without checking trusted issuers
+        // InvalidRequestException (not TokenVerificationException) propagates without checking trusted issuers
         JWT expiredJwt = createValidJWT();
         expiredJwt.setExp((System.currentTimeMillis() / 1000) - 3600);
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(expiredJwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         // Expired error propagates — no fallback to trusted issuers
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error ->
             error.getMessage().contains("has expired")
         );
@@ -169,10 +173,10 @@ public class TrustedIssuerTokenValidatorTest {
         when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(decodedJwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error ->
             error.getMessage().equals("Untrusted issuer: https://unknown-issuer.example.com")
         );
@@ -191,10 +195,10 @@ public class TrustedIssuerTokenValidatorTest {
         when(jwtService.decode(eq(TOKEN), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(decodedJwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error ->
             error.getMessage().equals("JWT missing 'iss' claim")
         );
@@ -226,7 +230,7 @@ public class TrustedIssuerTokenValidatorTest {
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -256,12 +260,12 @@ public class TrustedIssuerTokenValidatorTest {
                 .thenReturn(Single.just(decodedJwt));
 
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
-                .thenThrow(new InvalidGrantException("JWT signature verification failed for trusted issuer: https://external-idp.example.com"));
+                .thenThrow(new InvalidRequestException("JWT signature verification failed for trusted issuer: https://external-idp.example.com"));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error ->
             error.getMessage().contains("JWT signature verification failed")
         );
@@ -291,7 +295,7 @@ public class TrustedIssuerTokenValidatorTest {
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -327,7 +331,7 @@ public class TrustedIssuerTokenValidatorTest {
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -368,7 +372,7 @@ public class TrustedIssuerTokenValidatorTest {
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -411,10 +415,10 @@ public class TrustedIssuerTokenValidatorTest {
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error ->
             error.getMessage().contains("has expired")
         );
@@ -440,7 +444,7 @@ public class TrustedIssuerTokenValidatorTest {
         when(trustedIssuerResolver.resolve(eq(TOKEN), eq(ti)))
                 .thenReturn(claimsSet);
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
