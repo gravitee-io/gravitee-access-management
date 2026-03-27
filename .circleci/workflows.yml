@@ -1211,15 +1211,55 @@ jobs:
           name: Run schema checker test suite
           command: node scripts/schema-compatibility/test/run-tests.mjs
       - run:
-          name: Check schema backwards compatibility
+          name: Check plugin schema backward compatibility
           command: bash .circleci/scripts/schema-compat-check.sh
+
+  oas-compat-check:
+    executor:
+      name: openjdk
+      class: medium
+      version: "21.0.6"
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
+      - restore-maven-job-cache:
+          jobName: pull_requests
+      - run:
+          name: Copy Maven settings
+          command: mkdir -p ~/.m2 && cp /tmp/.gravitee.settings.xml ~/.m2/settings.xml
+      - restore_cache:
+          keys:
+            - v1-oasdiff-{{ checksum ".oasdiff-version" }}
+      - run:
+          name: Install oasdiff
+          command: |
+            if command -v oasdiff &>/dev/null; then
+              echo "oasdiff already cached: $(oasdiff version)"
+            else
+              OASDIFF_VERSION=$(cat .oasdiff-version)
+              curl -sSL "https://github.com/tufin/oasdiff/releases/download/v${OASDIFF_VERSION}/oasdiff_${OASDIFF_VERSION}_linux_amd64.tar.gz" \
+                | sudo tar -xz -C /usr/local/bin oasdiff
+            fi
+      - save_cache:
+          key: v1-oasdiff-{{ checksum ".oasdiff-version" }}
+          paths:
+            - /usr/local/bin/oasdiff
+      - run:
+          name: Check OAS staleness
+          command: bash .circleci/scripts/oas-staleness-check.sh
+      - run:
+          name: Check OAS breaking changes
+          command: bash .circleci/scripts/oas-compat-check.sh
 
   ee-schema-compat-check:
     executor:
       name: openjdk
       class: medium
       version: "21.0.6"
-      with_node: true
     steps:
       - attach_workspace:
           at: /tmp
@@ -1239,7 +1279,7 @@ jobs:
               -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution \
               -P full-bundle -DskipTests -Dlicense.skip=true
       - run:
-          name: Check EE plugin schema backwards compatibility
+          name: Check EE plugin schema backward compatibility
           command: bash .circleci/scripts/ee-schema-compat-check.sh
 
   junit_tests:
@@ -2141,7 +2181,7 @@ workflows:
                 - master
                 - /^[0-999].[0-999].x/
       - schema-compat-check:
-          name: Check schema backwards compatibility
+          name: Check plugin schema backward compatibility
           context: cicd-orchestrator
           requires:
             - setup
@@ -2150,12 +2190,22 @@ workflows:
               ignore:
                 - master
                 - /^[0-999].[0-999].x/
-      - ee-schema-compat-check:
-          name: Check EE plugin schema backwards compatibility
+      - oas-compat-check:
+          name: Check OAS backward compatibility
           context: cicd-orchestrator
           requires:
             - process_pull_request
-            - Check schema backwards compatibility
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^[0-999].[0-999].x/
+      - ee-schema-compat-check:
+          name: Check EE plugin schema backward compatibility
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+            - Check plugin schema backward compatibility
           filters:
             branches:
               ignore:
