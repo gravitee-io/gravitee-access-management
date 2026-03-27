@@ -141,6 +141,10 @@
     <mapping map-null="false">
         <class-a>io.gravitee.am.model.Application</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.ApplicationTypeConverter">
+            <a>type</a>
+            <b>type</b>
+        </field>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
             <a>metadata</a>
             <b>metadata</b>

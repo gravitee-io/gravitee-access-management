@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.DomainReadinessService;
@@ -99,6 +100,7 @@ public class ClientManagerTest {
         Application application = new Application();
         application.setId("client_id");
         application.setEnabled(true);
+        application.setType(ApplicationType.WEB);
 
         when(applicationRepository.findByDomain("domain_id")).thenReturn(Flowable.just(application));
 

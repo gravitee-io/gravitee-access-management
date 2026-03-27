@@ -98,10 +98,6 @@ import static com.mongodb.client.model.Filters.elemMatch;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_NAME;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_UPDATED_AT;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
@@ -148,7 +144,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findAll() {
-        return Flowable.fromPublisher(applicationsCollection.find()).map(MongoApplicationRepository::convert)
+        return Flowable.fromPublisher(applicationsCollection.find())
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
@@ -159,14 +156,16 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                         .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
                         .skip(size * page)
                         .limit(size))
-                .map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+                .map(MongoApplicationRepository::convert)
+                .collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByDomain(String domain) {
-        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain)))).map(MongoApplicationRepository::convert)
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain))))
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
@@ -249,7 +248,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findByCertificate(String certificate) {
-        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(MongoApplicationRepository::convert)
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate)))
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
@@ -257,38 +257,45 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     public Flowable<Application> findByIdentityProvider(String identityProvider) {
         final BsonDocument bsonDocument = new BsonDocument(FIELD_IDENTITY, new BsonString(identityProvider));
         final Bson query = elemMatch(FIELD_APPLICATION_IDENTITY_PROVIDERS, Document.parse(bsonDocument.toJson()));
-        return Flowable.fromPublisher(applicationsCollection.find(query)).map(MongoApplicationRepository::convert)
+        return Flowable.fromPublisher(applicationsCollection.find(query))
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByFactor(String factor) {
-        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(MongoApplicationRepository::convert)
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor)))
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Application> findById(String id) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoApplicationRepository::convert)
+        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_ID, id)).first()).firstElement()
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
         return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId)))
-                .first()).firstElement().map(MongoApplicationRepository::convert)
+                .first())
+                .firstElement()
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
-        return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant)))).map(MongoApplicationRepository::convert)
+        return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant))))
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(in(FIELD_ID, ids)))).map(MongoApplicationRepository::convert)
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(in(FIELD_ID, ids))))
+                .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
 
@@ -357,7 +364,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         Application application = new Application();
         application.setId(other.getId());
         application.setName(other.getName());
-        application.setType(other.getType() != null ? ApplicationType.valueOf(other.getType()) : null);
+        application.setType(ApplicationType.orNull(other.getType()));
         application.setDescription(other.getDescription());
         application.setDomain(other.getDomain());
         application.setEnabled(other.isEnabled());
