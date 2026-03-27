@@ -90,7 +90,7 @@ describe('Trusted Issuers - Impersonation with external JWT', () => {
       },
     ).expect(400);
 
-    expect(response.body.error).toBe('invalid_grant');
+    expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toContain('Untrusted issuer: https://unknown-issuer.example.com');
   });
 
@@ -145,8 +145,8 @@ describe('Trusted Issuers - Impersonation with external JWT', () => {
       },
     ).expect(400);
 
-    expect(response.body.error).toBe('invalid_grant');
-    expect(response.body.error_description).toContain('JWT signature verification failed for trusted issuer:');
+    expect(response.body.error).toBe('invalid_request');
+    expect(response.body.error_description).toBe('The presented token is invalid');
   });
 });
 
@@ -241,7 +241,7 @@ describe('Trusted Issuers - Delegation with external subject token', () => {
       },
     ).expect(400);
 
-    expect(response.body.error).toBe('invalid_grant');
+    expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toBeDefined();
   });
 
@@ -412,7 +412,7 @@ describe('Trusted Issuers - User Binding', () => {
       },
     ).expect(400);
 
-    expect(response.body.error).toBe('invalid_grant');
+    expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toContain('No domain user found for token binding');
   });
 
