@@ -74,6 +74,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
         logger.info("Initializing applications for domain {}", domain.getName());
         Flowable<Application> applicationsSource = domain.isMaster() ? applicationRepository.findAll() : applicationRepository.findByDomain(domain.getId());
         applicationsSource
+                .filter(app -> app.getType() != null)
                 .map(Application::toClient)
                 .filter(Client::isEnabled)
                 .subscribeOn(Schedulers.io())
