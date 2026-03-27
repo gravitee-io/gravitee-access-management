@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
@@ -67,7 +67,7 @@ public class DomainTokenValidator implements TokenValidator {
             };
             return databaseToken
                     .concatMapSingle(t -> Single.just(token.withParents(t.collectAllParentJtisWithCurrentJti())))
-                    .switchIfEmpty(Single.error(new InvalidGrantException("token has been revoked")));
+                    .switchIfEmpty(Single.error(new InvalidRequestException("token has been revoked")));
         }
     }
 }
