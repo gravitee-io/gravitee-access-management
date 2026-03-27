@@ -91,7 +91,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                               Client client,
                                                               Domain domain,
                                                               UserGatewayService userGatewayService) {
-        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
+        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain, client)
                 .flatMap(subjectToken -> resolveUserForExchange(subjectToken, userGatewayService)
                         .flatMap(resolvedUser -> buildImpersonationResult(tokenRequest, subjectToken, request, client, domain, resolvedUser)));
     }
@@ -103,7 +103,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                            UserGatewayService userGatewayService) {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
 
-        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain)
+        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain, client)
                 .flatMap(subjectToken -> {
                     // Reject JWT actor tokens when subject is from an external trusted issuer.
                     // This prevents transitive trust chains across external issuers.
@@ -111,7 +111,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                         return Single.error(new InvalidGrantException(
                                 "Actor token type JWT not allowed with external subject token"));
                     }
-                    return validateActorToken(request.actorToken(), request.actorTokenType(), domain)
+                    return validateActorToken(request.actorToken(), request.actorTokenType(), domain, client)
                             .flatMap(actorToken -> resolveUserForExchange(subjectToken, userGatewayService)
                                     .flatMap(resolvedUser -> {
                                         // Per RFC 8693 Section 4.1, delegation depth is based on
@@ -234,18 +234,18 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         }
     }
 
-    private Single<ValidatedToken> validateSubjectToken(String token, String tokenType, Domain domain) {
+    private Single<ValidatedToken> validateSubjectToken(String token, String tokenType, Domain domain, Client client) {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
         TokenValidator validator = findValidator(tokenType);
-        return validator.validate(token, settings, domain)
+        return validator.validate(token, settings, domain, client)
                 .doOnSuccess(t -> LOGGER.debug("Subject token validated for subject: {}", t.getSubject()))
                 .doOnError(error -> LOGGER.debug("Subject token validation failed: {}", error.getMessage()));
     }
 
-    private Single<ValidatedToken> validateActorToken(String token, String tokenType, Domain domain) {
+    private Single<ValidatedToken> validateActorToken(String token, String tokenType, Domain domain, Client client) {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
         TokenValidator validator = findValidator(tokenType);
-        return validator.validate(token, settings, domain)
+        return validator.validate(token, settings, domain, client)
                 .flatMap(t -> {
                     if (StringUtils.isEmpty(t.getSubject())) {
                         return Single.error(new InvalidRequestException("Actor token must contain a 'sub' claim"));

@@ -18,11 +18,12 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.TokenVerificationException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.oidc.Client;
 import com.nimbusds.jose.JOSEException;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -55,6 +56,9 @@ public class DefaultTokenValidatorTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private Client client;
+
     private DefaultTokenValidator validator;
 
     private static final String TOKEN = "test.jwt.token";
@@ -77,7 +81,7 @@ public class DefaultTokenValidatorTest {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -107,10 +111,10 @@ public class DefaultTokenValidatorTest {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error -> error.getMessage().contains("has expired"));
     }
 
@@ -122,10 +126,10 @@ public class DefaultTokenValidatorTest {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertError(InvalidGrantException.class);
+        testObserver.assertError(InvalidRequestException.class);
         testObserver.assertError(error -> error.getMessage().contains("is not yet valid"));
     }
 
@@ -134,26 +138,26 @@ public class DefaultTokenValidatorTest {
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.error(new JOSEException("Invalid signature")));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TokenVerificationException.class);
-        testObserver.assertError(error -> error.getMessage().contains("Invalid " + TOKEN_TYPE_URN));
+        testObserver.assertError(error -> error.getMessage().equals("The presented token is invalid"));
     }
 
     @Test
-    public void testExpiredToken_isInvalidGrantException_notTokenVerificationException() {
+    public void testExpiredToken_isInvalidRequestException_notTokenVerificationException() {
         JWT jwt = createValidJWT();
         jwt.setExp((System.currentTimeMillis() / 1000) - 3600);
 
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
                 .thenReturn(Single.just(jwt));
 
-        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain).test();
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(error ->
-            error instanceof InvalidGrantException && !(error instanceof TokenVerificationException)
+            error instanceof InvalidRequestException && !(error instanceof TokenVerificationException)
         );
     }
 

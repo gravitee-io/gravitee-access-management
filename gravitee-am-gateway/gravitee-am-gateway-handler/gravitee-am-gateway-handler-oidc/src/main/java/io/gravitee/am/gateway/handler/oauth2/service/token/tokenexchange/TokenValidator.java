@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -36,9 +37,10 @@ public interface TokenValidator {
      * @param token the token to validate
      * @param settings the token exchange settings
      * @param domain the domain context
+     * @param client the client performing the token exchange
      * @return a Single emitting the validated token with extracted claims
      */
-    Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain);
+    Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client);
 
     /**
      * Get the token type URI that this validator supports.

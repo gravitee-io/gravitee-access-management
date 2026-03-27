@@ -16,9 +16,9 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
 import com.nimbusds.jwt.JWTClaimsSet;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.TokenVerificationException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
@@ -79,8 +80,8 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
     }
 
     @Override
-    public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
-        return delegate.validate(token, settings, domain)
+    public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
+        return delegate.validate(token, settings, domain, client)
                 .onErrorResumeNext(error -> {
                     if (error instanceof TokenVerificationException && hasTrustedIssuers(settings)) {
                         LOGGER.debug("Domain cert validation failed, trying trusted issuers: {}",
@@ -96,12 +97,12 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                 .flatMap(jwt -> {
                     String issuer = jwt.getIss();
                     if (issuer == null || issuer.isBlank()) {
-                        return Single.error(new InvalidGrantException("JWT missing 'iss' claim"));
+                        return Single.error(new InvalidRequestException("JWT missing 'iss' claim"));
                     }
 
                     TrustedIssuer matchingIssuer = findTrustedIssuer(settings, issuer);
                     if (matchingIssuer == null) {
-                        return Single.error(new InvalidGrantException("Untrusted issuer: " + issuer));
+                        return Single.error(new InvalidRequestException("Untrusted issuer: " + issuer));
                     }
 
                     return Single.fromCallable(() -> {
@@ -110,12 +111,11 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                     }).subscribeOn(Schedulers.io());
                 })
                 .onErrorResumeNext(error -> {
-                    if (error instanceof InvalidGrantException) {
+                    if (error instanceof InvalidRequestException) {
                         return Single.error(error);
                     }
                     LOGGER.debug("Failed to decode JWT for trusted issuer validation: {}", error.getMessage());
-                    return Single.error(new InvalidGrantException(
-                            "Invalid " + supportedTokenType + ": " + error.getMessage()));
+                    return Single.error(new TokenVerificationException("The presented token is invalid"));
                 });
     }
 

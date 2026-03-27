@@ -15,15 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+
 /**
  * Signals that a token's cryptographic verification failed (e.g., signature mismatch,
- * missing certificate). This is a subtype of {@link InvalidGrantException} so that
- * OAuth2 error handling remains unchanged ({@code invalid_grant}), but decorators
- * can distinguish verification failures from explicit token rejections (expired, not-yet-valid).
+ * missing certificate).
  *
  * @author GraviteeSource Team
  */
-public class TokenVerificationException extends InvalidGrantException {
+public class TokenVerificationException extends InvalidRequestException {
 
     public TokenVerificationException(String message) {
         super(message);

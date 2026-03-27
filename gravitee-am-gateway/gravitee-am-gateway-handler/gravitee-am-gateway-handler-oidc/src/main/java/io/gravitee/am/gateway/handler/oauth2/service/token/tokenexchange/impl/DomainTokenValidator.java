@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenVa
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Maybe;
@@ -50,8 +51,8 @@ public class DomainTokenValidator implements TokenValidator {
     }
 
     @Override
-    public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
-        return defaultTokenValidator.validate(token, settings, domain)
+    public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
+        return defaultTokenValidator.validate(token, settings, domain, client)
                 .concatMap(t -> testIfNotRevoked(t, domain));
     }
 

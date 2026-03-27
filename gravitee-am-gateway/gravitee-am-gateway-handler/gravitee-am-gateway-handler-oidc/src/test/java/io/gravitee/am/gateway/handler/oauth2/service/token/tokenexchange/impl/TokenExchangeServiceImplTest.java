@@ -311,7 +311,7 @@ public class TokenExchangeServiceImplTest {
         // Create validator that returns preferred_username
         TokenValidator validatorWithUsername = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 Map<String, Object> claims = new HashMap<>();
                 claims.put(StandardClaims.PREFERRED_USERNAME, "john.doe");
 
@@ -387,7 +387,7 @@ public class TokenExchangeServiceImplTest {
     public void shouldSupportJwtSubjectTokenType() throws Exception {
         TokenValidator jwtValidator = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 return Single.just(ValidatedToken.builder()
                         .subject("subject")
                         .scopes(Set.of("openid"))
@@ -425,7 +425,7 @@ public class TokenExchangeServiceImplTest {
         // Create validator that returns gis claim
         TokenValidator validatorWithGis = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 Map<String, Object> claims = new HashMap<>();
                 claims.put(Claims.GIO_INTERNAL_SUB, "source-id:external-id");
 
@@ -516,7 +516,7 @@ public class TokenExchangeServiceImplTest {
         // Create validator that returns token ID
         TokenValidator validatorWithTokenId = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 return Single.just(ValidatedToken.builder()
                         .subject("subject")
                         .tokenId("token-jti-123")
@@ -553,7 +553,7 @@ public class TokenExchangeServiceImplTest {
         // Replace with validator for different token type
         TokenValidator differentValidator = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 return Single.just(ValidatedToken.builder().build());
             }
 
@@ -583,7 +583,7 @@ public class TokenExchangeServiceImplTest {
         // Create validator that fails
         TokenValidator failingValidator = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 return Single.error(new InvalidGrantException("Token validation failed"));
             }
 
@@ -613,7 +613,7 @@ public class TokenExchangeServiceImplTest {
         // Create validator with no scopes
         TokenValidator validatorNoScopes = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 return Single.just(ValidatedToken.builder()
                         .subject("subject")
                         .scopes(Collections.emptySet())
@@ -819,7 +819,7 @@ public class TokenExchangeServiceImplTest {
         // Create validators: subject token with existing "act" claim, actor token without.
         TokenValidator subjectValidator = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 if ("subject-token".equals(token)) {
                     Map<String, Object> claims = new HashMap<>();
                     // Subject token has existing act claim from previous delegation
@@ -884,7 +884,7 @@ public class TokenExchangeServiceImplTest {
         // With maxDelegationDepth=5, resulting depth of 5 should succeed.
         TokenValidator validatorWithDeepActChain = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 if ("subject-token".equals(token)) {
                     Map<String, Object> claims = new HashMap<>();
                     // Create a delegation chain (depth 4) on the subject token
@@ -959,7 +959,7 @@ public class TokenExchangeServiceImplTest {
         // Actor token with gis claim should include it in actorInfo
         TokenValidator validatorWithGis = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 if ("subject-token".equals(token)) {
                     return Single.just(ValidatedToken.builder()
                             .subject("subject-user")
@@ -1036,7 +1036,7 @@ public class TokenExchangeServiceImplTest {
         // the current actor in the new token.
         TokenValidator chainValidator = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 if ("subject-token".equals(token)) {
                     // Subject token has an existing act claim from first delegation
                     Map<String, Object> claims = new HashMap<>();
@@ -1098,7 +1098,7 @@ public class TokenExchangeServiceImplTest {
         // we should capture it as actorTokenActClaim for complete audit traceability.
         TokenValidator delegatedActorValidator = new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 if ("subject-token".equals(token)) {
                     // Subject token - normal token without delegation
                     return Single.just(ValidatedToken.builder()
@@ -2040,7 +2040,7 @@ public class TokenExchangeServiceImplTest {
     private static TokenValidator scopeValidator(Set<String> scopes) {
         return new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 return Single.just(ValidatedToken.builder()
                         .subject("subject")
                         .scopes(scopes)
@@ -2059,7 +2059,7 @@ public class TokenExchangeServiceImplTest {
     private static TokenValidator delegationScopeValidator(Set<String> subjectScopes, Set<String> actorScopes) {
         return new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 Set<String> scopes = "subject-token".equals(token) ? subjectScopes : actorScopes;
                 return Single.just(ValidatedToken.builder()
                         .subject("subject")
@@ -2081,7 +2081,7 @@ public class TokenExchangeServiceImplTest {
         ti.setIssuer(issuer);
         return new TokenValidator() {
             @Override
-            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+            public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
                 Map<String, Object> claims = new HashMap<>(additionalClaims);
                 return Single.just(ValidatedToken.builder()
                         .subject("external-subject")
@@ -2217,7 +2217,7 @@ public class TokenExchangeServiceImplTest {
     private static class FixedSubjectTokenValidator implements TokenValidator {
 
         @Override
-        public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain) {
+        public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
             return Single.just(ValidatedToken.builder()
                     .subject("subject")
                     .scopes(Set.of("openid"))
