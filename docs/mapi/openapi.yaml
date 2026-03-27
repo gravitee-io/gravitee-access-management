@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.11.0-alpha.2-SNAPSHOT
+  version: 4.11.0-alpha.4-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -70,29 +70,6 @@ tags:
 - name: user
 - name: user notifications
 paths:
-  /application.wadl:
-    get:
-      operationId: getWadl
-      responses:
-        default:
-          description: default response
-          content:
-            application/vnd.sun.wadl+xml: {}
-            application/xml: {}
-  /application.wadl/{path}:
-    get:
-      operationId: getExternalGrammar
-      parameters:
-      - name: path
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          description: default response
-          content:
-            application/xml: {}
   /organizations/{organizationId}/audits:
     get:
       tags:
@@ -14086,6 +14063,7 @@ components:
       type: object
       properties:
         certificatePem:
+          minLength: 1
           type: string
           description: The certificate in PEM format
           example: |-

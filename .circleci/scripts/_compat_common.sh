@@ -1,4 +1,4 @@
-# Shared helpers for plugin schema compatibility check scripts.
+# Shared helpers for compatibility check scripts.
 # Do not execute directly; source from those scripts after set -euo pipefail.
 
 # Read the y and z components of the project version from a pom.xml on stdin.
@@ -28,7 +28,7 @@ extract_version() {
 }
 
 # Parses --base and --use-head. Sets globals BASE_REF and USE_HEAD.
-schema_compat_parse_args() {
+compat_parse_args() {
   BASE_REF=""
   USE_HEAD="true"
   while [[ $# -gt 0 ]]; do
@@ -58,7 +58,7 @@ schema_compat_parse_args() {
 }
 
 # Uses global BASE_REF. Sets global MERGE_BASE.
-schema_compat_resolve_merge_base() {
+compat_resolve_merge_base() {
   if [[ -n "$BASE_REF" ]]; then
     # Explicit baseline supplied — resolve it to a commit SHA for clarity
     if ! MERGE_BASE="$(git rev-parse "$BASE_REF" 2>/dev/null)"; then
@@ -127,17 +127,17 @@ schema_compat_resolve_merge_base() {
 }
 
 # Reads globals HEAD_MINOR, HEAD_PATCH, BASE_MINOR. Sets global ALLOW_BREAKING.
-schema_compat_evaluate_minor_bump_allow_breaking() {
+compat_evaluate_minor_bump_allow_breaking() {
   ALLOW_BREAKING=""
   if [[ -n "$HEAD_MINOR" && -n "$BASE_MINOR" ]]; then
     if [[ "$HEAD_MINOR" != "$BASE_MINOR" ]]; then
       echo "⚠️   Minor version bump detected: $BASE_MINOR → $HEAD_MINOR"
-      echo "    Breaking schema changes will be reported but will NOT fail the build."
+      echo "    Breaking changes will be reported but will NOT fail the build."
       echo ""
       ALLOW_BREAKING="--allow-breaking"
     elif [[ "$HEAD_PATCH" == "0" ]]; then
       echo "⚠️   Minor version $HEAD_MINOR patch is 0 — no release of this minor version exists yet."
-      echo "    Breaking schema changes will be reported but will NOT fail the build."
+      echo "    Breaking changes will be reported but will NOT fail the build."
       echo ""
       ALLOW_BREAKING="--allow-breaking"
     else

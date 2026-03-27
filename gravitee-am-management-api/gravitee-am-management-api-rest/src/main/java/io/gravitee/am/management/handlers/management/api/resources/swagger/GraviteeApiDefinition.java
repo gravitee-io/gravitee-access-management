@@ -86,9 +86,11 @@ public class GraviteeApiDefinition implements ReaderListener {
 
         // sort tags for better comparisons
         openAPI.tags(new ArrayList<>(tags.values()));
-        // sort paths for better comparisons
+        // sort paths for better comparisons; exclude Jersey-internal paths not exposed by this API
         Paths paths = new Paths();
-        paths.putAll(new TreeMap<>(openAPI.getPaths()));
+        new TreeMap<>(openAPI.getPaths()).entrySet().stream()
+                .filter(e -> !e.getKey().startsWith("/application.wadl"))
+                .forEach(e -> paths.put(e.getKey(), e.getValue()));
         openAPI.setPaths(paths);
         // sort definitions for better comparisons
         Map<String, Schema> sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
