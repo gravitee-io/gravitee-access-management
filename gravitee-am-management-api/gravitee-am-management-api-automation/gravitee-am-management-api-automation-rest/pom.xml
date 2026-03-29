@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.gravitee.am.management.automation</groupId>
+        <artifactId>gravitee-am-management-api-automation</artifactId>
+        <version>4.12.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gravitee-am-management-api-automation-rest</artifactId>
+    <name>Gravitee IO - Access Management - Management API - Automation - Rest</name>
+
+    <dependencies>
+        <!-- Automation Security -->
+        <dependency>
+            <groupId>io.gravitee.am.management.automation</groupId>
+            <artifactId>gravitee-am-management-api-automation-security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- AM Management API Service -->
+        <dependency>
+            <groupId>io.gravitee.am.management</groupId>
+            <artifactId>gravitee-am-management-api-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- AM Management API REST (for shared components) -->
+        <dependency>
+            <groupId>io.gravitee.am.management</groupId>
+            <artifactId>gravitee-am-management-api-rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Jersey dependencies -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-servlet</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-bean-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-spring6</artifactId>
+        </dependency>
+
+        <!-- Jackson -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+    </dependencies>
+</project>

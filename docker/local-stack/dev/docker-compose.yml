@@ -73,6 +73,7 @@ services:
       - GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
       - GIO_MAX_MEM=512m
       - GRAVITEE_SERVICES_CORE_HTTP_HOST=0.0.0.0
+      - GRAVITEE_HTTP_API_AUTOMATION_ENABLED=true
 
   am-wait:
     image: curlimages/curl:8.10.1

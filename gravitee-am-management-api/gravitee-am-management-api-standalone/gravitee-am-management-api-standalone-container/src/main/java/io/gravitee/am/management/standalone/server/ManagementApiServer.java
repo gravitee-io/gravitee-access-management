@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.standalone.server;
 
+import io.gravitee.am.management.handlers.automation.AutomationApplication;
 import io.gravitee.am.management.handlers.management.api.ManagementApplication;
 import io.gravitee.am.management.handlers.management.api.spring.ManagementConfiguration;
 import io.gravitee.node.jetty.JettyHttpServer;
@@ -23,6 +24,8 @@ import org.eclipse.jetty.ee10.servlet.FilterHolder;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -41,8 +44,13 @@ import java.util.EnumSet;
  */
 public class ManagementApiServer extends JettyHttpServer {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ManagementApiServer.class);
+
     @Value("${http.api.entrypoint:/management}")
     private String entrypoint;
+
+    @Value("${http.api.automation.enabled:false}")
+    private boolean startAutomationAPI;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -76,6 +84,16 @@ public class ManagementApiServer extends JettyHttpServer {
         context.addEventListener(new ContextLoaderListener(webApplicationContext));
         context.addServlet(servletHolder, "/*");
         context.addServlet(new ServletHolder(new DispatcherServlet(webApplicationContext)), "/auth/*");
+
+        // Automation API (optional) — served as a separate servlet within the same context
+        if (startAutomationAPI) {
+            LOGGER.info("Automation API is enabled, registering at {}/automation/*", entrypoint);
+            final ServletHolder automationServlet = new ServletHolder(ServletContainer.class);
+            automationServlet.setInitParameter("jakarta.ws.rs.Application", AutomationApplication.class.getName());
+            automationServlet.setInitOrder(2);
+            automationServlet.setAsyncSupported(true);
+            context.addServlet(automationServlet, "/automation/*");
+        }
 
         // X-Forwarded-* support
         context.addFilter(ForwardedHeaderFilter.class, "/*", EnumSet.allOf(DispatcherType.class));

@@ -20,23 +20,19 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>io.gravitee.am</groupId>
-        <artifactId>gravitee-am-parent</artifactId>
+        <groupId>io.gravitee.am.management</groupId>
+        <artifactId>gravitee-am-management-api</artifactId>
         <version>4.12.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.management</groupId>
-    <artifactId>gravitee-am-management-api</artifactId>
-    <name>Gravitee IO - Access Management - Management API</name>
+    <groupId>io.gravitee.am.management.automation</groupId>
+    <artifactId>gravitee-am-management-api-automation</artifactId>
     <packaging>pom</packaging>
+    <name>Gravitee IO - Access Management - Management API - Automation</name>
 
     <modules>
-        <module>gravitee-am-management-api-service</module>
-        <module>gravitee-am-management-api-services</module>
-        <module>gravitee-am-management-api-rest</module>
-        <module>gravitee-am-management-api-automation</module>
-        <module>gravitee-am-management-api-standalone</module>
+        <module>gravitee-am-management-api-automation-rest</module>
+        <module>gravitee-am-management-api-automation-security</module>
     </modules>
 </project>
