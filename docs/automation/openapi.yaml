@@ -1,0 +1,1082 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+openapi: 3.0.1
+info:
+  title: Gravitee.io - Access Management API
+  version: 4.12.0-SNAPSHOT
+servers:
+- url: /management
+security:
+- BearerAuth: []
+- BasicAuth: []
+tags:
+- name: Domains
+- name: Environments
+- name: Identity Providers
+paths:
+  /organizations/{orgId}/environments:
+    get:
+      tags:
+      - Environments
+      summary: List all environments
+      description: Returns all environments within the specified organization.
+      operationId: listEnvironments
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of environments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Environment"
+    put:
+      tags:
+      - Environments
+      summary: Create or update an environment
+      description: Idempotent create-or-update. Uses the hrid field in the body to
+        identify the environment.
+      operationId: createOrUpdateEnvironment
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationEnvironmentDefinition"
+        required: true
+      responses:
+        "200":
+          description: The created or updated environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Environment"
+  /organizations/{orgId}/environments/{envId}:
+    get:
+      tags:
+      - Environments
+      summary: Get an environment
+      operationId: getEnvironment_1
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Environment"
+    delete:
+      tags:
+      - Environments
+      summary: Delete an environment
+      operationId: deleteEnvironment_1
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Environment deleted
+  /organizations/{orgId}/environments/{envId}/domains:
+    get:
+      tags:
+      - Domains
+      - Environments
+      summary: List all domains
+      description: Returns all security domains within the specified environment.
+      operationId: listDomains_2
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of domains
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Domain"
+    put:
+      tags:
+      - Domains
+      - Environments
+      summary: Create or update a domain
+      description: Idempotent create-or-update. Uses the hrid field in the body to
+        identify the domain.
+      operationId: createOrUpdateDomain_2
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationDomainDefinition"
+        required: true
+      responses:
+        "200":
+          description: The created or updated domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Domain"
+  /organizations/{orgId}/environments/{envId}/domains/{domainHrid}:
+    get:
+      tags:
+      - Domains
+      - Environments
+      summary: Get a domain
+      description: Retrieves a single security domain by its HRID.
+      operationId: getDomain_3
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainHrid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Domain"
+    delete:
+      tags:
+      - Domains
+      - Environments
+      summary: Delete a domain
+      operationId: deleteDomain_3
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainHrid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Domain deleted
+  /organizations/{orgId}/environments/{envId}/domains/{domainHrid}/identity-providers:
+    get:
+      tags:
+      - Identity Providers
+      - Domains
+      - Environments
+      summary: List all identity providers
+      description: Returns all identity providers within the specified domain.
+      operationId: listIdentityProviders_4
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainHrid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of identity providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdentityProvider"
+    put:
+      tags:
+      - Identity Providers
+      - Domains
+      - Environments
+      summary: Create or update an identity provider
+      description: Idempotent create-or-update. Uses the hrid field in the body to
+        identify the identity provider.
+      operationId: createOrUpdateIdentityProvider_4
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainHrid
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationIdentityProviderDefinition"
+        required: true
+      responses:
+        "200":
+          description: The created or updated identity provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityProvider"
+  /organizations/{orgId}/environments/{envId}/domains/{domainHrid}/identity-providers/{idpId}:
+    get:
+      tags:
+      - Identity Providers
+      - Domains
+      - Environments
+      summary: Get an identity provider
+      operationId: getIdentityProvider_5
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainHrid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: idpId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The identity provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityProvider"
+    delete:
+      tags:
+      - Identity Providers
+      - Domains
+      - Environments
+      summary: Delete an identity provider
+      operationId: deleteIdentityProvider_5
+      parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domainHrid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: idpId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Identity provider deleted
+components:
+  schemas:
+    AccountSettings:
+      type: object
+      properties:
+        accountBlockedDuration:
+          type: integer
+          format: int32
+        autoLoginAfterRegistration:
+          type: boolean
+        autoLoginAfterResetPassword:
+          type: boolean
+        botDetectionPlugin:
+          type: string
+        completeRegistrationWhenResetPassword:
+          type: boolean
+        defaultIdentityProviderForRegistration:
+          type: string
+        deletePasswordlessDevicesAfterResetPassword:
+          type: boolean
+        dynamicUserRegistration:
+          type: boolean
+        inherited:
+          type: boolean
+        loginAttemptsDetectionEnabled:
+          type: boolean
+        loginAttemptsResetTime:
+          type: integer
+          format: int32
+        maxLoginAttempts:
+          type: integer
+          format: int32
+        mfaChallengeAttemptsDetectionEnabled:
+          type: boolean
+        mfaChallengeAttemptsResetTime:
+          type: integer
+          format: int32
+        mfaChallengeMaxAttempts:
+          type: integer
+          format: int32
+        mfaChallengeSendVerifyAlertEmail:
+          type: boolean
+        redirectUriAfterRegistration:
+          type: string
+        redirectUriAfterResetPassword:
+          type: string
+        rememberMe:
+          type: boolean
+        rememberMeDuration:
+          type: integer
+          format: int32
+        resetPasswordConfirmIdentity:
+          type: boolean
+        resetPasswordCustomForm:
+          type: boolean
+        resetPasswordCustomFormFields:
+          type: array
+          items:
+            $ref: "#/components/schemas/FormField"
+        resetPasswordInvalidateTokens:
+          type: boolean
+        sendRecoverAccountEmail:
+          type: boolean
+        sendVerifyRegistrationAccountEmail:
+          type: boolean
+        useBotDetection:
+          type: boolean
+    AutomationDomainDefinition:
+      required:
+      - hrid
+      - name
+      type: object
+      properties:
+        dataPlaneId:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        hrid:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+        name:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+        path:
+          type: string
+        tags:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+    AutomationEnvironmentDefinition:
+      required:
+      - name
+      type: object
+      properties:
+        description:
+          type: string
+        domainRestrictions:
+          type: array
+          items:
+            type: string
+        hrid:
+          type: string
+        hrids:
+          type: array
+          items:
+            type: string
+        name:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+    AutomationIdentityProviderDefinition:
+      required:
+      - hrid
+      - name
+      - type
+      type: object
+      properties:
+        configuration:
+          type: string
+        domainWhitelist:
+          type: array
+          items:
+            type: string
+        groupMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        hrid:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+        mappers:
+          type: object
+          additionalProperties:
+            type: string
+        name:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+        roleMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        type:
+          type: string
+    CIBASettingNotifier:
+      type: object
+      properties:
+        id:
+          type: string
+    CIBASettings:
+      type: object
+      properties:
+        authReqExpiry:
+          type: integer
+          format: int32
+        bindingMessageLength:
+          type: integer
+          format: int32
+        deviceNotifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CIBASettingNotifier"
+        enabled:
+          type: boolean
+        tokenReqInterval:
+          type: integer
+          format: int32
+    CertificateSettings:
+      type: object
+      properties:
+        fallbackCertificate:
+          type: string
+    ClientRegistrationSettings:
+      type: object
+      properties:
+        allowHttpSchemeRedirectUri:
+          type: boolean
+        allowLocalhostRedirectUri:
+          type: boolean
+        allowRedirectUriParamsExpressionLanguage:
+          type: boolean
+        allowWildCardRedirectUri:
+          type: boolean
+        allowedScopes:
+          type: array
+          items:
+            type: string
+        allowedScopesEnabled:
+          type: boolean
+        clientTemplateEnabled:
+          type: boolean
+        defaultScopes:
+          type: array
+          items:
+            type: string
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+    CorsSettings:
+      type: object
+      properties:
+        allowCredentials:
+          type: boolean
+        allowedHeaders:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        allowedMethods:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        allowedOrigins:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        maxAge:
+          type: integer
+          format: int32
+    Domain:
+      type: object
+      properties:
+        accountSettings:
+          $ref: "#/components/schemas/AccountSettings"
+        alertEnabled:
+          type: boolean
+        certificateSettings:
+          $ref: "#/components/schemas/CertificateSettings"
+        corsSettings:
+          $ref: "#/components/schemas/CorsSettings"
+        createdAt:
+          type: string
+          format: date-time
+        dataPlaneId:
+          type: string
+        description:
+          type: string
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        dynamicClientRegistrationTemplateEnabled:
+          type: boolean
+        enabled:
+          type: boolean
+        hrid:
+          type: string
+        id:
+          type: string
+        identities:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        loginSettings:
+          $ref: "#/components/schemas/LoginSettings"
+        managedBy:
+          type: string
+          enum:
+          - NONE
+          - TERRAFORM
+          - GKO
+          - AUTOMATION_API
+        master:
+          type: boolean
+        name:
+          type: string
+        oidc:
+          $ref: "#/components/schemas/OIDCSettings"
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+        passwordSettings:
+          $ref: "#/components/schemas/PasswordSettings"
+        path:
+          type: string
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
+        redirectUriLocalhostAllowed:
+          type: boolean
+        redirectUriStrictMatching:
+          type: boolean
+        redirectUriUnsecuredHttpSchemeAllowed:
+          type: boolean
+        redirectUriWildcardAllowed:
+          type: boolean
+        referenceId:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
+        saml:
+          $ref: "#/components/schemas/SAMLSettings"
+        scim:
+          $ref: "#/components/schemas/SCIMSettings"
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
+        selfServiceAccountManagementSettings:
+          $ref: "#/components/schemas/SelfServiceAccountManagementSettings"
+        tags:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        tokenExchangeSettings:
+          $ref: "#/components/schemas/TokenExchangeSettings"
+        uma:
+          $ref: "#/components/schemas/UMASettings"
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: string
+          enum:
+          - V1_0
+          - V2_0
+        vhostMode:
+          type: boolean
+        vhosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/VirtualHost"
+        webAuthnSettings:
+          $ref: "#/components/schemas/WebAuthnSettings"
+    Environment:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        domainRestrictions:
+          type: array
+          items:
+            type: string
+        hrids:
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+        name:
+          type: string
+        organizationId:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    FormField:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+    IdentityProvider:
+      type: object
+      properties:
+        configuration:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        dataPlaneId:
+          type: string
+        domainWhitelist:
+          type: array
+          items:
+            type: string
+        external:
+          type: boolean
+        groupMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        id:
+          type: string
+        managedBy:
+          type: string
+          enum:
+          - NONE
+          - TERRAFORM
+          - GKO
+          - AUTOMATION_API
+        mappers:
+          type: object
+          additionalProperties:
+            type: string
+        name:
+          type: string
+        passwordPolicy:
+          type: string
+        referenceId:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
+        roleMapper:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        system:
+          type: boolean
+        type:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    LoginSettings:
+      type: object
+      properties:
+        certificateBasedAuthEnabled:
+          type: boolean
+        certificateBasedAuthUrl:
+          type: string
+        enforcePasswordPolicyEnabled:
+          type: boolean
+        forgotPasswordEnabled:
+          type: boolean
+        hideForm:
+          type: boolean
+        identifierFirstEnabled:
+          type: boolean
+        inherited:
+          type: boolean
+        magicLinkAuthEnabled:
+          type: boolean
+        passwordlessDeviceNamingEnabled:
+          type: boolean
+        passwordlessEnabled:
+          type: boolean
+        passwordlessEnforcePasswordEnabled:
+          type: boolean
+        passwordlessEnforcePasswordMaxAge:
+          type: integer
+          format: int32
+        passwordlessRememberDeviceEnabled:
+          type: boolean
+        registerEnabled:
+          type: boolean
+        rememberMeEnabled:
+          type: boolean
+        resetPasswordOnExpiration:
+          type: boolean
+    OIDCSettings:
+      type: object
+      properties:
+        cibaSettings:
+          $ref: "#/components/schemas/CIBASettings"
+        clientRegistrationSettings:
+          $ref: "#/components/schemas/ClientRegistrationSettings"
+        postLogoutRedirectUris:
+          type: array
+          items:
+            type: string
+        redirectUriStrictMatching:
+          type: boolean
+        requestUris:
+          type: array
+          items:
+            type: string
+        securityProfileSettings:
+          $ref: "#/components/schemas/SecurityProfileSettings"
+    PasswordSettings:
+      type: object
+      properties:
+        excludePasswordsInDictionary:
+          type: boolean
+        excludeUserProfileInfoInPassword:
+          type: boolean
+        expiryDuration:
+          type: integer
+          format: int32
+        includeNumbers:
+          type: boolean
+        includeSpecialCharacters:
+          type: boolean
+        inherited:
+          type: boolean
+        lettersInMixedCase:
+          type: boolean
+        maxConsecutiveLetters:
+          type: integer
+          format: int32
+        maxLength:
+          type: integer
+          format: int32
+        minLength:
+          type: integer
+          format: int32
+        oldPasswords:
+          type: integer
+          format: int32
+        passwordHistoryEnabled:
+          type: boolean
+    ResetPasswordSettings:
+      type: object
+      properties:
+        oldPasswordRequired:
+          type: boolean
+        tokenAge:
+          type: integer
+          format: int32
+    SAMLSettings:
+      type: object
+      properties:
+        certificate:
+          type: string
+        enabled:
+          type: boolean
+        entityId:
+          type: string
+    SCIMSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        idpSelectionEnabled:
+          type: boolean
+        idpSelectionRule:
+          type: string
+    SecretExpirationSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        expiryTimeSeconds:
+          type: integer
+          format: int64
+    SecurityProfileSettings:
+      type: object
+      properties:
+        enableFapiBrazil:
+          type: boolean
+        enablePlainFapi:
+          type: boolean
+    SelfServiceAccountManagementSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        resetPassword:
+          $ref: "#/components/schemas/ResetPasswordSettings"
+    TokenExchangeOAuthSettings:
+      type: object
+      properties:
+        inherited:
+          type: boolean
+        scopeHandling:
+          type: string
+          enum:
+          - DOWNSCOPING
+          - PERMISSIVE
+    TokenExchangeSettings:
+      type: object
+      properties:
+        allowDelegation:
+          type: boolean
+        allowImpersonation:
+          type: boolean
+        allowedActorTokenTypes:
+          type: array
+          items:
+            type: string
+        allowedRequestedTokenTypes:
+          type: array
+          items:
+            type: string
+        allowedSubjectTokenTypes:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        maxDelegationDepth:
+          type: integer
+          format: int32
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
+        trustedIssuers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustedIssuer"
+    TrustedIssuer:
+      type: object
+      properties:
+        certificate:
+          type: string
+        issuer:
+          type: string
+        jwksUri:
+          type: string
+        keyResolutionMethod:
+          type: string
+          enum:
+          - JWKS_URL
+          - PEM
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+        userBindingCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+    UMASettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+    UserBindingCriterion:
+      type: object
+      properties:
+        attribute:
+          type: string
+        expression:
+          type: string
+    VirtualHost:
+      type: object
+      properties:
+        host:
+          type: string
+        overrideEntrypoint:
+          type: boolean
+        path:
+          type: string
+    WebAuthnSettings:
+      type: object
+      properties:
+        attestationConveyancePreference:
+          type: string
+          enum:
+          - NONE
+          - INDIRECT
+          - DIRECT
+        authenticatorAttachment:
+          type: string
+          enum:
+          - CROSS_PLATFORM
+          - PLATFORM
+        certificates:
+          type: object
+          additionalProperties:
+            type: object
+        enforceAuthenticatorIntegrity:
+          type: boolean
+        enforceAuthenticatorIntegrityMaxAge:
+          type: integer
+          format: int32
+        forceRegistration:
+          type: boolean
+        origin:
+          type: string
+        relyingPartyId:
+          type: string
+        relyingPartyName:
+          type: string
+        requireResidentKey:
+          type: boolean
+        userVerification:
+          type: string
+          enum:
+          - REQUIRED
+          - PREFERRED
+          - DISCOURAGED
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    BasicAuth:
+      type: http
+      scheme: basic
