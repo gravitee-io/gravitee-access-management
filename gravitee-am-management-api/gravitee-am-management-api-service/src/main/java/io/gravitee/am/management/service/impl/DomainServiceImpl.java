@@ -91,6 +91,7 @@ import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
+import io.gravitee.am.service.model.AutomationNewDomain;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -356,8 +357,10 @@ public class DomainServiceImpl implements DomainService {
     @Override
     public Single<Domain> create(String organizationId, String environmentId, NewDomain newDomain, User principal) {
         LOGGER.debug("Create a new domain: {}", newDomain);
-        // generate hrid
-        String hrid = IdGenerator.generate(newDomain.getName());
+        // Use automation-provided hrid if available, otherwise generate from name
+        var automationDomain = newDomain instanceof AutomationNewDomain auto ? auto : null;
+        String hrid = automationDomain != null && automationDomain.getHrid() != null
+                ? automationDomain.getHrid() : IdGenerator.generate(newDomain.getName());
         if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
             return Single.error(new InvalidDataPlaneException("An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
         }
@@ -369,9 +372,11 @@ public class DomainServiceImpl implements DomainService {
                     } else {
                         Domain domain = new Domain();
                         domain.setVersion(DomainVersion.V2_0);
-                        domain.setId(RandomString.generate());
+                        domain.setId(automationDomain != null && automationDomain.getId() != null
+                                ? automationDomain.getId() : RandomString.generate());
                         domain.setHrid(hrid);
-                        domain.setPath(generateContextPath(newDomain.getName()));
+                        domain.setPath(automationDomain != null && automationDomain.getPath() != null
+                                ? automationDomain.getPath() : generateContextPath(newDomain.getName()));
                         domain.setName(newDomain.getName());
                         domain.setDescription(newDomain.getDescription());
                         domain.setEnabled(false);
@@ -468,7 +473,7 @@ public class DomainServiceImpl implements DomainService {
                     domain.setVersion(existingDomain.getVersion());
                     domain.setReferenceId(existingDomain.getReferenceId());
                     domain.setReferenceType(existingDomain.getReferenceType());
-                    domain.setHrid(IdGenerator.generate(domain.getName()));
+                    domain.setHrid(existingDomain.getHrid());
                     domain.setUpdatedAt(new Date());
                     return validateDomain(domain)
                             .andThen(validateCertificateSettings(domain))
@@ -504,7 +509,8 @@ public class DomainServiceImpl implements DomainService {
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
-                    toPatch.setHrid(IdGenerator.generate(toPatch.getName()));
+                    // Preserve existing HRID — once created, it is immutable
+                    toPatch.setHrid(oldDomain.getHrid());
                     toPatch.setUpdatedAt(new Date());
                     return validateDomain(toPatch)
                             .andThen(validateCertificateSettings(toPatch))
