@@ -57,4 +57,6 @@ public class JdbcIdentityProvider {
     private String passwordPolicy;
     @Column("data_plane_id")
     private String dataPlaneId;
+    @Column("managed_by")
+    private String managedBy;
 }

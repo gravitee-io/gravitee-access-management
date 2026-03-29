@@ -201,6 +201,11 @@ public class Domain implements Resource {
      */
     private CertificateSettings certificateSettings;
 
+    /**
+     * Indicates the source of truth for this domain.
+     */
+    private ManagedBy managedBy;
+
     public Domain() {
     }
 
@@ -244,6 +249,7 @@ public class Domain implements Resource {
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.tokenExchangeSettings = other.tokenExchangeSettings;
         this.certificateSettings = other.certificateSettings != null ? new CertificateSettings(other.certificateSettings) : null;
+        this.managedBy = other.managedBy;
     }
 
     @Override
@@ -563,6 +569,14 @@ public class Domain implements Resource {
         return this.getOidc() != null &&
                 this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowRedirectUriParamsExpressionLanguage();
+    }
+
+    public ManagedBy getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(ManagedBy managedBy) {
+        this.managedBy = managedBy;
     }
 
     @Override

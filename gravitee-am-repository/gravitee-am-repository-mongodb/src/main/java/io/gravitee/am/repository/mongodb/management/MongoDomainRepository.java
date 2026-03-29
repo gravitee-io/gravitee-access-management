@@ -23,6 +23,7 @@ import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
@@ -232,6 +233,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
         domain.setDataPlaneId(domainMongo.getDataPlaneId());
+        domain.setManagedBy(domainMongo.getManagedBy() != null ? ManagedBy.valueOf(domainMongo.getManagedBy()) : null);
         domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
         domain.setTokenExchangeSettings(convert(domainMongo.getTokenExchangeSettings()));
         domain.setCertificateSettings(domainMongo.getCertificateSettings());
@@ -273,6 +275,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
         domainMongo.setDataPlaneId(domain.getDataPlaneId());
+        domainMongo.setManagedBy(domain.getManagedBy() != null ? domain.getManagedBy().name() : null);
         domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
         domainMongo.setTokenExchangeSettings(convert(domain.getTokenExchangeSettings()));
         domainMongo.setCertificateSettings(domain.getCertificateSettings());

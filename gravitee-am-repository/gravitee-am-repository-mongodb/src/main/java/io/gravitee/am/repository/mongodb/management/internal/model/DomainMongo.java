@@ -91,6 +91,8 @@ public class DomainMongo extends Auditable {
 
     private String dataPlaneId;
 
+    private String managedBy;
+
     private SecretSettingsMongo secretSettings;
 
     private TokenExchangeSettingsMongo tokenExchangeSettings;

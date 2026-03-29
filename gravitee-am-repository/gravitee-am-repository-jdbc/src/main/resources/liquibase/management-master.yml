@@ -209,3 +209,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_11_0/4.11.0-update-domains-certificate-settings.yml
   - include:
       - file: liquibase/changelogs/v4_11_0/4.11.0-action-lease-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_12_0/4.12.0-add-managed-by-column.yml

@@ -70,6 +70,11 @@ public class IdentityProvider {
      */
     private String dataPlaneId;
 
+    /**
+     * Indicates the source of truth for this identity provider.
+     */
+    private ManagedBy managedBy;
+
     public IdentityProvider(IdentityProvider other) {
         this.id = other.id;
         this.name = other.name;
@@ -87,6 +92,7 @@ public class IdentityProvider {
         this.updatedAt = other.updatedAt;
         this.passwordPolicy = other.passwordPolicy;
         this.dataPlaneId = other.dataPlaneId;
+        this.managedBy = other.managedBy;
     }
 
     @Override

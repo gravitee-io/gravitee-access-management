@@ -19,6 +19,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
@@ -189,6 +190,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
         identityProvider.setPasswordPolicy(identityProviderMongo.getPasswordPolicy());
+        identityProvider.setManagedBy(identityProviderMongo.getManagedBy() != null ? ManagedBy.valueOf(identityProviderMongo.getManagedBy()) : null);
         return identityProvider;
     }
 
@@ -217,6 +219,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
                             .map(BsonString::new)
                             .collect(toCollection(BsonArray::new)));
             identityProviderMongo.setPasswordPolicy(identityProvider.getPasswordPolicy());
+            identityProviderMongo.setManagedBy(identityProvider.getManagedBy() != null ? identityProvider.getManagedBy().name() : null);
             return identityProviderMongo;
         });
     }

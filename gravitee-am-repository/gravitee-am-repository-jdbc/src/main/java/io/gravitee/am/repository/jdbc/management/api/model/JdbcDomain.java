@@ -69,6 +69,8 @@ public class JdbcDomain {
     private String corsSettings;
     @Column("data_plane_id")
     private String dataPlaneId;
+    @Column("managed_by")
+    private String managedBy;
     @Column("secret_expiration_settings")
     private String secretExpirationSettings;
     @Column("token_exchange_settings")

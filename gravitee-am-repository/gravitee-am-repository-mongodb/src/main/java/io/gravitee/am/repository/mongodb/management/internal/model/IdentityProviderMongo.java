@@ -69,6 +69,8 @@ public class IdentityProviderMongo extends Auditable {
 
     private String dataPlaneId;
 
+    private String managedBy;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
