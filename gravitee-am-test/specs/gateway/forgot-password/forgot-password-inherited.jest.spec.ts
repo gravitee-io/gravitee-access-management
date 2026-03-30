@@ -19,6 +19,7 @@ import { resetPassword } from './fixture/reset-password-flow-utils';
 import { requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forgot-password-flow-utils';
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { uniqueName } from '@utils-commands/misc';
 
@@ -70,7 +71,14 @@ afterAll(async () => {
 });
 
 describe('Gateway reset password', () => {
-  const passwordHistoryTests = [
+  type PasswordHistoryRow = {
+    password: string;
+    expectedMsg: string;
+    /** Optional Jira key; when set, title includes `jira()` for Xray / junit test_key mapping */
+    jiraKey?: string;
+  };
+
+  const passwordHistoryTests: PasswordHistoryRow[] = [
     {
       password: 'SomeP@ssw0rd01',
       expectedMsg: resetPasswordFailed,
@@ -78,6 +86,7 @@ describe('Gateway reset password', () => {
     {
       password: 'SomeP@ssw0rd02',
       expectedMsg: setting.settings.accountSettings.redirectUriAfterResetPassword,
+      jiraKey: 'AM-2214',
     },
     {
       password: 'SomeP@ssw0rd03',
@@ -94,8 +103,11 @@ describe('Gateway reset password', () => {
   ];
 
   describe(`when password history is enabled for ${setting.passwordPolicy.oldPasswords} passwords`, () => {
-    passwordHistoryTests.forEach(({ password, expectedMsg }) => {
-      it(`resetting with ${password} should return ${expectedMsg}`, async () => {
+    passwordHistoryTests.forEach(({ password, expectedMsg, jiraKey }) => {
+      const title = jiraKey
+        ? `${jira(jiraKey)} should redirect to configured URI after successful forgot-password reset`
+        : `resetting with ${password} should return ${expectedMsg}`;
+      it(title, async () => {
         await clearEmails(userProps.email);
         await requestForgotPassword(fixture.forgotPasswordContext(), setting.settings);
         const link = await retrieveEmailLinkForReset(userProps.email);

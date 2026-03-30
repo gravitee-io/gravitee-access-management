@@ -56,6 +56,16 @@ Tests should be:
 - Code is self-documenting
 - Complex logic is extracted to helper functions
 
+### 5. Assertion quality
+
+Match **`.claude/rules/20-integration-tests.md`** (and the Playwright rules in `gravitee-am-test/playwright/GUIDELINES.md` for browser tests):
+
+- **Do not use `toBeDefined()` on required fields** — it passes for empty strings and wrong values. Prefer `toMatch(JWT_FORMAT)` for access tokens, `toEqual` for known values, and `expect.any(String)` when you only need a non-empty identifier shape.
+- **One deterministic outcome per test** — no conditional branches around `expect()`.
+- **Assert what you configure** — if the fixture sets token claims or flow behaviour, the test should verify that output (or drop unused configuration).
+
+Avoid repeating a visibility check in the spec when a **shared helper** already performs that `expect` immediately before the same interaction (keeps Playwright specs DRY).
+
 ---
 
 ## Fixture Pattern
@@ -238,7 +248,6 @@ describe('Feature Name - Primary Functionality', () => {
     const result = await fixture.performOperation(testParam);
 
     // Assert
-    expect(result).toBeDefined();
     expect(result.status).toBe(200);
   });
 
@@ -287,9 +296,8 @@ describe('Resource Name - CRUD Operations', () => {
     await waitForDomainSync(fixture.domain.id);
     
     const resource = await fixture.getResource(createdResourceId);
-    
-    expect(resource).toBeDefined();
-    expect(resource.id).toBeDefined();
+
+    expect(resource.id).toEqual(expect.any(String));
     createdResourceId = resource.id;
   });
 
@@ -377,20 +385,21 @@ export const FEATURE_TEST = {
  * Helper function to setup test environment (domain, IDP)
  * Uses setupDomainForTest which handles create, start, readiness polling, and OIDC config.
  */
+const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+
 async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();
-  expect(accessToken).toBeDefined();
+  expect(accessToken).toMatch(JWT_FORMAT);
 
   const { domain, oidcConfig } = await setupDomainForTest(
     uniqueName(FEATURE_TEST.DOMAIN_NAME_PREFIX, true),
     { accessToken, waitForStart: true },
   );
-  expect(domain).toBeDefined();
-  expect(domain.id).toBeDefined();
+  expect(domain.id).toEqual(expect.any(String));
 
   const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
-  expect(defaultIdp).toBeDefined();
+  expect(defaultIdp?.id).toEqual(expect.any(String));
 
   return { domain, defaultIdp, accessToken, oidcConfig };
 }
@@ -418,8 +427,7 @@ async function createTestApplication(
     identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
   });
 
-  expect(application).toBeDefined();
-  expect(application.id).toBeDefined();
+  expect(application.id).toEqual(expect.any(String));
   return application;
 }
 
@@ -444,7 +452,7 @@ async function createTestUser(
     preRegistration: false,
   });
 
-  expect(testUser).toBeDefined();
+  expect(testUser.username).toEqual(username);
   return testUser;
 }
 
