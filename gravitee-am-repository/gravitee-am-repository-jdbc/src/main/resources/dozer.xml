@@ -193,6 +193,15 @@
     </mapping>
 
     <mapping map-null="false">
+        <class-a>io.gravitee.am.model.flow.Flow</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcFlow</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.FlowTypeConverter">
+            <a>type</a>
+            <b>type</b>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
         <class-a>io.gravitee.am.model.User</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcUser</class-b>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
