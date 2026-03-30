@@ -168,7 +168,7 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
         flow.setPre(flowMongo.getPre());
         flow.setPost(flowMongo.getPost());
         flow.setEnabled(flowMongo.isEnabled());
-        flow.setType(flowMongo.getType() == null ? null : Type.valueOf(flowMongo.getType()));
+        flow.setType(Type.orNull(flowMongo.getType()));
         flow.setCondition(flowMongo.getCondition());
         flow.setCreatedAt(flowMongo.getCreatedAt());
         flow.setUpdatedAt(flowMongo.getUpdatedAt());
