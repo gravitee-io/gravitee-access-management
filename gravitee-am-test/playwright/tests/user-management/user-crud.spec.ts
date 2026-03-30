@@ -18,7 +18,7 @@ import { linkJira } from '../../utils/jira';
 import { DomainUsersPage } from '../../pages/domain-users.page';
 import { UserCreationPage } from '../../pages/user-creation.page';
 import { UserDetailPage } from '../../pages/user-detail.page';
-import { deleteUser } from '../../../api/commands/management/user-management-commands';
+import { deleteUser } from '@management-commands/user-management-commands';
 import { uniqueTestName } from '../../utils/fixture-helpers';
 import { UI_USER_PASSWORD } from '../../utils/test-constants';
 

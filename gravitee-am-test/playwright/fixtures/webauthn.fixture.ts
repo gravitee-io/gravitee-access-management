@@ -18,7 +18,7 @@ import { test as base } from '@playwright/test';
 import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
 
-import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
   startDomain,
@@ -26,11 +26,13 @@ import {
   safeDeleteDomain,
   waitForOidcReady,
   patchDomain,
-} from '../../api/commands/management/domain-management-commands';
-import { getAllIdps } from '../../api/commands/management/idp-management-commands';
-import { createUser, deleteUser } from '../../api/commands/management/user-management-commands';
-import { createTestApp } from '../../api/commands/utils/application-commands';
-import { Domain, Application, User } from '../../api/management/models';
+} from '@management-commands/domain-management-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
+import { createUser, deleteUser } from '@management-commands/user-management-commands';
+import { createTestApp } from '@utils-commands/application-commands';
+import type { Application } from '@management-models/Application';
+import type { Domain } from '@management-models/Domain';
+import type { User } from '@management-models/User';
 
 import { quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';

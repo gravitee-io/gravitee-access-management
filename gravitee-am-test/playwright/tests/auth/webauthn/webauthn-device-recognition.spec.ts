@@ -23,9 +23,10 @@ import {
   clearSessionOnly,
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
-import { API_USER_PASSWORD } from '../../../utils/test-constants';
-import { patchDomain, waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
-import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../../utils/test-constants';
+import { linkJira } from '../../../utils/jira';
+import { patchDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 
 /**
  * AM-5292: WebAuthn & Passwordless Device Recognition

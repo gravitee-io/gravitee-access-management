@@ -252,8 +252,57 @@ export async function waitForOidcReady(
 
   throw new Error(
     `Timed out waiting for OIDC config for domain "${domainHrid}" after ${timeoutMs}ms. ` +
-      (lastStatus ? `Last status: ${lastStatus}` : '') +
+      (lastStatus ? ` Last status: ${lastStatus}` : '') +
       (lastError instanceof Error ? ` Last error: ${lastError.message}` : ''),
+  );
+}
+
+/**
+ * Waits until a GET to the OAuth authorize endpoint returns a redirect whose Location targets the gateway login
+ * page for the given domain HRID.
+ *
+ * `waitForDomainReady` / `waitForSyncAfter` reflect `_node/domains` sync; the HTTP router can lag. Polling authorize
+ * with `redirect: 'manual'` matches what the browser sees after navigating to the same authorize URL.
+ */
+export async function waitForOAuthAuthorizeRedirectsToLogin(
+  domainHrid: string,
+  clientId: string,
+  redirectUri: string,
+  options?: {
+    timeoutMs?: number;
+    intervalMs?: number;
+  },
+): Promise<void> {
+  const { timeoutMs = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS, intervalMs = DEFAULT_DOMAIN_SYNC_INTERVAL_MS } = options || {};
+  const gatewayBase = (process.env.AM_GATEWAY_URL || 'http://localhost:8092').replace(/\/$/, '');
+  const authorizeUrl = new URL(`${gatewayBase}/${domainHrid}/oauth/authorize`);
+  authorizeUrl.searchParams.set('response_type', 'code');
+  authorizeUrl.searchParams.set('client_id', clientId);
+  authorizeUrl.searchParams.set('redirect_uri', redirectUri);
+  authorizeUrl.searchParams.set('scope', 'openid');
+
+  const start = Date.now();
+  let lastStatus: number | undefined;
+
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(authorizeUrl.toString(), { method: 'GET', redirect: 'manual' });
+      lastStatus = res.status;
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get('location') || '';
+        if (/\/login/i.test(location)) {
+          return;
+        }
+      }
+    } catch {
+      // Transient gateway errors — retry until timeout.
+    }
+    await waitFor(intervalMs);
+  }
+
+  const statusHint = typeof lastStatus === 'number' ? ` Last HTTP status: ${lastStatus}.` : '';
+  throw new Error(
+    `Timed out waiting for authorize → login redirect for domain "${domainHrid}" (clientId=${clientId}).${statusHint}`,
   );
 }
 

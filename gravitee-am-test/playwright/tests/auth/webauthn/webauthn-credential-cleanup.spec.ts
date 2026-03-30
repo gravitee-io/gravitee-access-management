@@ -21,11 +21,7 @@ import {
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { API_USER_PASSWORD, MULTI_PHASE_TEST_TIMEOUT } from '../../../utils/test-constants';
-import {
-  createUser,
-  deleteUser,
-  listUserCredentials,
-} from '../../../../api/commands/management/user-management-commands';
+import { createUser, deleteUser, listUserCredentials } from '@management-commands/user-management-commands';
 import { uniqueTestName } from '../../../utils/fixture-helpers';
 import { linkJira } from '../../../utils/jira';
 

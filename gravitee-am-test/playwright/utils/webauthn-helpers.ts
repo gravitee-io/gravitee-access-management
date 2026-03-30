@@ -161,8 +161,9 @@ export async function handleConsentIfPresent(page: Page, timeoutMs = BRIEF_TIMEO
 
 /** Build the OAuth authorize URL for a given domain + app. */
 export function buildAuthorizeUrl(gatewayUrl: string, clientId: string): string {
+  const base = gatewayUrl.replace(/\/$/, '');
   return (
-    `${gatewayUrl}/oauth/authorize?response_type=code` +
+    `${base}/oauth/authorize?response_type=code` +
     `&client_id=${clientId}` +
     `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
     `&scope=openid`

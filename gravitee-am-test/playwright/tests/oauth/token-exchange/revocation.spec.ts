@@ -19,7 +19,7 @@ import { createTokenExchangeFixture, TOKEN_EXCHANGE_DEFAULTS } from '../../../fi
 import { linkJira } from '../../../utils/jira';
 import { obtainAuthorizationCodeTokens, waitForTokenInactive } from '../../../utils/auth-code-helpers';
 import { exchangeToken } from '../../../utils/token-exchange-helpers';
-import { revokeUserConsents } from '../../../../api/commands/management/user-management-commands';
+import { revokeUserConsents } from '@management-commands/user-management-commands';
 import { API_USER_PASSWORD } from '../../../utils/test-constants';
 
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';

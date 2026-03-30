@@ -24,7 +24,7 @@ import {
   VirtualAuthenticator,
 } from '../../../fixtures/webauthn.fixture';
 import { API_USER_PASSWORD, MULTI_PHASE_TEST_TIMEOUT, BRIEF_TIMEOUT } from '../../../utils/test-constants';
-import { updateUserStatus } from '../../../../api/commands/management/user-management-commands';
+import { updateUserStatus } from '@management-commands/user-management-commands';
 import { linkJira } from '../../../utils/jira';
 
 /**

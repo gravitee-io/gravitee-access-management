@@ -18,7 +18,7 @@ import {
   performFormPost,
   performGet,
   performPost,
-} from '../../api/commands/gateway/oauth-oidc-commands';
+} from '@gateway-commands/oauth-oidc-commands';
 import { SubjectTokens, OidcConfiguration } from './token-exchange-helpers';
 
 /**

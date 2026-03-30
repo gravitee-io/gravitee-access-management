@@ -24,9 +24,9 @@ import {
   configureTrustedIssuer,
   retryOnStatus,
 } from '../../../utils/token-exchange-helpers';
-import { waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
-import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
-import { patchApplication } from '../../../../api/commands/management/application-management-commands';
+import { waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { patchApplication } from '@management-commands/application-management-commands';
 
 /* ------------------------------------------------------------------ */
 /*  Downscoping impersonation (AM-6642)                                */
