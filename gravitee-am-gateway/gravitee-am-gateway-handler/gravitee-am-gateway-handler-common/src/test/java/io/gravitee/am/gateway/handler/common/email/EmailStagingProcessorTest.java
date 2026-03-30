@@ -327,7 +327,6 @@ class EmailStagingProcessorTest {
                     .thenReturn(Flowable.just(stagingEmail));
             when(userRepository.findById(any(Reference.class), any(UserId.class)))
                     .thenReturn(Maybe.empty());
-            when(emailService.batch(any(), anyInt())).thenReturn(List.of());
 
             var processor = buildProcessor(false);
             processor.afterPropertiesSet();
