@@ -22,6 +22,7 @@ import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -257,6 +258,23 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         obs.assertNoValues();
 
         assertNull(flowRepository.findById(flowCreated.getId()).blockingGet());
+    }
+
+    @Test
+    public void testCheckInvalidType_ignored() {
+        Flow flow = buildFlow(1, 1);
+        Type login = Mockito.mock(Type.class);
+        flow.setType(login);
+        Mockito.doReturn("UNKNOWN").when(login).name();
+
+        var result = flowRepository.create(flow).test();
+
+        result.awaitDone(10, TimeUnit.SECONDS);
+        result.assertComplete();
+
+        var findResult = flowRepository.findById(flow.getId()).test();
+        findResult.awaitDone(10, TimeUnit.SECONDS);
+        findResult.assertValue(f -> f.getType() == null);
     }
 
     private Flow buildFlow(int nbPreSteps, int nbPostSteps) {
