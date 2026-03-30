@@ -34,11 +34,11 @@ import java.util.Map;
 public class AutomationIdentityProviderDefinition {
 
     @NotNull
-    @Size(min = 1)
+    @Size(min = 1, max = 255)
     private String hrid;
 
     @NotNull
-    @Size(min = 1)
+    @Size(min = 1, max = 255)
     private String name;
 
     @NotNull

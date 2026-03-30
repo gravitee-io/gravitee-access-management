@@ -40,10 +40,10 @@ describe('Environment Management - List Environments', () => {
 
     expect(response.status).toBe(200);
     const body = response.body;
-    expect(body).toHaveLength(1);
+    expect(body.length).toBeGreaterThanOrEqual(1);
 
-    const env = body[0];
-    expect(env.id).toEqual(process.env.AM_DEF_ENV_ID);
+    const env = body.find((e: any) => e.id === process.env.AM_DEF_ENV_ID);
+    expect(env).toBeDefined();
     expect(env.name).toEqual('Default environment');
     expect(env.description).toEqual('Default environment');
     expect(env.domainRestrictions).toEqual([]);

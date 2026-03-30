@@ -51,7 +51,7 @@ public class DomainResource extends AbstractAutomationResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "getDomain", summary = "Get a domain",
+    @Operation(operationId = "automationGetDomain", summary = "Get a domain",
             description = "Retrieves a single security domain by its HRID.")
     @ApiResponse(responseCode = "200", description = "The domain",
             content = @Content(mediaType = "application/json",
@@ -67,7 +67,7 @@ public class DomainResource extends AbstractAutomationResource {
     }
 
     @DELETE
-    @Operation(operationId = "deleteDomain", summary = "Delete a domain")
+    @Operation(operationId = "automationDeleteDomain", summary = "Delete a domain")
     @ApiResponse(responseCode = "204", description = "Domain deleted")
     public void delete(
             @PathParam("orgId") String organizationId,

@@ -51,7 +51,7 @@ public class IdentityProviderResource extends AbstractAutomationResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "getIdentityProvider", summary = "Get an identity provider")
+    @Operation(operationId = "automationGetIdentityProvider", summary = "Get an identity provider")
     @ApiResponse(responseCode = "200", description = "The identity provider",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = IdentityProvider.class)))
@@ -71,7 +71,7 @@ public class IdentityProviderResource extends AbstractAutomationResource {
     }
 
     @DELETE
-    @Operation(operationId = "deleteIdentityProvider", summary = "Delete an identity provider")
+    @Operation(operationId = "automationDeleteIdentityProvider", summary = "Delete an identity provider")
     @ApiResponse(responseCode = "204", description = "Identity provider deleted")
     public void delete(
             @PathParam("orgId") String organizationId,

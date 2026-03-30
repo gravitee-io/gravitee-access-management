@@ -22,6 +22,7 @@ import io.gravitee.am.model.IdentityProvider;
 import java.util.UUID;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,7 +64,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "listIdentityProviders", summary = "List all identity providers",
+    @Operation(operationId = "automationListIdentityProviders", summary = "List all identity providers",
             description = "Returns all identity providers within the specified domain.")
     @ApiResponse(responseCode = "200", description = "List of identity providers",
             content = @Content(mediaType = "application/json",
@@ -83,7 +84,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "createOrUpdateIdentityProvider",
+    @Operation(operationId = "automationCreateOrUpdateIdentityProvider",
             summary = "Create or update an identity provider",
             description = "Idempotent create-or-update. Uses the hrid field in the body to identify the identity provider.")
     @ApiResponse(responseCode = "200", description = "The created or updated identity provider",
@@ -121,8 +122,9 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         return resourceContext.getResource(IdentityProviderResource.class);
     }
 
-    private NewIdentityProvider toNewIdentityProvider(AutomationIdentityProviderDefinition definition) {
-        NewIdentityProvider newIdp = new NewIdentityProvider();
+    private AutomationNewIdentityProvider toNewIdentityProvider(AutomationIdentityProviderDefinition definition) {
+        AutomationNewIdentityProvider newIdp = new AutomationNewIdentityProvider();
+        newIdp.setHrid(definition.getHrid());
         newIdp.setName(definition.getName());
         newIdp.setType(definition.getType());
         newIdp.setConfiguration(definition.getConfiguration());

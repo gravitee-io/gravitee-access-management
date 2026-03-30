@@ -57,7 +57,7 @@ public class DomainsResource extends AbstractAutomationResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "listDomains", summary = "List all domains",
+    @Operation(operationId = "automationListDomains", summary = "List all domains",
             description = "Returns all security domains within the specified environment.")
     @ApiResponse(responseCode = "200", description = "List of domains",
             content = @Content(mediaType = "application/json",
@@ -76,7 +76,7 @@ public class DomainsResource extends AbstractAutomationResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "createOrUpdateDomain",
+    @Operation(operationId = "automationCreateOrUpdateDomain",
             summary = "Create or update a domain",
             description = "Idempotent create-or-update. Uses the hrid field in the body to identify the domain.")
     @ApiResponse(responseCode = "200", description = "The created or updated domain",

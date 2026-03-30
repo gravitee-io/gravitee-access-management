@@ -108,7 +108,7 @@ public class AutomationApiDefinition implements ReaderListener {
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll));
 
         openAPI.info(new Info()
-                .version(Version.RUNTIME_VERSION.MAJOR_VERSION)
+                .version(Version.RUNTIME_VERSION.toString())
                 .title("Gravitee.io AM - Automation API")
                 .description("Declarative, GitOps-style management of Access Management resources.")
         );

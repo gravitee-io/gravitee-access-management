@@ -49,7 +49,7 @@ public class EnvironmentResource extends AbstractAutomationResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "getEnvironment", summary = "Get an environment")
+    @Operation(operationId = "automationGetEnvironment", summary = "Get an environment")
     @ApiResponse(responseCode = "200", description = "The environment",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = Environment.class)))
@@ -63,14 +63,14 @@ public class EnvironmentResource extends AbstractAutomationResource {
     }
 
     @DELETE
-    @Operation(operationId = "deleteEnvironment", summary = "Delete an environment")
+    @Operation(operationId = "automationDeleteEnvironment", summary = "Delete an environment")
     @ApiResponse(responseCode = "204", description = "Environment deleted")
     public void delete(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
             @Suspended final AsyncResponse response) {
-        response.resume(Response.status(Response.Status.NOT_FOUND)
-                .entity("Environment deletion is not supported")
+        response.resume(Response.status(Response.Status.METHOD_NOT_ALLOWED)
+                .entity("Environment deletion is not supported via the Automation API")
                 .build());
     }
 

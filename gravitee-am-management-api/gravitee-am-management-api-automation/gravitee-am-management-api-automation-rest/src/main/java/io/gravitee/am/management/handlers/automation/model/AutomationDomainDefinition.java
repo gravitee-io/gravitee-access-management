@@ -33,11 +33,11 @@ import java.util.Set;
 public class AutomationDomainDefinition {
 
     @NotNull
-    @Size(min = 1)
+    @Size(min = 1, max = 255)
     private String hrid;
 
     @NotNull
-    @Size(min = 1)
+    @Size(min = 1, max = 255)
     private String name;
 
     private String description;

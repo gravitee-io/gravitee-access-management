@@ -59,7 +59,7 @@ public class EnvironmentsResource extends AbstractAutomationResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "listEnvironments",
+            operationId = "automationListEnvironments",
             summary = "List all environments",
             description = "Returns all environments within the specified organization.")
     @ApiResponse(responseCode = "200", description = "List of environments",
@@ -78,7 +78,7 @@ public class EnvironmentsResource extends AbstractAutomationResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(operationId = "createOrUpdateEnvironment",
+    @Operation(operationId = "automationCreateOrUpdateEnvironment",
             summary = "Create or update an environment",
             description = "Idempotent create-or-update. Uses the hrid field in the body to identify the environment.")
     @ApiResponse(responseCode = "200", description = "The created or updated environment",

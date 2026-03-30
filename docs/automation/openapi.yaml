@@ -81,7 +81,7 @@ paths:
       tags:
       - Environments
       summary: Get an environment
-      operationId: getEnvironment_1
+      operationId: getEnvironment
       parameters:
       - name: orgId
         in: path
@@ -104,7 +104,7 @@ paths:
       tags:
       - Environments
       summary: Delete an environment
-      operationId: deleteEnvironment_1
+      operationId: deleteEnvironment
       parameters:
       - name: orgId
         in: path
@@ -126,7 +126,7 @@ paths:
       - Environments
       summary: List all domains
       description: Returns all security domains within the specified environment.
-      operationId: listDomains_2
+      operationId: listDomains
       parameters:
       - name: orgId
         in: path
@@ -154,7 +154,7 @@ paths:
       summary: Create or update a domain
       description: Idempotent create-or-update. Uses the hrid field in the body to
         identify the domain.
-      operationId: createOrUpdateDomain_2
+      operationId: createOrUpdateDomain
       parameters:
       - name: orgId
         in: path
@@ -186,7 +186,7 @@ paths:
       - Environments
       summary: Get a domain
       description: Retrieves a single security domain by its HRID.
-      operationId: getDomain_3
+      operationId: getDomain
       parameters:
       - name: orgId
         in: path
