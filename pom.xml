@@ -78,16 +78,16 @@
     <properties>
         <bouncycastle-extension.version>1.81</bouncycastle-extension.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>9.0.0-beta.2</gravitee-bom.version>
-        <gravitee-common.version>5.0.0-beta.1</gravitee-common.version>
-        <gravitee-plugin.version>5.0.0</gravitee-plugin.version>
-        <gravitee-node.version>8.0.0-beta.2</gravitee-node.version>
+        <gravitee-bom.version>9.0.0-alpha.2</gravitee-bom.version>
+        <gravitee-common.version>5.0.0-alpha.1</gravitee-common.version>
+        <gravitee-plugin.version>5.0.0-alpha.3</gravitee-plugin.version>
+        <gravitee-node.version>9.0.0-alpha.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
-        <gravitee-gateway-api.version>5.0.0-beta.2</gravitee-gateway-api.version>
+        <gravitee-gateway-api.version>6.0.0-alpha.1</gravitee-gateway-api.version>
         <gravitee-expression-language.version>4.3.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>4.0.0-AM-6611-vertx-5-migration-SNAPSHOT</gravitee-cockpit-api.version>
-        <gravitee-kubernetes-client-version>4.0.0-feat-migrate-vertx5-SNAPSHOT</gravitee-kubernetes-client-version>
+        <gravitee-kubernetes-client-version>4.0.0-alpha.1</gravitee-kubernetes-client-version>
         <gravitee-plugin-validator.version>2.3.0</gravitee-plugin-validator.version>
         <nimbus.version>10.4</nimbus.version>
         <json-smart.version>2.5.2</json-smart.version>
