@@ -25,7 +25,6 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.TransportSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
@@ -35,7 +34,6 @@ import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.mongodb.provider.metrics.MongoMetricsConnectionPoolListener;
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -72,8 +70,6 @@ public class MongoFactoryImpl implements MongoFactory {
     private static final String PASSWORD = "password";
     private static final String SERVERS = "servers[";
     private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
-    public static final NioEventLoopGroup COMMON_EVENT_LOOP_GROUP = new NioEventLoopGroup();
-
     @Autowired
     private RepositoriesEnvironment environment;
 
@@ -88,7 +84,7 @@ public class MongoFactoryImpl implements MongoFactory {
             MongoClientSettings settings = builder
                     .applyToConnectionPoolSettings(builder1 -> builder1.addConnectionPoolListener(connectionPoolListener))
                     .applyConnectionString(new ConnectionString(configuration.getUri()))
-                    .transportSettings(TransportSettings.nettyBuilder().eventLoopGroup(COMMON_EVENT_LOOP_GROUP).build())
+
                     .build();
             mongoClient = MongoClients.create(settings);
         } else {
@@ -97,8 +93,7 @@ public class MongoFactoryImpl implements MongoFactory {
             ClusterSettings clusterSettings = ClusterSettings.builder().hosts(of(serverAddress)).build();
             MongoClientSettings.Builder settings = MongoClientSettings.builder()
                     .applyToConnectionPoolSettings(builder1 -> builder1.applySettings(connectionPoolBuilder.build()))
-                    .applyToClusterSettings(clusterBuilder -> clusterBuilder.applySettings(clusterSettings))
-                    .transportSettings(TransportSettings.nettyBuilder().eventLoopGroup(COMMON_EVENT_LOOP_GROUP).build());
+                    .applyToClusterSettings(clusterBuilder -> clusterBuilder.applySettings(clusterSettings));
             if (configuration.isEnableCredentials()) {
                 MongoCredential credential = MongoCredential.createCredential(configuration
                         .getUsernameCredentials(), configuration
@@ -141,7 +136,7 @@ public class MongoFactoryImpl implements MongoFactory {
                     .applyToServerSettings(builder1 -> builder1.applySettings(serverSettings))
                     .applyToSslSettings(builder1 -> builder1.applySettings(sslSettings))
                     .applyConnectionString(new ConnectionString(uri))
-                    .transportSettings(TransportSettings.nettyBuilder().eventLoopGroup(COMMON_EVENT_LOOP_GROUP).build())
+
                     .build();
 
             return MongoClients.create(settings);
@@ -224,7 +219,7 @@ public class MongoFactoryImpl implements MongoFactory {
                     .applyToConnectionPoolSettings(builder1 -> builder1.applySettings(connectionPoolSettings))
                     .applyToServerSettings(builder1 -> builder1.applySettings(serverSettings))
                     .applyToSslSettings(builder1 -> builder1.applySettings(sslSettings))
-                    .transportSettings(TransportSettings.nettyBuilder().eventLoopGroup(COMMON_EVENT_LOOP_GROUP).build())
+
                     .build();
 
             return MongoClients.create(settings);
