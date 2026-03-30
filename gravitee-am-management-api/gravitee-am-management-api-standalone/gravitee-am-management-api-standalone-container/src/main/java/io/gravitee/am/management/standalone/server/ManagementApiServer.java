@@ -53,8 +53,12 @@ public class ManagementApiServer extends JettyHttpServer {
 
     public void attachHandlers() {
 
-        // Create the servlet context
+        // Create the servlet context.
+        // Explicitly set classLoader to null so Jetty's ContextHandler.enterScope() skips
+        // Thread.setContextClassLoader() — this prevents SecurityException when async
+        // responses are resumed on InnocuousThread (which blocks setContextClassLoader).
         final ServletContextHandler context = new ServletContextHandler(entrypoint, ServletContextHandler.NO_SESSIONS);
+        context.setClassLoader(null);
         // REST configuration
         final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
         servletHolder.setInitParameter("jakarta.ws.rs.Application", ManagementApplication.class.getName());
