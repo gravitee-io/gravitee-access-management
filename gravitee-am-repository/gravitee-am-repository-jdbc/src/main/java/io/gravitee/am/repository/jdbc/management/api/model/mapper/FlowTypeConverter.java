@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.flow;
+package io.gravitee.am.repository.jdbc.management.api.model.mapper;
+
+import com.github.dozermapper.core.DozerConverter;
+import io.gravitee.am.model.flow.Type;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric Leleu (eric.leleu@graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
-    ROOT,
-    LOGIN_IDENTIFIER,
-    LOGIN,
-    CONNECT,
-    CONSENT,
-    REGISTER,
-    RESET_PASSWORD,
-    REGISTRATION_CONFIRMATION,
-    TOKEN,
-    WEBAUTHN_REGISTER;
+public class FlowTypeConverter extends DozerConverter<Type, String> {
 
-    public static Type orNull(String type) {
-        if (type == null) {
-            return null;
-        }
+    public FlowTypeConverter() {
+        super(Type.class, String.class);
+    }
 
-        try {
-            return Type.valueOf(type);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+    @Override
+    public String convertTo(Type type, String s) {
+        return type == null ? null : type.name();
+    }
+
+    @Override
+    public Type convertFrom(String s, Type type) {
+        return Type.orNull(s);
     }
 }
