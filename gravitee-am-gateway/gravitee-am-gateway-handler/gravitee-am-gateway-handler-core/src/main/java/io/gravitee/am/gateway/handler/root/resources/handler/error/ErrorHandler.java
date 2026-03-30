@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
@@ -96,10 +97,12 @@ public class ErrorHandler extends AbstractErrorHandler {
             final HttpServerRequest request = routingContext.request();
             // prepare query parameters
             MultiMap parameters = RequestUtils.getCleanedQueryParams(routingContext.request());
-            // get client if exists
-            Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-            if (client != null) {
+            // get client if exists (may be Client or ClientProperties depending on the execution path)
+            Object clientObj = routingContext.get(CLIENT_CONTEXT_KEY);
+            if (clientObj instanceof Client client) {
                 parameters.set(Parameters.CLIENT_ID, client.getClientId());
+            } else if (clientObj instanceof ClientProperties clientProps) {
+                parameters.set(Parameters.CLIENT_ID, clientProps.getClientId());
             } else if (request.getParam(Parameters.CLIENT_ID) != null) {
                 parameters.set(Parameters.CLIENT_ID, (request.getParam(Parameters.CLIENT_ID)));
             }

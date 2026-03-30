@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresource.ClassLoaderTemplateResource;
 import org.thymeleaf.templateresource.ITemplateResource;
 
 import java.util.Map;
@@ -29,11 +30,17 @@ import java.util.regex.Pattern;
  */
 public class CustomClassLoaderTemplateResolver extends ClassLoaderTemplateResolver {
 
+    private final ClassLoader classLoader;
+
+    public CustomClassLoaderTemplateResolver() {
+        this.classLoader = CustomClassLoaderTemplateResolver.class.getClassLoader();
+    }
+
     @Override
     protected ITemplateResource computeTemplateResource(IEngineConfiguration configuration, String ownerTemplate, String template, String resourceName, String characterEncoding, Map<String, Object> templateResolutionAttributes) {
         if (resourceName.contains(FormManager.TEMPLATE_NAME_SEPARATOR)) {
             resourceName = resourceName.split(Pattern.quote(FormManager.TEMPLATE_NAME_SEPARATOR))[0] + ".html";
         }
-        return super.computeTemplateResource(configuration, ownerTemplate, template, resourceName, characterEncoding, templateResolutionAttributes);
+        return new ClassLoaderTemplateResource(classLoader, resourceName, characterEncoding);
     }
 }
