@@ -53,12 +53,13 @@ public class ManagementApiServer extends JettyHttpServer {
 
     public void attachHandlers() {
 
-        // Create the servlet context.
-        // Explicitly set classLoader to null so Jetty's ContextHandler.enterScope() skips
-        // Thread.setContextClassLoader() — this prevents SecurityException when async
-        // responses are resumed on InnocuousThread (which blocks setContextClassLoader).
-        final ServletContextHandler context = new ServletContextHandler(entrypoint, ServletContextHandler.NO_SESSIONS);
-        context.setClassLoader(null);
+        // Use a custom ServletContextHandler that tolerates InnocuousThread.
+        // JDK InnocuousThread (used by ForkJoinPool compensation threads, MongoDB async driver, etc.)
+        // blocks Thread.setContextClassLoader() with a SecurityException. Jetty's ContextHandler calls
+        // setContextClassLoader in both enterScope() and exitScope() during request dispatch.
+        // When async responses (AsyncResponse.resume()) complete on an InnocuousThread, this causes
+        // the response to fail. This subclass catches and ignores the SecurityException.
+        final ServletContextHandler context = new SafeClassLoaderServletContextHandler(entrypoint, ServletContextHandler.NO_SESSIONS);
         // REST configuration
         final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
         servletHolder.setInitParameter("jakarta.ws.rs.Application", ManagementApplication.class.getName());
