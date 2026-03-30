@@ -125,9 +125,9 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
                             .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
                     .toList();
 
-            sortedVhosts.forEach(virtualHost -> this.router.route(sanitizePath(virtualHost.getPath())).subRouter(VHostRouter.router(domain, virtualHost, domainHandler.router())));
+            sortedVhosts.forEach(virtualHost -> this.router.route(sanitizePath(virtualHost.getPath())).subRouter(VHostRouter.router(vertx, domain, virtualHost, domainHandler.router())));
         } else {
-            this.router.route(sanitizePath(domain.getPath())).subRouter(VHostRouter.router(domain, domainHandler.router()));
+            this.router.route(sanitizePath(domain.getPath())).subRouter(VHostRouter.router(vertx, domain, domainHandler.router()));
         }
     }
 
