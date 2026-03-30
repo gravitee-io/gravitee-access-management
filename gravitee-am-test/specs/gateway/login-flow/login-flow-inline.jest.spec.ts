@@ -391,7 +391,7 @@ describe('Account Locked - REST API', () => {
     expect(user.id).toBeDefined();
     userId = user.id;
 
-    await waitForSyncAfter(fixture.domain.id, () => lockUser(fixture.domain.id, fixture.accessToken, userId));
+    await lockUser(fixture.domain.id, fixture.accessToken, userId);
   });
 
   afterAll(async () => {
