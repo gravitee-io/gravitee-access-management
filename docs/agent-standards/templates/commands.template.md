@@ -15,7 +15,7 @@ Fill commands from:
 - CI configuration (for CI-equivalent commands)
 
 ## Quick start
-- Prerequisites: <e.g. Java 17, Node.js 20>
+- Prerequisites: <e.g. Java 25 per root pom `jdk.version`, Node.js 20>
 - Install deps (backend): <fill>
 - Install deps (frontend): <fill>
 

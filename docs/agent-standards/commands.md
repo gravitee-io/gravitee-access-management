@@ -3,7 +3,7 @@
 This file lists the canonical, **verified** commands for building, testing, linting, and generating artefacts for Gravitee Access Management.
 
 ## Prerequisites
-- Java 17 or higher
+- Java 25 (matches root `pom.xml` property `jdk.version`; older JDKs will fail with `invalid target release`)
 - Maven 3.6+
 - Node.js >= 20.11.1
 - Yarn 4.1.1 (packageManager)
@@ -42,6 +42,18 @@ mvn test -pl gravitee-am-service
 
 # Run specific test class
 mvn test -Dtest="TestClassName"
+```
+
+`mvn test` compiles the selected module; use **`install -pl <module> -am -DskipTests` first** when you need a clean install of that module and all **upstream** dependencies (CI-style), then run tests on the module:
+
+```bash
+mvn clean install \
+  -pl gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-core \
+  -am \
+  -DskipTests
+mvn test \
+  -pl gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-core \
+  -Dtest=MFAEnrollPostEndpointTest
 ```
 
 ### Integration tests

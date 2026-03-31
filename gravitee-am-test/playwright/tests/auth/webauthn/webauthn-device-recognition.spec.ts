@@ -55,7 +55,8 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-5292');
     const clientId = waApp.settings.oauth.clientId;
 
     // Enable device recognition
@@ -123,7 +124,8 @@ test.describe('WebAuthn - Device Recognition (AM-5292)', () => {
     waAdminToken,
     waDomain,
     gatewayUrl,
-  }) => {
+  }, testInfo) => {
+    linkJira(testInfo, 'AM-5292');
     const clientId = waApp.settings.oauth.clientId;
 
     // First enable device recognition so we get the cookie

@@ -16,7 +16,7 @@ If you are an AI agent operating in this repository:
 
 ### Prerequisites
 
-- Java 21+, Maven 3.6+, Node.js >= 20.11.1, Yarn 4.1.1, Docker & Docker Compose
+- Java 25+ (see root `pom.xml` `jdk.version`), Maven 3.6+, Node.js >= 20.11.1, Yarn 4.1.1, Docker & Docker Compose
 
 ### Backend (Java / Maven)
 
@@ -122,7 +122,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 | Layer | Technology                                                    |
 |-------|---------------------------------------------------------------|
-| Backend | Java 21, RxJava 3, Vert.x, Spring                             |
+| Backend | Java 25, RxJava 3, Vert.x, Spring                             |
 | Frontend | Angular, TypeScript                                           |
 | Build | Maven (backend), Yarn 4.1.1 (frontend)                        |
 | Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server               |
