@@ -21,11 +21,13 @@ import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
 
 // Reuse the existing AM test API layer.
-import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
-import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain } from '../../api/commands/management/domain-management-commands';
-import { createApplication, deleteApplication } from '../../api/commands/management/application-management-commands';
-import { createUser, deleteUser } from '../../api/commands/management/user-management-commands';
-import { Domain, Application, User } from '../../api/management/models';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { createApplication, deleteApplication } from '@management-commands/application-management-commands';
+import { createUser, deleteUser } from '@management-commands/user-management-commands';
+import type { Application } from '@management-models/Application';
+import type { Domain } from '@management-models/Domain';
+import type { User } from '@management-models/User';
 
 import { HomePage } from '../pages/home.page';
 import { LoginPage } from '../pages/login.page';

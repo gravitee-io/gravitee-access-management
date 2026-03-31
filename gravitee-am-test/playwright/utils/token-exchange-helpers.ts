@@ -17,14 +17,15 @@ import request from 'supertest';
 import { expect } from '@playwright/test';
 import * as forge from 'node-forge';
 import jwt from 'jsonwebtoken';
-import { getDomainManagerUrl } from '../../api/commands/management/service/utils';
-import { getWellKnownOpenIdConfiguration, performPost, performGet } from '../../api/commands/gateway/oauth-oidc-commands';
-import { waitForSyncAfter, waitForNextSync } from '../../api/commands/gateway/monitoring-commands';
-import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain, waitForOidcReady } from '../../api/commands/management/domain-management-commands';
-import { getAllIdps } from '../../api/commands/management/idp-management-commands';
-import { buildCreateAndTestUser } from '../../api/commands/management/user-management-commands';
-import { createTestApp } from '../../api/commands/utils/application-commands';
-import { applicationBase64Token } from '../../api/commands/gateway/utils';
+import { getDomainManagerUrl } from '@management-commands/service/utils';
+import { getWellKnownOpenIdConfiguration, performPost, performGet } from '@gateway-commands/oauth-oidc-commands';
+import { waitForSyncAfter, waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
+import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
+import { createTestApp } from '@utils-commands/application-commands';
+import { applicationBase64Token } from '@gateway-commands/utils';
+import type { Domain } from '@management-models/Domain';
 import { TOKEN_EXCHANGE_DEFAULTS } from '../fixtures/token-exchange.fixture';
 import { quietly, uniqueTestName } from './fixture-helpers';
 import { API_USER_PASSWORD } from './test-constants';
@@ -369,7 +370,7 @@ export function waitMs(ms: number): Promise<void> {
 const ISSUER_USER_PASSWORD = API_USER_PASSWORD;
 
 export interface IssuerDomain {
-  domain: import('../../api/management/models').Domain;
+  domain: Domain;
   oidcConfig: OidcConfiguration;
   basicAuth: string;
   certificatePem: string;
@@ -384,7 +385,7 @@ export interface IssuerDomain {
  * and a helper to obtain real AM-issued tokens.
  */
 export async function setupIssuerDomain(adminToken: string): Promise<IssuerDomain> {
-  let domain: import('../../api/management/models').Domain | null = null;
+  let domain: Domain | null = null;
   try {
     domain = await quietly(() => createDomain(adminToken, uniqueTestName('pw-issuer-b'), 'Issuer domain for cross-trust tests'));
     await quietly(() => startDomain(domain.id, adminToken));

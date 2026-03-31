@@ -16,7 +16,7 @@
 import { test, expect } from '../../fixtures/base.fixture';
 import { linkJira } from '../../utils/jira';
 import { UserDetailPage } from '../../pages/user-detail.page';
-import { createUser, deleteUser } from '../../../api/commands/management/user-management-commands';
+import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { UI_USER_PASSWORD } from '../../utils/test-constants';
 
 test.describe('User Management — Change Username', () => {

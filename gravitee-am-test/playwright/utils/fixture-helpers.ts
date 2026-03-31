@@ -38,3 +38,20 @@ export const uniqueTestName = (prefix: string) =>
   faker.helpers.slugify(
     `${prefix}-${faker.commerce.productAdjective()}-${faker.animal.type()}-${faker.datatype.number({ min: 1, max: 10000 })}`,
   );
+
+/** Gateway base URL from env, with trailing slash stripped. */
+export function getGatewayBaseUrl(): string {
+  return (process.env.AM_GATEWAY_URL || 'http://localhost:8092').replace(/\/$/, '');
+}
+
+/** Standard OAuth WEB settings used across gateway fixtures. Requires REDIRECT_URI. */
+export function oauthWebSettings(redirectUri: string) {
+  return {
+    redirectUris: [redirectUri],
+    grantTypes: ['authorization_code'],
+    scopeSettings: [
+      { scope: 'openid', defaultScope: true },
+      { scope: 'profile', defaultScope: true },
+    ],
+  };
+}
