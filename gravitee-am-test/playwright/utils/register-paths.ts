@@ -20,6 +20,10 @@ import Module from 'module';
  * Module resolution hook: resolves tsconfig path aliases and shims
  * @jest/globals for Playwright. Loaded in playwright.config.ts.
  *
+ * Aliases match Jest integration tests (`specs/`) so Playwright can import
+ * the Management API layer as `@management-commands/...`, `@management-models/...`,
+ * `@utils-commands/...` instead of fragile `../../../../api/...` depth.
+ *
  * Uses Module._resolveFilename (private Node API). If removed in a
  * future Node version, migrate aliases to tsconfig-paths/register
  * and the jest shim to module.register() (Node 20.6+).

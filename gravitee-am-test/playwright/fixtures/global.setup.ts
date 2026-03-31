@@ -15,8 +15,8 @@
  */
 import { test as setup } from '@playwright/test';
 import { LoginPage } from '../pages/login.page';
-import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
-import { listDomains, safeDeleteDomain } from '../../api/commands/management/domain-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { listDomains, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { ADMIN_PASSWORD } from '../utils/test-constants';
 
 const ADMIN_STORAGE_STATE = 'playwright/fixtures/.auth/admin.json';

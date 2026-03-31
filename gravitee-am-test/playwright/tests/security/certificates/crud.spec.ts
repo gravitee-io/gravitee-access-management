@@ -16,8 +16,8 @@
 import { test, expect } from '../../../fixtures/base.fixture';
 import { linkJira } from '../../../utils/jira';
 import { DomainCertificatesPage } from '../../../pages/domain-certificates.page';
-import { updateCertificateSettings } from '../../../../api/commands/management/domain-management-commands';
-import { getAllCertificates } from '../../../../api/commands/management/certificate-management-commands';
+import { updateCertificateSettings } from '@management-commands/domain-management-commands';
+import { getAllCertificates } from '@management-commands/certificate-management-commands';
 
 test.describe('Certificate CRUD', () => {
   test('display certificate list with system certificate', async ({ page, testDomain }) => {

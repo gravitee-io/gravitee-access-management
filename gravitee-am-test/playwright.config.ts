@@ -31,6 +31,10 @@ process.env.AM_DEF_ORG_ID = process.env.AM_DEF_ORG_ID || 'DEFAULT';
 process.env.AM_DEF_ENV_ID = process.env.AM_DEF_ENV_ID || 'DEFAULT';
 // The Angular router uses the environment hrid (lowercase), not the ID.
 process.env.AM_DEF_ENV_HRID = process.env.AM_DEF_ENV_HRID || 'default';
+// fakeSMTP UI (matches api/config/dev.setup.js) — forgot-password Playwright specs
+process.env.FAKE_SMTP = process.env.FAKE_SMTP || 'http://localhost:5080';
+process.env.INTERNAL_FAKE_SMTP_HOST = process.env.INTERNAL_FAKE_SMTP_HOST || 'smtp';
+process.env.INTERNAL_FAKE_SMTP_PORT = process.env.INTERNAL_FAKE_SMTP_PORT || '5025';
 
 export default defineConfig({
   globalTeardown: './playwright/fixtures/global.teardown.ts',

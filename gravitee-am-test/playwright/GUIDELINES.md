@@ -438,6 +438,10 @@ import { configureTrustedIssuer } from '../../utils/token-exchange-helpers';
 
 Fixtures import from utils. **Never the reverse** (avoids circular imports).
 
+### Path aliases for Management API (preferred over `../../api/...`)
+
+Use the same `@management-commands/...`, `@management-models/...`, `@utils-commands/...`, and `@gateway-commands/...` aliases as Jest specs under `specs/`. They are defined in `gravitee-am-test/tsconfig.json` and resolved at Playwright runtime by `playwright/utils/register-paths.ts` (loaded first from `playwright.config.ts`). All Playwright fixtures, utils, and specs under `playwright/` should import the shared API layer via these aliases (not `../../api/...`). Example: `import { createDomain } from '@management-commands/domain-management-commands';`
+
 ```
 utils/webauthn-helpers.ts       ← CDP helpers, flow helpers, navigation helpers
 utils/test-constants.ts         ← shared constants (regex, timeouts, passwords)
@@ -542,6 +546,12 @@ await navigateToWebAuthnLogin(page, gatewayUrl, clientId);
 ```
 
 The conditional in the helper handles infrastructure non-determinism, not a feature under test. This is the **only** acceptable use of conditional navigation — never use `if/else` around assertions.
+
+### Second authorisation in the same browser context
+
+If a test runs **two** OAuth round-trips on the same `page` / context, the gateway may still hold an **end-user session** after the first callback. A second `goto(authorizeUrl)` can then skip `/login` and sometimes **skip step-up MFA**, going straight to the client **callback with `code`**. Helpers that treat “callback + code” as a successful wait target return immediately while your test still expects `/mfa/challenge` or `/login` — leading to timeouts.
+
+When the scenario requires a **fresh login** or **MFA challenge** on the second leg, call `await page.context().clearCookies()` before that authorisation (or use a new context). The Xray parity example under [§6](#6-xray-test-parity) uses the same pattern for a second login path.
 
 ## 17. WebAuthn / CDP Virtual Authenticator
 
@@ -688,6 +698,9 @@ From `playwright.config.ts`:
 | All tests timeout after one passes | Gateway OOM | See [Gateway OOM](#gateway-oom-under-parallel-load) |
 | 400 errors, fields silently missing | Native fetch instead of cross-fetch | Ensure `base.fixture.ts` sets `globalThis.fetch = crossFetch` |
 | "Element detached from DOM" | `*ngIf` + `.clear()` removes element | Use triple-click + `pressSequentially()` |
+| `waitForURL(/mfa\/challenge/)` timeout on second OAuth | Prior leg left an AM session; second `/authorize` hits callback without step-up | `await page.context().clearCookies()` before the second authorisation (see [Gateway Page Tests §16](#16-gateway-page-tests)) |
+| `Cannot find module '.../api/commands/...'` when loading spec | Wrong relative depth: `../../api` from `playwright/tests/<area>/` resolves under `playwright/`, not `gravitee-am-test/api` | **Prefer aliases** (`@management-commands/...`, `@utils-commands/...`, `@management-models/...`) — same as Jest; resolved at runtime via `playwright/utils/register-paths.ts`. If using relatives: from `playwright/tests/<one-level>/` use `../../../api/...`; from `playwright/fixtures/` use `../../api/...` |
+| Themed `img.logo` still shows `gravitee-logo.svg` | Theme updated only after the gateway loaded the domain context | Set logo and colour fields **before** `startDomain`, or wait for theme propagation and reload the login page |
 
 ## Gateway OOM Under Parallel Load
 
@@ -740,6 +753,7 @@ npx playwright test --reporter=list > /tmp/pw.log 2>&1; echo "EXIT=$?" >> /tmp/p
 ### Patterns
 - [ ] Resources created **before** `startDomain`
 - [ ] `gatewayUrl` fixture starts domain and waits for sync + OIDC ready
+- [ ] Management API / SDK imports use **`@management-commands/...`, `@management-models/...`, `@utils-commands/...`, `@gateway-commands/...`, `@api-fixtures/...`** path aliases (see `gravitee-am-test/tsconfig.json` and `playwright/utils/register-paths.ts`) — same pattern as Jest specs under `specs/`. **Fallback** if an alias is missing: correct relative depth `../../api/...` from `playwright/fixtures/`, `../../../api/...` from `playwright/tests/<one-level>/`, `../../../../api/...` from `playwright/tests/<area>/<subarea>/` — ESLint will not catch wrong depth; Playwright fails at load time
 - [ ] `void fixture;` for ordering dependencies
 - [ ] Cleanup handles errors gracefully (try/catch)
 - [ ] `uniqueTestName()` for all resource names

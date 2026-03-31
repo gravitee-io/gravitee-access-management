@@ -26,9 +26,9 @@ import {
   retryOnStatus,
   IssuerDomain,
 } from '../../../utils/token-exchange-helpers';
-import { waitForSyncAfter } from '../../../../api/commands/gateway/monitoring-commands';
-import { waitForOidcReady } from '../../../../api/commands/management/domain-management-commands';
-import { requestAdminAccessToken } from '../../../../api/commands/management/token-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { waitForOidcReady } from '@management-commands/domain-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 
 const JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';

@@ -18,7 +18,7 @@ import { test as base } from '@playwright/test';
 import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
 
-import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
   startDomain,
@@ -26,24 +26,22 @@ import {
   safeDeleteDomain,
   waitForOidcReady,
   patchDomain,
-} from '../../api/commands/management/domain-management-commands';
-import { getAllIdps } from '../../api/commands/management/idp-management-commands';
-import { createUser, deleteUser } from '../../api/commands/management/user-management-commands';
-import { createTestApp } from '../../api/commands/utils/application-commands';
-import { createFactor } from '../../api/commands/management/factor-management-commands';
-import { createDevice } from '../../api/commands/management/device-management-commands';
-import { patchApplication } from '../../api/commands/management/application-management-commands';
-import { Domain, Application, User } from '../../api/management/models';
+} from '@management-commands/domain-management-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
+import { createUser, deleteUser } from '@management-commands/user-management-commands';
+import { createTestApp } from '@utils-commands/application-commands';
+import { createFactor } from '@management-commands/factor-management-commands';
+import { createDevice } from '@management-commands/device-management-commands';
+import { patchApplication } from '@management-commands/application-management-commands';
+import type { Application } from '@management-models/Application';
+import type { Domain } from '@management-models/Domain';
+import type { User } from '@management-models/User';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
-import { API_USER_PASSWORD } from '../utils/test-constants';
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { API_USER_PASSWORD, MOCK_MFA_CODE } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/webauthn-helpers';
 
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
-/* ------------------------------------------------------------------ */
-
-export const MOCK_MFA_CODE = '1234';
+export { MOCK_MFA_CODE } from '../utils/test-constants';
 
 /* ------------------------------------------------------------------ */
 /*  Fixture types                                                      */
@@ -184,13 +182,7 @@ export const test = base.extend<MfaWebAuthnFixtures>({
       }),
     );
     await use(user);
-    await quietly(async () => {
-      try {
-        await deleteUser(mfaDomain.id, mfaAdminToken, user.id);
-      } catch {
-        // domain teardown may cascade
-      }
-    });
+    await quietly(() => deleteUser(mfaDomain.id, mfaAdminToken, user.id).catch(() => {}));
   },
 
   gatewayUrl: async ({ mfaAdminToken, mfaDomain, mfaApp, mfaUser }, use) => {
@@ -201,8 +193,7 @@ export const test = base.extend<MfaWebAuthnFixtures>({
     await quietly(() => startDomain(mfaDomain.id, mfaAdminToken));
     await quietly(() => waitForDomainSync(mfaDomain.id));
     await waitForOidcReady(mfaDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
-    const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
-    await use(`${baseUrl}/${mfaDomain.hrid}`);
+    await use(`${getGatewayBaseUrl()}/${mfaDomain.hrid}`);
   },
 });
 

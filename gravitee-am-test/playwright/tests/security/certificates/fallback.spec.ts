@@ -15,7 +15,7 @@
  */
 import { test as base, expect } from '@playwright/test';
 
-import { requestAdminAccessToken } from '../../../../api/commands/management/token-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
   startDomain,
@@ -24,28 +24,25 @@ import {
   waitForOidcReady,
   updateCertificateSettings,
   getDomain,
-} from '../../../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../../../api/commands/gateway/monitoring-commands';
-import {
-  createCertificate,
-  getAllCertificates,
-  deleteCertificate,
-} from '../../../../api/commands/management/certificate-management-commands';
-import {
-  deleteApplication,
-} from '../../../../api/commands/management/application-management-commands';
-import { buildCreateAndTestUser } from '../../../../api/commands/management/user-management-commands';
-import { getAllIdps } from '../../../../api/commands/management/idp-management-commands';
-import { createTestApp } from '../../../../api/commands/utils/application-commands';
-import { applicationBase64Token } from '../../../../api/commands/gateway/utils';
-import { Domain, Application, User, Certificate } from '../../../../api/management/models';
-import { buildCertificate } from '../../../../api/fixtures/certificates';
+} from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { createCertificate, getAllCertificates, deleteCertificate } from '@management-commands/certificate-management-commands';
+import { deleteApplication } from '@management-commands/application-management-commands';
+import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
+import { createTestApp } from '@utils-commands/application-commands';
+import { applicationBase64Token } from '@gateway-commands/utils';
+import type { Application } from '@management-models/Application';
+import type { Certificate } from '@management-models/Certificate';
+import type { Domain } from '@management-models/Domain';
+import type { User } from '@management-models/User';
+import { buildCertificate } from '@api-fixtures/certificates';
 import { obtainSubjectToken, fetchOidcConfig, OidcConfiguration, parseJwt } from '../../../utils/token-exchange-helpers';
 import { linkJira } from '../../../utils/jira';
 import { quietly, uniqueTestName } from '../../../utils/fixture-helpers';
 import { API_USER_PASSWORD, JWT_FORMAT } from '../../../utils/test-constants';
 import request from 'supertest';
-import { getOrganisationManagementUrl } from '../../../../api/commands/management/service/utils';
+import { getOrganisationManagementUrl } from '@management-commands/service/utils';
 
 /** Poll org-level audit API until a matching SUCCESS event appears.
  *  By default matches on target.id === targetId. For domain-level events (DOMAIN_UPDATED),

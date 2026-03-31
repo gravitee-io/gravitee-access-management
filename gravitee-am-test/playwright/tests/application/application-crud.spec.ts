@@ -17,7 +17,7 @@ import { test, expect } from '../../fixtures/base.fixture';
 import { linkJira } from '../../utils/jira';
 import { ApplicationCreationPage } from '../../pages/application-creation.page';
 import { ApplicationGeneralSettingsPage } from '../../pages/application-general-settings.page';
-import { deleteApplication } from '../../../api/commands/management/application-management-commands';
+import { deleteApplication } from '@management-commands/application-management-commands';
 import { uniqueTestName } from '../../utils/fixture-helpers';
 
 /** Application CRUD tests — fixtures handle API setup/teardown. */

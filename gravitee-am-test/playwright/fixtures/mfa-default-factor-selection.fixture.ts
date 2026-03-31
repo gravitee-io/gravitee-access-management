@@ -1,0 +1,179 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { test as base } from '@playwright/test';
+
+import crossFetch from 'cross-fetch';
+globalThis.fetch = crossFetch;
+
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import {
+  createDomain,
+  startDomain,
+  waitForDomainSync,
+  safeDeleteDomain,
+  waitForOAuthAuthorizeRedirectsToLogin,
+  waitForOidcReady,
+} from '@management-commands/domain-management-commands';
+import { createUser, deleteUser } from '@management-commands/user-management-commands';
+import { createTestApp } from '@utils-commands/application-commands';
+import { createFactor } from '@management-commands/factor-management-commands';
+import { patchApplication } from '@management-commands/application-management-commands';
+import type { Application } from '@management-models/Application';
+import type { Domain } from '@management-models/Domain';
+import type { User } from '@management-models/User';
+
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { API_USER_PASSWORD, MOCK_MFA_CODE } from '../utils/test-constants';
+import { REDIRECT_URI } from '../utils/mfa-helpers';
+
+/** Mock verification code for the **default** factor (distinct from {@link MOCK_MFA_CODE}). */
+export const DEFAULT_SELECTION_MOCK_CODE = '5678';
+
+export type MfaDefaultFactorFixtures = {
+  adminToken: string;
+  defDomain: Domain;
+  mismatchFactorId: string;
+  defaultFactorId: string;
+  defApp: Application;
+  defUser: User;
+  gatewayUrl: string;
+};
+
+export const test = base.extend<MfaDefaultFactorFixtures>({
+  adminToken: async ({}, use) => {
+    await use(await requestAdminAccessToken());
+  },
+
+  defDomain: async ({ adminToken }, use) => {
+    const name = uniqueTestName('pw-mfa-def-factor');
+    const domain = await quietly(() =>
+      createDomain(adminToken, name, 'Phase 9 AM-2820 — default factor when rules miss'),
+    );
+    await use(domain);
+    await quietly(() => safeDeleteDomain(domain.id, adminToken));
+  },
+
+  mismatchFactorId: async ({ adminToken, defDomain }, use) => {
+    const factor = await quietly(() =>
+      createFactor(defDomain.id, adminToken, {
+        type: 'mock-am-factor',
+        factorType: 'MOCK',
+        configuration: `{"code":"${MOCK_MFA_CODE}"}`,
+        name: uniqueTestName('mock-never-selected'),
+      }),
+    );
+    await use(factor.id);
+  },
+
+  defaultFactorId: async ({ adminToken, defDomain }, use) => {
+    const factor = await quietly(() =>
+      createFactor(defDomain.id, adminToken, {
+        type: 'mock-am-factor',
+        factorType: 'MOCK',
+        configuration: `{"code":"${DEFAULT_SELECTION_MOCK_CODE}"}`,
+        name: uniqueTestName('mock-default'),
+      }),
+    );
+    await use(factor.id);
+  },
+
+  defApp: async ({ adminToken, defDomain, mismatchFactorId, defaultFactorId }, use) => {
+    const app = await quietly(() =>
+      createTestApp(uniqueTestName('pw-def-factor-app'), defDomain, adminToken, 'WEB', {
+        settings: {
+          oauth: {
+            redirectUris: [REDIRECT_URI],
+            grantTypes: ['authorization_code'],
+            scopeSettings: [
+              { scope: 'openid', defaultScope: true },
+              { scope: 'profile', defaultScope: true },
+            ],
+          },
+        },
+        identityProviders: new Set([{ identity: `default-idp-${defDomain.id}`, priority: 0 }]),
+      }),
+    );
+
+    await quietly(() =>
+      patchApplication(defDomain.id, adminToken, {
+        settings: {
+          mfa: {
+            factor: {
+              defaultFactorId,
+              applicationFactors: [
+                {
+                  id: mismatchFactorId,
+                  selectionRule: "{#request.params['username'] matches '^__impossible_username__$'}",
+                },
+                { id: defaultFactorId, selectionRule: '' },
+              ],
+            },
+            enroll: {
+              active: true,
+              forceEnrollment: true,
+              type: 'REQUIRED',
+            },
+            challenge: {
+              active: true,
+              type: 'REQUIRED',
+            },
+          },
+          advanced: { skipConsent: true },
+        },
+      }, app.id),
+    );
+
+    await use(app);
+  },
+
+  defUser: async ({ adminToken, defDomain }, use) => {
+    const user = await quietly(() =>
+      createUser(defDomain.id, adminToken, {
+        firstName: 'Def',
+        lastName: 'Factor',
+        email: `${uniqueTestName('def-factor-user')}@example.com`,
+        username: uniqueTestName('def-factor-user'),
+        password: API_USER_PASSWORD,
+        preRegistration: false,
+      }),
+    );
+    await use(user);
+    await quietly(() => deleteUser(defDomain.id, adminToken, user.id).catch(() => {}));
+  },
+
+  gatewayUrl: async ({ adminToken, defDomain, defApp, defUser }, use) => {
+    if (!defApp?.id || !defUser?.id) {
+      throw new Error('gatewayUrl: application or user not initialised');
+    }
+    await quietly(() => startDomain(defDomain.id, adminToken));
+    await quietly(() => waitForDomainSync(defDomain.id, { timeoutMillis: 90_000, intervalMillis: 500 }));
+    await waitForOidcReady(defDomain.hrid, { timeoutMs: 45_000, intervalMs: 500 });
+    await waitForOAuthAuthorizeRedirectsToLogin(defDomain.hrid, defApp.settings.oauth.clientId, REDIRECT_URI, {
+      timeoutMs: 90_000,
+      intervalMs: 500,
+    });
+    await use(`${getGatewayBaseUrl()}/${defDomain.hrid}`);
+  },
+});
+
+export { expect } from '@playwright/test';
+export {
+  buildAuthorizeUrl,
+  submitLogin,
+  enrollMockFactor,
+  completeMfaChallenge,
+  handleConsentIfPresent,
+} from '../utils/mfa-helpers';

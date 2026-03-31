@@ -18,7 +18,7 @@ import { test as base } from '@playwright/test';
 import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
 
-import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
   startDomain,
@@ -26,13 +26,15 @@ import {
   safeDeleteDomain,
   waitForOidcReady,
   patchDomain,
-} from '../../api/commands/management/domain-management-commands';
-import { getAllIdps } from '../../api/commands/management/idp-management-commands';
-import { createUser, deleteUser } from '../../api/commands/management/user-management-commands';
-import { createTestApp } from '../../api/commands/utils/application-commands';
-import { Domain, Application, User } from '../../api/management/models';
+} from '@management-commands/domain-management-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
+import { createUser, deleteUser } from '@management-commands/user-management-commands';
+import { createTestApp } from '@utils-commands/application-commands';
+import type { Application } from '@management-models/Application';
+import type { Domain } from '@management-models/Domain';
+import type { User } from '@management-models/User';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/webauthn-helpers';
 
@@ -157,13 +159,7 @@ export const test = base.extend<WebAuthnFixtures>({
 
     await use(user);
 
-    await quietly(async () => {
-      try {
-        await deleteUser(waDomain.id, waAdminToken, user.id);
-      } catch {
-        // domain teardown may cascade
-      }
-    });
+    await quietly(() => deleteUser(waDomain.id, waAdminToken, user.id).catch(() => {}));
   },
 
   gatewayUrl: async ({ waAdminToken, waDomain, waApp, waUser }, use) => {
@@ -175,8 +171,7 @@ export const test = base.extend<WebAuthnFixtures>({
     await quietly(() => startDomain(waDomain.id, waAdminToken));
     await quietly(() => waitForDomainSync(waDomain.id));
     await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
-    const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
-    await use(`${baseUrl}/${waDomain.hrid}`);
+    await use(`${getGatewayBaseUrl()}/${waDomain.hrid}`);
   },
 });
 

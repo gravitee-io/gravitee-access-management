@@ -18,14 +18,16 @@ import { test as base } from '@playwright/test';
 import crossFetch from 'cross-fetch';
 globalThis.fetch = crossFetch;
 
-import { requestAdminAccessToken } from '../../api/commands/management/token-management-commands';
-import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain, waitForOidcReady } from '../../api/commands/management/domain-management-commands';
-import { waitForNextSync } from '../../api/commands/gateway/monitoring-commands';
-import { getAllIdps } from '../../api/commands/management/idp-management-commands';
-import { buildCreateAndTestUser } from '../../api/commands/management/user-management-commands';
-import { createTestApp } from '../../api/commands/utils/application-commands';
-import { applicationBase64Token } from '../../api/commands/gateway/utils';
-import { Domain, Application, User } from '../../api/management/models';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitForNextSync } from '@gateway-commands/monitoring-commands';
+import { getAllIdps } from '@management-commands/idp-management-commands';
+import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
+import { createTestApp } from '@utils-commands/application-commands';
+import { applicationBase64Token } from '@gateway-commands/utils';
+import type { Application } from '@management-models/Application';
+import type { Domain } from '@management-models/Domain';
+import type { User } from '@management-models/User';
 
 import {
   OidcConfiguration,
