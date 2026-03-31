@@ -42,7 +42,9 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.subjects.CompletableSubject;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
@@ -65,6 +67,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -776,6 +780,95 @@ public class MFAEnrollPostEndpointTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
 
+        verify(userService, times(1)).setMfaEnrollmentSkippedTime(any(), any());
+    }
+
+    /**
+     * Regression: skip must not call {@code routingContext.next()} until {@code setMfaEnrollmentSkippedTime}
+     * completes. Otherwise the redirect runs before session MFA flags are set (visible under slower JDBC).
+     */
+    @Test
+    public void shouldNotSendRedirectBeforeSkipPersistenceCompletes() throws Exception {
+        final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
+        final var EMAIL_ADDR = "fake@acme.com";
+        final var USER_ACCEPT_ENROLL = false;
+
+        CompletableSubject skipPersistencePending = CompletableSubject.create();
+        when(userService.setMfaEnrollmentSkippedTime(any(), any())).thenReturn(skipPersistencePending);
+
+        router.route(HttpMethod.POST, REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    user.setId("userId");
+
+                    Client client = new Client();
+
+                    var mfa = new MFASettings();
+                    var enroll = new EnrollSettings();
+                    enroll.setActive(true);
+                    enroll.setForceEnrollment(true);
+                    enroll.setType(MfaEnrollType.CONDITIONAL);
+                    mfa.setEnroll(enroll);
+                    client.setMfaSettings(mfa);
+
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+                    ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
+                    ctx.session().put(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
+
+                    ctx.next();
+                })
+                .handler(new MFAEnrollPostEndpoint(factorManager, userService))
+                .handler(new FinalRedirectLocationHandler())
+                .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
+
+        Buffer formBody = Buffer.buffer();
+        formBody
+                .appendString("factorId=" + ENROLL_FACTOR_ID)
+                .appendString("&")
+                .appendString(ConstantKeys.USER_MFA_ENROLLMENT + "=" + USER_ACCEPT_ENROLL)
+                .appendString("&")
+                .appendString(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET + "=" + UUID.randomUUID())
+                .appendString("&")
+                .appendString(ConstantKeys.MFA_ENROLLMENT_EMAIL + "=" + EMAIL_ADDR);
+
+        CountDownLatch responseLatch = new CountDownLatch(1);
+        client.rxRequest(HttpMethod.POST, server.actualPort(), "localhost", REQUEST_PATH)
+                .flatMap(request -> {
+                    request.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    request.setChunked(true);
+                    return request.rxSend(formBody);
+                })
+                .subscribe(
+                        response -> {
+                            Assert.assertEquals(HttpStatusCode.FOUND_302, response.statusCode());
+                            String location = response.headers().get(HttpHeaders.LOCATION);
+                            Assert.assertNotNull(location);
+                            Assert.assertTrue(location.contains("/authorize"));
+                            responseLatch.countDown();
+                        },
+                        err -> {
+                            err.printStackTrace();
+                            Assert.fail(err.getMessage());
+                        });
+
+        CountDownLatch delayElapsed = new CountDownLatch(1);
+        vertx.setTimer(100L, id -> delayElapsed.countDown());
+        Assert.assertTrue(delayElapsed.await(5, TimeUnit.SECONDS));
+        Assert.assertEquals(
+                "HTTP response must not complete before setMfaEnrollmentSkippedTime completes",
+                1,
+                responseLatch.getCount());
+
+        CountDownLatch completionScheduled = new CountDownLatch(1);
+        vertx.runOnContext(v -> {
+            skipPersistencePending.onComplete();
+            completionScheduled.countDown();
+        });
+        Assert.assertTrue(completionScheduled.await(5, TimeUnit.SECONDS));
+
+        Assert.assertTrue(responseLatch.await(10, TimeUnit.SECONDS));
         verify(userService, times(1)).setMfaEnrollmentSkippedTime(any(), any());
     }
 }
