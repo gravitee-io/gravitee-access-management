@@ -16,11 +16,10 @@
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import {
-  createDomain,
   safeDeleteDomain,
-  patchDomain,
   setupDomainForTest,
-  startDomain,
+  waitForDomainSync,
+  waitFor,
 } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, resetUserPassword } from '@management-commands/user-management-commands';
 
@@ -48,7 +47,7 @@ describe('Testing password history...', () => {
     });
 
     user = await buildCreateAndTestUser(domain.id, accessToken, -1, false);
-    await new Promise((r) => setTimeout(r, 1000));
+    await waitForDomainSync(domain.id);
   });
 
   const desc = (password) => `when an admin resets a user's password with ${password}`;
@@ -96,11 +95,12 @@ describe('Testing password history...', () => {
   });
 
   afterEach(async () => {
-    await new Promise((r) => setTimeout(r, 1000)); //Need this delay, otherwise password history doesn't have time to update before subsequent reset requests.
+    // Brief delay to let password history persist in the database before the next test
+    await waitFor(500);
   });
 
   afterAll(async () => {
-    await new Promise((r) => setTimeout(r, 1000)); //Delay to prevent domain being cleaned up before reset completes
+    await waitFor(500);
     if (domain && domain.id) {
       await safeDeleteDomain(domain.id, accessToken);
     }

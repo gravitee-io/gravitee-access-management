@@ -225,7 +225,6 @@ describe('Flow Execution - Conditional Flows', () => {
 
     // Login WITHOUT the callout parameter
     const { postLoginRedirect } = await fixture.loginAndGetJwt();
-    await new Promise((r) => setTimeout(r, 1000));
     await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
     // Email should NOT have been sent
@@ -247,7 +246,6 @@ describe('Flow Execution - Conditional Flows', () => {
 
     // Login WITH the callout parameter
     const { postLoginRedirect } = await fixture.loginAndGetJwt('callout=true');
-    await new Promise((r) => setTimeout(r, 1000));
     await logoutUser(fixture.openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
     // Email SHOULD have been sent

@@ -740,9 +740,6 @@ public class UserServiceTest {
                 client,
                 mock(io.gravitee.am.identityprovider.api.User.class)).test();
 
-        // wait for the email service execution
-        Thread.sleep(1000);
-
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(tokenService, never()).deleteByUser(any());
@@ -772,9 +769,6 @@ public class UserServiceTest {
                 new ForgotPasswordParameters(user.getEmail(), true, true),
                 client,
                 mock(io.gravitee.am.identityprovider.api.User.class)).test();
-
-        // wait for the email service execution
-        Thread.sleep(1000);
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(EnforceUserIdentityException.class);

@@ -602,6 +602,28 @@ await updateApplication(domain.id, accessToken, updateRequest, app.id);
 await waitForNextSync(domain.id);
 ```
 
+#### After Domain Config Changes (patchDomain, updateFlows)
+
+When you modify the **domain configuration** itself (not just creating resources), the gateway redeploys its HTTP routing. There is a brief window after `waitForDomainSync` / `waitForSyncAfter` reports success where routing is not yet active. Always follow domain config mutations with `waitForOidcReady`:
+
+```typescript
+// After patchDomain with domain-level settings (accountSettings, loginSettings, oidc, scim, etc.)
+await waitForSyncAfter(domain.id, () =>
+  patchDomain(domain.id, accessToken, { accountSettings: { ... } }),
+);
+// Gateway may briefly return 404 while redeploying routes — wait for routing to be live
+await waitForOidcReady(domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+
+// After updating application flows
+await updateApplicationFlows(domain.id, accessToken, application.id, flows);
+await waitForDomainSync(domain.id);
+await waitForOidcReady(domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+```
+
+**Why:** `waitForDomainSync` / `waitForSyncAfter` checks the `_node/domains` endpoint which reports sync completion. But the gateway's Vert.x HTTP handler chain rebuilds **asynchronously after** the sync — there is a gap where the domain is "synced" but routes return 404 or redirect unexpectedly. `waitForOidcReady` polls the OIDC discovery endpoint until it returns 200, confirming that HTTP routing is fully active.
+
+**When NOT needed:** Creating resources (apps, users, IdPs) within an already-started domain does NOT require `waitForOidcReady` — only `waitForSyncAfter` or `waitForDomainSync`. The routing gap only occurs when domain-level config changes trigger a full route redeploy.
+
 #### Anti-patterns (DO NOT USE)
 
 ```typescript
@@ -1042,6 +1064,7 @@ Before submitting a test file, ensure:
 - [ ] Uses `uniqueName()` for all resource names
 - [ ] Uses `setupDomainForTest` with `waitForStart: true` for domain setup
 - [ ] Uses `waitForDomainSync` or `waitForNextSync` after resource changes (no raw `waitFor()` delays)
+- [ ] Uses `waitForOidcReady` after `patchDomain` or `updateFlows` mutations that change domain config
 - [ ] Does **not** call `getWellKnownOpenIdConfiguration` directly for setup (use `setupDomainForTest` or `waitForOidcReady`)
 - [ ] Error handling in fixture setup
 - [ ] Cleanup in `afterAll` (even if domain deletion cascades)

@@ -142,11 +142,13 @@ describe('Scope Discovery', () => {
       discovery: true,
     });
 
-    const wallet = await createScope(fixture.domain.id, fixture.accessToken, {
-      key: 'wallet',
-      name: 'wallet',
-      description: 'wallet information',
-    });
+    const wallet = await waitForSyncAfter(fixture.domain.id, () =>
+      createScope(fixture.domain.id, fixture.accessToken, {
+        key: 'wallet',
+        name: 'wallet',
+        description: 'wallet information',
+      }),
+    );
     walletScopeId = wallet.id;
   });
 

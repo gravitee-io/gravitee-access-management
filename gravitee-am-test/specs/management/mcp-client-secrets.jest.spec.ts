@@ -52,10 +52,6 @@ describe('MCP Client Secrets Management', () => {
 
   it('should rotate (renew) secret', async () => {
     const secretToRenew = await fixture.createSecret('secret-to-renew');
-
-    // Wait briefly to ensure timestamps might differ if relevant, though we check value
-    await new Promise((r) => setTimeout(r, 2000));
-
     const renewedSecret = await fixture.renewSecret(secretToRenew.id!);
     expect(renewedSecret).toBeDefined();
     expect(renewedSecret.id).toEqual(secretToRenew.id);

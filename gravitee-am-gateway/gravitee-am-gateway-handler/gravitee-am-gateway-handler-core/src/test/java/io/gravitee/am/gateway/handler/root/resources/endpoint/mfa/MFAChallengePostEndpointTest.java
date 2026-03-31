@@ -319,17 +319,15 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
 
         mfaChallengeEndpoint.handle(spyRoutingContext);
 
-        int attempt = 20;
+        int attempt = 200;
         while (attempt > 0) {
-            try {
-                assertFalse(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+            if (!spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY)) {
                 break;
-            } catch (Exception e) {
-                Thread.sleep(1000);
-                --attempt;
             }
-
+            Thread.sleep(100);
+            --attempt;
         }
+        assertFalse(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
     }
 
     @Test
