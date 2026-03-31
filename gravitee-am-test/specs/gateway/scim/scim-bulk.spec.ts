@@ -72,7 +72,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {},
     };
 
@@ -94,7 +94,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation1: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: user,
@@ -103,7 +103,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation2: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: user,
@@ -112,7 +112,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation3: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: uniqueName('user', true),
@@ -171,7 +171,7 @@ describe('SCIM Bulk endpoint', () => {
     const updateOp: BulkOperation = {
       method: 'PUT',
       path: '/Users/' + userLocation.substring(userLocation.lastIndexOf('/') + 1),
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: changedUser,
     };
 
@@ -205,7 +205,7 @@ describe('SCIM Bulk endpoint', () => {
     const updateOp: BulkOperation = {
       method: 'PUT',
       path: '/Users/' + random.word(),
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: random.word(),
@@ -236,7 +236,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation1: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: name,
@@ -245,7 +245,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation2: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: name,
@@ -254,7 +254,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation3: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: name,
@@ -263,7 +263,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation4: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: uniqueName('skye', true),
@@ -312,7 +312,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation1: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: name,
@@ -321,7 +321,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation2: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: name,
@@ -330,7 +330,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation3: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: uniqueName('sky', true),
@@ -339,7 +339,7 @@ describe('SCIM Bulk endpoint', () => {
     const operation4: BulkOperation = {
       method: 'POST',
       path: '/Users',
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
         userName: uniqueName('chase', true),
@@ -395,7 +395,7 @@ describe('SCIM Bulk endpoint', () => {
       const operation: BulkOperation = {
         method: 'POST',
         path: '/Users',
-        bulkId: random.word(),
+        bulkId: uniqueName('bulk', true),
         data: {
           schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
           userName: createRandomString(1000),
@@ -426,7 +426,7 @@ describe('SCIM Bulk endpoint', () => {
     const patchOp: BulkOperation = {
       method: 'PATCH',
       path: '/Users/' + user.id,
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
         Operations: [
@@ -480,7 +480,7 @@ describe('SCIM Bulk endpoint', () => {
     const patchOp: BulkOperation = {
       method: 'PATCH',
       path: '/Users/' + random.word(),
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
       data: {
         schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
         Operations: [
@@ -521,7 +521,7 @@ describe('SCIM Bulk endpoint', () => {
     const deleteOp: BulkOperation = {
       method: 'DELETE',
       path: '/Users/' + random.word(),
-      bulkId: random.word(),
+      bulkId: uniqueName('bulk', true),
     };
 
     const deleteRequest: BulkRequest = {

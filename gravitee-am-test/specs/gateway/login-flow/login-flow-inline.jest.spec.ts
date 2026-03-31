@@ -19,7 +19,7 @@ import { getHeaderLocation, login, loginUserNameAndPassword } from '@gateway-com
 import { performGet, performPost, logoutUser, requestToken } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { patchDomain } from '@management-commands/domain-management-commands';
+import { patchDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { createUser, deleteUser, lockUser, updateUserStatus } from '@management-commands/user-management-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { uniqueName } from '@utils-commands/misc';
@@ -316,7 +316,10 @@ describe('Account Disabled', () => {
   });
 
   it('should reject login for a disabled user', async () => {
-    await waitForSyncAfter(fixture.domain.id, () => updateUserStatus(fixture.domain.id, fixture.accessToken, userId, false));
+    await waitForSyncAfter(fixture.domain.id, () =>
+      updateUserStatus(fixture.domain.id, fixture.accessToken, userId, false),
+    );
+    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
 
     const clientId = fixture.appAccountTests.settings.oauth.clientId;
     const postLogin = await fixture.attemptLogin(clientId, testUsername, testPassword);
@@ -350,6 +353,18 @@ describe('Account Locked - Login Attempt', () => {
         fixture.appSso1.id,
       ),
     );
+    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+  });
+
+  afterAll(async () => {
+    try {
+      await patchDomain(fixture.domain.id, fixture.accessToken, {
+        accountSettings: { inherited: false, loginAttemptsDetectionEnabled: false },
+      });
+      await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+    } catch (e) {
+      console.warn('Failed to reset account settings after locked-attempt tests:', e);
+    }
   });
 
   it('should fail on first login attempt with wrong password and lock account', async () => {
@@ -391,7 +406,10 @@ describe('Account Locked - REST API', () => {
     expect(user.id).toBeDefined();
     userId = user.id;
 
-    await lockUser(fixture.domain.id, fixture.accessToken, userId);
+    await waitForSyncAfter(fixture.domain.id, () =>
+      lockUser(fixture.domain.id, fixture.accessToken, userId),
+    );
+    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
   });
 
   afterAll(async () => {

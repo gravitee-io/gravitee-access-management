@@ -34,13 +34,16 @@ import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -51,7 +54,9 @@ import java.util.concurrent.TimeUnit;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -77,11 +82,12 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private OAuth2AuthProvider oAuth2AuthProvider;
 
-    private final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
+    private OAuth2AuthHandler oAuth2AuthHandler;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
     }
 
     @Test
@@ -97,10 +103,14 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
     }
 
-    // TODO : need to mock Async Handler of the oauth2AuthHandler
     @Test
-    @Ignore
     public void shouldNotGetConsent_invalid_token() throws Exception {
+        doAnswer(invocation -> {
+            Handler<AsyncResult<io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse>> handler = invocation.getArgument(2);
+            handler.handle(Future.failedFuture(new InvalidTokenException("Invalid access token")));
+            return null;
+        }).when(oAuth2AuthProvider).decodeToken(anyString(), anyBoolean(), any());
+
         router.route("/users/:userId/consents/:consentId")
                 .handler(oAuth2AuthHandler)
                 .handler(underTest::get)

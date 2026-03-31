@@ -37,7 +37,7 @@ public class UserFactorUpdaterTest {
     @Test
     public void shouldNotUpdateFactors_NoChannel () {
         EnrolledFactor factor = new EnrolledFactor();
-        Assume.assumeTrue(factor.getChannel() == null);
+        assertNull("Factor channel must be null by default", factor.getChannel());
 
         User existingUser = new User();
         existingUser.setEmail("email@domain.org");

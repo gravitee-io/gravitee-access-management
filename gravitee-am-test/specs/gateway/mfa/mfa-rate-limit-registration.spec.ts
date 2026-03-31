@@ -28,6 +28,7 @@ import {
   startDomain,
   waitForDomainStart,
   waitForDomainSync,
+  waitForOidcReady,
 } from '@management-commands/domain-management-commands';
 import {
   createApplication,
@@ -280,6 +281,8 @@ beforeAll(async () => {
 
   await updateApplicationFlows(domain.id, accessToken, application.id, flows);
   await waitForDomainSync(domain.id);
+  // After flow update, gateway may briefly redeploy routes — wait for routing to be live.
+  await waitForOidcReady(domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
 
   // Get SCIM access token
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);

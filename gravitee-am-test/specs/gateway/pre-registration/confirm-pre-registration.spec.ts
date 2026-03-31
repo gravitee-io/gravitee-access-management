@@ -246,8 +246,6 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
     expect(createdUser.registrationAccessToken).toBeDefined();
 
     // Check that no email was sent (dynamic registration enabled, so no email should be sent)
-    // Wait a bit to ensure no email is sent
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     // Check that no email exists for this user
     expect(await hasEmail(1000, preRegisteredUserWithApp.email)).toBeFalsy();
   });

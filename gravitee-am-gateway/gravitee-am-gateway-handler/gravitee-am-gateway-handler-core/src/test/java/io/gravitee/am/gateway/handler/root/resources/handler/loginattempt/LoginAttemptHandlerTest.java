@@ -39,9 +39,13 @@ import java.util.Arrays;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -149,9 +153,14 @@ public class LoginAttemptHandlerTest {
         challengeSettings.setChallengeRule("{#variable == true}");
         client.setMfaSettings(mfaSettings);
 
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(_ -> {
+            latch.countDown();
+            return null;
+        }).when(spyRoutingContext).next();
+
         loginAttemptHandler.handle(spyRoutingContext);
-        //Necessary so the reactive consumer is consumed
-        Thread.sleep(1000);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
         verify(spyRoutingContext, times(1)).next();
     }
 
@@ -161,9 +170,14 @@ public class LoginAttemptHandlerTest {
         spyRoutingContext.putParam(USERNAME_PARAM_KEY, "username");
         doReturn(true).when(userActivityService).canSaveUserActivity();
 
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(_ -> {
+            latch.countDown();
+            return null;
+        }).when(spyRoutingContext).next();
+
         loginAttemptHandler.handle(spyRoutingContext);
-        //Necessary so the reactive consumer is consumed
-        Thread.sleep(1000);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
         verify(spyRoutingContext, times(1)).next();
     }
 

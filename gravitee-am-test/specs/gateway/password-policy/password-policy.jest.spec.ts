@@ -130,7 +130,6 @@ describe('password policy management', () => {
     await assignPasswordPolicyToIdp(fixture.domain.id, fixture.accessToken, fixture.customIdp.id, policy.id);
 
     user = await createOneUser('correct-user', fixture.customIdp.id);
-    await new Promise((r) => setTimeout(r, 1000));
 
     const fetchUser = await getUser(fixture.domain.id, fixture.accessToken, user.id);
     expect(fetchUser).toBeDefined();
@@ -145,7 +144,6 @@ describe('password policy management', () => {
     await assignPasswordPolicyToIdp(fixture.domain.id, fixture.accessToken, fixture.customIdp.id, policy.id);
 
     user = await createOneUser('correct-user-2', fixture.customIdp2.id);
-    await new Promise((r) => setTimeout(r, 1000));
 
     const fetchUser = await getUser(fixture.domain.id, fixture.accessToken, user.id);
     expect(fetchUser).toBeDefined();

@@ -14,42 +14,48 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { followRedirectTag, uniqueName } from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 import {
-  setupSamlTestDomains,
-  cleanupSamlTestDomains,
   SamlTestDomains,
   SamlFixture,
+  SamlProviderDomain,
+  setupSamlProviderDomain,
+  addClientDomain,
+  createSamlProvider,
   setupSamlProviderTest,
   setupSamlProviderTestViaMetadataUrl,
   setupSamlProviderTestViaMetadataFile,
   getProviderMetadataUrl,
   TEST_USER,
 } from './setup';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { performGet, performFormPost, requestToken } from '@gateway-commands/oauth-oidc-commands';
+import { safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import * as zlib from 'zlib';
-import { getCurrentUser } from '@management-commands/organisation-user-commands';
 import { setup } from '../../test-fixture';
 
 setup(200000);
 
+let provider: SamlProviderDomain;
 let domains: SamlTestDomains;
-let accessToken: string;
 let samlFixture: SamlFixture;
 
 beforeAll(async function () {
-  accessToken = await requestAdminAccessToken();
-  domains = await setupSamlTestDomains(uniqueName('saml-basic', true).toLowerCase());
-  samlFixture = await setupSamlProviderTest(uniqueName('saml-auth', true).toLowerCase());
+  provider = await setupSamlProviderDomain(uniqueName('saml-shared', true).toLowerCase());
+
+  domains = await addClientDomain(provider, createSamlProvider, uniqueName('saml-basic', true).toLowerCase());
+
+  samlFixture = await setupSamlProviderTest(uniqueName('saml-auth', true).toLowerCase(), undefined, provider);
 });
 
 afterAll(async function () {
-  if (domains && accessToken) {
-    await cleanupSamlTestDomains(accessToken, domains);
-  }
   if (samlFixture) {
     await samlFixture.cleanup();
+  }
+  if (domains) {
+    await safeDeleteDomain(domains.clientDomain.id, provider.accessToken);
+  }
+  if (provider) {
+    await safeDeleteDomain(provider.domain.id, provider.accessToken);
   }
 });
 
@@ -311,7 +317,7 @@ describe('SAML IdP configured via METADATA_URL', () => {
   let metadataUrlFixture: SamlFixture;
 
   beforeAll(async () => {
-    metadataUrlFixture = await setupSamlProviderTestViaMetadataUrl(uniqueName('saml-meta-url', true).toLowerCase());
+    metadataUrlFixture = await setupSamlProviderTestViaMetadataUrl(uniqueName('saml-meta-url', true).toLowerCase(), provider);
   });
 
   afterAll(async () => {
@@ -357,7 +363,7 @@ describe('SAML IdP configured via METADATA_FILE', () => {
   let metadataFileFixture: SamlFixture;
 
   beforeAll(async () => {
-    metadataFileFixture = await setupSamlProviderTestViaMetadataFile(uniqueName('saml-meta-file', true).toLowerCase());
+    metadataFileFixture = await setupSamlProviderTestViaMetadataFile(uniqueName('saml-meta-file', true).toLowerCase(), provider);
   });
 
   afterAll(async () => {

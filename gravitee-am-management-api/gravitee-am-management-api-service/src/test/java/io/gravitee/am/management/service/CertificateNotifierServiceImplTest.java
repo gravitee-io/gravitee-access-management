@@ -39,15 +39,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Date;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -122,23 +125,26 @@ public class CertificateNotifierServiceImplTest {
         user.setEmail("user@acme.fr");
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.just(user));
 
-        cut.registerCertificateExpiration(certificate);
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(_ -> { latch.countDown(); return null; }).when(notifierService).register(any(), any(), any());
 
-        Thread.sleep(1000); // wait subscription execution
+        cut.registerCertificateExpiration(certificate);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
 
         verify(notifierService).register(any(), any(), any());
     }
 
     @Test
     public void shouldNotifyUser_EmailAndUI() throws Exception {
-
         final User user = new User();
         user.setEmail("user@acme.fr");
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.just(user));
 
-        cut.registerCertificateExpiration(certificate);
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(_ -> { latch.countDown(); return null; }).when(notifierService).register(any(), any(), any());
 
-        Thread.sleep(1000); // wait subscription execution
+        cut.registerCertificateExpiration(certificate);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
 
         verify(notifierService).register(argThat(def -> def.getResourceId().equals("certificateId")), any(), any());
     }
@@ -157,34 +163,40 @@ public class CertificateNotifierServiceImplTest {
 
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.fromIterable(tenUsers).mergeWith(Flowable.just(singleUser)));
 
-        cut.registerCertificateExpiration(certificate);
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(_ -> { latch.countDown(); return null; }).when(notifierService).register(any(), any(), any());
 
-        Thread.sleep(1000); // wait subscription execution
+        cut.registerCertificateExpiration(certificate);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
 
         verify(notifierService, times(11)).register(any(), any(), any());
     }
 
     @Test
     public void shouldNotNotifyIfGroupIsEmpty() throws Exception {
-        when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.empty());
+        CountDownLatch latch = new CountDownLatch(1);
+        when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenAnswer(_ -> {
+            latch.countDown();
+            return Flowable.empty();
+        });
 
         cut.registerCertificateExpiration(certificate);
-
-        Thread.sleep(1000); // wait subscription execution
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
 
         verify(notifierService, never()).register(any(), any(), any());
     }
 
     @Test
-    public void shouldNotifyLog() throws InterruptedException {
+    public void shouldNotifyLog() throws Exception {
         final User user = new User();
         user.setEmail("user@acme.fr");
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.just(user));
 
-
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(_ -> { latch.countDown(); return null; }).when(notifierService).register(any(), any(), any());
 
         cut.registerCertificateExpiration(certificate);
-        Thread.sleep(1000); // wait subscription execution
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
 
         verify(notifierService, times(1)).register(any(), any(), any());
     }
