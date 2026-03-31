@@ -26,10 +26,19 @@ import io.gravitee.am.performance.utils.TreeGenerator
  * The purpose of this simulation is to validate an OpenFGA instance
  * and provision it with relationship tuples to describe a large company organization.
  *
+ * Provisioning runs in three sequential phases:
+ *   Phase 1 – a single virtual user validates the store/model and writes static role tuples.
+ *   Phase 2 – `agents` virtual users provision data in parallel. Each user receives a
+ *              round-robin partition of shared resources, teams (hierarchy + manager
+ *              relations + team resources) and users (memberships + user resources).
+ *   Phase 3 – a single virtual user writes emergency/blocked tuples and, optionally,
+ *              configures the AM domain authorization engine.
+ *
  * Possible arguments:
  * - fga_api_url: base URL of the OpenFGA REST API (default: http://localhost:8080)
  * - fga_store_id: OpenFGA Store identifier
  * - fga_authorization_model_id: OpenFGA authorization model identifier
+ * - agents: number of parallel virtual users for the provisioning phase (default: 10)
  * - number_of_users: how many users the simulation will create tuples for
  * - number_of_teams: how many teams the simulation will create tuples for
  * - depth_of_teams: maximum depth of teams in tree hierarchy
@@ -52,122 +61,17 @@ class OpenFGAProvision extends Simulation {
 
   private val teamParentMap = AuthorizationTopology.teamParentMap()
 
-  /**
-   * Create a feeder for shared resources
-   */
-  private def sharedResourceFeeder() = {
-    val numResources = NUMBER_OF_SHARED_RESOURCES.intValue()
+  private val numAgents    = AGENTS.intValue()
+  private val numTeams     = NUMBER_OF_TEAMS.intValue()
+  private val numUsers     = NUMBER_OF_USERS.intValue()
+  private val numSharedRes = NUMBER_OF_SHARED_RESOURCES.intValue()
+  private val resPerUser   = NUMBER_OF_RESOURCES_PER_USER.intValue()
+  private val resPerTeam   = NUMBER_OF_RESOURCES_PER_TEAM.intValue()
 
-    (1 to numResources).map { resourceId =>
-      Map("resourceId" -> resourceId)
-    }
-  }
+  // -------------------------------------------------------------------------
+  // Tuple-building helpers (read from session, unchanged from original)
+  // -------------------------------------------------------------------------
 
-  /**
-   * Create a feeder for team hierarchy and resource group ownership
-   */
-  private def teamFeeder() = {
-    val numTeams = NUMBER_OF_TEAMS.intValue()
-
-    // Create feeder for teams (excluding root team)
-    (1 until numTeams).map { teamId =>
-      val parentId = teamParentMap(teamId)
-      Map(
-        "teamId" -> teamId,
-        "parentId" -> parentId
-      )
-    }
-  }
-
-  /**
-   * Create a feeder for team resources
-   */
-  private def teamResourceFeeder() = {
-    val numTeams = NUMBER_OF_TEAMS.intValue()
-    val numResources = NUMBER_OF_RESOURCES_PER_TEAM.intValue()
-    
-    // Generate team-resource combinations (excluding root team)
-    (1 until numTeams).flatMap { teamId =>
-      (1 to numResources).map { resourceId =>
-        Map(
-          "teamId" -> teamId,
-          "resourceId" -> resourceId
-        )
-      }
-    }
-  }
-
-  /**
-   * Create a feeder for user team membership
-   */
-  private def userMembershipFeeder() = {
-    AuthorizationTopology.userIdsIterator().map { userId =>
-      Map(
-        "userId" -> userId,
-        "teamId" -> AuthorizationTopology.getTeamIdForUser(userId),
-        "roleAssignment" -> AuthorizationTopology.getUserRoleAssignment(userId)
-      )
-    }
-  }
-
-  /**
-   * Create a feeder for manager relationships using team-parent scheme
-   */
-  private def managerRelationFeeder() = {
-    val numTeams = NUMBER_OF_TEAMS.intValue()
-
-    (1 until numTeams).map { teamId =>
-      val parentId = teamParentMap(teamId)
-      val reportId = AuthorizationTopology
-        .getUserIdInTeam(teamId)
-        .getOrElse(throw new IllegalStateException(s"No user found in team $teamId"))
-      val managerId = AuthorizationTopology
-        .getUserIdInTeam(parentId)
-        .getOrElse(throw new IllegalStateException(s"No user found in team $parentId"))
-
-      Map(
-        "managerId" -> managerId,
-        "reportId" -> reportId
-      )
-    }
-  }
-
-  /**
-   * Create a feeder for user resources
-   */
-  private def userResourceFeeder() = {
-    val numResources = NUMBER_OF_RESOURCES_PER_USER.intValue()
-    AuthorizationTopology.userIdsIterator().flatMap { userId =>
-      (1 to numResources).map { resourceId =>
-        Map(
-          "userId" -> userId,
-          "resourceId" -> resourceId
-        )
-      }
-    }
-  }
-
-  // Create feeders (as iterators)
-  private val sharedResourceFeederIterator = sharedResourceFeeder().iterator
-  private val teamFeederIterator = teamFeeder().iterator
-  private val teamResourceFeederIterator = teamResourceFeeder().iterator
-  private val userMembershipFeederIterator = userMembershipFeeder()
-  private val managerRelationFeederData = managerRelationFeeder()
-  private val managerRelationFeederIterator = managerRelationFeederData.iterator
-  private val userResourceFeederIterator = userResourceFeeder()
-  
-  // Calculate counts for repeat loops
-  private val numSharedResources = NUMBER_OF_SHARED_RESOURCES.intValue()
-  private val numNonRootTeams = NUMBER_OF_TEAMS.intValue() - 1
-  private val numTeamResources = numNonRootTeams * NUMBER_OF_RESOURCES_PER_TEAM.intValue()
-  private val numUsers = NUMBER_OF_USERS.intValue()
-  private val numManagerRelations = managerRelationFeederData.size
-  private val numUserResources = numUsers * NUMBER_OF_RESOURCES_PER_USER.intValue()
-
-  // Role assignments
-  /**
-   * Build role tuples - these are statically defined
-   */
   private def buildRoleTuples(): Session => Session = { session =>
     val tuples = List(
       // Role availability
@@ -191,106 +95,76 @@ class OpenFGAProvision extends Simulation {
     session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
   }
 
-  /**
-   * Build shared resource tuple based on session data
-   */
   private def buildSharedResourceTuple(): Session => Session = { session =>
     val resourceId = session("resourceId").as[Int]
-
     val tuple = Tuple(s"resource_group:shared_resources", "group", s"resource:shared_resource_${resourceId}")
-
     session.set("tupleRequestBody", tuplesToJsonRequestBody(List(tuple)))
   }
 
-  /**
-   * Build team tuples (hierarchy + resource group ownership) based on session data
-   */
   private def buildTeamTuples(): Session => Session = { session =>
-    val teamId = session("teamId").as[Int]
+    val teamId   = session("teamId").as[Int]
     val parentId = session("parentId").as[Int]
-    
     val tuples = List(
       Tuple(s"team:team_${teamId}", "child", s"team:team_${parentId}"),
       Tuple(s"team:team_${teamId}#all_members", "owner", s"resource_group:team_${teamId}_resources")
     )
-    
     session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
   }
 
-  /**
-   * Build team resource tuple based on session data
-   */
   private def buildTeamResourceTuple(): Session => Session = { session =>
-    val teamId = session("teamId").as[Int]
+    val teamId     = session("teamId").as[Int]
     val resourceId = session("resourceId").as[Int]
-
     val tuple = Tuple(s"resource_group:team_${teamId}_resources", "group", s"resource:team_${teamId}_resource_${resourceId}")
-
     session.set("tupleRequestBody", tuplesToJsonRequestBody(List(tuple)))
   }
 
-  /**
-   * Build user membership tuples (team, role) based on session data
-   */
   private def buildUserMembershipTuples(): Session => Session = { session =>
-    val userId = session("userId").as[Int]
-    val teamId = session("teamId").as[Int]
+    val userId         = session("userId").as[Int]
+    val teamId         = session("teamId").as[Int]
     val roleAssignment = session("roleAssignment").as[String]
-    
     val tuples = List(
       Tuple(s"user:user_${userId}", "member", s"team:team_${teamId}"),
       Tuple(s"user:user_${userId}", "assignee", roleAssignment)
     )
-    
     session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
   }
 
-  /**
-   * Build manager relationship tuples based on session data
-   */
   private def buildManagerRelationTuples(): Session => Session = { session =>
     val managerId = session("managerId").as[Int]
-    val reportId = session("reportId").as[Int]
-
+    val reportId  = session("reportId").as[Int]
     val tuple = Tuple(s"user:user_${managerId}", "manager", s"user:user_${reportId}")
-
     session.set("tupleRequestBody", tuplesToJsonRequestBody(List(tuple)))
   }
 
-  /**
-   * Build emergency and blocked tuples for a deterministic team
-   */
   private def buildEmergencyBlockedTuples(): Session => Session = { session =>
     val teamId = 1
     val blockedUserId = AuthorizationTopology
       .getUserIdInTeam(teamId)
       .getOrElse(throw new IllegalStateException(s"No user found in team $teamId"))
     val emergencyUserId = AuthorizationTopology.getUserIdNotInTeam(teamId)
-
     val tuples = List(
       Tuple(s"user:user_${blockedUserId}", "blocked", s"resource_group:team_${teamId}_resources"),
       Tuple(s"user:user_${emergencyUserId}", "emergency_access", s"resource_group:team_${teamId}_resources")
     )
-
     session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
   }
 
-  /**
-   * Build user resource tuples (ownership + resource grouping) based on session data
-   */
   private def buildUserResourceTuples(): Session => Session = { session =>
-    val userId = session("userId").as[Int]
+    val userId     = session("userId").as[Int]
     val resourceId = session("resourceId").as[Int]
-    
     val tuples = List(
       Tuple(s"user:user_${userId}", "owner", s"resource:user_${userId}_resource_${resourceId}"),
       Tuple("resource_group:personal_resources", "group", s"resource:user_${userId}_resource_${resourceId}")
     )
-    
     session.set("tupleRequestBody", tuplesToJsonRequestBody(tuples))
   }
 
-  private val scn = scenario("OpenFGA Provisioning")
+  // -------------------------------------------------------------------------
+  // Phase 1 – Init (single virtual user)
+  //   Validate store + authorization model, then write the static role tuples.
+  // -------------------------------------------------------------------------
+
+  private val scnInit = scenario("Phase 1: Init")
     .exec(getStore)
     .doIf(_.isFailed) {
       exec(session => {
@@ -309,38 +183,93 @@ class OpenFGAProvision extends Simulation {
     .exitHereIfFailed
     .exec(buildRoleTuples())
     .exec(writeTuples("Add Roles"))
-    .repeat(numSharedResources) {
-      feed(sharedResourceFeederIterator)
-        .exec(buildSharedResourceTuple())
+
+  // -------------------------------------------------------------------------
+  // Phase 2 – Parallel provisioning (numAgents virtual users)
+  //
+  //   Each virtual user (index k, 1-based) handles the round-robin partition:
+  //     shared resources : k, k+N, k+2N, ...  (1..numSharedRes)
+  //     teams            : k, k+N, k+2N, ...  (1 until numTeams)
+  //     users            : k, k+N, k+2N, ...  (1..numUsers)
+  //
+  //   For each team in its partition the VU also writes the manager relation
+  //   and all team resources.  For each user it also writes all user resources.
+  // -------------------------------------------------------------------------
+
+  private val scnProvision = scenario("Phase 2: Parallel Provisioning")
+    // Compute this VU's partition and store it in the session.
+    .exec { session =>
+      val vuIndex = session.userId.toInt  // 1-based, 1..numAgents
+
+      val mySharedResourceIds: Seq[Int] = (vuIndex to numSharedRes   by numAgents).toList
+      val myTeamIds: Seq[Int]           = (vuIndex until numTeams    by numAgents).toList
+      val myUserIds: Seq[Int]           = (vuIndex to numUsers       by numAgents).toList
+
+      session
+        .set("mySharedResourceIds", mySharedResourceIds)
+        .set("myTeamIds", myTeamIds)
+        .set("myUserIds", myUserIds)
+    }
+    // --- Shared resources ---
+    .foreach("#{mySharedResourceIds}", "resourceId") {
+      exec(buildSharedResourceTuple())
         .exec(writeTuples("Add Shared Resource"))
     }
-    .repeat(numNonRootTeams) {
-      feed(teamFeederIterator)
+    // --- Team hierarchy, manager relations, and team resources ---
+    .foreach("#{myTeamIds}", "teamId") {
+      exec { session =>
+        val teamId    = session("teamId").as[Int]
+        val parentId  = teamParentMap(teamId)
+        val reportId  = AuthorizationTopology
+          .getUserIdInTeam(teamId)
+          .getOrElse(throw new IllegalStateException(s"No user found in team $teamId"))
+        val managerId = AuthorizationTopology
+          .getUserIdInTeam(parentId)
+          .getOrElse(throw new IllegalStateException(s"No user found in team $parentId"))
+        session
+          .set("parentId",  parentId)
+          .set("managerId", managerId)
+          .set("reportId",  reportId)
+      }
         .exec(buildTeamTuples())
         .exec(writeTuples("Add Team"))
-    }
-    .repeat(numTeamResources) {
-      feed(teamResourceFeederIterator)
-        .exec(buildTeamResourceTuple())
-        .exec(writeTuples("Add Team Resource"))
-    }
-    .repeat(numUsers) {
-      feed(userMembershipFeederIterator)
-        .exec(buildUserMembershipTuples())
-        .exec(writeTuples("Add User Membership"))
-    }
-    .repeat(numManagerRelations) {
-      feed(managerRelationFeederIterator)
         .exec(buildManagerRelationTuples())
         .exec(writeTuples("Add Manager Relation"))
+        .repeat(resPerTeam, "resourceIdx") {
+          exec { session =>
+            session.set("resourceId", session("resourceIdx").as[Int] + 1)
+          }
+            .exec(buildTeamResourceTuple())
+            .exec(writeTuples("Add Team Resource"))
+        }
     }
+    // --- User memberships and user resources ---
+    .foreach("#{myUserIds}", "userId") {
+      exec { session =>
+        val userId = session("userId").as[Int]
+        session
+          .set("teamId",         AuthorizationTopology.getTeamIdForUser(userId))
+          .set("roleAssignment", AuthorizationTopology.getUserRoleAssignment(userId))
+      }
+        .exec(buildUserMembershipTuples())
+        .exec(writeTuples("Add User Membership"))
+        .repeat(resPerUser, "resourceIdx") {
+          exec { session =>
+            session.set("resourceId", session("resourceIdx").as[Int] + 1)
+          }
+            .exec(buildUserResourceTuples())
+            .exec(writeTuples("Add User Resource"))
+        }
+    }
+
+  // -------------------------------------------------------------------------
+  // Phase 3 – Finalize (single virtual user)
+  //   Write emergency/blocked tuples, then optionally configure the AM domain.
+  // -------------------------------------------------------------------------
+
+  private val scnFinalize = scenario("Phase 3: Finalize")
     .exec(buildEmergencyBlockedTuples())
     .exec(writeTuples("Add Emergency/Blocked"))
-    .repeat(numUserResources) {
-      feed(userResourceFeederIterator)
-        .exec(buildUserResourceTuples())
-        .exec(writeTuples("Add User Resource"))
-    }
     .doIf(_ => Success(CONFIGURE_DOMAIN_AUTH_ENGINE)) {
       exec(ManagementAPICalls.login)
         .doIf(_.isFailed) {
@@ -387,7 +316,13 @@ class OpenFGAProvision extends Simulation {
         }
     }
 
+  // -------------------------------------------------------------------------
+  // Injection plan – three sequential phases
+  // -------------------------------------------------------------------------
+
   setUp(
-    scn.inject(atOnceUsers(1))
+    scnInit.inject(atOnceUsers(1))
+      .andThen(scnProvision.inject(atOnceUsers(numAgents)))
+      .andThen(scnFinalize.inject(atOnceUsers(1)))
   )
 }
