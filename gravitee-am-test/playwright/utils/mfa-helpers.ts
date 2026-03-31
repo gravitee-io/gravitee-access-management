@@ -307,6 +307,44 @@ export async function applyStandaloneChallengeMfaPatch(
   }
 }
 
+/** Login -> enroll -> challenge -> callback. Asserts auth code in callback URL. */
+export async function expectEnrollThenChallengeThenCallback(
+  page: Page, gatewayUrl: string, clientId: string, username: string, password: string,
+): Promise<void> {
+  await fullMfaLogin(page, gatewayUrl, clientId, username, password);
+  const callbackUrl = new URL(page.url());
+  expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+}
+
+/** Login -> enroll page shown -> skip -> callback. Asserts auth code in callback URL. */
+export async function expectEnrollSkipThenCallback(
+  page: Page, gatewayUrl: string, clientId: string, username: string, password: string,
+): Promise<void> {
+  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+  await page.waitForURL(/.*login.*/i);
+  await submitLogin(page, username, password);
+  await page.waitForURL(/.*mfa\/enroll.*/i);
+  await skipMfaEnrollment(page);
+  await handleConsentIfPresent(page);
+  await page.waitForURL(/.*callback\?code=.*/i);
+  const callbackUrl = new URL(page.url());
+  expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+}
+
+/** Login -> enrollment bypassed (conditional=true) -> callback. Asserts no enroll page appeared. */
+export async function expectEnrollBypassedThenCallback(
+  page: Page, gatewayUrl: string, clientId: string, username: string, password: string,
+): Promise<void> {
+  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+  await page.waitForURL(/.*login.*/i);
+  await submitLogin(page, username, password);
+  await handleConsentIfPresent(page);
+  await page.waitForURL(/.*callback\?code=.*/i);
+  const callbackUrl = new URL(page.url());
+  expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+  expect(page.url()).not.toMatch(/mfa\/enroll/);
+}
+
 export async function fullMfaLogin(
   page: Page,
   gatewayUrl: string,

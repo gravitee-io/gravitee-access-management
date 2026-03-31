@@ -29,7 +29,13 @@ import {
 import { linkJira } from '../../utils/jira';
 import { clearSessionOnly } from '../../utils/webauthn-helpers';
 import { AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT, API_USER_PASSWORD } from '../../utils/test-constants';
-import { waitUntilMfaEnrollmentSkipWindowExpired, applyStandaloneChallengeMfaPatch } from '../../utils/mfa-helpers';
+import {
+  waitUntilMfaEnrollmentSkipWindowExpired,
+  applyStandaloneChallengeMfaPatch,
+  expectEnrollThenChallengeThenCallback,
+  expectEnrollSkipThenCallback,
+  expectEnrollBypassedThenCallback,
+} from '../../utils/mfa-helpers';
 
 // Gateway auth flow tests need clean browser state
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -190,18 +196,7 @@ test.describe('Enrollment Optional with enrollment skip window (AM-2825)', () =>
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2825');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    await page.waitForURL(/.*mfa\/enroll.*/i);
-    await skipMfaEnrollment(page);
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+    await expectEnrollSkipThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
@@ -228,18 +223,7 @@ test.describe('Enrollment Optional with extended enrollment skip window (AM-2827
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2827');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    await page.waitForURL(/.*mfa\/enroll.*/i);
-    await skipMfaEnrollment(page);
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+    await expectEnrollSkipThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
@@ -259,21 +243,7 @@ test.describe('Enrollment Conditional = true (AM-2823)', () => {
 
   test('enrollment is skipped when conditional rule evaluates to true', async ({ page, gatewayUrl, matrixApp, matrixUser }, testInfo) => {
     linkJira(testInfo, 'AM-2823');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    // Rule = true → enrollment is bypassed. Flow goes to consent/callback.
-    // Reaching callback proves enrollment was skipped — if enrollment had appeared,
-    // the test would timeout because enrollment requires user interaction.
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
-    // Confirm current URL is NOT the enrollment page
-    expect(page.url()).not.toMatch(/mfa\/enroll/);
+    await expectEnrollBypassedThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
@@ -340,21 +310,7 @@ test.describe('Enrollment Conditional false + skip disabled + REQUIRED challenge
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2826');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    await page.waitForURL(/.*mfa\/enroll.*/i);
-    await enrollMockFactor(page);
-
-    await page.waitForURL(/.*mfa\/challenge.*/i);
-    await completeMfaChallenge(page, MOCK_MFA_CODE);
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
@@ -428,21 +384,7 @@ test.describe('Enrollment Conditional false + skip policy + RISK_BASED challenge
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2841');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    await page.waitForURL(/.*mfa\/enroll.*/i);
-    await enrollMockFactor(page);
-
-    await page.waitForURL(/.*mfa\/challenge.*/i);
-    await completeMfaChallenge(page, MOCK_MFA_CODE);
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
@@ -470,21 +412,7 @@ test.describe('Enrollment Conditional false + skip policy + REQUIRED challenge (
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2842');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    await page.waitForURL(/.*mfa\/enroll.*/i);
-    await enrollMockFactor(page);
-
-    await page.waitForURL(/.*mfa\/challenge.*/i);
-    await completeMfaChallenge(page, MOCK_MFA_CODE);
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
@@ -513,21 +441,7 @@ test.describe('Enrollment Conditional false + skip policy + CONDITIONAL challeng
     matrixUser,
   }, testInfo) => {
     linkJira(testInfo, 'AM-2843');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    await page.waitForURL(/.*mfa\/enroll.*/i);
-    await enrollMockFactor(page);
-
-    await page.waitForURL(/.*mfa\/challenge.*/i);
-    await completeMfaChallenge(page, MOCK_MFA_CODE);
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
@@ -547,24 +461,7 @@ test.describe('Required Enrollment + Required Challenge (AM-2836)', () => {
 
   test('user enrolls then completes MFA challenge', async ({ page, gatewayUrl, matrixApp, matrixUser }, testInfo) => {
     linkJira(testInfo, 'AM-2836');
-
-    await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await page.waitForURL(/.*login.*/i);
-
-    await submitLogin(page, matrixUser.username, API_USER_PASSWORD);
-
-    // Phase 1: enrollment
-    await page.waitForURL(/.*mfa\/enroll.*/i);
-    await enrollMockFactor(page);
-
-    // Phase 2: challenge (completeMfaChallenge anchors #code)
-    await page.waitForURL(/.*mfa\/challenge.*/i);
-    await completeMfaChallenge(page, MOCK_MFA_CODE);
-
-    await handleConsentIfPresent(page);
-    await page.waitForURL(/.*callback\?code=.*/i);
-    const callbackUrl = new URL(page.url());
-    expect(callbackUrl.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
+    await expectEnrollThenChallengeThenCallback(page, gatewayUrl, matrixApp.settings.oauth.clientId, matrixUser.username, API_USER_PASSWORD);
   });
 });
 
