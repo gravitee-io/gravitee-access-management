@@ -59,3 +59,11 @@ gravitee-am-test/jest-reports/
 
 # AI/Development documentation - plan files (temporary work files)
 docs/ai-guidelines
+
+# Claude Code configuration (local per-developer)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+
+# Playwright MCP logs
+.playwright-mcp/
