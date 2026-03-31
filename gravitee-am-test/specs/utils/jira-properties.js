@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = {
-  verbose: true,
-  rootDir: '../..',
-  setupFiles: ['./api/config/dev.setup.js'],
-  moduleNameMapper: {
-    '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
-    '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
-    '@gateway-commands/(.*)': '<rootDir>/api/commands/gateway/$1',
-    '@utils-commands/(.*)': '<rootDir>/api/commands/utils/$1',
-    '@utils/(.*)': '<rootDir>/api/utils/$1',
-    '@api-fixtures/(.*)': '<rootDir>/api/fixtures/$1',
-    '@gateway-apis/(.*)': '<rootDir>/api/gateway/apis/$1',
-    '@specs-utils/(.*)': '<rootDir>/specs/utils/$1',
-  },
+
+/**
+ * jest-junit testcase properties file.
+ *
+ * Extracts a single AM-XXXX Jira key from the test title and emits
+ * `test_key` and `issue` properties in JUnit XML for Xray traceability.
+ *
+ * Configured via `testCasePropertiesFile` in ci.config.js.
+ */
+const JIRA_BASE_URL = 'https://gravitee.atlassian.net/browse';
+const JIRA_KEY_FORMAT = /AM-\d+/;
+
+module.exports = (testResult) => {
+  const title = testResult.fullName || testResult.title || '';
+  const match = title.match(JIRA_KEY_FORMAT);
+  if (!match) return {};
+  const key = match[0];
+  return {
+    test_key: key,
+    issue: `${JIRA_BASE_URL}/${key}`,
+  };
 };
