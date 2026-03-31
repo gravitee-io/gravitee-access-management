@@ -76,3 +76,16 @@ export function extractSharedSecret(result, factorType: string = 'SMS'): any {
   const factor = factors.find((f) => f.factorType === factorType);
   return { sharedSecret: factor?.enrollment?.key || null, action, token };
 }
+
+/** Resolves enrollment entry by factor id first, then falls back to factorType. */
+export function extractSharedSecretForFactor(result, managementFactor: { id: string }, factorTypeFallback: string = 'TOTP'): any {
+  const { factors, action, token } = parseEnrollPage(result);
+  const entry =
+    factors.find((f: { id?: string }) => f.id === managementFactor.id) ||
+    factors.find((f: { factorType?: string }) => f.factorType === factorTypeFallback);
+  const sharedSecret = entry?.enrollment?.key ?? null;
+  if (sharedSecret == null) {
+    throw new Error(`Cannot extract enrollment shared secret for factor ${managementFactor.id}`);
+  }
+  return { sharedSecret, action, token };
+}
