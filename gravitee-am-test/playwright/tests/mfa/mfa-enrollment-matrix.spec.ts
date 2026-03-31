@@ -23,7 +23,7 @@ import {
   handleConsentIfPresent,
   skipMfaEnrollment,
   secondAuthorizeExpectCallbackWithoutMfa,
-  waitAfterAuthorizeThenLoginIfNeededAllowMfa,
+  waitAfterAuthorizeThenLoginIfNeeded,
   MOCK_MFA_CODE,
 } from '../../fixtures/mfa-enrollment-matrix.fixture';
 import { linkJira } from '../../utils/jira';
@@ -952,7 +952,7 @@ test.describe('Standalone challenge REQUIRED (AM-2829)', () => {
     await page.context().clearCookies();
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await waitAfterAuthorizeThenLoginIfNeededAllowMfa(page, matrixUser.username, API_USER_PASSWORD);
+    await waitAfterAuthorizeThenLoginIfNeeded(page, matrixUser.username, API_USER_PASSWORD, { allowMfa: true });
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
     await handleConsentIfPresent(page);
@@ -1051,7 +1051,7 @@ test.describe('Standalone challenge CONDITIONAL rule false requires challenge (A
     await page.context().clearCookies();
 
     await page.goto(buildAuthorizeUrl(gatewayUrl, matrixApp.settings.oauth.clientId));
-    await waitAfterAuthorizeThenLoginIfNeededAllowMfa(page, matrixUser.username, API_USER_PASSWORD);
+    await waitAfterAuthorizeThenLoginIfNeeded(page, matrixUser.username, API_USER_PASSWORD, { allowMfa: true });
     await page.waitForURL(/.*mfa\/challenge.*/i);
     await completeMfaChallenge(page, MOCK_MFA_CODE);
     await handleConsentIfPresent(page);

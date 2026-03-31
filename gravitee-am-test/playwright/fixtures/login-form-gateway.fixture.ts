@@ -36,7 +36,7 @@ import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 import { NewFormTemplateEnum } from '@management-models/NewForm';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, oauthWebSettings, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { AM2193_LOGIN_FORM_MARKER_TEXT } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/webauthn-helpers';
 
@@ -44,15 +44,6 @@ const LOGIN_HTML_PATH = join(
   __dirname,
   '../../../gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-core/src/main/resources/webroot/views/login.html',
 );
-
-const OAUTH_WEB = {
-  redirectUris: [REDIRECT_URI],
-  grantTypes: ['authorization_code'],
-  scopeSettings: [
-    { scope: 'openid', defaultScope: true },
-    { scope: 'profile', defaultScope: true },
-  ],
-};
 
 export type LoginFormGatewayBundle = {
   domain: Domain;
@@ -84,7 +75,7 @@ export const test = base.extend<{ loginFormGatewayBundle: LoginFormGatewayBundle
       createTestApp(uniqueTestName('pw-lf-app'), domain, adminToken, 'WEB', {
         identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
         settings: {
-          oauth: OAUTH_WEB,
+          oauth: oauthWebSettings(REDIRECT_URI),
           advanced: { skipConsent: true },
         },
       }),
@@ -115,8 +106,7 @@ export const test = base.extend<{ loginFormGatewayBundle: LoginFormGatewayBundle
     await quietly(() => waitForDomainSync(domain.id));
     await waitForOidcReady(domain.hrid, { timeoutMs: 30000, intervalMs: 500 });
 
-    const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
-    const gatewayUrl = `${baseUrl}/${domain.hrid}`;
+    const gatewayUrl = `${getGatewayBaseUrl()}/${domain.hrid}`;
 
     const bundle: LoginFormGatewayBundle = {
       domain,

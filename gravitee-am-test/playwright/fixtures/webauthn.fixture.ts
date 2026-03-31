@@ -34,7 +34,7 @@ import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 import type { User } from '@management-models/User';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/webauthn-helpers';
 
@@ -159,13 +159,7 @@ export const test = base.extend<WebAuthnFixtures>({
 
     await use(user);
 
-    await quietly(async () => {
-      try {
-        await deleteUser(waDomain.id, waAdminToken, user.id);
-      } catch {
-        // domain teardown may cascade
-      }
-    });
+    await quietly(() => deleteUser(waDomain.id, waAdminToken, user.id).catch(() => {}));
   },
 
   gatewayUrl: async ({ waAdminToken, waDomain, waApp, waUser }, use) => {
@@ -177,8 +171,7 @@ export const test = base.extend<WebAuthnFixtures>({
     await quietly(() => startDomain(waDomain.id, waAdminToken));
     await quietly(() => waitForDomainSync(waDomain.id));
     await waitForOidcReady(waDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
-    const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
-    await use(`${baseUrl}/${waDomain.hrid}`);
+    await use(`${getGatewayBaseUrl()}/${waDomain.hrid}`);
   },
 });
 

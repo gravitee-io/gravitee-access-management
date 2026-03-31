@@ -172,39 +172,22 @@ export async function secondAuthorizeExpectCallbackWithoutMfa(
 }
 
 /**
- * After `page.goto(authorizeUrl)`, wait for login, consent, or callback (not MFA pages — caller expects MFA skipped).
+ * After `page.goto(authorizeUrl)`, wait for login, consent, or callback; submit credentials only on /login.
+ * When `options.allowMfa` is true, also accepts /mfa/challenge as a valid landing page.
  */
 export async function waitAfterAuthorizeThenLoginIfNeeded(
   page: Page,
   username: string,
   password: string,
+  options?: { allowMfa?: boolean },
 ): Promise<void> {
-  await page.waitForURL(
-    (u) =>
-      /\/login/i.test(u.pathname) ||
-      /oauth\/consent/i.test(u.pathname) ||
-      (/callback/i.test(u.href) && u.searchParams.has('code')),
-  );
-  if (/\/login/i.test(new URL(page.url()).pathname)) {
-    await submitLogin(page, username, password);
-  }
-}
-
-/**
- * After `page.goto(authorizeUrl)`, wait for login, consent, MFA challenge, or callback; submit credentials only on /login.
- */
-export async function waitAfterAuthorizeThenLoginIfNeededAllowMfa(
-  page: Page,
-  username: string,
-  password: string,
-): Promise<void> {
-  await page.waitForURL(
-    (u) =>
-      /\/login/i.test(u.pathname) ||
-      /oauth\/consent/i.test(u.pathname) ||
-      /mfa\/challenge/i.test(u.pathname) ||
-      (/callback/i.test(u.href) && u.searchParams.has('code')),
-  );
+  await page.waitForURL((u) => {
+    if (/\/login/i.test(u.pathname)) return true;
+    if (/oauth\/consent/i.test(u.pathname)) return true;
+    if (options?.allowMfa && /mfa\/challenge/i.test(u.pathname)) return true;
+    if (/callback/i.test(u.href) && u.searchParams.has('code')) return true;
+    return false;
+  });
   if (/\/login/i.test(new URL(page.url()).pathname)) {
     await submitLogin(page, username, password);
   }

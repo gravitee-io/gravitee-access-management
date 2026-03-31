@@ -36,7 +36,7 @@ import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 import type { IdentityProvider } from '@management-models/IdentityProvider';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
 
@@ -58,7 +58,7 @@ export const test = base.extend<{ externalOidcBundle: ExternalOidcBundle; hideLo
 
   externalOidcBundle: async ({ hideLoginForm }, use) => {
     const adminToken = await requestAdminAccessToken();
-    const gatewayBase = (process.env.AM_GATEWAY_URL || 'http://localhost:8092').replace(/\/$/, '');
+    const gatewayBase = getGatewayBaseUrl();
 
     const clientDomain = await quietly(() =>
       createDomain(adminToken, uniqueTestName('pw-oidc-client'), 'Phase 7 AM-2207 client domain'),

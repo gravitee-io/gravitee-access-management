@@ -34,18 +34,9 @@ import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 import type { User } from '@management-models/User';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, oauthWebSettings, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { REDIRECT_URI } from '../utils/webauthn-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
-
-const OAUTH_WEB = {
-  redirectUris: [REDIRECT_URI],
-  grantTypes: ['authorization_code'],
-  scopeSettings: [
-    { scope: 'openid', defaultScope: true },
-    { scope: 'profile', defaultScope: true },
-  ],
-};
 
 export type ForgotPasswordGatewayBundle = {
   domain: Domain;
@@ -85,7 +76,7 @@ export const test = base.extend<{ forgotPasswordBundle: ForgotPasswordGatewayBun
       createTestApp(uniqueTestName('pw-fpw-app'), domain, adminToken, 'WEB', {
         identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
         settings: {
-          oauth: OAUTH_WEB,
+          oauth: oauthWebSettings(REDIRECT_URI),
           account: {
             inherited: false,
             autoLoginAfterResetPassword: true,
@@ -116,8 +107,7 @@ export const test = base.extend<{ forgotPasswordBundle: ForgotPasswordGatewayBun
     await waitForOidcReady(domain.hrid, { timeoutMs: 30000, intervalMs: 500 });
     await waitForOAuthAuthorizeRedirectsToLogin(domain.hrid, app.settings.oauth.clientId, REDIRECT_URI);
 
-    const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
-    const gatewayUrl = `${baseUrl}/${domain.hrid}`;
+    const gatewayUrl = `${getGatewayBaseUrl()}/${domain.hrid}`;
 
     const bundle: ForgotPasswordGatewayBundle = {
       domain,

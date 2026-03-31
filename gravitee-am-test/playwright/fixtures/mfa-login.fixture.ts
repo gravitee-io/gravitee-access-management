@@ -36,7 +36,7 @@ import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 import type { User } from '@management-models/User';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD, MOCK_MFA_CODE } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
 
@@ -160,13 +160,7 @@ export const test = base.extend<MfaLoginFixtures>({
       }),
     );
     await use(user);
-    await quietly(async () => {
-      try {
-        await deleteUser(mfaDomain.id, adminToken, user.id);
-      } catch {
-        // domain teardown may cascade
-      }
-    });
+    await quietly(() => deleteUser(mfaDomain.id, adminToken, user.id).catch(() => {}));
   },
 
   gatewayUrl: async ({ adminToken, mfaDomain, mfaApp, mfaUser, factorIds }, use) => {
@@ -178,8 +172,7 @@ export const test = base.extend<MfaLoginFixtures>({
     await quietly(() => waitForDomainSync(mfaDomain.id));
     await waitForOidcReady(mfaDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
     await waitForOAuthAuthorizeRedirectsToLogin(mfaDomain.hrid, mfaApp.settings.oauth.clientId, REDIRECT_URI);
-    const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
-    await use(`${baseUrl}/${mfaDomain.hrid}`);
+    await use(`${getGatewayBaseUrl()}/${mfaDomain.hrid}`);
   },
 });
 

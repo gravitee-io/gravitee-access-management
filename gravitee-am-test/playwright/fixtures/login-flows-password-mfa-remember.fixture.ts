@@ -36,7 +36,7 @@ import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 import type { User } from '@management-models/User';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD, MOCK_MFA_CODE } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
 
@@ -149,13 +149,7 @@ export const test = base.extend<PasswordMfaRememberFixtures>({
       }),
     );
     await use(user);
-    await quietly(async () => {
-      try {
-        await deleteUser(rememberDomain.id, adminToken, user.id);
-      } catch {
-        // domain teardown may cascade
-      }
-    });
+    await quietly(() => deleteUser(rememberDomain.id, adminToken, user.id).catch(() => {}));
   },
 
   gatewayUrl: async ({ adminToken, rememberDomain, rememberApp, rememberUser }, use) => {
@@ -171,8 +165,7 @@ export const test = base.extend<PasswordMfaRememberFixtures>({
       REDIRECT_URI,
       { timeoutMs: 90_000, intervalMs: 500 },
     );
-    const gatewayBase = (process.env.AM_GATEWAY_URL || 'http://localhost:8092').replace(/\/$/, '');
-    await use(`${gatewayBase}/${rememberDomain.hrid}`);
+    await use(`${getGatewayBaseUrl()}/${rememberDomain.hrid}`);
   },
 });
 

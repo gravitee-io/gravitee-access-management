@@ -36,7 +36,7 @@ import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 import type { IdentityProvider } from '@management-models/IdentityProvider';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
 
@@ -189,8 +189,7 @@ export const test = base.extend<RoleMapperFlowFixtures>({
     });
     // Root cause of "No security domain matches the request URI" in the browser: `AM_GATEWAY_URL` with a trailing
     // slash produced `http://host:8092//{hrid}/oauth/...`, which does not match any domain path.
-    const gatewayBase = (process.env.AM_GATEWAY_URL || 'http://localhost:8092').replace(/\/$/, '');
-    await use(`${gatewayBase}/${mapperDomain.hrid}`);
+    await use(`${getGatewayBaseUrl()}/${mapperDomain.hrid}`);
   },
 });
 

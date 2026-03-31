@@ -31,18 +31,9 @@ import { createTestApp } from '@utils-commands/application-commands';
 import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
 
-import { quietly, uniqueTestName } from '../utils/fixture-helpers';
+import { getGatewayBaseUrl, oauthWebSettings, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
-
-const OAUTH_WEB = {
-  redirectUris: [REDIRECT_URI],
-  grantTypes: ['authorization_code'],
-  scopeSettings: [
-    { scope: 'openid', defaultScope: true },
-    { scope: 'profile', defaultScope: true },
-  ],
-};
 
 export type LoginFlowsGatewayBundle = {
   domain: Domain;
@@ -128,7 +119,7 @@ export const test = base.extend<{ loginFlowsBundle: LoginFlowsGatewayBundle }>({
       createTestApp(uniqueTestName('pwlf-app-if'), domain, adminToken, 'WEB', {
         identityProviders: new Set([{ identity: idpIf.id, priority: 0 }]),
         settings: {
-          oauth: OAUTH_WEB,
+          oauth: oauthWebSettings(REDIRECT_URI),
           login: { identifierFirstEnabled: true, inherited: false },
           advanced: { skipConsent: true },
         },
@@ -150,7 +141,7 @@ export const test = base.extend<{ loginFlowsBundle: LoginFlowsGatewayBundle }>({
           },
         ]),
         settings: {
-          oauth: OAUTH_WEB,
+          oauth: oauthWebSettings(REDIRECT_URI),
           advanced: { skipConsent: true },
         },
       }),
@@ -159,8 +150,7 @@ export const test = base.extend<{ loginFlowsBundle: LoginFlowsGatewayBundle }>({
     await quietly(() => startDomain(domain.id, adminToken));
     await quietly(() => waitForDomainSync(domain.id));
     await waitForOidcReady(domain.hrid, { timeoutMs: 30000, intervalMs: 500 });
-    const baseUrl = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
-    const gatewayUrl = `${baseUrl}/${domain.hrid}`;
+    const gatewayUrl = `${getGatewayBaseUrl()}/${domain.hrid}`;
 
     const bundle: LoginFlowsGatewayBundle = {
       domain,
