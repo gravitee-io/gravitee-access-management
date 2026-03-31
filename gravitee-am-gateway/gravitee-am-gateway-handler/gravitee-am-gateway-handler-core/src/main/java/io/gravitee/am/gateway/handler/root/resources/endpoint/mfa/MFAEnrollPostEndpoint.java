@@ -83,31 +83,27 @@ public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<R
             routingContext.next();
             return;
         }
-        if(isSkipped(routingContext, acceptEnrollment, client)){
-            routingContext.next();
+        // Optional skip: persist skip timestamp first, then set session flags and continue.
+        // Calling next() before the Completable completes was racy (e.g. slower JDBC): redirect
+        // handlers ran without MFA_ENROLLMENT_COMPLETED_KEY and sent the user back to /mfa/enroll.
+        if (!acceptEnrollment && MfaUtils.isCanSkip(routingContext, client)) {
+            final User endUser =
+                    ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            userService
+                    .setMfaEnrollmentSkippedTime(client, endUser)
+                    .subscribe(
+                            () -> {
+                                // Skipping enrollment also skips MFA challenge for this authorisation leg
+                                routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+                                routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+                                routingContext.next();
+                            },
+                            routingContext::fail);
             return;
         }
 
         getValidFactor(routingContext, factorId, client)
                 .ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
-    }
-
-    private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
-        // if user has skipped the enrollment process, continue
-        if (!acceptEnrollment && MfaUtils.isCanSkip(routingContext, client)) {
-            final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            // set the last skipped time
-            // and update the session
-            userService.setMfaEnrollmentSkippedTime(client, endUser)
-                    .subscribe(() -> {
-                        // as the user has skipped the MFA enroll page
-                        // that means the user has also skipped the MFA challenge page
-                        routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
-                        routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                    });
-            return true;
-        }
-        return false;
     }
 
 
