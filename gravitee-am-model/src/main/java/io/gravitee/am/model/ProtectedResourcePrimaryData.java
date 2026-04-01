@@ -42,11 +42,20 @@ public record ProtectedResourcePrimaryData (
                 protectedResource.getDescription(),
                 protectedResource.getType(),
                 protectedResource.getResourceIdentifiers(),
-                protectedResource.getSettings(),
+                sanitizeSettings(protectedResource.getSettings()),
                 protectedResource.getSecretSettings(),
                 protectedResource.getFeatures(),
                 protectedResource.getUpdatedAt(),
                 protectedResource.getCertificate()
         );
+    }
+
+    private static ApplicationSettings sanitizeSettings(ApplicationSettings settings) {
+        if (settings != null && settings.getOauth() != null) {
+            ApplicationSettings copy = new ApplicationSettings(settings);
+            copy.getOauth().setClientSecret(null);
+            return copy;
+        }
+        return settings;
     }
 }
