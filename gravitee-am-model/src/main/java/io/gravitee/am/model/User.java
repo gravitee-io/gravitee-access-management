@@ -238,7 +238,7 @@ public class User implements IUser {
         this.source = other.source;
         this.client = other.client;
         this.loginsCount = other.loginsCount;
-        this.factors = other.factors != null ? new ArrayList<>(other.factors) : null;
+        this.factors = other.factors != null ? new ArrayList<>(other.factors.stream().map(EnrolledFactor::new).toList()) : null;
         this.identities = other.identities != null ? new ArrayList<>(other.identities) : null;
         this.lastIdentityUsed = other.lastIdentityUsed;
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
