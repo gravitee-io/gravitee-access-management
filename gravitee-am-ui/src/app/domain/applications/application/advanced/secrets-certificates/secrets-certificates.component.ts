@@ -59,8 +59,8 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
     this.application = structuredClone(this.route.snapshot.data['application']);
     this.certificates = this.route.snapshot.data['certificates'];
     this.secretSettings = this.application.settings.secretExpirationSettings;
-    this.editMode = this.authService.hasPermissions(['application_openid_update']);
-    this.deleteMode = this.authService.hasPermissions(['application_openid_delete']);
+    this.editMode = this.authService.hasPermissions(['application_openid_update']) && this.application.type;
+    this.deleteMode = this.authService.hasPermissions(['application_openid_delete']) && this.application.type;
   }
 
   onCertificateSave(certificateId: string): void {
