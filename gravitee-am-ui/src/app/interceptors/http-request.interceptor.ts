@@ -38,6 +38,11 @@ import { EnvironmentService } from '../services/environment.service';
  */
 export const SKIP_404_REDIRECT = new HttpContextToken<boolean>(() => false);
 
+/**
+ * HTTP context token to suppress the global error snackbar for requests that handle errors in-component
+ */
+export const SKIP_ERROR_SNACKBAR = new HttpContextToken<boolean>(() => false);
+
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
   private xsrfToken: string;
@@ -63,6 +68,7 @@ export class HttpRequestInterceptor implements HttpInterceptor {
     }
 
     const shouldSkip404Redirect = request.context.get(SKIP_404_REDIRECT);
+    const shouldSkipErrorSnackbar = request.context.get(SKIP_ERROR_SNACKBAR);
 
     request = request.clone({
       withCredentials: true,
@@ -89,9 +95,9 @@ export class HttpRequestInterceptor implements HttpInterceptor {
             if (err.status === 401) {
               this.snackbarService.open('The authentication session expires or the user is not authorized');
               this.authService.unauthorized();
-            } else if (err.status === 403) {
+            } else if (err.status === 403 && !shouldSkipErrorSnackbar) {
               this.snackbarService.open('Access denied');
-            } else {
+            } else if (!shouldSkipErrorSnackbar) {
               this.snackbarService.open(err.error.message || 'Server error');
             }
           }
