@@ -38,15 +38,14 @@
 			<excludes>
 				<exclude>io.projectreactor:reactor-core</exclude>
 				<exclude>org.reactivestreams:reactive-streams</exclude>
-				<exclude>io.netty:netty-common</exclude>
-				<exclude>io.netty:netty-codec</exclude>
-				<exclude>io.netty:netty-transport</exclude>
-				<exclude>io.netty:netty-buffer</exclude>
-				<exclude>io.netty:netty-codec-socks</exclude>
-				<exclude>io.netty:netty-codec-http</exclude>
-				<exclude>io.netty:netty-codec-http2</exclude>
-				<exclude>io.netty:netty-handler</exclude>
-				<exclude>io.netty:netty-handler-proxy</exclude>
+				<exclude>io.vertx:vertx-core</exclude>
+				<exclude>io.vertx:vertx-core-logging</exclude>
+
+				<exclude>io.netty:*</exclude>
+
+				<exclude>org.liquibase:*</exclude>
+				<exclude>org.freemarker:*</exclude>
+
 			</excludes>
 		</dependencySet>
 		<dependencySet>

@@ -35,6 +35,19 @@
 		<dependencySet>
 			<outputDirectory>lib</outputDirectory>
 			<useProjectArtifact>false</useProjectArtifact>
+			<excludes>
+				<exclude>io.projectreactor:reactor-core</exclude>
+				<exclude>org.reactivestreams:reactive-streams</exclude>
+				<exclude>io.vertx:vertx-core</exclude>
+				<exclude>io.vertx:vertx-core-logging</exclude>
+
+				<exclude>io.netty:*</exclude>
+				<exclude>io.projectreactor.addons:*</exclude>
+				<exclude>io.projectreactor.netty:*</exclude>
+
+				<exclude>org.freemarker:*</exclude>
+
+			</excludes>
 		</dependencySet>
 	</dependencySets>
 </assembly>
