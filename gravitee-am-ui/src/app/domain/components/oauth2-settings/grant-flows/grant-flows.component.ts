@@ -172,6 +172,10 @@ export class GrantFlowsComponent implements OnInit {
     return this.selectedGrantTypes.includes(this.TOKEN_EXCHANGE_GRANT_TYPE);
   }
 
+  isTokenExchangeEnabledAtDomain(): boolean {
+    return this.domainStore.current?.tokenExchangeSettings?.enabled === true;
+  }
+
   isTokenExchangeInherited(): boolean {
     return this.oauthSettings.tokenExchangeOAuthSettings?.inherited !== false;
   }
