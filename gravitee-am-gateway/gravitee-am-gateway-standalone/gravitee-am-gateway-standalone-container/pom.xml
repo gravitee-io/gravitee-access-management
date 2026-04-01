@@ -190,6 +190,13 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- Required for Prometheus metrics (transitive runtime dependency of micrometer-registry-prometheus, needs compile for distribution) -->
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exposition-formats</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
