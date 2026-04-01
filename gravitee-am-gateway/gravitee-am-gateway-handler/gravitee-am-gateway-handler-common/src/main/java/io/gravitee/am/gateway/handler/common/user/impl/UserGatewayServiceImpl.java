@@ -168,11 +168,14 @@ public class UserGatewayServiceImpl implements UserGatewayService, InitializingB
                     return update(user) // update is managing the UserStore usage
                             .doOnSuccess(user1 -> log.debug("Factor {} registered for user {}", enrolledFactor.getFactorId(), user1.getId()))
                             .doOnSuccess(user1 -> {
-                                if (needToAuditUserFactorsOperation(user1, oldUser)) {
+                                // do local copy to avoid side effect on enrolled factors when User cache is used
+                                User updatedUserLocalCopy = new User(user1);
+                                User oldUserLocalCopy = new User(oldUser);
+                                if (needToAuditUserFactorsOperation(updatedUserLocalCopy, oldUserLocalCopy)) {
                                     // remove sensitive data about factors
-                                    removeSensitiveFactorsData(user1.getFactors());
-                                    removeSensitiveFactorsData(oldUser.getFactors());
-                                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser));
+                                    removeSensitiveFactorsData(updatedUserLocalCopy.getFactors());
+                                    removeSensitiveFactorsData(oldUserLocalCopy.getFactors());
+                                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(updatedUserLocalCopy).oldValue(oldUserLocalCopy));
                                 }
                             })
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).reference(new Reference(user.getReferenceType(), user.getReferenceId())).throwable(throwable)));
