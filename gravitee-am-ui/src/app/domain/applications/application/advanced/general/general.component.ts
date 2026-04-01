@@ -86,7 +86,7 @@ export class ApplicationGeneralComponent implements OnInit {
     this.domain = deepClone(this.domainStore.current);
     this.domainId = this.domain.id;
     this.application = structuredClone(this.route.snapshot.data['application']);
-    this.applicationType = this.application.type.toUpperCase();
+    this.applicationType = this.application.type?.toUpperCase();
     this.redirectUris = this.application.settings.oauth.redirectUris || [];
     this.requestUris = this.application.settings.oauth.requestUris || [];
     this.singleSignOut = this.application.settings.oauth.singleSignOut;

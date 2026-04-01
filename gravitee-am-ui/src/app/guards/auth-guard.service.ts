@@ -97,7 +97,7 @@ export class AuthGuard {
     // if resource (application) should not display a settings page, continue
     if (path.data?.types?.only?.length > 0) {
       const app = route.data['application'];
-      if (app && path.data.types.only.indexOf(app.type.toUpperCase()) === -1) {
+      if (app && path.data.types.only.indexOf(app.type?.toUpperCase()) === -1) {
         return false;
       }
     }
