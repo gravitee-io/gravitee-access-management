@@ -28,8 +28,6 @@ import { createIdp, deleteIdp } from '@management-commands/idp-management-comman
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
-// Follows pattern: remember-me-fixture.ts (manual create/patch/start for pre-start config)
-
 export interface FlowPolicyFixture extends Fixture {
   domain: Domain;
   domainId: string;

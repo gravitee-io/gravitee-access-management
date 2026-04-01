@@ -58,13 +58,9 @@ Tests should be:
 
 ### 5. Assertion quality
 
-Match **`.claude/rules/20-integration-tests.md`** (and the Playwright rules in `gravitee-am-test/playwright/GUIDELINES.md` for browser tests):
-
 - **Do not use `toBeDefined()` on required fields** — it passes for empty strings and wrong values. Prefer `toMatch(JWT_FORMAT)` for access tokens, `toEqual` for known values, and `expect.any(String)` when you only need a non-empty identifier shape.
 - **One deterministic outcome per test** — no conditional branches around `expect()`.
 - **Assert what you configure** — if the fixture sets token claims or flow behaviour, the test should verify that output (or drop unused configuration).
-
-Avoid repeating a visibility check in the spec when a **shared helper** already performs that `expect` immediately before the same interaction (keeps Playwright specs DRY).
 
 ---
 

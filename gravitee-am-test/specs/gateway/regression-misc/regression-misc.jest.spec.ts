@@ -35,11 +35,9 @@ import { FlowPolicyFixture, setupFlowPolicyFixture } from './fixtures/flow-polic
 
 setup(200000);
 
-// Follows pattern: bot-detection.jest.spec.ts (CRUD), token-claims.jest.spec.ts (JWT assertions)
-
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
-describe('Domain Create (UC-AM5)', () => {
+describe('Domain Create', () => {
   let accessToken: string;
   let domainId: string;
 
@@ -164,7 +162,7 @@ describe('Flow Policy Execution', () => {
   });
 });
 
-describe('i18n Dictionary (UC-AM66)', () => {
+describe('i18n Dictionary', () => {
   let accessToken: string;
   let domainId: string;
 

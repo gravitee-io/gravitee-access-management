@@ -26,10 +26,8 @@ setup(200000);
 
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
-// Follows pattern: mcp-oauth2-resource.jest.spec.ts, oauth2-fixture.ts
-
 describe('Token Authentication Methods', () => {
-  describe('client_secret_basic (UC-AM54)', () => {
+  describe('client_secret_basic', () => {
     let fixture: TokenAuthFixture;
 
     beforeAll(async () => {
@@ -71,7 +69,7 @@ describe('Token Authentication Methods', () => {
     });
   });
 
-  describe('client_secret_post (UC-AM55)', () => {
+  describe('client_secret_post', () => {
     let fixture: TokenAuthFixture;
 
     beforeAll(async () => {
@@ -101,7 +99,7 @@ describe('Token Authentication Methods', () => {
     });
   });
 
-  describe('client_secret_jwt (UC-AM56)', () => {
+  describe('client_secret_jwt', () => {
     let fixture: TokenAuthFixture;
 
     function createClientAssertionJwt(clientId: string, clientSecret: string, audience: string): string {
@@ -149,11 +147,7 @@ describe('Token Authentication Methods', () => {
     });
   });
 
-  // AM-2233 (private_key_jwt / UC-AM57) deferred — requires JWKS registration
-  // on the application, which needs investigation of the AM JWKS API.
-  // Tracked in the regression automation plan for a dedicated session.
-
-  describe('Refresh Token (UC-AM53)', () => {
+  describe('Refresh Token', () => {
     let fixture: TokenAuthFixture;
 
     beforeAll(async () => {

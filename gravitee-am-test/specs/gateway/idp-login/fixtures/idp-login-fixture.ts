@@ -29,8 +29,6 @@ import { createIdp, deleteIdp } from '@management-commands/idp-management-comman
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
-// Follows pattern: login-flow-fixture.ts, oauth2-fixture.ts
-
 export interface IdpLoginFixture extends Fixture {
   domain: Domain;
   oidc: DomainOidcConfig;

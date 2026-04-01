@@ -29,9 +29,7 @@ setup(200000);
 
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
-// Follows pattern: bot-detection.jest.spec.ts (CRUD), login-flow-fixture.ts (IdP setup)
-
-describe('Identity Provider CRUD', () => {
+describe('Identity Provider Setup and Login', () => {
   let fixture: IdpLoginFixture;
 
   beforeAll(async () => {
@@ -95,7 +93,7 @@ describe('Identity Provider CRUD', () => {
 });
 
 describe('IdP Login Flows', () => {
-  describe('Single Internal IdP (UC-AM23)', () => {
+  describe('Single Internal IdP', () => {
     let fixture: IdpLoginFixture;
 
     beforeAll(async () => {
@@ -125,7 +123,7 @@ describe('IdP Login Flows', () => {
     });
   });
 
-  describe('Multiple IdPs (UC-AM25)', () => {
+  describe('Multiple IdPs', () => {
     let fixture: IdpLoginFixture;
 
     beforeAll(async () => {
@@ -168,7 +166,7 @@ describe('IdP Login Flows', () => {
     });
   });
 
-  describe('IdP Processing Order (UC-AM26)', () => {
+  describe('IdP Processing Order', () => {
     let fixture: IdpLoginFixture;
 
     beforeAll(async () => {
@@ -228,7 +226,7 @@ describe('IdP Login Flows', () => {
     });
   });
 
-  describe('IdP Selection Rule (UC-AM27)', () => {
+  describe('IdP Selection Rule', () => {
     let fixture: IdpLoginFixture;
 
     beforeAll(async () => {

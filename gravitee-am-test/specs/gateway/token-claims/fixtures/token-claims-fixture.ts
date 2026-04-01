@@ -48,7 +48,6 @@ export interface TokenClaimsSettings {
   }>;
 }
 
-// Follows pattern: oauth2-fixture.ts
 export const setupTokenClaimsFixture = async (settings: TokenClaimsSettings = {}): Promise<TokenClaimsFixture> => {
   const accessToken = await requestAdminAccessToken();
   let domain: Domain | null = null;

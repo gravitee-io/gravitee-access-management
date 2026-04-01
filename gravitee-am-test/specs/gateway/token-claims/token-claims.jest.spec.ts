@@ -22,8 +22,6 @@ import { TokenClaimsFixture, setupTokenClaimsFixture } from './fixtures/token-cl
 
 setup(200000);
 
-// Follows pattern: mcp-oauth2-resource.jest.spec.ts (token payload inspection)
-
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
@@ -32,7 +30,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 }
 
 describe('Token Claims and Duration', () => {
-  describe('Access Token Duration (UC-AM63)', () => {
+  describe('Access Token Duration', () => {
     let fixture: TokenClaimsFixture;
     const ACCESS_TOKEN_TTL = 60;
 
@@ -71,7 +69,7 @@ describe('Token Claims and Duration', () => {
     });
   });
 
-  describe('ID Token Duration (UC-AM64)', () => {
+  describe('ID Token Duration', () => {
     let fixture: TokenClaimsFixture;
     const ID_TOKEN_TTL = 120;
 
@@ -105,7 +103,7 @@ describe('Token Claims and Duration', () => {
     });
   });
 
-  describe('Static Custom Claim on ID Token (UC-AM62)', () => {
+  describe('Static Custom Claim on ID Token', () => {
     let fixture: TokenClaimsFixture;
 
     beforeAll(async () => {
@@ -143,7 +141,7 @@ describe('Token Claims and Duration', () => {
     });
   });
 
-  describe('Dynamic (EL) Custom Claim on ID Token (UC-AM61)', () => {
+  describe('Dynamic (EL) Custom Claim on ID Token', () => {
     let fixture: TokenClaimsFixture;
 
     beforeAll(async () => {
@@ -181,7 +179,7 @@ describe('Token Claims and Duration', () => {
     });
   });
 
-  describe('Static Custom Claim on Access Token (UC-AM60)', () => {
+  describe('Static Custom Claim on Access Token', () => {
     let fixture: TokenClaimsFixture;
 
     beforeAll(async () => {
@@ -219,7 +217,7 @@ describe('Token Claims and Duration', () => {
     });
   });
 
-  describe('Dynamic (EL) Custom Claim on Access Token (UC-AM59)', () => {
+  describe('Dynamic (EL) Custom Claim on Access Token', () => {
     let fixture: TokenClaimsFixture;
 
     beforeAll(async () => {

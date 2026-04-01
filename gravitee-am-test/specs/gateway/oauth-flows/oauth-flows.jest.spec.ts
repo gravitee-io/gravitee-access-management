@@ -29,8 +29,6 @@ import crypto from 'crypto';
 
 setup(200000);
 
-// Follows pattern: oauth2-grant-authorization-code.jest.spec.ts
-
 /**
  * Helper: execute the full auth code flow (login + consent if needed) and return the authorization code.
  * Reuses the redirect chain pattern from oauth2-grant-authorization-code.jest.spec.ts.
@@ -98,7 +96,7 @@ async function executeAuthCodeFlow(
 }
 
 describe('OAuth Grant Flows — Regression Suite', () => {
-  describe('Authorization Code Flow (UC-AM49)', () => {
+  describe('Authorization Code Flow', () => {
     let fixture: OAuth2Fixture;
     let user: { username: string; password: string };
 
@@ -135,7 +133,7 @@ describe('OAuth Grant Flows — Regression Suite', () => {
     });
   });
 
-  describe('Authorization Code + PKCE Flow (UC-AM50)', () => {
+  describe('Authorization Code + PKCE Flow', () => {
     let fixture: OAuth2Fixture;
     let user: { username: string; password: string };
 
@@ -180,7 +178,7 @@ describe('OAuth Grant Flows — Regression Suite', () => {
     });
   });
 
-  describe('Implicit Flow (UC-AM51)', () => {
+  describe('Implicit Flow', () => {
     let fixture: OAuth2Fixture;
     let user: { username: string; password: string };
 
@@ -258,7 +256,7 @@ describe('OAuth Grant Flows — Regression Suite', () => {
     });
   });
 
-  describe('Resource Owner Password (UC-AM52)', () => {
+  describe('Resource Owner Password', () => {
     let fixture: OAuth2Fixture;
     let user: { username: string; password: string };
 
@@ -292,7 +290,7 @@ describe('OAuth Grant Flows — Regression Suite', () => {
     });
   });
 
-  describe('Client Credentials (UC-AM48)', () => {
+  describe('Client Credentials', () => {
     let fixture: OAuth2Fixture;
 
     beforeAll(async () => {
