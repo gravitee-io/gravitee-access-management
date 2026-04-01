@@ -160,31 +160,6 @@ paths:
         "500":
           description: Internal server error
   /organizations/{organizationId}/entrypoints:
-    get:
-      tags:
-      - entrypoints
-      summary: List entrypoints
-      description: "User must have the ORGANIZATION[LIST] permission on the specified\
-        \ organization. Each returned entrypoint is filtered and contains only basic\
-        \ information such as id and name."
-      operationId: listEntrypoints
-      parameters:
-      - name: organizationId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: List all the entrypoints
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Entrypoint"
-        "500":
-          description: Internal server error
     post:
       tags:
       - entrypoints
