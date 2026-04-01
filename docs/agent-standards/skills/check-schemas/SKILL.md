@@ -3,7 +3,7 @@ name: check-schemas
 description: Detect breaking changes in schema-form.json plugin descriptors; run the schema compatibility checker, interpret findings, and guide fixes.
 ---
 
-# Schema Backwards-Compatibility Check
+# Schema Backward-Compatibility Check
 
 Run a schema compatibility check to detect breaking changes in `schema-form.json` files.
 
@@ -12,7 +12,8 @@ below use Gravitee AM conventions but the tooling is generic.
 
 ## Quick usage
 
-When `--base` is omitted the baseline is resolved automatically:
+When `--base` is omitted the baseline is resolved automatically
+(see `.circleci/scripts/_compat_common.sh`):
 - `master` or `x.y.x` release branches → `HEAD~1`
 - All other branches → git tracking branch (`@{u}`) if set to a different branch, else `HEAD~1`
 
@@ -104,7 +105,7 @@ is a concrete example the checker is tested against.
 
 The CI scripts pass `--allow-breaking` (findings printed as warnings, exit 0) in two cases,
 both detected by comparing the `pom.xml` `<version>` at baseline vs. HEAD
-(logic in `.circleci/scripts/_schema_compat_common.sh`):
+(logic in `.circleci/scripts/_compat_common.sh`):
 
 - **Minor version bump** — e.g. `4.11.x` → `4.12.x`. Breaking changes between releases are
   expected.
@@ -179,8 +180,9 @@ unzip -p /tmp/plugins/<artifactId>-<version>.zip 'schemas/schema-form.json' > /t
 - The automated `schema-compat-check.sh` covers schemas tracked in this git repository.
 - The automated `ee-schema-compat-check.sh` covers schemas in EE plugins that are distributed as closed-source ZIPs.
 
-> **Prerequisite:** run `mvn install -P full-bundle` first. The EE script locates new plugin
-> ZIPs from the local build output; it will error with a clear message if they are absent.
+> **Prerequisite:** run `mvn install` of the gateway and management-api standalone distribution
+> modules with `-am` (see `.circleci/workflows.yml`, `ee-schema-compat-check` job). The EE script
+> locates new plugin ZIPs from the local build output; it will error with a clear message if they are absent.
 
 ```bash
 # Run OSS check first — only proceed to EE check if OSS passes:
