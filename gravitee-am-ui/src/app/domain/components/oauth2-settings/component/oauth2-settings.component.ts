@@ -61,7 +61,9 @@ export class OAuth2SettingsComponent implements OnInit {
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
     this.scopes = this.route.snapshot.data['scopes'] || [];
 
-    this.readonly = !this.authService.hasPermissions([this.oauth2Service.getPermission()]);
+    const isTypelessApplication = this.oauth2Service.getContext() === 'Application' && !this.route.snapshot.data['application']?.type;
+
+    this.readonly = !this.authService.hasPermissions([this.oauth2Service.getPermission()]) || isTypelessApplication;
   }
 
   updateSettings(newSettings: any) {

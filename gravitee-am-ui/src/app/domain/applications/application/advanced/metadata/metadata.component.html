@@ -47,7 +47,7 @@
                 style="margin-top: 7px"
                 mat-stroked-button
                 (click)="addMetadata($event)"
-                [disabled]="!metadata.name || !metadata.value"
+                [disabled]="!metadata.name || !metadata.value || !application.type"
               >
                 +&nbsp;ADD
               </button>

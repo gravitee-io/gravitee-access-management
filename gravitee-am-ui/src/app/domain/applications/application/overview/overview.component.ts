@@ -95,11 +95,11 @@ export class ApplicationOverviewComponent implements OnInit {
   }
 
   isServiceApp(): boolean {
-    return this.application.type.toLowerCase() === 'service';
+    return 'service' === this.application.type?.toLowerCase();
   }
 
   isUmaApp(): boolean {
-    return this.application.type.toLowerCase() === 'resource_server';
+    return 'resource_server' === this.application.type?.toLowerCase();
   }
 
   valueCopied(message: string) {

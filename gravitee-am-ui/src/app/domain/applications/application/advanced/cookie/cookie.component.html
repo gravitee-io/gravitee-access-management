@@ -21,7 +21,7 @@
       <app-cookie-settings
         [cookieSettings]="cookieSettings"
         [inheritMode]="true"
-        [readonly]="readonly"
+        [readonly]="readonly || !application.type"
         (onSavedCookieSettings)="updateCookieSettings($event)"
       >
       </app-cookie-settings>
