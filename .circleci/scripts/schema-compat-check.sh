@@ -6,7 +6,7 @@ export GIT_PAGER=cat
 export PAGER=cat
 
 # ---------------------------------------------------------------------------
-# Schema Backwards-Compatibility Check
+# Schema Backward-Compatibility Check
 #
 # Compares every schema-form.json changed between a baseline ref and HEAD
 # (or the working tree when --use-head=false).
@@ -15,28 +15,21 @@ export PAGER=cat
 #   bash schema-compat-check.sh [--base <ref>] [--use-head <true|false>]
 #
 #   --base <ref>         Any git ref to use as the comparison baseline.
-#                        Examples:
-#                          --base origin/master          (merge-base with a branch)
-#                          --base 4.11.0                 (tag — changes since a release)
-#                          --base abc1234                (specific commit SHA)
-#                          --base HEAD~10                (relative to current HEAD)
-#                        When omitted, the baseline is determined automatically:
-#                          - master / x.y.x branches → HEAD~1
-#                          - all other branches       → auto-detects (tracking branch, GitHub API, HEAD~1 fallback)
-#   --use-head <bool>    true  (default): compare baseline → HEAD (committed changes only).
-#                               Used by CI where all changes are committed.
-#                        false: compare baseline → working tree (includes staged and
-#                               unstaged changes). Useful locally before committing.
+#                        When omitted, uses auto-detection: merge-base with the tracking
+#                        branch (@{u}), then GitHub API for PRs, with fallback to HEAD~1.
+#   --use-head <bool>    true  (default): compare baseline → HEAD.
+#                        false: compare baseline → working tree (staged + unstaged).
+#                               Useful locally before committing.
 #
 # Exits 0 if no breaking changes (or minor version bump detected).
 # Exits 1 if any OSS (Open Source) plugin in this repository has breaking changes.
 #
-# Shared CLI, merge-base, and POM version helpers: _schema_compat_common.sh
+# Shared CLI, merge-base, and POM version helpers: _compat_common.sh
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=_schema_compat_common.sh
-source "$SCRIPT_DIR/_schema_compat_common.sh"
+# shellcheck source=_compat_common.sh
+source "$SCRIPT_DIR/_compat_common.sh"
 
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 SCRIPT="$REPO_ROOT/scripts/schema-compatibility/check-schema-compatibility.mjs"
@@ -44,15 +37,15 @@ TMPDIR_SCHEMAS="$(mktemp -d)"
 cleanup() { rm -rf "$TMPDIR_SCHEMAS"; }
 trap cleanup EXIT
 
-schema_compat_parse_args "$@"
+compat_parse_args "$@"
 
-echo "=== Schema Backwards-Compatibility Check ==="
+echo "=== Schema Backward-Compatibility Check ==="
 if [[ "$USE_HEAD" == "false" ]]; then
   echo "(comparing against working tree)"
 fi
 echo ""
 
-schema_compat_resolve_merge_base
+compat_resolve_merge_base
 
 echo ""
 
@@ -67,7 +60,7 @@ else
 fi
 read -r BASE_MINOR BASE_PATCH <<< "$(extract_version "$MERGE_BASE")"
 
-schema_compat_evaluate_minor_bump_allow_breaking
+compat_evaluate_minor_bump_allow_breaking
 
 # ---------------------------------------------------------------------------
 # Find changed schema-form.json files
