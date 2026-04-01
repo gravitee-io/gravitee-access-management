@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { AppConfig } from '../../config/app.config';
+import { SKIP_ERROR_SNACKBAR } from '../interceptors/http-request.interceptor';
 
 import { Page, Sort, transformToQueryParam } from './api.model';
 
@@ -47,7 +48,9 @@ export class ProtectedResourceService {
   }
 
   patch(domainId: string, resourceId: string, patchProtectedResource: PatchProtectedResourceRequest): Observable<ProtectedResource> {
-    return this.http.patch<ProtectedResource>(this.baseURL + `${domainId}/protected-resources/${resourceId}`, patchProtectedResource);
+    return this.http.patch<ProtectedResource>(this.baseURL + `${domainId}/protected-resources/${resourceId}`, patchProtectedResource, {
+      context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
+    });
   }
 
   findById(domainId: string, id: string, type: ProtectedResourceType): Observable<ProtectedResource> {
@@ -55,7 +58,9 @@ export class ProtectedResourceService {
   }
 
   delete(domainId: string, id: string, type: ProtectedResourceType): Observable<any> {
-    return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${id}?type=${type}`);
+    return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${id}?type=${type}`, {
+      context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
+    });
   }
 }
 
