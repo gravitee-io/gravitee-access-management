@@ -62,7 +62,6 @@ public class EntrypointsResource extends AbstractResource {
     @Context
     private ResourceContext resourceContext;
 
-    @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "listEntrypoints",
