@@ -1998,7 +1998,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^[0-999].[0-999].x/
+                - /^\d\.\d+\.x$/
       - schema-compat-check:
           name: Check plugin schema backward compatibility
           context: cicd-orchestrator
@@ -2008,7 +2008,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^[0-999].[0-999].x/
+                - /^\d\.\d+\.x$/
       - oas-compat-check:
           name: Check OAS backward compatibility
           context: cicd-orchestrator
@@ -2018,7 +2018,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^[0-999].[0-999].x/
+                - /^\d\.\d+\.x$/
       - ee-schema-compat-check:
           name: Check EE plugin schema backward compatibility
           context: cicd-orchestrator
@@ -2029,7 +2029,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^[0-999].[0-999].x/
+                - /^\d\.\d+\.x$/
       - job-test-am-charts:
           name: Test Helm chart
           requires:
@@ -2043,7 +2043,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^[0-999].[0-999].x/
+                - /^\d\.\d+\.x$/
           pre-steps:
             - keeper/env-export:
                 secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
@@ -2115,7 +2115,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
       - run_testcontainer_tests_mongo:
           context: cicd-orchestrator
           requires:
@@ -2124,7 +2124,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
       - run_testcontainer_tests_redis:
           context: cicd-orchestrator
           requires:
@@ -2133,7 +2133,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
       - run_testcontainer_tests_jdbc:
           context: cicd-orchestrator
           requires:
@@ -2142,7 +2142,7 @@ workflows:
             branches:
               ignore:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
           matrix:
             parameters:
               jdbcType: ["postgres", "mysql", "mariadb", "mssql", "postgres-min", "mysql-min", "mariadb-min", "mssql-min"]
@@ -2159,7 +2159,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
       - build:
           requires:
             - setup
@@ -2167,7 +2167,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
 
       - deploy-snapshot-on-nexus:
           context: cicd-orchestrator
@@ -2177,7 +2177,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
 
       - publish-images-azure-registry:
           context: cicd-orchestrator
@@ -2187,7 +2187,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
 
       - gitops-deploy:
           context: cicd-orchestrator
@@ -2197,7 +2197,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
 
       - aquasec/docker_image_scan:
           context: cicd-orchestrator
@@ -2247,7 +2247,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
 
       - aquasec/register_artifact:
           context: cicd-orchestrator
@@ -2290,7 +2290,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - /^\d\.\d+\.x$/
 
   release:
     when:
