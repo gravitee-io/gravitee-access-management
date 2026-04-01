@@ -69,7 +69,7 @@
     </mat-tab-group>
 
     <div fxLayout="row" style="margin-top: 20px">
-      <button mat-raised-button color="primary" [disabled]="!formChanged" (click)="save()">SAVE</button>
+      <button mat-raised-button color="primary" [disabled]="!formChanged || readonly" (click)="save()">SAVE</button>
     </div>
   </div>
 </div>

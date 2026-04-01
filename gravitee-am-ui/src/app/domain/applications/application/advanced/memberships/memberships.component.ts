@@ -47,9 +47,9 @@ export class ApplicationMembershipsComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.appId = this.application.id;
     this.members = this.route.snapshot.data['members'];
-    this.createMode = this.authService.hasPermissions(['application_member_create']);
-    this.editMode = this.authService.hasPermissions(['application_member_update']);
-    this.deleteMode = this.authService.hasPermissions(['application_member_delete']);
+    this.createMode = this.authService.hasPermissions(['application_member_create']) && this.application.type;
+    this.editMode = this.authService.hasPermissions(['application_member_update']) && this.application.type;
+    this.deleteMode = this.authService.hasPermissions(['application_member_delete']) && this.application.type;
     this.updateDialogData();
   }
 
