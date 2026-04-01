@@ -102,13 +102,13 @@ fi
 
 if [[ -n "$ALLOW_BREAKING" ]]; then
   # Version-boundary exemption: print findings but do not fail.
-  oasdiff breaking "$OLD_SPEC" "$NEW_SPEC" || true
+  oasdiff breaking "$OLD_SPEC" "$NEW_SPEC" --fail-on ERR || true
   echo ""
   echo "✅  Breaking changes exempted (version boundary)."
   exit 0
 fi
 
-if ! oasdiff breaking "$OLD_SPEC" "$NEW_SPEC"; then
+if ! oasdiff breaking "$OLD_SPEC" "$NEW_SPEC" --fail-on ERR; then
   echo ""
   echo "❌  Breaking OAS changes detected."
   echo "    To fix: keep backward compatibility or bump the minor version in pom.xml."
