@@ -57,6 +57,31 @@ compat_parse_args() {
   done
 }
 
+# Fetches the base branch for a known PR number via the GitHub API.
+# Prints the base branch ref, or empty string on failure.
+# Requires: GITHUB_TOKEN, CIRCLE_PROJECT_USERNAME, CIRCLE_PROJECT_REPONAME
+_compat_github_base_from_pr_number() {
+  local pr_number="$1"
+  curl -sf \
+    -H "Authorization: token $GITHUB_TOKEN" \
+    "https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls/${pr_number}" \
+    | jq -r '.base.ref // empty' 2>/dev/null || true
+}
+
+# Searches for an open PR from the given branch and returns its base branch.
+# Prints the base branch ref, or empty string on failure.
+# Branch is URL-encoded (handles names containing '/').
+# Requires: GITHUB_TOKEN, CIRCLE_PROJECT_USERNAME, CIRCLE_PROJECT_REPONAME
+_compat_github_base_from_branch() {
+  local branch="$1"
+  local encoded_branch
+  encoded_branch="$(jq -rn --arg b "$branch" '$b | @uri')"
+  curl -sf \
+    -H "Authorization: token $GITHUB_TOKEN" \
+    "https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls?head=${CIRCLE_PROJECT_USERNAME}:${encoded_branch}&state=open" \
+    | jq -r '.[0].base.ref // empty' 2>/dev/null || true
+}
+
 # Uses global BASE_REF. Sets global MERGE_BASE.
 compat_resolve_merge_base() {
   if [[ -n "$BASE_REF" ]]; then
@@ -95,16 +120,20 @@ compat_resolve_merge_base() {
           MERGE_BASE="HEAD~1"
         fi
 
-      elif [[ -n "${CIRCLECI:-}" && -n "${CIRCLE_PULL_REQUEST:-}" && -n "${GITHUB_TOKEN:-}" ]]; then
-        # CircleCI PR build: resolve the exact base branch via the GitHub API
-        local pr_number base_branch
-        pr_number="${CIRCLE_PULL_REQUEST##*/}"
-        base_branch="$(curl -sf \
-          -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls/${pr_number}" \
-          | jq -r '.base.ref // empty' 2>/dev/null)" || true
+      elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        # GitHub API: try direct PR lookup first (CIRCLE_PR_NUMBER is set on webhook-triggered
+        # builds), then fall back to searching open PRs by branch name (works for API-triggered
+        # builds where CIRCLE_PR_NUMBER is absent).
+        local base_branch=""
+        if [[ -n "${CIRCLE_PR_NUMBER:-}" ]]; then
+          base_branch="$(_compat_github_base_from_pr_number "$CIRCLE_PR_NUMBER")" || true
+          [[ -n "$base_branch" ]] && echo "Base branch (GitHub API — PR): $base_branch"
+        fi
+        if [[ -z "$base_branch" && -n "${CIRCLE_BRANCH:-}" ]]; then
+          base_branch="$(_compat_github_base_from_branch "$CIRCLE_BRANCH")" || true
+          [[ -n "$base_branch" ]] && echo "Base branch (GitHub API — branch search): $base_branch"
+        fi
         if [[ -n "$base_branch" ]]; then
-          echo "Base branch (GitHub API): $base_branch"
           git fetch origin "$base_branch" --depth=50 2>/dev/null || true
           MERGE_BASE="$(git merge-base HEAD "origin/$base_branch")" || true
           if [[ -z "$MERGE_BASE" ]]; then
