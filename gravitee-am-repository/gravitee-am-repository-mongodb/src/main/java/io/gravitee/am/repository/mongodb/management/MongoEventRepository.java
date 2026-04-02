@@ -20,11 +20,8 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.token.RevokeToken;
-import io.gravitee.am.model.token.RevokeType;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EventMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -52,6 +49,7 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Filters.or;
+import static io.gravitee.am.repository.common.RevokeTokenConverter.toRevokeToken;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -197,52 +195,5 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         return document;
     }
 
-    private Document convert(RevokeToken revokeToken) {
-        if (revokeToken == null) {
-            return null;
-        }
 
-        Document document = new Document();
-        document.put("revokeType", revokeToken.getRevokeType().name());
-        document.put("domainId", revokeToken.getDomainId());
-        document.put("clientId", revokeToken.getClientId());
-        document.put("userId", convert(revokeToken.getUserId()));
-
-        return document;
-    }
-
-    private RevokeToken toRevokeToken(Map revokeToken) {
-        if (revokeToken == null) {
-            return null;
-        }
-
-        RevokeToken document = new RevokeToken();
-        document.setRevokeType(RevokeType.valueOf((String) revokeToken.get("revokeType")));
-        document.setDomainId((String) revokeToken.get("domainId"));
-        document.setClientId((String) revokeToken.get("clientId"));
-        document.setUserId(toUserId((Map) revokeToken.get("userId")));
-
-        return document;
-    }
-
-    private Document convert(UserId userId) {
-        if (userId == null) {
-            return null;
-        }
-
-        Document document = new Document();
-        document.put("id", userId.id());
-        document.put("externalId", userId.externalId());
-        document.put("source", userId.source());
-
-        return document;
-    }
-
-
-    private UserId toUserId(Map userId) {
-        if (userId == null) {
-            return null;
-        }
-        return new UserId((String) userId.get("id"), (String) userId.get("externalId"), (String) userId.get("source"));
-    }
 }

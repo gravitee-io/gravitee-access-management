@@ -23,6 +23,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
@@ -33,6 +34,7 @@ import java.util.function.Supplier;
 
 import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
 import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
+import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKE_SCHEDULED;
 import static java.lang.String.format;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -49,7 +51,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
     }
 
     public ClientTokenAuditBuilder revoked() {
-        revoked(null);
+        revoked("");
         return this;
     }
 
@@ -58,6 +60,33 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
         if (message != null) {
             tokenNewValue.put(REVOKE_MSG_KEY, message);
         }
+        return this;
+    }
+
+    public ClientTokenAuditBuilder scheduleRevoke(RevokeToken revokeToken) {
+        type(TOKEN_REVOKE_SCHEDULED);
+        return revokeTokenData(revokeToken);
+    }
+
+    public ClientTokenAuditBuilder revoked(RevokeToken revokeToken) {
+        type(TOKEN_REVOKED);
+        return revokeTokenData(revokeToken);
+    }
+
+    private ClientTokenAuditBuilder revokeTokenData(RevokeToken revokeToken) {
+        RevokeToken.UserData principal = revokeToken.getPrincipal();
+        if(principal != null) {
+            setActor(principal.getUserId(), EntityType.USER, principal.getUsername(), principal.getUsername(), principal.getReferenceType(), principal.getReferenceId());
+        }
+        RevokeToken.UserData user = revokeToken.getUser();
+        RevokeToken.ApplicationData app = revokeToken.getApplication();
+        switch (revokeToken.getRevokeType()){
+            case BY_USER_AND_CLIENT, BY_USER -> setTarget(user.getUserId(),EntityType.USER,  user.getUsername(), user.getUsername(), user.getReferenceType(), user.getReferenceId());
+            case BY_CLIENT -> setTarget(app.getApplicationId(), EntityType.APPLICATION, app.getApplicationName(), app.getApplicationName(), ReferenceType.DOMAIN, app.getApplicationName());
+        }
+
+        reference(Reference.domain(revokeToken.getDomainId()));
+
         return this;
     }
 

@@ -18,13 +18,15 @@ package io.gravitee.am.gateway.handler.common.service;
 
 
 import io.gravitee.am.gateway.handler.common.service.impl.RevokeTokenGatewayServiceImpl;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -38,6 +40,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -91,12 +94,14 @@ public class RevokeTokenGatewayServiceTest {
     public void processMethod_shouldDeleteTokensByDomainAndUser() {
         when(tokenRepository.deleteByDomainIdAndUserId(anyString(), any())).thenReturn(Completable.complete());
 
-        var revoke = RevokeToken.byUser(UUID.randomUUID().toString(), UserId.internal(UUID.randomUUID().toString()));
-        TestObserver<Void> testObserver = tokenService.process(new Domain(), revoke).test();
+        var domain = new Domain(UUID.randomUUID().toString());
+        var userId = UUID.randomUUID().toString();
+        var revoke = RevokeToken.byUser(domain, userId, "user-name", "principal-id", "principal-name");
+        TestObserver<Void> testObserver = tokenService.process(domain, revoke).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenRepository).deleteByDomainIdAndUserId(anyString(), any());
+        verify(tokenRepository).deleteByDomainIdAndUserId(eq(domain.getId()), eq(UserId.internal(userId)));
         verify(auditService, never()).report(any());
     }
 
@@ -104,12 +109,23 @@ public class RevokeTokenGatewayServiceTest {
     public void processMethod_shouldDeleteTokensByDomainAndClient() {
         when(tokenRepository.deleteByDomainIdAndClientId(anyString(), any())).thenReturn(Completable.complete());
 
-        var revoke = RevokeToken.byClientId(UUID.randomUUID().toString(), UUID.randomUUID().toString());
-        TestObserver<Void> testObserver = tokenService.process(new Domain(), revoke).test();
+        var domain = new Domain(UUID.randomUUID().toString());
+        var clientId = UUID.randomUUID().toString();
+        var app = new Application();
+        app.setId(UUID.randomUUID().toString());
+        app.setName("test-app");
+        var oauth = new ApplicationOAuthSettings();
+        oauth.setClientId(clientId);
+        var settings = new ApplicationSettings();
+        settings.setOauth(oauth);
+        app.setSettings(settings);
+        var revoke = RevokeToken.byApplication(domain, app, "principal-id", "principal-name");
+
+        TestObserver<Void> testObserver = tokenService.process(domain, revoke).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenRepository).deleteByDomainIdAndClientId(anyString(), any());
+        verify(tokenRepository).deleteByDomainIdAndClientId(eq(domain.getId()), eq(clientId));
         verify(auditService, never()).report(any());
     }
 
@@ -117,12 +133,15 @@ public class RevokeTokenGatewayServiceTest {
     public void processMethod_shouldDeleteTokensByDomainAndClientAndUser() {
         when(tokenRepository.deleteByDomainIdClientIdAndUserId(anyString(), any(), any())).thenReturn(Completable.complete());
 
-        var revoke = RevokeToken.byUserAndClientId(UUID.randomUUID().toString(), UUID.randomUUID().toString(), UserId.internal(UUID.randomUUID().toString()));
-        TestObserver<Void> testObserver = tokenService.process(new Domain(), revoke).test();
+        var domain = new Domain(UUID.randomUUID().toString());
+        var clientId = UUID.randomUUID().toString();
+        var userId = UUID.randomUUID().toString();
+        var revoke = RevokeToken.byUserAndClientId(domain, clientId, userId, "user-name", "principal-id", "principal-name");
+        TestObserver<Void> testObserver = tokenService.process(domain, revoke).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tokenRepository).deleteByDomainIdClientIdAndUserId(anyString(), any(), any());
+        verify(tokenRepository).deleteByDomainIdClientIdAndUserId(eq(domain.getId()), eq(clientId), eq(UserId.internal(userId)));
         verify(auditService, never()).report(any());
     }
 
