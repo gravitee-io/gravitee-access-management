@@ -81,6 +81,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -144,8 +145,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findAll() {
+<<<<<<< HEAD
         return Flowable.fromPublisher(applicationsCollection.find())
                 .map(MongoApplicationRepository::convert)
+=======
+        return Flowable.fromPublisher(applicationsCollection.find().sort(new BasicDBObject(FIELD_UPDATED_AT, -1))).map(MongoApplicationRepository::convert)
+>>>>>>> 5801379ce (fix: make application search on mongo constantly ordered)
                 .observeOn(Schedulers.computation());
     }
 
@@ -164,7 +169,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findByDomain(String domain) {
+<<<<<<< HEAD
         return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain))))
+=======
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1))))
+>>>>>>> 5801379ce (fix: make application search on mongo constantly ordered)
                 .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
@@ -186,21 +195,44 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                         .countDocuments(query, countOptions()))
                 .firstElement()
                 .toSingle();
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(
+        Single<List<Application>> applicationsOperation = Observable.fromPublisher(
                         withMaxTime(applicationsCollection.find(query))
                                 .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
                                 .skip(size * page).limit(size))
                 .map(MongoApplicationRepository::convert)
-                .collect(HashSet::new, Set::add);
+                .collect(ArrayList::new, List::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
     @Override
     public Single<Page<Application>> search(String domain, String query, int page, int size) {
+<<<<<<< HEAD
         // search - use collation for non-wildcard queries to leverage case-insensitive indexes
         Bson mongoQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
         boolean useCollation = !isWildcardQuery(query);
         return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
+=======
+        // currently search on client_id field
+        Bson searchQuery = or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query));
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
+            String escapedQuery = escapeRegexMetacharacters(query);
+            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern));
+        }
+
+        Bson mongoQuery = and(
+                eq(FIELD_DOMAIN, domain),
+                searchQuery);
+
+        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<List<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(ArrayList::new, List::add);
+        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
+                .observeOn(Schedulers.computation());
+>>>>>>> 5801379ce (fix: make application search on mongo constantly ordered)
     }
 
     @Override
@@ -226,6 +258,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 eq(FIELD_DOMAIN, domain),
                 searchQuery);
 
+<<<<<<< HEAD
         CountOptions countOpts = useWildcard ? countOptions() : countOptions().collation(CASE_INSENSITIVE_COLLATION);
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOpts)).first(0L);
 
@@ -242,6 +275,10 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 .map(MongoApplicationRepository::convert)
                 .collect(HashSet::new, Set::add);
 
+=======
+        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<List<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(ArrayList::new, List::add);
+>>>>>>> 5801379ce (fix: make application search on mongo constantly ordered)
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
                 .observeOn(Schedulers.computation());
     }
