@@ -372,6 +372,6 @@ export class AuditsComponent implements OnInit {
 
   private isDeletionEventType(type: string): boolean {
     const eventType = type.toLowerCase();
-    return eventType.includes('deleted') || eventType.includes('revoked');
+    return eventType.includes('deleted') || (eventType.includes('revoked') && !eventType.includes('token_revoked'));
   }
 }

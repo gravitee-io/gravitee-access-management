@@ -120,7 +120,7 @@ public class UserConsentResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapCompletable(domain -> scopeApprovalService.revokeByConsent(domain, UserId.internal(user), consent, revokeTokenManagementService::sendProcessRequest, authenticatedUser)))
+                        .flatMapCompletable(domain -> scopeApprovalService.revokeByConsent(domain, UserId.internal(user), consent, (d, t) -> revokeTokenManagementService.sendProcessRequest(d, t), authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

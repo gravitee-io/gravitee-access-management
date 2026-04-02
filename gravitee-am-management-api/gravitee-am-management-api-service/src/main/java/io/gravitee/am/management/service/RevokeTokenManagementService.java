@@ -16,26 +16,23 @@
 
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.token.RevokeToken;
 import io.reactivex.rxjava3.core.Completable;
 
 public interface RevokeTokenManagementService {
-
-    Completable deleteByUser(Domain domain, User user);
-
-    Completable deleteByApplication(Domain domain, Application application);
 
     /**
      * remove access & refresh tokens based on the RevokeToken content.
      * This method do not generate audits as it used as a sub process
      * of a higher level action which will trace the action in an audit.
      *
-     * @parm domain
+     * @param domain
      * @param revokeTokenDescription
      * @return
      */
-    Completable sendProcessRequest(Domain domain, RevokeToken revokeTokenDescription);
+    Completable sendProcessRequest(Domain domain,
+                                   RevokeToken revokeTokenDescription);
+
+
 }

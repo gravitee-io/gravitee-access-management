@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 
 
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -56,46 +57,10 @@ public class RevokeTokenManagementServiceImpl implements RevokeTokenManagementSe
     private AuditService auditService;
 
     @Override
-    public Completable deleteByUser(Domain domain, User user) {
-        log.debug("Delete tokens by user : {}", user.getId());
-        var userId = user.getId();
-        final var event = new Event(Type.REVOKE_TOKEN, Payload.from(RevokeToken.byUser(domain.getId(), UserId.internal(userId))));
-        return eventService.create(event, domain).ignoreElement()
-                .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to request tokens deletion for user {}", userId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to request tokens deletion for user: %s", userId), ex));
-                })
-                .doOnEvent(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                        .reference(new Reference(user.getReferenceType(), user.getReferenceId()))
-                        .tokenActor(user)
-                        .revoked("RevokeToken action requested for all tokens linked to user: " + userId)
-                        .throwable(error)));
-    }
-
-    @Override
-    public Completable deleteByApplication(Domain domain, Application application) {
-        log.debug("Delete tokens by application : {}", application);
-        var clientId = Optional.ofNullable(application.getSettings())
-                .map(ApplicationSettings::getOauth)
-                .map(ApplicationOAuthSettings::getClientId);
-        final var event = new Event(Type.REVOKE_TOKEN, Payload.from(RevokeToken.byClientId(domain.getId(), clientId.get())));
-        return eventService.create(event, domain).ignoreElement()
-                .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to request tokens deletion by client {}", clientId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to request tokens deletion by client: %s", clientId), ex));
-                })
-                .doOnEvent(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                        .reference(Reference.domain(application.getDomain()))
-                        .tokenActor(application.toClient())
-                        .revoked("RevokeToken action requested for all tokens linked to client: " + clientId)
-                        .throwable(error)));
-    }
-
-    @Override
     public Completable sendProcessRequest(Domain domain, RevokeToken revokeTokenDescription) {
         final var event = new Event(Type.REVOKE_TOKEN, Payload.from(revokeTokenDescription));
-        return eventService.create(event, domain).ignoreElement();
+        return eventService.create(event, domain).ignoreElement()
+                .doOnError(err -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).scheduleRevoke(revokeTokenDescription).throwable(err)))
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).scheduleRevoke(revokeTokenDescription)));
     }
 }
