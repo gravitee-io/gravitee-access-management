@@ -50,6 +50,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
+import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.model.token.RevokeType;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.ApplicationService;
@@ -113,6 +115,7 @@ import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -526,9 +529,11 @@ public class ManagementUserServiceTest {
     void shouldResetPassword_externalIdEmpty() {
         Domain domain = new Domain();
         domain.setId("domain");
+        domain.setReferenceId("org-id");
 
         User user = new User();
         user.setId("user-id");
+        user.setUsername("user-name");
         user.setSource("idp-id");
         user.setReferenceId("domain");
         user.setReferenceType(ReferenceType.DOMAIN);
@@ -544,26 +549,43 @@ public class ManagementUserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
-        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
+        when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
-        userService.resetPassword(domain, user.getId(), PASSWORD, null)
+        io.gravitee.am.identityprovider.api.User principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(principal.getId()).thenReturn("principal-id");
+        when(principal.getUsername()).thenReturn("principal-username");
+
+        userService.resetPassword(domain, user.getId(), PASSWORD, principal)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
 
-        verify(tokenService).deleteByUser(any(), any());
+        var revokeTokenCaptor = ArgumentCaptor.forClass(RevokeToken.class);
+        verify(tokenService).sendProcessRequest(eq(domain), revokeTokenCaptor.capture());
+        var request = revokeTokenCaptor.getValue();
+        assertEquals(RevokeType.BY_USER, request.getRevokeType());
+        assertEquals(domain.getId(), request.getDomainId());
+        assertNotNull(request.getUser());
+        assertEquals(user.getId(), request.getUser().getUserId());
+        assertEquals(user.getUsername(), request.getUser().getUsername());
+        assertNotNull(request.getPrincipal());
+        assertEquals("principal-id", request.getPrincipal().getUserId());
+        assertEquals("principal-username", request.getPrincipal().getUsername());
+        assertEquals(domain.getReferenceId(), request.getPrincipal().getReferenceId());
     }
 
     @Test
     void should_delete_user() {
         Domain domain = new Domain();
         domain.setId("domain");
+        domain.setReferenceId("org-id");
 
         User user = new User();
         user.setId("user-id");
+        user.setUsername("user-name");
         user.setExternalId("ext-user-id");
         user.setSource("idp-id");
         user.setReferenceId("domain");
@@ -581,9 +603,13 @@ public class ManagementUserServiceTest {
         when(credentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
 
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
-        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
+        when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
 
-        userService.delete(domain, user.getId(), null)
+        io.gravitee.am.identityprovider.api.User principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(principal.getId()).thenReturn("principal-id");
+        when(principal.getUsername()).thenReturn("principal-username");
+
+        userService.delete(domain, user.getId(), principal)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
@@ -592,7 +618,18 @@ public class ManagementUserServiceTest {
         verify(certificateCredentialService, times(1)).deleteByUserId(domain, user.getId());
         verify(credentialService, times(1)).deleteByUserId(domain, user.getId());
 
-        verify(tokenService).deleteByUser(any(), any());
+        var revokeTokenCaptor = ArgumentCaptor.forClass(RevokeToken.class);
+        verify(tokenService).sendProcessRequest(eq(domain), revokeTokenCaptor.capture());
+        var request = revokeTokenCaptor.getValue();
+        assertEquals(RevokeType.BY_USER, request.getRevokeType());
+        assertEquals(domain.getId(), request.getDomainId());
+        assertNotNull(request.getUser());
+        assertEquals(user.getId(), request.getUser().getUserId());
+        assertEquals(user.getUsername(), request.getUser().getUsername());
+        assertNotNull(request.getPrincipal());
+        assertEquals("principal-id", request.getPrincipal().getUserId());
+        assertEquals("principal-username", request.getPrincipal().getUsername());
+        assertEquals(domain.getReferenceId(), request.getPrincipal().getReferenceId());
         verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus() == Status.SUCCESS));
         verify(eventService).create(argThat(arg -> arg.getType() == Type.USER && arg.getPayload().getId().equals(user.getId())));
     }
@@ -601,9 +638,11 @@ public class ManagementUserServiceTest {
     void shouldResetPassword_idpUserNotFound() {
         Domain domain = new Domain();
         domain.setId("domain");
+        domain.setReferenceId("org-id");
 
         User user = new User();
         user.setId("user-id");
+        user.setUsername("user-name");
         user.setSource("idp-id");
         user.setReferenceId("domain");
         user.setReferenceType(ReferenceType.DOMAIN);
@@ -619,17 +658,135 @@ public class ManagementUserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
-        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
+        when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
-        userService.resetPassword(domain, user.getId(), PASSWORD, null)
+        io.gravitee.am.identityprovider.api.User principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(principal.getId()).thenReturn("principal-id");
+        when(principal.getUsername()).thenReturn("principal-username");
+
+        userService.resetPassword(domain, user.getId(), PASSWORD, principal)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(userProvider, times(1)).create(any());
-        verify(tokenService).deleteByUser(any(), any());
+        var revokeTokenCaptor = ArgumentCaptor.forClass(RevokeToken.class);
+        verify(tokenService).sendProcessRequest(eq(domain), revokeTokenCaptor.capture());
+        var request = revokeTokenCaptor.getValue();
+        assertEquals(RevokeType.BY_USER, request.getRevokeType());
+        assertEquals(domain.getId(), request.getDomainId());
+        assertNotNull(request.getUser());
+        assertEquals(user.getId(), request.getUser().getUserId());
+        assertEquals(user.getUsername(), request.getUser().getUsername());
+        assertNotNull(request.getPrincipal());
+        assertEquals("principal-id", request.getPrincipal().getUserId());
+        assertEquals("principal-username", request.getPrincipal().getUsername());
+        assertEquals(domain.getReferenceId(), request.getPrincipal().getReferenceId());
+    }
+
+    @Test
+    void shouldDisableUser_sendProcessRequestWithUserAndPrincipalData() {
+        var domain = new Domain();
+        domain.setId("domain-id");
+        domain.setReferenceId("org-id");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setUsername("user-name");
+        user.setSource("idp-id");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain.getId());
+
+        var principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(principal.getId()).thenReturn("principal-id");
+        when(principal.getUsername()).thenReturn("principal-username");
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
+        when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
+        when(userRepository.update(any(), any())).thenAnswer(answer -> Single.just(answer.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        userService.updateStatus(domain, user.getId(), false, principal)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        var revokeTokenCaptor = ArgumentCaptor.forClass(RevokeToken.class);
+        verify(tokenService).sendProcessRequest(eq(domain), revokeTokenCaptor.capture());
+
+        var request = revokeTokenCaptor.getValue();
+        assertEquals(RevokeType.BY_USER, request.getRevokeType());
+        assertEquals(domain.getId(), request.getDomainId());
+        assertNotNull(request.getUser());
+        assertEquals(user.getId(), request.getUser().getUserId());
+        assertEquals(user.getUsername(), request.getUser().getUsername());
+        assertNotNull(request.getPrincipal());
+        assertEquals("principal-id", request.getPrincipal().getUserId());
+        assertEquals("principal-username", request.getPrincipal().getUsername());
+        assertEquals(domain.getReferenceId(), request.getPrincipal().getReferenceId());
+
+        var updatedUserCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).update(updatedUserCaptor.capture(), any());
+        assertFalse(updatedUserCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    void shouldEnableUser_notSendProcessRequest() {
+        var domain = new Domain();
+        domain.setId("domain-id");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setUsername("user-name");
+        user.setSource("idp-id");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain.getId());
+
+        var principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(), any())).thenAnswer(answer -> Single.just(answer.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        userService.updateStatus(domain, user.getId(), true, principal)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(tokenService, never()).sendProcessRequest(any(), any());
+
+        var updatedUserCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).update(updatedUserCaptor.capture(), any());
+        assertTrue(updatedUserCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    void shouldDisableUser_failWhenProcessRequestFails() {
+        var domain = new Domain();
+        domain.setId("domain-id");
+        domain.setReferenceId("org-id");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setUsername("user-name");
+        user.setSource("idp-id");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain.getId());
+
+        var principal = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(principal.getId()).thenReturn("principal-id");
+        when(principal.getUsername()).thenReturn("principal-username");
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
+        when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.error(new TechnicalManagementException("boom")));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
+
+        userService.updateStatus(domain, user.getId(), false, principal)
+                .test()
+                .assertNotComplete()
+                .assertError(throwable -> throwable instanceof TechnicalManagementException && "boom".equals(throwable.getMessage()));
     }
 
     @Test

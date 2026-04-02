@@ -18,11 +18,8 @@ package io.gravitee.am.repository.jdbc.management.api.model.mapper;
 import com.github.dozermapper.core.DozerConverter;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
-import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.token.RevokeToken;
-import io.gravitee.am.model.token.RevokeType;
 import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEvent;
 import org.slf4j.Logger;
@@ -31,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.repository.common.RevokeTokenConverter.toRevokeToken;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -90,25 +88,4 @@ public class EventConverter extends DozerConverter<Event, JdbcEvent> {
         return result;
     }
 
-
-    private RevokeToken toRevokeToken(Map revokeToken) {
-        if (revokeToken == null) {
-            return null;
-        }
-
-        RevokeToken document = new RevokeToken();
-        document.setRevokeType(RevokeType.valueOf((String) revokeToken.get("revokeType")));
-        document.setDomainId((String) revokeToken.get("domainId"));
-        document.setClientId((String) revokeToken.get("clientId"));
-        document.setUserId(toUserId((Map) revokeToken.get("userId")));
-
-        return document;
-    }
-
-    private UserId toUserId(Map userId) {
-        if (userId == null) {
-            return null;
-        }
-        return new UserId((String) userId.get("id"), (String) userId.get("externalId"), (String) userId.get("source"));
-    }
 }

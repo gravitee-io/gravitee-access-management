@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -135,7 +136,9 @@ public class ApplicationResource extends AbstractResource {
             @Parameter(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
             @Suspended final AsyncResponse response) {
 
-        updateInternal(organizationId, environmentId, domain, application, patchApplication, response);
+        User principal = getAuthenticatedUser();
+        updateInternal(organizationId, environmentId, domain, application, patchApplication, principal)
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
@@ -161,7 +164,9 @@ public class ApplicationResource extends AbstractResource {
             @Parameter(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
             @Suspended final AsyncResponse response) {
 
-        updateInternal(organizationId, environmentId, domain, application, patchApplication, response);
+        User principal = getAuthenticatedUser();
+        updateInternal(organizationId, environmentId, domain, application, patchApplication, principal)
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
@@ -255,24 +260,23 @@ public class ApplicationResource extends AbstractResource {
         return resourceContext.getResource(ApplicationFlowsResource.class);
     }
 
-    public void updateInternal(String organizationId, String environmentId, String domainId, String application, PatchApplication patchApplication, final AsyncResponse response) {
+    public Maybe<Application> updateInternal(String organizationId, String environmentId, String domainId, String application, PatchApplication patchApplication, User principal) {
 
         final User authenticatedUser = getAuthenticatedUser();
         Set<Permission> requiredPermissions = patchApplication.getRequiredPermissions();
 
         if (requiredPermissions.isEmpty()) {
             // If there is no require permission, it means there is nothing to update. This is not a valid request.
-            response.resume(new BadRequestException("You need to specify at least one value to update."));
+            return Maybe.error(new BadRequestException("You need to specify at least one value to update."));
         } else {
-            Completable.merge(requiredPermissions.stream()
+            return Completable.merge(requiredPermissions.stream()
                     .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.APPLICATION, application, permission, Acl.UPDATE))
                     .collect(Collectors.toList()))
                     .andThen(domainService.findById(domainId)
                             .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                            .flatMapSingle(domain -> applicationService.patch(domain, application, patchApplication, authenticatedUser, revokeTokenManagementService::deleteByApplication)
+                            .flatMapSingle(domain -> applicationService.patch(domain, application, patchApplication, authenticatedUser, (d, app) -> revokeTokenManagementService.sendProcessRequest(d, RevokeToken.byApplication(d, app, principal.getId(), principal.getUsername())))
                                     .flatMap(updatedApplication -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId, application)
-                                            .map(userPermissions -> filterApplicationInfos(updatedApplication, userPermissions)))))
-                    .subscribe(response::resume, response::resume);
+                                            .map(userPermissions -> filterApplicationInfos(updatedApplication, userPermissions)))));
         }
     }
 

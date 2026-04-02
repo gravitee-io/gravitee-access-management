@@ -41,7 +41,7 @@ public interface ManagementUserService {
 
     Single<User> update(Domain domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> updateStatus(Domain domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> updateStatus(Domain domain, String id, boolean isUserEnabled, io.gravitee.am.identityprovider.api.User principal);
 
     Completable resetPassword(Domain domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 

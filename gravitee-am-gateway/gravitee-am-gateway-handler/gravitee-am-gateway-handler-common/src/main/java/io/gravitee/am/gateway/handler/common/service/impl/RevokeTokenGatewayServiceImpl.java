@@ -24,10 +24,10 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -79,21 +79,36 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
             final var revokeToken = event.content().getRevokeToken();
             if (event.type() == RevokeTokenEvent.REVOKE) {
                 process(revokeToken)
-                        .doOnComplete(() -> log.debug("Revoke Token {} action successful on domain '{}' for clientId '{}' and userId '{}'.",
-                                revokeToken.getRevokeType(),
-                                revokeToken.getDomainId(),
-                                revokeToken.getClientId(),
-                                revokeToken.getUserId()))
-                        .doOnError(error -> log.error("Revoke Token {} action fails on domain '{}' for clientId '{}' and userId '{}'.",
-                                revokeToken.getRevokeType(),
-                                revokeToken.getDomainId(),
-                                revokeToken.getClientId(),
-                                revokeToken.getUserId(), error))
+                        .doOnComplete(() -> auditLog(revokeToken))
+                        .doOnError(error -> auditLog(revokeToken, error))
                         .onErrorComplete()
                         .subscribe();
             }
         }
     }
+
+    private void auditLog(RevokeToken revokeToken) {
+        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .revoked(revokeToken));
+        log.debug("Revoke Token {} action successful on domain '{}' for clientId '{}' and userId '{}'.",
+                revokeToken.getRevokeType(),
+                revokeToken.getDomainId(),
+                revokeToken.getApplication() == null ? null : revokeToken.getApplication().getClientId(),
+                revokeToken.getUser() == null ? null : revokeToken.getUser().getUserId());
+    }
+
+    private void auditLog(RevokeToken revokeToken, Throwable error) {
+        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .revoked(revokeToken)
+                .throwable(error));
+        log.error("Revoke Token {} action fails on domain '{}' for clientId '{}' and userId '{}'.",
+                revokeToken.getRevokeType(),
+                revokeToken.getDomainId(),
+                revokeToken.getApplication() == null ? null : revokeToken.getApplication().getClientId(),
+                revokeToken.getUser() == null ? null : revokeToken.getUser().getUserId(),
+                error);
+    }
+
 
     @Override
     public Completable deleteByUser(User user, boolean needAudit) {
@@ -123,9 +138,9 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
 
     private Completable process(RevokeToken revokeTokenDescription) {
         return switch (revokeTokenDescription.getRevokeType()) {
-            case BY_USER -> tokenRepository.deleteByDomainIdAndUserId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getUserId());
-            case BY_CLIENT -> tokenRepository.deleteByDomainIdAndClientId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getClientId());
-            case BY_USER_AND_CLIENT -> tokenRepository.deleteByDomainIdClientIdAndUserId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getClientId(), revokeTokenDescription.getUserId());
+            case BY_USER -> tokenRepository.deleteByDomainIdAndUserId(revokeTokenDescription.getDomainId(), UserId.internal(revokeTokenDescription.getUser().getUserId()));
+            case BY_CLIENT -> tokenRepository.deleteByDomainIdAndClientId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getApplication().getClientId());
+            case BY_USER_AND_CLIENT -> tokenRepository.deleteByDomainIdClientIdAndUserId(revokeTokenDescription.getDomainId(), revokeTokenDescription.getApplication().getClientId(), UserId.internal(revokeTokenDescription.getUser().getUserId()));
         };
     }
 

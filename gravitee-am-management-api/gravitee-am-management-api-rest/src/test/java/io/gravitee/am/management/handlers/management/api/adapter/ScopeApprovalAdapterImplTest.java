@@ -37,6 +37,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.concurrent.TimeUnit;
 
@@ -92,8 +93,10 @@ class ScopeApprovalAdapterImplTest {
 
     @Test
     void shouldRevokeConsents() {
+        User user = new User();
+        user.setId("id");
         when(userRepository.findById(any(UserId.class)))
-                .thenReturn(Maybe.just(new User()));
+                .thenReturn(Maybe.just(user));
         var created = Single.mergeArray(
                         scopeApprovalRepository.create(approvalWithUser("internal-user-id")),
                         scopeApprovalRepository.create(approvalWithUser("some-other-user")))
@@ -102,7 +105,8 @@ class ScopeApprovalAdapterImplTest {
         if (!created) {
             Assertions.fail("creating test data failed");
         }
-        underTest.revokeUserConsents(TEST_DOMAIN, "internal-user-id", "client-id", null)
+
+        underTest.revokeUserConsents(TEST_DOMAIN, "internal-user-id", "client-id", Mockito.mock())
                 .test()
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete();
