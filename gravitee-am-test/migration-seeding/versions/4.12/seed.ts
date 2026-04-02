@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Stub for migration test data seeding.
- * Parses --to-version and prints confirmation.
- * Replace with real seeding logic when ready.
- */
-const args = process.argv.slice(2);
-const idx = args.indexOf('--to-version');
-const version = idx >= 0 ? args[idx + 1] : undefined;
-
-if (!version) {
-    console.error('Usage: migration-bootstrap.mjs --to-version <version>');
-    process.exit(1);
-}
-
-console.log(`Seeded migration test data for version ${version}`);
+// Placeholder seed for AM 4.12. No objects are seeded at this stage.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function seed(_accessToken: string): Promise<void> {}

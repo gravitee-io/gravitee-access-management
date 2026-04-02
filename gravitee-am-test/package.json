@@ -22,7 +22,7 @@
     "pw:report": "playwright show-report playwright/playwright-report",
     "pw:ci": "CI=true playwright test",
     "pw:lint": "eslint playwright/ && prettier --check \"playwright/**/*.ts\" && playwright test --list",
-    "migration:seed": "node migration-seeding/migration-bootstrap.mjs",
+    "migration:seed": "cross-env TS_NODE_PROJECT=migration-seeding/tsconfig.seed.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register migration-seeding/migration-bootstrap.ts",
     "typecheck": "tsc --noEmit",
     "lint": "npm run prettier && npm run lint:license",
     "lint:fix": "npm run prettier:fix && npm run lint:license:fix && tsc --noEmit",
