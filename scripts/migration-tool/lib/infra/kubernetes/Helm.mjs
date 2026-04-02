@@ -8,7 +8,7 @@ export class Helm {
     }
 
     async repoAdd(name, url) {
-        await this.shell`helm repo add ${name} ${url}`;
+        await this.shell`helm repo add --force-update ${name} ${url}`;
     }
 
     async repoUpdate() {

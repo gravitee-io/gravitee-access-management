@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import process from 'node:process';
+import { $, cd, within } from 'zx';
 
 /**
  * Orchestrator manages the migration test lifecycle and stages.

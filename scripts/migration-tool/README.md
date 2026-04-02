@@ -12,8 +12,7 @@ All commands must be run from the **repository root** (e.g. `./scripts/migration
 ## Prerequisites
 
 ### Kubernetes (Kind)
-- A running Kind cluster (e.g. `kind create cluster --name am-migration`).
-- `kubectl` and `helm` installed.
+- `kubectl`, `helm` and `kind` installed.
 - Gravitee license: set `GRAVITEE_LICENSE` (base64) or place a license file and set path via config (see `LicenseManager`).
 
 ### Docker Compose
