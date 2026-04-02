@@ -12,6 +12,7 @@ export class Orchestrator {
         this.provider = provider;
         this.options = options;
         this.projectRoot = process.cwd();
+        this._spawn = spawn;
     }
 
     async run(stages, options = {}) {
@@ -49,6 +50,12 @@ export class Orchestrator {
                 break;
             case 'deploy-from':
                 await this.provider.deploy(this.options.fromTag);
+                break;
+            case 'seed':
+                await this.runSeed(this.options.fromTag);
+                break;
+            case 'seed-upgrade':
+                await this.runSeed(this.options.toTag);
                 break;
             case 'verify-baseline':
                 await this.runTests('🔍 Running baseline tests...', 'ci:management:parallel', 'specs/management');
@@ -120,6 +127,29 @@ export class Orchestrator {
         const [code] = await once(child, 'exit');
         if (code !== 0) {
             throw new Error(`Jest exited with code ${code}`);
+        }
+    }
+
+    async runSeed(version) {
+        console.log(`🌱 Seeding test data for version ${version}...`);
+        const testDir = this.options.testDir;
+        if (!testDir) {
+            throw new Error('options.testDir is required to run seed');
+        }
+        const env = {
+            ...process.env,
+            ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {})
+        };
+        const args = ['run', 'migration:seed', '--', '--to-version', version];
+        const child = this._spawn('npm', args, {
+            cwd: testDir,
+            env,
+            stdio: 'inherit',
+            shell: false,
+        });
+        const [code] = await once(child, 'exit');
+        if (code !== 0) {
+            throw new Error(`Seed process exited with code ${code}`);
         }
     }
 }

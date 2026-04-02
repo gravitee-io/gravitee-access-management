@@ -210,10 +210,12 @@ const commands = {
             'clean',
             'k8s:setup',
             'deploy-from',
+            'seed',
             'verify-baseline',
             'upgrade-mapi',
             'verify-mapi',
             'upgrade-gw',
+            'seed-upgrade',
             'verify-all',
             ...(options.withDowngrade
                 ? ['downgrade-mapi', 'verify-after-downgrade-mapi', 'downgrade-gw', 'verify-after-downgrade']
@@ -255,6 +257,6 @@ function printHelp() {
     console.log('  --test-dir <path>   Test suite directory (default from config; use full path to override)');
     console.log('  --with-downgrade  After verify-all, downgrade back to from-tag and verify');
     console.log('\nStages:');
-    console.log('  clean, k8s:setup, deploy-from, verify-baseline, upgrade-mapi, verify-mapi, upgrade-gw, verify-all');
+    console.log('  clean, k8s:setup, deploy-from, seed, verify-baseline, upgrade-mapi, verify-mapi, upgrade-gw, seed-upgrade, verify-all');
     console.log('  (+ with --with-downgrade: downgrade-mapi, verify-after-downgrade-mapi, downgrade-gw, verify-after-downgrade)');
 }
