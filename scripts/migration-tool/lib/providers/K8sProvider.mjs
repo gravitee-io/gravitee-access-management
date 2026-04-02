@@ -40,7 +40,7 @@ export class K8sProvider extends BaseProvider {
         this.valuesPath = options.valuesPath || Config.k8s.valuesPath;
 
         this.clusterName = options.clusterName || 'am-migration';
-        this.pids = { mapi: null, gatewayDp1: null, gatewayDp2: null, ui: null };
+        this.pids = { mapi: null, gatewayDp1: null, gatewayDp1Technical: null, gatewayDp2: null, ui: null };
     }
 
     /**
@@ -142,6 +142,7 @@ export class K8sProvider extends BaseProvider {
             return {
                 AM_GATEWAY_URL: 'http://localhost:8091',
                 AM_DOMAIN_DATA_PLANE_ID: 'dp1',
+                AM_GATEWAY_NODE_MONITORING_URL: 'http://localhost:18092/_node',
             };
         }
         return {};
@@ -188,6 +189,7 @@ export class K8sProvider extends BaseProvider {
         await this.portForwarder.forceKillPort(8092);
         await this.portForwarder.forceKillPort(8093);
         await this.portForwarder.forceKillPort(8002);
+        await this.portForwarder.forceKillPort(18092);
 
         console.log(`💀 Deleting namespace: ${this.namespace}...`);
         await this.kubectl.deleteNamespace();
@@ -204,6 +206,10 @@ export class K8sProvider extends BaseProvider {
         if (this.pids.gatewayDp1) {
             await this.portForwarder.stop(this.pids.gatewayDp1);
             this.pids.gatewayDp1 = null;
+        }
+        if (this.pids.gatewayDp1Technical) {
+            await this.portForwarder.stop(this.pids.gatewayDp1Technical);
+            this.pids.gatewayDp1Technical = null;
         }
         if (this.pids.gatewayDp2) {
             await this.portForwarder.stop(this.pids.gatewayDp2);
@@ -275,6 +281,7 @@ export class K8sProvider extends BaseProvider {
             }
             if (dp1Release) {
                 this.pids.gatewayDp1 = await this.portForwarder.start(`svc/${dp1Release.name}-gateway`, 8091, 82);
+                this.pids.gatewayDp1Technical = await this.portForwarder.start(`svc/${dp1Release.name}-gateway`, 18092, 18092);
             }
             if (dp2Release) {
                 this.pids.gatewayDp2 = await this.portForwarder.start(`svc/${dp2Release.name}-gateway`, 8092, 82);
@@ -348,6 +355,10 @@ export class K8sProvider extends BaseProvider {
             await this.portForwarder.stop(this.pids.gatewayDp1);
             this.pids.gatewayDp1 = null;
         }
+        if (this.pids.gatewayDp1Technical) {
+            await this.portForwarder.stop(this.pids.gatewayDp1Technical);
+            this.pids.gatewayDp1Technical = null;
+        }
         if (this.pids.gatewayDp2) {
             await this.portForwarder.stop(this.pids.gatewayDp2);
             this.pids.gatewayDp2 = null;
@@ -357,6 +368,7 @@ export class K8sProvider extends BaseProvider {
             const dp2Release = this.releases.find(r => r.name === 'am-gateway-dp2');
             if (dp1Release) {
                 this.pids.gatewayDp1 = await this.portForwarder.start(`svc/${dp1Release.name}-gateway`, 8091, 82);
+                this.pids.gatewayDp1Technical = await this.portForwarder.start(`svc/${dp1Release.name}-gateway`, 18092, 18092);
             }
             if (dp2Release) {
                 this.pids.gatewayDp2 = await this.portForwarder.start(`svc/${dp2Release.name}-gateway`, 8092, 82);

@@ -264,12 +264,25 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         }));
     });
 
-    test('startTunnels should port-forward mapi, dp1 (8091), dp2 (8092), ui', async () => {
+    test('startTunnels should port-forward mapi, dp1 (8091), dp2 (8092), dp1-technical (18092), ui', async () => {
         await provider.startTunnels();
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-mapi-management-api', 8093, 83);
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-mapi-management-ui', 8002, 8002);
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp1-gateway', 8091, 82);
         expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp2-gateway', 8092, 82);
-        expect(mockPortForwarder.start).toHaveBeenCalledTimes(4);
+        expect(mockPortForwarder.start).toHaveBeenCalledWith('svc/am-gateway-dp1-gateway', 18092, 18092);
+        expect(mockPortForwarder.start).toHaveBeenCalledTimes(5);
+    });
+
+    test('getTestEnv should include gateway monitoring URL', () => {
+        const env = provider.getTestEnv();
+        expect(env.AM_GATEWAY_URL).toBe('http://localhost:8091');
+        expect(env.AM_DOMAIN_DATA_PLANE_ID).toBe('dp1');
+        expect(env.AM_GATEWAY_NODE_MONITORING_URL).toBe('http://localhost:18092/_node');
+    });
+
+    test('clean should force-kill port 18092', async () => {
+        await provider.clean();
+        expect(mockPortForwarder.forceKillPort).toHaveBeenCalledWith(18092);
     });
 });

@@ -86,6 +86,10 @@ gateway:
   enabled: true
   replicaCount: 1
   services:
+    core:
+      service:
+        enabled: true
+        externalPort: 18092
     sync:
       permissions: true
   image:

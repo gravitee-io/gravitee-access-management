@@ -42,12 +42,12 @@ All commands must be run from the **repository root** (e.g. `./scripts/migration
 
 ### K8s multi-dataplane
 - One Management API release and two Gateway releases (dp1, dp2) per run.
-- Ports (local port-forward): Management API **8093**, UI **8002** (local browser testing only; Jest uses 8093), Gateway dp1 **8091**, Gateway dp2 **8092**.
+- Ports (local port-forward): Management API **8093**, UI **8002** (local browser testing only; Jest uses 8093), Gateway dp1 **8091**, Gateway dp2 **8092**, Gateway dp1 node/monitoring **18092** (`AM_GATEWAY_NODE_MONITORING_URL`; used for domain readiness polling).
 - `AM_GATEWAY_URL` is set to `http://localhost:8091` for verify-all and verify-after-downgrade so gateway tests hit dp1.
 
 ### System diagram (K8s)
 
-When running with `--provider k8s`, the tool deploys the following into a Kind cluster. Port-forwards expose services on localhost: Jest (gravitee-am-test) uses **8093** (Management API) and **8091** (Gateway dp1). Port **8002** (Management UI) is for local browser testing only; Jest does not access it.
+When running with `--provider k8s`, the tool deploys the following into a Kind cluster. Port-forwards expose services on localhost: Jest (gravitee-am-test) uses **8093** (Management API), **8091** (Gateway dp1), and **18092** (Gateway dp1 node/monitoring for domain readiness). Port **8002** (Management UI) is for local browser testing only; Jest does not access it.
 
 ```mermaid
 flowchart LR
@@ -71,6 +71,7 @@ flowchart LR
 
     Jest -->|"localhost:8093"| MAPI
     Jest -->|"localhost:8091\n(AM_GATEWAY_URL)"| DP1
+    Jest -->|"localhost:18092\n(node/monitoring)"| DP1
     Jest -.->|"localhost:8092"| DP2
 ```
 
