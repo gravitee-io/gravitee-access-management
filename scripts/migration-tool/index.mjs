@@ -53,6 +53,7 @@ const parsed = parseArgs({
         stage: { type: 'string' },
         'test-filter': { type: 'string' },
         'test-dir': { type: 'string' },
+        registry: { type: 'string' },
         'with-downgrade': { type: 'boolean', default: false },
     },
     allowPositionals: true,
@@ -84,6 +85,7 @@ if (firstIsCommand) {
         stage: zxArgv.stage,
         'test-filter': zxArgv['test-filter'],
         'test-dir': zxArgv['test-dir'],
+        registry: zxArgv.registry,
         'with-downgrade': zxArgv['with-downgrade'],
     };
 } else {
@@ -102,6 +104,7 @@ const options = {
     stage: raw.stage ?? undefined,
     testFilter: (raw['test-filter'] ?? '').trim() || undefined,
     testDir,
+    registry: raw.registry ?? undefined,
     withDowngrade: raw['with-downgrade'] === true,
     token: process.env.CIRCLECI_TOKEN,
 };
@@ -141,7 +144,8 @@ switch (options.providerName) {
             helm,
             kubectl,
             databaseStrategy,
-            releases
+            releases,
+            registry: options.registry
         });
         break;
     }
@@ -255,6 +259,7 @@ function printHelp() {
     console.log('  --stage <name>    Run only this stage');
     console.log('  --test-filter <path>  Run only Jest tests matching path (e.g. specs/gateway/refresh-token.jest.spec.ts)');
     console.log('  --test-dir <path>   Test suite directory (default from config; use full path to override)');
+    console.log('  --registry <host>   Image registry, K8s only (e.g. graviteeio.azurecr.io); overrides Docker Hub and skips tag validation');
     console.log('  --with-downgrade  After verify-all, downgrade back to from-tag and verify');
     console.log('\nStages:');
     console.log('  clean, k8s:setup, deploy-from, seed, verify-baseline, upgrade-mapi, verify-mapi, upgrade-gw, seed-upgrade, verify-all');

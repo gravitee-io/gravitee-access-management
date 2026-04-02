@@ -152,6 +152,7 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 | `--test-filter` | Jest path pattern (e.g. `specs/management/certificates/certificates.jest.spec.ts`) | (none) |
 | `--with-downgrade` | After verify-all, downgrade to from-tag and run downgrade verification | `false` (CLI); CircleCI migration workflow may default to `true` |
 | `--test-dir` | Test suite directory (relative or absolute); overrides config default | From `Config.test.dir` or `AM_MIGRATION_TEST_DIR` |
+| `--registry` | Image registry host, K8s only (e.g. `graviteeio.azurecr.io`). Overrides image repositories via Helm `--set` and skips Docker Hub tag validation. CI trigger does not yet forward this parameter. | (none; uses Docker Hub) |
 
 ---
 

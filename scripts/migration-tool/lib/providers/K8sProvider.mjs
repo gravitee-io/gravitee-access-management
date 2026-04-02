@@ -40,6 +40,7 @@ export class K8sProvider extends BaseProvider {
         this.valuesPath = options.valuesPath || Config.k8s.valuesPath;
 
         this.clusterName = options.clusterName || 'am-migration';
+        this.registry = options.registry ? options.registry.replace(/\/+$/, '') : null;
         this.pids = { mapi: null, gatewayDp1: null, gatewayDp1Technical: null, gatewayDp2: null, ui: null };
     }
 
@@ -148,6 +149,24 @@ export class K8sProvider extends BaseProvider {
         return {};
     }
 
+    /**
+     * Returns Helm --set overrides for image repositories when a custom registry is configured.
+     * @param {'mapi'|'gateway'} component
+     */
+    _registryOverrides(component) {
+        if (!this.registry) return {};
+        if (component === 'mapi') {
+            return {
+                'api.image.repository': `${this.registry}/am-management-api`,
+                'gateway.image.repository': `${this.registry}/am-gateway`,
+                'ui.image.repository': `${this.registry}/am-management-ui`,
+            };
+        }
+        return {
+            'gateway.image.repository': `${this.registry}/am-gateway`,
+        };
+    }
+
     async setup() {
         console.log('🏗️  Setting up K8s environment...');
 
@@ -223,7 +242,7 @@ export class K8sProvider extends BaseProvider {
 
     async deploy(version) {
         console.log(`🚀 Deploying AM version ${version}...`);
-        await validateAmImageTag(version);
+        if (!this.registry) await validateAmImageTag(version);
 
         const licenseBase64 = await this.licenseManager.getLicenseBase64();
 
@@ -232,7 +251,8 @@ export class K8sProvider extends BaseProvider {
                 const licenseSecretName = `${r.name}-license`;
                 const set = {
                     'license.key': licenseBase64,
-                    'license.name': licenseSecretName
+                    'license.name': licenseSecretName,
+                    ...this._registryOverrides(r.component)
                 };
                 if (r.component === 'mapi') {
                     set['api.image.tag'] = version;
@@ -262,7 +282,8 @@ export class K8sProvider extends BaseProvider {
                     'gateway.image.tag': version,
                     'ui.image.tag': version,
                     'license.key': licenseBase64,
-                    'license.name': 'am-license-v4'
+                    'license.name': 'am-license-v4',
+                    ...this._registryOverrides('mapi')
                 }
             });
         }
@@ -296,7 +317,7 @@ export class K8sProvider extends BaseProvider {
 
     async upgradeMapi(toTag) {
         console.log(`🆙 Updating Management API to ${toTag}...`);
-        await validateAmImageTag(toTag);
+        if (!this.registry) await validateAmImageTag(toTag);
         if (this.releases.length > 0) {
             const mapiRelease = this.releases.find(r => r.component === 'mapi');
             if (mapiRelease) {
@@ -304,7 +325,7 @@ export class K8sProvider extends BaseProvider {
                 await this.helm.installOrUpgrade(mapiRelease.name, 'graviteeio/am', {
                     ...valuesOpt,
                     version: Config.k8s.amChartVersion,
-                    set: { 'api.image.tag': toTag, 'ui.image.tag': toTag },
+                    set: { 'api.image.tag': toTag, 'ui.image.tag': toTag, ...this._registryOverrides('mapi') },
                     reuseValues: true,
                     wait: true
                 });
@@ -314,7 +335,7 @@ export class K8sProvider extends BaseProvider {
             await this.helm.installOrUpgrade('am', 'graviteeio/am', {
                 ...valuesOpt,
                 version: Config.k8s.amChartVersion,
-                set: { 'api.image.tag': toTag, 'ui.image.tag': toTag },
+                set: { 'api.image.tag': toTag, 'ui.image.tag': toTag, ...this._registryOverrides('mapi') },
                 reuseValues: true,
                 wait: true
             });
@@ -381,7 +402,7 @@ export class K8sProvider extends BaseProvider {
 
     async upgradeGw(toTag) {
         console.log(`🆙 Updating Gateway to ${toTag}...`);
-        await validateAmImageTag(toTag);
+        if (!this.registry) await validateAmImageTag(toTag);
         if (this.releases.length > 0) {
             const gatewayReleases = this.releases.filter(r => r.component === 'gateway');
             for (const r of gatewayReleases) {
@@ -389,7 +410,7 @@ export class K8sProvider extends BaseProvider {
                 await this.helm.installOrUpgrade(r.name, 'graviteeio/am', {
                     ...valuesOpt,
                     version: Config.k8s.amChartVersion,
-                    set: { 'gateway.image.tag': toTag },
+                    set: { 'gateway.image.tag': toTag, ...this._registryOverrides('gateway') },
                     reuseValues: true,
                     wait: true
                 });
@@ -399,7 +420,7 @@ export class K8sProvider extends BaseProvider {
             await this.helm.installOrUpgrade('am', 'graviteeio/am', {
                 ...valuesOpt,
                 version: Config.k8s.amChartVersion,
-                set: { 'gateway.image.tag': toTag },
+                set: { 'gateway.image.tag': toTag, ...this._registryOverrides('gateway') },
                 reuseValues: true,
                 wait: true
             });
