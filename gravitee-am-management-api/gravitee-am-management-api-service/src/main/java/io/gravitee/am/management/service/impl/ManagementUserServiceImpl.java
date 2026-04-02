@@ -36,6 +36,7 @@ import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
+import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -399,22 +400,33 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
 
     @Override
-    public Single<User> updateStatus(Domain domain, String userId, boolean status, io.
+    public Single<User> updateStatus(Domain domain, String userId, boolean isUserEnabled, io.
             gravitee.am.identityprovider.api.User principal) {
-        Completable removeTokens = status ? Completable.complete() : tokenService.deleteByUser(domain, User.simpleUser(userId, DOMAIN, domain.getId()));
+
         final var userRepository = dataPlaneRegistry.getUserRepository(domain);
         return userRepository.findById(domain.asReference(), UserId.internal(userId))
                 .switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(userId))))
                 .flatMap(user -> {
-                    user.setEnabled(status);
+                    user.setEnabled(isUserEnabled);
+
                     final var action = new UpdateUserRule(userValidator, userRepository::update);
-                    return removeTokens.andThen(action.update(user));
+                    if(isUserEnabled){
+                        return action.update(user);
+                    } else {
+                        RevokeToken request = RevokeToken.byUser(domain,
+                                user.getId(),
+                                user.getUsername(),
+                                principal.getId(),
+                                principal.getUsername());
+                        return tokenService.sendProcessRequest(domain, request)
+                                .andThen(action.update(user));
+                    }
                 })
                 .doOnSuccess(user1 -> {
-                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1));
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((isUserEnabled ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1));
                     publishUserUpdateEvent(domain, user1);
                 })
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((isUserEnabled ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
     }
 
     @Override
@@ -464,7 +476,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                         })
                                         // after audit, invalidate tokens whatever is the domain or app settings
                                         // as it is an admin action here, we want to force the user to login
-                                        .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(domain, updatedUser)
+                                        .flatMap(updatedUser -> Single.defer(() -> tokenService.sendProcessRequest(domain, RevokeToken.byUser(domain, updatedUser.getId(), updatedUser.getUsername(), principal.getId(), principal.getUsername()))
                                                 .toSingleDefault(updatedUser)
                                                 .onErrorResumeNext(err -> {
                                                     log.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
@@ -814,7 +826,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         .toSingleDefault(user))
                 .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(domain.asReference()).throwable(throwable)))
-                .flatMap(user -> tokenService.deleteByUser(domain, user).toSingleDefault(user));
+                .flatMap(user -> tokenService.sendProcessRequest(domain, RevokeToken.byUser(domain, user.getId(), user.getUsername(), principal.getId(), principal.getUsername())).toSingleDefault(user));
     }
 
     protected void publishUserUpdateEvent(Domain domain, User user) {

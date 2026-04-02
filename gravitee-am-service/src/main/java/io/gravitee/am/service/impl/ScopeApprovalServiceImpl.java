@@ -145,7 +145,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable)))
-                                .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUserAndClientId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId())))))
+                                .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUserAndClientId(domain, scopeApproval.getClientId(), user.getId(), user.getUsername(), principal.getId(), principal.getUsername())))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -177,7 +177,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable))))
-                        .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUser(domain.getId(), userId))))
+                        .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUser(domain, user.getId(), user.getUsername(), principal.getId(), principal.getUsername()))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -211,7 +211,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                                         .user(user)
                                         .throwable(throwable))))
 
-                        .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUserAndClientId(domain.getId(), clientId, userId))))
+                        .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUserAndClientId(domain, clientId, user.getId(), user.getUsername(), principal.getId(), principal.getUsername()))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

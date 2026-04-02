@@ -182,7 +182,9 @@ public class ScopeApprovalServiceTest {
         when(scopeApprovalRepository.findById(CONSENT_ID)).thenReturn(Maybe.just(scopeApproval));
 
 
-        TestObserver testObserver = scopeApprovalService.revokeByConsent(new Domain(DOMAIN_ID), UserId.internal("user-id"), CONSENT_ID,  (Domain, RevokeToken) -> Completable.complete(), null).test();
+        final var principal = new DefaultUser("principal-username");
+        principal.setId("principal-id");
+        TestObserver testObserver = scopeApprovalService.revokeByConsent(new Domain(DOMAIN_ID), UserId.internal("user-id"), CONSENT_ID,  (Domain, RevokeToken) -> Completable.complete(), principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();

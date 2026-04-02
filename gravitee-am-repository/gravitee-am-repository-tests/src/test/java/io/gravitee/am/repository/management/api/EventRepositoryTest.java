@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.token.RevokeToken;
@@ -155,9 +154,28 @@ public class EventRepositoryTest extends AbstractManagementTest {
         event.setType(Type.DOMAIN);
         Payload payload = new Payload("pid", ReferenceType.ORGANIZATION, "oid", Action.BULK_CREATE);
         final var revokeToken = new RevokeToken();
-        revokeToken.setUserId(new UserId(UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        final var userId = UUID.randomUUID().toString();
+        final var principalId = UUID.randomUUID().toString();
+        final var clientId = UUID.randomUUID().toString();
+        final var appId = UUID.randomUUID().toString();
+        revokeToken.setUser(RevokeToken.UserData.builder()
+                .userId(userId)
+                .username("username")
+                .referenceId("domain-id")
+                .referenceType(ReferenceType.DOMAIN)
+                .build());
+        revokeToken.setPrincipal(RevokeToken.UserData.builder()
+                .userId(principalId)
+                .username("principal")
+                .referenceId("org-id")
+                .referenceType(ReferenceType.ORGANIZATION)
+                .build());
+        revokeToken.setApplication(RevokeToken.ApplicationData.builder()
+                .applicationId(appId)
+                .applicationName("my-app")
+                .clientId(clientId)
+                .build());
         revokeToken.setDomainId(UUID.randomUUID().toString());
-        revokeToken.setClientId(UUID.randomUUID().toString());
         revokeToken.setRevokeType(RevokeType.BY_USER);
         payload.put(Payload.REVOKE_TOKEN_DEFINITION, revokeToken);
         event.setPayload(new Payload(payload)); // duplicate the payload to avoid inner transformation that make test failing
@@ -180,10 +198,14 @@ public class EventRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(e -> e.getPayload().getRevokeToken() != null &&
                 e.getPayload().getRevokeToken().getRevokeType() == revokeToken.getRevokeType() &&
                 e.getPayload().getRevokeToken().getDomainId().equals(revokeToken.getDomainId()) &&
-                e.getPayload().getRevokeToken().getClientId().equals(revokeToken.getClientId()) &&
-                e.getPayload().getRevokeToken().getUserId() != null &&
-                e.getPayload().getRevokeToken().getUserId().id().equals(revokeToken.getUserId().id()) &&
-                e.getPayload().getRevokeToken().getUserId().externalId().equals(revokeToken.getUserId().externalId())
+                e.getPayload().getRevokeToken().getApplication() != null &&
+                e.getPayload().getRevokeToken().getApplication().getClientId().equals(revokeToken.getApplication().getClientId()) &&
+                e.getPayload().getRevokeToken().getApplication().getApplicationId().equals(revokeToken.getApplication().getApplicationId()) &&
+                e.getPayload().getRevokeToken().getUser() != null &&
+                e.getPayload().getRevokeToken().getUser().getUserId().equals(revokeToken.getUser().getUserId()) &&
+                e.getPayload().getRevokeToken().getUser().getUsername().equals(revokeToken.getUser().getUsername()) &&
+                e.getPayload().getRevokeToken().getPrincipal() != null &&
+                e.getPayload().getRevokeToken().getPrincipal().getUserId().equals(revokeToken.getPrincipal().getUserId())
                 );
     }
 
