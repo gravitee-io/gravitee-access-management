@@ -1901,6 +1901,9 @@ workflows:
                 - master
                 - /^\d\.\d+\.x$/
           pre-steps:
+            - run:
+                name: Set Trivy timeout
+                command: echo 'export TRIVY_TIMEOUT=30m' >> "$BASH_ENV"
             - keeper/env-export:
                 secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
                 var-name: AQUA_KEY
