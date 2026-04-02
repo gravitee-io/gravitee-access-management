@@ -22,6 +22,7 @@
     "pw:report": "playwright show-report playwright/playwright-report",
     "pw:ci": "CI=true playwright test",
     "pw:lint": "eslint playwright/ && prettier --check \"playwright/**/*.ts\" && playwright test --list",
+    "migration:seed": "echo \"MIGRATION TEST SEEDING TODO\"",
     "typecheck": "tsc --noEmit",
     "lint": "npm run prettier && npm run lint:license",
     "lint:fix": "npm run prettier:fix && npm run lint:license:fix && tsc --noEmit",
