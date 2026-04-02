@@ -78,6 +78,12 @@ gatewayEnv: &gatewayEnv
     value: gravitee-password
   - name: LIQUIBASE_ANALYTICS_ENABLED
     value: "false"
+  - name: gravitee_services_sync_cron
+    value: "*/2 * * * * *"
+  - name: gravitee_services_sync_timeframeBeforeDelay
+    value: "5000"
+  - name: gravitee_services_sync_timeframeAfterDelay
+    value: "5000"
 
 api:
   enabled: false

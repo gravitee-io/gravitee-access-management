@@ -37,6 +37,12 @@ gatewayEnv: &gatewayEnv
     value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000"
   - name: gravitee_repositories_oauth2_mongodb_dbname
     value: "gravitee-dp1"
+  - name: gravitee_services_sync_cron
+    value: "*/2 * * * * *"
+  - name: gravitee_services_sync_timeframeBeforeDelay
+    value: "5000"
+  - name: gravitee_services_sync_timeframeAfterDelay
+    value: "5000"
 
 api:
   enabled: false
