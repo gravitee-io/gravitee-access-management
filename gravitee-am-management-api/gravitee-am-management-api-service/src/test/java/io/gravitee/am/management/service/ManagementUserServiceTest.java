@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.event.UserEvent;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
@@ -45,6 +46,7 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
@@ -654,12 +656,14 @@ public class ManagementUserServiceTest {
         when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         userService.assignRoles(DOMAIN, user.getId(), rolesIds)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(userRepository, times(1)).update(any(), any());
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
     }
 
     @Test
@@ -702,12 +706,14 @@ public class ManagementUserServiceTest {
         when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         userService.revokeRoles(DOMAIN, user.getId(), rolesIds)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(userRepository, times(1)).update(any(), any());
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
     }
 
     @Test
@@ -1021,6 +1027,7 @@ public class ManagementUserServiceTest {
         when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
@@ -1032,6 +1039,7 @@ public class ManagementUserServiceTest {
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
         verify(credentialService, never()).update(any(), any());
         verify(loginAttemptService, times(1)).reset(any(), any());
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
     }
 
     @Test
@@ -1071,6 +1079,7 @@ public class ManagementUserServiceTest {
 
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
         when(credentialService.update(any(), any())).thenReturn(Single.just(credential));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
@@ -1125,6 +1134,7 @@ public class ManagementUserServiceTest {
 
         when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
@@ -1135,6 +1145,7 @@ public class ManagementUserServiceTest {
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any(), any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
 
         assertEquals(1, user.getFactors().size());
         assertNotEquals(
@@ -1182,6 +1193,7 @@ public class ManagementUserServiceTest {
 
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
         when(userProvider.update(any(), any())).thenReturn(Single.just(idpUserUpdated));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         var observer = userService.update(domain, user.getId(), updatedUser).test();
@@ -1191,6 +1203,7 @@ public class ManagementUserServiceTest {
 
         verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).update(any(), any());
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
     }
 
     @Test
@@ -1217,6 +1230,7 @@ public class ManagementUserServiceTest {
         defaultUser.setId("idp-user-id");
 
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("User not found in idp")));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         var observer = userService.update(domain, user.getId(), updatedUser).test();
@@ -1243,6 +1257,7 @@ public class ManagementUserServiceTest {
 
         when(userRepository.findById(any(Reference.class),any())).thenReturn(Maybe.just(user));
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -1254,6 +1269,7 @@ public class ManagementUserServiceTest {
 
         verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(0)).update(any(), any());
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
     }
 
     @Test
@@ -1317,6 +1333,8 @@ public class ManagementUserServiceTest {
         when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -1331,6 +1349,7 @@ public class ManagementUserServiceTest {
         }), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any(), any());
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
     }
 
     @Test
@@ -1392,11 +1411,13 @@ public class ManagementUserServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         when(userRepository.findById(eq("user-id"))).thenReturn(Maybe.just(user));
         when(userRepository.update(userCaptor.capture(), any(UserRepository.UpdateActions.class))).thenReturn(Single.just(user));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         userService.unlinkIdentity(DOMAIN, user.getId(), extraUserId, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(userRepository, times(1)).update(any(), any());
+        verify(eventService).create(argThat(evt -> evt.getType().equals(Type.USER)), any());
         User expectedUser = userCaptor.getValue();
         Assert.assertTrue(expectedUser.getIdentities().isEmpty());
     }
@@ -1644,7 +1665,8 @@ public class ManagementUserServiceTest {
         when(userRepository.findById(any(), any())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
         when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
-
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        
         TestObserver<User> testObserver = userService.update(domain, "user-id", updateUser, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
@@ -1677,6 +1699,7 @@ public class ManagementUserServiceTest {
         when(userRepository.findById(any(), any())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
         when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.update(domain, "user-id", updateUser, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -1710,6 +1733,7 @@ public class ManagementUserServiceTest {
         when(userRepository.findById(any(), any())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
         when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.update(domain, "user-id", updateUser, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

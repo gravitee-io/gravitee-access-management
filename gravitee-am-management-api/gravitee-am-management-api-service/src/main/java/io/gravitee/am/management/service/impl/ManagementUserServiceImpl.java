@@ -170,6 +170,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
     @Autowired
     protected PasswordHistoryService passwordHistoryService;
+
     @Autowired
     private EventService eventService;
 
@@ -363,7 +364,10 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         oldUser.setForceResetPassword(updateUser.getForceResetPassword());
 
                         return new UpdateUserRule(userValidator, userRepository::update).update(oldUser)
-                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
+                                .doOnSuccess(user1 -> {
+                                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1));
+                                    publishUserUpdateEvent(domain, user1);
+                                })
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).reference(domain.asReference()).throwable(throwable)));
                     }));
         }
@@ -406,7 +410,10 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                     final var action = new UpdateUserRule(userValidator, userRepository::update);
                     return removeTokens.andThen(action.update(user));
                 })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
+                .doOnSuccess(user1 -> {
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1));
+                    publishUserUpdateEvent(domain, user1);
+                })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
     }
 
@@ -542,7 +549,10 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                 return loginAttemptService.reset(domain, criteria).andThen(action.update(user));
                             });
                 })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).user(user1)))
+                .doOnSuccess(user1 -> {
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).user(user1));
+                    publishUserUpdateEvent(domain, user1);
+                })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).reference(domain.asReference()).throwable(throwable)))
                 .ignoreElement();
     }
@@ -565,7 +575,10 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                     final var action = new UpdateUserRule(userValidator, dataPlaneRegistry.getUserRepository(domain)::update);
                     return loginAttemptService.reset(domain, criteria).andThen(action.update(user));
                 })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
+                .doOnSuccess(user1 -> {
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1));
+                    publishUserUpdateEvent(domain, user1);
+                })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).reference(domain.asReference()).throwable(throwable)))
                 .ignoreElement();
     }
@@ -591,7 +604,10 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                     userToUpdate.setFactors(factors);
                     final var action = new UpdateUserRule(userValidator, userRepository::update);
                     return action.update(userToUpdate)
-                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser)))
+                            .doOnSuccess(user1 -> {
+                                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser));
+                                publishUserUpdateEvent(domain, user1);
+                            })
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(userToUpdate).throwable(throwable)));
                 });
     }
@@ -613,7 +629,10 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                     userToUpdate.setIdentities(linkedIdentities);
                     final var action = new UpdateUserRule(userValidator, userRepository::update);
                     return action.update(userToUpdate)
-                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser)))
+                            .doOnSuccess(user1 -> {
+                                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser));
+                                publishUserUpdateEvent(domain, user1);
+                            })
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).reference(new Reference(oldUser.getReferenceType(), oldUser.getId())).type(EventType.USER_UPDATED).throwable(throwable)));
                 });
     }
@@ -639,7 +658,10 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                     return checkRoles(roles)
                             // and update the user
                             .andThen(Single.defer(() -> new UpdateUserRule(userValidator, dataPlaneRegistry.getUserRepository(domain)::update).update(userToUpdate)))
-                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).oldValue(oldUser).user(user1)))
+                            .doOnSuccess(user1 -> {
+                                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).oldValue(oldUser).user(user1));
+                                publishUserUpdateEvent(domain, user1);
+                            })
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).reference(domain.asReference()).throwable(throwable)));
                 });
     }
@@ -748,7 +770,8 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                 .updateUsername(domain, username, principal,
                         (User user) -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
-                        () -> repository.findById(domain.asReference(), UserId.internal(id)).switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(id)))));
+                        () -> repository.findById(domain.asReference(), UserId.internal(id)).switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(id)))))
+                .doOnSuccess(user1 -> publishUserUpdateEvent(domain, user1));
     }
 
     @SuppressWarnings("ReactiveStreamsUnusedPublisher")
@@ -794,6 +817,14 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                 .flatMap(user -> tokenService.deleteByUser(domain, user).toSingleDefault(user));
     }
 
+    protected void publishUserUpdateEvent(Domain domain, User user) {
+        Event event = new Event(Type.USER, new Payload(user.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
+        eventService.create(event, domain).ignoreElement()
+                .doOnError(err -> log.warn("Unable to publish user update event for user {}", user.getId(), err))
+                .doOnComplete(() -> log.debug("User update event published for user {}", user.getId()))
+                .onErrorComplete()
+                .subscribe();
+    }
 
     protected io.gravitee.am.identityprovider.api.User convert(AbstractNewUser newUser) {
         DefaultUser user = new DefaultUser(newUser.getUsername());
