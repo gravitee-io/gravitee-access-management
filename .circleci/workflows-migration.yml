@@ -82,7 +82,7 @@ jobs:
           no_output_timeout: 30m
       - run:
           name: "Ensure test report directory exists"
-          command: mkdir -p gravitee-am-test/jest-reports/junit
+          command: mkdir -p gravitee-am-test/jest-reports/junit gravitee-am-test/jest-reports/html
           when: always
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit

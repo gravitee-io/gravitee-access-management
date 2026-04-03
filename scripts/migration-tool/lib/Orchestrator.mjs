@@ -151,7 +151,8 @@ export class Orchestrator {
         const jestEnv = {
             ...process.env,
             ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {}),
-            JEST_JUNIT_OUTPUT_NAME: `junit-migration-${stageName}.xml`
+            JEST_JUNIT_OUTPUT_NAME: `junit-migration-${stageName}.xml`,
+            JEST_HTML_REPORT_NAME: `report-${stageName}.html`
         };
         Object.assign(process.env, jestEnv);
 
