@@ -85,6 +85,30 @@ describe('Orchestrator', () => {
         expect(orchestrator.results[2]).toEqual(expect.objectContaining({ stage: 'k8s:setup', status: 'skipped' }));
     });
 
+    test('run should call _writeSummaryHtml with results', async () => {
+        orchestrator._writeSummaryHtml = jest.fn();
+        await orchestrator.run(['clean']);
+
+        expect(orchestrator._writeSummaryHtml).toHaveBeenCalledWith(
+            expect.arrayContaining([
+                expect.objectContaining({ stage: 'clean', status: 'passed' })
+            ])
+        );
+    });
+
+    test('run should call _writeSummaryHtml even on failure', async () => {
+        mockProvider.clean.mockRejectedValue(new Error('failed'));
+        orchestrator._writeSummaryHtml = jest.fn();
+
+        try { await orchestrator.run(['clean']); } catch (_) { /* expected */ }
+
+        expect(orchestrator._writeSummaryHtml).toHaveBeenCalledWith(
+            expect.arrayContaining([
+                expect.objectContaining({ stage: 'clean', status: 'failed' })
+            ])
+        );
+    });
+
     test('run should print summary table even on failure', async () => {
         mockProvider.clean.mockRejectedValue(new Error('clean failed'));
         const consoleSpy = jest.spyOn(console, 'log');
