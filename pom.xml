@@ -169,11 +169,19 @@
         <gravitee-spec-gen-api.version>1.1.0</gravitee-spec-gen-api.version>
 
         <!-- EE plugin included in default bundle -->
+<<<<<<< HEAD
         <gravitee-am-idp-ldap.version>3.0.0-alpha.1</gravitee-am-idp-ldap.version>
         <gravitee-am-idp-azure-ad.version>4.0.0-alpha.1</gravitee-am-idp-azure-ad.version>
         <gravitee-am-idp-franceconnect.version>4.0.0-alpha.1</gravitee-am-idp-franceconnect.version>
         <gravitee-am-idp-salesforce.version>3.0.0-alpha.1</gravitee-am-idp-salesforce.version>
         <gravitee-am-idp-saml2.version>5.0.0-alpha.3</gravitee-am-idp-saml2.version>
+=======
+        <gravitee-am-idp-saml2.version>5.0.0</gravitee-am-idp-saml2.version>
+        <gravitee-am-idp-ldap.version>2.2.2</gravitee-am-idp-ldap.version>
+        <gravitee-am-idp-azure-ad.version>3.0.0</gravitee-am-idp-azure-ad.version>
+        <gravitee-am-idp-franceconnect.version>3.1.1</gravitee-am-idp-franceconnect.version>
+        <gravitee-am-idp-salesforce.version>2.0.0</gravitee-am-idp-salesforce.version>
+>>>>>>> d1c61a674 (chore: update upgrade magic link and SAML idp plugin for 4.11.0)
         <gravitee-am-factor-call.version>1.0.2</gravitee-am-factor-call.version>
         <gravitee-am-factor-sms.version>1.0.3</gravitee-am-factor-sms.version>
         <gravitee-am-factor-fido2.version>4.0.0-alpha.1</gravitee-am-factor-fido2.version>
@@ -185,9 +193,15 @@
         <gravitee-am-policy-account-linking.version>2.0.0</gravitee-am-policy-account-linking.version>
         <gravitee-am-certificate-aws.version>3.0.0</gravitee-am-certificate-aws.version>
         <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.6</gravitee-am-authorizationengine-openfga.version>
+<<<<<<< HEAD
         <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.8</gravitee-am-gateway-handler-authzen.version>
         <gravitee-am-authenticator-cba.version>2.0.0-alpha.1</gravitee-am-authenticator-cba.version>
         <gravitee-am-authenticator-magiclink.version>2.0.0-alpha.2</gravitee-am-authenticator-magiclink.version>
+=======
+        <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.7</gravitee-am-gateway-handler-authzen.version>
+        <gravitee-am-authenticator-cba.version>1.0.0</gravitee-am-authenticator-cba.version>
+        <gravitee-am-authenticator-magiclink.version>1.0.0</gravitee-am-authenticator-magiclink.version>
+>>>>>>> d1c61a674 (chore: update upgrade magic link and SAML idp plugin for 4.11.0)
 
         <!-- Plugins included to full-bundle -->
         <gravitee-service-geoip.version>3.0.0</gravitee-service-geoip.version>
