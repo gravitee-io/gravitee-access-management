@@ -30,6 +30,7 @@ import { Orchestrator } from './lib/Orchestrator.mjs';
 import { CircleCI } from './lib/CircleCI.mjs';
 import { K8sProvider } from './lib/providers/K8sProvider.mjs';
 import { DockerComposeProvider } from './lib/providers/DockerComposeProvider.mjs';
+import { validateMigrationParams } from './lib/core/VersionResolver.mjs';
 import { Config } from './lib/core/Config.mjs';
 import { Helm } from './lib/infra/kubernetes/Helm.mjs';
 import { Kubectl } from './lib/infra/kubernetes/Kubectl.mjs';
@@ -108,6 +109,19 @@ const options = {
     withDowngrade: raw['with-downgrade'] === true,
     token: process.env.CIRCLECI_TOKEN,
 };
+
+// 0. Validate and resolve versions (for commands that deploy)
+if (command === 'run' || command === 'setup') {
+    try {
+        const { fromVersion, toVersion } = await validateMigrationParams(options);
+        options.fromVersion = fromVersion;
+        options.toVersion = toVersion;
+        console.log(`📝 Resolved versions: ${options.fromTag} → ${fromVersion}, ${options.toTag} → ${toVersion}`);
+    } catch (e) {
+        console.error(`❌ ${e.message}`);
+        process.exit(1);
+    }
+}
 
 // 1. Initialize Infrastructure Provider
 let provider;
@@ -252,8 +266,8 @@ function printHelp() {
     console.log('  teardown   Remove resources and delete Kind cluster (k8s)');
     console.log('  run        Run migration orchestration');
     console.log('\nOptions (use --key <value> or --key=<value>):');
-    console.log('  --from-tag <tag>   Initial AM version (default: 4.10.0)');
-    console.log('  --to-tag <tag>     Target AM version (default: latest)');
+    console.log('  --from-tag <tag>   Initial AM version: semver (4.10.0), branch-latest (4-10-x-latest), or master-latest');
+    console.log('  --to-tag <tag>     Target AM version (same formats). Must resolve to a newer version than from-tag');
     console.log('  --db-type <type>  Database: mongodb or postgres (default: mongodb)');
     console.log('  --provider <name> Infrastructure: docker-compose or k8s (default: docker-compose)');
     console.log('  --stage <name>    Run only this stage');

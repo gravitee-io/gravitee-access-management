@@ -82,26 +82,28 @@ describe('Orchestrator seed stages', () => {
         options = {
             fromTag: '4.10.0',
             toTag: '4.11.0',
+            fromVersion: '4.10',
+            toVersion: '4.11',
             testDir: '/fake/test-dir'
         };
     });
 
-    test('seed stage should call runSeed with fromTag', async () => {
+    test('seed stage should call runSeed with fromVersion', async () => {
         const orchestrator = new Orchestrator(mockProvider, options);
         orchestrator.runSeed = jest.fn();
 
         await orchestrator.executeStage('seed');
 
-        expect(orchestrator.runSeed).toHaveBeenCalledWith('4.10.0');
+        expect(orchestrator.runSeed).toHaveBeenCalledWith('4.10');
     });
 
-    test('seed-upgrade stage should call runSeed with toTag', async () => {
+    test('seed-upgrade stage should call runSeed with toVersion', async () => {
         const orchestrator = new Orchestrator(mockProvider, options);
         orchestrator.runSeed = jest.fn();
 
         await orchestrator.executeStage('seed-upgrade');
 
-        expect(orchestrator.runSeed).toHaveBeenCalledWith('4.11.0');
+        expect(orchestrator.runSeed).toHaveBeenCalledWith('4.11');
     });
 
     test('runSeed should spawn npm run migration:seed with correct args', async () => {

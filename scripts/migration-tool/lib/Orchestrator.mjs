@@ -52,10 +52,10 @@ export class Orchestrator {
                 await this.provider.deploy(this.options.fromTag);
                 break;
             case 'seed':
-                await this.runSeed(this.options.fromTag);
+                await this.runSeed(this.options.fromVersion);
                 break;
             case 'seed-upgrade':
-                await this.runSeed(this.options.toTag);
+                await this.runSeed(this.options.toVersion);
                 break;
             case 'verify-baseline':
                 await this.runTests('🔍 Running baseline tests...', 'ci:management:parallel', 'specs/management');

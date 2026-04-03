@@ -154,6 +154,25 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 | `--test-dir` | Test suite directory (relative or absolute); overrides config default | From `Config.test.dir` or `AM_MIGRATION_TEST_DIR` |
 | `--registry` | Image registry host, K8s only (e.g. `graviteeio.azurecr.io`). Overrides image repositories via Helm `--set` and skips Docker Hub tag validation. CI trigger does not yet forward this parameter. | (none; uses Docker Hub) |
 
+### Version resolution
+
+Tags are resolved to `major.minor` at startup before any deployment. The resolved versions are passed to the seed script (`migration:seed --to-version <major.minor>`).
+
+| Tag format | Example | Resolved | Method |
+|-----------|---------|----------|--------|
+| Semver release | `4.10.0` | `4.10` | Parsed directly |
+| Semver pre-release | `4.11.0-alpha.3` | `4.11` | Parsed directly |
+| Semver snapshot | `4.12.0-SNAPSHOT` | `4.12` | Parsed directly |
+| Branch-latest with version | `4-10-x-latest` | `4.10` | Parsed from tag |
+| `master-latest` | `master-latest` | `4.12` | Git: reads `origin/master` pom.xml |
+| `latest` | `latest` | `4.10` | Docker Hub API: resolves actual tag |
+
+**Validation rules** (checked at startup, fail fast):
+- Both tags must resolve to a valid `major.minor`.
+- `from-tag` must resolve to a version **older** than `to-tag` (same version = error).
+- Branch-latest tags (e.g. `master-latest`, `4-10-x-latest`) require `--registry`.
+- `latest` is always resolved via Docker Hub, even with `--registry`. Use explicit semver or branch-latest tags with custom registries.
+
 ---
 
 ## Running a single stage (--stage)
