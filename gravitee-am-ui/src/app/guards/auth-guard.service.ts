@@ -22,6 +22,7 @@ import { AuthService } from '../services/auth.service';
 import { DomainService } from '../services/domain.service';
 import { ApplicationService } from '../services/application.service';
 import { EnvironmentService } from '../services/environment.service';
+import { DomainStoreService } from '../stores/domain.store';
 
 @Injectable()
 export class AuthGuard {
@@ -30,6 +31,7 @@ export class AuthGuard {
     private environmentService: EnvironmentService,
     private domainService: DomainService,
     private applicationService: ApplicationService,
+    private domainStore: DomainStoreService,
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> | Promise<boolean> | boolean {
@@ -86,8 +88,11 @@ export class AuthGuard {
       return true;
     }
     // display SAML menu on the app settings only if the domain has enabled the SAML Protocol
-    if (path.data?.protocol === 'SAML' && (!route.data['domain'].saml || !route.data['domain'].saml.enabled)) {
-      return false;
+    if (path.data?.protocol === 'SAML') {
+      const domain = this.domainStore.current || route.data['domain'];
+      if (!domain?.saml?.enabled) {
+        return false;
+      }
     }
     // if resource (application) should not display a settings page, continue
     if (path.data?.types?.only?.length > 0) {
