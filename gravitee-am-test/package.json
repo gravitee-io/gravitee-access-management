@@ -9,6 +9,7 @@
     "test:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/dev.config.js",
     "ci": "jest --runInBand --no-cache --config=api/config/ci.config.js",
     "ci:management:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/ci.config.js specs/management",
+    "ci:migration": "jest --runInBand --no-cache --config=api/config/ci.config.js specs/migration",
     "ci:gateway": "jest --runInBand --no-cache --config=api/config/ci.config.js specs/gateway",
     "ci:gateway:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/ci.config.js specs/gateway",
     "pw": "playwright test",

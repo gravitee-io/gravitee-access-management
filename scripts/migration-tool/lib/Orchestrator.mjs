@@ -193,31 +193,31 @@ export class Orchestrator {
                 await this.runSeed(this.options.toVersion, { fromVersion: this.options.fromVersion });
                 break;
             case 'verify-baseline':
-                await this.runTests('🔍 Running baseline tests...', 'ci:management:parallel', 'specs/management');
+                await this.runTests('🔍 Running baseline tests...', 'ci:migration', 'specs/migration');
                 break;
             case 'upgrade-mapi':
                 await this.provider.upgradeMapi(this.options.toTag);
                 break;
             case 'verify-mapi':
-                await this.runTests('🔍 Verifying MAPI upgrade...', 'ci:management:parallel', 'specs/management');
+                await this.runTests('🔍 Verifying MAPI upgrade...', 'ci:migration', 'specs/migration');
                 break;
             case 'upgrade-gw':
                 await this.provider.upgradeGw(this.options.toTag);
                 break;
             case 'verify-all':
-                await this.runTests('🔍 Final verification...', 'ci:gateway', 'specs/gateway');
+                await this.runTests('🔍 Final verification...', 'ci:migration', 'specs/migration');
                 break;
             case 'downgrade-mapi':
                 await this.provider.upgradeMapi(this.options.fromTag);
                 break;
             case 'verify-after-downgrade-mapi':
-                await this.runTests('🔍 Verifying after MAPI downgrade...', 'ci:management:parallel', 'specs/management');
+                await this.runTests('🔍 Verifying after MAPI downgrade...', 'ci:migration', 'specs/migration');
                 break;
             case 'downgrade-gw':
                 await this.provider.upgradeGw(this.options.fromTag);
                 break;
             case 'verify-after-downgrade':
-                await this.runTests('🔍 Verifying after downgrade...', 'ci:gateway', 'specs/gateway');
+                await this.runTests('🔍 Verifying after downgrade...', 'ci:migration', 'specs/migration');
                 break;
             default:
                 throw new Error(`Unknown stage: ${stage}`);
