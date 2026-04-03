@@ -55,7 +55,7 @@ export class Orchestrator {
                 await this.runSeed(this.options.fromVersion);
                 break;
             case 'seed-upgrade':
-                await this.runSeed(this.options.toVersion);
+                await this.runSeed(this.options.toVersion, { fromVersion: this.options.fromVersion });
                 break;
             case 'verify-baseline':
                 await this.runTests('🔍 Running baseline tests...', 'ci:management:parallel', 'specs/management');
@@ -130,8 +130,8 @@ export class Orchestrator {
         }
     }
 
-    async runSeed(version) {
-        console.log(`🌱 Seeding test data for version ${version}...`);
+    async runSeed(version, { fromVersion } = {}) {
+        console.log(`🌱 Seeding test data for version ${version}${fromVersion ? ` (from ${fromVersion})` : ''}...`);
         const testDir = this.options.testDir;
         if (!testDir) {
             throw new Error('options.testDir is required to run seed');
@@ -141,6 +141,9 @@ export class Orchestrator {
             ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {})
         };
         const args = ['run', 'migration:seed', '--', '--to-version', version];
+        if (fromVersion) {
+            args.push('--from-version', fromVersion);
+        }
         const child = this._spawn('npm', args, {
             cwd: testDir,
             env,

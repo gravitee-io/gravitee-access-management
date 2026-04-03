@@ -32,6 +32,7 @@
  *
  * Usage:
  *   yarn migration:seed --to-version 4.11
+ *   yarn migration:seed --to-version 4.12 --from-version 4.11  (seeds only versions in (4.11, 4.12])
  */
 
 import fs from 'fs';
@@ -87,15 +88,18 @@ function compareVersions(a: [number, number], b: [number, number]): number {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  const idx = args.indexOf('--to-version');
-  const toVersionStr = idx >= 0 ? args[idx + 1] : undefined;
+  const toIdx = args.indexOf('--to-version');
+  const toVersionStr = toIdx >= 0 ? args[toIdx + 1] : undefined;
+  const fromIdx = args.indexOf('--from-version');
+  const fromVersionStr = fromIdx >= 0 ? args[fromIdx + 1] : undefined;
 
   if (!toVersionStr) {
-    console.error('Usage: yarn migration:seed --to-version <major.minor>');
+    console.error('Usage: yarn migration:seed --to-version <major.minor> [--from-version <major.minor>]');
     process.exit(1);
   }
 
-const toVersion = parseVersion(toVersionStr);
+  const toVersion = parseVersion(toVersionStr);
+  const fromVersion = fromVersionStr ? parseVersion(fromVersionStr) : null;
   setupEnvDefaults();
 
   const versionsDir = path.join(__dirname, 'versions');
@@ -103,11 +107,16 @@ const toVersion = parseVersion(toVersionStr);
     .readdirSync(versionsDir, { withFileTypes: true })
     .filter((d) => d.isDirectory() && /^\d+\.\d+$/.test(d.name))
     .map((d) => ({ folder: d.name, version: parseVersion(d.name) }))
-    .filter(({ version }) => compareVersions(version, toVersion) <= 0)
+    .filter(({ version }) => {
+      if (compareVersions(version, toVersion) > 0) return false;
+      if (fromVersion && compareVersions(version, fromVersion) <= 0) return false;
+      return true;
+    })
     .sort((a, b) => compareVersions(a.version, b.version));
 
   if (entries.length === 0) {
-    console.log(`No seed versions found at or below ${toVersionStr}`);
+    const range = fromVersion ? `in range (${fromVersionStr}, ${toVersionStr}]` : `at or below ${toVersionStr}`;
+    console.log(`No seed versions found ${range}`);
     return;
   }
 

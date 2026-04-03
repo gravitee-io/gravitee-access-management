@@ -97,13 +97,13 @@ describe('Orchestrator seed stages', () => {
         expect(orchestrator.runSeed).toHaveBeenCalledWith('4.10');
     });
 
-    test('seed-upgrade stage should call runSeed with toVersion', async () => {
+    test('seed-upgrade stage should call runSeed with toVersion and fromVersion', async () => {
         const orchestrator = new Orchestrator(mockProvider, options);
         orchestrator.runSeed = jest.fn();
 
         await orchestrator.executeStage('seed-upgrade');
 
-        expect(orchestrator.runSeed).toHaveBeenCalledWith('4.11');
+        expect(orchestrator.runSeed).toHaveBeenCalledWith('4.11', { fromVersion: '4.10' });
     });
 
     test('runSeed should spawn npm run migration:seed with correct args', async () => {
@@ -120,6 +120,28 @@ describe('Orchestrator seed stages', () => {
         expect(spawnFn).toHaveBeenCalledWith(
             'npm',
             ['run', 'migration:seed', '--', '--to-version', '4.10.0'],
+            expect.objectContaining({
+                cwd: '/fake/test-dir',
+                stdio: 'inherit',
+                shell: false
+            })
+        );
+    });
+
+    test('runSeed with fromVersion should pass --from-version arg', async () => {
+        const orchestrator = new Orchestrator(mockProvider, options);
+
+        const fakeChild = new EventEmitter();
+        const spawnFn = jest.fn().mockReturnValue(fakeChild);
+        orchestrator._spawn = spawnFn;
+
+        const seedPromise = orchestrator.runSeed('4.11', { fromVersion: '4.10' });
+        fakeChild.emit('exit', 0);
+        await seedPromise;
+
+        expect(spawnFn).toHaveBeenCalledWith(
+            'npm',
+            ['run', 'migration:seed', '--', '--to-version', '4.11', '--from-version', '4.10'],
             expect.objectContaining({
                 cwd: '/fake/test-dir',
                 stdio: 'inherit',
