@@ -67,7 +67,6 @@ describe('Backward compatibility — enum filtering (AM-6174)', () => {
     const domains = domainsPage?.data || [];
     // In the full migration pipeline, seed runs before verify — domains should exist.
     // When running a single stage locally (--stage verify-baseline without seed), domains may be empty.
-    expect(domains.length).toBeGreaterThanOrEqual(0);
     if (domains.length === 0) {
       console.warn('No domains present — domain-level roles check skipped (run seed first for full coverage)');
       return;
