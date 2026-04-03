@@ -20,6 +20,7 @@ package io.gravitee.am.gateway.handler.common.service.mfa.impl;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.UserEvent;
 import io.gravitee.am.gateway.handler.common.service.mfa.UserEventListener;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -45,6 +46,8 @@ public class UserEventListenerImpl extends AbstractService implements UserEventL
     @Autowired
     private EventManager eventManager;
     @Autowired
+    private UserStore userStore;
+    @Autowired
     private Domain domain;
 
     @Override
@@ -64,10 +67,23 @@ public class UserEventListenerImpl extends AbstractService implements UserEventL
     @Override
     public void onEvent(Event<UserEvent, Payload> event) {
         if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
-            if (event.type() == UserEvent.DELETE) {
-                cleanUpMfaLimits(event.content().getId());
+            switch (event.type()) {
+                case DELETE -> {
+                    String userId = event.content().getId();
+                    cleanUpMfaLimits(userId);
+                    evictFromCache(userId);
+                }
+                case UPDATE -> evictFromCache(event.content().getId());
+                default -> log.debug("No action to perform for User event type {}", event.type());
             }
         }
+    }
+
+    private void evictFromCache(String userId) {
+        userStore.remove(userId)
+                .doOnError(error -> log.debug("Error on cache clean up for userid '{}'", userId, error))
+                .onErrorComplete()
+                .subscribe();
     }
 
     private void cleanUpMfaLimits(String userId) {

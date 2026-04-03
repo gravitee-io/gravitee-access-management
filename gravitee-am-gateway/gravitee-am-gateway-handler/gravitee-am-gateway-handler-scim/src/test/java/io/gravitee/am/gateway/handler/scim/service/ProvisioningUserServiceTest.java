@@ -54,11 +54,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
@@ -199,6 +201,9 @@ public class ProvisioningUserServiceTest {
 
     @Mock
     private DataPlaneRegistry registry;
+
+    @Mock
+    private EventService eventService;
 
     @Mock
     private GatewayMetricProvider metricProvider = new GatewayMetricProvider();
@@ -426,6 +431,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
@@ -436,6 +442,7 @@ public class ProvisioningUserServiceTest {
         verify(userProvider, never()).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
         verify(tokenService, never()).deleteByUser(any());
+        verify(eventService).create(any(), any());
         assertTrue(userCaptor.getValue().isEnabled());
     }
 
@@ -471,6 +478,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
@@ -481,6 +489,7 @@ public class ProvisioningUserServiceTest {
         verify(userProvider, never()).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
         verify(tokenService, times(1)).deleteByUser(any());
+        verify(eventService).create(any(), any());
         assertFalse(userCaptor.getValue().isEnabled());
     }
 
@@ -517,6 +526,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
@@ -528,6 +538,7 @@ public class ProvisioningUserServiceTest {
         verify(userProvider).create(any());
         verify(userProvider, never()).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
+        verify(eventService).create(any(), any());
         assertTrue(userCaptor.getValue().isEnabled());
     }
 
@@ -558,6 +569,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
@@ -567,6 +579,7 @@ public class ProvisioningUserServiceTest {
         verify(userProvider, never()).create(any());
         verify(userProvider).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
+        verify(eventService).create(any(), any());
         assertTrue(userCaptor.getValue().isEnabled());
         assertTrue(userCaptor.getValue().getAdditionalInformation().containsKey("attr1"));
     }
@@ -595,6 +608,7 @@ public class ProvisioningUserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertNoErrors();
@@ -604,6 +618,7 @@ public class ProvisioningUserServiceTest {
         verify(userProvider, never()).create(any());
         verify(userProvider).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
+        verify(eventService).create(any(), any());
         assertTrue(userCaptor.getValue().isEnabled());
     }
 
@@ -677,6 +692,7 @@ public class ProvisioningUserServiceTest {
             Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("attr1"));
             return Single.just(userToUpdate);
         }).when(userRepository).update(any(), any());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
         testObserver.assertNoErrors();
@@ -769,6 +785,7 @@ public class ProvisioningUserServiceTest {
             Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("customClaim"));
             return Single.just(userToUpdate);
         }).when(userRepository).update(any(), any());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
         testObserver.assertNoErrors();

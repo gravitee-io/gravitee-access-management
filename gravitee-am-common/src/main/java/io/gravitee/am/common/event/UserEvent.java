@@ -20,11 +20,13 @@ package io.gravitee.am.common.event;
  */
 public enum UserEvent {
 
-    DELETE;
+    DELETE,
+    UPDATE;
 
     public static UserEvent actionOf(Action action) {
         return switch (action) {
             case DELETE -> UserEvent.DELETE;
+            case UPDATE -> UserEvent.UPDATE;
             default -> null;
         };
     }
