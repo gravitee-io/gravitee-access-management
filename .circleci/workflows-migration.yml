@@ -79,6 +79,18 @@ jobs:
               CMD="$CMD --with-downgrade"
             fi
             $CMD run
+          no_output_timeout: 30m
+      - run:
+          name: "Ensure test report directory exists"
+          command: mkdir -p gravitee-am-test/jest-reports/junit
+          when: always
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+          when: always
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
+          when: always
 
 workflows:
   migration-pipeline:

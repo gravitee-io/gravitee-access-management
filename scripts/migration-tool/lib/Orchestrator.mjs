@@ -20,20 +20,70 @@ export class Orchestrator {
         console.log(`🛠️ Running Migration Orchestration`);
         console.log(`📝 Tags: ${this.options.fromTag} -> ${this.options.toTag}`);
 
+        this.results = stages.map(stage => ({ stage, status: 'skipped', durationMs: 0 }));
+        const results = this.results;
+        let failedError = null;
+
         try {
-            for (const stage of stages) {
+            for (let i = 0; i < stages.length; i++) {
+                const stage = stages[i];
                 console.log(`\n▶️ Stage: ${stage}`);
-                await this.executeStage(stage);
+                const start = Date.now();
+                try {
+                    this._currentStage = stage;
+                    await this.executeStage(stage);
+                    results[i].status = 'passed';
+                    results[i].durationMs = Date.now() - start;
+                    console.log(`  ✓ ${stage} (${this._formatDuration(results[i].durationMs)})`);
+                } catch (error) {
+                    results[i].status = 'failed';
+                    results[i].durationMs = Date.now() - start;
+                    results[i].error = error.message;
+                    console.error(`\n❌ ${stage} failed: ${error.message}`);
+                    if (error.stderr) console.error(`Stderr: ${error.stderr}`);
+                    failedError = error;
+                    break;
+                }
             }
-        } catch (error) {
-            console.error(`\n❌ Error during orchestration: ${error.message}`);
-            if (error.stderr) console.error(`Stderr: ${error.stderr}`);
-            throw error;
         } finally {
+            this._printSummary(results);
             if (!skipCleanup && typeof this.provider.cleanup === 'function') {
                 await this.provider.cleanup();
             }
         }
+
+        if (failedError) throw failedError;
+        return results;
+    }
+
+    _formatDuration(ms) {
+        if (ms < 1000) return `${ms}ms`;
+        return `${(ms / 1000).toFixed(1)}s`;
+    }
+
+    _printSummary(results) {
+        const maxStageLen = Math.max(...results.map(r => r.stage.length), 5);
+        const header = `${'Stage'.padEnd(maxStageLen)}  Status     Duration`;
+        const separator = '─'.repeat(header.length);
+
+        console.log(`\n${separator}`);
+        console.log(header);
+        console.log(separator);
+        for (const r of results) {
+            const icon = r.status === 'passed' ? '✓' : r.status === 'failed' ? '✗' : '-';
+            const status = `${icon} ${r.status}`.padEnd(10);
+            const duration = r.status === 'skipped' ? '-' : this._formatDuration(r.durationMs);
+            console.log(`${r.stage.padEnd(maxStageLen)}  ${status} ${duration}`);
+        }
+        console.log(separator);
+
+        const failed = results.find(r => r.status === 'failed');
+        if (failed) {
+            console.log(`Result: FAILED at ${failed.stage}`);
+        } else if (results.every(r => r.status === 'passed')) {
+            console.log('Result: ALL PASSED');
+        }
+        console.log('');
     }
 
     async executeStage(stage) {
@@ -97,7 +147,12 @@ export class Orchestrator {
         }
         const filter = (this.options.testFilter || '').trim();
 
-        const jestEnv = { ...process.env, ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {}) };
+        const stageName = this._currentStage || 'unknown';
+        const jestEnv = {
+            ...process.env,
+            ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {}),
+            JEST_JUNIT_OUTPUT_NAME: `junit-migration-${stageName}.xml`
+        };
         Object.assign(process.env, jestEnv);
 
         if (typeof this.provider.prepareTests === 'function') {

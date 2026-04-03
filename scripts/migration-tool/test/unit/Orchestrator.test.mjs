@@ -59,6 +59,46 @@ describe('Orchestrator', () => {
         expect(mockProvider.upgradeMapi).toHaveBeenCalledWith('4.10.0');
         expect(mockProvider.upgradeGw).toHaveBeenCalledWith('4.10.0');
     });
+
+    test('run should return results with status and duration per stage', async () => {
+        const results = await orchestrator.run(['clean', 'deploy-from']);
+
+        expect(results).toHaveLength(2);
+        expect(results[0]).toEqual(expect.objectContaining({ stage: 'clean', status: 'passed' }));
+        expect(results[0].durationMs).toBeGreaterThanOrEqual(0);
+        expect(results[1]).toEqual(expect.objectContaining({ stage: 'deploy-from', status: 'passed' }));
+    });
+
+    test('run should mark failed stage and skip remaining', async () => {
+        mockProvider.deploy.mockRejectedValue(new Error('deploy failed'));
+
+        try {
+            await orchestrator.run(['clean', 'deploy-from', 'k8s:setup']);
+        } catch (e) {
+            // expected
+        }
+
+        expect(orchestrator.results).toHaveLength(3);
+        expect(orchestrator.results[0]).toEqual(expect.objectContaining({ stage: 'clean', status: 'passed' }));
+        expect(orchestrator.results[1]).toEqual(expect.objectContaining({ stage: 'deploy-from', status: 'failed' }));
+        expect(orchestrator.results[1].error).toBe('deploy failed');
+        expect(orchestrator.results[2]).toEqual(expect.objectContaining({ stage: 'k8s:setup', status: 'skipped' }));
+    });
+
+    test('run should print summary table even on failure', async () => {
+        mockProvider.clean.mockRejectedValue(new Error('clean failed'));
+        const consoleSpy = jest.spyOn(console, 'log');
+
+        try {
+            await orchestrator.run(['clean']);
+        } catch (e) {
+            // expected
+        }
+
+        const summaryCall = consoleSpy.mock.calls.find(c => typeof c[0] === 'string' && c[0].includes('Stage'));
+        expect(summaryCall).toBeDefined();
+        consoleSpy.mockRestore();
+    });
 });
 
 describe('Orchestrator seed stages', () => {
