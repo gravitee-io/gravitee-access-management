@@ -19,6 +19,8 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
@@ -35,6 +37,7 @@ import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -55,12 +58,15 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
@@ -184,6 +190,9 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Autowired
     private EmailStagingService emailStagingService;
+
+    @Autowired
+    private EventService eventService;
 
     @Value("${email.enabled:false}")
     private boolean emailEnabled = false;
@@ -458,7 +467,10 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                                     }
                                                     return Single.error(ex);
                                                 })
-                                                .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
+                                                .doOnSuccess(updatedUser -> {
+                                                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser));
+                                                    publishUserUpdateEvent(domain, userToUpdate);
+                                                })
                                                 .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error)))));
                             }));
                 })
@@ -481,6 +493,15 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 });
+    }
+
+    protected void publishUserUpdateEvent(Domain domain, io.gravitee.am.model.User user) {
+        Event event = new Event(Type.USER, new Payload(user.getId(), ReferenceType.DOMAIN, domain.getId(), Action.UPDATE));
+        eventService.create(event, domain).ignoreElement()
+                .doOnError(err -> LOGGER.warn("Unable to publish user update event for user {}", user.getId(), err))
+                .doOnComplete(() -> LOGGER.debug("User update event published for user {}", user.getId()))
+                .onErrorComplete()
+                .subscribe();
     }
 
     private Single<io.gravitee.am.model.User> updateUser(io.gravitee.am.model.User userToUpdate, UpdateActions updateActions) {
