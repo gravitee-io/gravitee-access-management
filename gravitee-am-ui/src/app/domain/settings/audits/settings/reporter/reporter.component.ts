@@ -109,6 +109,8 @@ export class ReporterComponent implements OnInit {
 
   labelFor(pluginId) {
     switch (pluginId) {
+      case 'reporter-am-tcp':
+        return 'TCP';
       case 'reporter-am-file':
         return 'File';
       case 'reporter-am-kafka':

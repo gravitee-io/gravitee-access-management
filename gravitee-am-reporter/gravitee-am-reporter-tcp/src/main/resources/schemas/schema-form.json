@@ -1,0 +1,151 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:reporter:tcp:TcpReporterConfiguration",
+  "properties": {
+    "host": {
+      "type": "string",
+      "title": "Host",
+      "description": "TCP server hostname or IP address.",
+      "default": "localhost"
+    },
+    "port": {
+      "type": "integer",
+      "title": "Port",
+      "description": "TCP server port.",
+      "default": 9000,
+      "minimum": 1
+    },
+    "output": {
+      "type": "string",
+      "title": "Output format",
+      "description": "Serialisation format used to write audit events to the TCP stream.",
+      "default": "JSON",
+      "enum": ["JSON", "MESSAGE_PACK", "CSV", "ELASTICSEARCH"]
+    },
+    "connectTimeout": {
+      "type": "integer",
+      "title": "Connect timeout (ms)",
+      "description": "Maximum time to wait for the TCP connection to be established.",
+      "default": 10000
+    },
+    "reconnectAttempts": {
+      "type": "integer",
+      "title": "Reconnect attempts",
+      "description": "Number of reconnection attempts before giving up. Use -1 for infinite.",
+      "default": 10
+    },
+    "reconnectInterval": {
+      "type": "integer",
+      "title": "Reconnect interval (ms)",
+      "description": "Time to wait between reconnection attempts.",
+      "default": 500,
+      "minimum": 100
+    },
+    "retryTimeout": {
+      "type": "integer",
+      "title": "Retry timeout (ms)",
+      "description": "Time to wait before starting a new reconnection cycle.",
+      "default": 5000
+    },
+    "ssl": {
+      "type": "object",
+      "title": "SSL / TLS",
+      "properties": {
+        "sslEnabled": {
+          "type": "boolean",
+          "title": "Enable SSL/TLS",
+          "default": false
+        },
+        "trustAll": {
+          "type": "boolean",
+          "title": "Trust all certificates",
+          "description": "Accept any server certificate without validation. Not recommended for production.",
+          "default": false
+
+        },
+        "verifyHost": {
+          "type": "boolean",
+          "title": "Verify hostname",
+          "description": "Verify that the server hostname matches the TLS certificate CN / SAN.",
+          "default": true
+        },
+        "keystore": {
+          "type": "object",
+          "title": "Keystore (mutual TLS)",
+          "description": "Client certificate for mutual TLS authentication. Leave empty if mutual TLS is not required.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "description": "Keystore format.",
+              "enum": ["jks", "pkcs12", "pem"]
+            },
+            "value": {
+              "type": "string",
+              "title": "Content",
+              "description": "Base64-encoded keystore content (JKS or PKCS12 only).",
+              "widget": "textarea",
+              "sensitive": true
+            },
+            "password": {
+              "type": "string",
+              "title": "Password",
+              "description": "Keystore password (JKS or PKCS12 only).",
+              "widget": "password",
+              "sensitive": true
+            },
+            "certValue": {
+              "type": "string",
+              "title": "Certificate",
+              "description": "PEM certificate content (PEM type only).",
+              "widget": "textarea",
+              "sensitive": true
+            },
+            "keyValue": {
+              "type": "string",
+              "title": "Private key",
+              "description": "PEM private key content (PEM type only).",
+              "widget": "textarea",
+              "sensitive": true
+            }
+          }
+        },
+        "truststore": {
+          "type": "object",
+          "title": "Truststore",
+          "description": "CA certificates used to verify the server certificate. Leave empty to use the JVM default truststore.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "description": "Truststore format.",
+              "enum": ["jks", "pkcs12", "pem"]
+            },
+            "value": {
+              "type": "string",
+              "title": "Content",
+              "description": "Base64-encoded truststore content (JKS or PKCS12 only).",
+              "widget": "textarea",
+              "sensitive": true
+            },
+            "password": {
+              "type": "string",
+              "title": "Password",
+              "description": "Truststore password (JKS or PKCS12 only).",
+              "widget": "password",
+              "sensitive": true
+            },
+            "certValue": {
+              "type": "string",
+              "title": "CA certificate",
+              "description": "PEM CA certificate content (PEM type only).",
+              "widget": "textarea",
+              "sensitive": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["host", "port", "output"]
+}
