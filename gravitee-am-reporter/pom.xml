@@ -40,6 +40,7 @@
         <module>gravitee-am-reporter-jdbc</module>
         <module>gravitee-am-reporter-file</module>
         <module>gravitee-am-reporter-kafka</module>
+        <module>gravitee-am-reporter-tcp</module>
     </modules>
     <dependencies>
         <dependency>
