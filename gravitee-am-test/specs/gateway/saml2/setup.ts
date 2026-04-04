@@ -445,6 +445,7 @@ async function createProviderApp(
       entityId: clientId,
       wantResponseSigned: false,
       wantAssertionsSigned: signAssertions,
+      wantAssertionsEncrypted: false,
       responseBinding: 'HTTP-POST',
       // X.509 PEM certificate of the SP; saml2-idp uses this to verify signed AuthnRequests.
       certificate: spCertificatePem,

@@ -29,6 +29,9 @@ public class ApplicationSAMLSettingsMongo {
     private String certificate;
     private boolean wantResponseSigned = true;
     private boolean wantAssertionsSigned;
+    private boolean wantAssertionsEncrypted;
+    private String keyTransportEncryptionAlgorithm;
+    private String dataEncryptionAlgorithm;
     private String responseBinding;
     private String nameIdMapping;
     private List<SAMLAssertionAttributeMongo> assertionAttributes;
@@ -79,6 +82,30 @@ public class ApplicationSAMLSettingsMongo {
 
     public void setWantAssertionsSigned(boolean wantAssertionsSigned) {
         this.wantAssertionsSigned = wantAssertionsSigned;
+    }
+
+    public boolean isWantAssertionsEncrypted() {
+        return wantAssertionsEncrypted;
+    }
+
+    public void setWantAssertionsEncrypted(boolean wantAssertionsEncrypted) {
+        this.wantAssertionsEncrypted = wantAssertionsEncrypted;
+    }
+
+    public String getKeyTransportEncryptionAlgorithm() {
+        return keyTransportEncryptionAlgorithm;
+    }
+
+    public void setKeyTransportEncryptionAlgorithm(String keyTransportEncryptionAlgorithm) {
+        this.keyTransportEncryptionAlgorithm = keyTransportEncryptionAlgorithm;
+    }
+
+    public String getDataEncryptionAlgorithm() {
+        return dataEncryptionAlgorithm;
+    }
+
+    public void setDataEncryptionAlgorithm(String dataEncryptionAlgorithm) {
+        this.dataEncryptionAlgorithm = dataEncryptionAlgorithm;
     }
 
     public String getResponseBinding() {

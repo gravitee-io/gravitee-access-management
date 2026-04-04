@@ -26,6 +26,9 @@ interface ApplicationSaml2SettingsPayload {
   singleLogoutServiceUrl?: string;
   wantResponseSigned?: boolean;
   wantAssertionsSigned?: boolean;
+  wantAssertionsEncrypted?: boolean;
+  keyTransportEncryptionAlgorithm?: string;
+  dataEncryptionAlgorithm?: string;
   certificate?: string;
   responseBinding?: string;
   nameIdMapping?: string;
@@ -54,6 +57,21 @@ export class ApplicationSaml2Component implements OnInit {
     { name: 'HTTP-Redirect', value: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' },
   ];
 
+  /** XML Encryption URIs for RSA key transport (encrypted assertions). */
+  rsaKeyTransportOptions: { name: string; value: string }[] = [
+    { name: 'Default (IdP choice)', value: '' },
+    { name: 'RSA-OAEP (MGF1)', value: 'http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p' },
+    { name: 'RSA PKCS#1 v1.5', value: 'http://www.w3.org/2001/04/xmlenc#rsa-1_5' },
+  ];
+
+  /** XML Encryption URIs for block / data encryption. */
+  dataEncryptionAlgorithmOptions: { name: string; value: string }[] = [
+    { name: 'Default (IdP choice)', value: '' },
+    { name: 'AES-128-CBC', value: 'http://www.w3.org/2001/04/xmlenc#aes128-cbc' },
+    { name: 'AES-256-CBC', value: 'http://www.w3.org/2001/04/xmlenc#aes256-cbc' },
+    { name: 'AES-256-GCM', value: 'http://www.w3.org/2009/xmlenc11#aes256-gcm' },
+  ];
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -67,11 +85,24 @@ export class ApplicationSaml2Component implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.certificates = this.route.snapshot.data['certificates'];
     this.applicationSamlSettings = this.application.settings == null ? {} : this.application.settings.saml || {};
+    this.normalizeEncryptionSelects();
     this.editMode = this.authService.hasPermissions(['application_saml_update']);
   }
 
+  private normalizeEncryptionSelects() {
+    this.applicationSamlSettings.keyTransportEncryptionAlgorithm = this.applicationSamlSettings.keyTransportEncryptionAlgorithm ?? '';
+    this.applicationSamlSettings.dataEncryptionAlgorithm = this.applicationSamlSettings.dataEncryptionAlgorithm ?? '';
+  }
+
   patch() {
-    this.applicationSamlSettings.certificate = this.applicationSamlSettings.certificate ? this.applicationSamlSettings.certificate : null;
+    const trimmedCert = this.applicationSamlSettings.certificate?.trim();
+    this.applicationSamlSettings.certificate = trimmedCert ? trimmedCert : null;
+    this.applicationSamlSettings.keyTransportEncryptionAlgorithm = this.applicationSamlSettings.keyTransportEncryptionAlgorithm
+      ? this.applicationSamlSettings.keyTransportEncryptionAlgorithm
+      : null;
+    this.applicationSamlSettings.dataEncryptionAlgorithm = this.applicationSamlSettings.dataEncryptionAlgorithm
+      ? this.applicationSamlSettings.dataEncryptionAlgorithm
+      : null;
     const settings = {
       settings: {
         saml: this.applicationSamlSettings,
@@ -81,7 +112,9 @@ export class ApplicationSaml2Component implements OnInit {
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       this.formChanged = false;
       this.application = data;
-      this.form.reset(this.application.settings.saml);
+      this.applicationSamlSettings = data.settings == null ? {} : data.settings.saml || {};
+      this.normalizeEncryptionSelects();
+      this.form.reset(this.applicationSamlSettings);
       this.snackbarService.open('Application updated');
     });
   }
@@ -110,6 +143,10 @@ export class ApplicationSaml2Component implements OnInit {
     this.applicationSamlSettings.assertionAttributes = (this.applicationSamlSettings.assertionAttributes || []).filter(
       (_, i) => i !== index,
     );
+    this.formChanged = true;
+  }
+
+  encryptionPreferenceChanged() {
     this.formChanged = true;
   }
 }

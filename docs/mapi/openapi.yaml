@@ -12381,7 +12381,11 @@ components:
           type: string
         certificate:
           type: string
+        dataEncryptionAlgorithm:
+          type: string
         entityId:
+          type: string
+        keyTransportEncryptionAlgorithm:
           type: string
         nameIdMapping:
           type: string
@@ -12389,6 +12393,8 @@ components:
           type: string
         singleLogoutServiceUrl:
           type: string
+        wantAssertionsEncrypted:
+          type: boolean
         wantAssertionsSigned:
           type: boolean
         wantResponseSigned:
@@ -15191,7 +15197,11 @@ components:
           type: string
         certificate:
           type: string
+        dataEncryptionAlgorithm:
+          type: string
         entityId:
+          type: string
+        keyTransportEncryptionAlgorithm:
           type: string
         nameIdMapping:
           type: string
@@ -15199,6 +15209,8 @@ components:
           type: string
         singleLogoutServiceUrl:
           type: string
+        wantAssertionsEncrypted:
+          type: boolean
         wantAssertionsSigned:
           type: boolean
         wantResponseSigned:

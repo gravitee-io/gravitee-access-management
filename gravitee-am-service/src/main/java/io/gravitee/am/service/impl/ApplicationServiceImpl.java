@@ -118,6 +118,21 @@ import static org.springframework.util.StringUtils.hasText;
 public class ApplicationServiceImpl implements ApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationServiceImpl.class);
+
+    /**
+     * Allowed XML Encryption key transport URIs (aligned with Management UI SAML 2.0 settings).
+     */
+    private static final Set<String> ALLOWED_SAML_KEY_TRANSPORT_ENCRYPTION_URIS = Set.of(
+            "http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p",
+            "http://www.w3.org/2001/04/xmlenc#rsa-1_5");
+
+    /**
+     * Allowed XML Encryption block (data) encryption URIs (aligned with Management UI SAML 2.0 settings).
+     */
+    private static final Set<String> ALLOWED_SAML_DATA_ENCRYPTION_URIS = Set.of(
+            "http://www.w3.org/2001/04/xmlenc#aes128-cbc",
+            "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+            "http://www.w3.org/2009/xmlenc11#aes256-gcm");
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
     public static final String ERROR_ON_CREATE = "An error occurs while trying to create an application";
     public static final String ERROR_ON_PATCH = "An error occurs while trying to patch an application";
@@ -744,20 +759,60 @@ public class ApplicationServiceImpl implements ApplicationService {
      * @return a client only if every condition are respected.
      */
     private Single<Application> validateApplicationMetadata(Application application, boolean updateTypeOnly) {
-        // do nothing if application has no settings
         if (application.getSettings() == null) {
             return Single.just(application);
         }
-        if (application.getSettings().getOauth() == null) {
+        return validateApplicationSamlSettings(application)
+                .flatMap(app -> {
+                    if (app.getSettings().getOauth() == null) {
+                        return Single.just(app);
+                    }
+                    return GrantTypeUtils.validateGrantTypes(app)
+                            .flatMap(a -> this.validateRedirectUris(a, updateTypeOnly))
+                            .flatMap(this::validateScopes)
+                            .flatMap(this::validateTokenEndpointAuthMethod)
+                            .flatMap(this::validateTlsClientAuth)
+                            .flatMap(this::validatePostLogoutRedirectUris)
+                            .flatMap(this::validateRequestUris);
+                });
+    }
+
+    /**
+     * Validates SAML SP settings: certificate required when encrypted assertions are required,
+     * and XML Encryption algorithm URIs must match supported values when set.
+     */
+    private Single<Application> validateApplicationSamlSettings(Application application) {
+        ApplicationSettings settings = application.getSettings();
+        if (settings == null || settings.getSaml() == null) {
             return Single.just(application);
         }
-        return GrantTypeUtils.validateGrantTypes(application)
-                .flatMap(app -> this.validateRedirectUris(app, updateTypeOnly))
-                .flatMap(this::validateScopes)
-                .flatMap(this::validateTokenEndpointAuthMethod)
-                .flatMap(this::validateTlsClientAuth)
-                .flatMap(this::validatePostLogoutRedirectUris)
-                .flatMap(this::validateRequestUris);
+        ApplicationSAMLSettings saml = settings.getSaml();
+
+        if (saml.isWantAssertionsEncrypted() && !hasText(saml.getCertificate())) {
+            return Single.error(
+                    new InvalidClientMetadataException(
+                            "SAML certificate is required when wantAssertionsEncrypted is true"));
+        }
+
+        if (hasText(saml.getKeyTransportEncryptionAlgorithm())) {
+            String uri = saml.getKeyTransportEncryptionAlgorithm().trim();
+            if (!ALLOWED_SAML_KEY_TRANSPORT_ENCRYPTION_URIS.contains(uri)) {
+                return Single.error(
+                        new InvalidClientMetadataException(
+                                "keyTransportEncryptionAlgorithm must be one of the supported XML Encryption key transport URIs"));
+            }
+        }
+
+        if (hasText(saml.getDataEncryptionAlgorithm())) {
+            String uri = saml.getDataEncryptionAlgorithm().trim();
+            if (!ALLOWED_SAML_DATA_ENCRYPTION_URIS.contains(uri)) {
+                return Single.error(
+                        new InvalidClientMetadataException(
+                                "dataEncryptionAlgorithm must be one of the supported XML Encryption block encryption URIs"));
+            }
+        }
+
+        return Single.just(application);
     }
 
     private Single<Application> validateRedirectUris(Application application, boolean updateTypeOnly) {
