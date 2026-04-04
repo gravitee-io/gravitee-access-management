@@ -52,6 +52,19 @@ public class ApplicationSAMLSettings {
      * SP requires that the SAML Assertions must be signed
      */
     private boolean wantAssertionsSigned;
+    /**
+     * SP requires that the SAML Assertions must be encrypted
+     */
+    private boolean wantAssertionsEncrypted;
+
+    /**
+     * Key transport encryption algorithm for encrypted assertions (XML Encryption {@code EncryptedKey}), e.g. RSA-OAEP URI.
+     */
+    private String keyTransportEncryptionAlgorithm;
+    /**
+     * Data encryption algorithm for encrypted assertions (XML Encryption {@code EncryptedData}), e.g. AES-256-CBC URI.
+     */
+    private String dataEncryptionAlgorithm;
 
     /**
      * SP preferred response binding
@@ -81,6 +94,9 @@ public class ApplicationSAMLSettings {
         this.certificate = other.certificate;
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
+        this.wantAssertionsEncrypted = other.wantAssertionsEncrypted;
+        this.keyTransportEncryptionAlgorithm = other.keyTransportEncryptionAlgorithm;
+        this.dataEncryptionAlgorithm = other.dataEncryptionAlgorithm;
         this.responseBinding = other.responseBinding;
         this.nameIdMapping = other.nameIdMapping;
         this.assertionAttributes = other.assertionAttributes != null ? new ArrayList<>(other.assertionAttributes) : null;
@@ -134,6 +150,30 @@ public class ApplicationSAMLSettings {
         this.wantAssertionsSigned = wantAssertionsSigned;
     }
 
+    public boolean isWantAssertionsEncrypted() {
+        return wantAssertionsEncrypted;
+    }
+
+    public void setWantAssertionsEncrypted(boolean wantAssertionsEncrypted) {
+        this.wantAssertionsEncrypted = wantAssertionsEncrypted;
+    }
+
+    public String getKeyTransportEncryptionAlgorithm() {
+        return keyTransportEncryptionAlgorithm;
+    }
+
+    public void setKeyTransportEncryptionAlgorithm(String keyTransportEncryptionAlgorithm) {
+        this.keyTransportEncryptionAlgorithm = keyTransportEncryptionAlgorithm;
+    }
+
+    public String getDataEncryptionAlgorithm() {
+        return dataEncryptionAlgorithm;
+    }
+
+    public void setDataEncryptionAlgorithm(String dataEncryptionAlgorithm) {
+        this.dataEncryptionAlgorithm = dataEncryptionAlgorithm;
+    }
+
     public String getResponseBinding() {
         return responseBinding;
     }
@@ -165,6 +205,9 @@ public class ApplicationSAMLSettings {
         client.setSamlCertificate(this.certificate);
         client.setWantResponseSigned(this.wantResponseSigned);
         client.setWantAssertionsSigned(this.wantAssertionsSigned);
+        client.setWantAssertionsEncrypted(this.wantAssertionsEncrypted);
+        client.setKeyTransportEncryptionAlgorithm(this.keyTransportEncryptionAlgorithm);
+        client.setDataEncryptionAlgorithm(this.dataEncryptionAlgorithm);
         client.setResponseBinding(this.responseBinding);
         client.setNameIdMapping(this.nameIdMapping);
         client.setAssertionAttributes(this.assertionAttributes);

@@ -665,6 +665,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettingsMongo.setCertificate(other.getCertificate());
         applicationSAMLSettingsMongo.setWantResponseSigned(other.isWantResponseSigned());
         applicationSAMLSettingsMongo.setWantAssertionsSigned(other.isWantAssertionsSigned());
+        applicationSAMLSettingsMongo.setWantAssertionsEncrypted(other.isWantAssertionsEncrypted());
+        applicationSAMLSettingsMongo.setKeyTransportEncryptionAlgorithm(other.getKeyTransportEncryptionAlgorithm());
+        applicationSAMLSettingsMongo.setDataEncryptionAlgorithm(other.getDataEncryptionAlgorithm());
         applicationSAMLSettingsMongo.setResponseBinding(other.getResponseBinding());
         applicationSAMLSettingsMongo.setNameIdMapping(other.getNameIdMapping());
         applicationSAMLSettingsMongo.setAssertionAttributes(getMongoAssertionAttributes(other.getAssertionAttributes()));
@@ -682,6 +685,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettings.setCertificate(other.getCertificate());
         applicationSAMLSettings.setWantResponseSigned(other.isWantResponseSigned());
         applicationSAMLSettings.setWantAssertionsSigned(other.isWantAssertionsSigned());
+        applicationSAMLSettings.setWantAssertionsEncrypted(other.isWantAssertionsEncrypted());
+        applicationSAMLSettings.setKeyTransportEncryptionAlgorithm(other.getKeyTransportEncryptionAlgorithm());
+        applicationSAMLSettings.setDataEncryptionAlgorithm(other.getDataEncryptionAlgorithm());
         applicationSAMLSettings.setResponseBinding(other.getResponseBinding());
         applicationSAMLSettings.setNameIdMapping(other.getNameIdMapping());
         applicationSAMLSettings.setAssertionAttributes(getAssertionAttributes(other.getAssertionAttributes()));

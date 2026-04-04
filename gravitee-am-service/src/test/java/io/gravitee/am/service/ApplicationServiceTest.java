@@ -38,6 +38,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
@@ -1729,6 +1730,121 @@ public class ApplicationServiceTest {
         testObserver.assertNoErrors();
 
         verify(applicationRepository, times(1)).findById(anyString());
+        verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidClientMetadataException_wantAssertionsEncryptedWithoutCertificate() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setWantAssertionsEncrypted(true);
+        saml.setCertificate(null);
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidClientMetadataException_invalidKeyTransportEncryptionAlgorithm() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setKeyTransportEncryptionAlgorithm("http://www.w3.org/2001/04/xmlenc#invalid");
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_invalidClientMetadataException_invalidDataEncryptionAlgorithm() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setDataEncryptionAlgorithm("http://www.w3.org/2001/04/xmlenc#tripledes-cbc");
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void validateClientMetadata_validMetadata_samlEncryptionAlgorithms() {
+        PatchApplication patchClient = Mockito.mock(PatchApplication.class);
+
+        Application client = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
+        oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setScopes(Collections.emptyList());
+        settings.setOauth(oAuthSettings);
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setWantAssertionsEncrypted(true);
+        saml.setCertificate("-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----");
+        saml.setKeyTransportEncryptionAlgorithm("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p");
+        saml.setDataEncryptionAlgorithm("http://www.w3.org/2001/04/xmlenc#aes256-cbc");
+        settings.setSaml(saml);
+        client.setSettings(settings);
+
+        when(patchClient.patch(any())).thenReturn(client);
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
         verify(applicationRepository, times(1)).update(any(Application.class));
     }
 

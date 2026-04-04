@@ -71,6 +71,40 @@
           >
           <mat-hint style="font-size: 75%">Optional. If the parameter is set to true, the assertions will be digitally signed.</mat-hint>
         </div>
+        <div style="display: flex; flex-direction: column; padding: 10px 5px">
+          <mat-checkbox
+            name="wantAssertionsEncrypted"
+            [(ngModel)]="applicationSamlSettings.wantAssertionsEncrypted"
+            [disabled]="!editMode"
+            (ngModelChange)="encryptionPreferenceChanged()"
+            >Want Assertions Encrypted</mat-checkbox
+          >
+          <mat-hint style="font-size: 75%">Optional. If the parameter is set to true, the assertions will be encrypted.</mat-hint>
+        </div>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Key transport encryption algorithm</mat-label>
+          <mat-select
+            name="keyTransportEncryptionAlgorithm"
+            [(ngModel)]="applicationSamlSettings.keyTransportEncryptionAlgorithm"
+            (ngModelChange)="encryptionPreferenceChanged()"
+            [disabled]="!editMode"
+          >
+            <mat-option *ngFor="let opt of rsaKeyTransportOptions" [value]="opt.value">{{ opt.name }}</mat-option>
+          </mat-select>
+          <mat-hint>XML Encryption key transport (e.g. RSA-OAEP). Used when assertions are encrypted.</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Data encryption algorithm</mat-label>
+          <mat-select
+            name="dataEncryptionAlgorithm"
+            [(ngModel)]="applicationSamlSettings.dataEncryptionAlgorithm"
+            (ngModelChange)="encryptionPreferenceChanged()"
+            [disabled]="!editMode"
+          >
+            <mat-option *ngFor="let opt of dataEncryptionAlgorithmOptions" [value]="opt.value">{{ opt.name }}</mat-option>
+          </mat-select>
+          <mat-hint>XML Encryption block algorithm (e.g. AES-256-CBC). Used when assertions are encrypted.</mat-hint>
+        </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Response binding</mat-label>
           <mat-select
@@ -157,17 +191,27 @@
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>Certificate</h5>
-          <small>The SP's base-64 encoded public key certificate, which is used by the IdP to verify SAML authorization requests</small>
+          <small
+            >The SP's PEM-encoded public key certificate: used by the IdP to verify SAML requests and, when assertions are encrypted, to
+            wrap the symmetric key.</small
+          >
           <mat-divider></mat-divider>
         </div>
         <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Certificate</mat-label>
           <textarea
             rows="5"
             matInput
             placeholder="PEM-encoded certificate"
             name="certificate"
+            #certificateField="ngModel"
             [(ngModel)]="applicationSamlSettings.certificate"
+            [required]="applicationSamlSettings.wantAssertionsEncrypted === true"
+            [disabled]="!editMode"
+            (ngModelChange)="encryptionPreferenceChanged()"
           ></textarea>
+          <mat-hint>Required when Want Assertions Encrypted is enabled.</mat-hint>
+          <mat-error *ngIf="certificateField.invalid">A certificate is required when Want Assertions Encrypted is enabled.</mat-error>
         </mat-form-field>
       </div>
       <div fxLayout="row" *ngIf="editMode">

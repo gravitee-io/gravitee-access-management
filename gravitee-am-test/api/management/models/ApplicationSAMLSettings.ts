@@ -75,6 +75,18 @@ export interface ApplicationSAMLSettings {
    * @type {string}
    * @memberof ApplicationSAMLSettings
    */
+  dataEncryptionAlgorithm?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSAMLSettings
+   */
+  keyTransportEncryptionAlgorithm?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSAMLSettings
+   */
   responseBinding?: string;
   /**
    *
@@ -88,6 +100,12 @@ export interface ApplicationSAMLSettings {
    * @memberof ApplicationSAMLSettings
    */
   wantAssertionsSigned?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ApplicationSAMLSettings
+   */
+  wantAssertionsEncrypted?: boolean;
   /**
    *
    * @type {boolean}
@@ -118,9 +136,14 @@ export function ApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscrimina
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
     nameIdMapping: json['nameIdMapping'] == null ? undefined : json['nameIdMapping'],
+    dataEncryptionAlgorithm:
+      json['dataEncryptionAlgorithm'] == null ? undefined : json['dataEncryptionAlgorithm'],
+    keyTransportEncryptionAlgorithm:
+      json['keyTransportEncryptionAlgorithm'] == null ? undefined : json['keyTransportEncryptionAlgorithm'],
     responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
     singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
     wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
+    wantAssertionsEncrypted: json['wantAssertionsEncrypted'] == null ? undefined : json['wantAssertionsEncrypted'],
     wantResponseSigned: json['wantResponseSigned'] == null ? undefined : json['wantResponseSigned'],
   };
 }
@@ -141,9 +164,12 @@ export function ApplicationSAMLSettingsToJSONTyped(value?: ApplicationSAMLSettin
     certificate: value['certificate'],
     entityId: value['entityId'],
     nameIdMapping: value['nameIdMapping'],
+    dataEncryptionAlgorithm: value['dataEncryptionAlgorithm'],
+    keyTransportEncryptionAlgorithm: value['keyTransportEncryptionAlgorithm'],
     responseBinding: value['responseBinding'],
     singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
     wantAssertionsSigned: value['wantAssertionsSigned'],
+    wantAssertionsEncrypted: value['wantAssertionsEncrypted'],
     wantResponseSigned: value['wantResponseSigned'],
   };
 }

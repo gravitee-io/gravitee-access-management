@@ -279,6 +279,12 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean wantAssertionsSigned;
 
+    private boolean wantAssertionsEncrypted;
+
+    private String keyTransportEncryptionAlgorithm;
+
+    private String dataEncryptionAlgorithm;
+
     private String responseBinding;
 
     private String nameIdMapping;
@@ -380,6 +386,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.samlCertificate = other.samlCertificate;
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
+        this.wantAssertionsEncrypted = other.wantAssertionsEncrypted;
+        this.keyTransportEncryptionAlgorithm = other.keyTransportEncryptionAlgorithm;
+        this.dataEncryptionAlgorithm = other.dataEncryptionAlgorithm;
         this.responseBinding = other.responseBinding;
         this.nameIdMapping = other.nameIdMapping;
         this.assertionAttributes = other.assertionAttributes != null ? new ArrayList<>(other.assertionAttributes) : null;
@@ -1136,6 +1145,30 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setWantAssertionsSigned(boolean wantAssertionsSigned) {
         this.wantAssertionsSigned = wantAssertionsSigned;
+    }
+
+    public boolean isWantAssertionsEncrypted() {
+        return wantAssertionsEncrypted;
+    }
+
+    public void setWantAssertionsEncrypted(boolean wantAssertionsEncrypted) {
+        this.wantAssertionsEncrypted = wantAssertionsEncrypted;
+    }
+
+    public String getKeyTransportEncryptionAlgorithm() {
+        return keyTransportEncryptionAlgorithm;
+    }
+
+    public void setKeyTransportEncryptionAlgorithm(String keyTransportEncryptionAlgorithm) {
+        this.keyTransportEncryptionAlgorithm = keyTransportEncryptionAlgorithm;
+    }
+
+    public String getDataEncryptionAlgorithm() {
+        return dataEncryptionAlgorithm;
+    }
+
+    public void setDataEncryptionAlgorithm(String dataEncryptionAlgorithm) {
+        this.dataEncryptionAlgorithm = dataEncryptionAlgorithm;
     }
 
     public String getResponseBinding() {

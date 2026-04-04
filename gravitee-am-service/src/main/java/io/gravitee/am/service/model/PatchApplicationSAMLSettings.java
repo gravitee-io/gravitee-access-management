@@ -34,6 +34,9 @@ public class PatchApplicationSAMLSettings {
     private Optional<String> certificate;
     private Optional<Boolean> wantResponseSigned;
     private Optional<Boolean> wantAssertionsSigned;
+    private Optional<Boolean> wantAssertionsEncrypted;
+    private Optional<String> keyTransportEncryptionAlgorithm;
+    private Optional<String> dataEncryptionAlgorithm;
     private Optional<String> responseBinding;
     private Optional<String> nameIdMapping;
     private Optional<List<SAMLAssertionAttribute>> assertionAttributes;
@@ -86,6 +89,30 @@ public class PatchApplicationSAMLSettings {
         this.wantAssertionsSigned = wantAssertionsSigned;
     }
 
+    public Optional<Boolean> getWantAssertionsEncrypted() {
+        return wantAssertionsEncrypted;
+    }
+
+    public void setWantAssertionsEncrypted(Optional<Boolean> wantAssertionsEncrypted) {
+        this.wantAssertionsEncrypted = wantAssertionsEncrypted;
+    }
+
+    public Optional<String> getKeyTransportEncryptionAlgorithm() {
+        return keyTransportEncryptionAlgorithm;
+    }
+
+    public void setKeyTransportEncryptionAlgorithm(Optional<String> keyTransportEncryptionAlgorithm) {
+        this.keyTransportEncryptionAlgorithm = keyTransportEncryptionAlgorithm;
+    }
+
+    public Optional<String> getDataEncryptionAlgorithm() {
+        return dataEncryptionAlgorithm;
+    }
+
+    public void setDataEncryptionAlgorithm(Optional<String> dataEncryptionAlgorithm) {
+        this.dataEncryptionAlgorithm = dataEncryptionAlgorithm;
+    }
+
     public Optional<String> getResponseBinding() {
         return responseBinding;
     }
@@ -119,6 +146,9 @@ public class PatchApplicationSAMLSettings {
         SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
         SetterUtils.safeSet(toPatch::setWantResponseSigned, this.getWantResponseSigned());
         SetterUtils.safeSet(toPatch::setWantAssertionsSigned, this.getWantAssertionsSigned());
+        SetterUtils.safeSet(toPatch::setWantAssertionsEncrypted, this.getWantAssertionsEncrypted());
+        SetterUtils.safeSet(toPatch::setKeyTransportEncryptionAlgorithm, this.getKeyTransportEncryptionAlgorithm());
+        SetterUtils.safeSet(toPatch::setDataEncryptionAlgorithm, this.getDataEncryptionAlgorithm());
         SetterUtils.safeSet(toPatch::setResponseBinding, this.getResponseBinding());
         SetterUtils.safeSet(toPatch::setNameIdMapping, this.getNameIdMapping());
         SetterUtils.safeSet(toPatch::setAssertionAttributes, this.getAssertionAttributes());
