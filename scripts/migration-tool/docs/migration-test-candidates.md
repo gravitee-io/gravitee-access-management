@@ -1,155 +1,179 @@
 # Migration Test Candidates — AM-5325
 
-Tests that could **fail** when run in a migration flow, based on concrete changes between AM 4.10 → 4.11 → 4.12.
+Scenarios where persistent data from version N could **fail** when accessed by version N+1 (upgrade) or N after downgrade. Each identifies the sensitive code path, whether seed data is needed, and which existing Jest test covers the area.
 
 ## Current default pipeline
 
-The migration tool's verify stages default to `ci:migration` (`specs/migration/` only). The full management and gateway suites are **not** run by default — use `--test-filter` to target specific specs when needed.
+The migration tool runs `ci:migration` (`specs/migration/`) at every verify stage. Existing management/gateway tests are self-contained (create+teardown) and won't catch migration issues. Migration tests must use **persistent data** — either auto-created by upgraders or explicitly seeded.
 
 ---
 
-## Concrete breaking changes between versions
+## Scenario 1: Unknown enum in roles after upgrade (AM-6174)
 
-| # | Area | Version | Change | Breaks on downgrade? | Breaks on upgrade? |
-|---|------|---------|--------|---------------------|-------------------|
-| 1 | Enum | 4.10 | `PROTECTED_RESOURCE` added to ReferenceType | **Yes** — `IllegalArgumentException` parsing roles | No |
-| 2 | Enum | 4.10 | `PROTECTED_RESOURCE` permissions added to system roles | **Yes** — permission JSON contains unknown keys | No |
-| 3 | Column | 4.11 | `domains.certificate_settings` CLOB | **Yes** — API rejects unknown `certificateSettings` property on PATCH | No (nullable) |
-| 4 | Column | 4.11 | `domains.token_exchange_settings` CLOB | No (nullable, ignored) | No |
-| 5 | Feature | 4.11 | Token exchange endpoint (RFC 8693) | N/A (endpoint didn't exist) | No |
-| 6 | Feature | 4.11 | `/_node/domains` monitoring endpoint | N/A (endpoint didn't exist) | No |
-| 7 | Enum | 4.11 | `TokenExchangeScopeHandling` (DOWNSCOPING/PERMISSIVE) | Possible — if stored in domain settings | No (defaults provided) |
-| 8 | Table | 4.11 | `cp_action_lease` for distributed coordination | No (old code doesn't query it) | No |
-| 9 | Schema | 4.10 | `protected_resources` + related tables | No (old code doesn't query them) | No |
-| 10 | Index | 4.9→4.10 | Redundant indexes swept (webauthn, uma, scope-approvals) | Slower queries on downgrade | No |
-| 11 | Sync | 4.11 | New entity types in MAPI→GW sync | Old GW ignores unknown types (assumption — not verified in code) | No |
+**Status**: DONE — `specs/migration/backward-compat-enums.jest.spec.ts`
 
-**Key insight**: Most changes are additive (new tables, nullable columns) and don't break on upgrade. The real risk is **downgrade** — older code encountering data created by newer versions.
+**What happens**: MAPI 4.10+ upgraders (`DefaultRoleUpgrader`, `OrganizationRolesUpgrader`) create system roles with `PROTECTED_RESOURCE` reference type. On downgrade to 4.9, `ReferenceType.valueOf("PROTECTED_RESOURCE")` throws `IllegalArgumentException`.
 
-### Upgraders that modify EXISTING data (irreversible on downgrade)
+**Seed needed**: No — upgraders create the data at startup automatically.
 
-These upgraders change data in existing collections/tables. After downgrade, the modifications remain:
+**Existing test reference**: `specs/management/roles.jest.spec.ts` covers role CRUD. Our migration test verifies the roles API returns 200 despite unknown enum values.
 
-| Upgrader | What it modifies | Downgrade impact |
-|----------|-----------------|-----------------|
-| `ProtectedResourcePermissionMongoUpgrader` | Adds `permissionAcls.PROTECTED_RESOURCE` to existing system roles | Old code may crash on unknown Permission key |
-| `DataPlanePermissionMongoUpgrader` | Adds `permissionAcls.DATA_PLANE` to org/env owner roles | Same — unknown Permission key |
-| `ReporterReferenceMongoUpgrader` | Sets `referenceType`/`referenceId` on reporters (previously only `domain`) | Old code reading `referenceType` may not handle new values |
-| `DefaultRoleUpgrader` (v4_11_0_b) | Creates/updates system roles with PROTECTED_RESOURCE assignableType | Old code crashes on unknown ReferenceType — **AM-6174 fix** |
-| `OrganizationRolesUpgrader` (v4_11_0_b) | Creates PROTECTED_RESOURCE_OWNER/USER org roles | Same as above |
-| JDBC Liquibase `4.10.0-protected-resource-permissions.yml` | Adds PROTECTED_RESOURCE to role permission JSON via SQL | Same as Mongo upgrader, for JDBC repos |
+**Confidence this fails without the fix**: 100% confirmed.
 
 ---
 
-## Migration test candidates
+## Scenario 2: Certificate settings property rejected on older MAPI
 
-### Already covered
+**What happens**: 4.11 adds `domains.certificate_settings` column and `certificateSettings` property on the domain API. If a domain is patched with `certificateSettings` on 4.11, then the MAPI is downgraded to 4.10, the 4.10 API rejects `certificateSettings` as unknown property (`400: Property [certificateSettings] is not recognized`).
 
-| Test | Area | What it validates |
-|------|------|------------------|
-| `specs/migration/backward-compat-enums.jest.spec.ts` | #1, #2 (Enums) | Org roles endpoint returns 200 despite PROTECTED_RESOURCE data |
+**Seed needed**: Yes — need a domain with `certificateSettings` configured. The seed should:
+- Create a domain on version N+1
+- Set a fallback certificate via `certificateSettings`
+- After downgrade, verify the domain is still loadable (GET returns 200, `certificateSettings` may be absent but no crash)
 
-### Candidate 1: Certificate settings (breaking change #3)
+**Existing test reference**: `specs/management/certificates/certificate-settings.jest.spec.ts` — tests fallback certificate assignment via `patchDomain` and dedicated endpoint.
 
-**Reference**: `specs/management/certificates/certificate-settings.jest.spec.ts`
+**Confidence this fails**: 100% confirmed — seen in CI run on 4.10 baseline.
 
-**Why it fails on migration**: The `certificateSettings` domain property was added in 4.11. When the test runs against a 4.10 MAPI at verify-baseline, it sends `PATCH /domains/{id}` with `certificateSettings` — the 4.10 MAPI returns `400: Property [certificateSettings] is not recognized`. We saw this fail in CI run `ab7072f0`.
-
-**Migration test approach**: Write a new test in `specs/migration/` that:
-- At verify-baseline (version N): verify domain PATCH without `certificateSettings` works
-- At verify-mapi (version N+1): verify `certificateSettings` is available
-- At verify-after-downgrade: verify domain still loads without crashing on the stored `certificateSettings` column
-
-**Infra needed**: MAPI only, no gateway
-
-### Candidate 2: Token exchange scope handling (breaking change #7)
-
-**Reference**: `specs/management/domain/token-exchange-validation.jest.spec.ts`
-
-**Why it could fail on migration**: `TokenExchangeOAuthSettings.scopeHandling` stores `PERMISSIVE` or `DOWNSCOPING` in `domains.token_exchange_settings` JSON. If a domain is configured with `PERMISSIVE` on 4.12 and you downgrade to 4.11-alpha where the enum didn't exist yet, deserialization could fail.
-
-**Migration test approach**: Verify domain with token exchange settings loads after downgrade.
-
-**Infra needed**: MAPI only
-
-### Candidate 3: Protected resources across versions (breaking changes #1, #2, #9)
-
-**Reference**: `specs/management/protected-resources.jest.spec.ts`
-
-**Why it could fail on migration**: Protected resources are a 4.10+ feature. Creating one triggers PROTECTED_RESOURCE roles/permissions via upgraders. The test itself needs `/_node/domains` (4.11+). After downgrade to a version without the feature, the API endpoint would return 404.
-
-**Migration test approach**: Not a downgrade test — rather validates the feature works after upgrade. The downgrade scenario is already covered by Candidate 1 (enum filtering).
-
-**Infra needed**: MAPI + gateway + `/_node/domains` (4.11+ from-tag)
-
-### Candidate 4: Refresh token format (potential breaking change)
-
-**Reference**: `specs/gateway/refresh-token.jest.spec.ts`
-
-**Why it could fail**: If the token signing key or format changes between versions, a refresh token issued on N may not be valid on N+1. This is the classic "sessions may break" scenario from AM-5325.
-
-**Migration test approach**: Would need to split the test — issue refresh token at one stage, attempt refresh at the next. Current test is self-contained (creates and uses token in one run). **Needs adaptation** — not a simple --test-filter candidate.
-
-**Infra needed**: MAPI + gateway + `/_node/domains`
-
-### Candidate 5: Client credentials grant (operational continuity)
-
-**Reference**: `specs/gateway/oauth2/oauth2-grant-client-credential.jest.spec.ts`
-
-**Why it could fail**: If the client secret hashing algorithm or application settings format changes between versions, client_credentials grant could fail after upgrade.
-
-**Migration test approach**: Self-contained — creates app, issues token, verifies in one run. Safe to run at every verify stage via `--test-filter`. If it passes at verify-baseline and verify-all, the grant flow works across versions.
-
-**Infra needed**: MAPI + gateway + `/_node/domains`
+**Migration test would**: Seed a domain with certificate settings on 4.11+, verify domain GET still works after downgrade to 4.10 (even if `certificateSettings` is stripped).
 
 ---
 
-## Confidence assessment
+## Scenario 3: Permission JSON with unknown keys after upgrade
 
-| Candidate | Confidence it fails | Evidence |
-|-----------|-------------------|----------|
-| Enum filtering (roles) | **100%** confirmed | CI run, AM-6174 Jira, `IllegalArgumentException` on 4.9. Fixed by `EnumParsingUtils.safeValueOf()` in all 4 repos |
-| Certificate settings | **100%** confirmed | CI run `ab7072f0` — `400: Property [certificateSettings] is not recognized` on 4.10 |
-| Permission JSON keys | **10%** low — **already fixed** | Upgraders add PROTECTED_RESOURCE + DATA_PLANE to existing role `permissionAcls`. AM-6174 fix covers all 4 repository classes (Mongo/JDBC Role + Membership). Service layer uses typed enums, not DB strings — doesn't parse. |
-| Reporter referenceType | **40%** medium | `ReporterReferenceMongoUpgrader` modifies existing reporter docs. Old code reads `domain` field (still works), but code reading `referenceType` may not handle new values |
-| Token exchange scope enum | **30%** theoretical | Stored in domain JSON. Jackson typically ignores unknown fields, but strict deserialization would fail |
-| Refresh token format | **10%** unlikely | No evidence of format changes 4.10-4.12. Signing keys stored in DB persist across versions |
-| Client credentials grant | **10%** unlikely | Self-contained test, format unchanged |
+**What happens**: `ProtectedResourcePermissionMongoUpgrader` adds `permissionAcls.PROTECTED_RESOURCE` to existing system roles. `DataPlanePermissionMongoUpgrader` adds `permissionAcls.DATA_PLANE`. These are stored as JSON keys in the role document. If older code iterates permission keys and calls `Permission.valueOf()`, it would crash.
 
-## Priority order for implementation
+**Seed needed**: No — upgraders modify existing role documents at startup.
 
-| Priority | Candidate | Effort | Confidence | Value |
-|----------|-----------|--------|-----------|-------|
-| **P1** | Certificate settings | Low — new test in specs/migration/ | 100% confirmed | HIGH |
-| **P2** | Permission JSON keys | Low — already fixed at repo layer | 10% | LOW — AM-6174 covers all repos |
-| **P2** | Reporter referenceType | Low — new test in specs/migration/ | 40% | MEDIUM |
-| **P3** | Token exchange scope enum | Low — new test | 30% | LOW |
-| **P3** | Refresh token lifecycle | High — needs test split | 10% | LOW for 4.10-4.12 range |
+**Existing test reference**: `specs/management/roles.jest.spec.ts` — role listing/querying exercises the permission deserialization path.
+
+**Confidence this fails without AM-6174 fix**: HIGH — the fix (`EnumParsingUtils.safeValueOf`) filters unknown permission keys at the repository layer. Without the fix, any code reading `permissionAcls` crashes. The fix is in 4.10+, backported to 4.9.8/4.8.23/4.7.30.
+
+**Migration test would**: Already covered by Scenario 1 (same fix, same code path). No separate test needed.
 
 ---
 
-## AM-5325 area coverage assessment
+## Scenario 4: Reporter referenceType modified by upgrader
 
-| Area | Covered? | Notes |
-|------|----------|-------|
-| Schema / migrations | Implicit | Upgraders run at startup; Liquibase handles expand/contract. No migration test needed — verified by successful MAPI boot. |
-| Enums / reference types | **Yes** | `backward-compat-enums.jest.spec.ts` covers ReferenceType filtering in roles |
-| Referential / JSON blobs | **Partial** | certificate-settings is a P1 candidate (confirmed breakage). token-exchange-settings is P3 (theoretical). |
-| Crypto / tokens / sessions | **No** | Refresh token lifecycle needs cross-stage test adaptation (P3). No format changes identified in 4.10-4.12. |
-| Search / indexes | **Low risk** | Index changes are additive; old queries still work, just slower. No test needed. |
-| Multi-component skew | **Not tested by default** | Default pipeline runs `specs/migration/` only. Gateway tests can be run via `--test-filter specs/gateway/...` but are not automatic. |
-| Volume / pagination | **Low risk** | Pagination unchanged between versions. No test needed. |
-| Startup vs runtime | **Implicit** | Verified by successful MAPI/gateway startup. `backward-compat-enums` test implicitly validates startup (roles load after upgraders ran). |
-| Policies | **Not tested** | Flow execution unchanged between these versions. No test needed. |
+**What happens**: `ReporterReferenceMongoUpgrader` modifies existing reporter documents — sets `referenceType=DOMAIN` and `referenceId` on reporters that previously only had a `domain` field. After downgrade, old code that reads the `referenceType` field may encounter a value it doesn't expect.
+
+**Seed needed**: No — upgrader modifies existing reporters. But reporters only exist if they were created before the upgrade (default reporter is created per domain).
+
+**Existing test reference**: `specs/management/reporters/domain-reporter.jest.spec.ts` — reporter CRUD and configuration.
+
+**Confidence this fails**: MEDIUM (40%) — old code reading `domain` field still works. The `referenceType` field is additive. Would only fail if old code explicitly validates `referenceType` values.
+
+**Migration test would**: Seed a domain with a reporter on version N, upgrade to N+1 (upgrader modifies reporter), downgrade to N, verify reporter is still listed and functional.
 
 ---
 
-## Dependencies for candidates
+## Scenario 5: Token exchange settings rejected on older MAPI
 
-| Candidate | MAPI | Gateway | /_node/domains | SMTP | OpenFGA | Min from-tag |
-|-----------|------|---------|---------------|------|---------|-------------|
-| Certificate settings | Yes | No | No | No | No | 4.10 |
-| Token exchange scope | Yes | No | No | No | No | 4.11 |
-| Client credentials | Yes | Yes | Yes | No | No | 4.11 |
-| Protected resources | Yes | Yes | Yes | No | No | 4.11 |
-| Refresh token | Yes | Yes | Yes | No | No | 4.11 |
+**What happens**: 4.11 adds `domains.token_exchange_settings` CLOB column and `tokenExchangeSettings` property on `PatchDomain.java:73`. If a domain is patched with `tokenExchangeSettings` on 4.11, then the MAPI is downgraded to 4.10, the 4.10 API rejects `tokenExchangeSettings` as an unknown property. This is the **same failure mechanism as Scenario 2** (certificate settings).
+
+**Root cause (confirmed by Stage 3 deep scan)**: The production MAPI ObjectMapper (`ObjectMapperResolver.java:60`) uses default Jackson settings where `FAIL_ON_UNKNOWN_PROPERTIES = true`. On 4.10, `PatchDomain.java` has no `tokenExchangeSettings` field → Jackson throws `UnrecognizedPropertyException` → **400 Bad Request**. Additionally, the `token_exchange_settings` CLOB column does not exist on 4.10 JDBC (`4.11.0-add-token-exchange-settings-column.yml`), and the Gateway does not recognize `urn:ietf:params:oauth:grant-type:token-exchange` grant type on 4.10.
+
+**Seed needed**: Yes — need a domain with `tokenExchangeSettings` configured. The seed should:
+- Create a domain on version N+1 (4.11+)
+- Enable token exchange via `tokenExchangeSettings: {enabled: true, allowedSubjectTokenTypes: [...], allowedRequestedTokenTypes: [...]}`
+- After downgrade, verify the domain is still loadable (GET returns 200, `tokenExchangeSettings` may be absent but no crash)
+
+**Existing test reference**: `specs/management/domain/token-exchange-validation.jest.spec.ts` — token exchange settings validation on domains. `specs/gateway/token-exchange/token-exchange.jest.spec.ts` — 7 fixtures covering token exchange scenarios.
+
+**Confidence this fails**: 100% confirmed — same Jackson `FAIL_ON_UNKNOWN_PROPERTIES` mechanism as Scenario 2 (`PatchDomain.java:73`, `ObjectMapperResolver.java:60`). Traced in Stage 3 deep scan (S2).
+
+**Migration test would**: Seed a domain with token exchange settings on 4.11+, verify domain GET still works after downgrade to 4.10 (even if `tokenExchangeSettings` is stripped).
+
+---
+
+## Scenario 6: Refresh token signed on old version used on new version
+
+**What happens**: If token signing key format, algorithm, or claims change between versions, a refresh token issued on version N may not be valid on N+1. The user would get an error when trying to refresh.
+
+**Seed needed**: Yes — need to issue a refresh token on version N and persist the token value. After upgrade to N+1, attempt to use the refresh token.
+
+**Existing test reference**: `specs/gateway/refresh-token.jest.spec.ts` — issues refresh tokens and tests refresh flow.
+
+**Confidence this fails**: LOW (10%) for 4.10-4.12 — no evidence of signing key or token format changes. Signing keys are stored in DB and persist across upgrades. Higher risk for major version changes.
+
+**Migration test would**: Need cross-stage state — issue token at verify-baseline, store it, attempt refresh at verify-all. This requires test infrastructure changes (shared state file between Jest runs). HIGH effort.
+
+---
+
+---
+
+## Scenario 7: Application client secrets format migration
+
+**What happens**: `ApplicationClientSecretsUpgrader` (4.10) migrates client secrets to new `secretSettings` format. On downgrade, old code may not understand the new format — client authentication could fail.
+
+**Seed needed**: Yes — need an application with client secret created on N. After upgrade (upgrader modifies secret storage), verify client_credentials grant still works. After downgrade, verify again.
+
+**Existing test reference**: `specs/gateway/oauth2/oauth2-grant-client-credential.jest.spec.ts` — client credentials flow. `specs/management/client-secrets.jest.spec.ts` — secret CRUD.
+
+**Confidence this fails**: MEDIUM (50%) — depends on whether old code can still read the migrated secret format. If the upgrader adds `secretSettings` alongside old fields (backward compatible), it won't fail. If it replaces the old format, it will.
+
+---
+
+## Scenario 8: Application factor settings migration
+
+**What happens**: `ApplicationFactorSettingsUpgrader` (4.10) migrates MFA factor config to new structure. On downgrade, old code reading factor settings from the application may not parse the new structure.
+
+**Seed needed**: Yes — need an application with MFA factor configured on N. After upgrade, verify MFA flow. After downgrade, verify factor config is still readable.
+
+**Existing test reference**: `specs/gateway/mfa/mfa-factor.spec.ts` — MFA factor enrollment and challenge.
+
+**Confidence this fails**: MEDIUM (40%) — depends on whether the migration is additive or destructive.
+
+---
+
+## Scenario 9: Domain dataplane assignment
+
+**What happens**: `DomainDataPlaneUpgrader` (4.10) assigns `dataPlaneId` to existing domains. `IdentityProviderDataPlaneUpgrader` assigns `dataPlaneId` to IdPs. On downgrade, old code that doesn't know `dataPlaneId` ignores it — but gateway sync may be affected if the old gateway doesn't filter by dataplane.
+
+**Seed needed**: No — upgrader modifies existing domains/IdPs.
+
+**Existing test reference**: `specs/management/domains.jest.spec.ts` — domain CRUD. `specs/management/identity-provider/identity-provider.jest.spec.ts` — IdP CRUD.
+
+**Confidence this fails**: LOW (20%) — `dataPlaneId` is an additive field. Old code ignores unknown fields during deserialization.
+
+---
+
+## Scenario 10: Password policy migration
+
+**What happens**: `DomainPasswordPoliciesUpgrader` converts legacy password settings to new `PasswordPolicy` objects. On downgrade, old code expecting the legacy format may not find it.
+
+**Seed needed**: Yes — need a domain with password policy configured on N. After upgrade (policy migrated), downgrade, verify password validation still works.
+
+**Existing test reference**: `specs/gateway/password-policy/password-policy.jest.spec.ts` — password policy enforcement. `specs/management/password-policy-management.jest.spec.ts` — policy CRUD.
+
+**Confidence this fails**: MEDIUM (40%) — if the upgrader replaces legacy settings with new PasswordPolicy objects, old code looking for the legacy format won't find it.
+
+---
+
+## Scenario 11: IdP config JSON modified by upgrader
+
+**What happens**: `NonBCryptIterationsRoundsUpgrader` modifies IdP configuration JSON — removes `iterations`/`rounds` fields for non-BCrypt algorithms. On downgrade, old code that expects these fields may use different defaults, changing password hashing behavior silently (no crash, but wrong hashing).
+
+**Seed needed**: Yes — need an IdP with non-BCrypt config (e.g. SHA-256 with iterations). After upgrade (fields removed), downgrade, verify user authentication still works.
+
+**Existing test reference**: `specs/management/identity-provider/identity-provider.jest.spec.ts` — IdP CRUD. `specs/gateway/login-flow/login-flow.jest.spec.ts` — login with IdP.
+
+**Confidence this fails**: MEDIUM (40%) — won't crash, but could silently change hashing behavior. Users created on N+1 may not authenticate on N if hashing differs.
+
+---
+
+## Summary: what to build next
+
+| # | Scenario | Seed? | Effort | Confidence | Recommendation |
+|---|----------|-------|--------|-----------|----------------|
+| 1 | Enum filtering | No | Done | 100% | **DONE** |
+| 2 | Certificate settings | Yes | LOW | 100% | **BUILD NEXT** — confirmed breakage |
+| 3 | Permission JSON keys | No | N/A | HIGH | Covered by #1 |
+| 4 | Reporter referenceType | No (upgrader) | LOW | 40% | Worth testing |
+| 5 | Token exchange settings | Yes | LOW | 100% | **BUILD NEXT** — confirmed breakage (same as #2) |
+| 6 | Refresh token cross-version | Yes + shared state | HIGH | 10% | Defer — needs infrastructure |
+| 7 | Client secrets format | Yes | MEDIUM | 50% | **Worth testing** — client auth is critical path |
+| 8 | Factor settings migration | Yes | MEDIUM | 40% | Worth testing if MFA is in scope |
+| 9 | Domain dataplane assignment | No | LOW | 20% | Low priority — additive field |
+| 10 | Password policy migration | Yes | MEDIUM | 40% | Worth testing — silent behavior change risk |
+| 11 | IdP config modification | Yes | MEDIUM | 40% | Worth testing — silent hashing change risk |
