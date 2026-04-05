@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.spring.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import io.gravitee.am.management.service.OrganizationUserService;
@@ -26,6 +27,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
  * Security configuration for the Automation API.
@@ -43,6 +45,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class AutomationSecurityConfiguration {
 
     @Bean
+    public Http401UnauthorizedEntryPoint automationEntryPoint(ObjectMapper objectMapper) {
+        return new Http401UnauthorizedEntryPoint(objectMapper);
+    }
+
+    @Bean
     public AutomationBearerTokenFilter automationBearerTokenFilter(
             @Qualifier("managementJwtParser") JWTParser jwtParser,
             OrganizationUserService userService
@@ -58,12 +65,15 @@ public class AutomationSecurityConfiguration {
     ) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/openapi.json", "/openapi.yaml").permitAll()
-                        .requestMatchers("OPTIONS", "/**").permitAll()
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/openapi.json", "GET"),
+                                new AntPathRequestMatcher("/openapi.yaml", "GET"),
+                                new AntPathRequestMatcher("/**", "OPTIONS")
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors(cors -> {})
+                .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))
