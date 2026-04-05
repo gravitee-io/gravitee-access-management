@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.security;
 
 import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
+import jakarta.servlet.Filter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -31,14 +32,19 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
  * Security configuration for the Automation API.
  * <p>
  * Scoped to {@code /automation/**} paths with Bearer token (JWT) authentication.
- * Creates its own {@link BearerAuthenticationFilter} instance to avoid sharing
- * a mutable filter bean with the management security chain.
+ * Uses a dedicated {@link BearerAuthenticationFilter} bean to avoid sharing
+ * a mutable filter instance with the management security chain.
  *
  * @author Stuart Clark
  * @author GraviteeSource Team
  */
 @Configuration
 public class SecurityAutomationConfiguration {
+
+    @Bean
+    public Filter automationJwtAuthenticationFilter() {
+        return new BearerAuthenticationFilter(new AntPathRequestMatcher("/automation/**"));
+    }
 
     @Bean
     @Order(99)
@@ -61,7 +67,7 @@ public class SecurityAutomationConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))
-                .addFilterBefore(new BearerAuthenticationFilter(new AntPathRequestMatcher("/automation/**")), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(automationJwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
