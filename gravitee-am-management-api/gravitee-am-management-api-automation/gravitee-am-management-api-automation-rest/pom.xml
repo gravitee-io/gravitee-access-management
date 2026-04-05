@@ -30,13 +30,6 @@
     <name>Gravitee IO - Access Management - Management API - Automation - Rest</name>
 
     <dependencies>
-        <!-- Automation Security -->
-        <dependency>
-            <groupId>io.gravitee.am.management.automation</groupId>
-            <artifactId>gravitee-am-management-api-automation-security</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- AM Management API Service -->
         <dependency>
             <groupId>io.gravitee.am.management</groupId>

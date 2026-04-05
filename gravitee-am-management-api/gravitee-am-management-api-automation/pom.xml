@@ -33,6 +33,5 @@
 
     <modules>
         <module>gravitee-am-management-api-automation-rest</module>
-        <module>gravitee-am-management-api-automation-security</module>
     </modules>
 </project>

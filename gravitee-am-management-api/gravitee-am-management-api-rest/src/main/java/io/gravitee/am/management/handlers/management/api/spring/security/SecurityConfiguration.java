@@ -55,14 +55,12 @@ import static java.util.Arrays.asList;
  */
 @Configuration
 @EnableWebSecurity
-@ComponentScan({
-        "io.gravitee.am.management.handlers.management.api.authentication",
-        "io.gravitee.am.management.handlers.automation.security"
-})
+@ComponentScan("io.gravitee.am.management.handlers.management.api.authentication")
 @Import({
         AuthSecurityConfiguration.class,
         TokenSecurityConfiguration.class,
-        ManagementSecurityConfiguration.class
+        ManagementSecurityConfiguration.class,
+        AutomationSecurityConfiguration.class
 })
 public class SecurityConfiguration {
 

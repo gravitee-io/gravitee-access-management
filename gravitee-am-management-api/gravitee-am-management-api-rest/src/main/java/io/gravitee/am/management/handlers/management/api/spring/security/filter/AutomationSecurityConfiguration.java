@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.automation.security;
+package io.gravitee.am.management.handlers.management.api.spring.security.filter;
 
 import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
-import jakarta.servlet.Filter;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -31,29 +35,36 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 /**
  * Security configuration for the Automation API.
  * <p>
- * Scoped to {@code /automation/**} paths with Bearer token (JWT) authentication.
- * Uses a dedicated {@link BearerAuthenticationFilter} bean to avoid sharing
- * a mutable filter instance with the management security chain.
+ * Active only when {@code http.api.automation.enabled=true}. Scoped to
+ * {@code /automation/**} paths with stateless Bearer token (JWT) authentication
+ * and CSRF disabled.
+ * <p>
+ * Creates a dedicated {@link BearerAuthenticationFilter} instance (not a Spring
+ * bean) to avoid type-ambiguity with the management chain's injection and to
+ * prevent shared-bean mutation between security chains.
  *
  * @author Stuart Clark
  * @author GraviteeSource Team
  */
 @Configuration
-public class SecurityAutomationConfiguration {
-
-    @Bean
-    public Filter automationJwtAuthenticationFilter() {
-        return new BearerAuthenticationFilter(new AntPathRequestMatcher("/automation/**"));
-    }
+@Conditional(AutomationSecurityConfiguration.AutomationEnabledCondition.class)
+public class AutomationSecurityConfiguration {
 
     @Bean
     @Order(99)
     public SecurityFilterChain automationSecurityFilterChain(
             HttpSecurity http,
-            Http401UnauthorizedEntryPoint entryPoint
+            Http401UnauthorizedEntryPoint entryPoint,
+            AutowireCapableBeanFactory beanFactory
     ) throws Exception {
+        BearerAuthenticationFilter bearerFilter =
+                new BearerAuthenticationFilter(new AntPathRequestMatcher("/automation/**"));
+        beanFactory.autowireBean(bearerFilter);
+        beanFactory.initializeBean(bearerFilter, "automationBearerAuthFilter");
+
         http
-                .securityMatchers(matcher -> matcher.requestMatchers(AntPathRequestMatcher.antMatcher("/automation/**")))
+                .securityMatchers(matcher -> matcher.requestMatchers(
+                        AntPathRequestMatcher.antMatcher("/automation/**")))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 new AntPathRequestMatcher("/automation/openapi.json", "GET"),
@@ -67,8 +78,16 @@ public class SecurityAutomationConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))
-                .addFilterBefore(automationJwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(bearerFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    static class AutomationEnabledCondition implements Condition {
+        @Override
+        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            return "true".equalsIgnoreCase(
+                    context.getEnvironment().getProperty("http.api.automation.enabled", "false"));
+        }
     }
 }
