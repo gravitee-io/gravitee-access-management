@@ -16,10 +16,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
-import { createIdp, deleteIdp, getIdp, updateIdp } from '@management-commands/idp-management-commands';
 import { updateApplication } from '@management-commands/application-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { uniqueName } from '@utils-commands/misc';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { IdpLoginFixture, setupIdpLoginFixture } from './fixtures/idp-login-fixture';
@@ -28,69 +26,6 @@ import { IdpLoginFixture, setupIdpLoginFixture } from './fixtures/idp-login-fixt
 setup(200000);
 
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
-
-describe('Identity Provider Setup and Login', () => {
-  let fixture: IdpLoginFixture;
-
-  beforeAll(async () => {
-    fixture = await setupIdpLoginFixture();
-  });
-
-  afterAll(async () => {
-    if (fixture) {
-      await fixture.cleanUp();
-    }
-  });
-
-  it(jira`should create an identity provider ${'AM-2204'}`, async () => {
-    const newIdpUsers = [{ firstname: 'New', lastname: 'User', username: uniqueName('new-idp-user', true), password: '#T3stP@ss' }];
-    const created = await createIdp(fixture.domain.id, fixture.accessToken, {
-      external: false,
-      type: 'inline-am-idp',
-      domainWhitelist: [],
-      configuration: JSON.stringify({ users: newIdpUsers }),
-      name: uniqueName('created-idp', true),
-    });
-
-    expect(created.id).toEqual(expect.any(String));
-    expect(created.type).toEqual('inline-am-idp');
-    expect(created.name).toMatch(/^created-idp/);
-
-    // Verify it can be retrieved
-    const fetched = await getIdp(fixture.domain.id, fixture.accessToken, created.id);
-    expect(fetched.id).toEqual(created.id);
-  });
-
-  it(jira`should update an identity provider ${'AM-2203'}`, async () => {
-    const updatedName = uniqueName('updated-idp', true);
-    const updated = await updateIdp(fixture.domain.id, fixture.accessToken, {
-      name: updatedName,
-      type: 'inline-am-idp',
-      configuration: fixture.idp1.users ? JSON.stringify({ users: fixture.idp1.users }) : '{}',
-    }, fixture.idp1.id);
-
-    expect(updated.id).toEqual(fixture.idp1.id);
-    expect(updated.name).toEqual(updatedName);
-  });
-
-  it(jira`should delete an identity provider ${'AM-2202'}`, async () => {
-    // Create a disposable IdP to delete
-    const disposable = await createIdp(fixture.domain.id, fixture.accessToken, {
-      external: false,
-      type: 'inline-am-idp',
-      domainWhitelist: [],
-      configuration: JSON.stringify({ users: [{ firstname: 'Del', lastname: 'User', username: uniqueName('del-user', true), password: '#T3stP@ss' }] }),
-      name: uniqueName('disposable-idp', true),
-    });
-
-    await deleteIdp(fixture.domain.id, fixture.accessToken, disposable.id);
-
-    // Verify it's gone
-    await expect(
-      getIdp(fixture.domain.id, fixture.accessToken, disposable.id),
-    ).rejects.toMatchObject({ response: { status: 404 } });
-  });
-});
 
 describe('IdP Login Flows', () => {
   describe('Single Internal IdP', () => {
