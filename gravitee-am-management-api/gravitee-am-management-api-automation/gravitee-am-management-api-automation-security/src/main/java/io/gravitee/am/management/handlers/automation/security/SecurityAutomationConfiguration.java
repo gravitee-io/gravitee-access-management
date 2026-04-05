@@ -17,8 +17,6 @@ package io.gravitee.am.management.handlers.automation.security;
 
 import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
-import jakarta.servlet.Filter;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -33,12 +31,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
  * Security configuration for the Automation API.
  * <p>
  * Scoped to {@code /automation/**} paths with Bearer token (JWT) authentication.
- * Reuses the shared {@link BearerAuthenticationFilter} and {@link Http401UnauthorizedEntryPoint}
- * beans from the management security context.
- * <p>
- * Uses explicit {@link AntPathRequestMatcher} instances in {@code authorizeHttpRequests}
- * because there are multiple servlets in this context ({@code /automation/*}, {@code /auth/*})
- * and Spring Security 6 cannot auto-resolve string-based patterns in multi-servlet contexts.
+ * Creates its own {@link BearerAuthenticationFilter} instance to avoid sharing
+ * a mutable filter bean with the management security chain.
  *
  * @author Stuart Clark
  * @author GraviteeSource Team
@@ -50,7 +44,6 @@ public class SecurityAutomationConfiguration {
     @Order(99)
     public SecurityFilterChain automationSecurityFilterChain(
             HttpSecurity http,
-            @Qualifier("jwtAuthenticationFilter") Filter bearerAuthenticationFilter,
             Http401UnauthorizedEntryPoint entryPoint
     ) throws Exception {
         http
@@ -68,7 +61,7 @@ public class SecurityAutomationConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))
-                .addFilterBefore(bearerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new BearerAuthenticationFilter(new AntPathRequestMatcher("/automation/**")), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
