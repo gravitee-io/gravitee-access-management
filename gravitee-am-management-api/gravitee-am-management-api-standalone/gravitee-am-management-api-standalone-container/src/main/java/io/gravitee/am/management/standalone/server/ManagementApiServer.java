@@ -24,7 +24,7 @@ import jakarta.servlet.DispatcherType;
 import org.eclipse.jetty.ee10.servlet.FilterHolder;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
-import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
@@ -70,7 +70,7 @@ public class ManagementApiServer extends JettyHttpServer {
     }
 
     public void attachHandlers() {
-        var contexts = new ArrayList<Handler>();
+        var contexts = new ArrayList<ContextHandler>();
 
         contexts.add(configureManagementAPI());
 
@@ -79,7 +79,7 @@ public class ManagementApiServer extends JettyHttpServer {
             contexts.add(configureAutomationAPI());
         }
 
-        server.setHandler(new ContextHandlerCollection(contexts.toArray(new Handler[0])));
+        server.setHandler(new ContextHandlerCollection(contexts.toArray(new ContextHandler[0])));
     }
 
     private ServletContextHandler configureManagementAPI() {
