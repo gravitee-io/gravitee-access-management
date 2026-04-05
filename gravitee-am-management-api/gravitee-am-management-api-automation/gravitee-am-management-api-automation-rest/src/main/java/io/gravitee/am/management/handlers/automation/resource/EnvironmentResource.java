@@ -15,9 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.resource;
 
-import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EnvironmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,9 +58,7 @@ public class EnvironmentResource extends AbstractAutomationResource {
             @PathParam("envId") String environmentId,
             @Suspended final AsyncResponse response) {
 
-        final var principal = getAuthenticatedUser();
-        checkAnyPermission(principal, organizationId, environmentId, Permission.ENVIRONMENT, Acl.READ)
-                .andThen(environmentService.findById(environmentId, organizationId))
+        environmentService.findById(environmentId, organizationId)
                 .subscribe(response::resume, response::resume);
     }
 

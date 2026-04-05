@@ -16,10 +16,7 @@
 package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.model.AutomationEnvironmentDefinition;
-import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,11 +69,9 @@ public class EnvironmentsResource extends AbstractAutomationResource {
             @PathParam("orgId") String organizationId,
             @Suspended final AsyncResponse response) {
 
-        final var principal = getAuthenticatedUser();
-        checkPermission(principal, ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.LIST)
-                .andThen(environmentService.findAll(organizationId)
-                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                        .toList())
+        environmentService.findAll(organizationId)
+                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                .toList()
                 .subscribe(response::resume, response::resume);
     }
 
@@ -94,12 +89,10 @@ public class EnvironmentsResource extends AbstractAutomationResource {
             @Valid @NotNull AutomationEnvironmentDefinition definition,
             @Suspended final AsyncResponse response) {
 
-        final var principal = getAuthenticatedUser();
         String envId = definition.getHrid();
         NewEnvironment newEnvironment = toNewEnvironment(definition);
 
-        checkPermission(principal, ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.CREATE)
-                .andThen(environmentService.createOrUpdate(organizationId, envId, newEnvironment, principal))
+        environmentService.createOrUpdate(organizationId, envId, newEnvironment, getAuthenticatedUser())
                 .subscribe(response::resume, response::resume);
     }
 
