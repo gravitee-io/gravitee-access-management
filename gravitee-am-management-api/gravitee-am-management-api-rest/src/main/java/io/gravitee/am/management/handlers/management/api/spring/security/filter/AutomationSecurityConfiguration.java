@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring.security.filter;
 
-import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanInitializationException;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import io.gravitee.am.management.service.OrganizationUserService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -41,9 +40,11 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
  * {@code /automation/**} paths with stateless Bearer token (JWT) authentication
  * and CSRF disabled.
  * <p>
- * Creates a dedicated {@link BearerAuthenticationFilter} instance (not a Spring
- * bean) to avoid type-ambiguity with the management chain's injection and to
- * prevent shared-bean mutation between security chains.
+ * Uses a lightweight {@link AutomationBearerTokenFilter} (a {@code OncePerRequestFilter})
+ * instead of the management chain's {@code BearerAuthenticationFilter} (which extends
+ * {@code AbstractAuthenticationProcessingFilter}). This avoids the complex request-matching
+ * and session lifecycle of {@code AbstractAuthenticationProcessingFilter} which interferes
+ * with non-GET HTTP methods and mutates shared filter state across security chains.
  *
  * @author Stuart Clark
  * @author GraviteeSource Team
@@ -53,22 +54,20 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 public class AutomationSecurityConfiguration {
 
     @Bean
+    public AutomationBearerTokenFilter automationBearerTokenFilter(
+            @Qualifier("managementJwtParser") JWTParser jwtParser,
+            OrganizationUserService userService
+    ) {
+        return new AutomationBearerTokenFilter(jwtParser, userService);
+    }
+
+    @Bean
     @Order(99)
     public SecurityFilterChain automationSecurityFilterChain(
             HttpSecurity http,
             Http401UnauthorizedEntryPoint entryPoint,
-            AutowireCapableBeanFactory beanFactory
+            AutomationBearerTokenFilter automationBearerTokenFilter
     ) throws Exception {
-        BearerAuthenticationFilter bearerFilter =
-                new BearerAuthenticationFilter(new AntPathRequestMatcher("/automation/**"));
-        try {
-            beanFactory.autowireBean(bearerFilter);
-            beanFactory.initializeBean(bearerFilter, "automationBearerAuthFilter");
-        } catch (BeansException e) {
-            throw new BeanInitializationException(
-                    "Failed to initialize BearerAuthenticationFilter for Automation API security chain", e);
-        }
-
         http
                 .securityMatchers(matcher -> matcher.requestMatchers(
                         AntPathRequestMatcher.antMatcher("/automation/**")))
@@ -85,7 +84,7 @@ public class AutomationSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))
-                .addFilterBefore(bearerFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(automationBearerTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
