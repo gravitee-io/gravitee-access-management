@@ -16,8 +16,10 @@
 package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -62,11 +64,10 @@ public class IdentityProviderResource extends AbstractAutomationResource {
             @PathParam("idpId") String idpHrid,
             @Suspended final AsyncResponse response) {
 
+        final var principal = getAuthenticatedUser();
         domainService.findByHrid(environmentId, domainHrid)
-                .flatMap(domain -> {
-                    String idpId = deterministicId(domain.getId(), idpHrid);
-                    return identityProviderService.findById(ReferenceType.DOMAIN, domain.getId(), idpId);
-                })
+                .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)
+                        .andThen(identityProviderService.findById(ReferenceType.DOMAIN, domain.getId(), deterministicId(domain.getId(), idpHrid))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -83,10 +84,10 @@ public class IdentityProviderResource extends AbstractAutomationResource {
         final var principal = getAuthenticatedUser();
 
         domainService.findByHrid(environmentId, domainHrid)
-                .flatMapCompletable(domain -> {
-                    String idpId = deterministicId(domain.getId(), idpHrid);
-                    return identityProviderService.delete(ReferenceType.DOMAIN, domain.getId(), idpId, principal);
-                })
+                .flatMapCompletable(domain ->
+                    checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN_IDENTITY_PROVIDER, Acl.DELETE)
+                            .andThen(identityProviderService.delete(ReferenceType.DOMAIN, domain.getId(), deterministicId(domain.getId(), idpHrid), principal))
+                )
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

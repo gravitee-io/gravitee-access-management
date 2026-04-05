@@ -17,12 +17,15 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.model.AutomationIdentityProviderDefinition;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.IdentityProviderService;
+import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 
 import java.util.UUID;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.swagger.v3.oas.annotations.Operation;
@@ -75,9 +78,10 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
             @PathParam("domainHrid") String domainHrid,
             @Suspended final AsyncResponse response) {
 
+        final var principal = getAuthenticatedUser();
         domainService.findByHrid(environmentId, domainHrid)
-                .flatMapPublisher(domain -> identityProviderService.findAll(ReferenceType.DOMAIN, domain.getId()))
-                .toList()
+                .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST)
+                        .andThen(identityProviderService.findAll(ReferenceType.DOMAIN, domain.getId()).toList()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -101,7 +105,8 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         final String idpHrid = definition.getHrid();
 
         domainService.findByHrid(environmentId, domainHrid)
-                .flatMap(domain -> {
+                .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
+                    .andThen(Single.defer(() -> {
                     String idpId = deterministicId(domain.getId(), idpHrid);
                     return identityProviderService.findById(ReferenceType.DOMAIN, domain.getId(), idpId)
                             .flatMap(existingIdp -> {
@@ -113,7 +118,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                                 newIdp.setId(idpId);
                                 return identityProviderService.create(domain, newIdp, principal);
                             });
-                })
+                })))
                 .subscribe(response::resume, response::resume);
     }
 

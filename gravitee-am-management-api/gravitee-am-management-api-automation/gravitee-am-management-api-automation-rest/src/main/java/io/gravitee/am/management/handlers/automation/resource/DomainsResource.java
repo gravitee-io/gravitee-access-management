@@ -17,8 +17,11 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.model.AutomationDomainDefinition;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.AutomationNewDomain;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -67,9 +70,11 @@ public class DomainsResource extends AbstractAutomationResource {
             @PathParam("envId") String environmentId,
             @Suspended final AsyncResponse response) {
 
-        domainService.findAllByEnvironment(organizationId, environmentId)
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                .toList()
+        final var principal = getAuthenticatedUser();
+        checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.LIST)
+                .andThen(domainService.findAllByEnvironment(organizationId, environmentId)
+                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                        .toList())
                 .subscribe(response::resume, response::resume);
     }
 
@@ -91,29 +96,32 @@ public class DomainsResource extends AbstractAutomationResource {
         final var principal = getAuthenticatedUser();
         final String hrid = definition.getHrid();
 
-        domainService.findByHrid(environmentId, hrid)
-                .flatMap(existingDomain -> {
-                    existingDomain.setName(definition.getName());
-                    existingDomain.setDescription(definition.getDescription());
-                    existingDomain.setEnabled(definition.isEnabled());
-                    if (definition.getPath() != null) {
-                        existingDomain.setPath(definition.getPath());
-                    }
-                    if (definition.getTags() != null) {
-                        existingDomain.setTags(definition.getTags());
-                    }
-                    return domainService.update(existingDomain.getId(), existingDomain);
-                })
-                .onErrorResumeNext(throwable -> {
-                    AutomationNewDomain newDomain = new AutomationNewDomain();
-                    newDomain.setId(deterministicId(environmentId, hrid));
-                    newDomain.setName(definition.getName());
-                    newDomain.setHrid(hrid);
-                    newDomain.setPath(definition.getPath());
-                    newDomain.setDescription(definition.getDescription());
-                    newDomain.setDataPlaneId(definition.getDataPlaneId());
-                    return domainService.create(organizationId, environmentId, newDomain, principal);
-                })
+        checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
+                .andThen(Single.defer(() ->
+                    domainService.findByHrid(environmentId, hrid)
+                        .flatMap(existingDomain -> {
+                            existingDomain.setName(definition.getName());
+                            existingDomain.setDescription(definition.getDescription());
+                            existingDomain.setEnabled(definition.isEnabled());
+                            if (definition.getPath() != null) {
+                                existingDomain.setPath(definition.getPath());
+                            }
+                            if (definition.getTags() != null) {
+                                existingDomain.setTags(definition.getTags());
+                            }
+                            return domainService.update(existingDomain.getId(), existingDomain);
+                        })
+                        .onErrorResumeNext(throwable -> {
+                            AutomationNewDomain newDomain = new AutomationNewDomain();
+                            newDomain.setId(deterministicId(environmentId, hrid));
+                            newDomain.setName(definition.getName());
+                            newDomain.setHrid(hrid);
+                            newDomain.setPath(definition.getPath());
+                            newDomain.setDescription(definition.getDescription());
+                            newDomain.setDataPlaneId(definition.getDataPlaneId());
+                            return domainService.create(organizationId, environmentId, newDomain, principal);
+                        })
+                ))
                 .subscribe(response::resume, response::resume);
     }
 

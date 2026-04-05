@@ -17,6 +17,8 @@ package io.gravitee.am.management.handlers.automation.model;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -26,6 +28,8 @@ import java.util.List;
  * @author Stuart Clark
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class AutomationEnvironmentDefinition {
 
     private String hrid;
@@ -39,44 +43,4 @@ public class AutomationEnvironmentDefinition {
     private List<String> hrids;
 
     private List<String> domainRestrictions;
-
-    public String getHrid() {
-        return hrid;
-    }
-
-    public void setHrid(String hrid) {
-        this.hrid = hrid;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public List<String> getHrids() {
-        return hrids;
-    }
-
-    public void setHrids(List<String> hrids) {
-        this.hrids = hrids;
-    }
-
-    public List<String> getDomainRestrictions() {
-        return domainRestrictions;
-    }
-
-    public void setDomainRestrictions(List<String> domainRestrictions) {
-        this.domainRestrictions = domainRestrictions;
-    }
 }

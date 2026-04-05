@@ -16,9 +16,19 @@
 package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.PermissionService;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
+import io.reactivex.rxjava3.core.Completable;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.SecurityContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * Base class for Automation API resources.
@@ -31,10 +41,40 @@ public abstract class AbstractAutomationResource {
     @Context
     protected SecurityContext securityContext;
 
+    @Autowired
+    private PermissionService permissionService;
+
     protected User getAuthenticatedUser() {
         if (securityContext.getUserPrincipal() != null) {
             return (User) ((UsernamePasswordAuthenticationToken) securityContext.getUserPrincipal()).getPrincipal();
         }
         return null;
+    }
+
+    protected Completable checkPermission(User user, ReferenceType referenceType, String referenceId, Permission permission, Acl... acls) {
+        return permissionService.hasPermission(user, of(referenceType, referenceId, permission, acls))
+                .flatMapCompletable(this::assertPermission);
+    }
+
+    protected Completable checkAnyPermission(User user, String organizationId, String environmentId, Permission permission, Acl... acls) {
+        return permissionService.hasPermission(user,
+                        or(of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
+                                of(ReferenceType.ORGANIZATION, organizationId, permission, acls)))
+                .flatMapCompletable(this::assertPermission);
+    }
+
+    protected Completable checkAnyPermission(User user, String organizationId, String environmentId, String domainId, Permission permission, Acl... acls) {
+        return permissionService.hasPermission(user,
+                        or(of(ReferenceType.DOMAIN, domainId, permission, acls),
+                                of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
+                                of(ReferenceType.ORGANIZATION, organizationId, permission, acls)))
+                .flatMapCompletable(this::assertPermission);
+    }
+
+    private Completable assertPermission(Boolean hasPermission) {
+        if (!hasPermission) {
+            return Completable.error(new ForbiddenException("Permission denied"));
+        }
+        return Completable.complete();
     }
 }

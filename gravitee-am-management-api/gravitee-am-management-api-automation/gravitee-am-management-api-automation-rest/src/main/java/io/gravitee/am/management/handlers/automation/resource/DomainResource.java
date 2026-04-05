@@ -17,7 +17,10 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.permissions.Permission;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -62,7 +65,10 @@ public class DomainResource extends AbstractAutomationResource {
             @PathParam("domainHrid") String domainHrid,
             @Suspended final AsyncResponse response) {
 
+        final var principal = getAuthenticatedUser();
         domainService.findByHrid(environmentId, domainHrid)
+                .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN, Acl.READ)
+                        .andThen(Single.just(domain)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -78,10 +84,10 @@ public class DomainResource extends AbstractAutomationResource {
         final var principal = getAuthenticatedUser();
 
         domainService.findByHrid(environmentId, domainHrid)
-                .flatMapCompletable(domain -> {
-                    GraviteeContext context = new GraviteeContext(organizationId, environmentId, domain.getId());
-                    return domainService.delete(context, domain.getId(), principal);
-                })
+                .flatMapCompletable(domain ->
+                    checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN, Acl.DELETE)
+                            .andThen(domainService.delete(new GraviteeContext(organizationId, environmentId, domain.getId()), domain.getId(), principal))
+                )
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

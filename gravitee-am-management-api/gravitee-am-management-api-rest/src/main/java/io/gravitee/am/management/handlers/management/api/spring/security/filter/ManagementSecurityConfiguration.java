@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.csrf.Coo
 import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -61,7 +62,7 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
     @Order(102)
     public SecurityFilterChain managementSecurityFilter(
             HttpSecurity http,
-            BearerAuthenticationFilter bearerAuthenticationFilter,
+            @Qualifier("jwtAuthenticationFilter") BearerAuthenticationFilter bearerAuthenticationFilter,
             CookieCsrfSignedTokenRepository csrfSignedTokenRepository
     ) throws Exception {
         var pathRequestMatchers = Arrays.stream(PATHS).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
