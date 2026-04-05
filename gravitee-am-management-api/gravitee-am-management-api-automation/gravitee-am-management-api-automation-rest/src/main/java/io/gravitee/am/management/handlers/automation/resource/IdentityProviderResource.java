@@ -36,6 +36,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
@@ -92,6 +93,6 @@ public class IdentityProviderResource extends AbstractAutomationResource {
     }
 
     private static String deterministicId(String domainId, String hrid) {
-        return UUID.nameUUIDFromBytes((domainId + "/" + hrid).getBytes()).toString();
+        return UUID.nameUUIDFromBytes((domainId + "/" + hrid).getBytes(StandardCharsets.UTF_8)).toString();
     }
 }

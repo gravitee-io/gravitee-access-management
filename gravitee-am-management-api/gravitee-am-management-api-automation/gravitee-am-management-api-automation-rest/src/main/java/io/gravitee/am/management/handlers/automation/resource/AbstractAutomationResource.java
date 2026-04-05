@@ -22,6 +22,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.reactivex.rxjava3.core.Completable;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.SecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,10 +46,13 @@ public abstract class AbstractAutomationResource {
     private PermissionService permissionService;
 
     protected User getAuthenticatedUser() {
-        if (securityContext.getUserPrincipal() != null) {
-            return (User) ((UsernamePasswordAuthenticationToken) securityContext.getUserPrincipal()).getPrincipal();
+        if (securityContext.getUserPrincipal() == null) {
+            throw new NotAuthorizedException("Bearer");
         }
-        return null;
+        if (!(securityContext.getUserPrincipal() instanceof UsernamePasswordAuthenticationToken token)) {
+            throw new NotAuthorizedException("Bearer");
+        }
+        return (User) token.getPrincipal();
     }
 
     protected Completable checkPermission(User user, ReferenceType referenceType, String referenceId, Permission permission, Acl... acls) {

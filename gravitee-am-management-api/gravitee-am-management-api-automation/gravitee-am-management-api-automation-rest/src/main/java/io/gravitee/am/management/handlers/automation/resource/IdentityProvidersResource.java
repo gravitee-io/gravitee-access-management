@@ -22,9 +22,11 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.reactivex.rxjava3.core.Single;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
@@ -105,20 +107,27 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         final String idpHrid = definition.getHrid();
 
         domainService.findByHrid(environmentId, domainHrid)
-                .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
-                    .andThen(Single.defer(() -> {
+                .flatMap(domain -> {
                     String idpId = deterministicId(domain.getId(), idpHrid);
                     return identityProviderService.findById(ReferenceType.DOMAIN, domain.getId(), idpId)
-                            .flatMap(existingIdp -> {
-                                UpdateIdentityProvider update = toUpdateIdentityProvider(definition);
-                                return identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existingIdp.getId(), update, principal, false);
-                            })
+                            .flatMap(existingIdp ->
+                                checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
+                                    .andThen(Single.defer(() -> {
+                                        UpdateIdentityProvider update = toUpdateIdentityProvider(definition);
+                                        return identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existingIdp.getId(), update, principal, false);
+                                    })))
                             .onErrorResumeNext(throwable -> {
-                                NewIdentityProvider newIdp = toNewIdentityProvider(definition);
-                                newIdp.setId(idpId);
-                                return identityProviderService.create(domain, newIdp, principal);
+                                if (!(throwable instanceof AbstractNotFoundException)) {
+                                    return Single.error(throwable);
+                                }
+                                return checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
+                                    .andThen(Single.defer(() -> {
+                                        NewIdentityProvider newIdp = toNewIdentityProvider(definition);
+                                        newIdp.setId(idpId);
+                                        return identityProviderService.create(domain, newIdp, principal);
+                                    }));
                             });
-                })))
+                })
                 .subscribe(response::resume, response::resume);
     }
 
@@ -150,6 +159,6 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
     }
 
     private static String deterministicId(String domainId, String hrid) {
-        return UUID.nameUUIDFromBytes((domainId + "/" + hrid).getBytes()).toString();
+        return UUID.nameUUIDFromBytes((domainId + "/" + hrid).getBytes(StandardCharsets.UTF_8)).toString();
     }
 }

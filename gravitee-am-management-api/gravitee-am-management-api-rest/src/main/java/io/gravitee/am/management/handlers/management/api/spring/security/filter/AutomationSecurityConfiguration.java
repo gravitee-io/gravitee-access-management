@@ -17,6 +17,8 @@ package io.gravitee.am.management.handlers.management.api.spring.security.filter
 
 import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
@@ -59,8 +61,13 @@ public class AutomationSecurityConfiguration {
     ) throws Exception {
         BearerAuthenticationFilter bearerFilter =
                 new BearerAuthenticationFilter(new AntPathRequestMatcher("/automation/**"));
-        beanFactory.autowireBean(bearerFilter);
-        beanFactory.initializeBean(bearerFilter, "automationBearerAuthFilter");
+        try {
+            beanFactory.autowireBean(bearerFilter);
+            beanFactory.initializeBean(bearerFilter, "automationBearerAuthFilter");
+        } catch (BeansException e) {
+            throw new BeanInitializationException(
+                    "Failed to initialize BearerAuthenticationFilter for Automation API security chain", e);
+        }
 
         http
                 .securityMatchers(matcher -> matcher.requestMatchers(

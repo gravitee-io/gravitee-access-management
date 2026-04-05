@@ -32,6 +32,8 @@ import java.util.List;
 @Setter
 public class AutomationEnvironmentDefinition {
 
+    @NotNull
+    @Size(min = 1, max = 255)
     private String hrid;
 
     @NotNull

@@ -18,6 +18,8 @@ package io.gravitee.am.management.standalone.server;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.server.Context;
 import org.eclipse.jetty.server.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ServletContextHandler} that tolerates threads which block
@@ -38,6 +40,8 @@ import org.eclipse.jetty.server.Request;
  */
 class SafeClassLoaderServletContextHandler extends ServletContextHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SafeClassLoaderServletContextHandler.class);
+
     SafeClassLoaderServletContextHandler(String contextPath, int options) {
         super(contextPath, options);
     }
@@ -47,9 +51,8 @@ class SafeClassLoaderServletContextHandler extends ServletContextHandler {
         try {
             return super.enterScope(request);
         } catch (SecurityException e) {
-            // InnocuousThread blocks setContextClassLoader — return current
-            // classloader so exitScope has something to restore (even though
-            // that restore will also be caught).
+            LOGGER.debug("SecurityException in enterScope on thread {} ({}): {}",
+                    Thread.currentThread().getName(), Thread.currentThread().getClass().getSimpleName(), e.getMessage());
             return Thread.currentThread().getContextClassLoader();
         }
     }
@@ -59,8 +62,8 @@ class SafeClassLoaderServletContextHandler extends ServletContextHandler {
         try {
             super.exitScope(request, previousContext, previousClassLoader);
         } catch (SecurityException e) {
-            // InnocuousThread blocks setContextClassLoader — safe to ignore
-            // since the thread doesn't allow classloader changes anyway.
+            LOGGER.debug("SecurityException in exitScope on thread {} ({}): {}",
+                    Thread.currentThread().getName(), Thread.currentThread().getClass().getSimpleName(), e.getMessage());
         }
     }
 }
