@@ -42,6 +42,8 @@ All tests should use a fixture pattern for setup and teardown. This provides:
 
 Each test file should focus on testing one feature or functionality area.
 
+**File placement:** New tests should go in a feature-aligned folder (e.g. `specs/gateway/token-claims/`, `specs/management/identity-provider/`). Avoid general-purpose buckets like "misc" or "regression". A shared file is acceptable only as a temporary home when a feature has 1–2 tests and no existing folder — once coverage grows, move them to a dedicated folder.
+
 ### 3. Test Isolation
 
 Tests should be:
