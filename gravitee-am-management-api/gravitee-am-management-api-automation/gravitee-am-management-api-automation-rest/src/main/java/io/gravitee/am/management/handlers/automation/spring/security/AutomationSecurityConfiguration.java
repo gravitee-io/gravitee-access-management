@@ -13,44 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.spring.security.filter;
+package io.gravitee.am.management.handlers.automation.spring.security;
 
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import io.gravitee.am.management.service.OrganizationUserService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
  * Security configuration for the Automation API.
  * <p>
- * Active only when {@code http.api.automation.enabled=true}. Scoped to
- * {@code /automation/**} paths with stateless Bearer token (JWT) authentication
- * and CSRF disabled.
+ * Lives in its own Spring child context (separate from the management API context),
+ * following the APIM pattern of isolated security per API surface.
  * <p>
- * Uses a lightweight {@link AutomationBearerTokenFilter} (a {@code OncePerRequestFilter})
- * instead of the management chain's {@code BearerAuthenticationFilter} (which extends
- * {@code AbstractAuthenticationProcessingFilter}). This avoids the complex request-matching
- * and session lifecycle of {@code AbstractAuthenticationProcessingFilter} which interferes
- * with non-GET HTTP methods and mutates shared filter state across security chains.
+ * Uses a lightweight {@link AutomationBearerTokenFilter} ({@code OncePerRequestFilter})
+ * for stateless JWT Bearer authentication with CSRF disabled.
  *
  * @author Stuart Clark
  * @author GraviteeSource Team
  */
 @Configuration
-@Conditional(AutomationSecurityConfiguration.AutomationEnabledCondition.class)
 public class AutomationSecurityConfiguration {
 
     @Bean
@@ -62,21 +51,15 @@ public class AutomationSecurityConfiguration {
     }
 
     @Bean
-    @Order(99)
     public SecurityFilterChain automationSecurityFilterChain(
             HttpSecurity http,
             Http401UnauthorizedEntryPoint entryPoint,
             AutomationBearerTokenFilter automationBearerTokenFilter
     ) throws Exception {
         http
-                .securityMatchers(matcher -> matcher.requestMatchers(
-                        AntPathRequestMatcher.antMatcher("/automation/**")))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                new AntPathRequestMatcher("/automation/openapi.json", "GET"),
-                                new AntPathRequestMatcher("/automation/openapi.yaml", "GET"),
-                                new AntPathRequestMatcher("/automation/**", "OPTIONS")
-                        ).permitAll()
+                        .requestMatchers("/openapi.json", "/openapi.yaml").permitAll()
+                        .requestMatchers("OPTIONS", "/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -87,13 +70,5 @@ public class AutomationSecurityConfiguration {
                 .addFilterBefore(automationBearerTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    static class AutomationEnabledCondition implements Condition {
-        @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-            return "true".equalsIgnoreCase(
-                    context.getEnvironment().getProperty("http.api.automation.enabled", "false"));
-        }
     }
 }

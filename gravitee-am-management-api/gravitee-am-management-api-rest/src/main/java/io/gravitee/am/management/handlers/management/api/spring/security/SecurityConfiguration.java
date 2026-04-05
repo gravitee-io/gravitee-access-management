@@ -59,8 +59,7 @@ import static java.util.Arrays.asList;
 @Import({
         AuthSecurityConfiguration.class,
         TokenSecurityConfiguration.class,
-        ManagementSecurityConfiguration.class,
-        AutomationSecurityConfiguration.class
+        ManagementSecurityConfiguration.class
 })
 public class SecurityConfiguration {
 

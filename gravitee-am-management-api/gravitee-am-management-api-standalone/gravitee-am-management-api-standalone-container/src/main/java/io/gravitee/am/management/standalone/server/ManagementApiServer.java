@@ -16,6 +16,7 @@
 package io.gravitee.am.management.standalone.server;
 
 import io.gravitee.am.management.handlers.automation.AutomationApplication;
+import io.gravitee.am.management.handlers.automation.spring.AutomationConfiguration;
 import io.gravitee.am.management.handlers.management.api.ManagementApplication;
 import io.gravitee.am.management.handlers.management.api.spring.ManagementConfiguration;
 import io.gravitee.node.jetty.JettyHttpServer;
@@ -23,6 +24,8 @@ import jakarta.servlet.DispatcherType;
 import org.eclipse.jetty.ee10.servlet.FilterHolder;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +39,16 @@ import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.servlet.DispatcherServlet;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 
 /**
+ * Configures and starts the Management API server.
+ * <p>
+ * Each API surface (Management, Automation) gets its own {@link ServletContextHandler}
+ * with an isolated Spring child context and security filter chain, following the APIM
+ * pattern of per-API context isolation via {@link ContextHandlerCollection}.
+ *
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -60,15 +70,21 @@ public class ManagementApiServer extends JettyHttpServer {
     }
 
     public void attachHandlers() {
+        var contexts = new ArrayList<Handler>();
 
-        // Use a custom ServletContextHandler that tolerates InnocuousThread.
-        // JDK InnocuousThread (used by ForkJoinPool compensation threads, MongoDB async driver, etc.)
-        // blocks Thread.setContextClassLoader() with a SecurityException. Jetty's ContextHandler calls
-        // setContextClassLoader in both enterScope() and exitScope() during request dispatch.
-        // When async responses (AsyncResponse.resume()) complete on an InnocuousThread, this causes
-        // the response to fail. This subclass catches and ignores the SecurityException.
+        contexts.add(configureManagementAPI());
+
+        if (startAutomationAPI) {
+            LOGGER.info("Automation API is enabled, registering at {}/automation", entrypoint);
+            contexts.add(configureAutomationAPI());
+        }
+
+        server.setHandler(new ContextHandlerCollection(contexts.toArray(new Handler[0])));
+    }
+
+    private ServletContextHandler configureManagementAPI() {
         final ServletContextHandler context = new SafeClassLoaderServletContextHandler(entrypoint, ServletContextHandler.NO_SESSIONS);
-        // REST configuration
+
         final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
         servletHolder.setInitParameter("jakarta.ws.rs.Application", ManagementApplication.class.getName());
         servletHolder.setInitOrder(1);
@@ -78,28 +94,39 @@ public class ManagementApiServer extends JettyHttpServer {
         webApplicationContext.setEnvironment((ConfigurableEnvironment) applicationContext.getEnvironment());
         webApplicationContext.setParent(applicationContext);
         webApplicationContext.setServletContext(context.getServletContext());
-
         webApplicationContext.register(ManagementConfiguration.class);
 
         context.addEventListener(new ContextLoaderListener(webApplicationContext));
         context.addServlet(servletHolder, "/*");
         context.addServlet(new ServletHolder(new DispatcherServlet(webApplicationContext)), "/auth/*");
 
-        // Automation API (optional) — served as a separate servlet within the same context
-        if (startAutomationAPI) {
-            LOGGER.info("Automation API is enabled, registering at {}/automation/*", entrypoint);
-            final ServletHolder automationServlet = new ServletHolder(ServletContainer.class);
-            automationServlet.setInitParameter("jakarta.ws.rs.Application", AutomationApplication.class.getName());
-            automationServlet.setInitOrder(2);
-            automationServlet.setAsyncSupported(true);
-            context.addServlet(automationServlet, "/automation/*");
-        }
-
-        // X-Forwarded-* support
         context.addFilter(ForwardedHeaderFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
-
-        // Spring Security filter
         context.addFilter(new FilterHolder(new DelegatingFilterProxy("springSecurityFilterChain")), "/*", EnumSet.allOf(DispatcherType.class));
-        server.setHandler(context);
+
+        return context;
+    }
+
+    private ServletContextHandler configureAutomationAPI() {
+        String automationPath = entrypoint + "/automation";
+        final ServletContextHandler context = new SafeClassLoaderServletContextHandler(automationPath, ServletContextHandler.NO_SESSIONS);
+
+        final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
+        servletHolder.setInitParameter("jakarta.ws.rs.Application", AutomationApplication.class.getName());
+        servletHolder.setInitOrder(1);
+        servletHolder.setAsyncSupported(true);
+
+        AnnotationConfigWebApplicationContext webApplicationContext = new AnnotationConfigWebApplicationContext();
+        webApplicationContext.setEnvironment((ConfigurableEnvironment) applicationContext.getEnvironment());
+        webApplicationContext.setParent(applicationContext);
+        webApplicationContext.setServletContext(context.getServletContext());
+        webApplicationContext.register(AutomationConfiguration.class);
+
+        context.addEventListener(new ContextLoaderListener(webApplicationContext));
+        context.addServlet(servletHolder, "/*");
+
+        context.addFilter(ForwardedHeaderFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+        context.addFilter(new FilterHolder(new DelegatingFilterProxy("springSecurityFilterChain")), "/*", EnumSet.allOf(DispatcherType.class));
+
+        return context;
     }
 }

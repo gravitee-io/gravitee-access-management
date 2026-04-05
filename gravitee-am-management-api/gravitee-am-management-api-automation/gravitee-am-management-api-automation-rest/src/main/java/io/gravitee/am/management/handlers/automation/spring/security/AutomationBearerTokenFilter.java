@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.spring.security.filter;
+package io.gravitee.am.management.handlers.automation.spring.security;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
@@ -28,8 +28,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -63,16 +61,10 @@ public class AutomationBearerTokenFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
-    @Value("${http.blockingGet.timeoutMillis:120000}")
-    private long blockingGetTimeoutMillis;
-
     private final JWTParser jwtParser;
     private final OrganizationUserService userService;
 
-    public AutomationBearerTokenFilter(
-            @Qualifier("managementJwtParser") JWTParser jwtParser,
-            OrganizationUserService userService
-    ) {
+    public AutomationBearerTokenFilter(JWTParser jwtParser, OrganizationUserService userService) {
         this.jwtParser = jwtParser;
         this.userService = userService;
     }
@@ -87,8 +79,6 @@ public class AutomationBearerTokenFilter extends OncePerRequestFilter {
                 var authentication = authenticate(token, request);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
-                // Clear any partial auth state — let the chain continue unauthenticated.
-                // The ExceptionTranslationFilter + AuthenticationEntryPoint will handle the 401.
                 SecurityContextHolder.clearContext();
             }
         }
