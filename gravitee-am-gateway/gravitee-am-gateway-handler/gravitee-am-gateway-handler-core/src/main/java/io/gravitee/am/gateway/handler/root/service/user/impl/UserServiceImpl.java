@@ -55,6 +55,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
@@ -676,6 +677,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
         return userService.upsertFactor(userId, enrolledFactor, principal);
+    }
+
+    @Override
+    public Completable removePendingEnrolledFactor(String userId, String factorId) {
+        return userService.findById(userId)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapSingle(user -> {
+                    boolean removed = false;
+                    if (user.getFactors() != null) {
+                        removed = user.getFactors().removeIf(ef ->
+                                ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION);
+                    }
+                    return removed ? userService.update(user) : Single.just(user);
+                })
+                .ignoreElement();
     }
 
     @Override
