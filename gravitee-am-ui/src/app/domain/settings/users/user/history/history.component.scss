@@ -30,6 +30,10 @@ a.expanded {
   font-size: 12px;
 }
 
+::ng-deep .audit-event-type-panel {
+  min-width: fit-content !important;
+}
+
 :host {
   ::ng-deep.ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
     font-size: 12px;
