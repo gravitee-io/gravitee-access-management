@@ -195,7 +195,7 @@
         <gravitee-am-resource-sfr.version>2.0.0-alpha.1</gravitee-am-resource-sfr.version>
         <gravitee-am-resource-http.version>2.0.0-alpha.1</gravitee-am-resource-http.version>
         <gravitee-am-resource-orange-contact-everyone.version>2.0.0-alpha.1</gravitee-am-resource-orange-contact-everyone.version>
-        <gravitee-am-resource-http-factor.version>4.0.0</gravitee-am-resource-http-factor.version>
+        <gravitee-am-resource-http-factor.version>5.0.0-alpha.1</gravitee-am-resource-http-factor.version>
         <gravitee-am-identityprovider-cas.version>5.0.0-alpha.1</gravitee-am-identityprovider-cas.version>
         <gravitee-am-identityprovider-http-flow.version>5.0.0-alpha.1</gravitee-am-identityprovider-http-flow.version>
 
