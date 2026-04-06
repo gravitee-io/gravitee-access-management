@@ -45,6 +45,8 @@ import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -72,6 +74,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -1529,5 +1532,60 @@ public class UserServiceTest {
         Assertions.assertNotNull(user.getUpdatedAt());
         Assertions.assertEquals(user.getCreatedAt(), user.getUpdatedAt());
         Assertions.assertNotNull(user.getLastPasswordReset());
+    }
+
+    @Test
+    public void shouldRemovePendingEnrolledFactor() {
+        String userId = "user-id";
+        String factorId = "factor-id";
+
+        EnrolledFactor pendingFactor = new EnrolledFactor();
+        pendingFactor.setFactorId(factorId);
+        pendingFactor.setStatus(FactorStatus.PENDING_ACTIVATION);
+
+        User user = new User();
+        user.setId(userId);
+        user.setFactors(new ArrayList<>(List.of(pendingFactor)));
+
+        when(commonUserService.findById(userId)).thenReturn(Maybe.just(user));
+        when(commonUserService.update(any(User.class))).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        TestObserver<Void> observer = userService.removePendingEnrolledFactor(userId, factorId).test();
+        observer.assertNoErrors();
+        observer.assertComplete();
+
+        verify(commonUserService).update(argThat(u -> u.getFactors().stream()
+                .noneMatch(ef -> ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION)));
+    }
+
+    @Test
+    public void shouldPreserveActivatedFactorWhenRemovingPendingFactor() {
+        String userId = "user-id";
+        String factorId = "factor-id";
+
+        EnrolledFactor activatedFactor = new EnrolledFactor();
+        activatedFactor.setFactorId(factorId);
+        activatedFactor.setStatus(FactorStatus.ACTIVATED);
+
+        User user = new User();
+        user.setId(userId);
+        user.setFactors(new ArrayList<>(List.of(activatedFactor)));
+
+        when(commonUserService.findById(userId)).thenReturn(Maybe.just(user));
+
+        TestObserver<Void> observer = userService.removePendingEnrolledFactor(userId, factorId).test();
+        observer.assertNoErrors();
+        observer.assertComplete();
+
+        // no pending factor was removed, so update should not be called
+        verify(commonUserService, never()).update(any(User.class));
+    }
+
+    @Test
+    public void shouldErrorWhenRemovingPendingFactorForNonexistentUser() {
+        when(commonUserService.findById("missing-id")).thenReturn(Maybe.empty());
+
+        TestObserver<Void> observer = userService.removePendingEnrolledFactor("missing-id", "factor-id").test();
+        observer.assertError(UserNotFoundException.class);
     }
 }
