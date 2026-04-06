@@ -69,6 +69,8 @@ public interface UserService {
 
     Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 
+    Completable removePendingEnrolledFactor(String userId, String factorId);
+
     Completable setMfaEnrollmentSkippedTime(Client client, User user);
 
     default Single<RegistrationResponse> register(Client client, User user) {
