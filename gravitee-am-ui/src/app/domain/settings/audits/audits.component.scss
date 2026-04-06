@@ -31,9 +31,14 @@ a.expanded {
 
 .audit-cell-text {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.audit-event-text {
+  font-family: monospace;
+  word-break: break-all;
+  white-space: normal;
 }
 
 .ngx-datatable.material {
@@ -41,11 +46,15 @@ a.expanded {
 }
 
 :host {
-  ::ng-deep.ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
+  ::ng-deep .ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
     font-size: 12px;
+    overflow-wrap: break-word;
+    white-space: normal;
+    display: flex;
+    align-items: center;
   }
 
-  ::ng-deep.ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+  ::ng-deep .ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
     &:first-child {
       padding-left: 32px;
     }
