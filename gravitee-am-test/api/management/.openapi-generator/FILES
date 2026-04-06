@@ -77,6 +77,7 @@ models/BulkResponse.ts
 models/BulkUpdateUser.ts
 models/CIBASettingNotifier.ts
 models/CIBASettings.ts
+models/CIMDSettings.ts
 models/Certificate.ts
 models/CertificateCredential.ts
 models/CertificateEntity.ts
@@ -179,6 +180,7 @@ models/PatchApplicationSAMLSettings.ts
 models/PatchApplicationSettings.ts
 models/PatchApplicationType.ts
 models/PatchCIBASettings.ts
+models/PatchCIMDSettings.ts
 models/PatchChallengeSettings.ts
 models/PatchClientRegistrationSettings.ts
 models/PatchDomain.ts

@@ -30,6 +30,8 @@ public class OIDCSettingsMongo {
     private List<String> requestUris;
     private CIBASettingsMongo cibaSettings;
 
+    private CIMDSettingsMongo cimdSettings;
+
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
     }
@@ -76,5 +78,13 @@ public class OIDCSettingsMongo {
 
     public void setCibaSettings(CIBASettingsMongo cibaSettings) {
         this.cibaSettings = cibaSettings;
+    }
+
+    public CIMDSettingsMongo getCimdSettings() {
+        return cimdSettings;
+    }
+
+    public void setCimdSettings(CIMDSettingsMongo cimdSettings) {
+        this.cimdSettings = cimdSettings;
     }
 }

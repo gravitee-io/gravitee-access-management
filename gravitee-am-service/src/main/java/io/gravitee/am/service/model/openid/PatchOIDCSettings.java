@@ -17,6 +17,7 @@ package io.gravitee.am.service.model.openid;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.CIBASettings;
+import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
@@ -44,6 +45,9 @@ public class PatchOIDCSettings {
 
     @JsonProperty("cibaSettings")
     private Optional<PatchCIBASettings> cibaSettings;
+
+    @JsonProperty("cimdSettings")
+    private Optional<PatchCIMDSettings> cimdSettings;
 
     private Optional<Boolean> redirectUriStrictMatching;
 
@@ -98,6 +102,14 @@ public class PatchOIDCSettings {
         this.cibaSettings = cibaSettings;
     }
 
+    public Optional<PatchCIMDSettings> getCimdSettings() {
+        return cimdSettings;
+    }
+
+    public void setCimdSettings(Optional<PatchCIMDSettings> cimdSettings) {
+        this.cimdSettings = cimdSettings;
+    }
+
     public OIDCSettings patch(OIDCSettings toPatch) {
 
         //If source may be null, in such case init with default values
@@ -139,6 +151,16 @@ public class PatchOIDCSettings {
             }
         }
 
+        if (getCimdSettings() != null) {
+            if (getCimdSettings().isPresent()) {
+                final PatchCIMDSettings patcher = getCimdSettings().get();
+                final CIMDSettings source = toPatch.getCimdSettings();
+                toPatch.setCimdSettings(patcher.patch(source));
+            } else {
+                toPatch.setCimdSettings(CIMDSettings.defaultSettings());
+            }
+        }
+
         return toPatch;
     }
 
@@ -150,6 +172,7 @@ public class PatchOIDCSettings {
         if ((clientRegistrationSettings != null && clientRegistrationSettings.isPresent())
                 || (redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent())
                 || (cibaSettings != null && cibaSettings.isPresent())
+                || (cimdSettings != null && cimdSettings.isPresent())
                 || (postLogoutRedirectUris != null && postLogoutRedirectUris.isPresent())
                 || (requestUris != null && requestUris.isPresent())
                 || (securityProfileSettings != null && securityProfileSettings.isPresent())) {

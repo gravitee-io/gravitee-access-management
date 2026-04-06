@@ -34,6 +34,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.CIBASettings;
+import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
@@ -53,6 +54,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchange
 import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingNotifierMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIMDSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
@@ -289,6 +291,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setClientRegistrationSettings(convert(oidcMongo.getClientRegistrationSettings()));
         oidcSettings.setSecurityProfileSettings(convert(oidcMongo.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidcMongo.getCibaSettings()));
+        oidcSettings.setCimdSettings(convert(oidcMongo.getCimdSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidcMongo.getRequestUris());
 
@@ -375,6 +378,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setClientRegistrationSettings(convert(oidc.getClientRegistrationSettings()));
         oidcSettings.setSecurityProfileSettings(convert(oidc.getSecurityProfileSettings()));
         oidcSettings.setCibaSettings(convert(oidc.getCibaSettings()));
+        oidcSettings.setCimdSettings(convert(oidc.getCimdSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
         oidcSettings.setRequestUris(oidc.getRequestUris());
 
@@ -435,6 +439,56 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         if (cibaSettings.getDeviceNotifiers() != null) {
             result.setDeviceNotifiers(cibaSettings.getDeviceNotifiers().stream().map(MongoDomainRepository::convert).collect(Collectors.toList()));
         }
+
+        return result;
+    }
+
+    private static CIMDSettings convert(CIMDSettingsMongo cimdSettings) {
+        if (cimdSettings == null) {
+            return null;
+        }
+
+        CIMDSettings result = new CIMDSettings();
+        result.setEnabled(cimdSettings.isEnabled());
+        result.setAllowUnsecuredHttpUri(cimdSettings.isAllowUnsecuredHttpUri());
+        result.setAllowPrivateIpAddress(cimdSettings.isAllowPrivateIpAddress());
+        result.setFetchTimeoutMs(cimdSettings.getFetchTimeoutMs());
+        result.setMaxResponseSizeKb(cimdSettings.getMaxResponseSizeKb());
+        result.setAllowedDomains(cimdSettings.getAllowedDomains());
+        result.setCacheTtlSeconds(cimdSettings.getCacheTtlSeconds());
+        result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
+        result.setAllowedGrantTypes(cimdSettings.getAllowedGrantTypes());
+        result.setAllowedScopes(cimdSettings.getAllowedScopes());
+        result.setIdentityProviders(cimdSettings.getIdentityProviders());
+        result.setCertificateId(cimdSettings.getCertificateId());
+        result.setAccessTokenValiditySeconds(cimdSettings.getAccessTokenValiditySeconds());
+        result.setRefreshTokenValiditySeconds(cimdSettings.getRefreshTokenValiditySeconds());
+        result.setIdTokenValiditySeconds(cimdSettings.getIdTokenValiditySeconds());
+
+        return result;
+    }
+
+    private static CIMDSettingsMongo convert(CIMDSettings cimdSettings) {
+        if (cimdSettings == null) {
+            return null;
+        }
+
+        CIMDSettingsMongo result = new CIMDSettingsMongo();
+        result.setEnabled(cimdSettings.isEnabled());
+        result.setAllowUnsecuredHttpUri(cimdSettings.isAllowUnsecuredHttpUri());
+        result.setAllowPrivateIpAddress(cimdSettings.isAllowPrivateIpAddress());
+        result.setFetchTimeoutMs(cimdSettings.getFetchTimeoutMs());
+        result.setMaxResponseSizeKb(cimdSettings.getMaxResponseSizeKb());
+        result.setAllowedDomains(cimdSettings.getAllowedDomains());
+        result.setCacheTtlSeconds(cimdSettings.getCacheTtlSeconds());
+        result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
+        result.setAllowedGrantTypes(cimdSettings.getAllowedGrantTypes());
+        result.setAllowedScopes(cimdSettings.getAllowedScopes());
+        result.setIdentityProviders(cimdSettings.getIdentityProviders());
+        result.setCertificateId(cimdSettings.getCertificateId());
+        result.setAccessTokenValiditySeconds(cimdSettings.getAccessTokenValiditySeconds());
+        result.setRefreshTokenValiditySeconds(cimdSettings.getRefreshTokenValiditySeconds());
+        result.setIdTokenValiditySeconds(cimdSettings.getIdTokenValiditySeconds());
 
         return result;
     }

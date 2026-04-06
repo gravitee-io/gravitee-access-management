@@ -50,10 +50,6 @@ export interface AddOrUpdateOrganizationMemberRequest {
   newMembership: NewMembership;
 }
 
-export interface GetExternalGrammarRequest {
-  path: string;
-}
-
 export interface GetMemberPermissionsRequest {
   organizationId: string;
   environmentId: string;
@@ -147,53 +143,6 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.addOrUpdateOrganizationMemberRaw(requestParameters, initOverrides);
-  }
-
-  /**
-   */
-  async getExternalGrammarRaw(
-    requestParameters: GetExternalGrammarRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.path === null || requestParameters.path === undefined) {
-      throw new runtime.RequiredError(
-        'path',
-        'Required parameter requestParameters.path was null or undefined when calling getExternalGrammar.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/application.wadl/{path}`.replace(`{${'path'}}`, encodeURIComponent(String(requestParameters.path))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   */
-  async getExternalGrammar(
-    requestParameters: GetExternalGrammarRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<void> {
-    await this.getExternalGrammarRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -310,40 +259,6 @@ export class DefaultApi extends runtime.BaseAPI {
   ): Promise<Domain> {
     const response = await this.getOrganizationSettingsRaw(requestParameters, initOverrides);
     return await response.value();
-  }
-
-  /**
-   */
-  async getWadlRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/application.wadl`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   */
-  async getWadl(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getWadlRaw(initOverrides);
   }
 
   /**

@@ -26,6 +26,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { CIMDSettings } from './CIMDSettings';
+import { CIMDSettingsFromJSON, CIMDSettingsFromJSONTyped, CIMDSettingsToJSON, CIMDSettingsToJSONTyped } from './CIMDSettings';
 import type { CIBASettings } from './CIBASettings';
 import { CIBASettingsFromJSON, CIBASettingsFromJSONTyped, CIBASettingsToJSON, CIBASettingsToJSONTyped } from './CIBASettings';
 import type { ClientRegistrationSettings } from './ClientRegistrationSettings';
@@ -55,6 +57,12 @@ export interface OIDCSettings {
    * @memberof OIDCSettings
    */
   cibaSettings?: CIBASettings;
+  /**
+   *
+   * @type {CIMDSettings}
+   * @memberof OIDCSettings
+   */
+  cimdSettings?: CIMDSettings;
   /**
    *
    * @type {ClientRegistrationSettings}
@@ -104,6 +112,7 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
   }
   return {
     cibaSettings: json['cibaSettings'] == null ? undefined : CIBASettingsFromJSON(json['cibaSettings']),
+    cimdSettings: json['cimdSettings'] == null ? undefined : CIMDSettingsFromJSON(json['cimdSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
@@ -125,6 +134,7 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
 
   return {
     cibaSettings: CIBASettingsToJSON(value['cibaSettings']),
+    cimdSettings: CIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
