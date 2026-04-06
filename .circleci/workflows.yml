@@ -1082,6 +1082,7 @@ jobs:
       name: openjdk
       class: medium
       version: "25.0.1"
+      with_node: true
     steps:
       - attach_workspace:
           at: /tmp
