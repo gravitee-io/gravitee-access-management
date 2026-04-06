@@ -46,6 +46,8 @@ public class OIDCSettings {
 
     private CIBASettings cibaSettings;
 
+    private CIMDSettings cimdSettings;
+
     public ClientRegistrationSettings getClientRegistrationSettings() {
         return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();
     }
@@ -94,12 +96,21 @@ public class OIDCSettings {
         this.cibaSettings = cibaSettings;
     }
 
+    public CIMDSettings getCimdSettings() {
+        return cimdSettings;
+    }
+
+    public void setCimdSettings(CIMDSettings cimdSettings) {
+        this.cimdSettings = cimdSettings;
+    }
+
     public static OIDCSettings defaultSettings() {
         OIDCSettings defaultSettings = new OIDCSettings();
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
         defaultSettings.setSecurityProfileSettings(SecurityProfileSettings.defaultSettings());
         defaultSettings.setRedirectUriStrictMatching(false);
         defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
+        defaultSettings.setCimdSettings(CIMDSettings.defaultSettings());
         return defaultSettings;
     }
 

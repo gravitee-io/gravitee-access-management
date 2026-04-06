@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { PatchCIMDSettings } from './PatchCIMDSettings';
+import {
+  PatchCIMDSettingsFromJSON,
+  PatchCIMDSettingsFromJSONTyped,
+  PatchCIMDSettingsToJSON,
+  PatchCIMDSettingsToJSONTyped,
+} from './PatchCIMDSettings';
 import type { PatchCIBASettings } from './PatchCIBASettings';
 import {
   PatchCIBASettingsFromJSON,
@@ -60,6 +67,12 @@ export interface PatchOIDCSettings {
    * @memberof PatchOIDCSettings
    */
   cibaSettings?: PatchCIBASettings;
+  /**
+   *
+   * @type {PatchCIMDSettings}
+   * @memberof PatchOIDCSettings
+   */
+  cimdSettings?: PatchCIMDSettings;
   /**
    *
    * @type {PatchClientRegistrationSettings}
@@ -191,6 +204,7 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
   }
   return {
     cibaSettings: json['cibaSettings'] == null ? undefined : PatchCIBASettingsFromJSON(json['cibaSettings']),
+    cimdSettings: json['cimdSettings'] == null ? undefined : PatchCIMDSettingsFromJSON(json['cimdSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : PatchClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
@@ -213,6 +227,7 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
 
   return {
     cibaSettings: PatchCIBASettingsToJSON(value['cibaSettings']),
+    cimdSettings: PatchCIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: PatchClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],

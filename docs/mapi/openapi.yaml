@@ -12751,6 +12751,54 @@ components:
         tokenReqInterval:
           type: integer
           format: int32
+    CIMDSettings:
+      type: object
+      properties:
+        accessTokenValiditySeconds:
+          type: integer
+          format: int32
+        allowPrivateIpAddress:
+          type: boolean
+        allowUnsecuredHttpUri:
+          type: boolean
+        allowedDomains:
+          type: array
+          items:
+            type: string
+        allowedGrantTypes:
+          type: array
+          items:
+            type: string
+        allowedScopes:
+          type: array
+          items:
+            type: string
+        cacheMaxEntries:
+          type: integer
+          format: int32
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+        certificateId:
+          type: string
+        enabled:
+          type: boolean
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+        idTokenValiditySeconds:
+          type: integer
+          format: int32
+        identityProviders:
+          type: array
+          items:
+            type: string
+        maxResponseSizeKb:
+          type: integer
+          format: int32
+        refreshTokenValiditySeconds:
+          type: integer
+          format: int32
     Certificate:
       type: object
       properties:
@@ -14677,6 +14725,8 @@ components:
       properties:
         cibaSettings:
           $ref: "#/components/schemas/CIBASettings"
+        cimdSettings:
+          $ref: "#/components/schemas/CIMDSettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/ClientRegistrationSettings"
         postLogoutRedirectUris:
@@ -15290,6 +15340,54 @@ components:
         tokenReqInterval:
           type: integer
           format: int32
+    PatchCIMDSettings:
+      type: object
+      properties:
+        accessTokenValiditySeconds:
+          type: integer
+          format: int32
+        allowPrivateIpAddress:
+          type: boolean
+        allowUnsecuredHttpUri:
+          type: boolean
+        allowedDomains:
+          type: array
+          items:
+            type: string
+        allowedGrantTypes:
+          type: array
+          items:
+            type: string
+        allowedScopes:
+          type: array
+          items:
+            type: string
+        cacheMaxEntries:
+          type: integer
+          format: int32
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+        certificateId:
+          type: string
+        enabled:
+          type: boolean
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+        idTokenValiditySeconds:
+          type: integer
+          format: int32
+        identityProviders:
+          type: array
+          items:
+            type: string
+        maxResponseSizeKb:
+          type: integer
+          format: int32
+        refreshTokenValiditySeconds:
+          type: integer
+          format: int32
     PatchChallengeSettings:
       type: object
       properties:
@@ -15532,6 +15630,8 @@ components:
       properties:
         cibaSettings:
           $ref: "#/components/schemas/PatchCIBASettings"
+        cimdSettings:
+          $ref: "#/components/schemas/PatchCIMDSettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/PatchClientRegistrationSettings"
         postLogoutRedirectUris:
