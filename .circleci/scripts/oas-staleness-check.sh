@@ -14,9 +14,8 @@ set -euo pipefail
 # the module is not compiled) — a build failure should not mask a compile
 # error as an OAS staleness failure.
 #
-# Requires the management API module to be compiled. In CI this is satisfied
-# by the process_pull_request workspace. Locally, pass --also-make:
-#   bash .circleci/scripts/oas-staleness-check.sh --also-make
+# Pass --also-make to build upstream modules before generating. Locally,
+# use --also-make when the tree is not already compiled.
 #
 # Options forwarded to scripts/regen-oas.sh:
 #   --also-make   Build upstream Maven modules before generating.
