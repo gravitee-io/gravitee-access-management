@@ -230,7 +230,30 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
 
         if (!isSkipped(routingContext, acceptEnrollment, client)) {
-            getValidFactor(routingContext, factorId, client).ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
+            getValidFactor(routingContext, factorId, client).ifPresent(optFactor ->
+                    removeStalePendingFactorThenEnroll(routingContext, optFactor, params, factorId));
+        }
+    }
+
+    private void removeStalePendingFactorThenEnroll(RoutingContext routingContext,
+                                                     Map.Entry<io.gravitee.am.model.Factor, FactorProvider> factorEntry,
+                                                     MultiMap params,
+                                                     String factorId) {
+        final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        if (userHasPendingActivations(factorId, endUser)) {
+            userService.removePendingEnrolledFactor(endUser.getId(), factorId)
+                    .subscribe(
+                            () -> {
+                                endUser.getFactors().removeIf(ef ->
+                                        ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION);
+                                manageEnrolledFactors(routingContext, factorEntry, params);
+                            },
+                            throwable -> {
+                                logger.error("Failed to remove stale pending factor for user {}", endUser.getId(), throwable);
+                                routingContext.fail(throwable);
+                            });
+        } else {
+            manageEnrolledFactors(routingContext, factorEntry, params);
         }
     }
 
@@ -396,6 +419,15 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private static boolean userHasPendingActivations(String factorId, User endUser) {
+        return endUser.getFactors() != null &&
+                endUser.getFactors()
+                        .stream()
+                        .anyMatch(ef ->
+                                ef.getFactorId().equals(factorId) &&
+                                ef.getStatus() == FactorStatus.PENDING_ACTIVATION);
     }
 
     @Getter
