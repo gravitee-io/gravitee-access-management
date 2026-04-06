@@ -31,14 +31,14 @@ a.expanded {
 
 .audit-cell-text {
   display: block;
-  word-break: break-word;
   white-space: normal;
+  word-break: break-word;
 }
 
 .audit-event-text {
   font-family: monospace;
-  word-break: break-all;
   white-space: normal;
+  word-break: break-all;
 }
 
 .ngx-datatable.material {
@@ -47,11 +47,11 @@ a.expanded {
 
 :host {
   ::ng-deep .ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
+    display: flex;
+    align-items: center;
     font-size: 12px;
     overflow-wrap: break-word;
     white-space: normal;
-    display: flex;
-    align-items: center;
   }
 
   ::ng-deep .ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
