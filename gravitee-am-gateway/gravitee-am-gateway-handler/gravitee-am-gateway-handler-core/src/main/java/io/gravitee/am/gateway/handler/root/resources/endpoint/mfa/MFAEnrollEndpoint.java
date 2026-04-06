@@ -42,6 +42,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EnrollmentChannelValidationException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -220,31 +221,26 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
         if (!isSkipped(routingContext, acceptEnrollment, client)) {
             getValidFactor(routingContext, factorId, client).ifPresent(optFactor ->
-                    removeStalePendingFactorThenEnroll(routingContext, optFactor, params, factorId));
+                    removeStalePendingFactors(routingContext, factorId)
+                            .subscribe(
+                                    () -> manageEnrolledFactors(routingContext, optFactor, params),
+                                    throwable -> {
+                                        logger.error("Failed to remove stale pending factor for user {}",
+                                                ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser().getId(), throwable);
+                                        routingContext.fail(throwable);
+                                    }));
         }
     }
 
-    private void removeStalePendingFactorThenEnroll(RoutingContext routingContext,
-                                                     Map.Entry<io.gravitee.am.model.Factor, FactorProvider> factorEntry,
-                                                     MultiMap params,
-                                                     String factorId) {
+    private Completable removeStalePendingFactors(RoutingContext routingContext, String factorId) {
         final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        if (userHasPendingActivations(factorId, endUser)) {
-            userService.removePendingEnrolledFactor(endUser.getId(), factorId)
-                    .subscribe(
-                            () -> {
-                                endUser.setFactors(endUser.getFactors().stream()
-                                        .filter(ef -> !(ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION))
-                                        .collect(Collectors.toList()));
-                                manageEnrolledFactors(routingContext, factorEntry, params);
-                            },
-                            throwable -> {
-                                logger.error("Failed to remove stale pending factor for user {}", endUser.getId(), throwable);
-                                routingContext.fail(throwable);
-                            });
-        } else {
-            manageEnrolledFactors(routingContext, factorEntry, params);
+        if (!userHasPendingActivations(factorId, endUser)) {
+            return Completable.complete();
         }
+        return userService.removePendingEnrolledFactor(endUser.getId(), factorId)
+                .doOnComplete(() -> endUser.setFactors(endUser.getFactors().stream()
+                        .filter(ef -> !(ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION))
+                        .collect(Collectors.toList())));
     }
 
     private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
