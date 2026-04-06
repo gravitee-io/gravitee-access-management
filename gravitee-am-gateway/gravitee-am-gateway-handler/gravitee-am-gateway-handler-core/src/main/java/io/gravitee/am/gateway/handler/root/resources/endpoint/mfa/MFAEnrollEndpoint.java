@@ -202,6 +202,147 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
     }
 
+<<<<<<< HEAD
+=======
+    private void saveEnrollment(RoutingContext routingContext) {
+        MultiMap params = routingContext.request().formAttributes();
+        final boolean acceptEnrollment = ofNullable(params.get(ConstantKeys.USER_MFA_ENROLLMENT)).map(Boolean::parseBoolean).orElse(true);
+        final String factorId = params.get(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID);
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+        if (!acceptEnrollment && !MfaUtils.isCanSkip(routingContext, client)) {
+            // user request a skipEnrollment but it is required,
+            // redirect back to the authorize endpoint to force
+            // the enrollment
+            redirectToAuthorize(routingContext);
+            return;
+        }
+
+        if (!isSkipped(routingContext, acceptEnrollment, client)) {
+            getValidFactor(routingContext, factorId, client).ifPresent(optFactor ->
+                    removeStalePendingFactorThenEnroll(routingContext, optFactor, params, factorId));
+        }
+    }
+
+    private void removeStalePendingFactorThenEnroll(RoutingContext routingContext,
+                                                     Map.Entry<io.gravitee.am.model.Factor, FactorProvider> factorEntry,
+                                                     MultiMap params,
+                                                     String factorId) {
+        final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        if (userHasPendingActivations(factorId, endUser)) {
+            userService.removePendingEnrolledFactor(endUser.getId(), factorId)
+                    .subscribe(
+                            () -> {
+                                endUser.getFactors().removeIf(ef ->
+                                        ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION);
+                                manageEnrolledFactors(routingContext, factorEntry, params);
+                            },
+                            throwable -> {
+                                logger.error("Failed to remove stale pending factor for user {}", endUser.getId(), throwable);
+                                routingContext.fail(throwable);
+                            });
+        } else {
+            manageEnrolledFactors(routingContext, factorEntry, params);
+        }
+    }
+
+    private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
+        // if user has skipped the enrollment process, continue
+        if (!acceptEnrollment && MfaUtils.isCanSkip(routingContext, client)) {
+            final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            // set the last skipped time
+            // and update the session
+            userService.setMfaEnrollmentSkippedTime(client, endUser)
+                    .subscribe(() -> {
+                        // as the user has skipped the MFA enroll page
+                        // that means the user has also skipped the MFA challenge page
+                        routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+                        routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+                        redirectToAuthorize(routingContext);
+                    });
+            return true;
+        }
+        return false;
+    }
+
+
+    private Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> getValidFactor(RoutingContext routingContext, String factorId, Client client) {
+        if (factorId == null) {
+            logger.warn("No factor id in form - did you forget to include factor id value ?");
+            routingContext.fail(400);
+            return Optional.empty();
+        }
+
+        final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
+        Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> optFactor = factors.entrySet().stream().filter(factor -> factorId.equals(factor.getKey().getId())).findFirst();
+        if (optFactor.isEmpty()) {
+            logger.warn("Factor not found - did you send a valid factor id ?");
+            routingContext.fail(400);
+            return Optional.empty();
+        }
+
+        if (routingContext.user() == null) {
+            logger.warn("User must be authenticated to enroll MFA challenge.");
+            routingContext.fail(401);
+            return Optional.empty();
+        }
+
+        final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        if (userAlreadyHasFactor(endUser, client, routingContext.session())) {
+            logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
+            routingContext.fail(new InvalidRequestException("factor already enrolled"));
+            return Optional.empty();
+        }
+        return optFactor;
+    }
+
+    private void manageEnrolledFactors(RoutingContext routingContext, Map.Entry<io.gravitee.am.model.Factor, FactorProvider> optFactor, MultiMap params) {
+        final String sharedSecret = params.get(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET);
+        final String phoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_PHONE);
+        final String extensionPhoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER);
+        final String emailAddress = params.get(ConstantKeys.MFA_ENROLLMENT_EMAIL);
+        FactorProvider provider = optFactor.getValue();
+        if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.getKey()))) {
+            // save enrolled factor for the current user and continue
+            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, optFactor.getKey().getId());
+            logger.debug("Factor {} selected", optFactor.getKey().getId());
+
+            if (sharedSecret != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
+            }
+            if (phoneNumber != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
+            }
+            if (extensionPhoneNumber != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER, extensionPhoneNumber);
+            }
+            if (emailAddress != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);
+            }
+            // update the session
+            routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+            // redirect to the original request
+            redirectToAuthorize(routingContext);
+        } else {
+            routingContext.fail(new EnrollmentChannelValidationException("Invalid parameters"));
+        }
+    }
+
+    private boolean userAlreadyHasFactor(User endUser, Client client, Session session) {
+        // check if MFA force enroll is enabled
+        if (Boolean.TRUE.equals(session.get(ConstantKeys.MFA_FORCE_ENROLLMENT))) {
+            return false;
+        }
+
+        // verify that the user has no enrolled factor
+        final var recoveryCodeFactors = getRecoveryFactorIds(client);
+        return isNotEmpty(endUser.getFactors()) &&
+                endUser.getFactors().stream()
+                        .filter(enrolledFactor -> !recoveryCodeFactors.contains(enrolledFactor.getFactorId()))
+                        .anyMatch(enrolledFactor -> enrolledFactor.getStatus() == FactorStatus.ACTIVATED);
+    }
+
+>>>>>>> 8094cf293 (fix(mfa): remove stale PENDING_ACTIVATION factor on re-enrollment (AM-6745))
     private void redirectToAuthorize(RoutingContext routingContext) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         final String returnURL = getReturnUrl(routingContext, queryParams);
@@ -237,6 +378,15 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private static boolean userHasPendingActivations(String factorId, User endUser) {
+        return endUser.getFactors() != null &&
+                endUser.getFactors()
+                        .stream()
+                        .anyMatch(ef ->
+                                ef.getFactorId().equals(factorId) &&
+                                ef.getStatus() == FactorStatus.PENDING_ACTIVATION);
     }
 
     @Getter
