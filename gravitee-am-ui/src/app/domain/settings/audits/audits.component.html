@@ -106,10 +106,10 @@
     <ngx-datatable
       class="material"
       #auditsTable
-      [columnMode]="'flex'"
+      [columnMode]="'force'"
       [headerHeight]="40"
       [footerHeight]="50"
-      [rowHeight]="50"
+      [rowHeight]="'auto'"
       [messages]="{ emptyMessage: 'There is no audit to display.', totalMessage: 'total' }"
       [rows]="audits"
       [loadingIndicator]="loadingIndicator"
@@ -133,7 +133,7 @@
         </ng-template>
       </ngx-datatable-row-detail>
       <!-- Column Templates -->
-      <ngx-datatable-column [sortable]="false" *hasPermission="[requiredReadPermission]">
+      <ngx-datatable-column [sortable]="false" [width]="40" [resizeable]="false" [canAutoResize]="false" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" let-expanded="expanded" ngx-datatable-cell-template>
           <a
             class="expanded"
@@ -146,17 +146,17 @@
           </a>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Date" [flexGrow]="2" prop="timestamp">
+      <ngx-datatable-column [sortable]="true" name="Date" [width]="180" prop="timestamp">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.timestamp | date: 'medium' }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Event" [flexGrow]="2" prop="type">
+      <ngx-datatable-column [sortable]="true" name="Event" [width]="180" prop="type">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <pre style="margin: 0">{{ row.type }}</pre>
+          <span class="audit-event-text">{{ row.type }}</span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Actor" [flexGrow]="2" prop="actor.sortDisplayName">
+      <ngx-datatable-column [sortable]="true" name="Actor" [width]="200" prop="actor.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span
             #actorUnknownEl
@@ -194,7 +194,7 @@
           >
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Target" [flexGrow]="3" prop="target.sortDisplayName">
+      <ngx-datatable-column [sortable]="true" name="Target" [width]="280" prop="target.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div *ngIf="row.target">
             <a
@@ -233,13 +233,13 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Status" [flexGrow]="1" prop="outcome.status">
+      <ngx-datatable-column [sortable]="true" name="Status" [width]="100" prop="outcome.status">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span *ngIf="row.outcome?.status === 'success'" class="gio-badge-primary">{{ row.outcome?.status }}</span>
           <span *ngIf="row.outcome?.status !== 'success'" class="gio-badge-error">{{ row.outcome?.status }}</span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="false" name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">
+      <ngx-datatable-column [sortable]="false" name="Actions" [width]="80" [resizeable]="false" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
