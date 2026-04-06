@@ -34,6 +34,12 @@ a.expanded {
   min-width: fit-content !important;
 }
 
+.audit-event-text {
+  font-family: monospace;
+  word-break: break-all;
+  white-space: normal;
+}
+
 :host {
   ::ng-deep .ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
     font-size: 12px;
