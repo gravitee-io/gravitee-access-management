@@ -1072,7 +1072,7 @@ jobs:
             - /usr/local/bin/oasdiff
       - run:
           name: Check OAS staleness
-          command: bash .circleci/scripts/oas-staleness-check.sh
+          command: bash .circleci/scripts/oas-staleness-check.sh --also-make
       - run:
           name: Check OAS breaking changes
           command: bash .circleci/scripts/oas-compat-check.sh
