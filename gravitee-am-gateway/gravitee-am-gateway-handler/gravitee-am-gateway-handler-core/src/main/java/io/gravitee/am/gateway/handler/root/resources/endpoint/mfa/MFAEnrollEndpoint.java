@@ -233,8 +233,9 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             userService.removePendingEnrolledFactor(endUser.getId(), factorId)
                     .subscribe(
                             () -> {
-                                endUser.getFactors().removeIf(ef ->
-                                        ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION);
+                                endUser.setFactors(endUser.getFactors().stream()
+                                        .filter(ef -> !(ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION))
+                                        .collect(Collectors.toList()));
                                 manageEnrolledFactors(routingContext, factorEntry, params);
                             },
                             throwable -> {
