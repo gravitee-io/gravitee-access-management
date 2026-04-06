@@ -21,6 +21,7 @@ import { getAllUsers, listUsers } from '@management-commands/user-management-com
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { jira } from '@specs-utils/jira';
 import { register, setupFixture, UserRegistrationFixture } from './fixture/user-registration';
 import { setup } from '../../test-fixture';
 
@@ -184,7 +185,7 @@ describe('Register User on domain', () => {
 
   // This test mutates domain-level settings so it MUST run last
   describe('Domain-level registration settings (application inherits)', () => {
-    it('should use domain-level registration settings when application inherits', async () => {
+    it(jira`should use domain-level registration redirect when application inherits account settings ${'AM-2214'}`, async () => {
       // Patch domain-level settings: enable registration + set autoLoginAfterRegistration
       await waitForSyncAfter(fixture.domain.id, () =>
         patchDomain(fixture.domain.id, fixture.accessToken, {

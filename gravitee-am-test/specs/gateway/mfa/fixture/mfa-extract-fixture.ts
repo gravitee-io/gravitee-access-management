@@ -55,26 +55,24 @@ export async function extractSmsCode(sfrUrl): Promise<string> {
   return code;
 }
 
-export function extractSharedSecret(result, factorType: string = 'SMS'): any {
+/** Parses the MFA enrollment page: XSRF token, form action, and embedded factors JSON. */
+export function parseEnrollPage(result): { factors: any[]; action: string; token: string } {
   const dom = cheerio.load(result.text);
-  const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
+  const token = dom('[name=X-XSRF-TOKEN]').val();
   const action = dom('form').attr('action');
-
-  expect(xsrfToken).toBeDefined();
+  expect(token).toBeDefined();
   expect(action).toBeDefined();
-
   const codeString = dom('script')
     .text()
     .split('\n')
     .find((line: string) => line.trim().startsWith('const factors'));
   const match = codeString.match(/\[.*]/);
   if (!match) throw new Error('Cannot extract factors');
-  const factors = JSON.parse(match[0]);
+  return { factors: JSON.parse(match[0]), action, token };
+}
+
+export function extractSharedSecret(result, factorType: string = 'SMS'): any {
+  const { factors, action, token } = parseEnrollPage(result);
   const factor = factors.find((f) => f.factorType === factorType);
-  const sharedSecret = factor?.enrollment?.key || null;
-  return {
-    sharedSecret: sharedSecret,
-    action: action,
-    token: xsrfToken,
-  };
+  return { sharedSecret: factor?.enrollment?.key || null, action, token };
 }

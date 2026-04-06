@@ -153,8 +153,8 @@ export const setupFixture = async (): Promise<UserRegistrationFixture> => {
       ],
     });
 
-    await startDomain(domain.id, accessToken);
-    const domainWithOidc = await waitForDomainStart(domain);
+    const startedDomain = await startDomain(domain.id, accessToken);
+    const domainWithOidc = await waitForDomainStart(startedDomain);
 
     return {
       domain: domain,

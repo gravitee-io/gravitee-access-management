@@ -16,6 +16,7 @@
 import * as faker from 'faker';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { createIdp, deleteIdp, getAllIdps, getIdp, updateIdp } from '@management-commands/idp-management-commands';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { IdpFixture, setupIdpFixture, buildInlineIdpBody } from './fixtures/idp-fixture';
 
@@ -56,7 +57,7 @@ function buildIdp(i: number) {
   return { idpConfig, newIdp };
 }
 
-describe('when creating identity providers', () => {
+describe(jira`when creating identity providers ${'AM-2204'}`, () => {
   for (let i = 0; i < 10; i++) {
     it('must create new idp: ' + i, async () => {
       const { idpConfig, newIdp } = buildIdp(i);
@@ -91,7 +92,7 @@ describe('after creating identity providers', () => {
     expect(idp.id).toEqual(foundIdp.id);
   });
 
-  it('must update Identity Provider', async () => {
+  it(jira`must update Identity Provider ${'AM-2203'}`, async () => {
     const updatedIdp = await updateIdp(
       fixture.domain.id,
       fixture.accessToken,
@@ -111,7 +112,7 @@ describe('after creating identity providers', () => {
     expect(idpSet.length).toEqual(11);
   });
 
-  it('Must delete Identity Provider', async () => {
+  it(jira`Must delete Identity Provider ${'AM-2202'}`, async () => {
     await deleteIdp(fixture.domain.id, fixture.accessToken, idp.id);
     const idpSet = await getAllIdps(fixture.domain.id, fixture.accessToken);
     expect(idpSet.length).toEqual(10);

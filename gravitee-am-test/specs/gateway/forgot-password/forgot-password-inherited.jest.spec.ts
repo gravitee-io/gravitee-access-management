@@ -19,6 +19,7 @@ import { resetPassword } from './fixture/reset-password-flow-utils';
 import { requestForgotPassword, retrieveEmailLinkForReset } from './fixture/forgot-password-flow-utils';
 import { DomainTestSettings } from './fixture/settings-utils';
 import { clearEmails } from '@utils-commands/email-commands';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { uniqueName } from '@utils-commands/misc';
 
@@ -70,32 +71,18 @@ afterAll(async () => {
 });
 
 describe('Gateway reset password', () => {
+  const redirectUri = setting.settings.accountSettings.redirectUriAfterResetPassword;
   const passwordHistoryTests = [
-    {
-      password: 'SomeP@ssw0rd01',
-      expectedMsg: resetPasswordFailed,
-    },
-    {
-      password: 'SomeP@ssw0rd02',
-      expectedMsg: setting.settings.accountSettings.redirectUriAfterResetPassword,
-    },
-    {
-      password: 'SomeP@ssw0rd03',
-      expectedMsg: setting.settings.accountSettings.redirectUriAfterResetPassword,
-    },
-    {
-      password: 'SomeP@ssw0rd04',
-      expectedMsg: setting.settings.accountSettings.redirectUriAfterResetPassword,
-    },
-    {
-      password: 'SomeP@ssw0rd01',
-      expectedMsg: setting.settings.accountSettings.redirectUriAfterResetPassword,
-    },
+    { password: 'SomeP@ssw0rd01', expectedMsg: resetPasswordFailed },
+    { password: 'SomeP@ssw0rd02', expectedMsg: redirectUri, title: jira`should redirect to configured URI after successful forgot-password reset ${'AM-2214'}` },
+    { password: 'SomeP@ssw0rd03', expectedMsg: redirectUri },
+    { password: 'SomeP@ssw0rd04', expectedMsg: redirectUri },
+    { password: 'SomeP@ssw0rd01', expectedMsg: redirectUri },
   ];
 
   describe(`when password history is enabled for ${setting.passwordPolicy.oldPasswords} passwords`, () => {
-    passwordHistoryTests.forEach(({ password, expectedMsg }) => {
-      it(`resetting with ${password} should return ${expectedMsg}`, async () => {
+    passwordHistoryTests.forEach(({ password, expectedMsg, title }) => {
+      it(title || `resetting with ${password} should return ${expectedMsg}`, async () => {
         await clearEmails(userProps.email);
         await requestForgotPassword(fixture.forgotPasswordContext(), setting.settings);
         const link = await retrieveEmailLinkForReset(userProps.email);
