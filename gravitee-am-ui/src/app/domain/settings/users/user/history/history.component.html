@@ -92,10 +92,10 @@
       <ngx-datatable
         class="material"
         #auditsTable
-        [columnMode]="'flex'"
+        [columnMode]="'force'"
         [headerHeight]="40"
         [footerHeight]="50"
-        [rowHeight]="50"
+        [rowHeight]="'auto'"
         [messages]="{ emptyMessage: 'There is no audit to display.', totalMessage: 'total' }"
         [rows]="audits"
         [loadingIndicator]="loadingIndicator"
@@ -121,7 +121,7 @@
           </ng-template>
         </ngx-datatable-row-detail>
         <!-- Column Templates -->
-        <ngx-datatable-column *hasPermission="[requiredReadPermission]">
+        <ngx-datatable-column [width]="40" [resizeable]="false" [canAutoResize]="false" *hasPermission="[requiredReadPermission]">
           <ng-template let-row="row" let-expanded="expanded" ngx-datatable-cell-template>
             <a
               class="expanded"
@@ -134,17 +134,17 @@
             </a>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Date" [flexGrow]="3">
+        <ngx-datatable-column name="Date" [width]="180">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{ row.timestamp | date: 'medium' }}
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Event" [flexGrow]="3">
+        <ngx-datatable-column name="Event" [width]="240">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <pre style="margin: 0">{{ row.type }}</pre>
+            <span style="font-family: monospace; word-break: break-all; white-space: normal">{{ row.type }}</span>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Status" [flexGrow]="2">
+        <ngx-datatable-column name="Status" [width]="100">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <span *ngIf="row.outcome?.status === 'success'" class="gio-badge-success">{{ row.outcome?.status }}</span>
             <span *ngIf="row.outcome?.status !== 'success'" class="gio-badge-error">{{ row.outcome?.status }}</span>
