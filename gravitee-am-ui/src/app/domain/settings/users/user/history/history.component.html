@@ -20,7 +20,7 @@
     <form (submit)="search()" fxLayout.lt-lg="row wrap" fxLayout.gt-md="row" fxLayoutGap="10px" class="audits-search">
       <mat-form-field fxFlex="15">
         <mat-label>Event</mat-label>
-        <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
+        <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()" panelClass="audit-event-type-panel">
           <mat-option></mat-option>
           <mat-option *ngFor="let eventType of eventTypes$ | async" [value]="eventType">
             {{ eventType }}
