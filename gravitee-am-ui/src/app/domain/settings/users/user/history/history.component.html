@@ -141,7 +141,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Event" [width]="240">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <span style="font-family: monospace; word-break: break-all; white-space: normal">{{ row.type }}</span>
+            <span class="audit-event-text">{{ row.type }}</span>
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Status" [width]="100">
