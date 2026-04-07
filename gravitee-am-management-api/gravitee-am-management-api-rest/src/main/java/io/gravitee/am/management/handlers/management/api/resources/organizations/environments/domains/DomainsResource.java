@@ -25,6 +25,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,10 +54,6 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-import static io.gravitee.am.repository.utils.RepositoryConstants.DEFAULT_MAX_CONCURRENCY;
-import static io.gravitee.am.repository.utils.RepositoryConstants.DELAY_ERRORS;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -99,13 +96,15 @@ public class DomainsResource extends AbstractDomainResource {
             @Suspended final AsyncResponse response) {
 
         User authenticatedUser = getAuthenticatedUser();
+        Flowable<Domain> domainSource = query != null
+                ? domainService.search(organizationId, environmentId, query)
+                : domainService.findAllByEnvironment(organizationId, environmentId);
+
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.LIST)
-                .andThen(query != null ? domainService.search(organizationId, environmentId, query) : domainService.findAllByEnvironment(organizationId, environmentId))
-                .flatMapMaybe(domain -> hasPermission(authenticatedUser,
-                        or(of(ReferenceType.DOMAIN, domain.getId(), Permission.DOMAIN, Acl.READ),
-                                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
-                                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
-                        .filter(Boolean::booleanValue).map(permit -> domain), DELAY_ERRORS, DEFAULT_MAX_CONCURRENCY)
+                // Load all domain IDs the user has DOMAIN:READ on in a single query, then filter.
+                .andThen(getResourceIdsWithPermission(authenticatedUser, ReferenceType.DOMAIN, Permission.DOMAIN, Acl.READ)
+                        .collect(Collectors.toSet()))
+                .flatMapPublisher(allowedDomainIds -> domainSource.filter(domain -> allowedDomainIds.contains(domain.getId())))
                 .map(this::filterDomainInfos)
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()
