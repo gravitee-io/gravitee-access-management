@@ -152,17 +152,17 @@
           </a>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Date" [width]="180" prop="timestamp">
+      <ngx-datatable-column [sortable]="true" name="Date" [width]="180" [minWidth]="140" prop="timestamp">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.timestamp | date: 'medium' }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Event" [width]="180" prop="type">
+      <ngx-datatable-column [sortable]="true" name="Event" [width]="180" [minWidth]="140" prop="type">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span class="audit-event-text">{{ row.type }}</span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Actor" [width]="200" prop="actor.sortDisplayName">
+      <ngx-datatable-column [sortable]="true" name="Actor" [width]="200" [minWidth]="150" prop="actor.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span
             #actorUnknownEl
@@ -200,7 +200,7 @@
           >
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Target" [width]="280" prop="target.sortDisplayName">
+      <ngx-datatable-column [sortable]="true" name="Target" [width]="280" [minWidth]="150" prop="target.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div *ngIf="row.target">
             <a
@@ -239,13 +239,13 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="true" name="Status" [width]="100" prop="outcome.status">
+      <ngx-datatable-column [sortable]="true" name="Status" [width]="100" [minWidth]="80" prop="outcome.status">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span *ngIf="row.outcome?.status === 'success'" class="gio-badge-success">{{ row.outcome?.status }}</span>
           <span *ngIf="row.outcome?.status !== 'success'" class="gio-badge-error">{{ row.outcome?.status }}</span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [sortable]="false" name="Actions" [width]="80" [resizeable]="false" *hasPermission="[requiredReadPermission]">
+      <ngx-datatable-column [sortable]="false" name="Actions" [width]="80" [minWidth]="60" [resizeable]="false" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
