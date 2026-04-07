@@ -108,7 +108,6 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         CookieSession session = new CookieSession(jwtService, certificateManager, timeout);
 
         registerSession(context, session);
-        updateSessionWithTransactionId(context, session);
 
         Single<CookieSession> sessionObs = Single.just(session);
 
@@ -133,8 +132,14 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
                     });
         }
 
-        // Need to wait the session to be ready before invoking next.
+        // Update the session with the transaction ID only after the session has been fully
+        // restored from the cookie. setValue() replaces all session data via setData(), so
+        // any tid set before setValue() would be lost. By running this after the cookie is
+        // parsed, we correctly set the tid when the cookie has none (e.g. after cleanSession())
+        // while preserving an existing tid when the cookie already contains one.
+        sessionObs = sessionObs.doOnSuccess(s -> updateSessionWithTransactionId(context, s));
 
+        // Need to wait the session to be ready before invoking next.
         sessionObs
                 .doFinally(context::next)
                 .subscribe(
