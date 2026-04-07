@@ -16,11 +16,14 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.HttpStatusCode;
@@ -32,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -56,6 +60,8 @@ public class DomainsResourceTest extends JerseySpringTest {
         mockDomain2.setName("domain-name-2");
 
         doReturn(Flowable.just(mockDomain, mockDomain2)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
+        doReturn(Flowable.just("domain-id-1", "domain-id-2"))
+                .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
 
         final Response response = target("domains").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -65,8 +71,58 @@ public class DomainsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldGetDomains_onlyWithReadPermission() {
+        final Domain mockDomain = new Domain();
+        mockDomain.setId("domain-id-1");
+        mockDomain.setName("domain-name-1");
+
+        final Domain mockDomain2 = new Domain();
+        mockDomain2.setId("domain-id-2");
+        mockDomain2.setName("domain-name-2");
+
+        final Domain mockDomain3 = new Domain();
+        mockDomain3.setId("domain-id-3");
+        mockDomain3.setName("domain-name-3");
+
+        doReturn(Flowable.just(mockDomain, mockDomain2, mockDomain3)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
+        // User only has READ permission on domain-id-1 and domain-id-3
+        doReturn(Flowable.just("domain-id-1", "domain-id-3"))
+                .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
+
+        final Response response = target("domains").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final Map responseEntity = readEntity(response, Map.class);
+        List data = (List) responseEntity.get("data");
+        assertEquals(2, data.size());
+        assertEquals(2, responseEntity.get("totalCount"));
+    }
+
+    @Test
+    public void shouldGetDomains_noneWithReadPermission() {
+        final Domain mockDomain = new Domain();
+        mockDomain.setId("domain-id-1");
+        mockDomain.setName("domain-name-1");
+
+        doReturn(Flowable.just(mockDomain)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
+        // User has no DOMAIN:READ permissions
+        doReturn(Flowable.empty())
+                .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
+
+        final Response response = target("domains").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final Map responseEntity = readEntity(response, Map.class);
+        List data = (List) responseEntity.get("data");
+        assertEquals(0, data.size());
+        assertEquals(0, responseEntity.get("totalCount"));
+    }
+
+    @Test
     public void shouldGetDomains_technicalManagementException() {
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(domainService).findAll();
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
+        doReturn(Flowable.just("domain-id-1"))
+                .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
 
         final Response response = target("domains").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
