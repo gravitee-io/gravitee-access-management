@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
@@ -60,8 +61,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         mockDomain2.setName("domain-name-2");
 
         doReturn(Flowable.just(mockDomain, mockDomain2)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
-        doReturn(Flowable.just("domain-id-1", "domain-id-2"))
-                .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
+        // hasPermission returns true by default (from JerseySpringTest.init), so global env/org read passes — all domains returned.
 
         final Response response = target("domains").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -85,7 +85,8 @@ public class DomainsResourceTest extends JerseySpringTest {
         mockDomain3.setName("domain-name-3");
 
         doReturn(Flowable.just(mockDomain, mockDomain2, mockDomain3)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
-        // User only has READ permission on domain-id-1 and domain-id-3
+        // First hasPermission call (LIST) returns true, second (global READ) returns false — fall back to domain-level filtering
+        doReturn(Single.just(true), Single.just(false)).when(permissionService).hasPermission(any(), any(PermissionAcls.class));
         doReturn(Flowable.just("domain-id-1", "domain-id-3"))
                 .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
 
@@ -105,7 +106,8 @@ public class DomainsResourceTest extends JerseySpringTest {
         mockDomain.setName("domain-name-1");
 
         doReturn(Flowable.just(mockDomain)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
-        // User has no DOMAIN:READ permissions
+        // First hasPermission call (LIST) returns true, second (global READ) returns false — no domain-level permissions either
+        doReturn(Single.just(true), Single.just(false)).when(permissionService).hasPermission(any(), any(PermissionAcls.class));
         doReturn(Flowable.empty())
                 .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
 
@@ -121,8 +123,6 @@ public class DomainsResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetDomains_technicalManagementException() {
         doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
-        doReturn(Flowable.just("domain-id-1"))
-                .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.DOMAIN), eq(Permission.DOMAIN), eq(Set.of(Acl.READ)));
 
         final Response response = target("domains").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
