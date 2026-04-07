@@ -81,6 +81,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -144,7 +145,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findAll() {
-        return Flowable.fromPublisher(applicationsCollection.find())
+        return Flowable.fromPublisher(applicationsCollection.find().sort(new BasicDBObject(FIELD_UPDATED_AT, -1)))
                 .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
@@ -152,19 +153,19 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments()).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find())
+        Single<List<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find())
                         .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
                         .skip(size * page)
                         .limit(size))
                 .map(MongoApplicationRepository::convert)
-                .collect(HashSet::new, Set::add);
+                .collect(ArrayList::new, List::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
                 .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByDomain(String domain) {
-        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain))))
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1))))
                 .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }
@@ -186,12 +187,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                         .countDocuments(query, countOptions()))
                 .firstElement()
                 .toSingle();
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(
+        Single<List<Application>> applicationsOperation = Observable.fromPublisher(
                         withMaxTime(applicationsCollection.find(query))
                                 .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
                                 .skip(size * page).limit(size))
                 .map(MongoApplicationRepository::convert)
-                .collect(HashSet::new, Set::add);
+                .collect(ArrayList::new, List::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
@@ -238,9 +239,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
             findPublisher = findPublisher.collation(CASE_INSENSITIVE_COLLATION);
         }
 
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(findPublisher)
+        Single<List<Application>> applicationsOperation = Observable.fromPublisher(findPublisher)
                 .map(MongoApplicationRepository::convert)
-                .collect(HashSet::new, Set::add);
+                .collect(ArrayList::new, List::add);
 
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
                 .observeOn(Schedulers.computation());
