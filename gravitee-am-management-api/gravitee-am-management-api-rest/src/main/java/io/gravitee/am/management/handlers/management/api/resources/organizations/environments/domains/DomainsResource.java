@@ -52,7 +52,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 
 /**
@@ -101,10 +106,18 @@ public class DomainsResource extends AbstractDomainResource {
                 : domainService.findAllByEnvironment(organizationId, environmentId);
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.LIST)
-                // Load all domain IDs the user has DOMAIN:READ on in a single query, then filter.
-                .andThen(getResourceIdsWithPermission(authenticatedUser, ReferenceType.DOMAIN, Permission.DOMAIN, Acl.READ)
-                        .collect(Collectors.toSet()))
-                .flatMapPublisher(allowedDomainIds -> domainSource.filter(domain -> allowedDomainIds.contains(domain.getId())))
+                // Check if user has DOMAIN:READ at env or org level (global access), otherwise filter by specific domain permissions.
+                .andThen(hasPermission(authenticatedUser, or(
+                        of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
+                        of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ))))
+                .flatMapPublisher(hasGlobalRead -> {
+                    if (Boolean.TRUE.equals(hasGlobalRead)) {
+                        return domainSource;
+                    }
+                    return getResourceIdsWithPermission(authenticatedUser, ReferenceType.DOMAIN, Permission.DOMAIN, Acl.READ)
+                            .collect(HashSet<String>::new, Set::add)
+                            .flatMapPublisher(allowedDomainIds -> domainSource.filter(domain -> allowedDomainIds.contains(domain.getId())));
+                })
                 .map(this::filterDomainInfos)
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()
