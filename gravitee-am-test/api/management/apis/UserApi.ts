@@ -88,6 +88,9 @@ import {
   User,
   UserFromJSON,
   UserToJSON,
+  UserCursorPage,
+  UserCursorPageFromJSON,
+  UserCursorPageToJSON,
   UserEntity,
   UserEntityFromJSON,
   UserEntityToJSON,
@@ -308,6 +311,17 @@ export interface ListUsersRequest {
   filter?: string;
   page?: number;
   size?: number;
+}
+
+export interface ListUsersCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  q?: string;
+  filter?: string;
+  limit?: number;
+  after?: string;
+  sort?: string;
 }
 
 export interface LockUserRequest {
@@ -2717,6 +2731,95 @@ export class UserApi extends runtime.BaseAPI {
    */
   async listUsers(requestParameters: ListUsersRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<UserPage> {
     const response = await this.listUsersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List users using cursor-based pagination for improved performance at scale. User must have DOMAIN_USER[LIST] permission on the specified domain, environment or organization.
+   * List users with cursor-based pagination
+   */
+  async listUsersCursorRaw(
+    requestParameters: ListUsersCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<UserCursorPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listUsersCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listUsersCursor.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listUsersCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.filter !== undefined) {
+      queryParameters['filter'] = requestParameters.filter;
+    }
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.after !== undefined) {
+      queryParameters['after'] = requestParameters.after;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserCursorPageFromJSON(jsonValue));
+  }
+
+  /**
+   * List users using cursor-based pagination for improved performance at scale. User must have DOMAIN_USER[LIST] permission on the specified domain, environment or organization.
+   * List users with cursor-based pagination
+   */
+  async listUsersCursor(
+    requestParameters: ListUsersCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<UserCursorPage> {
+    const response = await this.listUsersCursorRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

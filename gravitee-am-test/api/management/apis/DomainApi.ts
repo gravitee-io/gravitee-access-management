@@ -46,6 +46,9 @@ import {
   Application,
   ApplicationFromJSON,
   ApplicationToJSON,
+  ApplicationCursorPage,
+  ApplicationCursorPageFromJSON,
+  ApplicationCursorPageToJSON,
   ApplicationPage,
   ApplicationPageFromJSON,
   ApplicationPageToJSON,
@@ -91,6 +94,9 @@ import {
   Domain,
   DomainFromJSON,
   DomainToJSON,
+  DomainCursorPage,
+  DomainCursorPageFromJSON,
+  DomainCursorPageToJSON,
   DomainPage,
   DomainPageFromJSON,
   DomainPageToJSON,
@@ -361,6 +367,9 @@ import {
   User,
   UserFromJSON,
   UserToJSON,
+  UserCursorPage,
+  UserCursorPageFromJSON,
+  UserCursorPageToJSON,
   UserEntity,
   UserEntityFromJSON,
   UserEntityToJSON,
@@ -1285,6 +1294,16 @@ export interface ListApplicationsRequest {
   q?: string;
 }
 
+export interface ListApplicationsCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  after?: string;
+  q?: string;
+  sort?: string;
+}
+
 export interface ListAuthenticationDeviceNotifiersRequest {
   organizationId: string;
   environmentId: string;
@@ -1356,6 +1375,15 @@ export interface ListDomainsRequest {
   page?: number;
   size?: number;
   q?: string;
+}
+
+export interface ListDomainsCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  limit?: number;
+  after?: string;
+  q?: string;
+  sort?: string;
 }
 
 export interface ListExtensionGrantsRequest {
@@ -1506,6 +1534,17 @@ export interface ListUsersRequest {
   filter?: string;
   page?: number;
   size?: number;
+}
+
+export interface ListUsersCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  q?: string;
+  filter?: string;
+  limit?: number;
+  after?: string;
+  sort?: string;
 }
 
 export interface LockUserRequest {
@@ -11648,6 +11687,91 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async listApplicationsCursorRaw(
+    requestParameters: ListApplicationsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<ApplicationCursorPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listApplicationsCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listApplicationsCursor.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listApplicationsCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.after !== undefined) {
+      queryParameters['after'] = requestParameters.after;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ApplicationCursorPageFromJSON(jsonValue));
+  }
+
+  /**
+   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications with cursor-based pagination
+   */
+  async listApplicationsCursor(
+    requestParameters: ListApplicationsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<ApplicationCursorPage> {
+    const response = await this.listApplicationsCursorRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization Each returned Authentication Device Notifier is filtered and contains only basic information such as id, name.
    * List registered Authentication Device Notifiers for a security domain
    */
@@ -12379,6 +12503,83 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async listDomains(requestParameters: ListDomainsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<DomainPage> {
     const response = await this.listDomainsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List security domains using cursor-based pagination for improved performance at scale. User must have DOMAIN[LIST] permission on the specified environment or organization.
+   * List security domains with cursor-based pagination
+   */
+  async listDomainsCursorRaw(
+    requestParameters: ListDomainsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<DomainCursorPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listDomainsCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listDomainsCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.after !== undefined) {
+      queryParameters['after'] = requestParameters.after;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => DomainCursorPageFromJSON(jsonValue));
+  }
+
+  /**
+   * List security domains using cursor-based pagination for improved performance at scale. User must have DOMAIN[LIST] permission on the specified environment or organization.
+   * List security domains with cursor-based pagination
+   */
+  async listDomainsCursor(
+    requestParameters: ListDomainsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<DomainCursorPage> {
+    const response = await this.listDomainsCursorRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -13909,6 +14110,95 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async listUsers(requestParameters: ListUsersRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<UserPage> {
     const response = await this.listUsersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List users using cursor-based pagination for improved performance at scale. User must have DOMAIN_USER[LIST] permission on the specified domain, environment or organization.
+   * List users with cursor-based pagination
+   */
+  async listUsersCursorRaw(
+    requestParameters: ListUsersCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<UserCursorPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listUsersCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listUsersCursor.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listUsersCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.filter !== undefined) {
+      queryParameters['filter'] = requestParameters.filter;
+    }
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.after !== undefined) {
+      queryParameters['after'] = requestParameters.after;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserCursorPageFromJSON(jsonValue));
+  }
+
+  /**
+   * List users using cursor-based pagination for improved performance at scale. User must have DOMAIN_USER[LIST] permission on the specified domain, environment or organization.
+   * List users with cursor-based pagination
+   */
+  async listUsersCursor(
+    requestParameters: ListUsersCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<UserCursorPage> {
+    const response = await this.listUsersCursorRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

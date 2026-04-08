@@ -50,6 +50,7 @@ models/AlertTrigger.ts
 models/AnalyticsTypeParam.ts
 models/Application.ts
 models/ApplicationAdvancedSettings.ts
+models/ApplicationCursorPage.ts
 models/ApplicationEntity.ts
 models/ApplicationFactorSettings.ts
 models/ApplicationIdentityProvider.ts
@@ -92,6 +93,7 @@ models/DataPlane.ts
 models/DataSource.ts
 models/DeviceIdentifier.ts
 models/Domain.ts
+models/DomainCursorPage.ts
 models/DomainPage.ts
 models/DomainUserBulkRequest.ts
 models/Email.ts
@@ -260,6 +262,7 @@ models/UpdateUser.ts
 models/UpdateUserWithId.ts
 models/User.ts
 models/UserBindingCriterion.ts
+models/UserCursorPage.ts
 models/UserEntity.ts
 models/UserId.ts
 models/UserIdentity.ts
