@@ -181,6 +181,28 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
                     "vaI47gC+TNpkgYGkkBT6B/m/U01BuOBBTzhIlMEZq9qkDWuM2cA5kW5V3FJUcfHn\n" +
                     "w1IdYIg2Wxg7yHcQZemFQg==";
 
+    /* New Android Keystore Root (ECDSA P-384), CN=Key Attestation CA1, O=Google LLC.
+     * Published by Google at https://android.googleapis.com/attestation/root
+     * Validity: 2025-07-17 .. 2035-07-15
+     * Starts signing attestation chains on 2026-02-01; from 2026-04-10 RKP-enabled
+     * devices use this root exclusively. Without it, newly enrolled Android devices
+     * fail WebAuthn android-key attestation with "Root certificate is invalid!".
+     * See: https://developer.android.com/privacy-and-security/security-key-attestation
+     */
+    private static final String ANDROID_KEYSTORE_ROOT_5 =
+            "MIICIjCCAaigAwIBAgIRAISp0Cl7DrWK5/8OgN52BgUwCgYIKoZIzj0EAwMwUjEc\n" +
+                    "MBoGA1UEAwwTS2V5IEF0dGVzdGF0aW9uIENBMTEQMA4GA1UECwwHQW5kcm9pZDET\n" +
+                    "MBEGA1UECgwKR29vZ2xlIExMQzELMAkGA1UEBhMCVVMwHhcNMjUwNzE3MjIzMjE4\n" +
+                    "WhcNMzUwNzE1MjIzMjE4WjBSMRwwGgYDVQQDDBNLZXkgQXR0ZXN0YXRpb24gQ0Ex\n" +
+                    "MRAwDgYDVQQLDAdBbmRyb2lkMRMwEQYDVQQKDApHb29nbGUgTExDMQswCQYDVQQG\n" +
+                    "EwJVUzB2MBAGByqGSM49AgEGBSuBBAAiA2IABCPaI3FO3z5bBQo8cuiEas4HjqCt\n" +
+                    "G/mLFfRT0MsIssPBEEU5Cfbt6sH5yOAxqEi5QagpU1yX4HwnGb7OtBYpDTB57uH5\n" +
+                    "Eczm34A5FNijV3s0/f0UPl7zbJcTx6xwqMIRq6NCMEAwDwYDVR0TAQH/BAUwAwEB\n" +
+                    "/zAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFFIyuyz7RkOb3NaBqQ5lZuA0QepA\n" +
+                    "MAoGCCqGSM49BAMDA2gAMGUCMETfjPO/HwqReR2CS7p0ZWoD/LHs6hDi422opifH\n" +
+                    "EUaYLxwGlT9SLdjkVpz0UUOR5wIxAIoGyxGKRHVTpqpGRFiJtQEOOTp/+s1GcxeY\n" +
+                    "uR2zh/80lQyu9vAFCj6E4AXc+osmRg==";
+
 
     private Map<String, List<X509Certificate>> additionalRootCertificates = new HashMap<>();
 
@@ -214,6 +236,7 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
         pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_2);
         pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_3);
         pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_4);
+        pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_5);
     }
 
     public WebAuthnOptions pushAdditionalRootCertificate(String key, String value) {
