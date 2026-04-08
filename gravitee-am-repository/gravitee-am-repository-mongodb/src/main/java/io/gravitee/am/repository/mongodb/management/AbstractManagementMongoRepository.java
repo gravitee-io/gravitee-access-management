@@ -261,7 +261,7 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
                                 cursor.getDirection(),
                                 cursorSortField);
                     }
-                    return new CursorPage<>(data, nextCursor, hasNext, totalCount);
+                    return new CursorPage<>(data, nextCursor, totalCount);
                 })
                 .observeOn(Schedulers.computation());
     }

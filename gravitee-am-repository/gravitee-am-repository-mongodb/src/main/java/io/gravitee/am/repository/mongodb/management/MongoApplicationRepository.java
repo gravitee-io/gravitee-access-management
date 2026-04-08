@@ -332,7 +332,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     private static Object dateFromString(String value) {
         try { return new java.util.Date(Long.parseLong(value)); }
-        catch (NumberFormatException e) { return new java.util.Date(0); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid cursor: sort value '" + value + "' is not a valid timestamp", e); }
     }
 
     @Override

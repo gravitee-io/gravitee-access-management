@@ -98,4 +98,72 @@ class CursorRequestTest {
         assertTrue(SortDirection.ASC.isAscending());
         assertFalse(SortDirection.DESC.isAscending());
     }
+
+    @Test
+    void encode_withSortField_roundTrip() {
+        String encoded = CursorRequest.encode("myValue", "id1", SortDirection.ASC, "name");
+        var req = CursorRequest.from(encoded, SortDirection.DESC, 50);
+        assertEquals("myValue", req.getLastSortValue());
+        assertEquals("id1", req.getLastId());
+        assertEquals(SortDirection.ASC, req.getDirection());
+        assertEquals("name", req.getSortField());
+    }
+
+    @Test
+    void encode_withoutSortField_hasNullSortField() {
+        String encoded = CursorRequest.encode("val", "id1", SortDirection.ASC);
+        var req = CursorRequest.from(encoded, SortDirection.ASC, 50);
+        assertNull(req.getSortField());
+    }
+
+    @Test
+    void nullDirection_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () ->
+                CursorRequest.firstPage(null, 50));
+    }
+
+    @Test
+    void fromSortParam_nullSort_usesDefaults() {
+        var req = CursorRequest.fromSortParam(null, "name", SortDirection.ASC, null, 50);
+        assertTrue(req.isFirstPage());
+        assertEquals("name", req.getSortField());
+        assertEquals(SortDirection.ASC, req.getDirection());
+    }
+
+    @Test
+    void fromSortParam_descendingPrefix() {
+        var req = CursorRequest.fromSortParam("-updatedAt", "name", SortDirection.ASC, null, 50);
+        assertTrue(req.isFirstPage());
+        assertEquals("updatedAt", req.getSortField());
+        assertEquals(SortDirection.DESC, req.getDirection());
+    }
+
+    @Test
+    void fromSortParam_ascendingNoPrefix() {
+        var req = CursorRequest.fromSortParam("email", "name", SortDirection.DESC, null, 25);
+        assertEquals("email", req.getSortField());
+        assertEquals(SortDirection.ASC, req.getDirection());
+    }
+
+    @Test
+    void fromSortParam_justDash_usesDefault() {
+        var req = CursorRequest.fromSortParam("-", "name", SortDirection.ASC, null, 50);
+        assertEquals("name", req.getSortField());
+    }
+
+    @Test
+    void fromSortParam_withCursor_preservesCursorSortField() {
+        String cursor = CursorRequest.encode("val", "id1", SortDirection.DESC, "updatedAt");
+        var req = CursorRequest.fromSortParam("updatedAt", "name", SortDirection.ASC, cursor, 50);
+        assertEquals("updatedAt", req.getSortField());
+        assertEquals(SortDirection.DESC, req.getDirection());
+        assertEquals("val", req.getLastSortValue());
+    }
+
+    @Test
+    void fromSortParam_conflictingSortField_throws() {
+        String cursor = CursorRequest.encode("val", "id1", SortDirection.ASC, "name");
+        assertThrows(IllegalArgumentException.class, () ->
+                CursorRequest.fromSortParam("-updatedAt", "name", SortDirection.ASC, cursor, 50));
+    }
 }

@@ -355,27 +355,54 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
 
         if (!cursor.isFirstPage()) {
-            spec = spec.bind("lastSort", LocalDateTime.parse(cursor.getLastSortValue(), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                       .bind("lastId", cursor.getLastId());
+            try {
+                long epochMs = Long.parseLong(cursor.getLastSortValue());
+                LocalDateTime lastSort = LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(epochMs), java.time.ZoneOffset.UTC);
+                spec = spec.bind("lastSort", lastSort).bind("lastId", cursor.getLastId());
+            } catch (NumberFormatException e) {
+                return Single.error(new IllegalArgumentException("Invalid cursor: sort value is not a valid timestamp", e));
+            }
         }
+
+        // Count query uses the same base filter without keyset conditions
+        var countSql = new StringBuilder("SELECT COUNT(*) FROM applications a WHERE a.domain = :domain");
+        if (applicationIds != null) {
+            countSql.append(" AND a.id IN (:applicationIds)");
+        }
+        if (searchQuery != null) {
+            boolean wildcardMatch2 = searchQuery.contains("*");
+            countSql.append(" AND (UPPER(a.name) ").append(wildcardMatch2 ? "LIKE" : "=").append(" :searchValue")
+                    .append(" OR UPPER(a.settings_oauth_clientId) ").append(wildcardMatch2 ? "LIKE" : "=").append(" :searchValue)");
+        }
+        DatabaseClient.GenericExecuteSpec countSpec = getTemplate().getDatabaseClient().sql(countSql.toString())
+                .bind("domain", domain);
+        if (applicationIds != null) {
+            countSpec = countSpec.bind("applicationIds", applicationIds);
+        }
+        if (searchQuery != null) {
+            boolean wildcardMatch2 = searchQuery.contains("*");
+            String value2 = wildcardMatch2 ? databaseDialectHelper.escapeLikePatternValue(searchQuery.replaceAll("\\*+", "%")).toUpperCase() : searchQuery.toUpperCase();
+            countSpec = countSpec.bind("searchValue", value2);
+        }
+        Single<Long> countSingle = monoToSingle(countSpec.map((row, rowMetadata) -> row.get(0, Long.class)).first());
 
         return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row)).all())
                 .map(this::toEntity)
                 .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .map(items -> {
+                .flatMap(items -> countSingle.map(totalCount -> {
                     boolean hasNext = items.size() > cursor.getLimit();
                     List<Application> data = hasNext ? items.subList(0, cursor.getLimit()) : items;
                     String nextCursor = null;
                     if (hasNext && !data.isEmpty()) {
                         Application last = data.get(data.size() - 1);
                         String sortValue = last.getUpdatedAt() != null
-                                ? java.time.LocalDateTime.ofInstant(last.getUpdatedAt().toInstant(), java.time.ZoneOffset.UTC).format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                ? String.valueOf(last.getUpdatedAt().getTime())
                                 : "0";
-                        nextCursor = CursorRequest.encode(sortValue, last.getId(), cursor.getDirection());
+                        nextCursor = CursorRequest.encode(sortValue, last.getId(), cursor.getDirection(), cursor.getSortField());
                     }
-                    return new CursorPage<>(data, nextCursor, hasNext);
-                })
+                    return new CursorPage<>(data, nextCursor, totalCount);
+                }))
                 .observeOn(Schedulers.computation());
     }
 

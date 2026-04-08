@@ -15,39 +15,40 @@
  */
 package io.gravitee.am.model.common;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Collection;
 import java.util.List;
 
 /**
- * Cursor-based pagination response. Unlike {@link Page}, this does not include a total count
- * (which requires an expensive full scan). Instead it provides an opaque cursor for fetching
- * the next page and a {@code hasNext} flag.
+ * Cursor-based pagination response. Provides an opaque cursor for fetching the next page.
+ * {@code hasNext} is derived from {@code nextCursor} — they cannot be contradictory.
  *
  * @param <T> the type of items in the page
  */
 public class CursorPage<T> {
     private final List<T> data;
     private final String nextCursor;
-    private final boolean hasNext;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final Long totalCount;
 
-    public CursorPage(Collection<T> data, String nextCursor, boolean hasNext) {
-        this(data, nextCursor, hasNext, null);
+    public CursorPage(Collection<T> data, String nextCursor) {
+        this(data, nextCursor, null);
     }
 
-    public CursorPage(Collection<T> data, String nextCursor, boolean hasNext, Long totalCount) {
+    public CursorPage(Collection<T> data, String nextCursor, Long totalCount) {
         this.data = data != null ? List.copyOf(data) : List.of();
         this.nextCursor = nextCursor;
-        this.hasNext = hasNext;
         this.totalCount = totalCount;
     }
 
     public static <T> CursorPage<T> empty() {
-        return new CursorPage<>(List.of(), null, false, null);
+        return new CursorPage<>(List.of(), null, null);
     }
 
     public CursorPage<T> withTotalCount(Long totalCount) {
-        return new CursorPage<>(this.data, this.nextCursor, this.hasNext, totalCount);
+        return new CursorPage<>(this.data, this.nextCursor, totalCount);
     }
 
     public List<T> getData() {
@@ -58,8 +59,9 @@ public class CursorPage<T> {
         return nextCursor;
     }
 
+    @JsonProperty("hasNext")
     public boolean isHasNext() {
-        return hasNext;
+        return nextCursor != null;
     }
 
     public Long getTotalCount() {

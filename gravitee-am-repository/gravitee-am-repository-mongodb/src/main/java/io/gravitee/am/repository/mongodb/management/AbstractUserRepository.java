@@ -259,7 +259,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     public Single<CursorPage<User>> findAllCursor(ReferenceType referenceType, String referenceId, CursorRequest cursor) {
         Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
         return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
-                this::convert, User::getUsername, User::getId);
+                this::convert, u -> u.getUsername() != null ? u.getUsername() : "", User::getId);
     }
 
     @Override
@@ -287,7 +287,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         }
         Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), searchQuery);
         return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
-                this::convert, User::getUsername, User::getId);
+                this::convert, u -> u.getUsername() != null ? u.getUsername() : "", User::getId);
     }
 
     @Override
@@ -296,7 +296,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
             BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
             Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), searchQuery);
             return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
-                    this::convert, User::getUsername, User::getId);
+                    this::convert, u -> u.getUsername() != null ? u.getUsername() : "", User::getId);
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);

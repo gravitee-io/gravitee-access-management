@@ -178,8 +178,8 @@ public class DomainsResource extends AbstractDomainResource {
     }
 
     public static final class DomainCursorPage extends CursorPage<Domain> {
-        public DomainCursorPage(Collection<Domain> data, String nextCursor, boolean hasNext, Long totalCount) {
-            super(data, nextCursor, hasNext, totalCount);
+        public DomainCursorPage(Collection<Domain> data, String nextCursor, Long totalCount) {
+            super(data, nextCursor, totalCount);
         }
     }
 
@@ -212,8 +212,10 @@ public class DomainsResource extends AbstractDomainResource {
                 .map(cursorPage -> new DomainCursorPage(
                         cursorPage.getData().stream().map(this::filterDomainInfos).collect(Collectors.toList()),
                         cursorPage.getNextCursor(),
-                        cursorPage.isHasNext(),
                         cursorPage.getTotalCount()))
+                .onErrorResumeNext(ex -> ex instanceof IllegalArgumentException
+                        ? Single.error(new jakarta.ws.rs.BadRequestException(ex.getMessage()))
+                        : Single.error(ex))
                 .subscribe(response::resume, response::resume);
     }
 

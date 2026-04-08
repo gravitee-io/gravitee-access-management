@@ -53,6 +53,9 @@ public class CursorRequest {
     private final int limit;
 
     private CursorRequest(String lastSortValue, String lastId, SortDirection direction, String sortField, int limit) {
+        if (direction == null) {
+            throw new IllegalArgumentException("direction must not be null");
+        }
         this.lastSortValue = lastSortValue;
         this.lastId = lastId;
         this.direction = direction;
@@ -137,25 +140,37 @@ public class CursorRequest {
      * Parse a sort parameter string (e.g., "name", "-updatedAt") into field + direction.
      * Prefix with "-" for descending. Returns a CursorRequest for the first page.
      */
+    /**
+     * Parse a sort parameter string (e.g., "name", "-updatedAt") into field + direction.
+     * Prefix with "-" for descending. If a cursor is provided, its embedded sort field and
+     * direction are used (the cursor is authoritative for continuation pages).
+     *
+     * @throws IllegalArgumentException if the cursor's sort field conflicts with the requested sort
+     */
     public static CursorRequest fromSortParam(String sortParam, String defaultSortField, SortDirection defaultDirection, String afterCursor, int limit) {
         String sortField = defaultSortField;
         SortDirection direction = defaultDirection;
 
         if (sortParam != null && !sortParam.isBlank()) {
-            if (sortParam.startsWith("-")) {
-                sortField = sortParam.substring(1);
-                direction = SortDirection.DESC;
-            } else {
-                sortField = sortParam;
-                direction = SortDirection.ASC;
+            String parsed = sortParam.startsWith("-") ? sortParam.substring(1) : sortParam;
+            if (parsed.isBlank()) {
+                // sortParam was just "-" with no field name — use defaults
+                parsed = defaultSortField;
             }
+            sortField = parsed;
+            direction = sortParam.startsWith("-") ? SortDirection.DESC : SortDirection.ASC;
         }
 
         if (afterCursor != null && !afterCursor.isBlank()) {
             CursorRequest decoded = decode(afterCursor, limit);
-            // The cursor's sort field takes precedence (it was set when the cursor was created)
-            return new CursorRequest(decoded.lastSortValue, decoded.lastId, decoded.direction,
-                    decoded.sortField != null ? decoded.sortField : sortField, limit);
+            String cursorSortField = decoded.sortField != null ? decoded.sortField : sortField;
+            // Reject conflicting sort field between cursor and query param
+            if (decoded.sortField != null && !decoded.sortField.equals(sortField)) {
+                throw new IllegalArgumentException(
+                        "Sort field '" + sortField + "' conflicts with cursor sort field '" + decoded.sortField
+                                + "'. Start a new pagination (omit the cursor) when changing sort order.");
+            }
+            return new CursorRequest(decoded.lastSortValue, decoded.lastId, decoded.direction, cursorSortField, limit);
         }
 
         return firstPage(sortField, direction, limit);

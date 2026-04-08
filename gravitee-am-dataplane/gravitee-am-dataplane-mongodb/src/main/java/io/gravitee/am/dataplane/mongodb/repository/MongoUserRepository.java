@@ -305,19 +305,22 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
         Bson sort = new BasicDBObject(FIELD_USERNAME, sortDir).append(FIELD_ID, sortDir);
 
+        Single<Long> countSingle = Observable.fromPublisher(usersCollection.countDocuments(baseFilter, countOptions()))
+                .firstOrError();
+
         return Observable.fromPublisher(withMaxTime(usersCollection.find(filter)).sort(sort).limit(fetchLimit))
                 .map(this::convert)
                 .toList()
-                .map(items -> {
+                .flatMap(items -> countSingle.map(totalCount -> {
                     boolean hasNext = items.size() > cursor.getLimit();
                     java.util.List<User> data = hasNext ? items.subList(0, cursor.getLimit()) : items;
                     String nextCursor = null;
                     if (hasNext && !data.isEmpty()) {
                         User last = data.get(data.size() - 1);
-                        nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection());
+                        nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection(), cursor.getSortField());
                     }
-                    return new CursorPage<>(data, nextCursor, hasNext);
-                })
+                    return new CursorPage<>(data, nextCursor, totalCount);
+                }))
                 .observeOn(Schedulers.computation());
     }
 

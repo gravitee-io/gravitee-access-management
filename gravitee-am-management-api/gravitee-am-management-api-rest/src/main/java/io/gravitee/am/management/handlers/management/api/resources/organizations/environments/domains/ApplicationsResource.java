@@ -184,8 +184,8 @@ public class ApplicationsResource extends AbstractDomainResource {
     }
 
     public static final class ApplicationCursorPage extends CursorPage<FilteredApplication> {
-        public ApplicationCursorPage(Collection<FilteredApplication> data, String nextCursor, boolean hasNext, Long totalCount) {
-            super(data, nextCursor, hasNext, totalCount);
+        public ApplicationCursorPage(Collection<FilteredApplication> data, String nextCursor, Long totalCount) {
+            super(data, nextCursor, totalCount);
         }
     }
 
@@ -226,8 +226,10 @@ public class ApplicationsResource extends AbstractDomainResource {
                         new ApplicationCursorPage(
                                 cursorPage.getData().stream().map(FilteredApplication::of).toList(),
                                 cursorPage.getNextCursor(),
-                                cursorPage.isHasNext(),
                                 cursorPage.getTotalCount()))
+                .onErrorResumeNext(ex -> ex instanceof IllegalArgumentException
+                        ? Single.error(new jakarta.ws.rs.BadRequestException(ex.getMessage()))
+                        : Single.error(ex))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -248,7 +248,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         }
 
         sql.append(" ORDER BY LOWER(d.name) ").append(sortDir).append(", d.id ").append(sortDir)
-           .append(" LIMIT :fetchLimit");
+           .append(" LIMIT :fetchLimit"); // TODO LIMIT is not portable to MSSQL/Oracle — use dialect helper when available
 
         DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
                 .bind("refType", ReferenceType.ENVIRONMENT.name())
@@ -266,11 +266,29 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                        .bind("lastId", cursor.getLastId());
         }
 
+        // Count query uses the same base filter without keyset conditions
+        var countSql = new StringBuilder("SELECT COUNT(*) FROM domains d WHERE d.reference_type = :refType AND d.reference_id = :refId");
+        if (searchQuery != null) {
+            boolean wildcardMatch2 = searchQuery.contains("*");
+            countSql.append(" AND UPPER(d.hrid) ").append(wildcardMatch2 ? "LIKE" : "=").append(" :searchValue");
+        }
+
+        DatabaseClient.GenericExecuteSpec countSpec = getTemplate().getDatabaseClient().sql(countSql.toString())
+                .bind("refType", ReferenceType.ENVIRONMENT.name())
+                .bind("refId", environmentId);
+        if (searchQuery != null) {
+            boolean wildcardMatch2 = searchQuery.contains("*");
+            String value2 = wildcardMatch2 ? searchQuery.replaceAll("\\*+", "%").toUpperCase() : searchQuery.toUpperCase();
+            countSpec = countSpec.bind("searchValue", value2);
+        }
+
+        Single<Long> countSingle = monoToSingle(countSpec.map((row, rowMetadata) -> row.get(0, Long.class)).first());
+
         return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcDomain.class, row)).all())
                 .map(this::toDomain)
                 .concatMap(this::completeDomain)
                 .toList()
-                .map(items -> buildCursorPage(items, cursor, Domain::getName, Domain::getId))
+                .flatMap(items -> countSingle.map(totalCount -> buildCursorPage(items, cursor, Domain::getName, Domain::getId).withTotalCount(totalCount)))
                 .observeOn(Schedulers.computation());
     }
 
@@ -282,9 +300,9 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         String nextCursor = null;
         if (hasNext && !data.isEmpty()) {
             T last = data.get(data.size() - 1);
-            nextCursor = CursorRequest.encode(sortValueExtractor.apply(last), idExtractor.apply(last), cursor.getDirection());
+            nextCursor = CursorRequest.encode(sortValueExtractor.apply(last), idExtractor.apply(last), cursor.getDirection(), cursor.getSortField());
         }
-        return new CursorPage<>(data, nextCursor, hasNext);
+        return new CursorPage<>(data, nextCursor);
     }
 
     private Flowable<Domain> completeDomain(Domain entity) {

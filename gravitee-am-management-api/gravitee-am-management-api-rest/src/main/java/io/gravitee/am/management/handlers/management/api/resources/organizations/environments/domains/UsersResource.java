@@ -289,8 +289,8 @@ public class UsersResource extends AbstractResource {
     }
 
     public static final class UserCursorPage extends CursorPage<User> {
-        public UserCursorPage(Collection<User> data, String nextCursor, boolean hasNext, Long totalCount) {
-            super(data, nextCursor, hasNext, totalCount);
+        public UserCursorPage(Collection<User> data, String nextCursor, Long totalCount) {
+            super(data, nextCursor, totalCount);
         }
     }
 
@@ -321,6 +321,9 @@ public class UsersResource extends AbstractResource {
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                         .flatMap(domain -> searchUsersCursor(domain, query, filter, afterCursor, limit, sort)))
+                .onErrorResumeNext(ex -> ex instanceof IllegalArgumentException
+                        ? Single.error(new BadRequestException(ex.getMessage()))
+                        : Single.error(ex))
                 .subscribe(response::resume, response::resume);
     }
 

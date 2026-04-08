@@ -608,52 +608,61 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Override
     public Single<CursorPage<User>> searchCursor(ReferenceType referenceType, String referenceId, FilterCriteria criteria, CursorRequest cursor) {
         // FilterCriteria cursor search is complex; delegate to a simpler SCIM-style query approach
-        try {
-            boolean ascending = cursor.getDirection().isAscending();
-            String compareOp = ascending ? ">" : "<";
-            String sortDir = ascending ? "ASC" : "DESC";
-            int fetchLimit = cursor.getLimit() + 1;
+        boolean ascending = cursor.getDirection().isAscending();
+        String compareOp = ascending ? ">" : "<";
+        String sortDir = ascending ? "ASC" : "DESC";
+        int fetchLimit = cursor.getLimit() + 1;
 
+        final ScimSearch search;
+        try {
             StringBuilder queryBuilder = new StringBuilder();
             queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
-            ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME, -1, -1, USERS);
-
-            // Modify the select query to add keyset pagination
-            String selectQuery = search.getSelectQuery();
-            // Remove any existing ORDER BY and add keyset conditions
-            int orderByIdx = selectQuery.toUpperCase().lastIndexOf("ORDER BY");
-            String baseQuery = orderByIdx > 0 ? selectQuery.substring(0, orderByIdx) : selectQuery;
-
-            var sql = new StringBuilder(baseQuery);
-            if (!cursor.isFirstPage()) {
-                sql.append(" AND (u.username ").append(compareOp).append(" :lastSort")
-                   .append(" OR (u.username = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
-            }
-            sql.append(" ORDER BY u.username ").append(sortDir).append(", u.id ").append(sortDir)
-               .append(" LIMIT :fetchLimit");
-
-            org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString());
-            spec = spec.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId).bind("fetchLimit", fetchLimit);
-            for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
-                spec = spec.bind(entry.getKey(), entry.getValue());
-            }
-            if (!cursor.isFirstPage()) {
-                spec = spec.bind("lastSort", cursor.getLastSortValue()).bind("lastId", cursor.getLastId());
-            }
-
-            return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
-                    .map(this::toEntity)
-                    .concatMap(user -> completeUser(user).toFlowable())
-                    .toList()
-                    .map(items -> buildUserCursorPage(items, cursor))
-                    .observeOn(Schedulers.computation());
+            search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME, -1, -1, USERS);
+        } catch (IllegalArgumentException ex) {
+            return Single.error(ex);
         } catch (Exception ex) {
-            if (ex instanceof IllegalArgumentException) {
-                return Single.error(ex);
-            }
             LOGGER.error("An error has occurred while searching users with cursor and criteria {}", criteria, ex);
             return Single.error(new io.gravitee.am.repository.exceptions.TechnicalException("An error has occurred while searching users with cursor and filter criteria", ex));
         }
+
+        // Modify the select query to add keyset pagination
+        String selectQuery = search.getSelectQuery();
+        // Remove any existing ORDER BY and add keyset conditions
+        int orderByIdx = selectQuery.toUpperCase().lastIndexOf("ORDER BY");
+        String baseQuery = orderByIdx > 0 ? selectQuery.substring(0, orderByIdx) : selectQuery;
+
+        var sql = new StringBuilder(baseQuery);
+        if (!cursor.isFirstPage()) {
+            sql.append(" AND (COALESCE(u.username, '') ").append(compareOp).append(" :lastSort")
+               .append(" OR (COALESCE(u.username, '') = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
+        }
+        sql.append(" ORDER BY COALESCE(u.username, '') ").append(sortDir).append(", u.id ").append(sortDir)
+           .append(" LIMIT :fetchLimit");
+
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString());
+        spec = spec.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId).bind("fetchLimit", fetchLimit);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            spec = spec.bind(entry.getKey(), entry.getValue());
+        }
+        if (!cursor.isFirstPage()) {
+            spec = spec.bind("lastSort", cursor.getLastSortValue()).bind("lastId", cursor.getLastId());
+        }
+
+        // Count query uses the base SCIM filter without keyset conditions
+        String countQuery = search.getCountQuery();
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec countSpec = getTemplate().getDatabaseClient().sql(countQuery);
+        countSpec = countSpec.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            countSpec = countSpec.bind(entry.getKey(), entry.getValue());
+        }
+        Single<Long> countSingle = monoToSingle(countSpec.map((row, rowMetadata) -> row.get(0, Long.class)).first());
+
+        return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
+                .map(this::toEntity)
+                .concatMap(user -> completeUser(user).toFlowable())
+                .toList()
+                .flatMap(items -> countSingle.map(totalCount -> buildUserCursorPage(items, cursor).withTotalCount(totalCount)))
+                .observeOn(Schedulers.computation());
     }
 
     private Single<CursorPage<User>> executeUserCursorQuery(ReferenceType referenceType, String referenceId, String searchQuery, CursorRequest cursor) {
@@ -676,11 +685,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         }
 
         if (!cursor.isFirstPage()) {
-            sql.append(" AND (u.username ").append(compareOp).append(" :lastSort")
-               .append(" OR (u.username = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
+            sql.append(" AND (COALESCE(u.username, '') ").append(compareOp).append(" :lastSort")
+               .append(" OR (COALESCE(u.username, '') = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
         }
 
-        sql.append(" ORDER BY u.username ").append(sortDir).append(", u.id ").append(sortDir)
+        sql.append(" ORDER BY COALESCE(u.username, '') ").append(sortDir).append(", u.id ").append(sortDir)
            .append(" LIMIT :fetchLimit");
 
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
@@ -698,11 +707,33 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             spec = spec.bind("lastSort", cursor.getLastSortValue()).bind("lastId", cursor.getLastId());
         }
 
+        // Count query uses the same base filter without keyset conditions
+        var countSql = new StringBuilder("SELECT COUNT(*) FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId");
+        if (searchQuery != null) {
+            boolean wildcardSearch2 = searchQuery.contains("*");
+            String op2 = wildcardSearch2 ? "LIKE" : "=";
+            countSql.append(" AND (UPPER(u.username) ").append(op2).append(" :searchValue")
+                    .append(" OR UPPER(u.email) ").append(op2).append(" :searchValue")
+                    .append(" OR UPPER(u.additional_information_email) ").append(op2).append(" :searchValue")
+                    .append(" OR UPPER(u.display_name) ").append(op2).append(" :searchValue")
+                    .append(" OR UPPER(u.first_name) ").append(op2).append(" :searchValue")
+                    .append(" OR UPPER(u.last_name) ").append(op2).append(" :searchValue)");
+        }
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec countSpec = getTemplate().getDatabaseClient().sql(countSql.toString())
+                .bind(REF_TYPE, referenceType.name())
+                .bind(REF_ID, referenceId);
+        if (searchQuery != null) {
+            boolean wildcardSearch2 = searchQuery.contains("*");
+            String value2 = wildcardSearch2 ? searchQuery.replaceAll("\\*+", "%") : searchQuery;
+            countSpec = countSpec.bind("searchValue", value2.toUpperCase());
+        }
+        Single<Long> countSingle = monoToSingle(countSpec.map((row, rowMetadata) -> row.get(0, Long.class)).first());
+
         return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
                 .map(this::toEntity)
                 .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
-                .map(items -> buildUserCursorPage(items, cursor))
+                .flatMap(items -> countSingle.map(totalCount -> buildUserCursorPage(items, cursor).withTotalCount(totalCount)))
                 .observeOn(Schedulers.computation());
     }
 
@@ -712,9 +743,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         String nextCursor = null;
         if (hasNext && !data.isEmpty()) {
             User last = data.get(data.size() - 1);
-            nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection());
+            nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection(), cursor.getSortField());
         }
-        return new CursorPage<>(data, nextCursor, hasNext);
+        return new CursorPage<>(data, nextCursor);
     }
 
     @Override

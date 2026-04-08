@@ -26,7 +26,7 @@ class CursorPageTest {
     @Test
     void constructor_copiesData() {
         var mutableList = new java.util.ArrayList<>(List.of("a", "b", "c"));
-        var page = new CursorPage<>(mutableList, "cursor123", true);
+        var page = new CursorPage<>(mutableList, "cursor123");
 
         mutableList.add("d");
         assertEquals(3, page.getData().size());
@@ -35,7 +35,7 @@ class CursorPageTest {
 
     @Test
     void constructor_nullData_returnsEmptyList() {
-        var page = new CursorPage<String>(null, null, false);
+        var page = new CursorPage<String>(null, null);
         assertNotNull(page.getData());
         assertTrue(page.getData().isEmpty());
     }
@@ -46,22 +46,44 @@ class CursorPageTest {
         assertTrue(page.getData().isEmpty());
         assertNull(page.getNextCursor());
         assertFalse(page.isHasNext());
+        assertNull(page.getTotalCount());
     }
 
     @Test
-    void hasNext_reflectsConstructorArg() {
-        var withNext = new CursorPage<>(List.of("a"), "next", true);
+    void hasNext_derivedFromNextCursor() {
+        var withNext = new CursorPage<>(List.of("a"), "next");
         assertTrue(withNext.isHasNext());
         assertEquals("next", withNext.getNextCursor());
 
-        var withoutNext = new CursorPage<>(List.of("a"), null, false);
+        var withoutNext = new CursorPage<>(List.of("a"), null);
         assertFalse(withoutNext.isHasNext());
         assertNull(withoutNext.getNextCursor());
     }
 
     @Test
     void data_isImmutable() {
-        var page = new CursorPage<>(List.of("a", "b"), "cursor", true);
+        var page = new CursorPage<>(List.of("a", "b"), "cursor");
         assertThrows(UnsupportedOperationException.class, () -> page.getData().add("c"));
+    }
+
+    @Test
+    void withTotalCount_returnsNewInstance() {
+        var page = new CursorPage<>(List.of("a"), "cursor");
+        assertNull(page.getTotalCount());
+
+        var withCount = page.withTotalCount(42L);
+        assertEquals(42L, withCount.getTotalCount());
+        assertEquals(List.of("a"), withCount.getData());
+        assertEquals("cursor", withCount.getNextCursor());
+        assertTrue(withCount.isHasNext());
+
+        // Original unchanged
+        assertNull(page.getTotalCount());
+    }
+
+    @Test
+    void totalCount_includedInConstructor() {
+        var page = new CursorPage<>(List.of("a"), "cursor", 100L);
+        assertEquals(100L, page.getTotalCount());
     }
 }
