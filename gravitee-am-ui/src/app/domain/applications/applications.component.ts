@@ -64,14 +64,20 @@ export class ApplicationsComponent implements OnInit {
       ? this.applicationService.searchCursor(this.domainId, '*' + this.searchValue + '*', this.pageSize, currentCursor, this.currentSort)
       : this.applicationService.findByDomainCursor(this.domainId, this.pageSize, currentCursor, this.currentSort);
 
-    findApps.subscribe((cursorPage) => {
-      this.applications = cursorPage.data;
-      this.nextCursor = cursorPage.nextCursor;
-      this.hasNext = cursorPage.hasNext;
-      this.hasPrevious = this.cursorStack.length > 0;
-      if (cursorPage.totalCount !== undefined) {
-        this.totalCount = cursorPage.totalCount;
-      }
+    findApps.subscribe({
+      next: (cursorPage) => {
+        this.applications = cursorPage.data;
+        this.nextCursor = cursorPage.nextCursor;
+        this.hasNext = cursorPage.hasNext;
+        this.hasPrevious = this.cursorStack.length > 0;
+        if (cursorPage.totalCount !== undefined) {
+          this.totalCount = cursorPage.totalCount;
+        }
+      },
+      error: (err: unknown) => {
+        this.snackbarService.open('Failed to load applications');
+        console.error('Failed to load applications:', err);
+      },
     });
   }
 

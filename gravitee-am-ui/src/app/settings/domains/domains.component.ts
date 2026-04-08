@@ -57,14 +57,19 @@ export class DomainsComponent implements OnInit {
       ? this.domainService.searchCursor('*' + this.searchValue + '*', this.pageSize, currentCursor, this.currentSort)
       : this.domainService.findByEnvironmentCursor(this.pageSize, currentCursor, this.currentSort);
 
-    findDomains.subscribe((cursorPage) => {
-      this.domains = cursorPage.data;
-      this.nextCursor = cursorPage.nextCursor;
-      this.hasNext = cursorPage.hasNext;
-      this.hasPrevious = this.cursorStack.length > 0;
-      if (cursorPage.totalCount !== undefined) {
-        this.totalCount = cursorPage.totalCount;
-      }
+    findDomains.subscribe({
+      next: (cursorPage) => {
+        this.domains = cursorPage.data;
+        this.nextCursor = cursorPage.nextCursor;
+        this.hasNext = cursorPage.hasNext;
+        this.hasPrevious = this.cursorStack.length > 0;
+        if (cursorPage.totalCount !== undefined) {
+          this.totalCount = cursorPage.totalCount;
+        }
+      },
+      error: (err: unknown) => {
+        console.error('Failed to load domains:', err);
+      },
     });
   }
 

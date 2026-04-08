@@ -109,18 +109,25 @@ export class UsersComponent implements OnInit {
     }
 
     this.isLoading = true;
-    findUsers.subscribe((cursorPage) => {
-      this.isLoading = false;
-      this.users = cursorPage.data;
-      this.nextCursor = cursorPage.nextCursor;
-      this.hasNext = cursorPage.hasNext;
-      this.hasPrevious = this.cursorStack.length > 0;
-      if (cursorPage.totalCount !== undefined) {
-        this.totalCount = cursorPage.totalCount;
-      }
-      if (advancedSearchMode) {
-        this.searchValue = searchQuery;
-      }
+    findUsers.subscribe({
+      next: (cursorPage) => {
+        this.isLoading = false;
+        this.users = cursorPage.data;
+        this.nextCursor = cursorPage.nextCursor;
+        this.hasNext = cursorPage.hasNext;
+        this.hasPrevious = this.cursorStack.length > 0;
+        if (cursorPage.totalCount !== undefined) {
+          this.totalCount = cursorPage.totalCount;
+        }
+        if (advancedSearchMode) {
+          this.searchValue = searchQuery;
+        }
+      },
+      error: (err: unknown) => {
+        this.isLoading = false;
+        this.snackbarService.open('Failed to load users');
+        console.error('Failed to load users:', err);
+      },
     });
   }
 
