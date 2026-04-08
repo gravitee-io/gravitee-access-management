@@ -95,7 +95,7 @@ class SCIMBulkUsersCreation extends Simulation {
          |        "emails": [
          |          {
          |            "primary": true,
-         |            "value": "user_$userIndex@acme.fr"
+         |            "value": "success@simulator.amazonses.com"
          |          }
          |        ]
          |      }

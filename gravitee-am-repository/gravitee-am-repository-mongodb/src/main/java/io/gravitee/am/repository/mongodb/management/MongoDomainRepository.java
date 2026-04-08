@@ -457,13 +457,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedDomains(cimdSettings.getAllowedDomains());
         result.setCacheTtlSeconds(cimdSettings.getCacheTtlSeconds());
         result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
-        result.setAllowedGrantTypes(cimdSettings.getAllowedGrantTypes());
-        result.setAllowedScopes(cimdSettings.getAllowedScopes());
-        result.setIdentityProviders(cimdSettings.getIdentityProviders());
-        result.setCertificateId(cimdSettings.getCertificateId());
-        result.setAccessTokenValiditySeconds(cimdSettings.getAccessTokenValiditySeconds());
-        result.setRefreshTokenValiditySeconds(cimdSettings.getRefreshTokenValiditySeconds());
-        result.setIdTokenValiditySeconds(cimdSettings.getIdTokenValiditySeconds());
+        result.setSoftwareId(cimdSettings.getSoftwareId());
 
         return result;
     }
@@ -482,13 +476,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedDomains(cimdSettings.getAllowedDomains());
         result.setCacheTtlSeconds(cimdSettings.getCacheTtlSeconds());
         result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
-        result.setAllowedGrantTypes(cimdSettings.getAllowedGrantTypes());
-        result.setAllowedScopes(cimdSettings.getAllowedScopes());
-        result.setIdentityProviders(cimdSettings.getIdentityProviders());
-        result.setCertificateId(cimdSettings.getCertificateId());
-        result.setAccessTokenValiditySeconds(cimdSettings.getAccessTokenValiditySeconds());
-        result.setRefreshTokenValiditySeconds(cimdSettings.getRefreshTokenValiditySeconds());
-        result.setIdTokenValiditySeconds(cimdSettings.getIdTokenValiditySeconds());
+        result.setSoftwareId(cimdSettings.getSoftwareId());
 
         return result;
     }

@@ -29,9 +29,6 @@ public class CIMDSettings {
     public static final int DEFAULT_MAX_RESPONSE_SIZE_KB = 10;
     public static final int DEFAULT_CACHE_TTL_SECONDS = 86400;
     public static final int DEFAULT_CACHE_MAX_ENTRIES = 1000;
-    public static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
-    public static final int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
-    public static final int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
 
     /**
      * Whether CIMD authentication is permitted for the domain.
@@ -83,39 +80,9 @@ public class CIMDSettings {
     // --- Security Policy ---
 
     /**
-     * Grant types that CIMD clients are permitted to use.
+     * Template identifier
      */
-    private List<String> allowedGrantTypes = Arrays.asList("authorization_code", "password");
-
-    /**
-     * Scopes that CIMD clients may request. Scopes not in this list are stripped before token issuance.
-     */
-    private List<String> allowedScopes;
-
-    /**
-     * Identity provider IDs available to CIMD clients.
-     */
-    private List<String> identityProviders;
-
-    /**
-     * Certificate ID used to sign tokens issued to CIMD clients.
-     */
-    private String certificateId;
-
-    /**
-     * Access token validity in seconds for CIMD clients.
-     */
-    private int accessTokenValiditySeconds = DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS;
-
-    /**
-     * Refresh token validity in seconds for CIMD clients.
-     */
-    private int refreshTokenValiditySeconds = DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS;
-
-    /**
-     * ID token validity in seconds for CIMD clients.
-     */
-    private int idTokenValiditySeconds = DEFAULT_ID_TOKEN_VALIDITY_SECONDS;
+    private String softwareId;
 
     public boolean isEnabled() {
         return enabled;
@@ -181,60 +148,12 @@ public class CIMDSettings {
         this.cacheMaxEntries = cacheMaxEntries;
     }
 
-    public List<String> getAllowedGrantTypes() {
-        return allowedGrantTypes;
+    public String getSoftwareId() {
+        return softwareId;
     }
 
-    public void setAllowedGrantTypes(List<String> allowedGrantTypes) {
-        this.allowedGrantTypes = allowedGrantTypes;
-    }
-
-    public List<String> getAllowedScopes() {
-        return allowedScopes;
-    }
-
-    public void setAllowedScopes(List<String> allowedScopes) {
-        this.allowedScopes = allowedScopes;
-    }
-
-    public List<String> getIdentityProviders() {
-        return identityProviders;
-    }
-
-    public void setIdentityProviders(List<String> identityProviders) {
-        this.identityProviders = identityProviders;
-    }
-
-    public String getCertificateId() {
-        return certificateId;
-    }
-
-    public void setCertificateId(String certificateId) {
-        this.certificateId = certificateId;
-    }
-
-    public int getAccessTokenValiditySeconds() {
-        return accessTokenValiditySeconds;
-    }
-
-    public void setAccessTokenValiditySeconds(int accessTokenValiditySeconds) {
-        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-    }
-
-    public int getRefreshTokenValiditySeconds() {
-        return refreshTokenValiditySeconds;
-    }
-
-    public void setRefreshTokenValiditySeconds(int refreshTokenValiditySeconds) {
-        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
-    }
-
-    public int getIdTokenValiditySeconds() {
-        return idTokenValiditySeconds;
-    }
-
-    public void setIdTokenValiditySeconds(int idTokenValiditySeconds) {
-        this.idTokenValiditySeconds = idTokenValiditySeconds;
+    public void setSoftwareId(String softwareId) {
+        this.softwareId = softwareId;
     }
 
     public static CIMDSettings defaultSettings() {

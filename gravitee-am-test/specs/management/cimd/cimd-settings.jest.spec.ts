@@ -45,10 +45,7 @@ describe('CIMD Settings - Defaults', () => {
     expect(cimd.maxResponseSizeKb).toBe(10);
     expect(cimd.cacheTtlSeconds).toBe(86400);
     expect(cimd.cacheMaxEntries).toBe(1000);
-    expect(cimd.allowedGrantTypes).toEqual(expect.arrayContaining(['authorization_code', 'password']));
-    expect(cimd.accessTokenValiditySeconds).toBe(7200);
-    expect(cimd.refreshTokenValiditySeconds).toBe(14400);
-    expect(cimd.idTokenValiditySeconds).toBe(14400);
+    expect(cimd.softwareId).toBeNull();
   });
 });
 
@@ -105,36 +102,12 @@ describe('CIMD Settings - Cache', () => {
 });
 
 describe('CIMD Settings - Security Policy', () => {
-  it('should update allowed grant types and scopes', async () => {
-    const domain = await fixture.patchCimdSettings({
-      allowedGrantTypes: ['authorization_code'],
-      allowedScopes: ['openid', 'profile'],
-    });
-
-    const cimd = domain.oidc.cimdSettings;
-    expect(cimd.allowedGrantTypes).toEqual(['authorization_code']);
-    expect(cimd.allowedScopes).toEqual(['openid', 'profile']);
-  });
-
-  it('should update token expiration settings', async () => {
-    const domain = await fixture.patchCimdSettings({
-      accessTokenValiditySeconds: 3600,
-      refreshTokenValiditySeconds: 7200,
-      idTokenValiditySeconds: 3600,
-    });
-
-    const cimd = domain.oidc.cimdSettings;
-    expect(cimd.accessTokenValiditySeconds).toBe(3600);
-    expect(cimd.refreshTokenValiditySeconds).toBe(7200);
-    expect(cimd.idTokenValiditySeconds).toBe(3600);
-  });
-
   it('should update identity provider assignments', async () => {
     const domain = await fixture.patchCimdSettings({
-      identityProviders: ['idp-1', 'idp-2'],
+      sofwareId: 'template-id',
     });
 
-    expect(domain.oidc.cimdSettings.identityProviders).toEqual(['idp-1', 'idp-2']);
+    expect(domain.oidc.cimdSettings.softwareId).toEqual('template-id');
   });
 });
 
