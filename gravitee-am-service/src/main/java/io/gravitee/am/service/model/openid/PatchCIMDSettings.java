@@ -46,13 +46,7 @@ public class PatchCIMDSettings {
     private Optional<Integer> cacheMaxEntries;
 
     // Security Policy
-    private Optional<List<String>> allowedGrantTypes;
-    private Optional<List<String>> allowedScopes;
-    private Optional<List<String>> identityProviders;
-    private Optional<String> certificateId;
-    private Optional<Integer> accessTokenValiditySeconds;
-    private Optional<Integer> refreshTokenValiditySeconds;
-    private Optional<Integer> idTokenValiditySeconds;
+    private Optional<String> softwareId;
 
     public Optional<Boolean> getEnabled() {
         return enabled;
@@ -118,60 +112,12 @@ public class PatchCIMDSettings {
         this.cacheMaxEntries = cacheMaxEntries;
     }
 
-    public Optional<List<String>> getAllowedGrantTypes() {
-        return allowedGrantTypes;
+    public Optional<String> getSoftwareId() {
+        return softwareId;
     }
 
-    public void setAllowedGrantTypes(Optional<List<String>> allowedGrantTypes) {
-        this.allowedGrantTypes = allowedGrantTypes;
-    }
-
-    public Optional<List<String>> getAllowedScopes() {
-        return allowedScopes;
-    }
-
-    public void setAllowedScopes(Optional<List<String>> allowedScopes) {
-        this.allowedScopes = allowedScopes;
-    }
-
-    public Optional<List<String>> getIdentityProviders() {
-        return identityProviders;
-    }
-
-    public void setIdentityProviders(Optional<List<String>> identityProviders) {
-        this.identityProviders = identityProviders;
-    }
-
-    public Optional<String> getCertificateId() {
-        return certificateId;
-    }
-
-    public void setCertificateId(Optional<String> certificateId) {
-        this.certificateId = certificateId;
-    }
-
-    public Optional<Integer> getAccessTokenValiditySeconds() {
-        return accessTokenValiditySeconds;
-    }
-
-    public void setAccessTokenValiditySeconds(Optional<Integer> accessTokenValiditySeconds) {
-        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-    }
-
-    public Optional<Integer> getRefreshTokenValiditySeconds() {
-        return refreshTokenValiditySeconds;
-    }
-
-    public void setRefreshTokenValiditySeconds(Optional<Integer> refreshTokenValiditySeconds) {
-        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
-    }
-
-    public Optional<Integer> getIdTokenValiditySeconds() {
-        return idTokenValiditySeconds;
-    }
-
-    public void setIdTokenValiditySeconds(Optional<Integer> idTokenValiditySeconds) {
-        this.idTokenValiditySeconds = idTokenValiditySeconds;
+    public void setSoftwareId(Optional<String> softwareId) {
+        this.softwareId = softwareId;
     }
 
     public CIMDSettings patch(CIMDSettings toPatch) {
@@ -185,13 +131,7 @@ public class PatchCIMDSettings {
         SetterUtils.safeSet(result::setAllowedDomains, this.getAllowedDomains());
         SetterUtils.safeSet(result::setCacheTtlSeconds, this.getCacheTtlSeconds(), int.class);
         SetterUtils.safeSet(result::setCacheMaxEntries, this.getCacheMaxEntries(), int.class);
-        SetterUtils.safeSet(result::setAllowedGrantTypes, this.getAllowedGrantTypes());
-        SetterUtils.safeSet(result::setAllowedScopes, this.getAllowedScopes());
-        SetterUtils.safeSet(result::setIdentityProviders, this.getIdentityProviders());
-        SetterUtils.safeSet(result::setCertificateId, this.getCertificateId());
-        SetterUtils.safeSet(result::setAccessTokenValiditySeconds, this.getAccessTokenValiditySeconds(), int.class);
-        SetterUtils.safeSet(result::setRefreshTokenValiditySeconds, this.getRefreshTokenValiditySeconds(), int.class);
-        SetterUtils.safeSet(result::setIdTokenValiditySeconds, this.getIdTokenValiditySeconds(), int.class);
+        SetterUtils.safeSet(result::setSoftwareId, this.getSoftwareId(), String.class);
 
         return result;
     }

@@ -34,12 +34,6 @@ import { mapValues } from '../runtime';
 export interface PatchCIMDSettings {
   /**
    *
-   * @type {number}
-   * @memberof PatchCIMDSettings
-   */
-  accessTokenValiditySeconds?: number;
-  /**
-   *
    * @type {boolean}
    * @memberof PatchCIMDSettings
    */
@@ -58,18 +52,6 @@ export interface PatchCIMDSettings {
   allowedDomains?: Array<string>;
   /**
    *
-   * @type {Array<string>}
-   * @memberof PatchCIMDSettings
-   */
-  allowedGrantTypes?: Array<string>;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchCIMDSettings
-   */
-  allowedScopes?: Array<string>;
-  /**
-   *
    * @type {number}
    * @memberof PatchCIMDSettings
    */
@@ -80,12 +62,6 @@ export interface PatchCIMDSettings {
    * @memberof PatchCIMDSettings
    */
   cacheTtlSeconds?: number;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchCIMDSettings
-   */
-  certificateId?: string;
   /**
    *
    * @type {boolean}
@@ -103,25 +79,13 @@ export interface PatchCIMDSettings {
    * @type {number}
    * @memberof PatchCIMDSettings
    */
-  idTokenValiditySeconds?: number;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof PatchCIMDSettings
-   */
-  identityProviders?: Array<string>;
-  /**
-   *
-   * @type {number}
-   * @memberof PatchCIMDSettings
-   */
   maxResponseSizeKb?: number;
   /**
    *
-   * @type {number}
+   * @type {string}
    * @memberof PatchCIMDSettings
    */
-  refreshTokenValiditySeconds?: number;
+  softwareId?: string;
 }
 
 /**
@@ -140,21 +104,15 @@ export function PatchCIMDSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     return json;
   }
   return {
-    accessTokenValiditySeconds: json['accessTokenValiditySeconds'] == null ? undefined : json['accessTokenValiditySeconds'],
     allowPrivateIpAddress: json['allowPrivateIpAddress'] == null ? undefined : json['allowPrivateIpAddress'],
     allowUnsecuredHttpUri: json['allowUnsecuredHttpUri'] == null ? undefined : json['allowUnsecuredHttpUri'],
     allowedDomains: json['allowedDomains'] == null ? undefined : json['allowedDomains'],
-    allowedGrantTypes: json['allowedGrantTypes'] == null ? undefined : json['allowedGrantTypes'],
-    allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
     cacheMaxEntries: json['cacheMaxEntries'] == null ? undefined : json['cacheMaxEntries'],
     cacheTtlSeconds: json['cacheTtlSeconds'] == null ? undefined : json['cacheTtlSeconds'],
-    certificateId: json['certificateId'] == null ? undefined : json['certificateId'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     fetchTimeoutMs: json['fetchTimeoutMs'] == null ? undefined : json['fetchTimeoutMs'],
-    idTokenValiditySeconds: json['idTokenValiditySeconds'] == null ? undefined : json['idTokenValiditySeconds'],
-    identityProviders: json['identityProviders'] == null ? undefined : json['identityProviders'],
     maxResponseSizeKb: json['maxResponseSizeKb'] == null ? undefined : json['maxResponseSizeKb'],
-    refreshTokenValiditySeconds: json['refreshTokenValiditySeconds'] == null ? undefined : json['refreshTokenValiditySeconds'],
+    softwareId: json['softwareId'] == null ? undefined : json['softwareId'],
   };
 }
 
@@ -168,20 +126,14 @@ export function PatchCIMDSettingsToJSONTyped(value?: PatchCIMDSettings | null, i
   }
 
   return {
-    accessTokenValiditySeconds: value['accessTokenValiditySeconds'],
     allowPrivateIpAddress: value['allowPrivateIpAddress'],
     allowUnsecuredHttpUri: value['allowUnsecuredHttpUri'],
     allowedDomains: value['allowedDomains'],
-    allowedGrantTypes: value['allowedGrantTypes'],
-    allowedScopes: value['allowedScopes'],
     cacheMaxEntries: value['cacheMaxEntries'],
     cacheTtlSeconds: value['cacheTtlSeconds'],
-    certificateId: value['certificateId'],
     enabled: value['enabled'],
     fetchTimeoutMs: value['fetchTimeoutMs'],
-    idTokenValiditySeconds: value['idTokenValiditySeconds'],
-    identityProviders: value['identityProviders'],
     maxResponseSizeKb: value['maxResponseSizeKb'],
-    refreshTokenValiditySeconds: value['refreshTokenValiditySeconds'],
+    softwareId: value['softwareId'],
   };
 }

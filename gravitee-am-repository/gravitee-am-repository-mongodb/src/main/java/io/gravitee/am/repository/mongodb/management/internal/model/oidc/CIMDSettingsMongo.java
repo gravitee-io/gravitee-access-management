@@ -30,13 +30,7 @@ public class CIMDSettingsMongo {
     private List<String> allowedDomains;
     private int cacheTtlSeconds;
     private int cacheMaxEntries;
-    private List<String> allowedGrantTypes;
-    private List<String> allowedScopes;
-    private List<String> identityProviders;
-    private String certificateId;
-    private int accessTokenValiditySeconds;
-    private int refreshTokenValiditySeconds;
-    private int idTokenValiditySeconds;
+    private String softwareId;
 
     public boolean isEnabled() {
         return enabled;
@@ -102,59 +96,11 @@ public class CIMDSettingsMongo {
         this.cacheMaxEntries = cacheMaxEntries;
     }
 
-    public List<String> getAllowedGrantTypes() {
-        return allowedGrantTypes;
+    public String getSoftwareId() {
+        return softwareId;
     }
 
-    public void setAllowedGrantTypes(List<String> allowedGrantTypes) {
-        this.allowedGrantTypes = allowedGrantTypes;
-    }
-
-    public List<String> getAllowedScopes() {
-        return allowedScopes;
-    }
-
-    public void setAllowedScopes(List<String> allowedScopes) {
-        this.allowedScopes = allowedScopes;
-    }
-
-    public List<String> getIdentityProviders() {
-        return identityProviders;
-    }
-
-    public void setIdentityProviders(List<String> identityProviders) {
-        this.identityProviders = identityProviders;
-    }
-
-    public String getCertificateId() {
-        return certificateId;
-    }
-
-    public void setCertificateId(String certificateId) {
-        this.certificateId = certificateId;
-    }
-
-    public int getAccessTokenValiditySeconds() {
-        return accessTokenValiditySeconds;
-    }
-
-    public void setAccessTokenValiditySeconds(int accessTokenValiditySeconds) {
-        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-    }
-
-    public int getRefreshTokenValiditySeconds() {
-        return refreshTokenValiditySeconds;
-    }
-
-    public void setRefreshTokenValiditySeconds(int refreshTokenValiditySeconds) {
-        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
-    }
-
-    public int getIdTokenValiditySeconds() {
-        return idTokenValiditySeconds;
-    }
-
-    public void setIdTokenValiditySeconds(int idTokenValiditySeconds) {
-        this.idTokenValiditySeconds = idTokenValiditySeconds;
+    public void setSoftwareId(String softwareId) {
+        this.softwareId = softwareId;
     }
 }
