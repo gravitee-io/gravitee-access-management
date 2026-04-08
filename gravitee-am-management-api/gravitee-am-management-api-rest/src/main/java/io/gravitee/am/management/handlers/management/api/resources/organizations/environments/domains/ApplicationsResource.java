@@ -22,6 +22,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.CursorPage;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -180,5 +181,65 @@ public class ApplicationsResource extends AbstractDomainResource {
         public ApplicationPage(Collection<FilteredApplication> data, int currentPage, long totalCount) {
             super(data, currentPage, totalCount);
         }
+    }
+
+    public static final class ApplicationCursorPage extends CursorPage<FilteredApplication> {
+        public ApplicationCursorPage(Collection<FilteredApplication> data, String nextCursor, boolean hasNext, Long totalCount) {
+            super(data, nextCursor, hasNext, totalCount);
+        }
+    }
+
+    @GET
+    @Path("_cursor")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "listApplicationsCursor",
+            summary = "List applications with cursor-based pagination",
+            description = "List applications using cursor-based pagination for improved performance at scale. " +
+                    "User must have APPLICATION[LIST] permission on the specified domain, environment or organization.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List applications with cursor pagination",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApplicationCursorPage.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void listCursor(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @QueryParam("limit") @DefaultValue(MAX_APPLICATIONS_SIZE_PER_PAGE_STRING) int limit,
+            @QueryParam("after") String afterCursor,
+            @QueryParam("q") String query,
+            @QueryParam("sort") String sort,
+            @Suspended final AsyncResponse response) {
+
+        User authenticatedUser = getAuthenticatedUser();
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
+                .andThen(checkDomainExists(domain).ignoreElement())
+                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
+                        .filter(hasPermission -> hasPermission)
+                        .flatMapSingle(__ -> listApplicationsCursor(domain, afterCursor, limit, query, sort))
+                        .switchIfEmpty(
+                                getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
+                                        .toList()
+                                        .flatMap(ids -> listApplicationsByIdsCursor(domain, ids, afterCursor, limit, query, sort))))
+                .map(cursorPage ->
+                        new ApplicationCursorPage(
+                                cursorPage.getData().stream().map(FilteredApplication::of).toList(),
+                                cursorPage.getNextCursor(),
+                                cursorPage.isHasNext(),
+                                cursorPage.getTotalCount()))
+                .subscribe(response::resume, response::resume);
+    }
+
+    private Single<CursorPage<Application>> listApplicationsCursor(String domain, String afterCursor, int limit, String query, String sort) {
+        if (query != null) {
+            return applicationService.searchByDomainCursor(domain, query, afterCursor, limit, sort);
+        } else {
+            return applicationService.findByDomainCursor(domain, afterCursor, limit, sort);
+        }
+    }
+
+    private Single<CursorPage<Application>> listApplicationsByIdsCursor(String domain, List<String> applicationIds, String afterCursor, int limit, String query, String sort) {
+        return applicationService.findByDomainAndIdsCursor(domain, applicationIds, afterCursor, limit, sort);
     }
 }

@@ -33,6 +33,8 @@ import io.gravitee.am.management.service.dataplane.UserActivityManagementService
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
@@ -312,6 +314,22 @@ public class DomainServiceImpl implements DomainService {
                     LOGGER.error("An error has occurred when trying to search domains with query {} for environmentId {}", query, environmentId, ex);
                     return Flowable.empty();
                 });
+    }
+
+    @Override
+    public Single<CursorPage<Domain>> findByEnvironmentCursor(String organizationId, String environmentId, String afterCursor, int limit, String sort) {
+        LOGGER.debug("Find domains by environment {} with cursor pagination", environmentId);
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "name", CursorRequest.SortDirection.ASC, afterCursor, limit);
+        return environmentService.findById(environmentId, organizationId)
+                .flatMap(env -> domainRepository.findByEnvironmentCursor(env.getId(), cursor));
+    }
+
+    @Override
+    public Single<CursorPage<Domain>> searchByEnvironmentCursor(String organizationId, String environmentId, String query, String afterCursor, int limit, String sort) {
+        LOGGER.debug("Search domains with query {} for environment {} with cursor pagination", query, environmentId);
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "name", CursorRequest.SortDirection.ASC, afterCursor, limit);
+        return environmentService.findById(environmentId, organizationId)
+                .flatMap(env -> domainRepository.searchByEnvironmentCursor(env.getId(), query, cursor));
     }
 
     @Override

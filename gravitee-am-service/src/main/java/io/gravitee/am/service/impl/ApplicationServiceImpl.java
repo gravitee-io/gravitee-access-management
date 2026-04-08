@@ -27,6 +27,8 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
@@ -238,6 +240,27 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to search applications with query %s by domain %s", query, domain), ex));
                 });
+    }
+
+    @Override
+    public Single<CursorPage<Application>> findByDomainCursor(String domain, String afterCursor, int limit, String sort) {
+        LOGGER.debug("Find applications by domain {} with cursor pagination", domain);
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "updatedAt", CursorRequest.SortDirection.DESC, afterCursor, limit);
+        return applicationRepository.findByDomainCursor(domain, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Application>> searchByDomainCursor(String domain, String query, String afterCursor, int limit, String sort) {
+        LOGGER.debug("Search applications with query {} for domain {} with cursor pagination", query, domain);
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "updatedAt", CursorRequest.SortDirection.DESC, afterCursor, limit);
+        return applicationRepository.searchByDomainCursor(domain, query, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Application>> findByDomainAndIdsCursor(String domain, List<String> applicationIds, String afterCursor, int limit, String sort) {
+        LOGGER.debug("Find applications by domain {} and ids with cursor pagination", domain);
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "updatedAt", CursorRequest.SortDirection.DESC, afterCursor, limit);
+        return applicationRepository.findByDomainAndIdsCursor(domain, applicationIds, cursor);
     }
 
     @Override

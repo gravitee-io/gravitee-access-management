@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.common.CursorPage;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.model.NewDomain;
@@ -39,6 +40,10 @@ import java.util.List;
 public interface DomainService extends DomainReadService {
 
     Flowable<Domain> findAllByEnvironment(String organizationId, String environment);
+
+    Single<CursorPage<Domain>> findByEnvironmentCursor(String organizationId, String environmentId, String afterCursor, int limit, String sort);
+
+    Single<CursorPage<Domain>> searchByEnvironmentCursor(String organizationId, String environmentId, String query, String afterCursor, int limit, String sort);
 
     Flowable<Domain> search(String organizationId, String environmentId, String query);
 

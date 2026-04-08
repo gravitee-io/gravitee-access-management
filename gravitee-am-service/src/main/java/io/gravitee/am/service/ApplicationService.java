@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.common.CursorPage;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
@@ -50,6 +51,12 @@ public interface ApplicationService {
     Single<Page<Application>> search(String domain, String query, int page, int size);
 
     Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size);
+
+    Single<CursorPage<Application>> findByDomainCursor(String domain, String afterCursor, int limit, String sort);
+
+    Single<CursorPage<Application>> searchByDomainCursor(String domain, String query, String afterCursor, int limit, String sort);
+
+    Single<CursorPage<Application>> findByDomainAndIdsCursor(String domain, List<String> applicationIds, String afterCursor, int limit, String sort);
 
     Flowable<Application> findByCertificate(String certificate);
 

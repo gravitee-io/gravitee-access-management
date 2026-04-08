@@ -46,6 +46,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
@@ -186,6 +188,24 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     @Override
     public Single<Page<User>> findAll(Domain domain, int page, int size) {
         return dataPlaneRegistry.getUserRepository(domain).findAll(domain.asReference(), page, size);
+    }
+
+    @Override
+    public Single<CursorPage<User>> findAllCursor(Domain domain, String afterCursor, int limit, String sort) {
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "username", CursorRequest.SortDirection.ASC, afterCursor, limit);
+        return dataPlaneRegistry.getUserRepository(domain).findAllCursor(domain.asReference(), cursor);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(Domain domain, String query, String afterCursor, int limit, String sort) {
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "username", CursorRequest.SortDirection.ASC, afterCursor, limit);
+        return dataPlaneRegistry.getUserRepository(domain).searchCursor(domain.asReference(), query, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(Domain domain, FilterCriteria criteria, String afterCursor, int limit, String sort) {
+        CursorRequest cursor = CursorRequest.fromSortParam(sort, "username", CursorRequest.SortDirection.ASC, afterCursor, limit);
+        return dataPlaneRegistry.getUserRepository(domain).searchCursor(domain.asReference(), criteria, cursor);
     }
 
     @Override

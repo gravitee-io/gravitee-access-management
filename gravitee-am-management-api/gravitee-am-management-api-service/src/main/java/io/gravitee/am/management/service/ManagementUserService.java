@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.CursorPage;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -81,4 +82,10 @@ public interface ManagementUserService {
     Single<Page<User>> search(Domain domain, FilterCriteria filterCriteria, int page, int size);
 
     Single<Page<User>> findAll(Domain domain, int page, int size);
+
+    Single<CursorPage<User>> findAllCursor(Domain domain, String afterCursor, int limit, String sort);
+
+    Single<CursorPage<User>> searchCursor(Domain domain, String query, String afterCursor, int limit, String sort);
+
+    Single<CursorPage<User>> searchCursor(Domain domain, FilterCriteria criteria, String afterCursor, int limit, String sort);
 }

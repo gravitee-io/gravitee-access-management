@@ -21,6 +21,7 @@ import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.CursorPage;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.NewDomain;
@@ -176,6 +177,45 @@ public class DomainsResource extends AbstractDomainResource {
         }
     }
 
+    public static final class DomainCursorPage extends CursorPage<Domain> {
+        public DomainCursorPage(Collection<Domain> data, String nextCursor, boolean hasNext, Long totalCount) {
+            super(data, nextCursor, hasNext, totalCount);
+        }
+    }
+
+    @GET
+    @Path("_cursor")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "listDomainsCursor",
+            summary = "List security domains with cursor-based pagination",
+            description = "List security domains using cursor-based pagination for improved performance at scale. " +
+                    "User must have DOMAIN[LIST] permission on the specified environment or organization.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List accessible security domains",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = DomainCursorPage.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void listCursor(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @QueryParam("limit") @DefaultValue(MAX_DOMAINS_SIZE_PER_PAGE_STRING) int limit,
+            @QueryParam("after") String afterCursor,
+            @QueryParam("q") String query,
+            @QueryParam("sort") String sort,
+            @Suspended final AsyncResponse response) {
+
+        checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.LIST)
+                .andThen(Single.defer(() -> query != null
+                        ? domainService.searchByEnvironmentCursor(organizationId, environmentId, query, afterCursor, limit, sort)
+                        : domainService.findByEnvironmentCursor(organizationId, environmentId, afterCursor, limit, sort)))
+                .map(cursorPage -> new DomainCursorPage(
+                        cursorPage.getData().stream().map(this::filterDomainInfos).collect(Collectors.toList()),
+                        cursorPage.getNextCursor(),
+                        cursorPage.isHasNext(),
+                        cursorPage.getTotalCount()))
+                .subscribe(response::resume, response::resume);
+    }
 
     @Path("{domain}")
     public DomainResource getDomainResource() {

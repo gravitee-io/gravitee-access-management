@@ -35,6 +35,7 @@ import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.CursorPage;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -285,6 +286,60 @@ public class UsersResource extends AbstractResource {
         public UserPage(Collection<User> data, int currentPage, long totalCount) {
             super(data, currentPage, totalCount);
         }
+    }
+
+    public static final class UserCursorPage extends CursorPage<User> {
+        public UserCursorPage(Collection<User> data, String nextCursor, boolean hasNext, Long totalCount) {
+            super(data, nextCursor, hasNext, totalCount);
+        }
+    }
+
+    @GET
+    @Path("_cursor")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "listUsersCursor",
+            summary = "List users with cursor-based pagination",
+            description = "List users using cursor-based pagination for improved performance at scale. " +
+                    "User must have DOMAIN_USER[LIST] permission on the specified domain, environment or organization.")
+    @ApiResponse(responseCode = "200", description = "List users with cursor pagination",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = UserCursorPage.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public void listCursor(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @QueryParam("q") String query,
+            @QueryParam("filter") String filter,
+            @QueryParam("limit") @DefaultValue("30") int limit,
+            @QueryParam("after") String afterCursor,
+            @QueryParam("sort") String sort,
+            @Suspended final AsyncResponse response) {
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.LIST)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> searchUsersCursor(domain, query, filter, afterCursor, limit, sort)))
+                .subscribe(response::resume, response::resume);
+    }
+
+    private Single<CursorPage<User>> searchUsersCursor(Domain domain, String query, String filter, String afterCursor, int limit, String sort) {
+        if (query != null) {
+            return userService.searchCursor(domain, query, afterCursor, limit, sort);
+        }
+        if (filter != null) {
+            return Single.defer(() -> {
+                FilterCriteria filterCriteria = FilterCriteria.convert(SCIMFilterParser.parse(filter));
+                return userService.searchCursor(domain, filterCriteria, afterCursor, limit, sort);
+            }).onErrorResumeNext(ex -> {
+                if (ex instanceof IllegalArgumentException) {
+                    return Single.error(new BadRequestException(ex.getMessage()));
+                }
+                return Single.error(ex);
+            });
+        }
+        return userService.findAllCursor(domain, afterCursor, limit, sort);
     }
 
     @Schema(oneOf = {BulkCreateUser.class, BulkUpdateUser.class, BulkDeleteUser.class},
