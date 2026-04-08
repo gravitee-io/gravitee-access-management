@@ -94,10 +94,10 @@ describe('Cursor-based pagination', () => {
         { limit: 3 },
       );
 
-      expect(page.data).toBeDefined();
-      expect(Array.isArray(page.data)).toBe(true);
+      expect(page.data.length).toBeGreaterThan(0);
       expect(page.data.length).toBeLessThanOrEqual(3);
-      expect(typeof page.hasNext).toBe('boolean');
+      expect(page.hasNext).toBe(true);
+      expect(page.totalCount).toBeGreaterThanOrEqual(DOMAIN_COUNT);
     });
 
     it('should paginate through all domains with cursor', async () => {
@@ -182,9 +182,26 @@ describe('Cursor-based pagination', () => {
         { limit: 10 },
       );
 
-      // CursorPage intentionally omits totalCount for performance
-      expect((page as any).totalCount).toBeUndefined();
+      expect(page.totalCount).toBeGreaterThanOrEqual(0);
       expect((page as any).currentPage).toBeUndefined();
+    });
+
+    it('should sort by updatedAt descending when requested', async () => {
+      const page = await fetchCursorPage<any>(
+        `${managementBase()}/domains/_cursor`,
+        accessToken,
+        { limit: 10, sort: '-updatedAt' },
+      );
+
+      expect(page.data.length).toBeGreaterThan(0);
+    });
+
+    it('should return 400 for malformed cursor', async () => {
+      const res = await request(process.env.AM_MANAGEMENT_URL)
+        .get(`/management/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/_cursor?after=not-a-valid-cursor&limit=10`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toEqual(400);
     });
   });
 
@@ -218,9 +235,10 @@ describe('Cursor-based pagination', () => {
         { limit: 3 },
       );
 
-      expect(page.data).toBeDefined();
+      expect(page.data.length).toBeGreaterThan(0);
       expect(page.data.length).toBeLessThanOrEqual(3);
-      expect(typeof page.hasNext).toBe('boolean');
+      expect(page.hasNext).toBe(true);
+      expect(page.totalCount).toBeGreaterThanOrEqual(APP_COUNT);
     });
 
     it('should paginate through all applications', async () => {
@@ -269,8 +287,20 @@ describe('Cursor-based pagination', () => {
         { limit: 10 },
       );
 
-      expect((page as any).totalCount).toBeUndefined();
+      expect(page.totalCount).toBeGreaterThanOrEqual(0);
       expect((page as any).currentPage).toBeUndefined();
+    });
+
+    it('should sort by name ascending when requested', async () => {
+      const page = await fetchCursorPage<any>(
+        `${managementBase()}/domains/${domainId}/applications/_cursor`,
+        accessToken,
+        { limit: 10, sort: 'name' },
+      );
+
+      const names = page.data.map((a) => a.name);
+      const sorted = [...names].sort((a, b) => a.localeCompare(b));
+      expect(names).toEqual(sorted);
     });
   });
 
@@ -314,9 +344,10 @@ describe('Cursor-based pagination', () => {
         { limit: 3 },
       );
 
-      expect(page.data).toBeDefined();
+      expect(page.data.length).toBeGreaterThan(0);
       expect(page.data.length).toBeLessThanOrEqual(3);
-      expect(typeof page.hasNext).toBe('boolean');
+      expect(page.hasNext).toBe(true);
+      expect(page.totalCount).toBeGreaterThanOrEqual(USER_COUNT);
     });
 
     it('should paginate through all users', async () => {
@@ -380,7 +411,7 @@ describe('Cursor-based pagination', () => {
         { limit: 10 },
       );
 
-      expect((page as any).totalCount).toBeUndefined();
+      expect(page.totalCount).toBeGreaterThanOrEqual(0);
       expect((page as any).currentPage).toBeUndefined();
     });
   });
