@@ -460,6 +460,53 @@ paths:
                 $ref: "#/components/schemas/Domain"
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/_cursor:
+    get:
+      tags:
+      - domain
+      summary: List security domains with cursor-based pagination
+      description: "List security domains using cursor-based pagination for improved\
+        \ performance at scale. User must have DOMAIN[LIST] permission on the specified\
+        \ environment or organization."
+      operationId: listDomainsCursor
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: q
+        in: query
+        schema:
+          type: string
+      - name: sort
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List accessible security domains
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainCursorPage"
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/_hrid/{hrid}:
     get:
       tags:
@@ -1066,6 +1113,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Application"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/_cursor:
+    get:
+      tags:
+      - application
+      - domain
+      summary: List applications with cursor-based pagination
+      description: "List applications using cursor-based pagination for improved performance\
+        \ at scale. User must have APPLICATION[LIST] permission on the specified domain,\
+        \ environment or organization."
+      operationId: listApplicationsCursor
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: q
+        in: query
+        schema:
+          type: string
+      - name: sort
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List applications with cursor pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationCursorPage"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}:
@@ -8045,6 +8145,63 @@ paths:
                 $ref: "#/components/schemas/User"
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/_cursor:
+    get:
+      tags:
+      - user
+      - domain
+      summary: List users with cursor-based pagination
+      description: "List users using cursor-based pagination for improved performance\
+        \ at scale. User must have DOMAIN_USER[LIST] permission on the specified domain,\
+        \ environment or organization."
+      operationId: listUsersCursor
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: q
+        in: query
+        schema:
+          type: string
+      - name: filter
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 30
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: sort
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List users with cursor pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserCursorPage"
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/bulk:
     post:
       tags:
@@ -12157,6 +12314,20 @@ components:
           type: boolean
         skipConsent:
           type: boolean
+    ApplicationCursorPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/FilteredApplication"
+        hasNext:
+          type: boolean
+        nextCursor:
+          type: string
+        totalCount:
+          type: integer
+          format: int64
     ApplicationEntity:
       type: object
       properties:
@@ -13141,6 +13312,20 @@ components:
             $ref: "#/components/schemas/VirtualHost"
         webAuthnSettings:
           $ref: "#/components/schemas/WebAuthnSettings"
+    DomainCursorPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Domain"
+        hasNext:
+          type: boolean
+        nextCursor:
+          type: string
+        totalCount:
+          type: integer
+          format: int64
     DomainPage:
       type: object
       properties:
@@ -17261,6 +17446,20 @@ components:
           type: string
         expression:
           type: string
+    UserCursorPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        hasNext:
+          type: boolean
+        nextCursor:
+          type: string
+        totalCount:
+          type: integer
+          format: int64
     UserEntity:
       type: object
       properties:
