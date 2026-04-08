@@ -258,8 +258,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Single<CursorPage<User>> findAllCursor(ReferenceType referenceType, String referenceId, CursorRequest cursor) {
         Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
-        return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
-                this::convert, u -> u.getUsername() != null ? u.getUsername() : "", User::getId);
+        return userCursorQuery(baseFilter, cursor);
     }
 
     @Override
@@ -286,8 +285,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     new BasicDBObject(FIELD_LAST_NAME, query));
         }
         Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), searchQuery);
-        return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
-                this::convert, u -> u.getUsername() != null ? u.getUsername() : "", User::getId);
+        return userCursorQuery(baseFilter, cursor);
     }
 
     @Override
@@ -295,8 +293,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         try {
             BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
             Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), searchQuery);
-            return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
-                    this::convert, u -> u.getUsername() != null ? u.getUsername() : "", User::getId);
+            return userCursorQuery(baseFilter, cursor);
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
@@ -304,6 +301,25 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
             logger.error("An error has occurred while searching users with cursor and criteria {}", criteria, ex);
             return Single.error(new TechnicalException("An error has occurred while searching users with cursor and filter criteria", ex));
         }
+    }
+
+    private Single<CursorPage<User>> userCursorQuery(Bson baseFilter, CursorRequest cursor) {
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "username";
+        return switch (sortField) {
+            case "updatedAt" -> findCursorPage(usersCollection, baseFilter, cursor, FIELD_UPDATED_AT,
+                    this::convert, u -> dateToString(u.getUpdatedAt()), User::getId, AbstractUserRepository::dateFromString);
+            default -> findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
+                    this::convert, u -> u.getUsername() != null ? u.getUsername() : "", User::getId);
+        };
+    }
+
+    private static String dateToString(java.util.Date date) {
+        return date != null ? String.valueOf(date.getTime()) : "0";
+    }
+
+    private static Object dateFromString(String value) {
+        try { return new java.util.Date(Long.parseLong(value)); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid cursor: sort value '" + value + "' is not a valid timestamp", e); }
     }
 
     @Override

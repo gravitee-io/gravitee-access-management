@@ -289,21 +289,27 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     private Single<CursorPage<User>> cursorQuery(Bson baseFilter, CursorRequest cursor) {
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "username";
         boolean ascending = cursor.getDirection().isAscending();
         int sortDir = ascending ? 1 : -1;
         int fetchLimit = cursor.getLimit() + 1;
 
+        String mongoSortField = "updatedAt".equals(sortField) ? MongoUtils.FIELD_UPDATED_AT : FIELD_USERNAME;
+
         Bson filter = baseFilter;
         if (!cursor.isFirstPage()) {
             String compareOp = ascending ? "$gt" : "$lt";
-            Bson beyondSort = new BasicDBObject(FIELD_USERNAME, new BasicDBObject(compareOp, cursor.getLastSortValue()));
+            Object sortValue = "updatedAt".equals(sortField)
+                    ? dateFromString(cursor.getLastSortValue())
+                    : cursor.getLastSortValue();
+            Bson beyondSort = new BasicDBObject(mongoSortField, new BasicDBObject(compareOp, sortValue));
             Bson sameSortBeyondId = and(
-                    eq(FIELD_USERNAME, cursor.getLastSortValue()),
+                    eq(mongoSortField, sortValue),
                     new BasicDBObject(FIELD_ID, new BasicDBObject(compareOp, cursor.getLastId())));
             filter = and(baseFilter, or(beyondSort, sameSortBeyondId));
         }
 
-        Bson sort = new BasicDBObject(FIELD_USERNAME, sortDir).append(FIELD_ID, sortDir);
+        Bson sort = new BasicDBObject(mongoSortField, sortDir).append(FIELD_ID, sortDir);
 
         Single<Long> countSingle = Observable.fromPublisher(usersCollection.countDocuments(baseFilter, countOptions()))
                 .firstOrError();
@@ -317,11 +323,23 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                     String nextCursor = null;
                     if (hasNext && !data.isEmpty()) {
                         User last = data.get(data.size() - 1);
-                        nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection(), cursor.getSortField());
+                        String sortValue = "updatedAt".equals(sortField)
+                                ? dateToString(last.getUpdatedAt())
+                                : (last.getUsername() != null ? last.getUsername() : "");
+                        nextCursor = CursorRequest.encode(sortValue, last.getId(), cursor.getDirection(), cursor.getSortField());
                     }
                     return new CursorPage<>(data, nextCursor, totalCount);
                 }))
                 .observeOn(Schedulers.computation());
+    }
+
+    private static String dateToString(java.util.Date date) {
+        return date != null ? String.valueOf(date.getTime()) : "0";
+    }
+
+    private static Object dateFromString(String value) {
+        try { return new java.util.Date(Long.parseLong(value)); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid cursor: sort value '" + value + "' is not a valid timestamp", e); }
     }
 
     @Override

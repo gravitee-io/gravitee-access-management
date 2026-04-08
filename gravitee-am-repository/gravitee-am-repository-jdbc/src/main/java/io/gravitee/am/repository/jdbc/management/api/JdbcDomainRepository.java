@@ -235,6 +235,9 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         String sortDir = ascending ? "ASC" : "DESC";
         int fetchLimit = cursor.getLimit() + 1;
 
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "name";
+        String sortColumn = "updatedAt".equals(sortField) ? "d.updated_at" : "LOWER(d.name)";
+
         var sql = new StringBuilder("SELECT * FROM domains d WHERE d.reference_type = :refType AND d.reference_id = :refId");
 
         if (searchQuery != null) {
@@ -243,11 +246,11 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         }
 
         if (!cursor.isFirstPage()) {
-            sql.append(" AND (LOWER(d.name) ").append(compareOp).append(" LOWER(:lastSort)")
-               .append(" OR (LOWER(d.name) = LOWER(:lastSort) AND d.id ").append(compareOp).append(" :lastId))");
+            sql.append(" AND (").append(sortColumn).append(" ").append(compareOp).append(" :lastSort")
+               .append(" OR (").append(sortColumn).append(" = :lastSort AND d.id ").append(compareOp).append(" :lastId))");
         }
 
-        sql.append(" ORDER BY LOWER(d.name) ").append(sortDir).append(", d.id ").append(sortDir)
+        sql.append(" ORDER BY ").append(sortColumn).append(" ").append(sortDir).append(", d.id ").append(sortDir)
            .append(" LIMIT :fetchLimit"); // TODO LIMIT is not portable to MSSQL/Oracle — use dialect helper when available
 
         DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
@@ -262,8 +265,18 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         }
 
         if (!cursor.isFirstPage()) {
-            spec = spec.bind("lastSort", cursor.getLastSortValue())
-                       .bind("lastId", cursor.getLastId());
+            if ("updatedAt".equals(sortField)) {
+                try {
+                    long epochMs = Long.parseLong(cursor.getLastSortValue());
+                    java.time.LocalDateTime lastSort = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(epochMs), java.time.ZoneOffset.UTC);
+                    spec = spec.bind("lastSort", lastSort);
+                } catch (NumberFormatException e) {
+                    return Single.error(new IllegalArgumentException("Invalid cursor: sort value is not a valid timestamp", e));
+                }
+            } else {
+                spec = spec.bind("lastSort", cursor.getLastSortValue());
+            }
+            spec = spec.bind("lastId", cursor.getLastId());
         }
 
         // Count query uses the same base filter without keyset conditions
@@ -284,11 +297,15 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
         Single<Long> countSingle = monoToSingle(countSpec.map((row, rowMetadata) -> row.get(0, Long.class)).first());
 
+        java.util.function.Function<Domain, String> sortValueExtractor = "updatedAt".equals(sortField)
+                ? d -> d.getUpdatedAt() != null ? String.valueOf(d.getUpdatedAt().getTime()) : "0"
+                : Domain::getName;
+
         return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcDomain.class, row)).all())
                 .map(this::toDomain)
                 .concatMap(this::completeDomain)
                 .toList()
-                .flatMap(items -> countSingle.map(totalCount -> buildCursorPage(items, cursor, Domain::getName, Domain::getId).withTotalCount(totalCount)))
+                .flatMap(items -> countSingle.map(totalCount -> buildCursorPage(items, cursor, sortValueExtractor, Domain::getId).withTotalCount(totalCount)))
                 .observeOn(Schedulers.computation());
     }
 

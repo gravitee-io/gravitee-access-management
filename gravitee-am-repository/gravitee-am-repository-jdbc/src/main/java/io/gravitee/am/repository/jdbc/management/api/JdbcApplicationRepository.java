@@ -320,6 +320,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         String sortDir = ascending ? "ASC" : "DESC";
         int fetchLimit = cursor.getLimit() + 1;
 
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "updatedAt";
+        String sortColumn = "name".equals(sortField) ? "LOWER(a.name)" : "a.updated_at";
+
         var sql = new StringBuilder("SELECT * FROM applications a WHERE a.domain = :domain");
 
         if (applicationIds != null) {
@@ -333,11 +336,11 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
 
         if (!cursor.isFirstPage()) {
-            sql.append(" AND (a.updated_at ").append(compareOp).append(" :lastSort")
-               .append(" OR (a.updated_at = :lastSort AND a.id ").append(compareOp).append(" :lastId))");
+            sql.append(" AND (").append(sortColumn).append(" ").append(compareOp).append(" :lastSort")
+               .append(" OR (").append(sortColumn).append(" = :lastSort AND a.id ").append(compareOp).append(" :lastId))");
         }
 
-        sql.append(" ORDER BY a.updated_at ").append(sortDir).append(", a.id ").append(sortDir)
+        sql.append(" ORDER BY ").append(sortColumn).append(" ").append(sortDir).append(", a.id ").append(sortDir)
            .append(" LIMIT :fetchLimit");
 
         DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
@@ -355,13 +358,18 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
 
         if (!cursor.isFirstPage()) {
-            try {
-                long epochMs = Long.parseLong(cursor.getLastSortValue());
-                LocalDateTime lastSort = LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(epochMs), java.time.ZoneOffset.UTC);
-                spec = spec.bind("lastSort", lastSort).bind("lastId", cursor.getLastId());
-            } catch (NumberFormatException e) {
-                return Single.error(new IllegalArgumentException("Invalid cursor: sort value is not a valid timestamp", e));
+            if ("name".equals(sortField)) {
+                spec = spec.bind("lastSort", cursor.getLastSortValue());
+            } else {
+                try {
+                    long epochMs = Long.parseLong(cursor.getLastSortValue());
+                    LocalDateTime lastSort = LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(epochMs), java.time.ZoneOffset.UTC);
+                    spec = spec.bind("lastSort", lastSort);
+                } catch (NumberFormatException e) {
+                    return Single.error(new IllegalArgumentException("Invalid cursor: sort value is not a valid timestamp", e));
+                }
             }
+            spec = spec.bind("lastId", cursor.getLastId());
         }
 
         // Count query uses the same base filter without keyset conditions
@@ -386,6 +394,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
         Single<Long> countSingle = monoToSingle(countSpec.map((row, rowMetadata) -> row.get(0, Long.class)).first());
 
+        java.util.function.Function<Application, String> sortValueExtractor = "name".equals(sortField)
+                ? Application::getName
+                : app -> app.getUpdatedAt() != null ? String.valueOf(app.getUpdatedAt().getTime()) : "0";
+
         return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row)).all())
                 .map(this::toEntity)
                 .concatMap(app -> completeApplication(app).toFlowable())
@@ -396,10 +408,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                     String nextCursor = null;
                     if (hasNext && !data.isEmpty()) {
                         Application last = data.get(data.size() - 1);
-                        String sortValue = last.getUpdatedAt() != null
-                                ? String.valueOf(last.getUpdatedAt().getTime())
-                                : "0";
-                        nextCursor = CursorRequest.encode(sortValue, last.getId(), cursor.getDirection(), cursor.getSortField());
+                        nextCursor = CursorRequest.encode(sortValueExtractor.apply(last), last.getId(), cursor.getDirection(), cursor.getSortField());
                     }
                     return new CursorPage<>(data, nextCursor, totalCount);
                 }))

@@ -364,6 +364,9 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         String sortDir = ascending ? "ASC" : "DESC";
         int fetchLimit = cursor.getLimit() + 1;
 
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "username";
+        String sortColumn = "updatedAt".equals(sortField) ? "u.updated_at" : "COALESCE(u.username, '')";
+
         final ScimSearch search;
         try {
             StringBuilder queryBuilder = new StringBuilder();
@@ -382,10 +385,10 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
         var sql = new StringBuilder(baseQuery);
         if (!cursor.isFirstPage()) {
-            sql.append(" AND (COALESCE(u.username, '') ").append(compareOp).append(" :lastSort")
-               .append(" OR (COALESCE(u.username, '') = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
+            sql.append(" AND (").append(sortColumn).append(" ").append(compareOp).append(" :lastSort")
+               .append(" OR (").append(sortColumn).append(" = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
         }
-        sql.append(" ORDER BY COALESCE(u.username, '') ").append(sortDir).append(", u.id ").append(sortDir)
+        sql.append(" ORDER BY ").append(sortColumn).append(" ").append(sortDir).append(", u.id ").append(sortDir)
            .append(" LIMIT :fetchLimit");
 
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString());
@@ -394,7 +397,18 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             spec = spec.bind(entry.getKey(), entry.getValue());
         }
         if (!cursor.isFirstPage()) {
-            spec = spec.bind("lastSort", cursor.getLastSortValue()).bind("lastId", cursor.getLastId());
+            if ("updatedAt".equals(sortField)) {
+                try {
+                    long epochMs = Long.parseLong(cursor.getLastSortValue());
+                    java.time.LocalDateTime lastSort = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(epochMs), java.time.ZoneOffset.UTC);
+                    spec = spec.bind("lastSort", lastSort);
+                } catch (NumberFormatException e) {
+                    return Single.error(new IllegalArgumentException("Invalid cursor: sort value is not a valid timestamp", e));
+                }
+            } else {
+                spec = spec.bind("lastSort", cursor.getLastSortValue());
+            }
+            spec = spec.bind("lastId", cursor.getLastId());
         }
 
         // Count query uses the base SCIM filter without keyset conditions
@@ -420,6 +434,9 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         String sortDir = ascending ? "ASC" : "DESC";
         int fetchLimit = cursor.getLimit() + 1;
 
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "username";
+        String sortColumn = "updatedAt".equals(sortField) ? "u.updated_at" : "COALESCE(u.username, '')";
+
         var sql = new StringBuilder("SELECT * FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId");
 
         if (searchQuery != null) {
@@ -434,11 +451,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         }
 
         if (!cursor.isFirstPage()) {
-            sql.append(" AND (COALESCE(u.username, '') ").append(compareOp).append(" :lastSort")
-               .append(" OR (COALESCE(u.username, '') = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
+            sql.append(" AND (").append(sortColumn).append(" ").append(compareOp).append(" :lastSort")
+               .append(" OR (").append(sortColumn).append(" = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
         }
 
-        sql.append(" ORDER BY COALESCE(u.username, '') ").append(sortDir).append(", u.id ").append(sortDir)
+        sql.append(" ORDER BY ").append(sortColumn).append(" ").append(sortDir).append(", u.id ").append(sortDir)
            .append(" LIMIT :fetchLimit");
 
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
@@ -453,7 +470,18 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         }
 
         if (!cursor.isFirstPage()) {
-            spec = spec.bind("lastSort", cursor.getLastSortValue()).bind("lastId", cursor.getLastId());
+            if ("updatedAt".equals(sortField)) {
+                try {
+                    long epochMs = Long.parseLong(cursor.getLastSortValue());
+                    java.time.LocalDateTime lastSort = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(epochMs), java.time.ZoneOffset.UTC);
+                    spec = spec.bind("lastSort", lastSort);
+                } catch (NumberFormatException e) {
+                    return Single.error(new IllegalArgumentException("Invalid cursor: sort value is not a valid timestamp", e));
+                }
+            } else {
+                spec = spec.bind("lastSort", cursor.getLastSortValue());
+            }
+            spec = spec.bind("lastId", cursor.getLastId());
         }
 
         // Count query uses the same base filter without keyset conditions
@@ -492,7 +520,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         String nextCursor = null;
         if (hasNext && !data.isEmpty()) {
             User last = data.get(data.size() - 1);
-            nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection(), cursor.getSortField());
+            String sortField = cursor.getSortField() != null ? cursor.getSortField() : "username";
+            String sortValue = "updatedAt".equals(sortField)
+                    ? (last.getUpdatedAt() != null ? String.valueOf(last.getUpdatedAt().getTime()) : "0")
+                    : (last.getUsername() != null ? last.getUsername() : "");
+            nextCursor = CursorRequest.encode(sortValue, last.getId(), cursor.getDirection(), cursor.getSortField());
         }
         return new CursorPage<>(data, nextCursor);
     }
