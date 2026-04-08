@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
@@ -60,4 +62,9 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
 
     Maybe<Application> findByDomainAndClientId(String domain, String clientId);
 
+    Single<CursorPage<Application>> findByDomainCursor(String domain, CursorRequest cursor);
+
+    Single<CursorPage<Application>> searchByDomainCursor(String domain, String query, CursorRequest cursor);
+
+    Single<CursorPage<Application>> findByDomainAndIdsCursor(String domain, List<String> applicationIds, CursorRequest cursor);
 }

@@ -21,6 +21,8 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -292,6 +294,89 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+    }
+
+    @Override
+    public Single<CursorPage<Application>> findByDomainCursor(String domain, CursorRequest cursor) {
+        return executeAppCursorQuery(domain, null, null, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Application>> searchByDomainCursor(String domain, String query, CursorRequest cursor) {
+        return executeAppCursorQuery(domain, query, null, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Application>> findByDomainAndIdsCursor(String domain, List<String> applicationIds, CursorRequest cursor) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Single.just(CursorPage.empty());
+        }
+        return executeAppCursorQuery(domain, null, applicationIds, cursor);
+    }
+
+    private Single<CursorPage<Application>> executeAppCursorQuery(String domain, String searchQuery, List<String> applicationIds, CursorRequest cursor) {
+        boolean ascending = cursor.getDirection().isAscending();
+        String compareOp = ascending ? ">" : "<";
+        String sortDir = ascending ? "ASC" : "DESC";
+        int fetchLimit = cursor.getLimit() + 1;
+
+        var sql = new StringBuilder("SELECT * FROM applications a WHERE a.domain = :domain");
+
+        if (applicationIds != null) {
+            sql.append(" AND a.id IN (:applicationIds)");
+        }
+
+        if (searchQuery != null) {
+            boolean wildcardMatch = searchQuery.contains("*");
+            sql.append(" AND (UPPER(a.name) ").append(wildcardMatch ? "LIKE" : "=").append(" :searchValue")
+               .append(" OR UPPER(a.settings_oauth_clientId) ").append(wildcardMatch ? "LIKE" : "=").append(" :searchValue)");
+        }
+
+        if (!cursor.isFirstPage()) {
+            sql.append(" AND (a.updated_at ").append(compareOp).append(" :lastSort")
+               .append(" OR (a.updated_at = :lastSort AND a.id ").append(compareOp).append(" :lastId))");
+        }
+
+        sql.append(" ORDER BY a.updated_at ").append(sortDir).append(", a.id ").append(sortDir)
+           .append(" LIMIT :fetchLimit");
+
+        DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
+                .bind("domain", domain)
+                .bind("fetchLimit", fetchLimit);
+
+        if (applicationIds != null) {
+            spec = spec.bind("applicationIds", applicationIds);
+        }
+
+        if (searchQuery != null) {
+            boolean wildcardMatch = searchQuery.contains("*");
+            String value = wildcardMatch ? databaseDialectHelper.escapeLikePatternValue(searchQuery.replaceAll("\\*+", "%")).toUpperCase() : searchQuery.toUpperCase();
+            spec = spec.bind("searchValue", value);
+        }
+
+        if (!cursor.isFirstPage()) {
+            spec = spec.bind("lastSort", LocalDateTime.parse(cursor.getLastSortValue(), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                       .bind("lastId", cursor.getLastId());
+        }
+
+        return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row)).all())
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .map(items -> {
+                    boolean hasNext = items.size() > cursor.getLimit();
+                    List<Application> data = hasNext ? items.subList(0, cursor.getLimit()) : items;
+                    String nextCursor = null;
+                    if (hasNext && !data.isEmpty()) {
+                        Application last = data.get(data.size() - 1);
+                        String sortValue = last.getUpdatedAt() != null
+                                ? java.time.LocalDateTime.ofInstant(last.getUpdatedAt().toInstant(), java.time.ZoneOffset.UTC).format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                : "0";
+                        nextCursor = CursorRequest.encode(sortValue, last.getId(), cursor.getDirection());
+                    }
+                    return new CursorPage<>(data, nextCursor, hasNext);
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override

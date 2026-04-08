@@ -37,6 +37,8 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.jose.ECKey;
@@ -297,6 +299,40 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(in(FIELD_ID, ids))))
                 .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<CursorPage<Application>> findByDomainCursor(String domain, CursorRequest cursor) {
+        return appCursorQuery(eq(FIELD_DOMAIN, domain), cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Application>> searchByDomainCursor(String domain, String query, CursorRequest cursor) {
+        return appCursorQuery(buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID), cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Application>> findByDomainAndIdsCursor(String domain, List<String> applicationIds, CursorRequest cursor) {
+        return appCursorQuery(and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, applicationIds)), cursor);
+    }
+
+    private Single<CursorPage<Application>> appCursorQuery(Bson baseFilter, CursorRequest cursor) {
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "updatedAt";
+        return switch (sortField) {
+            case "name" -> findCursorPage(applicationsCollection, baseFilter, cursor, FIELD_NAME,
+                    MongoApplicationRepository::convert, Application::getName, Application::getId);
+            default -> findCursorPage(applicationsCollection, baseFilter, cursor, FIELD_UPDATED_AT,
+                    MongoApplicationRepository::convert, app -> dateToString(app.getUpdatedAt()), Application::getId, MongoApplicationRepository::dateFromString);
+        };
+    }
+
+    private static String dateToString(java.util.Date date) {
+        return date != null ? String.valueOf(date.getTime()) : "0";
+    }
+
+    private static Object dateFromString(String value) {
+        try { return new java.util.Date(Long.parseLong(value)); }
+        catch (NumberFormatException e) { return new java.util.Date(0); }
     }
 
     @Override

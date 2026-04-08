@@ -27,6 +27,8 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -109,6 +111,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1), new IndexOptions().name("rt1ri1l1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("rt1ri1ext1s1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_IDENTITIES_USERNAME, 1).append(FIELD_IDENTITIES_PROVIDER_ID, 1), new IndexOptions().name("rt1ri1iu1ip1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_ID, 1), new IndexOptions().name("rt1ri1u1id1"));
         super.createIndex(usersCollection, indexes);
         createOrUpdateIndex();
     }
@@ -250,6 +253,57 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     public Maybe<User> findById(String userId) {
         return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(this::convert)
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<CursorPage<User>> findAllCursor(ReferenceType referenceType, String referenceId, CursorRequest cursor) {
+        Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
+        return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
+                this::convert, User::getUsername, User::getId);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(ReferenceType referenceType, String referenceId, String query, CursorRequest cursor) {
+        Bson searchQuery;
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = or(
+                    new BasicDBObject(FIELD_USERNAME, pattern),
+                    new BasicDBObject(FIELD_EMAIL, pattern),
+                    new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, pattern),
+                    new BasicDBObject(FIELD_DISPLAY_NAME, pattern),
+                    new BasicDBObject(FIELD_FIRST_NAME, pattern),
+                    new BasicDBObject(FIELD_LAST_NAME, pattern));
+        } else {
+            searchQuery = or(
+                    new BasicDBObject(FIELD_USERNAME, query),
+                    new BasicDBObject(FIELD_EMAIL, query),
+                    new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, query),
+                    new BasicDBObject(FIELD_DISPLAY_NAME, query),
+                    new BasicDBObject(FIELD_FIRST_NAME, query),
+                    new BasicDBObject(FIELD_LAST_NAME, query));
+        }
+        Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), searchQuery);
+        return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
+                this::convert, User::getUsername, User::getId);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(ReferenceType referenceType, String referenceId, FilterCriteria criteria, CursorRequest cursor) {
+        try {
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
+            Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), searchQuery);
+            return findCursorPage(usersCollection, baseFilter, cursor, FIELD_USERNAME,
+                    this::convert, User::getUsername, User::getId);
+        } catch (Exception ex) {
+            if (ex instanceof IllegalArgumentException) {
+                return Single.error(ex);
+            }
+            logger.error("An error has occurred while searching users with cursor and criteria {}", criteria, ex);
+            return Single.error(new TechnicalException("An error has occurred while searching users with cursor and filter criteria", ex));
+        }
     }
 
     @Override

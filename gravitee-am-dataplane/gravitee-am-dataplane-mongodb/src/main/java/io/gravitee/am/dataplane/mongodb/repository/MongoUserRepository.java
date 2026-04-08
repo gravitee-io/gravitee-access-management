@@ -39,6 +39,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -242,6 +244,81 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
             return Flowable.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
         }
 
+    }
+
+    @Override
+    public Single<CursorPage<User>> findAllCursor(Reference reference, CursorRequest cursor) {
+        Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()));
+        return cursorQuery(baseFilter, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(Reference reference, String query, CursorRequest cursor) {
+        Bson searchQuery;
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = or(
+                    new BasicDBObject(FIELD_USERNAME, pattern), new BasicDBObject(FIELD_EMAIL, pattern),
+                    new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, pattern), new BasicDBObject(FIELD_DISPLAY_NAME, pattern),
+                    new BasicDBObject(FIELD_FIRST_NAME, pattern), new BasicDBObject(FIELD_LAST_NAME, pattern));
+        } else {
+            searchQuery = or(
+                    new BasicDBObject(FIELD_USERNAME, query), new BasicDBObject(FIELD_EMAIL, query),
+                    new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, query), new BasicDBObject(FIELD_DISPLAY_NAME, query),
+                    new BasicDBObject(FIELD_FIRST_NAME, query), new BasicDBObject(FIELD_LAST_NAME, query));
+        }
+        Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), searchQuery);
+        return cursorQuery(baseFilter, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(Reference reference, FilterCriteria criteria, CursorRequest cursor) {
+        try {
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
+            Bson baseFilter = and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), searchQuery);
+            return cursorQuery(baseFilter, cursor);
+        } catch (Exception ex) {
+            if (ex instanceof IllegalArgumentException) {
+                return Single.error(ex);
+            }
+            logger.error("An error has occurred while searching users with cursor and criteria {}", criteria, ex);
+            return Single.error(new TechnicalException("An error has occurred while searching users with cursor and filter criteria", ex));
+        }
+    }
+
+    private Single<CursorPage<User>> cursorQuery(Bson baseFilter, CursorRequest cursor) {
+        boolean ascending = cursor.getDirection().isAscending();
+        int sortDir = ascending ? 1 : -1;
+        int fetchLimit = cursor.getLimit() + 1;
+
+        Bson filter = baseFilter;
+        if (!cursor.isFirstPage()) {
+            String compareOp = ascending ? "$gt" : "$lt";
+            Bson beyondSort = new BasicDBObject(FIELD_USERNAME, new BasicDBObject(compareOp, cursor.getLastSortValue()));
+            Bson sameSortBeyondId = and(
+                    eq(FIELD_USERNAME, cursor.getLastSortValue()),
+                    new BasicDBObject(FIELD_ID, new BasicDBObject(compareOp, cursor.getLastId())));
+            filter = and(baseFilter, or(beyondSort, sameSortBeyondId));
+        }
+
+        Bson sort = new BasicDBObject(FIELD_USERNAME, sortDir).append(FIELD_ID, sortDir);
+
+        return Observable.fromPublisher(withMaxTime(usersCollection.find(filter)).sort(sort).limit(fetchLimit))
+                .map(this::convert)
+                .toList()
+                .map(items -> {
+                    boolean hasNext = items.size() > cursor.getLimit();
+                    java.util.List<User> data = hasNext ? items.subList(0, cursor.getLimit()) : items;
+                    String nextCursor = null;
+                    if (hasNext && !data.isEmpty()) {
+                        User last = data.get(data.size() - 1);
+                        nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection());
+                    }
+                    return new CursorPage<>(data, nextCursor, hasNext);
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override

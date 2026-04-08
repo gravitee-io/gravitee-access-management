@@ -19,6 +19,8 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcDomain;
 import io.gravitee.am.repository.jdbc.management.api.spring.domain.SpringDomainIdentitiesRepository;
@@ -215,6 +217,74 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .map(this::toDomain)
                 .concatMap(this::completeDomain)
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<CursorPage<Domain>> findByEnvironmentCursor(String environmentId, CursorRequest cursor) {
+        return executeDomainCursorQuery(environmentId, null, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Domain>> searchByEnvironmentCursor(String environmentId, String query, CursorRequest cursor) {
+        return executeDomainCursorQuery(environmentId, query, cursor);
+    }
+
+    private Single<CursorPage<Domain>> executeDomainCursorQuery(String environmentId, String searchQuery, CursorRequest cursor) {
+        boolean ascending = cursor.getDirection().isAscending();
+        String compareOp = ascending ? ">" : "<";
+        String sortDir = ascending ? "ASC" : "DESC";
+        int fetchLimit = cursor.getLimit() + 1;
+
+        var sql = new StringBuilder("SELECT * FROM domains d WHERE d.reference_type = :refType AND d.reference_id = :refId");
+
+        if (searchQuery != null) {
+            boolean wildcardMatch = searchQuery.contains("*");
+            sql.append(" AND UPPER(d.hrid) ").append(wildcardMatch ? "LIKE" : "=").append(" :searchValue");
+        }
+
+        if (!cursor.isFirstPage()) {
+            sql.append(" AND (LOWER(d.name) ").append(compareOp).append(" LOWER(:lastSort)")
+               .append(" OR (LOWER(d.name) = LOWER(:lastSort) AND d.id ").append(compareOp).append(" :lastId))");
+        }
+
+        sql.append(" ORDER BY LOWER(d.name) ").append(sortDir).append(", d.id ").append(sortDir)
+           .append(" LIMIT :fetchLimit");
+
+        DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
+                .bind("refType", ReferenceType.ENVIRONMENT.name())
+                .bind("refId", environmentId)
+                .bind("fetchLimit", fetchLimit);
+
+        if (searchQuery != null) {
+            boolean wildcardMatch = searchQuery.contains("*");
+            String value = wildcardMatch ? searchQuery.replaceAll("\\*+", "%").toUpperCase() : searchQuery.toUpperCase();
+            spec = spec.bind("searchValue", value);
+        }
+
+        if (!cursor.isFirstPage()) {
+            spec = spec.bind("lastSort", cursor.getLastSortValue())
+                       .bind("lastId", cursor.getLastId());
+        }
+
+        return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcDomain.class, row)).all())
+                .map(this::toDomain)
+                .concatMap(this::completeDomain)
+                .toList()
+                .map(items -> buildCursorPage(items, cursor, Domain::getName, Domain::getId))
+                .observeOn(Schedulers.computation());
+    }
+
+    private <T> CursorPage<T> buildCursorPage(List<T> items, CursorRequest cursor,
+                                                java.util.function.Function<T, String> sortValueExtractor,
+                                                java.util.function.Function<T, String> idExtractor) {
+        boolean hasNext = items.size() > cursor.getLimit();
+        List<T> data = hasNext ? items.subList(0, cursor.getLimit()) : items;
+        String nextCursor = null;
+        if (hasNext && !data.isEmpty()) {
+            T last = data.get(data.size() - 1);
+            nextCursor = CursorRequest.encode(sortValueExtractor.apply(last), idExtractor.apply(last), cursor.getDirection());
+        }
+        return new CursorPage<>(data, nextCursor, hasNext);
     }
 
     private Flowable<Domain> completeDomain(Domain entity) {

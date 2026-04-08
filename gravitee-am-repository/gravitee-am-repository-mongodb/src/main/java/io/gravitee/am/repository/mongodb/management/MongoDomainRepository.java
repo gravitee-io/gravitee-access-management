@@ -25,6 +25,8 @@ import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
@@ -99,6 +101,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_HRID, 1), new IndexOptions().name("ri1rt1h1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1).append(FIELD_ID, 1), new IndexOptions().name("rt1ri1n1id1"));
 
         super.createIndex(domainsCollection, indexes);
         if (ensureIndexOnStart) {
@@ -196,6 +199,49 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     public Completable delete(String id) {
         return Completable.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id)))
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<CursorPage<Domain>> findByEnvironmentCursor(String environmentId, CursorRequest cursor) {
+        Bson baseFilter = and(
+                eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
+                eq(FIELD_REFERENCE_ID, environmentId));
+        return domainCursorQuery(baseFilter, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<Domain>> searchByEnvironmentCursor(String environmentId, String query, CursorRequest cursor) {
+        Bson searchQuery = eq(FIELD_HRID, query);
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = new BasicDBObject(FIELD_HRID, pattern);
+        }
+        Bson baseFilter = and(
+                eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
+                eq(FIELD_REFERENCE_ID, environmentId),
+                searchQuery);
+        return domainCursorQuery(baseFilter, cursor);
+    }
+
+    private Single<CursorPage<Domain>> domainCursorQuery(Bson baseFilter, CursorRequest cursor) {
+        String sortField = cursor.getSortField() != null ? cursor.getSortField() : "name";
+        return switch (sortField) {
+            case "updatedAt" -> findCursorPage(domainsCollection, baseFilter, cursor, FIELD_UPDATED_AT,
+                    MongoDomainRepository::convert, d -> dateToString(d.getUpdatedAt()), Domain::getId, MongoDomainRepository::dateFromString);
+            default -> findCursorPage(domainsCollection, baseFilter, cursor, FIELD_NAME,
+                    MongoDomainRepository::convert, Domain::getName, Domain::getId);
+        };
+    }
+
+    private static String dateToString(java.util.Date date) {
+        return date != null ? String.valueOf(date.getTime()) : "0";
+    }
+
+    private static Object dateFromString(String value) {
+        try { return new java.util.Date(Long.parseLong(value)); }
+        catch (NumberFormatException e) { return new java.util.Date(0); }
     }
 
     private static Domain convert(DomainMongo domainMongo) {

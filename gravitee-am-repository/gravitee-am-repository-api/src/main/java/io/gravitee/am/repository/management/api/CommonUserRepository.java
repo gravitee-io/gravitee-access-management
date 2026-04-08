@@ -19,6 +19,8 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -65,6 +67,12 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
     Maybe<User> findById(Reference reference, UserId userId);
 
     Completable deleteByReference(ReferenceType referenceType, String referenceId);
+
+    Single<CursorPage<User>> findAllCursor(ReferenceType referenceType, String referenceId, CursorRequest cursor);
+
+    Single<CursorPage<User>> searchCursor(ReferenceType referenceType, String referenceId, String query, CursorRequest cursor);
+
+    Single<CursorPage<User>> searchCursor(ReferenceType referenceType, String referenceId, FilterCriteria criteria, CursorRequest cursor);
 
     /**
      * Used to specify if some user information need to be updated

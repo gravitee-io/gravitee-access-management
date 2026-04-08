@@ -32,6 +32,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -589,6 +591,125 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .map(this::toEntity)
                 .concatMap(user -> completeUser(user).toFlowable())
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<CursorPage<User>> findAllCursor(Reference reference, CursorRequest cursor) {
+        return executeUserCursorQuery(reference, null, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(Reference reference, String query, CursorRequest cursor) {
+        return executeUserCursorQuery(reference, query, cursor);
+    }
+
+    @Override
+    public Single<CursorPage<User>> searchCursor(Reference reference, FilterCriteria criteria, CursorRequest cursor) {
+        try {
+            boolean ascending = cursor.getDirection().isAscending();
+            String compareOp = ascending ? ">" : "<";
+            String sortDir = ascending ? "ASC" : "DESC";
+            int fetchLimit = cursor.getLimit() + 1;
+
+            StringBuilder queryBuilder = new StringBuilder();
+            queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
+            ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME, -1, -1, USERS);
+
+            String selectQuery = search.getSelectQuery();
+            int orderByIdx = selectQuery.toUpperCase().lastIndexOf("ORDER BY");
+            String baseQuery = orderByIdx > 0 ? selectQuery.substring(0, orderByIdx) : selectQuery;
+
+            var sql = new StringBuilder(baseQuery);
+            if (!cursor.isFirstPage()) {
+                sql.append(" AND (u.username ").append(compareOp).append(" :lastSort")
+                   .append(" OR (u.username = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
+            }
+            sql.append(" ORDER BY u.username ").append(sortDir).append(", u.id ").append(sortDir)
+               .append(" LIMIT :fetchLimit");
+
+            org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString());
+            spec = spec.bind(REF_TYPE, reference.type().name()).bind(REF_ID, reference.id()).bind("fetchLimit", fetchLimit);
+            for (java.util.Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+                spec = spec.bind(entry.getKey(), entry.getValue());
+            }
+            if (!cursor.isFirstPage()) {
+                spec = spec.bind("lastSort", cursor.getLastSortValue()).bind("lastId", cursor.getLastId());
+            }
+
+            return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
+                    .map(this::toEntity)
+                    .concatMap(user -> completeUser(user).toFlowable())
+                    .toList()
+                    .map(items -> buildUserCursorPage(items, cursor))
+                    .observeOn(Schedulers.computation());
+        } catch (Exception ex) {
+            if (ex instanceof IllegalArgumentException) {
+                return Single.error(ex);
+            }
+            LOGGER.error("An error has occurred while searching users with cursor and criteria {}", criteria, ex);
+            return Single.error(new io.gravitee.am.repository.exceptions.TechnicalException("An error has occurred while searching users with cursor and filter criteria", ex));
+        }
+    }
+
+    private Single<CursorPage<User>> executeUserCursorQuery(Reference reference, String searchQuery, CursorRequest cursor) {
+        boolean ascending = cursor.getDirection().isAscending();
+        String compareOp = ascending ? ">" : "<";
+        String sortDir = ascending ? "ASC" : "DESC";
+        int fetchLimit = cursor.getLimit() + 1;
+
+        var sql = new StringBuilder("SELECT * FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId");
+
+        if (searchQuery != null) {
+            boolean wildcardSearch = searchQuery.contains("*");
+            String op = wildcardSearch ? "LIKE" : "=";
+            sql.append(" AND (UPPER(u.username) ").append(op).append(" :searchValue")
+               .append(" OR UPPER(u.email) ").append(op).append(" :searchValue")
+               .append(" OR UPPER(u.additional_information_email) ").append(op).append(" :searchValue")
+               .append(" OR UPPER(u.display_name) ").append(op).append(" :searchValue")
+               .append(" OR UPPER(u.first_name) ").append(op).append(" :searchValue")
+               .append(" OR UPPER(u.last_name) ").append(op).append(" :searchValue)");
+        }
+
+        if (!cursor.isFirstPage()) {
+            sql.append(" AND (u.username ").append(compareOp).append(" :lastSort")
+               .append(" OR (u.username = :lastSort AND u.id ").append(compareOp).append(" :lastId))");
+        }
+
+        sql.append(" ORDER BY u.username ").append(sortDir).append(", u.id ").append(sortDir)
+           .append(" LIMIT :fetchLimit");
+
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql.toString())
+                .bind(REF_TYPE, reference.type().name())
+                .bind(REF_ID, reference.id())
+                .bind("fetchLimit", fetchLimit);
+
+        if (searchQuery != null) {
+            boolean wildcardSearch = searchQuery.contains("*");
+            String value = wildcardSearch ? searchQuery.replaceAll("\\*+", "%") : searchQuery;
+            spec = spec.bind("searchValue", value.toUpperCase());
+        }
+
+        if (!cursor.isFirstPage()) {
+            spec = spec.bind("lastSort", cursor.getLastSortValue()).bind("lastId", cursor.getLastId());
+        }
+
+        return fluxToFlowable(spec.map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
+                .map(this::toEntity)
+                .concatMap(user -> completeUser(user).toFlowable())
+                .toList()
+                .map(items -> buildUserCursorPage(items, cursor))
+                .observeOn(Schedulers.computation());
+    }
+
+    private CursorPage<User> buildUserCursorPage(java.util.List<User> items, CursorRequest cursor) {
+        boolean hasNext = items.size() > cursor.getLimit();
+        java.util.List<User> data = hasNext ? items.subList(0, cursor.getLimit()) : items;
+        String nextCursor = null;
+        if (hasNext && !data.isEmpty()) {
+            User last = data.get(data.size() - 1);
+            nextCursor = CursorRequest.encode(last.getUsername() != null ? last.getUsername() : "", last.getId(), cursor.getDirection());
+        }
+        return new CursorPage<>(data, nextCursor, hasNext);
     }
 
     @Override

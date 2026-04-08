@@ -24,18 +24,24 @@ import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.model.common.CursorPage;
+import io.gravitee.am.model.common.CursorRequest;
+import io.gravitee.am.model.common.CursorRequest.SortDirection;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import java.util.regex.Pattern;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -197,5 +203,82 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
 
     protected Single<Long> countItems(MongoCollection collection, Bson query, CountOptions options) {
         return Observable.fromPublisher(collection.countDocuments(query, options)).first(0L);
+    }
+
+    /**
+     * Reusable keyset (cursor-based) pagination query. Fetches {@code limit + 1} items to detect
+     * whether more pages exist, and performs a count query for totalCount. Builds a {@link CursorPage}
+     * with an opaque cursor pointing to the last returned item.
+     */
+    protected <T, R> Single<CursorPage<R>> findCursorPage(
+            MongoCollection<T> collection,
+            Bson baseFilter,
+            CursorRequest cursor,
+            String sortFieldName,
+            Function<T, R> mapper,
+            java.util.function.Function<R, String> sortValueExtractor,
+            java.util.function.Function<R, String> idExtractor,
+            java.util.function.Function<String, Object> sortValueDeserializer) {
+
+        boolean ascending = cursor.getDirection().isAscending();
+        int sortDir = ascending ? 1 : -1;
+        int fetchLimit = cursor.getLimit() + 1;
+
+        Bson filter = baseFilter;
+        if (!cursor.isFirstPage()) {
+            String compareOp = ascending ? "$gt" : "$lt";
+            Object sortValue = sortValueDeserializer.apply(cursor.getLastSortValue());
+            Bson beyondSort = new BasicDBObject(sortFieldName, new BasicDBObject(compareOp, sortValue));
+            Bson sameSortBeyondId = and(
+                    eq(sortFieldName, sortValue),
+                    new BasicDBObject(FIELD_ID, new BasicDBObject(compareOp, cursor.getLastId()))
+            );
+            filter = and(baseFilter, or(beyondSort, sameSortBeyondId));
+        }
+
+        Bson sort = new BasicDBObject(sortFieldName, sortDir).append(FIELD_ID, sortDir);
+
+        Single<Long> countOperation = countItems(collection, baseFilter, countOptions());
+
+        Single<List<R>> dataOperation = Observable.fromPublisher(
+                        withMaxTime(collection.find(filter))
+                                .sort(sort)
+                                .limit(fetchLimit))
+                .map(mapper)
+                .toList();
+
+        String cursorSortField = cursor.getSortField() != null ? cursor.getSortField() : sortFieldName;
+
+        return Single.zip(countOperation, dataOperation, (totalCount, items) -> {
+                    boolean hasNext = items.size() > cursor.getLimit();
+                    List<R> data = hasNext ? items.subList(0, cursor.getLimit()) : items;
+                    String nextCursor = null;
+                    if (hasNext && !data.isEmpty()) {
+                        R last = data.get(data.size() - 1);
+                        nextCursor = CursorRequest.encode(
+                                sortValueExtractor.apply(last),
+                                idExtractor.apply(last),
+                                cursor.getDirection(),
+                                cursorSortField);
+                    }
+                    return new CursorPage<>(data, nextCursor, hasNext, totalCount);
+                })
+                .observeOn(Schedulers.computation());
+    }
+
+    /**
+     * Convenience overload for string-typed sort fields (name, username, hrid, etc.)
+     * where the cursor string value can be used directly in BSON queries.
+     */
+    protected <T, R> Single<CursorPage<R>> findCursorPage(
+            MongoCollection<T> collection,
+            Bson baseFilter,
+            CursorRequest cursor,
+            String sortFieldName,
+            Function<T, R> mapper,
+            java.util.function.Function<R, String> sortValueExtractor,
+            java.util.function.Function<R, String> idExtractor) {
+        return findCursorPage(collection, baseFilter, cursor, sortFieldName, mapper,
+                sortValueExtractor, idExtractor, s -> s);
     }
 }
