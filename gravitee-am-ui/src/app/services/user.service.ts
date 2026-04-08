@@ -105,6 +105,20 @@ export class UserService {
     return this.http.get<any>(this.usersURL + domainId + '/users?' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
+  findByDomainCursor(domainId: string, limit: number, after?: string, sort?: string): Observable<any> {
+    let url = this.usersURL + domainId + '/users/_cursor?limit=' + limit;
+    if (after) url += '&after=' + encodeURIComponent(after);
+    if (sort) url += '&sort=' + encodeURIComponent(sort);
+    return this.http.get<any>(url);
+  }
+
+  searchCursor(domainId: string, searchTerm: string, limit: number, after?: string, sort?: string): Observable<any> {
+    let url = this.usersURL + domainId + '/users/_cursor?' + searchTerm + '&limit=' + limit;
+    if (after) url += '&after=' + encodeURIComponent(after);
+    if (sort) url += '&sort=' + encodeURIComponent(sort);
+    return this.http.get<any>(url);
+  }
+
   consents(domainId, userId, clientId): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/consents' + (clientId ? '?clientId=' + clientId : ''));
   }

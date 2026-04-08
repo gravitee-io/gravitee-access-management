@@ -34,6 +34,6 @@ export class DomainsResolver {
       });
     }
 
-    return this.domainService.findByEnvironment(0, 10);
+    return this.domainService.findByEnvironmentCursor(10);
   }
 }

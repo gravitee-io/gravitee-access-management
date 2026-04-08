@@ -41,7 +41,6 @@ export class UsersComponent implements OnInit {
   requiredReadPermission: string;
   users: any[];
   domainId: string;
-  page: any = {};
   createMode: boolean;
   applications: any[];
   identityProviders: any[];
@@ -49,6 +48,18 @@ export class UsersComponent implements OnInit {
   selectedApplications: string[];
   selectedDisabledUsers = false;
   displayAdvancedSearchMode = false;
+
+  // Cursor pagination state
+  pageSize = 25;
+  totalCount = 0;
+  hasNext = false;
+  hasPrevious = false;
+  private nextCursor: string | null = null;
+  private cursorStack: string[] = [];
+  private currentSort: string = 'username';
+
+  // Fallback offset pagination for organization context (no cursor endpoint)
+  page: any = {};
 
   constructor(
     private userService: UserService,
@@ -80,6 +91,41 @@ export class UsersComponent implements OnInit {
   }
 
   loadUsers(searchQuery: string | null) {
+    if (this.organizationContext) {
+      this.loadUsersOffset(searchQuery);
+      return;
+    }
+
+    const currentCursor = this.cursorStack.length > 0 ? this.cursorStack[this.cursorStack.length - 1] : undefined;
+    let findUsers: any;
+    let advancedSearchMode = false;
+
+    if (searchQuery) {
+      advancedSearchMode = this.isAdvancedSearch(searchQuery);
+      const searchTerm = !advancedSearchMode ? 'q=' + searchQuery + '*' : 'filter=' + encodeURIComponent(searchQuery);
+      findUsers = this.userService.searchCursor(this.domainId, searchTerm, this.pageSize, currentCursor, this.currentSort);
+    } else {
+      findUsers = this.userService.findByDomainCursor(this.domainId, this.pageSize, currentCursor, this.currentSort);
+    }
+
+    this.isLoading = true;
+    findUsers.subscribe((cursorPage) => {
+      this.isLoading = false;
+      this.users = cursorPage.data;
+      this.nextCursor = cursorPage.nextCursor;
+      this.hasNext = cursorPage.hasNext;
+      this.hasPrevious = this.cursorStack.length > 0;
+      if (cursorPage.totalCount !== undefined) {
+        this.totalCount = cursorPage.totalCount;
+      }
+      if (advancedSearchMode) {
+        this.searchValue = searchQuery;
+      }
+    });
+  }
+
+  /** Fallback offset pagination for organization context */
+  private loadUsersOffset(searchQuery: string | null) {
     let findUsers: any;
     let advancedSearchMode = false;
     if (searchQuery) {
@@ -87,9 +133,7 @@ export class UsersComponent implements OnInit {
       const searchTerm = !advancedSearchMode ? 'q=' + searchQuery + '*' : 'filter=' + encodeURIComponent(searchQuery);
       findUsers = this.userService.search(this.domainId, searchTerm, this.page.pageNumber, this.page.size, this.organizationContext);
     } else {
-      findUsers = this.organizationContext
-        ? this.organizationService.users(this.page.pageNumber, this.page.size)
-        : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+      findUsers = this.organizationService.users(this.page.pageNumber, this.page.size);
     }
     this.isLoading = true;
     findUsers.subscribe((pagedUsers) => {
@@ -111,7 +155,7 @@ export class UsersComponent implements OnInit {
         switchMap(() => this.userService.delete(this.domainId, id, this.organizationContext)),
         tap(() => {
           this.snackbarService.open('User deleted');
-          this.page.pageNumber = 0;
+          this.resetPagination();
           this.loadUsers(null);
         }),
       )
@@ -139,17 +183,17 @@ export class UsersComponent implements OnInit {
     this.selectedApplications = null;
     this.selectedIdPs = null;
     this.selectedDisabledUsers = false;
-    this.page.pageNumber = 0;
+    this.resetPagination();
     this.loadUsers(this.searchValue);
   }
 
   onSearch() {
-    this.page.pageNumber = 0;
+    this.resetPagination();
     this.loadUsers(this.searchValue);
   }
 
   onAdvancedSearch() {
-    this.page.pageNumber = 0;
+    this.resetPagination();
     this.displayAdvancedSearchMode = false;
     let searchQuery = '';
     if (this.selectedApplications && this.selectedApplications.length > 0) {
@@ -179,9 +223,47 @@ export class UsersComponent implements OnInit {
     this.selectedDisabledUsers = event.checked;
   }
 
+  nextPage() {
+    if (this.organizationContext) {
+      this.page.pageNumber++;
+      this.loadUsers(this.searchValue);
+    } else if (this.nextCursor) {
+      this.cursorStack.push(this.nextCursor);
+      this.loadUsers(this.searchValue);
+    }
+  }
+
+  previousPage() {
+    if (this.organizationContext) {
+      this.page.pageNumber = Math.max(0, this.page.pageNumber - 1);
+      this.loadUsers(this.searchValue);
+    } else if (this.cursorStack.length > 0) {
+      this.cursorStack.pop();
+      this.loadUsers(this.searchValue);
+    }
+  }
+
+  onSort(event) {
+    if (this.organizationContext) return; // org context uses offset pagination, no server sort
+    const sortField = event.sorts[0];
+    const prop = sortField.prop === 'username' ? 'username' : 'updatedAt';
+    this.currentSort = sortField.dir === 'desc' ? '-' + prop : prop;
+    this.resetPagination();
+    this.loadUsers(this.searchValue);
+  }
+
   setPage(pageInfo) {
+    // Kept for organization context fallback via ngx-datatable paging events
     this.page.pageNumber = pageInfo.offset;
     this.loadUsers(this.searchValue);
+  }
+
+  private resetPagination() {
+    this.cursorStack = [];
+    this.nextCursor = null;
+    this.hasNext = false;
+    this.hasPrevious = false;
+    this.page.pageNumber = 0;
   }
 
   accountLocked(user) {

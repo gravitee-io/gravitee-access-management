@@ -36,6 +36,14 @@
   }
 }
 
+.cursor-pager {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px;
+}
+
 :host ::ng-deep.app-name-cell {
   padding: 0 !important;
 

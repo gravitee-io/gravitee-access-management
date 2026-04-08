@@ -39,6 +39,20 @@ export class ApplicationService {
     return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm);
   }
 
+  findByDomainCursor(domainId: string, limit: number, after?: string, sort?: string): Observable<any> {
+    let url = this.appsURL + domainId + '/applications/_cursor?limit=' + limit;
+    if (after) url += '&after=' + encodeURIComponent(after);
+    if (sort) url += '&sort=' + encodeURIComponent(sort);
+    return this.http.get<any>(url);
+  }
+
+  searchCursor(domainId: string, searchTerm: string, limit: number, after?: string, sort?: string): Observable<any> {
+    let url = this.appsURL + domainId + '/applications/_cursor?q=' + encodeURIComponent(searchTerm) + '&limit=' + limit;
+    if (after) url += '&after=' + encodeURIComponent(after);
+    if (sort) url += '&sort=' + encodeURIComponent(sort);
+    return this.http.get<any>(url);
+  }
+
   get(domainId, id): Observable<any> {
     return this.http.get<any>(this.appsURL + domainId + '/applications/' + id);
   }

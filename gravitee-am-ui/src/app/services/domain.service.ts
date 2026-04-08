@@ -41,6 +41,20 @@ export class DomainService {
     return this.http.get<any>(this.domainsURL + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
+  findByEnvironmentCursor(limit: number, after?: string, sort?: string): Observable<any> {
+    let url = this.domainsURL + '_cursor?limit=' + limit;
+    if (after) url += '&after=' + encodeURIComponent(after);
+    if (sort) url += '&sort=' + encodeURIComponent(sort);
+    return this.http.get<any>(url);
+  }
+
+  searchCursor(searchTerm: string, limit: number, after?: string, sort?: string): Observable<any> {
+    let url = this.domainsURL + '_cursor?q=' + encodeURIComponent(searchTerm) + '&limit=' + limit;
+    if (after) url += '&after=' + encodeURIComponent(after);
+    if (sort) url += '&sort=' + encodeURIComponent(sort);
+    return this.http.get<any>(url);
+  }
+
   list(): Observable<any> {
     return this.http.get<any>(this.domainsURL);
   }

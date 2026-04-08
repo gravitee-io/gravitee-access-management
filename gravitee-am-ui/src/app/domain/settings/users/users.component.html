@@ -75,12 +75,21 @@
       [messages]="{ emptyMessage: 'There is no user to display.', totalMessage: 'total' }"
       [rows]="users"
       [loadingIndicator]="isLoading"
-      [externalPaging]="true"
-      [count]="page.totalElements"
-      [offset]="page.pageNumber"
-      [limit]="page.size"
-      (page)="setPage($event)"
+      [externalSorting]="true"
+      (sort)="onSort($event)"
     >
+      <ngx-datatable-footer>
+        <ng-template ngx-datatable-footer-template>
+          <div class="cursor-pager">
+            <button mat-icon-button [disabled]="!hasPrevious" (click)="previousPage()" matTooltip="Previous page">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <button mat-icon-button [disabled]="!hasNext" (click)="nextPage()" matTooltip="Next page">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+        </ng-template>
+      </ngx-datatable-footer>
       <ngx-datatable-column name="Name" prop="username" [flexGrow]="4" [cellClass]="'user-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="user-header" fxLayout="row">

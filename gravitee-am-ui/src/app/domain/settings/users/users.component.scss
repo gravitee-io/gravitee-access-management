@@ -1,6 +1,14 @@
 @use '@angular/material' as mat;
 @use '@gravitee/ui-particles-angular' as gio;
 
+.cursor-pager {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px;
+}
+
 ngx-datatable {
   margin-top: 10px;
 

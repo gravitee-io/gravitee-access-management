@@ -30,45 +30,78 @@ export class ApplicationsComponent implements OnInit {
   applications: any[];
   private searchValue: string;
   domainId: string;
-  page: any = {};
+
+  pageSize = 10;
+  totalCount = 0;
+  hasNext = false;
+  hasPrevious = false;
+  private nextCursor: string | null = null;
+  private cursorStack: string[] = [];
+  private currentSort: string = '-updatedAt';
 
   constructor(
     private dialogService: DialogService,
     private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private route: ActivatedRoute,
-  ) {
-    this.page.pageNumber = 0;
-    this.page.size = 10;
-  }
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    const pagedApps = this.route.snapshot.data['applications'];
-    this.applications = pagedApps.data;
-    this.page.totalElements = pagedApps.totalCount;
+    this.loadApps();
   }
 
   onSearch(event) {
-    this.page.pageNumber = 0;
     this.searchValue = event.target.value;
+    this.resetPagination();
     this.loadApps();
   }
 
   loadApps() {
-    const findApps = this.searchValue
-      ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*')
-      : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+    const currentCursor = this.cursorStack.length > 0 ? this.cursorStack[this.cursorStack.length - 1] : undefined;
 
-    findApps.subscribe((pagedApps) => {
-      this.page.totalElements = pagedApps.totalCount;
-      this.applications = pagedApps.data;
+    const findApps = this.searchValue
+      ? this.applicationService.searchCursor(this.domainId, '*' + this.searchValue + '*', this.pageSize, currentCursor, this.currentSort)
+      : this.applicationService.findByDomainCursor(this.domainId, this.pageSize, currentCursor, this.currentSort);
+
+    findApps.subscribe((cursorPage) => {
+      this.applications = cursorPage.data;
+      this.nextCursor = cursorPage.nextCursor;
+      this.hasNext = cursorPage.hasNext;
+      this.hasPrevious = this.cursorStack.length > 0;
+      if (cursorPage.totalCount !== undefined) {
+        this.totalCount = cursorPage.totalCount;
+      }
     });
   }
 
-  setPage(pageInfo) {
-    this.page.pageNumber = pageInfo.offset;
+  onSort(event) {
+    const sortField = event.sorts[0];
+    const prop = sortField.prop === 'name' ? 'name' : 'updatedAt';
+    this.currentSort = sortField.dir === 'desc' ? '-' + prop : prop;
+    this.resetPagination();
     this.loadApps();
+  }
+
+  nextPage() {
+    if (this.nextCursor) {
+      this.cursorStack.push(this.nextCursor);
+      this.loadApps();
+    }
+  }
+
+  previousPage() {
+    if (this.cursorStack.length > 0) {
+      this.cursorStack.pop();
+      this.loadApps();
+    }
+  }
+
+  private resetPagination() {
+    this.cursorStack = [];
+    this.nextCursor = null;
+    this.hasNext = false;
+    this.hasPrevious = false;
   }
 
   get isEmpty() {

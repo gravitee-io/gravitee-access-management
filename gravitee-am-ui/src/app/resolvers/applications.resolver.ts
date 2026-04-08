@@ -34,7 +34,7 @@ export class ApplicationsResolver {
     const domain = route.parent.data['domain'];
 
     if (domain) {
-      return this.applicationService.findByDomain(domain.id, this.default_page, this.default_size);
+      return this.applicationService.findByDomainCursor(domain.id, this.default_size);
     } else {
       return this.dashboardService.findApplications(null);
     }

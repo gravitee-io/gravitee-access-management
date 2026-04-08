@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 
 import { AppConfig } from '../../../config/app.config';
 import { DomainService } from '../../services/domain.service';
@@ -27,45 +26,75 @@ import { DomainService } from '../../services/domain.service';
 })
 export class DomainsComponent implements OnInit {
   private searchValue: string;
-  page: any = {};
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   domains = [];
 
-  constructor(
-    private route: ActivatedRoute,
-    private domainService: DomainService,
-  ) {
-    this.page.pageNumber = 0;
-    this.page.size = 10;
-  }
+  pageSize = 10;
+  totalCount = 0;
+  hasNext = false;
+  hasPrevious = false;
+  private nextCursor: string | null = null;
+  private cursorStack: string[] = [];
+  private currentSort: string = 'name';
+
+  constructor(private domainService: DomainService) {}
 
   ngOnInit() {
-    const pagedDomains = this.route.snapshot.data['domains'];
-    this.domains = pagedDomains.data;
-    this.page.totalElements = pagedDomains.totalCount;
+    this.loadDomains();
   }
 
   onSearch(event) {
-    this.page.pageNumber = 0;
     this.searchValue = event.target.value;
+    this.resetPagination();
     this.loadDomains();
   }
 
   loadDomains() {
-    const findDomains = this.searchValue
-      ? this.domainService.search('*' + this.searchValue + '*', this.page.pageNumber, this.page.size)
-      : this.domainService.findByEnvironment(this.page.pageNumber, this.page.size);
+    const currentCursor = this.cursorStack.length > 0 ? this.cursorStack[this.cursorStack.length - 1] : undefined;
 
-    findDomains.subscribe((pagedDomains) => {
-      this.page.totalElements = pagedDomains.totalCount;
-      this.domains = pagedDomains.data;
+    const findDomains = this.searchValue
+      ? this.domainService.searchCursor('*' + this.searchValue + '*', this.pageSize, currentCursor, this.currentSort)
+      : this.domainService.findByEnvironmentCursor(this.pageSize, currentCursor, this.currentSort);
+
+    findDomains.subscribe((cursorPage) => {
+      this.domains = cursorPage.data;
+      this.nextCursor = cursorPage.nextCursor;
+      this.hasNext = cursorPage.hasNext;
+      this.hasPrevious = this.cursorStack.length > 0;
+      if (cursorPage.totalCount !== undefined) {
+        this.totalCount = cursorPage.totalCount;
+      }
     });
   }
 
-  setPage(pageInfo) {
-    this.page.pageNumber = pageInfo.offset;
+  onSort(event) {
+    const sortField = event.sorts[0];
+    const prop = sortField.prop === 'name' ? 'name' : 'updatedAt';
+    this.currentSort = sortField.dir === 'desc' ? '-' + prop : prop;
+    this.resetPagination();
     this.loadDomains();
+  }
+
+  nextPage() {
+    if (this.nextCursor) {
+      this.cursorStack.push(this.nextCursor);
+      this.loadDomains();
+    }
+  }
+
+  previousPage() {
+    if (this.cursorStack.length > 0) {
+      this.cursorStack.pop();
+      this.loadDomains();
+    }
+  }
+
+  private resetPagination() {
+    this.cursorStack = [];
+    this.nextCursor = null;
+    this.hasNext = false;
+    this.hasPrevious = false;
   }
 
   get isEmpty() {
