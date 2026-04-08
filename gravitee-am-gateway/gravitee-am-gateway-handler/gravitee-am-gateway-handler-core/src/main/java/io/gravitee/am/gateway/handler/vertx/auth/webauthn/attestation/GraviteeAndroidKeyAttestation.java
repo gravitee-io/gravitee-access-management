@@ -48,8 +48,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.security.*;
 import java.security.cert.*;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static io.vertx.ext.auth.impl.Codec.base64UrlDecode;
 import static io.vertx.ext.auth.webauthn.impl.attestation.Attestation.*;
@@ -183,15 +186,12 @@ public class GraviteeAndroidKeyAttestation implements Attestation {
             }
 
             if (statement == null || statement.getJsonArray("attestationRootCertificates", EMPTY).size() == 0) {
-                // 5. Check that root certificate(last in the chain) is set to the root certificate
-                // Google does not publish this certificate, so this was extracted from one of the attestations.
-                if (!validateRootCA(options, attStmt, options.getRootCertificate(fmt()))) {
-                    log.debug("Default Root certificate invalid for android-key, fallback to the updated ones");
-                    List<X509Certificate> additionalRootCertificates = ((GraviteeWebAuthnOptions) options).getAdditionalRootCertificate(fmt());
-                    if (!additionalRootCertificates.stream().anyMatch(cert -> validateRootCA(options, attStmt, cert))) {
-                        throw new AttestationException("Root certificate is invalid!");
-                    }
-                }
+                // 5. Validate the certificate chain against the configured trust anchors.
+                // Builds a PKIX path from x5c and validates it against the default root plus
+                // any additional roots provided by GraviteeWebAuthnOptions. This handles both
+                // chains that include the trust anchor as last element and chains where the
+                // device omits the root (RKP-enabled Android devices from 2026-04-10).
+                validateCertificateChain(options, certChain);
             }
 
             if (statement != null) {
@@ -210,14 +210,62 @@ public class GraviteeAndroidKeyAttestation implements Attestation {
         }
     }
 
-    private boolean validateRootCA(WebAuthnOptions options, JsonObject attStmt, X509Certificate rootCertificate) {
-        final JsonArray x5c = attStmt.getJsonArray("x5c");
-        try {
-            return  (rootCertificate != null && MessageDigest.isEqual(rootCertificate.getEncoded(), base64UrlDecode(x5c.getString(x5c.size() - 1))));
-        } catch (CertificateEncodingException e) {
-            log.error("Invalid root certificate", e);
-            return false;
+    /**
+     * Validate the attestation certificate chain against the configured trust anchors
+     * using PKIX path validation. Trust anchors are collected from the default root
+     * registered on {@link WebAuthnOptions} and any additional roots exposed by
+     * {@link GraviteeWebAuthnOptions#getAdditionalRootCertificate(String)}.
+     * <p>
+     * The cert path passed to {@link CertPathValidator} must NOT include the trust
+     * anchor itself, so a self-signed last element is stripped. Revocation checking
+     * is disabled because attestation roots are validated offline (no CRL/OCSP).
+     */
+    private void validateCertificateChain(WebAuthnOptions options, List<X509Certificate> certChain)
+            throws AttestationException {
+        // Collect trust anchors from default + additional roots
+        Set<TrustAnchor> trustAnchors = new HashSet<>();
+        X509Certificate defaultRoot = options.getRootCertificate(fmt());
+        if (defaultRoot != null) {
+            trustAnchors.add(new TrustAnchor(defaultRoot, null));
+        }
+        if (options instanceof GraviteeWebAuthnOptions) {
+            List<X509Certificate> extra = ((GraviteeWebAuthnOptions) options).getAdditionalRootCertificate(fmt());
+            if (extra != null) {
+                for (X509Certificate c : extra) {
+                    trustAnchors.add(new TrustAnchor(c, null));
+                }
+            }
+        }
+        if (trustAnchors.isEmpty()) {
+            throw new AttestationException("No trust anchors configured for " + fmt());
         }
 
+        // Strip a self-signed trailing cert: CertPath must not contain the trust anchor.
+        List<X509Certificate> path = new ArrayList<>(certChain);
+        X509Certificate last = path.get(path.size() - 1);
+        if (last.getIssuerX500Principal().equals(last.getSubjectX500Principal())) {
+            path.remove(path.size() - 1);
+        }
+
+        // Edge case: chain was just a self-signed root. Accept iff it matches a trust anchor.
+        if (path.isEmpty()) {
+            for (TrustAnchor ta : trustAnchors) {
+                if (ta.getTrustedCert().equals(last)) {
+                    return;
+                }
+            }
+            throw new AttestationException("Root certificate is invalid: self-signed leaf is not a trusted anchor");
+        }
+
+        try {
+            CertPath certPath = CertificateFactory.getInstance("X.509").generateCertPath(path);
+            PKIXParameters params = new PKIXParameters(trustAnchors);
+            params.setRevocationEnabled(false);
+            CertPathValidator.getInstance("PKIX").validate(certPath, params);
+        } catch (CertPathValidatorException e) {
+            throw new AttestationException("Root certificate is invalid: " + e.getMessage());
+        } catch (CertificateException | InvalidAlgorithmParameterException | NoSuchAlgorithmException e) {
+            throw new AttestationException("Failed to validate attestation certificate chain: " + e.getMessage());
+        }
     }
 }
