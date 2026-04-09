@@ -881,6 +881,9 @@ gateway:
   #   request:
   #     transaction:
   #       header: X-Gravitee-Transaction-Id
+  #   webauthn:
+  #     clientErrorReporting:
+  #       enabled: false
   # sharding_tags:
   replicaCount: 1
   image:

@@ -97,6 +97,11 @@ public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
                         routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true);
 
                 routingContext.put("webAuthnLoginPath", webAuthnLoginPath);
+                if (Boolean.TRUE.equals(routingContext.get(ConstantKeys.WEBAUTHN_CLIENT_ERROR_REPORTING_ENABLED_KEY))) {
+                    final String webAuthnErrorPath = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
+                            routingContext.get(CONTEXT_PATH) + "/webauthn/webauthn-error", queryParams, true);
+                    routingContext.put("webAuthnErrorPath", webAuthnErrorPath);
+                }
                 routingContext.put("userName", endUser.getUsername());
             }
 

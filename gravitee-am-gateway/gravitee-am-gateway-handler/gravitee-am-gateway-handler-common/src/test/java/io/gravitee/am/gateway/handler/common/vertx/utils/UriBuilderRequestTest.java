@@ -26,6 +26,8 @@ import org.junit.Test;
 import org.springframework.core.env.Environment;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -678,6 +680,21 @@ public class UriBuilderRequestTest {
 
         final var generatedUri2 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
         assertEquals("https://myhost:443/my/path?param1=value1", generatedUri2);
+    }
+
+    @Test
+    public void shouldAllowOrigin_whenMatchesForwardedPublicUrl() {
+        setupMockEnvironment(false, true);
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("gw.example.com");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("8443");
+        when(request.scheme()).thenReturn("http");
+        when(request.authority()).thenReturn(HostAndPort.create("internal", 8080));
+
+        assertTrue(UriBuilderRequest.isRequestOriginAllowed(request, "https://gw.example.com:8443"));
+        assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, "https://evil.example"));
+        assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, null));
+        assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, "null"));
     }
 
 }
