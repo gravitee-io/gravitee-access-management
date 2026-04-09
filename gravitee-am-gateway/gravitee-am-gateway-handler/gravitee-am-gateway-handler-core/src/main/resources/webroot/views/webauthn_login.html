@@ -29,6 +29,7 @@
     </div>
     <div class="section">
         <form class="form" role="form" id="login" method="post" th:action="${action}">
+            <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div>
                 <input class="input-field" type="text" id="username" name="username"
                        th:placeholder="#{login.label.username}"
@@ -79,8 +80,9 @@
     </div>
 </div>
 
+<script th:if="${webauthnClientErrorReportingEnabled}" th:src="@{../assets/js/webauthn-telemetry-v4.js}"></script>
 <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
-<script th:src="@{../assets/js/webauthn-login-v3.js}"></script>
+<script th:src="@{../assets/js/webauthn-login-v4.js}"></script>
 <script th:if="${rememberDeviceIsActive}" th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
 
 <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
