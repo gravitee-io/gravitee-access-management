@@ -52,6 +52,7 @@ public class VHostRouter extends RouterImpl {
     private final Router delegate;
     private final VirtualHost vhost;
 
+<<<<<<< HEAD
     public static io.vertx.rxjava3.ext.web.Router router(io.vertx.rxjava3.core.Vertx vertx, Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
 
         return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(vertx.getDelegate(), domain, vhost, delegate.getDelegate()));
@@ -62,6 +63,23 @@ public class VHostRouter extends RouterImpl {
         return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(vertx.getDelegate(), domain, delegate.getDelegate()));
     }
 
+=======
+    public static io.vertx.rxjava3.ext.web.Router router(Vertx vertx, Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
+
+        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(vertx, domain, vhost, delegate));
+    }
+
+    public static io.vertx.rxjava3.ext.web.Router router(Vertx vertx, Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
+
+        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(vertx, domain, delegate));
+    }
+
+    private VHostRouter(Vertx vertx, Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
+
+        this(vertx, domain, delegate.getDelegate());
+    }
+
+>>>>>>> d9e6800ff (fix: extend RouterImpl to handle change in vertx update)
     private VHostRouter(Vertx vertx, Domain domain, Router delegate) {
 
         super(vertx);
@@ -72,6 +90,14 @@ public class VHostRouter extends RouterImpl {
         this.delegate = delegate;
     }
 
+<<<<<<< HEAD
+=======
+    private VHostRouter(Vertx vertx, Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
+
+        this(vertx, domain, vhost, delegate.getDelegate());
+    }
+
+>>>>>>> d9e6800ff (fix: extend RouterImpl to handle change in vertx update)
     private VHostRouter(Vertx vertx, Domain domain, VirtualHost vhost, Router delegate) {
 
         super(vertx);
@@ -304,6 +330,7 @@ public class VHostRouter extends RouterImpl {
 
     @Override
     public Router errorHandler(int statusCode, Handler<RoutingContext> errorHandler) {
+        super.errorHandler(statusCode, errorHandler);
         return delegate.errorHandler(statusCode, errorHandler);
     }
 
