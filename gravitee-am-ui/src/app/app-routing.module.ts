@@ -232,6 +232,7 @@ import { AuthorizationEngineResolver } from './resolvers/authorization-engine.re
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
+import { CimdSettingsComponent } from './domain/settings/cimd/cimd.component';
 import { DeviceNotifiersComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
 import { DeviceNotifiersCreationComponent } from './domain/settings/openid/ciba/device-notifiers/create/device-notifiers-creation.component';
 import { DeviceNotifiersResolver } from './resolvers/device-notifiers.resolver';
@@ -2894,6 +2895,21 @@ export const routes: Routes = [
                             ],
                           },
                         ],
+                      },
+                      {
+                        path: 'cimd',
+                        component: CimdSettingsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'CIMD',
+                            section: 'OAuth 2.0',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_openid_read'],
+                          },
+                        },
                       },
                       {
                         path: 'dcr',

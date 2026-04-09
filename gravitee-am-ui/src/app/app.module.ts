@@ -415,6 +415,7 @@ import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/devic
 import { CookieSettingsComponent } from './domain/components/cookie/cookie-settings.component';
 import { UserNotificationsService } from './services/user-notifications.service';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
+import { CimdSettingsComponent } from './domain/settings/cimd/cimd.component';
 import { MfaSelectComponent } from './domain/applications/application/advanced/factors/mfa/mfa-select.component';
 import { MfaRememberDeviceComponent } from './domain/applications/application/advanced/factors/remember-device/mfa-remember-device.component';
 import { TimeConverterService } from './services/time-converter.service';
@@ -716,6 +717,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     CibaComponent,
     CibaSettingsComponent,
     Saml2Component,
+    CimdSettingsComponent,
     DeviceNotifiersComponent,
     DeviceNotifierComponent,
     DeviceNotifierFormComponent,
