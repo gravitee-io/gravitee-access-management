@@ -30,6 +30,7 @@ import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
@@ -44,6 +45,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -119,6 +121,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -154,6 +157,10 @@ public class DomainServiceImpl implements DomainService {
      */
     private static final int CIBA_MAX_BINDING_MESSAGE_LENGTH = 2048;
     public static final String IS_MALFORMED = " is malformed";
+
+    private static final String HOSTNAME_REGEX = "^(\\*\\.)?([a-zA-Z0-9-]{1,63}\\.)+[a-zA-Z0-9-]{1,63}$";
+
+    private static final Pattern HOSTNAME_PATTERN = Pattern.compile(HOSTNAME_REGEX);
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
@@ -875,6 +882,38 @@ public class DomainServiceImpl implements DomainService {
                         }));
     }
 
+
+    private Completable validateCIMDSettings(Domain domain) {
+        Optional<CIMDSettings> optCIMDSettings = Optional.ofNullable(domain.getOidc()).map(OIDCSettings::getCimdSettings);
+        if (optCIMDSettings.isEmpty() || !optCIMDSettings.get().isEnabled()) {
+            return Completable.complete();
+        }
+
+        CIMDSettings cimdSettings = optCIMDSettings.get();
+        if (cimdSettings.getAllowedDomains() != null && !cimdSettings.getAllowedDomains().isEmpty() && hasInvalidDomain(cimdSettings)) {
+            return Completable.error(new InvalidDomainException("CIMD settings are invalid: allowed domains must be a list of valid domains and wildcard is only allowed for first-level subdomain"));
+        }
+
+        String softwareId = cimdSettings.getSoftwareId();
+        if (!StringUtils.hasText(softwareId)) {
+            return Completable.error(new InvalidDomainException("softwareId must be provided when Client ID Metadata Document is enabled"));
+        }
+
+        return applicationService.findById(softwareId).filter(Application::isTemplate)
+                .switchIfEmpty(Maybe.error(new InvalidDomainException("softwareId must be a valid application id configured as template"))).ignoreElement();
+    }
+
+    private boolean hasInvalidDomain(CIMDSettings cimdSettings) {
+        return cimdSettings.getAllowedDomains().stream().filter(host -> !isValid(host)).findFirst().isPresent();
+    }
+
+    public boolean isValid(String hostname) {
+        if (hostname == null || hostname.isEmpty() || hostname.length() > 253) {
+            return false;
+        }
+        return HOSTNAME_PATTERN.matcher(hostname).matches();
+    }
+
     private boolean hasIncorrectOrigins(Domain domain) {
         var corsSettings = ofNullable(domain.getCorsSettings());
         if (corsSettings.isPresent()) {
@@ -967,12 +1006,12 @@ public class DomainServiceImpl implements DomainService {
     }
 
     private Completable validateDomain(Domain domain, Environment environment) {
-
         // Get environment domain restrictions and validate all data are correctly defined.
         return domainValidator.validate(domain, environment.getDomainRestrictions())
                 .andThen(listAll()
                         .collect(Collectors.toList())
-                        .flatMapCompletable(domains -> virtualHostValidator.validateDomainVhosts(domain, domains)));
+                        .flatMapCompletable(domains -> virtualHostValidator.validateDomainVhosts(domain, domains)))
+                .andThen(Completable.defer(() ->validateCIMDSettings(domain)));
     }
 
     private void setDeployMode(Domain domain, Environment environment) {

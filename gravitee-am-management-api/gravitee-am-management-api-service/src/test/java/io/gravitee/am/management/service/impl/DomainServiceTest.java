@@ -56,6 +56,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.oidc.CIMDSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -841,6 +843,85 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, never()).update(any(Domain.class));
         verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldNoPatch_CIMD_contains_invalid_domain() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        OIDCSettings oidcSettings = new OIDCSettings();
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setAllowedDomains(List.of("*.com")); // invalid as wildcard with only root is forbidden
+        oidcSettings.setCimdSettings(cimdSettings);
+        domain.setOidc(oidcSettings);
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(new Domain(domain.getId())));
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
+        when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNotComplete()
+                .assertError(InvalidDomainException.class);
+
+        verify(domainRepository).findById(anyString());
+        verify(applicationService, never()).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldNoPatch_CIMD_reference_classical_app_not_template() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        OIDCSettings oidcSettings = new OIDCSettings();
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setAllowedDomains(List.of("*.gravitee.io")); // invalid as wildcard with only root is forbidden
+        oidcSettings.setCimdSettings(cimdSettings);
+        domain.setOidc(oidcSettings);
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(new Domain(domain.getId())));
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
+        when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
+        Application template = new Application();
+        template.setTemplate(false);
+        when(applicationService.findById(anyString())).thenReturn(Maybe.just(template));
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNotComplete()
+                .assertError(InvalidDomainException.class);
+
+        verify(domainRepository).findById(anyString());
+        verify(applicationService).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
     }
 
     @Test
