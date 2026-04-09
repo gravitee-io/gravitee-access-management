@@ -169,7 +169,7 @@
             <a (click)="addDynamicComponent()" class="gv-accent-link" *ngIf="canEdit">(+) add user attribute</a>
             <template #dynamic></template>
             <div *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
-              <div *ngIf="keyValuePair.value && !asObject(keyValuePair.value)" fxLayout="row">
+              <div *ngIf="keyValuePair.value !== null && !asObject(keyValuePair.value)" fxLayout="row">
                 <mat-form-field style="margin-right: 20px" fxFlex="40">
                   <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled />
                 </mat-form-field>
@@ -186,7 +186,7 @@
                   <mat-icon>clear</mat-icon>
                 </button>
               </div>
-              <div *ngIf="keyValuePair.value && asObject(keyValuePair.value)" fxLayout="row">
+              <div *ngIf="keyValuePair.value !== null && asObject(keyValuePair.value)" fxLayout="row">
                 <mat-form-field style="margin-right: 20px; vertical-align: middle" fxFlex="40">
                   <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled />
                 </mat-form-field>
