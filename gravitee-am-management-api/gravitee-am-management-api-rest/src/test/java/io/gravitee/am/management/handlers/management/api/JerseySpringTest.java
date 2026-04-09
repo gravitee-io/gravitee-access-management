@@ -819,4 +819,23 @@ public abstract class JerseySpringTest {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Invoke HTTP PATCH.
+     * <p>
+     * Java's {@link java.net.HttpURLConnection} does not support PATCH out of the box.
+     * Setting {@code jersey.config.client.httpUrlConnection.setMethodWorkaround} on the
+     * WebTarget makes Jersey use reflection to bypass the HttpURLConnection restriction.
+     */
+    protected <T> Response patch(jakarta.ws.rs.client.WebTarget webTarget, T value) {
+        try {
+            String json = objectMapper.writeValueAsString(value);
+            return webTarget
+                    .property("jersey.config.client.httpUrlConnection.setMethodWorkaround", true)
+                    .request()
+                    .method("PATCH", Entity.entity(json, MediaType.APPLICATION_JSON_TYPE));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
