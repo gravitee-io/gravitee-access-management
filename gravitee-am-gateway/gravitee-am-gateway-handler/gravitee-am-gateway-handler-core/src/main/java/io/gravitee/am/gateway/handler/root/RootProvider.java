@@ -80,6 +80,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebauthnErrorEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
@@ -114,6 +115,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebauthnClientErrorReportingContextHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnTelemetrySameOriginHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnEnforcePasswordHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLoginHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
@@ -185,6 +188,7 @@ public class RootProvider extends AbstractProtocolProvider {
     public static final String PATH_WEBAUTHN_RESPONSE = "/webauthn/response";
     public static final String PATH_WEBAUTHN_LOGIN = "/webauthn/login";
     public static final String PATH_WEBAUTHN_LOGIN_CREDENTIALS = "/webauthn/login/credentials";
+    public static final String PATH_WEBAUTHN_WEBAUTHN_ERROR = "/webauthn/webauthn-error";
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
@@ -339,6 +343,17 @@ public class RootProvider extends AbstractProtocolProvider {
     @Value("${handlers.request.logger.accesslog.enabled:false}")
     private boolean accessLogEnabled = false;
 
+    @Value("${handlers.request.transaction.header:" + WebauthnErrorEndpoint.DEFAULT_TRANSACTION_ID_HTTP_HEADER + "}")
+    private String transactionIdHttpHeader = WebauthnErrorEndpoint.DEFAULT_TRANSACTION_ID_HTTP_HEADER;
+
+    /**
+     * When enabled, registers POST /webauthn/webauthn-error (client error reporting + audit), applies CSRF on WebAuthn
+     * login/register/MFA FIDO2 pages, and exposes {@code webauthnClientErrorReportingEnabled} to Thymeleaf
+     * so {@code webauthn-telemetry-v4.js} can send client errors with the X-XSRF-TOKEN header.
+     */
+    @Value("${handlers.webauthn.clientErrorReporting.enabled:false}")
+    private boolean webauthnClientErrorReportingEnabled = false;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -390,6 +405,8 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> userRememberMeHandler = new UserRememberMeRequestHandler(jwtService, domain, rememberMeCookieName);
         Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain, userService);
         Handler<RoutingContext> returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
+        Handler<RoutingContext> webauthnClientErrorReportingContextHandler =
+                new WebauthnClientErrorReportingContextHandler(webauthnClientErrorReportingEnabled);
 
         // Root policy chain handler
         rootRouter.route()
@@ -525,9 +542,16 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
+<<<<<<< HEAD
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
                         domainDataPlane,  credentialService, rateLimiterService, verifyAttemptService, emailService, auditService, deviceIdentifierManager,
                         jwtService, rememberDeviceCookieName))
+=======
+                .handler(webauthnClientErrorReportingContextHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_CHALLENGE))
+                .handler(new MFAChallengeGetEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
+                        domainDataPlane,  rateLimiterService, auditService))
+>>>>>>> 0bf2b2f (feat(webauthn): Client-Side Error Monitoring and Server-Side Logging)
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
@@ -552,6 +576,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(returnUrlValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(localeHandler)
+                .handler(webauthnClientErrorReportingContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_WEBAUTHN_REGISTER))
                 .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domainDataPlane, factorManager));
         rootRouter.post(PATH_WEBAUTHN_REGISTER)
@@ -577,6 +602,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(webAuthnAccessHandler)
                 .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(localeHandler)
+                .handler(webauthnClientErrorReportingContextHandler)
                 .handler(new WebAuthnEnforcePasswordHandler(domain, webAuthnCookieService))
                 .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
@@ -604,6 +630,14 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
                 .handler(new WebAuthnResponseEndpoint());
+        if (webauthnClientErrorReportingEnabled) {
+            Handler<RoutingContext> webAuthnTelemetrySameOriginHandler = new WebAuthnTelemetrySameOriginHandler();
+            rootRouter.post(PATH_WEBAUTHN_WEBAUTHN_ERROR)
+                    .handler(clientRequestParseHandler)
+                    .handler(webAuthnAccessHandler)
+                    .handler(webAuthnTelemetrySameOriginHandler)
+                    .handler(new WebauthnErrorEndpoint(domain, auditService, transactionIdHttpHeader));
+        }
 
         // Registration route
         Handler<RoutingContext> registerAccessHandler = new RegisterAccessHandler(domain);
@@ -785,6 +819,9 @@ public class RootProvider extends AbstractProtocolProvider {
         router
                 .route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(sessionHandler);
+        if (webauthnClientErrorReportingEnabled) {
+            router.route(PATH_WEBAUTHN_WEBAUTHN_ERROR).handler(sessionHandler);
+        }
 
         // Identifier First login endpoint
         router
@@ -825,6 +862,9 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
+        if (webauthnClientErrorReportingEnabled) {
+            router.route(PATH_WEBAUTHN_WEBAUTHN_ERROR).handler(authenticationFlowContextHandler);
+        }
 
         // Identifier First Login endpoint
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(authenticationFlowContextHandler);
@@ -847,6 +887,11 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(csrfHandler);
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(csrfHandler);
+        if (webauthnClientErrorReportingEnabled) {
+            router.route(PATH_WEBAUTHN_LOGIN).handler(csrfHandler);
+            router.route(PATH_WEBAUTHN_REGISTER).handler(csrfHandler);
+            router.route(PATH_WEBAUTHN_WEBAUTHN_ERROR).handler(csrfHandler);
+        }
     }
 
     private void cspHandler(Router router) {
@@ -870,6 +915,9 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(cspHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(cspHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(cspHandler);
+        if (webauthnClientErrorReportingEnabled) {
+            router.route(PATH_WEBAUTHN_WEBAUTHN_ERROR).handler(cspHandler);
+        }
         router.route(PATH_FORGOT_PASSWORD).handler(cspHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(cspHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(cspHandler);
@@ -894,6 +942,9 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(xframeHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(xframeHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(xframeHandler);
+        if (webauthnClientErrorReportingEnabled) {
+            router.route(PATH_WEBAUTHN_WEBAUTHN_ERROR).handler(xframeHandler);
+        }
         router.route(PATH_FORGOT_PASSWORD).handler(xframeHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xframeHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(xframeHandler);
@@ -918,6 +969,9 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(xssHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(xssHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(xssHandler);
+        if (webauthnClientErrorReportingEnabled) {
+            router.route(PATH_WEBAUTHN_WEBAUTHN_ERROR).handler(xssHandler);
+        }
         router.route(PATH_FORGOT_PASSWORD).handler(xssHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xssHandler);
         router.route(PATH_VERIFY_REGISTRATION).handler(xssHandler);
