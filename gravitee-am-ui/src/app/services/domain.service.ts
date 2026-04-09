@@ -128,6 +128,12 @@ export class DomainService {
     });
   }
 
+  patchCimdSettings(id, cimdSettings): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
+      oidc: { cimdSettings },
+    });
+  }
+
   patchScimSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       scim: domain.scim,

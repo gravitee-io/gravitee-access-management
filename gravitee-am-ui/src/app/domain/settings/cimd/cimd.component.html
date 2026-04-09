@@ -1,0 +1,189 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>CIMD</h1>
+  <div>
+    <div fxFlex="70">
+      <form #cimdSettingsForm="ngForm" (ngSubmit)="save()" (keydown.enter)="(false)">
+        <div class="gv-form-section" fxLayout="column">
+          <mat-slide-toggle (change)="enableCIMD($event)" [checked]="isCIMDEnabled()" [disabled]="!editMode">
+            Client-Initiated Metadata Document (CIMD) support
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Enable support for Client-Initiated Metadata Document (CIMD).</mat-hint>
+        </div>
+
+        <div *ngIf="cimdSettings.enabled">
+          <div class="gv-form-section" fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Template ID</mat-label>
+              <input
+                matInput
+                type="text"
+                placeholder="Enter the Template ID"
+                name="softwareId"
+                [(ngModel)]="cimdSettings.softwareId"
+                (ngModelChange)="onFormChange()"
+                [disabled]="!editMode"
+                required
+              />
+              <mat-hint>The template identifier used in CIMD requests.</mat-hint>
+              <mat-error>Template ID is required.</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="gv-form-section" fxLayout="column">
+            <div class="gv-form-section-title">
+              <h5>SSRF Protection</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-slide-toggle
+              name="allowPrivateIpAddress"
+              (change)="cimdSettings.allowPrivateIpAddress = $event.checked; onFormChange()"
+              [checked]="cimdSettings.allowPrivateIpAddress"
+              [disabled]="!editMode"
+            >
+              Allow private/loopback IP addresses
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%">Allow metadata document requests to private IP addresses.</mat-hint>
+            <mat-slide-toggle
+              name="allowUnsecuredHttpUri"
+              (change)="cimdSettings.allowUnsecuredHttpUri = $event.checked; onFormChange()"
+              [checked]="cimdSettings.allowUnsecuredHttpUri"
+              [disabled]="!editMode"
+              style="margin-top: 16px"
+            >
+              Allow unsecured HTTP URIs
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%">Allow metadata document requests to plain HTTP (non-HTTPS) URIs.</mat-hint>
+            <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 16px">
+              <mat-label>Fetch Timeout (ms)</mat-label>
+              <input
+                matInput
+                type="number"
+                placeholder="3000"
+                name="fetchTimeoutMs"
+                [(ngModel)]="cimdSettings.fetchTimeoutMs"
+                (ngModelChange)="onFormChange()"
+                [disabled]="!editMode"
+                min="0"
+              />
+              <mat-hint>Timeout in milliseconds for fetching client metadata documents.</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Max Response Size (KB)</mat-label>
+              <input
+                matInput
+                type="number"
+                placeholder="20"
+                name="maxResponseSizeKb"
+                [(ngModel)]="cimdSettings.maxResponseSizeKb"
+                (ngModelChange)="onFormChange()"
+                [disabled]="!editMode"
+                min="0"
+              />
+              <mat-hint>Maximum allowed size of a metadata response in kilobytes.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Allowed Domains</h5>
+              <small
+                >Restrict metadata document to these domains (Supports wildcard for first-level subdomain). Leave empty to allow all
+                domains.</small
+              >
+              <mat-divider></mat-divider>
+            </div>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Allowed Domains</mat-label>
+              <mat-chip-grid #domainGrid aria-label="Allowed domains" [disabled]="!editMode">
+                <mat-chip-row
+                  *ngFor="let allowedDomain of cimdSettings.allowedDomains"
+                  [removable]="editMode"
+                  (removed)="removeAllowedDomain(allowedDomain)"
+                >
+                  {{ allowedDomain }}
+                  <mat-icon matChipRemove *ngIf="editMode">cancel</mat-icon>
+                </mat-chip-row>
+                <input
+                  matInput
+                  placeholder="example.com, *.example.com, ..."
+                  name="allowedDomainInput"
+                  [matChipInputFor]="domainGrid"
+                  (keydown.enter)="addAllowedDomain($event)"
+                  [value]="allowedDomainInputValue || ''"
+                  (input)="allowedDomainInputValue = $any($event.target).value"
+                  [disabled]="!editMode"
+                />
+              </mat-chip-grid>
+              <mat-hint>List of allowed domains for metadata document.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="gv-form-section" fxLayout="column">
+            <div class="gv-form-section-title">
+              <h5>Cache Settings</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Cache TTL (seconds)</mat-label>
+              <input
+                matInput
+                type="number"
+                placeholder="3600"
+                name="cacheTtlSeconds"
+                [(ngModel)]="cimdSettings.cacheTtlSeconds"
+                (ngModelChange)="onFormChange()"
+                [disabled]="!editMode"
+                min="0"
+              />
+              <mat-hint>Time-to-live for cached metadata responses in seconds.</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Cache Max Entries</mat-label>
+              <input
+                matInput
+                type="number"
+                placeholder="500"
+                name="cacheMaxEntries"
+                [(ngModel)]="cimdSettings.cacheMaxEntries"
+                (ngModelChange)="onFormChange()"
+                [disabled]="!editMode"
+                min="0"
+              />
+              <mat-hint>Maximum number of entries to store in the metadata cache.</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div fxLayout="row" *ngIf="editMode">
+          <button mat-raised-button color="primary" [disabled]="!cimdSettingsForm.valid || !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>CIMD?</h3>
+      <div class="gv-page-description-content">
+        <p>
+          Client-Initiated Metadata Document (CIMD) allows OAuth 2.0 clients to retrieve their own metadata from a well-known URI, enabling
+          dynamic configuration of client parameters without prior registration.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
