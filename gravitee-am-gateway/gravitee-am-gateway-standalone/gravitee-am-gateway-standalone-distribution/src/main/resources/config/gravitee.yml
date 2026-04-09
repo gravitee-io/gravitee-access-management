@@ -377,6 +377,11 @@ handlers:
       maxRequestLength: 1048576
       maxRequestOperations: 1000
       maxConcurrency: 1
+  # WebAuthn client error reporting (webauthn-telemetry-v4.js): when enabled, registers POST /webauthn/webauthn-error,
+  # loads reporting script on login/register/MFA FIDO2 pages, and applies CSRF on those routes
+  webauthn:
+    clientErrorReporting:
+      enabled: false
 
 repositories:
   # specify which scope is used as reference

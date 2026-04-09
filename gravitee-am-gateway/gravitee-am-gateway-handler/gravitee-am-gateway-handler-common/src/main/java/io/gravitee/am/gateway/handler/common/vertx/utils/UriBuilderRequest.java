@@ -26,6 +26,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -215,5 +216,67 @@ public class UriBuilderRequest {
     private static boolean isDefaultPort(String port, String scheme) {
         return ("http".equals(scheme) && "80".equals(port)) || 
                ("https".equals(scheme) && "443".equals(port));
+    }
+
+    /**
+     * True when {@code Origin} matches this request's public origin (scheme, host, port), using the same
+     * {@code X-Forwarded-*} resolution as {@link #resolveProxyRequest(HttpServerRequest, String, MultiMap, boolean)}.
+     * Rejects missing, literal {@code null}, opaque, or non-http(s) origins.
+     */
+    public static boolean isRequestOriginAllowed(HttpServerRequest request, String originHeader) {
+        if (originHeader == null || originHeader.isBlank()) {
+            return false;
+        }
+        String trimmed = originHeader.trim();
+        if ("null".equalsIgnoreCase(trimmed)) {
+            return false;
+        }
+        final URI originUri;
+        try {
+            originUri = URI.create(trimmed);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        if (!originUri.isAbsolute() || originUri.getScheme() == null || originUri.getHost() == null) {
+            return false;
+        }
+        String scheme = originUri.getScheme();
+        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+            return false;
+        }
+
+        final String resolved = resolveProxyRequest(request, "/", (MultiMap) null, false);
+        final URI baseUri;
+        try {
+            baseUri = URI.create(resolved);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        if (baseUri.getScheme() == null || baseUri.getHost() == null) {
+            return false;
+        }
+        return sameOriginAuthority(baseUri, originUri);
+    }
+
+    private static boolean sameOriginAuthority(URI expected, URI origin) {
+        if (!expected.getScheme().equalsIgnoreCase(origin.getScheme())) {
+            return false;
+        }
+        if (!expected.getHost().equalsIgnoreCase(origin.getHost())) {
+            return false;
+        }
+        return effectivePort(expected) == effectivePort(origin);
+    }
+
+    private static int effectivePort(URI uri) {
+        int port = uri.getPort();
+        if (port >= 0) {
+            return port;
+        }
+        String scheme = uri.getScheme();
+        if (scheme != null && "https".equalsIgnoreCase(scheme)) {
+            return 443;
+        }
+        return 80;
     }
 }

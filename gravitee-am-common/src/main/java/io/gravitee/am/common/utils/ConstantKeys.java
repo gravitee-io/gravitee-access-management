@@ -125,6 +125,7 @@ public interface ConstantKeys {
     long DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS = 10L * 60L * 60L; // ten hours
 
     // Passwordless keys.
+    String WEBAUTHN_CLIENT_ERROR_REPORTING_ENABLED_KEY = "webauthnClientErrorReportingEnabled";
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
     String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
     String WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY = "webAuthnCredentialInternalId";
