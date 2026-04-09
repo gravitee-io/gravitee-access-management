@@ -18,15 +18,16 @@ package io.gravitee.am.gateway.reactor.impl.router;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.AllowForwardHeaders;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.impl.RouterImpl;
 
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -40,7 +41,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class VHostRouter implements Router {
+public class VHostRouter extends RouterImpl {
 
     private final Domain domain;
     private final Pattern vhostPattern;
@@ -48,23 +49,24 @@ public class VHostRouter implements Router {
     private final Router delegate;
     private final VirtualHost vhost;
 
-    public static io.vertx.rxjava3.ext.web.Router router(Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
+    public static io.vertx.rxjava3.ext.web.Router router(Vertx vertx, Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
 
-        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(domain, vhost, delegate));
+        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(vertx, domain, vhost, delegate));
     }
 
-    public static io.vertx.rxjava3.ext.web.Router router(Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
+    public static io.vertx.rxjava3.ext.web.Router router(Vertx vertx, Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
 
-        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(domain, delegate));
+        return io.vertx.rxjava3.ext.web.Router.newInstance(new VHostRouter(vertx, domain, delegate));
     }
 
-    private VHostRouter(Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
+    private VHostRouter(Vertx vertx, Domain domain, io.vertx.rxjava3.ext.web.Router delegate) {
 
-        this(domain, delegate.getDelegate());
+        this(vertx, domain, delegate.getDelegate());
     }
 
-    private VHostRouter(Domain domain, Router delegate) {
+    private VHostRouter(Vertx vertx, Domain domain, Router delegate) {
 
+        super(vertx);
         this.domain = domain;
         this.vhost = null;
         this.vhostPattern = null;
@@ -72,13 +74,14 @@ public class VHostRouter implements Router {
         this.delegate = delegate;
     }
 
-    private VHostRouter(Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
+    private VHostRouter(Vertx vertx, Domain domain, VirtualHost vhost, io.vertx.rxjava3.ext.web.Router delegate) {
 
-        this(domain, vhost, delegate.getDelegate());
+        this(vertx, domain, vhost, delegate.getDelegate());
     }
 
-    private VHostRouter(Domain domain, VirtualHost vhost, Router delegate) {
+    private VHostRouter(Vertx vertx, Domain domain, VirtualHost vhost, Router delegate) {
 
+        super(vertx);
         this.domain = domain;
         this.vhost = vhost;
         this.vhostPattern = Pattern.compile(Pattern.quote(vhost.getHost()));
@@ -134,21 +137,6 @@ public class VHostRouter implements Router {
         } else {
             context.put(CONTEXT_PATH, contextPath);
         }
-    }
-
-    @Override
-    public Router putMetadata(String key, Object value) {
-        return null;
-    }
-
-    @Override
-    public Map<String, Object> metadata() {
-        return null;
-    }
-
-    @Override
-    public <T> T getMetadata(String key) {
-        return Router.super.getMetadata(key);
     }
 
     @Override
@@ -328,6 +316,7 @@ public class VHostRouter implements Router {
 
     @Override
     public Router errorHandler(int statusCode, Handler<RoutingContext> errorHandler) {
+        super.errorHandler(statusCode, errorHandler);
         return delegate.errorHandler(statusCode, errorHandler);
     }
 
