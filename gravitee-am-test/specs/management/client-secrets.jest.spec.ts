@@ -427,6 +427,67 @@ describe('Usage expired secrets', () => {
   });
 });
 
+describe('AM-4872: client_id containing + character', () => {
+  let plusApp: any;
+  let plusAppSecret: string;
+
+  it('should create application with + in client_id', async () => {
+    plusApp = await createApplication(domain.id, accessToken, {
+      name: 'plus-client',
+      type: 'SERVICE',
+      clientId: 'my+client+id',
+      redirectUris: ['https://callback'],
+    }).then((app) =>
+      updateApplication(
+        domain.id,
+        accessToken,
+        {
+          settings: {
+            oauth: {
+              redirectUris: ['https://callback'],
+              grantTypes: ['client_credentials'],
+            },
+          },
+        },
+        app.id,
+      ).then((updatedApp) => {
+        updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+        return updatedApp;
+      }),
+    );
+    expect(plusApp).toBeDefined();
+    expect(plusApp.settings.oauth.clientId).toEqual('my+client+id');
+    plusAppSecret = plusApp.settings.oauth.clientSecret;
+    await delay(6000);
+  });
+
+  it('should authenticate with Basic auth when client_id contains +', async () => {
+    const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + getBase64BasicAuth('my+client+id', plusAppSecret),
+    }).expect(200);
+
+    expect(response.body.access_token).toBeDefined();
+    expect(response.body.token_type).toEqual('bearer');
+  });
+
+  it('should authenticate with client_secret_post when client_id contains +', async () => {
+    const encodedClientId = encodeURIComponent('my+client+id');
+    const encodedSecret = encodeURIComponent(plusAppSecret);
+    const response = await performPost(
+      openIdConfiguration.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_id=${encodedClientId}&client_secret=${encodedSecret}`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
+    ).expect(200);
+
+    expect(response.body.access_token).toBeDefined();
+    expect(response.body.token_type).toEqual('bearer');
+  });
+});
+
 function assetTime(now: number, received: number, delta: number) {
   expect(received).toBeLessThan(now + delta);
   expect(received).toBeGreaterThan(now - delta);

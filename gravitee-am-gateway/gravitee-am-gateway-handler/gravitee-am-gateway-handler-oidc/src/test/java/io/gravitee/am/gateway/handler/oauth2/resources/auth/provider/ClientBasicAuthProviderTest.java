@@ -271,6 +271,49 @@ public class ClientBasicAuthProviderTest {
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
+    /**
+     * AM-4872: Client IDs containing '+' must authenticate successfully.
+     * The urlDecode method uses URLDecoder.decode which treats '+' as space,
+     * causing authentication to fail when client_id contains literal '+' characters.
+     */
+    @Test
+    public void shouldAuthenticateClient_clientIdWithPlusSign() throws Exception {
+        Client client = mock(Client.class);
+        when(client.getClientId()).thenReturn("my+client-id");
+        var sha512Encoder = new SHAPasswordEncoder(512);
+        var hashedPassword = sha512Encoder.encode("my+client-secret");
+
+        var clientSecret = new ClientSecret();
+        clientSecret.setId(UUID.randomUUID().toString());
+        clientSecret.setName(clientSecret.getId());
+        clientSecret.setSecret(hashedPassword);
+        clientSecret.setSettingsId(UUID.randomUUID().toString());
+        clientSecret.setCreatedAt(new Date());
+
+        var settings = new ApplicationSecretSettings(clientSecret.getSettingsId(), SecretHashAlgorithm.SHA_512.name(), Map.of());
+
+        when(client.getSecretSettings()).thenReturn(of(settings));
+        when(client.getClientSecrets()).thenReturn(of(clientSecret));
+
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        // Base64("my+client-id:my+client-secret") - literal '+' not percent-encoded
+        vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXkrY2xpZW50LWlkOm15K2NsaWVudC1zZWNyZXQ=");
+        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.handle(client, context, clientAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(clientAsyncResult);
+            Assert.assertNotNull("Client with '+' in ID should authenticate successfully", clientAsyncResult.result());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+    }
+
     @Test
     public void shouldNotAuthenticateClient_legacy_badClientSecret() throws Exception {
         Client client = mock(Client.class);

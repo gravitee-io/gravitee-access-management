@@ -126,6 +126,36 @@ public class UriBuilderTest {
                         "test=1");
     }
 
+    /**
+     * AM-4872: decodeURIComponent must preserve literal '+' characters.
+     * URLDecoder.decode() treats '+' as space (form-urlencoded rules),
+     * but URI component decoding should only decode percent-encoded sequences.
+     */
+    @Test
+    public void decodeURIComponent_shouldPreservePlusSign() {
+        // A literal '+' in a URI component must NOT be decoded as a space
+        assertThat(UriBuilder.decodeURIComponent("my+app")).isEqualTo("my+app");
+        assertThat(UriBuilder.decodeURIComponent("client+id+with+plus")).isEqualTo("client+id+with+plus");
+    }
+
+    @Test
+    public void decodeURIComponent_shouldDecodePercentEncodedPlus() {
+        // %2B is the percent-encoded form of '+' and should decode to '+'
+        assertThat(UriBuilder.decodeURIComponent("my%2Bapp")).isEqualTo("my+app");
+    }
+
+    @Test
+    public void decodeURIComponent_shouldDecodePercentEncodedSpace() {
+        // %20 is a percent-encoded space
+        assertThat(UriBuilder.decodeURIComponent("my%20app")).isEqualTo("my app");
+    }
+
+    @Test
+    public void decodeURIComponent_shouldHandleMixedEncoding() {
+        // Mix of literal '+' and percent-encoded characters
+        assertThat(UriBuilder.decodeURIComponent("a+b%20c%2Bd")).isEqualTo("a+b c+d");
+    }
+
     private String uriEncoded(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
