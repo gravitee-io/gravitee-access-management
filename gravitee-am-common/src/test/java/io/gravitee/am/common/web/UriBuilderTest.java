@@ -156,8 +156,22 @@ public class UriBuilderTest {
         assertThat(UriBuilder.decodeURIComponent("a+b%20c%2Bd")).isEqualTo("a+b c+d");
     }
 
+    @Test
+    public void encodeURIComponent_shouldUsePercentEncodingForSpaces() {
+        // Spaces must be encoded as %20 (RFC 3986), not '+' (form-urlencoded)
+        assertThat(UriBuilder.encodeURIComponent("a b")).contains("%20").doesNotContain("+");
+    }
+
+    @Test
+    public void encodeAndDecode_roundTrip() {
+        // encode then decode must return the original value
+        assertThat(UriBuilder.decodeURIComponent(UriBuilder.encodeURIComponent("a b"))).isEqualTo("a b");
+        assertThat(UriBuilder.decodeURIComponent(UriBuilder.encodeURIComponent("a+b"))).isEqualTo("a+b");
+        assertThat(UriBuilder.decodeURIComponent(UriBuilder.encodeURIComponent("a+b c+d"))).isEqualTo("a+b c+d");
+    }
+
     private String uriEncoded(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+        return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
 
