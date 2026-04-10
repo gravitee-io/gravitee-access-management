@@ -114,9 +114,9 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
      */
     private static String urlDecode(String value) {
         try {
-            // Preserve literal '+' characters: credentials from Basic auth are not
-            // form-urlencoded, so '+' must remain as-is. URLDecoder treats '+' as space
-            // per application/x-www-form-urlencoded rules, so we escape it first.
+            // Preserve literal '+' characters: although RFC 6749 Section 2.3.1 specifies
+            // form-urlencoded rules (where '+' means space), many clients send literal '+'
+            // characters. We escape it to '%2B' before decoding to support them.
             return URLDecoder.decode(value.replace("+", "%2B"), UTF_8);
         } catch (IllegalArgumentException e) {
             // Introduced to fix https://github.com/gravitee-io/issues/issues/8501.
