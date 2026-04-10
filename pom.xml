@@ -265,14 +265,6 @@
                 <type>pom</type>
             </dependency>
 
-            <!-- vertx-auth-webauthn was removed after 5.0.0.CR2 (replaced by vertx-auth-webauthn4j) -->
-            <!-- Pin to last available version until WebAuthn code is migrated -->
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-auth-webauthn</artifactId>
-                <version>5.0.0.CR2</version>
-            </dependency>
-
             <!-- Gravitee.io -->
             <dependency>
                 <groupId>io.gravitee.common</groupId>

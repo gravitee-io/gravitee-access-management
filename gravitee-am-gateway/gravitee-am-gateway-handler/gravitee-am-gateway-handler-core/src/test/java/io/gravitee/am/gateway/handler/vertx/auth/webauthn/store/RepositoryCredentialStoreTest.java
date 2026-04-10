@@ -20,7 +20,7 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Flowable;
-import io.vertx.ext.auth.webauthn.Authenticator;
+import io.vertx.ext.auth.webauthn4j.Authenticator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,14 +62,13 @@ public class RepositoryCredentialStoreTest {
     public void shouldFetchAuthenticator_byUsername_emptyList() {
         repositoryCredentialStore.maxAllowCredentials = 5;
 
-        Authenticator query = new Authenticator();
-        query.setUserName("username");
+        final String username = "username";
 
-        when(credentialService.findByUsername(any(), eq(query.getUserName()), intThat(i -> i == 5))).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(username), intThat(i -> i == 5))).thenReturn(Flowable.empty());
         when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
 
-        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
-        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query).blockingGet();
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(username, null).blockingGet();
+        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(username, null).blockingGet();
 
         Assert.assertNotNull(authenticators);
         Assert.assertNotNull(authenticators2);
@@ -83,18 +82,15 @@ public class RepositoryCredentialStoreTest {
     public void shouldFetchAuthenticator_byUsername_emptyList_different_users() {
         repositoryCredentialStore.maxAllowCredentials = 5;
 
-        Authenticator query = new Authenticator();
-        query.setUserName("username");
+        final String username = "username";
+        final String username2 = "username2";
 
-        Authenticator query2 = new Authenticator();
-        query2.setUserName("username2");
-
-        when(credentialService.findByUsername(any(), eq(query.getUserName()), anyInt())).thenReturn(Flowable.empty());
-        when(credentialService.findByUsername(any(), eq(query2.getUserName()), anyInt())).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(username), anyInt())).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(username2), anyInt())).thenReturn(Flowable.empty());
         when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c").thenReturn("part1.part2.-sVkXqTOhFeJwQXyH3WhuNJfAfnRkVM6llEu6k46iqY");
 
-        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
-        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query2).blockingGet();
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(username, null).blockingGet();
+        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(username2, null).blockingGet();
 
         Assert.assertNotNull(authenticators);
         Assert.assertNotNull(authenticators2);
@@ -108,20 +104,19 @@ public class RepositoryCredentialStoreTest {
     public void shouldFetchAuthenticator_byUsername_withValues() {
         repositoryCredentialStore.maxAllowCredentials = 5;
 
-        Authenticator query = new Authenticator();
-        query.setUserName("username");
+        final String username = "username";
 
         Credential credential = new Credential();
-        credential.setUsername(query.getUserName());
+        credential.setUsername(username);
         credential.setCredentialId("credID");
 
-        when(credentialService.findByUsername(any(), eq(query.getUserName()), anyInt())).thenReturn(Flowable.just(credential));
-        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
+        when(credentialService.findByUsername(any(), eq(username), anyInt())).thenReturn(Flowable.just(credential));
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(username, null).blockingGet();
 
         Assert.assertNotNull(authenticators);
         Assert.assertEquals(1, authenticators.size());
         Assert.assertEquals("credID", authenticators.get(0).getCredID());
-        Assert.assertEquals(authenticators.get(0).getUserName(), query.getUserName());
+        Assert.assertEquals(authenticators.get(0).getUsername(), username);
         verify(jwtBuilder, never()).sign(any());
     }
 
@@ -129,20 +124,19 @@ public class RepositoryCredentialStoreTest {
     public void shouldFetchAllValuesWhenMaxAllowCredentialsLessLEQ0() {
         repositoryCredentialStore.maxAllowCredentials = -1;
 
-        Authenticator query = new Authenticator();
-        query.setUserName("username");
+        final String username = "username";
 
         Credential credential = new Credential();
-        credential.setUsername(query.getUserName());
+        credential.setUsername(username);
         credential.setCredentialId("credID");
 
-        when(credentialService.findByUsername(any(), eq(query.getUserName()))).thenReturn(Flowable.just(credential));
-        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
+        when(credentialService.findByUsername(any(), eq(username))).thenReturn(Flowable.just(credential));
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(username, null).blockingGet();
 
         Assert.assertNotNull(authenticators);
         Assert.assertEquals(1, authenticators.size());
         Assert.assertEquals("credID", authenticators.get(0).getCredID());
-        Assert.assertEquals(authenticators.get(0).getUserName(), query.getUserName());
+        Assert.assertEquals(authenticators.get(0).getUsername(), username);
         verify(jwtBuilder, never()).sign(any());
     }
 }

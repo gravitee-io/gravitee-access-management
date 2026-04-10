@@ -22,7 +22,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
@@ -43,9 +43,9 @@ import org.slf4j.LoggerFactory;
 public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginCredentialsEndpoint.class);
-    private final WebAuthn webAuthn;
+    private final WebAuthn4J webAuthn;
 
-    public WebAuthnLoginCredentialsEndpoint(WebAuthn webAuthn) {
+    public WebAuthnLoginCredentialsEndpoint(WebAuthn4J webAuthn) {
         this.webAuthn = webAuthn;
     }
 

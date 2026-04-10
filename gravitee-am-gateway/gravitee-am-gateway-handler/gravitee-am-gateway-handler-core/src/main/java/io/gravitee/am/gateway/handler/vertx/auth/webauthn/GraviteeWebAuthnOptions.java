@@ -16,23 +16,21 @@
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.impl.jose.JWS;
-import io.vertx.ext.auth.webauthn.WebAuthnOptions;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4JOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Base64;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GraviteeWebAuthnOptions extends WebAuthnOptions {
+public class GraviteeWebAuthnOptions extends WebAuthn4JOptions {
     private static Logger LOGGER = LoggerFactory.getLogger(GraviteeWebAuthnOptions.class);
 
     /* Android Keystore Root is not published anywhere.
@@ -203,20 +201,18 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
                     "uR2zh/80lQyu9vAFCj6E4AXc+osmRg==";
 
 
-    private Map<String, List<X509Certificate>> additionalRootCertificates = new HashMap<>();
-
     public GraviteeWebAuthnOptions(JsonObject json) {
         super(json);
-        initAdditionalRootCertificates();
+        initAndroidRootCertificates();
     }
 
     public GraviteeWebAuthnOptions() {
         super();
-        initAdditionalRootCertificates();
+        initAndroidRootCertificates();
     }
 
     @Override
-    public WebAuthnOptions putRootCertificate(String key, String value) {
+    public WebAuthn4JOptions putRootCertificate(String key, String value) {
         try {
             return super.putRootCertificate(key, value);
         } catch (IllegalArgumentException e) {
@@ -225,28 +221,27 @@ public class GraviteeWebAuthnOptions extends WebAuthnOptions {
         }
     }
 
-    public List<X509Certificate> getAdditionalRootCertificate(String key) {
-        return this.additionalRootCertificates == null ? null : this.additionalRootCertificates.get(key);
+    private void initAndroidRootCertificates() {
+        addAndroidRootCertificate("android-key-root-0", ANDROID_KEYSTORE_ROOT);
+        addAndroidRootCertificate("android-key-root-1", ANDROID_KEYSTORE_ROOT_1);
+        addAndroidRootCertificate("android-key-root-2", ANDROID_KEYSTORE_ROOT_2);
+        addAndroidRootCertificate("android-key-root-3", ANDROID_KEYSTORE_ROOT_3);
+        addAndroidRootCertificate("android-key-root-4", ANDROID_KEYSTORE_ROOT_4);
+        addAndroidRootCertificate("android-key-root-5", ANDROID_KEYSTORE_ROOT_5);
     }
 
-    private void initAdditionalRootCertificates() {
-        pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT);
-        pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_1);
-        pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_2);
-        pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_3);
-        pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_4);
-        pushAdditionalRootCertificate("android-key", ANDROID_KEYSTORE_ROOT_5);
-    }
-
-    public WebAuthnOptions pushAdditionalRootCertificate(String key, String value) {
+    private void addAndroidRootCertificate(String key, String pem) {
         try {
-            X509Certificate cert = JWS.parseX5c(value);
-            cert.checkValidity();
-            this.additionalRootCertificates.putIfAbsent(key, new ArrayList<>());
-            this.additionalRootCertificates.get(key).add(cert);
-            return this;
-        } catch (CertificateException e) {
-            throw new IllegalArgumentException("Invalid additional root certificate", e);
+            X509Certificate cert = parseX5c(pem);
+            putRootCertificate(key, cert);
+        } catch (Exception e) {
+            LOGGER.warn("Android root certificate '{}' can't be loaded: {}", key, e.getMessage(), e);
         }
+    }
+
+    private static X509Certificate parseX5c(String pem) throws CertificateException {
+        byte[] certBytes = Base64.getDecoder().decode(pem.replaceAll("\\s+", ""));
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        return (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(certBytes));
     }
 }
