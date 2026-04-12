@@ -36,6 +36,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EnrollmentChannelValidationException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
+import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
@@ -103,7 +104,15 @@ public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<R
         }
 
         getValidFactor(routingContext, factorId, client)
-                .ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
+                .ifPresent(optFactor ->
+                        removeStalePendingFactors(routingContext, factorId)
+                                .subscribe(
+                                        () -> manageEnrolledFactors(routingContext, optFactor, params),
+                                        throwable -> {
+                                            logger.error("Failed to remove stale pending factor for user {}",
+                                                    ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser().getId(), throwable);
+                                            routingContext.fail(throwable);
+                                        }));
     }
 
 
@@ -214,6 +223,26 @@ public class MFAEnrollPostEndpoint extends AbstractEndpoint implements Handler<R
                 .map(ApplicationFactorSettings::getId)
                 .filter(f -> factorManager.get(f) != null)
                 .collect(Collectors.toMap(factorManager::getFactor, factorManager::get));
+    }
+
+    private Completable removeStalePendingFactors(RoutingContext routingContext, String factorId) {
+        final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        if (!userHasPendingActivations(factorId, endUser)) {
+            return Completable.complete();
+        }
+        return userService.removePendingEnrolledFactor(endUser.getId(), factorId)
+                .doOnComplete(() -> endUser.setFactors(endUser.getFactors().stream()
+                        .filter(ef -> !(ef.getFactorId().equals(factorId) && ef.getStatus() == FactorStatus.PENDING_ACTIVATION))
+                        .collect(Collectors.toList())));
+    }
+
+    private static boolean userHasPendingActivations(String factorId, User endUser) {
+        return endUser.getFactors() != null &&
+                endUser.getFactors()
+                        .stream()
+                        .anyMatch(ef ->
+                                ef.getFactorId().equals(factorId) &&
+                                ef.getStatus() == FactorStatus.PENDING_ACTIVATION);
     }
 
     private Set<String> getRecoveryFactorIds(Client client) {
