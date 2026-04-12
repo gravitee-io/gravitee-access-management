@@ -203,8 +203,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
     }
 
-<<<<<<< HEAD
-=======
     private void saveEnrollment(RoutingContext routingContext) {
         MultiMap params = routingContext.request().formAttributes();
         final boolean acceptEnrollment = ofNullable(params.get(ConstantKeys.USER_MFA_ENROLLMENT)).map(Boolean::parseBoolean).orElse(true);
@@ -339,7 +337,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                         .anyMatch(enrolledFactor -> enrolledFactor.getStatus() == FactorStatus.ACTIVATED);
     }
 
->>>>>>> 8094cf293 (fix(mfa): remove stale PENDING_ACTIVATION factor on re-enrollment (AM-6745))
     private void redirectToAuthorize(RoutingContext routingContext) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         final String returnURL = getReturnUrl(routingContext, queryParams);

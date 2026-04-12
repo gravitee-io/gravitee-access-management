@@ -267,8 +267,6 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         return applicationFactorSettings;
     }
 
-<<<<<<< HEAD
-=======
     @Test
     public void shouldAcceptEnrollment_FactorIdNotActivated() throws Exception {
         final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
@@ -745,5 +743,4 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         verify(userService, times(1)).removePendingEnrolledFactor("userId", ENROLL_FACTOR_ID);
         verify(userService, never()).removePendingEnrolledFactor("userId", OTHER_FACTOR_ID);
     }
->>>>>>> 8094cf293 (fix(mfa): remove stale PENDING_ACTIVATION factor on re-enrollment (AM-6745))
 }
