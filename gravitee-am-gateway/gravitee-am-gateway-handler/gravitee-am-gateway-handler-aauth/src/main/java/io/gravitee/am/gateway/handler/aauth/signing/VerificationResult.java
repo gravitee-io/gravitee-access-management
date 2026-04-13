@@ -21,15 +21,18 @@ import java.security.PublicKey;
  * Result of successful HTTP Message Signature verification.
  * Stored in the RoutingContext as "aauth.verification" for downstream handlers.
  *
- * @param scheme       the Signature-Key scheme used (e.g. "hwk", "jwks_uri", "jwt")
- * @param label        the signature label (e.g. "sig")
- * @param publicKey    the verified signer's public key
- * @param jwkThumbprint RFC 7638 JWK Thumbprint — base64url-encoded SHA-256 hash
+ * @param scheme           the Signature-Key scheme used (e.g. "hwk", "jwks_uri", "jwt")
+ * @param label            the signature label (e.g. "sig")
+ * @param publicKey        the verified signer's public key
+ * @param jwkThumbprint    RFC 7638 JWK Thumbprint — base64url-encoded SHA-256 hash
+ * @param agentIdentityUrl the agent server metadata URL for identified schemes (jwks_uri, jwt),
+ *                         or {@code null} for pseudonymous (hwk) requests
  */
 public record VerificationResult(
         String scheme,
         String label,
         PublicKey publicKey,
-        String jwkThumbprint
+        String jwkThumbprint,
+        String agentIdentityUrl
 ) {
 }

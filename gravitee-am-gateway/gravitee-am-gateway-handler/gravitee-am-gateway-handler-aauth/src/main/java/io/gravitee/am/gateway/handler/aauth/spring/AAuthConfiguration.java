@@ -16,13 +16,18 @@
 package io.gravitee.am.gateway.handler.aauth.spring;
 
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.service.AgentMetadataFetcher;
+import io.gravitee.am.gateway.handler.aauth.service.registry.AAuthAgentRegistry;
+import io.gravitee.am.gateway.handler.aauth.service.registry.AAuthAgentRegistryImpl;
 import io.gravitee.am.gateway.handler.aauth.signing.AAuthSignatureVerifier;
 import io.gravitee.am.gateway.handler.aauth.signing.ReplayDetector;
 import io.gravitee.am.gateway.handler.aauth.signing.schemes.JWKSUriScheme;
 import io.gravitee.am.gateway.handler.aauth.signing.schemes.SignatureSchemeFactory;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -71,5 +76,18 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     @Bean
     public AAuthJWKSEndpoint aAuthJWKSEndpoint(CertificateManager certificateManager) {
         return new AAuthJWKSEndpoint(certificateManager);
+    }
+
+    @Bean
+    public AAuthAgentRegistry aAuthAgentRegistry(ApplicationService applicationService,
+                                                  AgentMetadataFetcher fetcher,
+                                                  Domain domain) {
+        return new AAuthAgentRegistryImpl(applicationService, fetcher, domain);
+    }
+
+    @Bean
+    public AAuthAgentResolveHandler aAuthAgentResolveHandler(AAuthAgentRegistry registry,
+                                                              Domain domain) {
+        return new AAuthAgentResolveHandler(registry, domain.getId());
     }
 }

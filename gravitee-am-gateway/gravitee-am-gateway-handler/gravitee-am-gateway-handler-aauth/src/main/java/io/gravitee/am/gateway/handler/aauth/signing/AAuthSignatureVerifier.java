@@ -105,11 +105,16 @@ public class AAuthSignatureVerifier {
 
         verifySignature(resolvedKey, signatureBase, signatureBytes);
 
+        // For jwks_uri scheme, the "id" param is the agent's identity URL
+        String agentIdentityUrl = "jwks_uri".equals(keyInfo.scheme())
+                ? keyInfo.getParam("id") : null;
+
         return new VerificationResult(
                 keyInfo.scheme(),
                 keyInfo.label(),
                 resolvedKey.publicKey(),
-                resolvedKey.jwkThumbprint()
+                resolvedKey.jwkThumbprint(),
+                agentIdentityUrl
         );
     }
 
