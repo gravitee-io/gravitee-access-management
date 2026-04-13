@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.aauth.spring;
 
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
+import io.gravitee.am.gateway.handler.aauth.service.AgentMetadataFetcher;
 import io.gravitee.am.gateway.handler.aauth.signing.AAuthSignatureVerifier;
 import io.gravitee.am.gateway.handler.aauth.signing.ReplayDetector;
+import io.gravitee.am.gateway.handler.aauth.signing.schemes.JWKSUriScheme;
 import io.gravitee.am.gateway.handler.aauth.signing.schemes.SignatureSchemeFactory;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,8 +41,20 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public SignatureSchemeFactory signatureSchemeFactory() {
-        return new SignatureSchemeFactory();
+    public AgentMetadataFetcher agentMetadataFetcher() {
+        return new AgentMetadataFetcher();
+    }
+
+    @Bean
+    public JWKSUriScheme jwksUriScheme(AgentMetadataFetcher fetcher) {
+        return new JWKSUriScheme(fetcher);
+    }
+
+    @Bean
+    public SignatureSchemeFactory signatureSchemeFactory(JWKSUriScheme jwksUriScheme) {
+        var factory = new SignatureSchemeFactory();
+        factory.register("jwks_uri", jwksUriScheme);
+        return factory;
     }
 
     @Bean
@@ -50,5 +66,10 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     @Bean
     public AAuthSignatureHandler aAuthSignatureHandler(AAuthSignatureVerifier verifier) {
         return new AAuthSignatureHandler(verifier);
+    }
+
+    @Bean
+    public AAuthJWKSEndpoint aAuthJWKSEndpoint(CertificateManager certificateManager) {
+        return new AAuthJWKSEndpoint(certificateManager);
     }
 }

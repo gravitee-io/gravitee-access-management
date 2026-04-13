@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.aauth;
 
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPSMetadataEndpoint;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.vertx.core.http.HttpMethod;
@@ -40,6 +41,9 @@ public class AAuthProvider extends AbstractProtocolProvider {
     @Autowired
     private CorsHandler corsHandler;
 
+    @Autowired
+    private AAuthJWKSEndpoint aAuthJWKSEndpoint;
+
     @Override
     public String path() {
         return "/aauth";
@@ -54,10 +58,15 @@ public class AAuthProvider extends AbstractProtocolProvider {
     private void startAAuthProtocol() {
         final Router aAuthRouter = Router.router(vertx);
 
-        // PS metadata endpoint (per AAUTH spec, Metadata Documents section)
+        // PS metadata endpoint
         aAuthRouter.route(HttpMethod.GET, "/.well-known/aauth-person.json")
                 .handler(corsHandler)
                 .handler(new AAuthPSMetadataEndpoint());
+
+        // PS JWKS endpoint — domain signing keys for auth token verification
+        aAuthRouter.route(HttpMethod.GET, "/.well-known/jwks.json")
+                .handler(corsHandler)
+                .handler(aAuthJWKSEndpoint);
 
         router.route(subRouterPath()).subRouter(aAuthRouter);
     }
