@@ -35,12 +35,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-<<<<<<< HEAD
 import io.vertx.ext.web.Session;
 import io.vertx.core.buffer.Buffer;
-=======
-import io.vertx.rxjava3.core.buffer.Buffer;
->>>>>>> 3526674b8 (fix(mfa): move stale pending factor removal to MFAEnrollPostEndpoint (AM-6745))
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
@@ -59,12 +55,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-<<<<<<< HEAD
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-=======
->>>>>>> 3526674b8 (fix(mfa): move stale pending factor removal to MFAEnrollPostEndpoint (AM-6745))
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyMap;
 import static org.mockito.Mockito.doAnswer;

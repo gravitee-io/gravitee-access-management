@@ -915,7 +915,7 @@ public class MFAEnrollPostEndpointTest extends RxWebTestBase {
                     FactorSettings factorSettings = new FactorSettings();
                     factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(ENROLL_FACTOR_ID)));
                     client.setFactorSettings(factorSettings);
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    setUser(ctx, user);
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
                     ctx.next();
