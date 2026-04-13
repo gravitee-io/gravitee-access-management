@@ -38,12 +38,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-<<<<<<< HEAD
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-=======
-import io.vertx.rxjava3.core.MultiMap;
->>>>>>> 3526674b8 (fix(mfa): move stale pending factor removal to MFAEnrollPostEndpoint (AM-6745))
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
