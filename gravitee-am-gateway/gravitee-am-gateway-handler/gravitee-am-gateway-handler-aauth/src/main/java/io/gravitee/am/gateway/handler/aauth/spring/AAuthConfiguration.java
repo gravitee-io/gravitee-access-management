@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.aauth.spring;
 
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
+import io.gravitee.am.gateway.handler.aauth.signing.AAuthSignatureVerifier;
+import io.gravitee.am.gateway.handler.aauth.signing.ReplayDetector;
+import io.gravitee.am.gateway.handler.aauth.signing.schemes.SignatureSchemeFactory;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -25,4 +30,25 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class AAuthConfiguration implements ProtocolConfiguration {
+
+    @Bean
+    public ReplayDetector replayDetector() {
+        return new ReplayDetector();
+    }
+
+    @Bean
+    public SignatureSchemeFactory signatureSchemeFactory() {
+        return new SignatureSchemeFactory();
+    }
+
+    @Bean
+    public AAuthSignatureVerifier aAuthSignatureVerifier(SignatureSchemeFactory schemeFactory,
+                                                          ReplayDetector replayDetector) {
+        return new AAuthSignatureVerifier(schemeFactory, replayDetector);
+    }
+
+    @Bean
+    public AAuthSignatureHandler aAuthSignatureHandler(AAuthSignatureVerifier verifier) {
+        return new AAuthSignatureHandler(verifier);
+    }
 }

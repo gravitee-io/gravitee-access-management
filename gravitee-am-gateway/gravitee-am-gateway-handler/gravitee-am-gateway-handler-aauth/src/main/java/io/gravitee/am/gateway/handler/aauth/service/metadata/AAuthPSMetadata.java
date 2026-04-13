@@ -17,30 +17,19 @@ package io.gravitee.am.gateway.handler.aauth.service.metadata;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * AAUTH Person Server (PS) metadata document.
- * Served at /.well-known/aauth-person.json per the AAUTH protocol specification.
+ * Served at {@code /.well-known/aauth-person.json} per the AAUTH protocol specification.
  *
- * @author GraviteeSource Team
+ * @param issuer        the PS's HTTPS URL (placed in the {@code iss} claim of issued JWTs)
+ * @param tokenEndpoint URL where agents send token requests
+ * @param jwksUri       URL to the PS's JSON Web Key Set
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AAuthPSMetadata {
-
-    @JsonProperty("issuer")
-    private String issuer;
-
-    @JsonProperty("token_endpoint")
-    private String tokenEndpoint;
-
-    @JsonProperty("jwks_uri")
-    private String jwksUri;
+public record AAuthPSMetadata(
+        @JsonProperty("issuer") String issuer,
+        @JsonProperty("token_endpoint") String tokenEndpoint,
+        @JsonProperty("jwks_uri") String jwksUri
+) {
 }
