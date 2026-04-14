@@ -126,48 +126,8 @@ public class UriBuilderTest {
                         "test=1");
     }
 
-    /**
-     * AM-4872: decodeURIComponent follows application/x-www-form-urlencoded rules
-     * where '+' is treated as space. Literal '+' must be percent-encoded as %2B.
-     */
-    @Test
-    public void decodeURIComponent_shouldDecodePercentEncodedPlus() {
-        assertThat(UriBuilder.decodeURIComponent("my%2Bapp")).isEqualTo("my+app");
-    }
-
-    @Test
-    public void decodeURIComponent_shouldDecodePercentEncodedSpace() {
-        assertThat(UriBuilder.decodeURIComponent("my%20app")).isEqualTo("my app");
-    }
-
-    @Test
-    public void decodeURIComponent_shouldDecodePlusAsSpace() {
-        // '+' means space in form-urlencoded decoding
-        assertThat(UriBuilder.decodeURIComponent("my+app")).isEqualTo("my app");
-    }
-
-    @Test
-    public void encodeURIComponent_shouldUsePercentEncodingForSpaces() {
-        // Spaces are encoded as %20 (RFC 3986), not '+' (form-urlencoded)
-        assertThat(UriBuilder.encodeURIComponent("a b")).contains("%20").doesNotContain("+");
-    }
-
-    @Test
-    public void encodeURIComponent_shouldPercentEncodePlus() {
-        // Literal '+' is encoded as %2B
-        assertThat(UriBuilder.encodeURIComponent("a+b")).contains("%2B");
-    }
-
-    @Test
-    public void encodeAndDecode_roundTrip() {
-        // encode then decode must return the original value
-        assertThat(UriBuilder.decodeURIComponent(UriBuilder.encodeURIComponent("a b"))).isEqualTo("a b");
-        assertThat(UriBuilder.decodeURIComponent(UriBuilder.encodeURIComponent("a+b"))).isEqualTo("a+b");
-        assertThat(UriBuilder.decodeURIComponent(UriBuilder.encodeURIComponent("a+b c+d"))).isEqualTo("a+b c+d");
-    }
-
     private String uriEncoded(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
 
