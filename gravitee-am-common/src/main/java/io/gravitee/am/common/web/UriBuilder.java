@@ -138,19 +138,16 @@ public class UriBuilder {
     }
 
     /**
-     * Percent-encode a string per RFC 3986 URI component rules.
-     * Unlike application/x-www-form-urlencoded, spaces are encoded as %20 (not +).
+     * Convert a String to the application/x-www-form-urlencoded MIME format
      */
     public static String encodeURIComponent(String s) {
         if (s == null) {
             return null;
         }
-        return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Convert a application/x-www-form-urlencoded String to plain text.
-     */
+
     public static String decodeURIComponent(String s) {
         try {
             return URLDecoder.decode(s, StandardCharsets.UTF_8);
