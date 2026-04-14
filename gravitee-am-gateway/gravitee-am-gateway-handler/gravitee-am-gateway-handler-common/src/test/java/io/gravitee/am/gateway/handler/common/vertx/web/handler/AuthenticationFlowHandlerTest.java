@@ -1168,7 +1168,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge?scope=read%20write"));
+                    assertTrue(location.endsWith("/mfa/challenge?scope=read+write"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1203,7 +1203,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge?scope=read%20write"));
+                    assertTrue(location.endsWith("/mfa/challenge?scope=read+write"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1275,7 +1275,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge?scope=read%20write"));
+                    assertTrue(location.endsWith("/mfa/challenge?scope=read+write"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
