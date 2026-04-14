@@ -148,13 +148,12 @@ public class UriBuilder {
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
+    /**
+     * Convert a application/x-www-form-urlencoded String to plain text.
+     */
     public static String decodeURIComponent(String s) {
         try {
-            // Preserve literal '+' characters: URI component decoding (RFC 3986) must not
-            // treat '+' as space — only percent-encoded sequences like %20 represent a space.
-            // URLDecoder follows application/x-www-form-urlencoded rules where '+' means space,
-            // so we escape '+' to '%2B' before decoding to keep it intact.
-            return URLDecoder.decode(s.replace("+", "%2B"), StandardCharsets.UTF_8);
+            return URLDecoder.decode(s, StandardCharsets.UTF_8);
         } catch (Exception e) {
             return s;
         }
