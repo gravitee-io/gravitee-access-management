@@ -17,10 +17,15 @@ package io.gravitee.am.gateway.handler.aauth;
 
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPSMetadataEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
+import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,6 +48,18 @@ public class AAuthProvider extends AbstractProtocolProvider {
 
     @Autowired
     private AAuthJWKSEndpoint aAuthJWKSEndpoint;
+
+    @Autowired
+    private AAuthSignatureHandler aAuthSignatureHandler;
+
+    @Autowired
+    private AAuthAgentResolveHandler aAuthAgentResolveHandler;
+
+    @Autowired
+    private AAuthTokenRequestParseHandler aAuthTokenRequestParseHandler;
+
+    @Autowired
+    private AAuthTokenEndpoint aAuthTokenEndpoint;
 
     @Override
     public String path() {
@@ -67,6 +84,15 @@ public class AAuthProvider extends AbstractProtocolProvider {
         aAuthRouter.route(HttpMethod.GET, "/.well-known/jwks.json")
                 .handler(corsHandler)
                 .handler(aAuthJWKSEndpoint);
+
+        // PS token endpoint — issues aa-auth+jwt tokens (Section 7.1.3)
+        aAuthRouter.route(HttpMethod.POST, "/token")
+                .handler(corsHandler)
+                .handler(BodyHandler.create())
+                .handler(aAuthSignatureHandler)
+                .handler(aAuthAgentResolveHandler)
+                .handler(aAuthTokenRequestParseHandler)
+                .handler(aAuthTokenEndpoint);
 
         router.route(subRouterPath()).subRouter(aAuthRouter);
     }

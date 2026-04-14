@@ -65,7 +65,14 @@ public class AgentMetadataFetcher {
      * Fetch agent metadata from {@code {agentUrl}/.well-known/aauth-agent.json}.
      */
     public AgentMetadata fetchMetadata(String agentUrl) throws SignatureVerificationException {
-        String url = agentUrl + "/.well-known/aauth-agent.json";
+        return fetchMetadataByUrl(agentUrl + "/.well-known/aauth-agent.json");
+    }
+
+    /**
+     * Fetch metadata from an explicit URL (e.g. for resource server metadata at
+     * {@code {iss}/.well-known/aauth-resource.json}).
+     */
+    public AgentMetadata fetchMetadataByUrl(String url) throws SignatureVerificationException {
         return fetchCached(url, metadataCache, () -> {
             String body = httpGet(url);
             return objectMapper.readValue(body, AgentMetadata.class);
