@@ -178,10 +178,20 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
+<<<<<<< HEAD
             // get client - first try regular client, then fallback to protected resource
             clientSyncService
                     .findByClientId(decodeURIComponent(clientId))
                     .switchIfEmpty(protectedResourceSyncService.findByClientId(decodeURIComponent(clientId)))
+=======
+            // Preserve literal '+' in client_id: the value may come from Base64-decoded
+            // Basic auth (not URL-encoded) or from getParam() (already URL-decoded by Vert.x).
+            // In both cases, '+' is literal and must not be treated as space by URLDecoder.
+            String decodedClientId = decodeURIComponent(clientId.replace("+", "%2B"));
+            // get client
+            clientSyncService
+                    .findByClientId(decodedClientId)
+>>>>>>> bd8b66017 (fix: keep decodeURIComponent as standard form-urlencoded, preserve '+' at call site in ClientAuthHandlerImpl)
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),

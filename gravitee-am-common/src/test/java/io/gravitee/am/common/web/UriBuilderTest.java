@@ -127,39 +127,35 @@ public class UriBuilderTest {
     }
 
     /**
-     * AM-4872: decodeURIComponent must preserve literal '+' characters.
-     * URLDecoder.decode() treats '+' as space (form-urlencoded rules),
-     * but URI component decoding should only decode percent-encoded sequences.
+     * AM-4872: decodeURIComponent follows application/x-www-form-urlencoded rules
+     * where '+' is treated as space. Literal '+' must be percent-encoded as %2B.
      */
     @Test
-    public void decodeURIComponent_shouldPreservePlusSign() {
-        // A literal '+' in a URI component must NOT be decoded as a space
-        assertThat(UriBuilder.decodeURIComponent("my+app")).isEqualTo("my+app");
-        assertThat(UriBuilder.decodeURIComponent("client+id+with+plus")).isEqualTo("client+id+with+plus");
-    }
-
-    @Test
     public void decodeURIComponent_shouldDecodePercentEncodedPlus() {
-        // %2B is the percent-encoded form of '+' and should decode to '+'
         assertThat(UriBuilder.decodeURIComponent("my%2Bapp")).isEqualTo("my+app");
     }
 
     @Test
     public void decodeURIComponent_shouldDecodePercentEncodedSpace() {
-        // %20 is a percent-encoded space
         assertThat(UriBuilder.decodeURIComponent("my%20app")).isEqualTo("my app");
     }
 
     @Test
-    public void decodeURIComponent_shouldHandleMixedEncoding() {
-        // Mix of literal '+' and percent-encoded characters
-        assertThat(UriBuilder.decodeURIComponent("a+b%20c%2Bd")).isEqualTo("a+b c+d");
+    public void decodeURIComponent_shouldDecodePlusAsSpace() {
+        // '+' means space in form-urlencoded decoding
+        assertThat(UriBuilder.decodeURIComponent("my+app")).isEqualTo("my app");
     }
 
     @Test
     public void encodeURIComponent_shouldUsePercentEncodingForSpaces() {
-        // Spaces must be encoded as %20 (RFC 3986), not '+' (form-urlencoded)
+        // Spaces are encoded as %20 (RFC 3986), not '+' (form-urlencoded)
         assertThat(UriBuilder.encodeURIComponent("a b")).contains("%20").doesNotContain("+");
+    }
+
+    @Test
+    public void encodeURIComponent_shouldPercentEncodePlus() {
+        // Literal '+' is encoded as %2B
+        assertThat(UriBuilder.encodeURIComponent("a+b")).contains("%2B");
     }
 
     @Test
