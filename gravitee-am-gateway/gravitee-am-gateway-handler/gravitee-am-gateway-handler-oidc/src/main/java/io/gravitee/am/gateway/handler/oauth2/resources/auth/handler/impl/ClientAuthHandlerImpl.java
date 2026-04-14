@@ -175,9 +175,13 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
+            // Preserve literal '+' in client_id: the value may come from Base64-decoded
+            // Basic auth (not URL-encoded) or from getParam() (already URL-decoded by Vert.x).
+            // In both cases, '+' is literal and must not be treated as space by URLDecoder.
+            String decodedClientId = decodeURIComponent(clientId.replace("+", "%2B"));
             // get client
             clientSyncService
-                    .findByClientId(decodeURIComponent(clientId))
+                    .findByClientId(decodedClientId)
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
