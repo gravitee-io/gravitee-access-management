@@ -63,6 +63,17 @@
           </mat-form-field>
         </div>
 
+        <div *ngIf="isAAuthAgent()" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Agent Metadata URL</h5>
+            <small>The agent's well-known metadata URL. This is the application's Client ID.</small>
+          </div>
+          <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
+            <mat-label>Agent Metadata URL</mat-label>
+            <input matInput [value]="application.settings?.oauth?.clientId" readonly />
+          </mat-form-field>
+        </div>
+
         <div *ngIf="displaySection()" class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Redirect URIs</h5>

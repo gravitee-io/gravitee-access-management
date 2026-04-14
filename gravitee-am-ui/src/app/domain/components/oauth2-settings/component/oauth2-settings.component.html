@@ -25,7 +25,7 @@
     </div>
 
     <mat-tab-group animationDuration="0ms">
-      <mat-tab label="Grant Flows">
+      <mat-tab *ngIf="resource.type?.toUpperCase() !== 'AAUTH_AGENT'" label="Grant Flows">
         <div class="tab-content">
           <app-grant-flows-settings
             [oauthSettings]="oauthSettings"

@@ -56,6 +56,10 @@ export class ApplicationEndpointsComponent implements OnInit {
     return this.baseUrl + path;
   }
 
+  isAAuthAgent(): boolean {
+    return 'aauth_agent' === this.application.type?.toLowerCase();
+  }
+
   uma2Enabled(): boolean {
     return this.domain.uma?.enabled;
   }

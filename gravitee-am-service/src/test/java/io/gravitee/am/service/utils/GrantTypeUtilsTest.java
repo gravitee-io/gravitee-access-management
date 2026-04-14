@@ -18,6 +18,7 @@ package io.gravitee.am.service.utils;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -285,5 +286,32 @@ public class GrantTypeUtilsTest {
         application = GrantTypeUtils.completeGrantTypeCorrespondance(application);
         assertTrue("was expecting code grant type",application.getSettings().getOauth().getResponseTypes().contains("code"));
         assertTrue("was expecting code grant type",application.getSettings().getOauth().getGrantTypes().contains("authorization_code"));
+    }
+
+    @Test
+    public void validateGrantTypes_aauth_agent_emptyGrantTypes_ok() {
+        Application application = new Application();
+        application.setType(ApplicationType.AAUTH_AGENT);
+
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(Collections.emptyList());
+
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        application.setSettings(settings);
+
+        TestObserver<Application> testObserver = GrantTypeUtils.validateGrantTypes(application).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void validateGrantTypes_aauth_agent_nullSettings_ok() {
+        Application application = new Application();
+        application.setType(ApplicationType.AAUTH_AGENT);
+
+        TestObserver<Application> testObserver = GrantTypeUtils.validateGrantTypes(application).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
     }
 }

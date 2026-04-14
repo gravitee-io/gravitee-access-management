@@ -16,7 +16,7 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">Configure your application.</p>
+  <p class="gv-plugin-creation-description">{{ application.type === 'AAUTH_AGENT' ? 'Configure your AAUTH agent.' : 'Configure your application.' }}</p>
 
   <div *ngIf="cimdEnabled()" class="creation-mode-section">
     <h4 class="creation-mode-heading">Import configuration</h4>
@@ -42,14 +42,13 @@
       </div>
     </div>
   </div>
-
   <div>
     <form class="provider-creation-step2-form" fxLayout="column" #appForm="ngForm">
       <!-- Manual mode -->
       <ng-container *ngIf="!isCimd()">
         <div class="gv-form-section">
           <div class="gv-form-section-title">
-            <h5>Application Settings</h5>
+            <h5>{{ application.type === 'AAUTH_AGENT' ? 'Agent Settings' : 'Application Settings' }}</h5>
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="row">
@@ -57,71 +56,85 @@
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Domain</mat-label>
                 <input matInput type="text" placeholder="Domain" name="domain" [value]="domain.name" disabled />
-                <mat-hint>Application's security domain.</mat-hint>
+                <mat-hint>{{ application.type === 'AAUTH_AGENT' ? "Agent's security domain." : "Application's security domain." }}</mat-hint>
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Name</mat-label>
-                <input matInput type="text" placeholder="Enter the application name" name="name" [(ngModel)]="application.name" required />
-                <mat-hint>The application's name</mat-hint>
+                <input matInput type="text" [placeholder]="application.type === 'AAUTH_AGENT' ? 'Enter the agent name' : 'Enter the application name'" name="name" [(ngModel)]="application.name" required />
+                <mat-hint>{{ application.type === 'AAUTH_AGENT' ? "The agent's display name" : "The application's name" }}</mat-hint>
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Description</mat-label>
                 <textarea
                   matInput
                   type="text"
-                  placeholder="Enter the application description"
+                  [placeholder]="application.type === 'AAUTH_AGENT' ? 'Enter the agent description' : 'Enter the application description'"
                   name="description"
                   [(ngModel)]="application.description"
                 ></textarea>
-                <mat-hint>The application's description</mat-hint>
+                <mat-hint>{{ application.type === 'AAUTH_AGENT' ? "The agent's description" : "The application's description" }}</mat-hint>
               </mat-form-field>
             </div>
             <div fxFlex fxLayout="column" fxLayoutAlign="center center" style="text-align: center">
-              <mat-hint style="font-size: 75%">Application's type: {{ application.type }}</mat-hint>
-              <i class="material-icons">{{ icon(application) }}</i>
-            </div>
-          </div>
-          <div *ngIf="displayRedirectUri()" style="margin-top: 20px; max-width: 70%">
-            <mat-divider style="padding: 5px"></mat-divider>
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-label>Redirect URI</mat-label>
-              <input
-                matInput
-                type="url"
-                placeholder="Enter a redirect URI"
-                name="redirectURI"
-                [(ngModel)]="application.redirectUri"
-                #redirectURI="ngModel"
-                required
-              />
-              <mat-hint
-                >Allowed URL where the user will be redirected after successfully login to your application.<br />{{
-                  elRedirectUriEnabled()
-                    ? 'Supports expression language and dynamic parameters.'
-                    : 'Expression language and dynamic parameters are turned off'
-                }}</mat-hint
-              >
-              <mat-error *ngIf="redirectURI.errors?.url">Enter first name</mat-error>
-            </mat-form-field>
+              <mat-hint style="font-size: 75%">{{ application.type === 'AAUTH_AGENT' ? 'Agent type: AAUTH Agent' : "Application's type: " + application.type }}</mat-hint>
+            <i class="material-icons">{{ icon(application) }}</i>
           </div>
         </div>
-        <div class="gv-form-section">
-          <div class="gv-form-section-title">
-            <h5>OAuth 2.0 Settings (Optional)</h5>
-            <mat-divider></mat-divider>
-          </div>
-          <div>
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-label>Client ID</mat-label>
-              <input matInput type="text" placeholder="Client ID" name="client_id" [(ngModel)]="application.clientId" />
-              <mat-hint>Public identifier for the application required for OAuth 2.0 protocol.</mat-hint>
-            </mat-form-field>
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-label>Client Secret</mat-label>
-              <input matInput type="text" placeholder="Client Secret" name="client_secret" [(ngModel)]="application.clientSecret" />
-              <mat-hint>Secret used by the application to request OAuth 2.0 tokens.</mat-hint>
-            </mat-form-field>
-          </div>
+        <div *ngIf="displayRedirectUri()" style="margin-top: 20px; max-width: 70%">
+          <mat-divider style="padding: 5px"></mat-divider>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Redirect URI</mat-label>
+            <input
+              matInput
+              type="url"
+              placeholder="Enter a redirect URI"
+              name="redirectURI"
+              [(ngModel)]="application.redirectUri"
+              #redirectURI="ngModel"
+              required
+            />
+            <mat-hint
+              >Allowed URL where the user will be redirected after successfully login to your application.<br />{{
+                elRedirectUriEnabled()
+                  ? 'Supports expression language and dynamic parameters.'
+                  : 'Expression language and dynamic parameters are turned off'
+              }}</mat-hint
+            >
+            <mat-error *ngIf="redirectURI.errors?.url">Enter first name</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+      <!-- AAUTH Agent Settings -->
+      <div *ngIf="application.type === 'AAUTH_AGENT'" class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>AAUTH Agent Settings</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Agent Metadata URL</mat-label>
+            <input matInput type="url" placeholder="https://agent.example/.well-known/aauth-agent.json" name="client_id" [(ngModel)]="application.clientId" />
+            <mat-hint>The agent's well-known metadata URL. Becomes the agent's Client ID for scope and consent management.</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+      <!-- OAuth 2.0 Settings (hidden for AAUTH agents) -->
+        <div *ngIf="application.type !== 'AAUTH_AGENT'" class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>OAuth 2.0 Settings (Optional)</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Client ID</mat-label>
+            <input matInput type="text" placeholder="Client ID" name="client_id" [(ngModel)]="application.clientId" />
+            <mat-hint>Public identifier for the application required for OAuth 2.0 protocol.</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Client Secret</mat-label>
+            <input matInput type="text" placeholder="Client Secret" name="client_secret" [(ngModel)]="application.clientSecret" />
+            <mat-hint>Secret used by the application to request OAuth 2.0 tokens.</mat-hint>
+          </mat-form-field></div>
         </div>
       </ng-container>
 

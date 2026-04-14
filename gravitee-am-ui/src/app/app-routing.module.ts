@@ -1015,7 +1015,7 @@ export const routes: Routes = [
                                 only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AAUTH_AGENT'],
                               },
                             },
                           },
@@ -1037,7 +1037,7 @@ export const routes: Routes = [
                                 ],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'SERVICE'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'SERVICE', 'AAUTH_AGENT'],
                               },
                             },
                             children: [
@@ -1054,7 +1054,7 @@ export const routes: Routes = [
                                     only: ['application_form_list', 'application_form_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT', 'AAUTH_AGENT'],
                                   },
                                 },
                                 children: [
@@ -1093,7 +1093,7 @@ export const routes: Routes = [
                                     only: ['application_email_template_list', 'application_email_template_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT', 'AAUTH_AGENT'],
                                   },
                                 },
                                 children: [
@@ -1159,7 +1159,7 @@ export const routes: Routes = [
                                 only: ['application_analytics_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AAUTH_AGENT'],
                               },
                             },
                           },
@@ -1285,7 +1285,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AAUTH_AGENT'],
                                   },
                                 },
                               },
@@ -1324,7 +1324,7 @@ export const routes: Routes = [
                                     only: ['application_factor_list'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AAUTH_AGENT'],
                                   },
                                 },
                               },
@@ -1342,7 +1342,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AAUTH_AGENT'],
                                   },
                                 },
                               },

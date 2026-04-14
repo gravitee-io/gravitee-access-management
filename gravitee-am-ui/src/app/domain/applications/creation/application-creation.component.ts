@@ -19,7 +19,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
 import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { ApplicationService } from '../../../services/application.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -95,8 +95,13 @@ export class ApplicationCreationComponent implements OnInit {
     this.applicationService
       .create(this.application.domain, app)
       .pipe(
-        switchMap((data) =>
-          this.matDialog
+        switchMap((data) => {
+          // AAUTH agents have no client secret — skip the copy dialog
+          if (this.application.type === 'AAUTH_AGENT') {
+            this.snackbarService.open('AAUTH Agent ' + data.name + ' created');
+            return of(data);
+          }
+          return this.matDialog
             .open<CopyClientSecretComponent, CopyClientSecretCopyDialogData, void>(CopyClientSecretComponent, {
               width: GIO_DIALOG_WIDTH.MEDIUM,
               disableClose: true,
@@ -114,8 +119,8 @@ export class ApplicationCreationComponent implements OnInit {
               }),
               map(() => data),
               takeUntil(this.unsubscribe$),
-            ),
-        ),
+            );
+        }),
       )
       .subscribe((data) => {
         this.router.navigate(['..', data.id], { relativeTo: this.route });
@@ -167,6 +172,6 @@ export class ApplicationCreationComponent implements OnInit {
     if (!this.application?.name) {
       return false;
     }
-    return this.application.type !== 'SERVICE' ? !!this.application.redirectUri : true;
+    return this.application.type !== 'SERVICE' && this.application.type !== 'AAUTH_AGENT' ? !!this.application.redirectUri : true;
   }
 }

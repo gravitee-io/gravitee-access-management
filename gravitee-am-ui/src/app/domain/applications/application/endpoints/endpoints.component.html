@@ -16,7 +16,42 @@
 
 -->
 <div fxLayout="column" class="gv-page-container">
-  <div class="gv-form-section">
+  <!-- AAUTH Agent endpoints -->
+  <div *ngIf="isAAuthAgent()" class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h2>AAUTH Endpoints</h2>
+      <span>Endpoints for the AAUTH Person Server (PS) protocol.</span>
+    </div>
+    <div>
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>PS Metadata</mat-label>
+        <input matInput type="text" [value]="endpoint('/aauth/.well-known/aauth-person.json')" readonly />
+        <mat-hint>Person Server metadata document</mat-hint>
+        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/aauth/.well-known/aauth-person.json')" (cbOnSuccess)="valueCopied('Copied to clipboard')">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-form-field>
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>Token endpoint</mat-label>
+        <input matInput type="text" [value]="endpoint('/aauth/token')" readonly />
+        <mat-hint>Where agents send token requests</mat-hint>
+        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/aauth/token')" (cbOnSuccess)="valueCopied('Copied to clipboard')">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-form-field>
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>JWKS endpoint</mat-label>
+        <input matInput type="text" [value]="endpoint('/aauth/.well-known/jwks.json')" readonly />
+        <mat-hint>PS signing keys for auth token verification</mat-hint>
+        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/aauth/.well-known/jwks.json')" (cbOnSuccess)="valueCopied('Copied to clipboard')">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Standard OIDC endpoints -->
+  <div *ngIf="!isAAuthAgent()" class="gv-form-section">
     <div class="gv-form-section-title">
       <h2>Endpoints</h2>
       <span>All necessary endpoints to communicate with the Authorization Server.</span>

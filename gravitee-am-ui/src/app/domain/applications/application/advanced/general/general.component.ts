@@ -69,6 +69,10 @@ export class ApplicationGeneralComponent implements OnInit {
       type: 'SERVICE',
     },
     {
+      name: 'AAUTH Agent',
+      type: 'AAUTH_AGENT',
+    },
+    {
       name: 'Resource Server',
       type: 'RESOURCE_SERVER',
     },
@@ -270,7 +274,11 @@ export class ApplicationGeneralComponent implements OnInit {
   }
 
   displaySection(): boolean {
-    return this.application.type !== 'service';
+    return this.application.type !== 'service' && !this.isAAuthAgent();
+  }
+
+  isAAuthAgent(): boolean {
+    return 'aauth_agent' === this.application.type?.toLowerCase();
   }
 
   elRedirectUriEnabled(): boolean {

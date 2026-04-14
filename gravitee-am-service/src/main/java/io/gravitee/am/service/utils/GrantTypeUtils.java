@@ -17,6 +17,7 @@ package io.gravitee.am.service.utils;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Single;
@@ -74,6 +75,11 @@ public class GrantTypeUtils {
         // no application to check, continue
         if (application==null) {
             return Single.error(new InvalidClientMetadataException("No application to validate grant"));
+        }
+
+        // AAUTH agents don't use OAuth grant types — skip validation entirely
+        if (ApplicationType.AAUTH_AGENT.equals(application.getType())) {
+            return Single.just(application);
         }
 
         // no application settings to check, continue

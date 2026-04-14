@@ -57,6 +57,10 @@ export class ApplicationCreationStep2Component implements OnInit {
       type: 'SERVICE',
     },
     {
+      icon: 'memory',
+      type: 'AAUTH_AGENT',
+    },
+    {
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',
     },
@@ -75,7 +79,7 @@ export class ApplicationCreationStep2Component implements OnInit {
   }
 
   displayRedirectUri(): boolean {
-    return this.application.type !== 'SERVICE';
+    return this.application.type !== 'SERVICE' && this.application.type !== 'AAUTH_AGENT';
   }
 
   elRedirectUriEnabled(): boolean {

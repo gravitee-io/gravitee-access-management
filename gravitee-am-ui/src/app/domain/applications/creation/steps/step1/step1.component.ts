@@ -56,6 +56,13 @@ export class ApplicationCreationStep1Component implements OnInit {
       subDescription: 'e.g : Shell script, daemon, CLI',
     },
     {
+      name: 'AAUTH Agent',
+      icon: 'memory',
+      type: 'AAUTH_AGENT',
+      description: 'AI agents, autonomous services',
+      subDescription: 'e.g : LLM assistants, MCP clients',
+    },
+    {
       name: 'Resource Server',
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',

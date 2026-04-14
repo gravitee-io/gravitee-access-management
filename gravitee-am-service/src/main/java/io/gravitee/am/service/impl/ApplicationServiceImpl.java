@@ -1112,7 +1112,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
-                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                    } else if (application.getType() != ApplicationType.SERVICE && application.getType() != ApplicationType.AAUTH_AGENT && !updateTypeOnly) {
                         return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);

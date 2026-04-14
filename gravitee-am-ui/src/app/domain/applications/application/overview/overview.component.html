@@ -19,7 +19,24 @@
   <div>
     <div fxFlex="70">
       <div class="application-doc-content">
-        <div *ngIf="!isServiceApp() && !isUmaApp()">
+        <div *ngIf="isAAuthAgent()">
+          <h1>AAUTH Agent</h1>
+          <h2>Agent Information</h2>
+          <ul>
+            <li>Agent Metadata URL : <b>{{ application.settings?.oauth?.clientId }}</b></li>
+            <li>Agent Name : <b>{{ application.name }}</b></li>
+            <li>Status : <b>{{ application.enabled ? 'Enabled' : 'Disabled' }}</b></li>
+            <li>Registration : <b>{{ application.metadata?.['aauth.firstSeenAt'] ? 'Auto-registered' : 'Pre-registered' }}</b></li>
+            <li *ngIf="application.metadata?.['aauth.firstSeenAt']">First seen : <b>{{ application.metadata['aauth.firstSeenAt'] }}</b></li>
+            <li *ngIf="application.metadata?.['aauth.lastSeenAt']">Last seen : <b>{{ application.metadata['aauth.lastSeenAt'] }}</b></li>
+          </ul>
+          <p>
+            This application represents an AAUTH agent — an AI agent or autonomous service that authenticates via HTTP Message Signatures.
+            The agent's metadata URL serves as its identity and is used as the Client ID for consent and scope management.
+          </p>
+        </div>
+
+        <div *ngIf="!isServiceApp() && !isUmaApp() && !isAAuthAgent()">
           <h1>Integrate authentication to your application</h1>
           <h2>Get your Application Information</h2>
           <p>

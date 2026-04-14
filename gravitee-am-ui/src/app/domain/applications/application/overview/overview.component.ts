@@ -102,6 +102,10 @@ export class ApplicationOverviewComponent implements OnInit {
     return 'resource_server' === this.application.type?.toLowerCase();
   }
 
+  isAAuthAgent(): boolean {
+    return 'aauth_agent' === this.application.type?.toLowerCase();
+  }
+
   valueCopied(message: string) {
     this.snackbarService.open(message);
   }
