@@ -73,6 +73,13 @@ public interface ClientAuthenticationMethod {
      */
     String JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
 
+    /**
+     * URN for workload-jwt assertions used by blueprint agent instances.
+     * The assertion's {@code iss} identifies the blueprint application and
+     * {@code sub} identifies the agent instance.
+     */
+    String WORKLOAD_JWT = "urn:ietf:params:oauth:client-assertion-type:workload-jwt";
+
     static List<String> supportedValues() {
         return Arrays.asList(
                 CLIENT_SECRET_BASIC,
