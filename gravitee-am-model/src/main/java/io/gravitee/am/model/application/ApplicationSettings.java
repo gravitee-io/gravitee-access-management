@@ -89,6 +89,12 @@ public class ApplicationSettings {
      */
     private SecretExpirationSettings secretExpirationSettings;
 
+    /**
+     * Agent identity settings (Blueprint model).
+     * Non-null only when the application has agent identity mode enabled.
+     */
+    private AgentSettings agent;
+
 
     public ApplicationAdvancedSettings getAdvanced() {
         return advanced != null ? advanced : new ApplicationAdvancedSettings();
@@ -105,6 +111,7 @@ public class ApplicationSettings {
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
         this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
+        this.agent = other.agent != null ? new AgentSettings(other.agent) : null;
     }
 
     public void copyTo(Client client) {
@@ -118,6 +125,9 @@ public class ApplicationSettings {
         client.setRiskAssessment(this.getRiskAssessment());
         Optional.ofNullable(this.saml).ifPresent(s -> s.copyTo(client));
         client.setSecretExpirationSettings(this.secretExpirationSettings);
+        if (this.agent != null) {
+            client.setAgentType(this.agent.getAgentType());
+        }
     }
 
     private RiskAssessmentSettings getRiskAssessment(RiskAssessmentSettings settings) {
