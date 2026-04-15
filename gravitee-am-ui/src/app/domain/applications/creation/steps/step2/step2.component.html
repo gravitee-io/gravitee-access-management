@@ -49,7 +49,9 @@
             </mat-form-field>
           </div>
           <div fxFlex fxLayout="column" fxLayoutAlign="center center" style="text-align: center">
-            <mat-hint style="font-size: 75%">Application's type: {{ application.type }}</mat-hint>
+            <mat-hint style="font-size: 75%">{{
+              application.type === 'AGENT' ? 'Agent: ' + application.agentType : "Application's type: " + application.type
+            }}</mat-hint>
             <i class="material-icons">{{ icon(application) }}</i>
           </div>
         </div>
