@@ -431,33 +431,30 @@ describe('AM-4872: client_id containing + character', () => {
   let plusApp: any;
   let plusAppSecret: string;
 
+  it('should reset domain secret settings before + tests', async () => {
+    // Previous tests leave secretSettings with a 5s expiry, which would cause
+    // secrets created here to expire before we can authenticate with them.
+    domain = await patchDomain(domain.id, accessToken, {
+      secretSettings: {
+        enabled: false,
+        expiryTimeSeconds: 0,
+      },
+    });
+  });
+
   it('should create application with + in client_id', async () => {
+    // SERVICE apps get client_credentials grant type by default — no updateApplication needed.
+    // Calling updateApplication was causing the captured raw secret to become stale.
     plusApp = await createApplication(domain.id, accessToken, {
       name: 'plus-client',
       type: 'SERVICE',
       clientId: 'my+client+id',
       redirectUris: ['https://callback'],
-    }).then((app) =>
-      updateApplication(
-        domain.id,
-        accessToken,
-        {
-          settings: {
-            oauth: {
-              redirectUris: ['https://callback'],
-              grantTypes: ['client_credentials'],
-            },
-          },
-        },
-        app.id,
-      ).then((updatedApp) => {
-        updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-        return updatedApp;
-      }),
-    );
+    });
     expect(plusApp).toBeDefined();
     expect(plusApp.settings.oauth.clientId).toEqual('my+client+id');
     plusAppSecret = plusApp.settings.oauth.clientSecret;
+    expect(plusAppSecret).toBeDefined();
     await delay(6000);
   });
 
@@ -472,8 +469,26 @@ describe('AM-4872: client_id containing + character', () => {
   });
 
   it('should authenticate with client_secret_post when client_id contains +', async () => {
-    const encodedClientId = encodeURIComponent('my+client+id');
-    const encodedSecret = encodeURIComponent(plusAppSecret);
+    // Create a separate app with client_secret_post auth method for this test,
+    // since the default SERVICE app uses client_secret_basic.
+    const postApp = await createApplication(domain.id, accessToken, {
+      name: 'plus-client-post',
+      type: 'SERVICE',
+      clientId: 'my+post+client',
+      redirectUris: ['https://callback'],
+    });
+    const postSecret = postApp.settings.oauth.clientSecret;
+    await patchApplication(domain.id, accessToken, {
+      settings: {
+        oauth: {
+          tokenEndpointAuthMethod: 'client_secret_post',
+        },
+      },
+    }, postApp.id);
+    await delay(6000);
+
+    const encodedClientId = encodeURIComponent('my+post+client');
+    const encodedSecret = encodeURIComponent(postSecret);
     const response = await performPost(
       openIdConfiguration.token_endpoint,
       '',
