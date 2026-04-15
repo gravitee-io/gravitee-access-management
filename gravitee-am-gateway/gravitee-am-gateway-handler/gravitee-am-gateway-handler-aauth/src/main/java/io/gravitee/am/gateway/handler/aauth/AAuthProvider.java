@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.aauth;
 
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPSMetadataEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
@@ -65,6 +66,9 @@ public class AAuthProvider extends AbstractProtocolProvider {
     @Autowired
     private AAuthTokenEndpoint aAuthTokenEndpoint;
 
+    @Autowired
+    private AAuthPendingEndpoint aAuthPendingEndpoint;
+
     @Override
     public String path() {
         return "/aauth";
@@ -100,6 +104,12 @@ public class AAuthProvider extends AbstractProtocolProvider {
                 .handler(aAuthAgentResolveHandler)
                 .handler(aAuthTokenRequestParseHandler)
                 .handler(aAuthTokenEndpoint);
+
+        // Pending endpoint — agent polls for auth token (spec Section 12.4)
+        aAuthRouter.route(HttpMethod.GET, "/pending/:id")
+                .handler(corsHandler)
+                .handler(aAuthSignatureHandler)
+                .handler(aAuthPendingEndpoint);
 
         router.route(subRouterPath()).subRouter(aAuthRouter);
     }

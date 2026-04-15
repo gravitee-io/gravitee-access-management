@@ -16,7 +16,9 @@
 package io.gravitee.am.gateway.handler.aauth.spring;
 
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
+import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthTokenRequestParseHandler;
@@ -25,6 +27,7 @@ import io.gravitee.am.gateway.handler.aauth.service.registry.AAuthAgentRegistry;
 import io.gravitee.am.gateway.handler.aauth.service.registry.AAuthAgentRegistryImpl;
 import io.gravitee.am.gateway.handler.aauth.service.token.AAuthTokenService;
 import io.gravitee.am.gateway.handler.aauth.service.token.ResourceTokenValidator;
+import io.gravitee.am.repository.oidc.api.AAuthPendingRequestRepository;
 import io.gravitee.am.gateway.handler.aauth.signing.AAuthSignatureVerifier;
 import io.gravitee.am.gateway.handler.aauth.signing.ReplayDetector;
 import io.gravitee.am.gateway.handler.aauth.signing.schemes.JWKSUriScheme;
@@ -116,8 +119,21 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
+    public AAuthPendingRequestService aAuthPendingRequestService(AAuthPendingRequestRepository repository) {
+        return new AAuthPendingRequestService(repository);
+    }
+
+    @Bean
+    public AAuthPendingEndpoint aAuthPendingEndpoint(AAuthPendingRequestService pendingService) {
+        return new AAuthPendingEndpoint(pendingService);
+    }
+
+    @Bean
     public AAuthTokenEndpoint aAuthTokenEndpoint(ResourceTokenValidator resourceTokenValidator,
-                                                  AAuthTokenService aAuthTokenService) {
-        return new AAuthTokenEndpoint(resourceTokenValidator, aAuthTokenService);
+                                                  AAuthTokenService aAuthTokenService,
+                                                  AAuthPendingRequestService pendingService,
+                                                  Domain domain) {
+        int pendingTtl = domain.getAauth() != null ? domain.getAauth().getPendingRequestTtl() : 600;
+        return new AAuthTokenEndpoint(resourceTokenValidator, aAuthTokenService, pendingService, domain.getId(), pendingTtl);
     }
 }

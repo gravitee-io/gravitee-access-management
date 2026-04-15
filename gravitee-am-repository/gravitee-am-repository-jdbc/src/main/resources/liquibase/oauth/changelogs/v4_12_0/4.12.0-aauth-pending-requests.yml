@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-aauth-pending-requests-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: aauth_pending_requests
+      changes:
+        - createTable:
+            tableName: aauth_pending_requests
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: status, type: nvarchar(32), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: agent_id, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: agent_sub, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: agent_jkt, type: nvarchar(128), constraints: { nullable: false } }
+              - column: { name: agent_public_key, type: clob, constraints: { nullable: false } }
+              - column: { name: application_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: resource_iss, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: scope, type: nvarchar(1024), constraints: { nullable: true } }
+              - column: { name: justification, type: clob, constraints: { nullable: true } }
+              - column: { name: interaction_code, type: nvarchar(32), constraints: { nullable: false } }
+              - column: { name: ps_issuer_url, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: auth_token, type: clob, constraints: { nullable: true } }
+              - column: { name: auth_token_expires_in, type: bigint, constraints: { nullable: true } }
+              - column: { name: user_id, type: nvarchar(320), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: last_access_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_aauth_pending_requests
+            columnNames: id
+            tableName: aauth_pending_requests

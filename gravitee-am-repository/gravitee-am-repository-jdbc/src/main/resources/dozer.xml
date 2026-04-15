@@ -321,4 +321,9 @@
         <class-a>io.gravitee.am.model.application.ApplicationScopeSettings</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.ScopeSettings</class-b>
     </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.repository.oidc.model.AAuthPendingRequest</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.oauth2.aauth.model.JdbcAAuthPendingRequest</class-b>
+    </mapping>
 </mappings>
