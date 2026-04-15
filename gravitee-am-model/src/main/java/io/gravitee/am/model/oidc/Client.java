@@ -31,6 +31,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
@@ -314,6 +315,11 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private SecretExpirationSettings secretExpirationSettings;
 
+    // ----------- Agent Identity (Blueprint) -----------
+    private boolean agentIdentityMode;
+
+    private AgentType agentType;
+
     public Client() {
     }
 
@@ -417,6 +423,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
+        this.agentIdentityMode = other.agentIdentityMode;
+        this.agentType = other.agentType;
     }
 
     public String getId() {
@@ -1315,6 +1323,22 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setSecretExpirationSettings(SecretExpirationSettings secretExpirationSettings) {
         this.secretExpirationSettings = secretExpirationSettings;
+    }
+
+    public boolean isAgentIdentityMode() {
+        return agentIdentityMode;
+    }
+
+    public void setAgentIdentityMode(boolean agentIdentityMode) {
+        this.agentIdentityMode = agentIdentityMode;
+    }
+
+    public AgentType getAgentType() {
+        return agentType;
+    }
+
+    public void setAgentType(AgentType agentType) {
+        this.agentType = agentType;
     }
 
     @Override

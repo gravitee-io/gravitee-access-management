@@ -34,6 +34,7 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -346,6 +347,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public Single<Application> create(Domain domain, NewApplication newApplication, User principal) {
         LOGGER.debug("Create a new application {} for domain {}", newApplication, domain);
+
+        // when type is AGENT, infer the real underlying type from agent settings
+        if (ApplicationType.AGENT == newApplication.getType()) {
+            newApplication.setAgentIdentityMode(true);
+            newApplication.setType(inferApplicationTypeFromAgent(newApplication));
+        }
+
         Application application = new Application();
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
@@ -376,6 +384,27 @@ public class ApplicationServiceImpl implements ApplicationService {
                 // redirect_uri can use custom URI (especially for mobile deep links)
                 LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
             }
+        }
+
+        // apply agent identity mode if requested
+        if (newApplication.isAgentIdentityMode()) {
+            ApplicationAdvancedSettings advancedSettings = applicationSettings.getAdvanced();
+            if (advancedSettings == null) {
+                advancedSettings = new ApplicationAdvancedSettings();
+            }
+            advancedSettings.setAgentIdentityMode(true);
+            applicationSettings.setAdvanced(advancedSettings);
+
+            AgentSettings agentSettings = newApplication.getAgentSettings();
+            if (agentSettings == null) {
+                agentSettings = new AgentSettings();
+            }
+            // ensure agentType is set on the settings block
+            if (agentSettings.getAgentType() == null && newApplication.getAgentSettings() != null) {
+                agentSettings.setAgentType(newApplication.getAgentSettings().getAgentType());
+            }
+            applyAgentDefaults(agentSettings, oAuthSettings);
+            applicationSettings.setAgent(agentSettings);
         }
 
         application.setSettings(applicationSettings);
@@ -618,6 +647,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public Single<Application> updateType(String domain, String id, ApplicationType type, User principal) {
         LOGGER.debug("Update application {} type to {} for domain {}", id, type, domain);
+
+        if (ApplicationType.AGENT == type) {
+            return Single.error(new InvalidClientMetadataException("Cannot change application type to AGENT. Use agent identity mode on application settings instead."));
+        }
 
         return applicationRepository.findById(id)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
@@ -999,7 +1032,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .flatMap(this::validateTokenEndpointAuthMethod)
                             .flatMap(this::validateTlsClientAuth)
                             .flatMap(this::validatePostLogoutRedirectUris)
-                            .flatMap(this::validateRequestUris);
+                            .flatMap(this::validateRequestUris)
+                            .flatMap(this::validateAgentSettings);
                 });
     }
 
@@ -1286,5 +1320,115 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return Single.just(application);
                 });
+    }
+
+    private Single<Application> validateAgentSettings(Application application) {
+        if (application.getSettings() == null || application.getSettings().getAdvanced() == null) {
+            return Single.just(application);
+        }
+        if (!application.getSettings().getAdvanced().isAgentIdentityMode()) {
+            return Single.just(application);
+        }
+
+        AgentSettings agent = application.getSettings().getAgent();
+        if (agent == null) {
+            return Single.error(new InvalidClientMetadataException("Agent settings are required when agent identity mode is enabled"));
+        }
+        if (agent.getAgentType() == null) {
+            return Single.error(new InvalidClientMetadataException("Agent type is required when agent identity mode is enabled"));
+        }
+
+        // validate grant types by agent type
+        if (agent.getAllowedGrantTypes() != null) {
+            switch (agent.getAgentType()) {
+                case USER_EMBEDDED -> {
+                    if (agent.getAllowedGrantTypes().stream().anyMatch(g -> GrantType.CLIENT_CREDENTIALS.equals(g))) {
+                        return Single.error(new InvalidClientMetadataException("USER_EMBEDDED agents cannot use client_credentials grant"));
+                    }
+                }
+                case AUTONOMOUS -> {
+                    if (agent.getAllowedGrantTypes().stream().anyMatch(g -> GrantType.AUTHORIZATION_CODE.equals(g))) {
+                        return Single.error(new InvalidClientMetadataException("AUTONOMOUS agents cannot use authorization_code grant"));
+                    }
+                }
+                default -> { }
+            }
+        }
+
+        // validate token TTL
+        if (agent.getTokenTtlSeconds() != null) {
+            if (agent.getTokenTtlSeconds() < 60) {
+                return Single.error(new InvalidClientMetadataException("Token TTL must be at least 60 seconds"));
+            }
+            if (agent.getTokenTtlSeconds() > 86400) {
+                return Single.error(new InvalidClientMetadataException("Token TTL must not exceed 86400 seconds (24 hours)"));
+            }
+        }
+
+        // validate max public keys
+        if (agent.getMaxPublicKeysPerWorkload() < 1 || agent.getMaxPublicKeysPerWorkload() > 100) {
+            return Single.error(new InvalidClientMetadataException("Max public keys per workload must be between 1 and 100"));
+        }
+
+        return Single.just(application);
+    }
+
+    /**
+     * Infer the underlying ApplicationType from the agent type.
+     * USER_EMBEDDED → NATIVE (PKCE + public client, runs in user's device)
+     * HOSTED_DELEGATED → WEB (confidential client, server-side)
+     * AUTONOMOUS → SERVICE (client_credentials, no user involvement)
+     */
+    private ApplicationType inferApplicationTypeFromAgent(NewApplication newApplication) {
+        AgentSettings agentSettings = newApplication.getAgentSettings();
+        if (agentSettings == null || agentSettings.getAgentType() == null) {
+            return ApplicationType.WEB;
+        }
+        return switch (agentSettings.getAgentType()) {
+            case USER_EMBEDDED -> ApplicationType.NATIVE;
+            case HOSTED_DELEGATED -> ApplicationType.WEB;
+            case AUTONOMOUS -> ApplicationType.SERVICE;
+        };
+    }
+
+    /**
+     * Apply agent-type-specific defaults to OAuth settings.
+     */
+    private void applyAgentDefaults(AgentSettings agentSettings, ApplicationOAuthSettings oAuthSettings) {
+        if (agentSettings.getAgentType() == null) {
+            return;
+        }
+        switch (agentSettings.getAgentType()) {
+            case USER_EMBEDDED -> {
+                // public client, PKCE required
+                oAuthSettings.setClientType("public");
+                oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
+                oAuthSettings.setForcePKCE(true);
+                oAuthSettings.setForceS256CodeChallengeMethod(true);
+                if (agentSettings.getAllowedGrantTypes() == null) {
+                    agentSettings.setAllowedGrantTypes(List.of(GrantType.AUTHORIZATION_CODE));
+                }
+            }
+            case HOSTED_DELEGATED -> {
+                // confidential client with auth code + token exchange
+                if (agentSettings.getAllowedGrantTypes() == null) {
+                    agentSettings.setAllowedGrantTypes(List.of(
+                            GrantType.AUTHORIZATION_CODE,
+                            GrantType.CLIENT_CREDENTIALS,
+                            GrantType.TOKEN_EXCHANGE
+                    ));
+                }
+            }
+            case AUTONOMOUS -> {
+                // confidential client, client_credentials + token exchange, no redirect_uri
+                oAuthSettings.setRedirectUris(null);
+                if (agentSettings.getAllowedGrantTypes() == null) {
+                    agentSettings.setAllowedGrantTypes(List.of(
+                            GrantType.CLIENT_CREDENTIALS,
+                            GrantType.TOKEN_EXCHANGE
+                    ));
+                }
+            }
+        }
     }
 }
