@@ -48,7 +48,7 @@ public class AAuthTokenServiceTest {
     public void setUp() {
         jwtService = mock(JWTService.class);
         certificateManager = mock(CertificateManager.class);
-        tokenService = new AAuthTokenService(jwtService, certificateManager);
+        tokenService = new AAuthTokenService(jwtService, certificateManager, 300);
         agentKeyPair = TestAgentKeyPairFactory.ed25519();
 
         CertificateProvider certProvider = mock(CertificateProvider.class);

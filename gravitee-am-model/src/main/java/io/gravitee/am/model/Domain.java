@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.utils.PathUtils;
+import io.gravitee.am.model.aauth.AAuthSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -157,6 +158,11 @@ public class Domain implements Resource {
     private SCIMSettings scim;
 
     /**
+     * AAUTH protocol settings
+     */
+    private AAuthSettings aauth;
+
+    /**
      * User accounts settings
      */
     private AccountSettings accountSettings;
@@ -235,6 +241,7 @@ public class Domain implements Resource {
         this.loginSettings = other.loginSettings;
         this.webAuthnSettings = other.webAuthnSettings;
         this.scim = other.scim;
+        this.aauth = other.aauth;
         this.accountSettings = other.accountSettings;
         this.passwordSettings = other.passwordSettings;
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
@@ -421,6 +428,14 @@ public class Domain implements Resource {
 
     public void setScim(SCIMSettings scim) {
         this.scim = scim;
+    }
+
+    public AAuthSettings getAauth() {
+        return aauth;
+    }
+
+    public void setAauth(AAuthSettings aauth) {
+        this.aauth = aauth;
     }
 
     public AccountSettings getAccountSettings() {

@@ -147,6 +147,12 @@ export class DomainService {
     });
   }
 
+  patchAauthSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
+      aauth: domain.aauth,
+    });
+  }
+
   patchLoginSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       loginSettings: domain.loginSettings,

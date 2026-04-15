@@ -171,6 +171,7 @@ import { EntrypointComponent } from './settings/management/entrypoints/entrypoin
 import { EntrypointResolver } from './resolvers/entrypoint.resolver';
 import { EntrypointsResolver } from './resolvers/entrypoints.resolver';
 import { UmaComponent } from './domain/settings/uma/uma.component';
+import { AauthComponent } from './domain/settings/aauth/aauth.component';
 import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
 import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
 import { ApplicationResourceComponent } from './domain/applications/application/advanced/resources/resource/resource.component';
@@ -2861,6 +2862,21 @@ export const routes: Routes = [
                           },
                           perms: {
                             only: ['domain_uma_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'aauth',
+                        component: AauthComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'AAUTH',
+                            section: 'AAUTH',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_aauth_read'],
                           },
                         },
                       },

@@ -104,8 +104,10 @@ public class AAuthConfiguration implements ProtocolConfiguration {
 
     @Bean
     public AAuthTokenService aAuthTokenService(JWTService jwtService,
-                                                CertificateManager certificateManager) {
-        return new AAuthTokenService(jwtService, certificateManager);
+                                                CertificateManager certificateManager,
+                                                Domain domain) {
+        int lifespan = domain.getAauth() != null ? domain.getAauth().getAuthTokenLifespan() : 300;
+        return new AAuthTokenService(jwtService, certificateManager, lifespan);
     }
 
     @Bean

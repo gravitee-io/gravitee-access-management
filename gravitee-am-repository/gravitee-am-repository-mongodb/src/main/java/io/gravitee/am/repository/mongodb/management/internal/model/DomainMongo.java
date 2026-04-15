@@ -21,6 +21,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import io.gravitee.am.repository.mongodb.management.internal.model.aauth.AAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import lombok.Getter;
@@ -64,6 +65,8 @@ public class DomainMongo extends Auditable {
     private UMASettingsMongo uma;
 
     private SCIMSettingsMongo scim;
+
+    private AAuthSettingsMongo aauth;
 
     private LoginSettingsMongo loginSettings;
 

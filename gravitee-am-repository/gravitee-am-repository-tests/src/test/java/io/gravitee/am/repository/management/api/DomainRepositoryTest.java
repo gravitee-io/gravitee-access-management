@@ -21,6 +21,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.aauth.AAuthSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -131,6 +132,10 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setOidc(oidc);
         domain.setScim(new SCIMSettings());
         domain.setUma(new UMASettings());
+        AAuthSettings aauth = new AAuthSettings();
+        aauth.setEnabled(true);
+        aauth.setAuthTokenLifespan(600);
+        domain.setAauth(aauth);
         domain.setWebAuthnSettings(new WebAuthnSettings());
         domain.setSelfServiceAccountManagementSettings(new SelfServiceAccountManagementSettings());
         CertificateSettings certificateSettings = new CertificateSettings();
@@ -218,6 +223,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getOidc().getCibaSettings().getDeviceNotifiers() != null && d.getOidc().getCibaSettings().getDeviceNotifiers().size() == 1);
         testObserver.assertValue(d -> d.getOidc().getRequestUris() != null && d.getOidc().getRequestUris().size() == 1);
         testObserver.assertValue(d -> d.getScim() != null);
+        testObserver.assertValue(d -> d.getAauth() != null && d.getAauth().isEnabled() && d.getAauth().getAuthTokenLifespan() == 600);
         testObserver.assertValue(d -> d.getWebAuthnSettings() != null);
         testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);
         testObserver.assertValue(d -> d.getCertificateSettings() != null);
@@ -259,6 +265,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         updatedDomain.setWebAuthnSettings(null);
         updatedDomain.setLoginSettings(null);
         updatedDomain.setUma(null);
+        updatedDomain.setAauth(null);
         updatedDomain.setOidc(null);
         updatedDomain.setScim(null);
         updatedDomain.setAccountSettings(null);
@@ -292,6 +299,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getAccountSettings() == null);
         testObserver.assertValue(d -> d.getLoginSettings() == null);
         testObserver.assertValue(d -> d.getUma() == null);
+        testObserver.assertValue(d -> d.getAauth() == null);
         testObserver.assertValue(d -> d.getOidc() == null);
         testObserver.assertValue(d -> d.getWebAuthnSettings() == null);
         testObserver.assertValue(d -> d.getScim() == null);

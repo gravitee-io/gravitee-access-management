@@ -340,6 +340,7 @@ import { IdenticonHashDirective } from './directives/identicon-hash.directive';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { UmaComponent } from './domain/settings/uma/uma.component';
+import { AauthComponent } from './domain/settings/aauth/aauth.component';
 import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
@@ -717,6 +718,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     UserAvatarComponent,
     NotFoundComponent,
     UmaComponent,
+    AauthComponent,
     OIDCProfileComponent,
     CibaComponent,
     CibaSettingsComponent,

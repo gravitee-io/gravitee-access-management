@@ -22,6 +22,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.aauth.AAuthSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -59,6 +60,7 @@ public class PatchDomain {
     private Optional<PatchOIDCSettings> oidc;
     private Optional<UMASettings> uma;
     private Optional<SCIMSettings> scim;
+    private Optional<AAuthSettings> aauth;
     private Optional<LoginSettings> loginSettings;
     private Optional<WebAuthnSettings> webAuthnSettings;
     private Optional<AccountSettings> accountSettings;
@@ -86,6 +88,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setVhosts, this.getVhosts());
         SetterUtils.safeSet(toPatch::setUma, this.getUma());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
+        SetterUtils.safeSet(toPatch::setAauth, this.getAauth());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
         SetterUtils.safeSet(toPatch::setWebAuthnSettings, this.getWebAuthnSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
@@ -174,6 +177,10 @@ public class PatchDomain {
 
         if (scim != null && scim.isPresent()) {
             requiredPermissions.add(Permission.DOMAIN_SCIM);
+        }
+
+        if (aauth != null && aauth.isPresent()) {
+            requiredPermissions.add(Permission.DOMAIN_AAUTH);
         }
 
         return requiredPermissions;

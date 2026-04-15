@@ -48,6 +48,7 @@ public class AAuthTokenService {
 
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
+    private final int authTokenLifespan;
 
     /**
      * Create and sign an auth token for a machine-to-machine (scope-only) grant.
@@ -76,7 +77,9 @@ public class AAuthTokenService {
                                                        String psIssuerUrl,
                                                        String sub) {
         long now = Instant.now().getEpochSecond();
-        long expiresIn = DEFAULT_AUTH_TOKEN_LIFETIME_SECONDS;
+        long expiresIn = Math.min(
+                authTokenLifespan > 0 ? authTokenLifespan : DEFAULT_AUTH_TOKEN_LIFETIME_SECONDS,
+                MAX_AUTH_TOKEN_LIFETIME_SECONDS);
         long exp = now + expiresIn;
 
         JWT jwt = new JWT();

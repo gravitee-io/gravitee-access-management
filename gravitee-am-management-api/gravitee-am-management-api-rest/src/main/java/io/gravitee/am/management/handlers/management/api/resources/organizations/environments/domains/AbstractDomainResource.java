@@ -101,6 +101,10 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setScim(domain.getScim());
         }
 
+        if (hasAnyPermission(userPermissions, Permission.DOMAIN_AAUTH, Acl.READ)) {
+            filteredDomain.setAauth(domain.getAauth());
+        }
+
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
             filteredDomain.setLoginSettings(domain.getLoginSettings());
             filteredDomain.setWebAuthnSettings(domain.getWebAuthnSettings());

@@ -78,6 +78,9 @@ export class ApplicationCreationStep1Component implements OnInit {
     if (!this.domain.uma || !this.domain.uma.enabled) {
       remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
+    if (!this.domain.aauth || !this.domain.aauth.enabled) {
+      remove(this.applicationTypes, { type: 'AAUTH_AGENT' });
+    }
   }
 
   selectApplicationType(selectedApplicationType: string): void {

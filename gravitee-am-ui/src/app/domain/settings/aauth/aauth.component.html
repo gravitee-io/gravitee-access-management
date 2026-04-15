@@ -1,0 +1,76 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>AAUTH</h1>
+  <div>
+    <div fxFlex="70">
+      <form (ngSubmit)="save()">
+        <div class="gv-form-section" fxLayout="column">
+          <mat-slide-toggle (change)="enableAAuth($event)" [checked]="isAAuthEnabled()" [disabled]="!editMode">
+            AAUTH Protocol Support
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%"
+            >Enable the AAUTH protocol for this domain. When enabled, the Person Server (PS) endpoints are available
+            at <i>/aauth/.well-known/aauth-person.json</i>.</mat-hint
+          >
+
+          <div *ngIf="isAAuthEnabled()" style="margin-top: 20px">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Auth token lifespan (seconds)</mat-label>
+              <input
+                matInput
+                type="number"
+                name="authTokenLifespan"
+                [(ngModel)]="domain.aauth.authTokenLifespan"
+                (ngModelChange)="formChange()"
+                min="1"
+                max="3600"
+                [disabled]="!editMode"
+              />
+              <mat-hint>Lifetime of issued auth tokens in seconds (max 3600 per spec).</mat-hint>
+            </mat-form-field>
+
+            <div fxLayout="column" style="margin-top: 20px">
+              <mat-slide-toggle
+                [checked]="domain.aauth.autoRegisterAgents !== false"
+                (change)="domain.aauth.autoRegisterAgents = $event.checked; formChange()"
+                [disabled]="!editMode"
+              >
+                Auto-register agents
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%"
+                >Automatically create an AAUTH Agent application when a new agent presents a valid signature.
+                Disable to require manual agent registration.</mat-hint
+              >
+            </div>
+          </div>
+        </div>
+        <div fxLayout="row" *ngIf="editMode">
+          <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>AAUTH Protocol</h3>
+      <div class="gv-page-description-content">
+        <p>AAUTH is an authorization protocol for agent-to-resource access. It replaces bearer tokens with
+          cryptographic proof-of-possession via HTTP Message Signatures, enabling secure AI agent authorization.</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -38,6 +38,10 @@
             <a>scim</a>
             <b>scim</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.AAuthSettingsConverter">
+            <a>aauth</a>
+            <b>aauth</b>
+        </field>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.AccountSettingsConverter">
             <a>accountSettings</a>
             <b>accountSettings</b>

@@ -54,6 +54,7 @@ public class JdbcDomain {
     @Column("web_authn_settings")
     private String webAuthnSettings;
     private String scim;
+    private String aauth;
     @Column("account_settings")
     private String accountSettings;
     @Column("password_settings")

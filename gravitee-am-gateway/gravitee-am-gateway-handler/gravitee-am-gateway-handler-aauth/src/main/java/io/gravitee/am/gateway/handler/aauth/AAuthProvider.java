@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveH
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
+import io.gravitee.am.model.Domain;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
@@ -36,6 +37,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 public class AAuthProvider extends AbstractProtocolProvider {
+
+    @Autowired
+    private Domain domain;
 
     @Autowired
     private Vertx vertx;
@@ -69,7 +73,10 @@ public class AAuthProvider extends AbstractProtocolProvider {
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        startAAuthProtocol();
+
+        if (domain.getAauth() != null && domain.getAauth().isEnabled()) {
+            startAAuthProtocol();
+        }
     }
 
     private void startAAuthProtocol() {

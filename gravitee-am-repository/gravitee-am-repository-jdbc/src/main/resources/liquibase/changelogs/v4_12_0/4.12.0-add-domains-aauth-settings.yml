@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-add-domains-aauth-settings
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: domains
+              columnName: aauth
+      changes:
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: { name: aauth, type: clob, constraints: { nullable: true } }

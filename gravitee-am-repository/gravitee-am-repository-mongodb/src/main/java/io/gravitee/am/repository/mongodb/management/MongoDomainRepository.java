@@ -38,6 +38,7 @@ import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.aauth.AAuthSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -47,6 +48,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SAMLSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.aauth.AAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SelfServiceAccountManagementSettingsMongo;
@@ -221,6 +223,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setOidc(convert(domainMongo.getOidc()));
         domain.setUma(convert(domainMongo.getUma()));
         domain.setScim(convert(domainMongo.getScim()));
+        domain.setAauth(convert(domainMongo.getAauth()));
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
         domain.setWebAuthnSettings(convert(domainMongo.getWebAuthnSettings()));
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
@@ -262,6 +265,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setOidc(convert(domain.getOidc()));
         domainMongo.setUma(convert(domain.getUma()));
         domainMongo.setScim(convert(domain.getScim()));
+        domainMongo.setAauth(convert(domain.getAauth()));
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
         domainMongo.setWebAuthnSettings(convert(domain.getWebAuthnSettings()));
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
@@ -393,6 +397,36 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         UMASettingsMongo umaMongo = new UMASettingsMongo();
         umaMongo.setEnabled(uma.isEnabled());
         return umaMongo;
+    }
+
+    private static AAuthSettings convert(AAuthSettingsMongo aAuthMongo) {
+        if (aAuthMongo == null) {
+            return null;
+        }
+
+        AAuthSettings settings = new AAuthSettings();
+        settings.setEnabled(aAuthMongo.isEnabled());
+        settings.setAuthTokenLifespan(aAuthMongo.getAuthTokenLifespan());
+        settings.setPendingRequestTtl(aAuthMongo.getPendingRequestTtl());
+        settings.setAllowedAgentPatterns(aAuthMongo.getAllowedAgentPatterns());
+        settings.setTrustedResourcePatterns(aAuthMongo.getTrustedResourcePatterns());
+        settings.setAutoRegisterAgents(aAuthMongo.isAutoRegisterAgents());
+        return settings;
+    }
+
+    private static AAuthSettingsMongo convert(AAuthSettings aAuth) {
+        if (aAuth == null) {
+            return null;
+        }
+
+        AAuthSettingsMongo mongo = new AAuthSettingsMongo();
+        mongo.setEnabled(aAuth.isEnabled());
+        mongo.setAuthTokenLifespan(aAuth.getAuthTokenLifespan());
+        mongo.setPendingRequestTtl(aAuth.getPendingRequestTtl());
+        mongo.setAllowedAgentPatterns(aAuth.getAllowedAgentPatterns());
+        mongo.setTrustedResourcePatterns(aAuth.getTrustedResourcePatterns());
+        mongo.setAutoRegisterAgents(aAuth.isAutoRegisterAgents());
+        return mongo;
     }
 
     private static ClientRegistrationSettingsMongo convert(ClientRegistrationSettings dcr) {
