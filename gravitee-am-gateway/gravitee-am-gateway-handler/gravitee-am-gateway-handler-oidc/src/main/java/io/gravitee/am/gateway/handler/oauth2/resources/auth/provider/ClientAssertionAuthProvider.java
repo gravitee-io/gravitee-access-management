@@ -75,6 +75,13 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
             return true;
         }
 
+        // Workload-jwt assertion for blueprint agent instances
+        if (client != null && client.isAgentIdentityMode()
+                && ClientAuthenticationMethod.WORKLOAD_JWT.equals(getClientAssertionType(context.request()))
+                && getClientAssertion(context.request()) != null) {
+            return true;
+        }
+
         if ((client == null || client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty())
                 && getClientAssertion(context.request()) != null && getClientAssertionType(context.request()) != null) {
             return true;
