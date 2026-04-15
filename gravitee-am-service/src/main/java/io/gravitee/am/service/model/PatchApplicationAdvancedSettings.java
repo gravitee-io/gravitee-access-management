@@ -28,6 +28,7 @@ public class PatchApplicationAdvancedSettings {
 
     private Optional<Boolean> skipConsent;
     private Optional<Boolean> flowsInherited;
+    private Optional<Boolean> agentIdentityMode;
 
     public Optional<Boolean> getSkipConsent() {
         return skipConsent;
@@ -45,11 +46,20 @@ public class PatchApplicationAdvancedSettings {
         this.flowsInherited = flowsInherited;
     }
 
+    public Optional<Boolean> getAgentIdentityMode() {
+        return agentIdentityMode;
+    }
+
+    public void setAgentIdentityMode(Optional<Boolean> agentIdentityMode) {
+        this.agentIdentityMode = agentIdentityMode;
+    }
+
     public ApplicationAdvancedSettings patch(ApplicationAdvancedSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationAdvancedSettings toPatch = _toPatch == null ? new ApplicationAdvancedSettings() : new ApplicationAdvancedSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setSkipConsent, this.getSkipConsent(), boolean.class);
         SetterUtils.safeSet(toPatch::setFlowsInherited, this.getFlowsInherited(), boolean.class);
+        SetterUtils.safeSet(toPatch::setAgentIdentityMode, this.getAgentIdentityMode(), boolean.class);
 
         return toPatch;
     }

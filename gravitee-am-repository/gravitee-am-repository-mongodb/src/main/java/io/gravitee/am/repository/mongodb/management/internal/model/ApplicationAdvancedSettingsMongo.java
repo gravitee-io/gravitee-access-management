@@ -24,6 +24,7 @@ public class ApplicationAdvancedSettingsMongo {
     private boolean skipConsent;
     private boolean flowsInherited;
     private String mfaSelectionRule;
+    private boolean agentIdentityMode;
 
     public boolean isSkipConsent() {
         return skipConsent;
@@ -49,4 +50,11 @@ public class ApplicationAdvancedSettingsMongo {
         this.mfaSelectionRule = mfaSelectionRule;
     }
 
+    public boolean isAgentIdentityMode() {
+        return agentIdentityMode;
+    }
+
+    public void setAgentIdentityMode(boolean agentIdentityMode) {
+        this.agentIdentityMode = agentIdentityMode;
+    }
 }
