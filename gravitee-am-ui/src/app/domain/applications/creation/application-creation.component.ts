@@ -54,11 +54,18 @@ export class ApplicationCreationComponent implements OnInit {
   create() {
     const app: any = {};
     app.name = this.application.name;
-    app.type = this.application.type;
     app.description = this.application.description;
     app.clientId = this.application.clientId;
     app.clientSecret = this.application.clientSecret;
     app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
+
+    app.type = this.application.type;
+
+    if (this.application.type === 'AGENT') {
+      app.agentSettings = {
+        agentType: this.application.agentType,
+      };
+    }
 
     this.applicationService
       .create(this.application.domain, app)
@@ -91,11 +98,27 @@ export class ApplicationCreationComponent implements OnInit {
   }
 
   stepperValid(): boolean {
-    return (
-      this.application?.type &&
-      this.application.domain &&
-      this.application.name &&
-      (this.application.type !== 'SERVICE' ? this.application.redirectUri : true)
-    );
+    if (!this.application?.type || !this.application.domain || !this.application.name) {
+      return false;
+    }
+
+    // Agent requires agent type selection
+    if (this.application.type === 'AGENT') {
+      if (!this.application.agentType) {
+        return false;
+      }
+      // Autonomous agents don't need redirect URI
+      if (this.application.agentType === 'AUTONOMOUS') {
+        return true;
+      }
+      return !!this.application.redirectUri;
+    }
+
+    // SERVICE and RESOURCE_SERVER don't need redirect URI
+    if (this.application.type === 'SERVICE') {
+      return true;
+    }
+
+    return !!this.application.redirectUri;
   }
 }
