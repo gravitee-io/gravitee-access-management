@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
@@ -57,6 +58,10 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
 
     @Override
     public boolean canHandle(Client client, RoutingContext context) {
+        // Workload-jwt assertions are handled by ClientAssertionAuthProvider, not here
+        if (ClientAuthenticationMethod.WORKLOAD_JWT.equals(context.request().getParam(Parameters.CLIENT_ASSERTION_TYPE))) {
+            return false;
+        }
         if (client != null && ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(client.getTokenEndpointAuthMethod())) {
             return true;
         }

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
@@ -215,7 +216,13 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 clientId = ClientBasicAuthProvider.urlDecode(clientId);
             } else if(clientAssertion != null && clientAssertionType != null) {
                 JWT jwt = JWTParser.parse(clientAssertion);
-                clientId = jwt.getJWTClaimsSet().getSubject();
+                // For workload-jwt assertions, the blueprint client_id is in "iss" (not "sub")
+                // because "sub" contains the agent instance ID which is not a registered client.
+                if (ClientAuthenticationMethod.WORKLOAD_JWT.equals(clientAssertionType)) {
+                    clientId = jwt.getJWTClaimsSet().getIssuer();
+                } else {
+                    clientId = jwt.getJWTClaimsSet().getSubject();
+                }
             } else {
                 // if no authorization header found, check client_id via the query parameter
                 clientId = request.getParam(Parameters.CLIENT_ID);
