@@ -47,6 +47,7 @@ helm/charts/
 # docker compose local volume
 docker/compose/data/
 docker/compose/mongo/data/
+docker/local-stack/dev/build-ctx/
 
 # Playwright auth state
 gravitee-am-test/playwright/fixtures/.auth/

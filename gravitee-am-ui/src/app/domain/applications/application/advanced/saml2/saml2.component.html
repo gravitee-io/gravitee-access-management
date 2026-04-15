@@ -87,6 +87,75 @@
       </div>
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h5>Assertion Mapping</h5>
+          <small>Customize the NameID and attribute statement emitted in SAML responses</small>
+          <mat-divider></mat-divider>
+        </div>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>NameID Mapping</mat-label>
+          <input
+            matInput
+            type="text"
+            placeholder="e.g. {#context.attributes['user'].username}"
+            name="nameIdMapping"
+            [(ngModel)]="applicationSamlSettings.nameIdMapping"
+            (ngModelChange)="formChanged = true"
+            [disabled]="!editMode"
+          />
+          <mat-hint>EL expression for the &lt;NameID&gt; value. Leave empty to use the default internal user ID.</mat-hint>
+        </mat-form-field>
+        <div
+          *ngIf="editMode"
+          fxLayout="row"
+          fxLayoutGap="5px"
+          fxLayoutAlign="flex-start center"
+          style="margin-bottom: 10px; margin-top: 16px"
+        >
+          <mat-form-field appearance="outline" floatLabel="always" fxFlex>
+            <mat-label>Attribute Name</mat-label>
+            <input matInput [(ngModel)]="newAttributeName" name="newAttrName" placeholder="e.g. email" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always" fxFlex>
+            <mat-label>Value (EL expression)</mat-label>
+            <input matInput [(ngModel)]="newAttributeValue" name="newAttrValue" placeholder="e.g. {#context.attributes['user'].email}" />
+          </mat-form-field>
+          <div>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="addAssertionAttribute()"
+              [disabled]="!newAttributeName?.trim() || !newAttributeValue?.trim()"
+            >
+              ADD
+            </button>
+          </div>
+        </div>
+        <ngx-datatable
+          *ngIf="applicationSamlSettings.assertionAttributes?.length"
+          [rows]="applicationSamlSettings.assertionAttributes"
+          class="material"
+          columnMode="flex"
+          [headerHeight]="40"
+          [rowHeight]="55"
+        >
+          <ngx-datatable-column name="Attribute Name" [flexGrow]="2" prop="name"></ngx-datatable-column>
+          <ngx-datatable-column name="Value" [flexGrow]="4" prop="value"></ngx-datatable-column>
+          <ngx-datatable-column name="" [flexGrow]="1" *ngIf="editMode">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
+              <div fxLayout="row" class="gv-table-cell-actions">
+                <button mat-icon-button type="button" (click)="deleteAssertionAttribute(rowIndex)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+        <mat-hint *ngIf="!applicationSamlSettings.assertionAttributes?.length" style="font-size: 75%">
+          No custom attributes configured — the default attribute set (sub, username, name, email, etc.) will be emitted.
+        </mat-hint>
+      </div>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Certificate</h5>
           <small>The SP's base-64 encoded public key certificate, which is used by the IdP to verify SAML authorization requests</small>
           <mat-divider></mat-divider>

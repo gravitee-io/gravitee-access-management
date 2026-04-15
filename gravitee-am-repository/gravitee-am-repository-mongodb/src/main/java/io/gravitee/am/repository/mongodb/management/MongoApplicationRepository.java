@@ -32,6 +32,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
+import io.gravitee.am.model.application.SAMLAssertionAttribute;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -63,6 +64,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SAMLAssertionAttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeOAuthSettingsMongo;
@@ -664,6 +666,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettingsMongo.setWantResponseSigned(other.isWantResponseSigned());
         applicationSAMLSettingsMongo.setWantAssertionsSigned(other.isWantAssertionsSigned());
         applicationSAMLSettingsMongo.setResponseBinding(other.getResponseBinding());
+        applicationSAMLSettingsMongo.setNameIdMapping(other.getNameIdMapping());
+        applicationSAMLSettingsMongo.setAssertionAttributes(getMongoAssertionAttributes(other.getAssertionAttributes()));
         return applicationSAMLSettingsMongo;
     }
 
@@ -679,7 +683,34 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettings.setWantResponseSigned(other.isWantResponseSigned());
         applicationSAMLSettings.setWantAssertionsSigned(other.isWantAssertionsSigned());
         applicationSAMLSettings.setResponseBinding(other.getResponseBinding());
+        applicationSAMLSettings.setNameIdMapping(other.getNameIdMapping());
+        applicationSAMLSettings.setAssertionAttributes(getAssertionAttributes(other.getAssertionAttributes()));
         return applicationSAMLSettings;
+    }
+
+    private static List<SAMLAssertionAttribute> getAssertionAttributes(List<SAMLAssertionAttributeMongo> mongoAttrs) {
+        if (mongoAttrs == null) {
+            return null;
+        }
+        return mongoAttrs.stream().map(MongoApplicationRepository::convert).collect(Collectors.toList());
+    }
+
+    private static List<SAMLAssertionAttributeMongo> getMongoAssertionAttributes(List<SAMLAssertionAttribute> attrs) {
+        if (attrs == null) {
+            return null;
+        }
+        return attrs.stream().map(MongoApplicationRepository::convert).collect(Collectors.toList());
+    }
+
+    private static SAMLAssertionAttribute convert(SAMLAssertionAttributeMongo mongo) {
+        return new SAMLAssertionAttribute(mongo.getName(), mongo.getValue());
+    }
+
+    private static SAMLAssertionAttributeMongo convert(SAMLAssertionAttribute attr) {
+        SAMLAssertionAttributeMongo mongo = new SAMLAssertionAttributeMongo();
+        mongo.setName(attr.name());
+        mongo.setValue(attr.value());
+        return mongo;
     }
 
     private static ApplicationScopeSettings convert(ApplicationScopeSettingsMongo other) {

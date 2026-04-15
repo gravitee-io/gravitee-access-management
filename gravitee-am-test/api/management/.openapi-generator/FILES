@@ -214,6 +214,7 @@ models/RiskAssessmentSettings.ts
 models/Role.ts
 models/RoleEntity.ts
 models/RolePage.ts
+models/SAMLAssertionAttribute.ts
 models/SAMLSettings.ts
 models/SCIMSettings.ts
 models/Scope.ts

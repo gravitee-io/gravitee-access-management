@@ -16,8 +16,10 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
+import io.gravitee.am.model.application.SAMLAssertionAttribute;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,6 +35,8 @@ public class PatchApplicationSAMLSettings {
     private Optional<Boolean> wantResponseSigned;
     private Optional<Boolean> wantAssertionsSigned;
     private Optional<String> responseBinding;
+    private Optional<String> nameIdMapping;
+    private Optional<List<SAMLAssertionAttribute>> assertionAttributes;
 
     public Optional<String> getEntityId() {
         return entityId;
@@ -90,6 +94,22 @@ public class PatchApplicationSAMLSettings {
         this.responseBinding = responseBinding;
     }
 
+    public Optional<String> getNameIdMapping() {
+        return nameIdMapping;
+    }
+
+    public void setNameIdMapping(Optional<String> nameIdMapping) {
+        this.nameIdMapping = nameIdMapping;
+    }
+
+    public Optional<List<SAMLAssertionAttribute>> getAssertionAttributes() {
+        return assertionAttributes;
+    }
+
+    public void setAssertionAttributes(Optional<List<SAMLAssertionAttribute>> assertionAttributes) {
+        this.assertionAttributes = assertionAttributes;
+    }
+
     public ApplicationSAMLSettings patch(ApplicationSAMLSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationSAMLSettings toPatch = _toPatch == null ? new ApplicationSAMLSettings() : new ApplicationSAMLSettings(_toPatch);
@@ -100,6 +120,8 @@ public class PatchApplicationSAMLSettings {
         SetterUtils.safeSet(toPatch::setWantResponseSigned, this.getWantResponseSigned());
         SetterUtils.safeSet(toPatch::setWantAssertionsSigned, this.getWantAssertionsSigned());
         SetterUtils.safeSet(toPatch::setResponseBinding, this.getResponseBinding());
+        SetterUtils.safeSet(toPatch::setNameIdMapping, this.getNameIdMapping());
+        SetterUtils.safeSet(toPatch::setAssertionAttributes, this.getAssertionAttributes());
         return toPatch;
     }
 }

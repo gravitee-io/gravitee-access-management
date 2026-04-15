@@ -26,12 +26,26 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { SAMLAssertionAttribute } from './SAMLAssertionAttribute';
+import {
+  SAMLAssertionAttributeFromJSON,
+  SAMLAssertionAttributeFromJSONTyped,
+  SAMLAssertionAttributeToJSON,
+  SAMLAssertionAttributeToJSONTyped,
+} from './SAMLAssertionAttribute';
+
 /**
  *
  * @export
  * @interface ApplicationSAMLSettings
  */
 export interface ApplicationSAMLSettings {
+  /**
+   *
+   * @type {Array<SAMLAssertionAttribute>}
+   * @memberof ApplicationSAMLSettings
+   */
+  assertionAttributes?: Array<SAMLAssertionAttribute>;
   /**
    *
    * @type {string}
@@ -50,6 +64,12 @@ export interface ApplicationSAMLSettings {
    * @memberof ApplicationSAMLSettings
    */
   entityId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSAMLSettings
+   */
+  nameIdMapping?: string;
   /**
    *
    * @type {string}
@@ -92,9 +112,12 @@ export function ApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscrimina
     return json;
   }
   return {
+    assertionAttributes:
+      json['assertionAttributes'] == null ? undefined : (json['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeFromJSON),
     attributeConsumeServiceUrl: json['attributeConsumeServiceUrl'] == null ? undefined : json['attributeConsumeServiceUrl'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
+    nameIdMapping: json['nameIdMapping'] == null ? undefined : json['nameIdMapping'],
     responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
     singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
     wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
@@ -112,9 +135,12 @@ export function ApplicationSAMLSettingsToJSONTyped(value?: ApplicationSAMLSettin
   }
 
   return {
+    assertionAttributes:
+      value['assertionAttributes'] == null ? undefined : (value['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeToJSON),
     attributeConsumeServiceUrl: value['attributeConsumeServiceUrl'],
     certificate: value['certificate'],
     entityId: value['entityId'],
+    nameIdMapping: value['nameIdMapping'],
     responseBinding: value['responseBinding'],
     singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
     wantAssertionsSigned: value['wantAssertionsSigned'],

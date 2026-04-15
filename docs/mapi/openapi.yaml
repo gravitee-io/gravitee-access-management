@@ -12373,11 +12373,17 @@ components:
     ApplicationSAMLSettings:
       type: object
       properties:
+        assertionAttributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/SAMLAssertionAttribute"
         attributeConsumeServiceUrl:
           type: string
         certificate:
           type: string
         entityId:
+          type: string
+        nameIdMapping:
           type: string
         responseBinding:
           type: string
@@ -15177,11 +15183,17 @@ components:
     PatchApplicationSAMLSettings:
       type: object
       properties:
+        assertionAttributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/SAMLAssertionAttribute"
         attributeConsumeServiceUrl:
           type: string
         certificate:
           type: string
         entityId:
+          type: string
+        nameIdMapping:
           type: string
         responseBinding:
           type: string
@@ -16240,6 +16252,16 @@ components:
         totalCount:
           type: integer
           format: int64
+    SAMLAssertionAttribute:
+      required:
+      - name
+      - value
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
     SAMLSettings:
       type: object
       properties:

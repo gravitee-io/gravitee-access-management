@@ -33,6 +33,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.SAMLAssertionAttribute;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
@@ -280,6 +281,10 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private String responseBinding;
 
+    private String nameIdMapping;
+
+    private List<SAMLAssertionAttribute> assertionAttributes;
+
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
@@ -376,6 +381,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
         this.responseBinding = other.responseBinding;
+        this.nameIdMapping = other.nameIdMapping;
+        this.assertionAttributes = other.assertionAttributes != null ? new ArrayList<>(other.assertionAttributes) : null;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
@@ -1139,6 +1146,22 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.responseBinding = responseBinding;
     }
 
+    public String getNameIdMapping() {
+        return nameIdMapping;
+    }
+
+    public void setNameIdMapping(String nameIdMapping) {
+        this.nameIdMapping = nameIdMapping;
+    }
+
+    public List<SAMLAssertionAttribute> getAssertionAttributes() {
+        return assertionAttributes;
+    }
+
+    public void setAssertionAttributes(List<SAMLAssertionAttribute> assertionAttributes) {
+        this.assertionAttributes = assertionAttributes;
+    }
+
     public boolean isBackchannelUserCodeParameter() {
         return backchannelUserCodeParameter;
     }
@@ -1207,6 +1230,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setDefaultACRvalues(this.getDefaultACRvalues() != null ? new ArrayList<>(this.getDefaultACRvalues()) : null);
         clone.setRequestUris(this.getRequestUris() != null ? new ArrayList<>(this.getRequestUris()) : null);
         clone.setScopeSettings(this.scopeSettings != null ? new ArrayList<>(this.getScopeSettings()) : null);
+        clone.setAssertionAttributes(this.getAssertionAttributes() != null ? new ArrayList<>(this.getAssertionAttributes()) : null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
         clone.setIdentityProviders(this.getIdentityProviders() != null ? new TreeSet<>(this.getIdentityProviders()) : null);
         clone.setFactorSettings(this.getFactorSettings());

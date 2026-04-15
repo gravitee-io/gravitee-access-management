@@ -25,10 +25,12 @@ import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.SAMLAssertionAttribute;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
@@ -337,6 +339,61 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         observer.assertComplete();
         observer.assertNoValues();
         observer.assertNoErrors();
+    }
+
+    @Test
+    public void testApplicationSamlSettings() {
+        String domain = "domainSamlRt" + UUID.randomUUID();
+        Application app = new Application();
+        app.setName("samlRtApp");
+        app.setDomain(domain);
+        app.setType(ApplicationType.WEB);
+
+        ApplicationSAMLSettings saml = new ApplicationSAMLSettings();
+        saml.setEntityId("https://sp.example.com/metadata");
+        saml.setNameIdMapping("{#context.attributes['user'].email}");
+        saml.setAssertionAttributes(Arrays.asList(
+                new SAMLAssertionAttribute("email", "{#context.attributes['user'].email}"),
+                new SAMLAssertionAttribute("dept", "{#context.attributes['user'].additionalInformation['dept']}")));
+
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setSaml(saml);
+        app.setSettings(settings);
+
+        Application created = applicationRepository.create(app).blockingGet();
+
+        TestObserver<Application> afterCreate = applicationRepository.findById(created.getId()).test();
+        afterCreate.awaitDone(10, TimeUnit.SECONDS);
+        afterCreate.assertComplete();
+        afterCreate.assertNoErrors();
+        afterCreate.assertValue(a -> a.getSettings() != null && a.getSettings().getSaml() != null);
+        afterCreate.assertValue(a -> "https://sp.example.com/metadata".equals(a.getSettings().getSaml().getEntityId()));
+        afterCreate.assertValue(a -> "{#context.attributes['user'].email}".equals(a.getSettings().getSaml().getNameIdMapping()));
+        afterCreate.assertValue(a -> a.getSettings().getSaml().getAssertionAttributes() != null
+                && a.getSettings().getSaml().getAssertionAttributes().size() == 2);
+        afterCreate.assertValue(a -> "email".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).name())
+                && "{#context.attributes['user'].email}".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).value()));
+        afterCreate.assertValue(a -> "dept".equals(a.getSettings().getSaml().getAssertionAttributes().get(1).name()));
+
+        Application loaded = applicationRepository.findById(created.getId()).blockingGet();
+        loaded.getSettings().getSaml().setNameIdMapping("{#context.attributes['user'].username}");
+        loaded.getSettings().getSaml().setAssertionAttributes(
+                Arrays.asList(new SAMLAssertionAttribute("uid", "{#context.attributes['user'].username}")));
+
+        TestObserver<Application> afterUpdate = applicationRepository.update(loaded).test();
+        afterUpdate.awaitDone(10, TimeUnit.SECONDS);
+        afterUpdate.assertComplete();
+        afterUpdate.assertNoErrors();
+
+        TestObserver<Application> reloaded = applicationRepository.findById(created.getId()).test();
+        reloaded.awaitDone(10, TimeUnit.SECONDS);
+        reloaded.assertComplete();
+        reloaded.assertNoErrors();
+        reloaded.assertValue(a -> "{#context.attributes['user'].username}".equals(a.getSettings().getSaml().getNameIdMapping()));
+        reloaded.assertValue(a -> a.getSettings().getSaml().getAssertionAttributes() != null
+                && a.getSettings().getSaml().getAssertionAttributes().size() == 1);
+        reloaded.assertValue(a -> "uid".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).name())
+                && "{#context.attributes['user'].username}".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).value()));
     }
 
     @Test

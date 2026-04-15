@@ -53,6 +53,14 @@ export const TEST_USER = {
   password: '#CoMpL3X-SAML-P@SsW0Rd',
 };
 
+export const FALLBACK_USER = {
+  firstname: faker.name.firstName(),
+  lastname: faker.name.lastName(),
+  username: 'samluser-fallback',
+  email: 'samluser-fallback@test.com',
+  password: '#CoMpL3X-SAML-P@SsW0Rd',
+};
+
 export interface SamlTestDomains {
   providerDomain: Domain;
   clientDomain: Domain;
@@ -292,7 +300,7 @@ async function replaceDefaultIdpWithInline(domain: Domain, accessToken: string, 
     type: 'inline-am-idp',
     domainWhitelist: [],
     configuration: JSON.stringify({
-      users: [TEST_USER],
+      users: [TEST_USER, FALLBACK_USER],
     }),
     name: `inmemory-${domainSuffix}`,
   }).then((newIdp) => {

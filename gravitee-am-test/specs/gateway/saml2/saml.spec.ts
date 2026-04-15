@@ -27,13 +27,20 @@ import {
   setupSamlProviderTestViaMetadataFile,
   getProviderMetadataUrl,
   TEST_USER,
+  FALLBACK_USER,
 } from './setup';
 import { safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { patchApplication } from '@management-commands/application-management-commands';
+import { listUsers } from '@management-commands/user-management-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import * as zlib from 'zlib';
 import { setup } from '../../test-fixture';
 
 setup(200000);
+
+/** Poll options for gateway sync after application patches (matches other gateway specs). */
+const SYNC_AFTER_PATCH_OPTS = { timeoutMillis: 60000, intervalMillis: 500 };
 
 let provider: SamlProviderDomain;
 let domains: SamlTestDomains;
@@ -84,8 +91,7 @@ describe('SAML Authentication', () => {
 
     const config = JSON.parse(domains.inlineIdp.configuration);
     expect(config.users).toBeDefined();
-    expect(config.users).toHaveLength(1);
-    expect(config.users[0].username).toBe(TEST_USER.username);
+    expect(config.users.some((u: any) => u.username === TEST_USER.username)).toBe(true);
   });
 
   it('should have configured SAML IDP pointing to provider domain', async () => {
@@ -399,6 +405,162 @@ describe('SAML IdP configured via METADATA_FILE', () => {
     expect(metadataXml).toContain('IDPSSODescriptor');
     expect(metadataXml).toContain('SingleSignOnService');
     expect(metadataXml).toContain(metadataFileFixture.domains.providerDomain.hrid);
+  });
+});
+
+describe('SAML Assertion Mapping — NameID', () => {
+  let nameidFixture: SamlFixture;
+
+  beforeAll(async () => {
+    nameidFixture = await setupSamlProviderTest(uniqueName('saml-nameid', true).toLowerCase(), undefined, provider);
+
+    // Configure the provider application to use the username as the NameID value
+    await waitForSyncAfter(
+      nameidFixture.domains.providerDomain.id,
+      () =>
+        patchApplication(
+          nameidFixture.domains.providerDomain.id,
+          provider.accessToken,
+          { settings: { saml: { nameIdMapping: `{#context.attributes['user'].username}` } } },
+          nameidFixture.domains.providerApplication.id,
+        ),
+      SYNC_AFTER_PATCH_OPTS,
+    );
+  });
+
+  afterAll(async () => {
+    if (nameidFixture) {
+      await waitForSyncAfter(
+        nameidFixture.domains.providerDomain.id,
+        () =>
+          patchApplication(
+            nameidFixture.domains.providerDomain.id,
+            provider.accessToken,
+            { settings: { saml: { nameIdMapping: null } } },
+            nameidFixture.domains.providerApplication.id,
+          ),
+        SYNC_AFTER_PATCH_OPTS,
+      );
+      await nameidFixture.cleanup();
+    }
+  });
+
+  it('should set NameID to the username when nameIdMapping is configured', async () => {
+    const loginResponse = await nameidFixture.login(TEST_USER.username, TEST_USER.password);
+    const authCode = await nameidFixture.expectRedirectToClient(loginResponse);
+    expect(authCode).toBeDefined();
+
+    const usersPage = await listUsers(
+      nameidFixture.domains.clientDomain.id,
+      provider.accessToken,
+      TEST_USER.username,
+    );
+    expect(usersPage.data).toHaveLength(1);
+    const federatedUser = usersPage.data[0];
+    expect(federatedUser.username).toBe(TEST_USER.username);
+    expect(federatedUser.externalId).toBe(TEST_USER.username);
+  });
+});
+
+describe('SAML Assertion Mapping — Custom Attributes', () => {
+  let attrFixture: SamlFixture;
+
+  beforeAll(async () => {
+    attrFixture = await setupSamlProviderTest(uniqueName('saml-attrs', true).toLowerCase(), undefined, provider);
+
+    // Configure the provider application with custom assertion attributes.
+    await waitForSyncAfter(
+      attrFixture.domains.providerDomain.id,
+      () =>
+        patchApplication(
+          attrFixture.domains.providerDomain.id,
+          provider.accessToken,
+          {
+            settings: {
+              saml: {
+                nameIdMapping: `{#context.attributes['user'].username}`,
+                assertionAttributes: [
+                  { name: 'custom_email', value: `{#context.attributes['user'].email}` },
+                  { name: 'custom_username', value: `{#context.attributes['user'].username}` },
+                ],
+              },
+            },
+          },
+          attrFixture.domains.providerApplication.id,
+        ),
+      SYNC_AFTER_PATCH_OPTS,
+    );
+  });
+
+  afterAll(async () => {
+    if (attrFixture) {
+      await waitForSyncAfter(
+        attrFixture.domains.providerDomain.id,
+        () =>
+          patchApplication(
+            attrFixture.domains.providerDomain.id,
+            provider.accessToken,
+            { settings: { saml: { nameIdMapping: null, assertionAttributes: null } } },
+            attrFixture.domains.providerApplication.id,
+          ),
+        SYNC_AFTER_PATCH_OPTS,
+      );
+      await attrFixture.cleanup();
+    }
+  });
+
+  it('should emit only the configured assertionAttributes in the SAML response', async () => {
+    const loginResponse = await attrFixture.login(TEST_USER.username, TEST_USER.password);
+    const authCode = await attrFixture.expectRedirectToClient(loginResponse);
+    expect(authCode).toBeDefined();
+
+    const usersPage = await listUsers(
+      attrFixture.domains.clientDomain.id,
+      provider.accessToken,
+      TEST_USER.username,
+    );
+    expect(usersPage.data).toHaveLength(1);
+    const federatedUser = usersPage.data[0];
+    expect(federatedUser.username).toBe(TEST_USER.username);
+    expect(federatedUser.additionalInformation?.mail).toBeUndefined();
+    expect(federatedUser.additionalInformation?.givenname).toBeUndefined();
+    expect(federatedUser.additionalInformation?.familyname).toBeUndefined();
+    expect(federatedUser.additionalInformation?.custom_email).toBe(TEST_USER.email);
+    expect(federatedUser.additionalInformation?.custom_username).toBe(TEST_USER.username);
+  });
+
+  it('should fall back to default attribute set when assertionAttributes is empty', async () => {
+    // Remove the custom mapping to verify default behavior
+    await waitForSyncAfter(
+      attrFixture.domains.providerDomain.id,
+      () =>
+        patchApplication(
+          attrFixture.domains.providerDomain.id,
+          provider.accessToken,
+          { settings: { saml: { assertionAttributes: [] } } },
+          attrFixture.domains.providerApplication.id,
+        ),
+      SYNC_AFTER_PATCH_OPTS,
+    );
+
+    const loginResponse = await attrFixture.login(FALLBACK_USER.username, FALLBACK_USER.password);
+    const authCode = await attrFixture.expectRedirectToClient(loginResponse);
+    expect(authCode).toBeDefined();
+
+    const usersPage = await listUsers(
+      attrFixture.domains.clientDomain.id,
+      provider.accessToken,
+      FALLBACK_USER.username,
+    );
+    expect(usersPage.data).toHaveLength(1);
+    const federatedUser = usersPage.data[0];
+    expect(federatedUser.username).toBe(FALLBACK_USER.username);
+    expect(federatedUser.externalId).toBe(FALLBACK_USER.username);
+    expect(federatedUser.additionalInformation?.mail).toBe(FALLBACK_USER.email);
+    expect(federatedUser.additionalInformation?.givenname).toBe(FALLBACK_USER.firstname);
+    expect(federatedUser.additionalInformation?.familyname).toBe(FALLBACK_USER.lastname);
+    expect(federatedUser.additionalInformation?.custom_email).toBeUndefined();
+    expect(federatedUser.additionalInformation?.custom_username).toBeUndefined();
   });
 });
 

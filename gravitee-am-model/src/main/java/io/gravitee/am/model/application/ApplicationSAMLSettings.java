@@ -17,6 +17,8 @@ package io.gravitee.am.model.application;
 
 import io.gravitee.am.common.saml2.Binding;
 import io.gravitee.am.model.oidc.Client;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * See <a href="https://www.oasis-open.org/committees/download.php/56786/sstc-saml-metadata-errata-2.0-wd-05-diff.pdf">2.4.4 Element <SPSSODescriptor></a>
@@ -56,6 +58,19 @@ public class ApplicationSAMLSettings {
      */
     private String responseBinding = Binding.INITIAL_REQUEST;
 
+    /**
+     * EL expression resolved to produce the {@code <NameID>} value in the SAML response.
+     * When null/empty the default behavior applies: the internal user ID is used, or the
+     * user's email when the SP requests EMAIL format.
+     */
+    private String nameIdMapping;
+
+    /**
+     * Custom SAML assertion attribute mappings. When non-empty, replaces the default fixed
+     * attribute set. Each entry maps a SAML attribute name to an EL expression.
+     */
+    private List<SAMLAssertionAttribute> assertionAttributes;
+
     public ApplicationSAMLSettings() {
     }
 
@@ -67,6 +82,8 @@ public class ApplicationSAMLSettings {
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
         this.responseBinding = other.responseBinding;
+        this.nameIdMapping = other.nameIdMapping;
+        this.assertionAttributes = other.assertionAttributes != null ? new ArrayList<>(other.assertionAttributes) : null;
     }
 
     public String getEntityId() {
@@ -125,6 +142,22 @@ public class ApplicationSAMLSettings {
         this.responseBinding = responseBinding;
     }
 
+    public String getNameIdMapping() {
+        return nameIdMapping;
+    }
+
+    public void setNameIdMapping(String nameIdMapping) {
+        this.nameIdMapping = nameIdMapping;
+    }
+
+    public List<SAMLAssertionAttribute> getAssertionAttributes() {
+        return assertionAttributes;
+    }
+
+    public void setAssertionAttributes(List<SAMLAssertionAttribute> assertionAttributes) {
+        this.assertionAttributes = assertionAttributes;
+    }
+
     public void copyTo(Client client) {
         client.setEntityId(this.entityId);
         client.setAttributeConsumeServiceUrl(this.attributeConsumeServiceUrl);
@@ -133,5 +166,7 @@ public class ApplicationSAMLSettings {
         client.setWantResponseSigned(this.wantResponseSigned);
         client.setWantAssertionsSigned(this.wantAssertionsSigned);
         client.setResponseBinding(this.responseBinding);
+        client.setNameIdMapping(this.nameIdMapping);
+        client.setAssertionAttributes(this.assertionAttributes);
     }
 }
