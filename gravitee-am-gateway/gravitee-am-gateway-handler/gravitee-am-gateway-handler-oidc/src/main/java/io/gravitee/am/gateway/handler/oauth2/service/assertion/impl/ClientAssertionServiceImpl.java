@@ -49,7 +49,10 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+import io.gravitee.am.model.application.AgentType;
+
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.WORKLOAD_JWT;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -104,6 +107,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                             return validateSignatureWithPublicKey(jwt);
                         }
                     });
+        }
+
+        if (WORKLOAD_JWT.equals(assertionType)) {
+            return this.validateWorkloadJWT(assertion, basePath);
         }
 
         return Maybe.error(unsupportedAssertionType);
@@ -253,6 +260,82 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             // Prior to 4.2, the client secret was not hashed and directly stored in the clientSecret attribute.
             JWSVerifier verifier = new MACVerifier(client.getClientSecret());
             return signedJWT.verify(verifier);
+        }
+    }
+
+    /**
+     * Validate a workload-jwt assertion for blueprint agent instances.
+     * <p>
+     * The JWT {@code iss} identifies the blueprint application (client_id) and
+     * {@code sub} identifies the agent instance. The signature is verified
+     * against the blueprint's agent JWKS. On success, a cloned Client is
+     * returned with the {@code clientId} set to the agent instance ID and
+     * {@code blueprintClientId} set to the original blueprint client_id.
+     */
+    private Maybe<Client> validateWorkloadJWT(String assertion, String basePath) {
+        try {
+            JWT jwt = JWTParser.parse(assertion);
+            SignedJWT signedJWT = (SignedJWT) jwt;
+
+            String iss = jwt.getJWTClaimsSet().getIssuer();
+            String sub = jwt.getJWTClaimsSet().getSubject();
+            List<String> aud = jwt.getJWTClaimsSet().getAudience();
+            Date exp = jwt.getJWTClaimsSet().getExpirationTime();
+
+            if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty()
+                    || aud == null || aud.isEmpty() || exp == null) {
+                return Maybe.error(NOT_VALID);
+            }
+
+            if (exp.before(Date.from(Instant.now()))) {
+                return Maybe.error(new InvalidClientException("assertion has expired"));
+            }
+
+            // Validate audience
+            OpenIDProviderMetadata discovery = openIDDiscoveryService.getConfiguration(basePath);
+            if (discovery == null || discovery.getTokenEndpoint() == null) {
+                return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
+            }
+            if (aud.stream().noneMatch(discovery.getTokenEndpoint()::equals)
+                    && (discovery.getIssuer() == null || aud.stream().noneMatch(discovery.getIssuer()::equals))) {
+                return Maybe.error(NOT_VALID);
+            }
+
+            // Look up blueprint client by iss
+            return this.clientSyncService.findByClientId(iss)
+                    .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
+                    .flatMap(blueprint -> {
+                        if (!blueprint.isAgentIdentityMode()) {
+                            return Maybe.error(new InvalidClientException("Application is not a blueprint agent"));
+                        }
+                        AgentType agentType = blueprint.getAgentType();
+                        if (agentType != AgentType.AUTONOMOUS && agentType != AgentType.HOSTED_DELEGATED) {
+                            return Maybe.error(new InvalidClientException("Workload-jwt is not supported for agent type: " + agentType));
+                        }
+
+                        JWKSet agentJwks = blueprint.getAgentJwks();
+                        if (agentJwks == null || agentJwks.getKeys() == null || agentJwks.getKeys().isEmpty()) {
+                            return Maybe.error(new InvalidClientException("No agent JWKS configured on blueprint"));
+                        }
+
+                        return jwkService.getKey(agentJwks, signedJWT.getHeader().getKeyID())
+                                .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key in blueprint agent JWKS")))
+                                .flatMap(jwk -> {
+                                    if (!jwsService.isValidSignature(signedJWT, jwk)) {
+                                        return Maybe.error(unableToValidateClientException());
+                                    }
+                                    // Clone blueprint — keep clientId as the blueprint's so auth code
+                                    // lookups and other grant validations still match. The agent
+                                    // instance ID is stored separately for token sub override.
+                                    Client agentClient = new Client(blueprint);
+                                    agentClient.setBlueprintClientId(blueprint.getClientId());
+                                    agentClient.setAgentInstanceId(sub);
+                                    return Maybe.just(agentClient);
+                                });
+                    });
+        } catch (ClassCastException | ParseException ex) {
+            log.error("Failed to parse workload-jwt assertion: {}", ex.getMessage(), ex);
+            return Maybe.error(NOT_VALID);
         }
     }
 
