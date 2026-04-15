@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import jakarta.validation.constraints.NotNull;
 
@@ -42,6 +43,10 @@ public class NewApplication {
     private List<String> redirectUris;
 
     private Map<String, Object> metadata;
+
+    private boolean agentIdentityMode;
+
+    private AgentSettings agentSettings;
 
     public String getName() {
         return name;
@@ -97,6 +102,22 @@ public class NewApplication {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public boolean isAgentIdentityMode() {
+        return agentIdentityMode;
+    }
+
+    public void setAgentIdentityMode(boolean agentIdentityMode) {
+        this.agentIdentityMode = agentIdentityMode;
+    }
+
+    public AgentSettings getAgentSettings() {
+        return agentSettings;
+    }
+
+    public void setAgentSettings(AgentSettings agentSettings) {
+        this.agentSettings = agentSettings;
     }
 
     @Override
