@@ -29,6 +29,8 @@ import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.AgentSettings;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -50,6 +52,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.AgentSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
@@ -466,6 +469,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettingsMongo.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
+        applicationSettingsMongo.setAgent(convert(other.getAgent()));
         return applicationSettingsMongo;
     }
 
@@ -485,6 +489,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettings.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
+        applicationSettings.setAgent(convert(other.getAgent()));
         return applicationSettings;
     }
 
@@ -767,6 +772,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettings applicationAdvancedSettings = new ApplicationAdvancedSettings();
         applicationAdvancedSettings.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettings.setFlowsInherited(other.isFlowsInherited());
+        applicationAdvancedSettings.setAgentIdentityMode(other.isAgentIdentityMode());
         return applicationAdvancedSettings;
     }
 
@@ -778,7 +784,44 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettingsMongo applicationAdvancedSettingsMongo = new ApplicationAdvancedSettingsMongo();
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
+        applicationAdvancedSettingsMongo.setAgentIdentityMode(other.isAgentIdentityMode());
         return applicationAdvancedSettingsMongo;
+    }
+
+    private static AgentSettings convert(AgentSettingsMongo other) {
+        if (other == null) {
+            return null;
+        }
+
+        AgentSettings agentSettings = new AgentSettings();
+        agentSettings.setAgentType(AgentType.orNull(other.getAgentType()));
+        agentSettings.setAllowedGrantTypes(other.getAllowedGrantTypes());
+        agentSettings.setTokenTtlSeconds(other.getTokenTtlSeconds());
+        agentSettings.setRefreshTokenEnabled(other.isRefreshTokenEnabled());
+        agentSettings.setAllowedScopes(other.getAllowedScopes());
+        agentSettings.setMaxPublicKeysPerWorkload(other.getMaxPublicKeysPerWorkload());
+        agentSettings.setRequiredClaims(other.getRequiredClaims());
+        agentSettings.setClientAssertionType(other.getClientAssertionType());
+        agentSettings.setJwks(convert(other.getJwks()));
+        return agentSettings;
+    }
+
+    private static AgentSettingsMongo convert(AgentSettings other) {
+        if (other == null) {
+            return null;
+        }
+
+        AgentSettingsMongo agentSettingsMongo = new AgentSettingsMongo();
+        agentSettingsMongo.setAgentType(other.getAgentType() != null ? other.getAgentType().name() : null);
+        agentSettingsMongo.setAllowedGrantTypes(other.getAllowedGrantTypes());
+        agentSettingsMongo.setTokenTtlSeconds(other.getTokenTtlSeconds());
+        agentSettingsMongo.setRefreshTokenEnabled(other.isRefreshTokenEnabled());
+        agentSettingsMongo.setAllowedScopes(other.getAllowedScopes());
+        agentSettingsMongo.setMaxPublicKeysPerWorkload(other.getMaxPublicKeysPerWorkload());
+        agentSettingsMongo.setRequiredClaims(other.getRequiredClaims());
+        agentSettingsMongo.setClientAssertionType(other.getClientAssertionType());
+        agentSettingsMongo.setJwks(convert(other.getJwks()));
+        return agentSettingsMongo;
     }
 
     private static MFASettings convert(MFASettingsMongo mfaSettingsMongo) {
