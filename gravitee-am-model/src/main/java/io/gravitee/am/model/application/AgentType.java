@@ -16,19 +16,25 @@
 package io.gravitee.am.model.application;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
+ * Agent types for Blueprint applications.
+ *
+ * <ul>
+ *   <li>{@link #USER_EMBEDDED} (Type A) — PKCE + public client + act claim injection</li>
+ *   <li>{@link #HOSTED_DELEGATED} (Type B) — Confidential client with token exchange (RFC 8693)</li>
+ *   <li>{@link #AUTONOMOUS} (Type C) — Confidential client with client_credentials + token exchange</li>
+ * </ul>
  */
-public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER, AGENT;
+public enum AgentType {
+    USER_EMBEDDED,
+    HOSTED_DELEGATED,
+    AUTONOMOUS;
 
-    public static ApplicationType orNull(String type) {
+    public static AgentType orNull(String type) {
         if (type == null) {
             return null;
         }
-
         try {
-            return ApplicationType.valueOf(type);
+            return AgentType.valueOf(type);
         } catch (IllegalArgumentException e) {
             return null;
         }
