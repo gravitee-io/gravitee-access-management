@@ -1482,6 +1482,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
             case HOSTED_DELEGATED -> {
                 // confidential client with auth code + token exchange
+                // No tokenEndpointAuthMethod — workload-jwt assertion is used instead
+                oAuthSettings.setTokenEndpointAuthMethod(null);
                 if (agentSettings.getAllowedGrantTypes() == null) {
                     agentSettings.setAllowedGrantTypes(List.of(
                             GrantType.AUTHORIZATION_CODE,
@@ -1492,6 +1494,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
             case AUTONOMOUS -> {
                 // confidential client, client_credentials + token exchange, no redirect_uri
+                // No tokenEndpointAuthMethod — workload-jwt assertion is used instead
+                oAuthSettings.setTokenEndpointAuthMethod(null);
                 oAuthSettings.setRedirectUris(null);
                 if (agentSettings.getAllowedGrantTypes() == null) {
                     agentSettings.setAllowedGrantTypes(List.of(

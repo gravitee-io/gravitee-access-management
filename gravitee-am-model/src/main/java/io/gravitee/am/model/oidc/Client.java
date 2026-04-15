@@ -320,6 +320,22 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private AgentType agentType;
 
+    private JWKSet agentJwks;
+
+    /**
+     * Transient field set during workload-jwt authentication to track
+     * the original blueprint client_id for act claim injection.
+     * Not persisted.
+     */
+    private transient String blueprintClientId;
+
+    /**
+     * Transient field carrying the agent instance ID from the workload-jwt
+     * assertion's {@code sub} claim. Used as the token {@code sub} for
+     * client_credentials flows. Not persisted.
+     */
+    private transient String agentInstanceId;
+
     public Client() {
     }
 
@@ -425,6 +441,9 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentIdentityMode = other.agentIdentityMode;
         this.agentType = other.agentType;
+        this.agentJwks = other.agentJwks;
+        this.blueprintClientId = other.blueprintClientId;
+        this.agentInstanceId = other.agentInstanceId;
     }
 
     public String getId() {
@@ -1339,6 +1358,30 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setAgentType(AgentType agentType) {
         this.agentType = agentType;
+    }
+
+    public JWKSet getAgentJwks() {
+        return agentJwks;
+    }
+
+    public void setAgentJwks(JWKSet agentJwks) {
+        this.agentJwks = agentJwks;
+    }
+
+    public String getBlueprintClientId() {
+        return blueprintClientId;
+    }
+
+    public void setBlueprintClientId(String blueprintClientId) {
+        this.blueprintClientId = blueprintClientId;
+    }
+
+    public String getAgentInstanceId() {
+        return agentInstanceId;
+    }
+
+    public void setAgentInstanceId(String agentInstanceId) {
+        this.agentInstanceId = agentInstanceId;
     }
 
     @Override

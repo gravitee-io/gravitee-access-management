@@ -127,6 +127,7 @@ public class ApplicationSettings {
         client.setSecretExpirationSettings(this.secretExpirationSettings);
         if (this.agent != null) {
             client.setAgentType(this.agent.getAgentType());
+            client.setAgentJwks(this.agent.getJwks());
         }
     }
 
