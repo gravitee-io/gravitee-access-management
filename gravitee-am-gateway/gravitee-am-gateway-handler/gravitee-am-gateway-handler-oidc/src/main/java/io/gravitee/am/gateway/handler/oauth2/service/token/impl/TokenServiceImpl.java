@@ -476,12 +476,15 @@ public class TokenServiceImpl implements TokenService {
             jwt.put(Claims.ACT, request.getActClaim());
         }
 
-        // Blueprint agent (Type A) - inject "act" claim for user-embedded agents
-        // The agent acts on behalf of the user, so the actor is the agent (client)
-        if (client.isAgentIdentityMode()
-                && client.getAgentType() == AgentType.USER_EMBEDDED
-                && jwt.get(Claims.ACT) == null) {
-            jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
+        // Blueprint agent - inject "act" claim
+        if (client.isAgentIdentityMode() && jwt.get(Claims.ACT) == null) {
+            if (client.getAgentType() == AgentType.USER_EMBEDDED) {
+                // Type A: the agent itself is the actor
+                jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
+            } else if (client.getBlueprintClientId() != null) {
+                // Type B/C (workload-jwt): blueprint is the actor, sub is the agent instance
+                jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getBlueprintClientId()));
+            }
         }
 
         // Apply resource to aud
@@ -524,7 +527,9 @@ public class TokenServiceImpl implements TokenService {
         JWT jwt = new JWT();
         jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
         if (oAuth2Request.isClientOnly()) {
-            jwt.setSub(client.getClientId());
+            // For workload-jwt agents in client_credentials flow, use the agent instance ID as sub
+            String sub = client.getAgentInstanceId() != null ? client.getAgentInstanceId() : client.getClientId();
+            jwt.setSub(sub);
         } else {
             subjectManager.updateJWT(jwt, user);
         }
