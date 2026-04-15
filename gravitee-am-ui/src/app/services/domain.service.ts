@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
+import { SKIP_ERROR_SNACKBAR } from '../interceptors/http-request.interceptor';
 
 import { AuthService } from './auth.service';
 
@@ -129,9 +130,15 @@ export class DomainService {
   }
 
   patchCimdSettings(id, cimdSettings): Observable<any> {
-    return this.http.patch<any>(this.domainsURL + id, {
-      oidc: { cimdSettings },
-    });
+    return this.http.patch<any>(
+      this.domainsURL + id,
+      {
+        oidc: { cimdSettings },
+      },
+      {
+        context: new HttpContext().set(SKIP_ERROR_SNACKBAR, true),
+      },
+    );
   }
 
   patchScimSettings(id, domain): Observable<any> {
