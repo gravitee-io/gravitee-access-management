@@ -401,7 +401,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateRequestObjectSigningAlgorithm)
                 .flatMap(this::validateRequestObjectEncryptionAlgorithm)
                 .flatMap(this::enforceWithSoftwareStatement)
-                .flatMap(this::validateCibaSettings);
+                .flatMap(this::validateCibaSettings)
+                .flatMap(this::validateAgentConstraints);
     }
 
     private Single<DynamicClientRegistrationRequest> enforceWithSoftwareStatement(DynamicClientRegistrationRequest request) {
@@ -958,6 +959,24 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             }
         }
 
+        return Single.just(request);
+    }
+
+    /**
+     * When the DCR request includes grant types that don't require redirect_uri
+     * (e.g., client_credentials only for autonomous agents), ensure we don't
+     * reject the request for missing redirect_uri. The redirect_uri validation
+     * in validateRedirectUri already handles this — this method validates
+     * additional agent-specific constraints if agent metadata extensions are present.
+     */
+    private Single<DynamicClientRegistrationRequest> validateAgentConstraints(DynamicClientRegistrationRequest request) {
+        // Agent constraints are validated at the Application level via
+        // ApplicationServiceImpl.validateAgentSettings() when agent identity mode
+        // is enabled through the Management API. DCR operates at the OIDC Client level
+        // and doesn't carry agent-specific metadata directly.
+        //
+        // This placeholder ensures the validation chain is wired for future extensions
+        // when DCR supports agent metadata (e.g., agent_type, agent_settings).
         return Single.just(request);
     }
 
