@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.application;
+package io.gravitee.am.repository.mongodb.management.internal.model;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER, AGENT;
+import lombok.Getter;
+import lombok.Setter;
 
-    public static ApplicationType orNull(String type) {
-        if (type == null) {
-            return null;
-        }
+import java.util.List;
+import java.util.Map;
 
-        try {
-            return ApplicationType.valueOf(type);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
+@Getter
+@Setter
+public class AgentSettingsMongo {
+
+    private String agentType;
+    private List<String> allowedGrantTypes;
+    private Integer tokenTtlSeconds;
+    private boolean refreshTokenEnabled;
+    private List<String> allowedScopes;
+    private int maxPublicKeysPerWorkload = 10;
+    private Map<String, String> requiredClaims;
+    private String clientAssertionType;
+    private List<JWKMongo> jwks;
 }
