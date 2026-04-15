@@ -62,6 +62,37 @@ export class ApplicationCreationStep1Component implements OnInit {
       description: 'Resource Server apps',
       subDescription: 'e.g : APIs',
     },
+    {
+      name: 'Agent',
+      icon: 'smart_toy',
+      type: 'AGENT',
+      description: 'AI agent with managed identity',
+      subDescription: 'e.g : LLM agents, autonomous services',
+    },
+  ];
+
+  agentTypes: any[] = [
+    {
+      name: 'User-Embedded',
+      icon: 'person',
+      type: 'USER_EMBEDDED',
+      description: "Runs in the user's context",
+      subDescription: 'Browser extension, desktop assistant — acts on behalf of a logged-in user via PKCE',
+    },
+    {
+      name: 'Hosted Delegated',
+      icon: 'cloud',
+      type: 'HOSTED_DELEGATED',
+      description: 'Server-side with user delegation',
+      subDescription: 'Backend agent that receives delegated authority via token exchange (RFC 8693)',
+    },
+    {
+      name: 'Autonomous',
+      icon: 'memory',
+      type: 'AUTONOMOUS',
+      description: 'Fully independent, no user',
+      subDescription: 'Machine-to-machine agent using client credentials + token exchange',
+    },
   ];
 
   constructor(private route: ActivatedRoute) {}
@@ -75,5 +106,16 @@ export class ApplicationCreationStep1Component implements OnInit {
 
   selectApplicationType(selectedApplicationType: string): void {
     this.application.type = selectedApplicationType;
+    if (selectedApplicationType !== 'AGENT') {
+      this.application.agentType = null;
+    }
+  }
+
+  selectAgentType(selectedAgentType: string): void {
+    this.application.agentType = selectedAgentType;
+  }
+
+  isAgentSelected(): boolean {
+    return this.application.type === 'AGENT';
   }
 }

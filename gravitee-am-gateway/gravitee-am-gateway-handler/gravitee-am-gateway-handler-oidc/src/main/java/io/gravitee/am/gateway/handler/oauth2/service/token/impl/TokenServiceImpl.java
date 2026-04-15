@@ -44,6 +44,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -473,6 +474,14 @@ public class TokenServiceImpl implements TokenService {
         // Token Exchange (RFC 8693) - set "act" claim for delegation scenarios
         if (request.isDelegation() && request.getActClaim() != null) {
             jwt.put(Claims.ACT, request.getActClaim());
+        }
+
+        // Blueprint agent (Type A) - inject "act" claim for user-embedded agents
+        // The agent acts on behalf of the user, so the actor is the agent (client)
+        if (client.isAgentIdentityMode()
+                && client.getAgentType() == AgentType.USER_EMBEDDED
+                && jwt.get(Claims.ACT) == null) {
+            jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
         }
 
         // Apply resource to aud
