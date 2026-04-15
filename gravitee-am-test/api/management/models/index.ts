@@ -200,6 +200,7 @@ export * from './RiskAssessmentSettings';
 export * from './Role';
 export * from './RoleEntity';
 export * from './RolePage';
+export * from './SAMLAssertionAttribute';
 export * from './SAMLSettings';
 export * from './SCIMSettings';
 export * from './Scope';

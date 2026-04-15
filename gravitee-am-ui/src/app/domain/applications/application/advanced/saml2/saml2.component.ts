@@ -28,6 +28,8 @@ interface ApplicationSaml2SettingsPayload {
   wantAssertionsSigned?: boolean;
   certificate?: string;
   responseBinding?: string;
+  nameIdMapping?: string;
+  assertionAttributes?: { name: string; value: string }[];
 }
 
 @Component({
@@ -44,6 +46,8 @@ export class ApplicationSaml2Component implements OnInit {
   formChanged: boolean;
   editMode: boolean;
   certificates: any[] = [];
+  newAttributeName = '';
+  newAttributeValue = '';
   bindings: any[] = [
     { name: 'Initial-Request', value: 'urn:oasis:names:tc:SAML:2.0:bindings:custom:Initial-Request' },
     { name: 'HTTP-POST', value: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' },
@@ -84,6 +88,28 @@ export class ApplicationSaml2Component implements OnInit {
 
   responseBindingChanged(value: string) {
     this.applicationSamlSettings.responseBinding = value;
+    this.formChanged = true;
+  }
+
+  addAssertionAttribute() {
+    const name = this.newAttributeName?.trim();
+    const value = this.newAttributeValue;
+    if (!name || !value) return;
+    const existing = (this.applicationSamlSettings.assertionAttributes || []).some((a) => a.name === name);
+    if (existing) {
+      this.snackbarService.open('Attribute name already exists');
+      return;
+    }
+    this.applicationSamlSettings.assertionAttributes = [...(this.applicationSamlSettings.assertionAttributes || []), { name, value }];
+    this.newAttributeName = '';
+    this.newAttributeValue = '';
+    this.formChanged = true;
+  }
+
+  deleteAssertionAttribute(index: number) {
+    this.applicationSamlSettings.assertionAttributes = (this.applicationSamlSettings.assertionAttributes || []).filter(
+      (_, i) => i !== index,
+    );
     this.formChanged = true;
   }
 }
