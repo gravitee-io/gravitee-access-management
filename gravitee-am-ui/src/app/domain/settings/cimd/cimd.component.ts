@@ -50,12 +50,22 @@ export class CimdSettingsComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchCimdSettings(this.domainId, this.cimdSettings).subscribe((data) => {
-      this.domainStore.set(data);
-      this.domain = data;
-      this.cimdSettings = deepClone(data.oidc?.cimdSettings) || {};
-      this.formChanged = false;
-      this.snackbarService.open('CIMD configuration updated');
+    this.domainService.patchCimdSettings(this.domainId, this.cimdSettings).subscribe({
+      next: (data) => {
+        this.domainStore.set(data);
+        this.domain = data;
+        this.cimdSettings = deepClone(data.oidc?.cimdSettings) || {};
+        this.formChanged = false;
+        this.snackbarService.open('CIMD configuration updated');
+      },
+      error: (error: unknown) => {
+        const httpError = error as { error?: { message?: string } };
+        if (httpError?.error?.message) {
+          this.snackbarService.open(httpError.error.message);
+        } else {
+          this.snackbarService.open('Failed to update CIMD configuration');
+        }
+      },
     });
   }
 
