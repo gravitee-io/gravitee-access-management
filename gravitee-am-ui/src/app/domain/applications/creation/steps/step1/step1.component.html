@@ -43,4 +43,31 @@
       </mat-card-content>
     </mat-card>
   </div>
+
+  <div *ngIf="isAgentSelected()" class="agent-type-selection">
+    <mat-divider style="margin: 20px 0"></mat-divider>
+    <p class="gv-plugin-creation-description">Select the <b>agent type</b> that matches how your agent authenticates and operates.</p>
+    <div fxLayout="row wrap" fxLayoutAlign="center center" class="application-creation-step1-content">
+      <mat-card
+        appearance="outlined"
+        *ngFor="let agentType of agentTypes"
+        fxFlex="30"
+        (click)="selectAgentType(agentType.type)"
+        [ngClass]="agentType.type === application.agentType ? 'selected' : ''"
+      >
+        <mat-card-content>
+          <div>
+            <i [ngClass]="agentType.type === application.agentType ? 'selected' : ''" class="material-icons">{{ agentType.icon }}</i>
+          </div>
+          <h3>{{ agentType.name }}</h3>
+          <p>
+            {{ agentType.description }}
+          </p>
+          <small>
+            {{ agentType.subDescription }}
+          </small>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
 </div>
