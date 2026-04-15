@@ -34,6 +34,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetad
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.Client;
@@ -74,7 +75,10 @@ import static org.mockito.Mockito.when;
 public class ClientAssertionServiceTest {
 
     private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    private static final String WORKLOAD_JWT_TYPE = "urn:ietf:params:oauth:client-assertion-type:workload-jwt";
     private static final String CLIENT_ID = "clientIdentifier";
+    private static final String BLUEPRINT_CLIENT_ID = "blueprintClientId";
+    private static final String AGENT_INSTANCE_ID = "agent-instance-42";
     private static final String ISSUER = "https://gravitee.io/test/oidc";
     private static final String AUDIENCE = "https://gravitee.io/test/oauth/token";
     private static final String KID = "keyIdentifier";
@@ -650,6 +654,164 @@ public class ClientAssertionServiceTest {
         clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
+    }
+
+    // ==================== Workload-JWT tests ====================
+
+    @Test
+    public void testWorkloadJwt_validAssertion() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        RSAKey key = new RSAKey();
+        key.setKty("RSA");
+        key.setKid(KID);
+        key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
+        key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
+
+        Client blueprint = new Client();
+        blueprint.setClientId(BLUEPRINT_CLIENT_ID);
+        blueprint.setAgentIdentityMode(true);
+        blueprint.setAgentType(AgentType.AUTONOMOUS);
+        JWKSet agentJwks = new JWKSet();
+        agentJwks.setKeys(List.of(key));
+        blueprint.setAgentJwks(agentJwks);
+
+        String assertion = generateWorkloadJWT(privateKey, BLUEPRINT_CLIENT_ID, AGENT_INSTANCE_ID);
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
+        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+                .assertNoErrors()
+                .assertValue(client -> {
+                    // clientId stays as blueprint, agentInstanceId carries the instance
+                    return BLUEPRINT_CLIENT_ID.equals(client.getClientId())
+                            && AGENT_INSTANCE_ID.equals(client.getAgentInstanceId())
+                            && BLUEPRINT_CLIENT_ID.equals(client.getBlueprintClientId())
+                            && client.isAgentIdentityMode();
+                });
+    }
+
+    @Test
+    public void testWorkloadJwt_invalidSignature() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        RSAKey key = new RSAKey();
+        key.setKty("RSA");
+        key.setKid(KID);
+        key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
+        key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
+
+        Client blueprint = new Client();
+        blueprint.setClientId(BLUEPRINT_CLIENT_ID);
+        blueprint.setAgentIdentityMode(true);
+        blueprint.setAgentType(AgentType.AUTONOMOUS);
+        JWKSet agentJwks = new JWKSet();
+        agentJwks.setKeys(List.of(key));
+        blueprint.setAgentJwks(agentJwks);
+
+        String assertion = generateWorkloadJWT(privateKey, BLUEPRINT_CLIENT_ID, AGENT_INSTANCE_ID);
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
+        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(false);
+
+        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    @Test
+    public void testWorkloadJwt_nonBlueprintClient() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        Client regularClient = new Client();
+        regularClient.setClientId(BLUEPRINT_CLIENT_ID);
+        regularClient.setAgentIdentityMode(false);
+
+        String assertion = generateWorkloadJWT(privateKey, BLUEPRINT_CLIENT_ID, AGENT_INSTANCE_ID);
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
+        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(regularClient));
+
+        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    @Test
+    public void testWorkloadJwt_expiredAssertion() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        SignedJWT signedJWT = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(KID).build(),
+                new JWTClaimsSet.Builder()
+                        .issuer(BLUEPRINT_CLIENT_ID)
+                        .subject(AGENT_INSTANCE_ID)
+                        .audience(AUDIENCE)
+                        .expirationTime(Date.from(Instant.now().minus(1, ChronoUnit.DAYS)))
+                        .build()
+        );
+        signedJWT.sign(new RSASSASigner(privateKey));
+
+        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, signedJWT.serialize(), "/").test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    @Test
+    public void testWorkloadJwt_userEmbeddedAgentRejected() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        Client blueprint = new Client();
+        blueprint.setClientId(BLUEPRINT_CLIENT_ID);
+        blueprint.setAgentIdentityMode(true);
+        blueprint.setAgentType(AgentType.USER_EMBEDDED);
+
+        String assertion = generateWorkloadJWT(privateKey, BLUEPRINT_CLIENT_ID, AGENT_INSTANCE_ID);
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
+        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+
+        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
+    }
+
+    private String generateWorkloadJWT(RSAPrivateKey privateKey, String issuer, String subject) throws JOSEException {
+        SignedJWT signedJWT = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(KID).build(),
+                new JWTClaimsSet.Builder()
+                        .issuer(issuer)
+                        .subject(subject)
+                        .audience(AUDIENCE)
+                        .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
+                        .build()
+        );
+        signedJWT.sign(new RSASSASigner(privateKey));
+        return signedJWT.serialize();
     }
 
     private KeyPair generateRsaKeyPair() throws NoSuchAlgorithmException{
