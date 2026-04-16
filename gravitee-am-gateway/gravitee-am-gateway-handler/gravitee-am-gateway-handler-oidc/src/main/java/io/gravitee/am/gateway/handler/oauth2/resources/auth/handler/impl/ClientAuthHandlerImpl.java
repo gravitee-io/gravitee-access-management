@@ -138,9 +138,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                     }
                 }
 
-                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(client)
+                auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).clientActor(authenticatedClient)
                         .ipAddress(routingContext)
                         .userAgent(routingContext)
+                        .agentContext(authenticatedClient)
                 );
                 // put client in context and continue
                 routingContext.put(CLIENT_CONTEXT_KEY, authenticatedClient);
