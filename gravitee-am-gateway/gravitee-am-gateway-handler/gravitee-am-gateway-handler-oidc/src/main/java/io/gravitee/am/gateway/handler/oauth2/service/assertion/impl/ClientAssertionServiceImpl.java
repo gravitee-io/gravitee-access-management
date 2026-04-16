@@ -36,11 +36,15 @@ import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDException;
 import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataDocument;
 import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataFetcher;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.SecretService;
+import io.gravitee.am.service.reporter.builder.AgentAuditBuilder;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.functions.Function;
@@ -93,6 +97,9 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Autowired
     private CIMDMetadataFetcher cimdMetadataFetcher;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
@@ -331,11 +338,19 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                                 .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key found for kid: " + signedJWT.getHeader().getKeyID())))
                                 .flatMap(jwk -> {
                                     if (!jwsService.isValidSignature(signedJWT, jwk)) {
+                                        reportAgentAuth(iss, sub, signedJWT.getHeader().getKeyID(),
+                                                jwt, blueprint, result, "INVALID_SIGNATURE");
                                         return Maybe.error(unableToValidateClientException());
                                     }
                                     Client agentClient = new Client(blueprint);
                                     agentClient.setBlueprintClientId(blueprint.getClientId());
                                     agentClient.setAgentInstanceId(sub);
+
+                                    // Audit: agent authenticated + key used
+                                    reportAgentAuth(iss, sub, signedJWT.getHeader().getKeyID(),
+                                            jwt, blueprint, result, null);
+                                    reportKeyUsed(signedJWT.getHeader().getKeyID(), sub, blueprint);
+
                                     return Maybe.just(agentClient);
                                 });
                     });
@@ -397,6 +412,51 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         // 2. Fall back to blueprint's registered agent JWKS
         log.debug("Using JWKS from blueprint agent registration");
         return result.client().getAgentJwks();
+    }
+
+    private void reportAgentAuth(String iss, String sub, String kid, JWT jwt,
+                                    Client blueprint, BlueprintResult result, String failureReason) {
+        try {
+            boolean isCimd = result.metadata() != null;
+            var builder = AuditBuilder.builder(AgentAuditBuilder.class);
+            if (blueprint.getDomain() != null) {
+                builder.reference(Reference.domain(blueprint.getDomain()));
+            }
+            builder
+                    .blueprintId(blueprint.getClientId())
+                    .blueprintName(blueprint.getClientName())
+                    .agentInstanceId(sub)
+                    .agentType(blueprint.getAgentType() != null ? blueprint.getAgentType().name() : null)
+                    .assertionKid(kid)
+                    .assertionIss(iss)
+                    .assertionJti(jwt.getJWTClaimsSet().getJWTID())
+                    .resolutionMethod(isCimd ? "CIMD" : "DIRECT");
+
+            if (isCimd) {
+                builder.cimdMetadataUri(iss)
+                       .cimdSoftwareId(result.metadata().getSoftwareId());
+            }
+
+            if (failureReason != null) {
+                builder.throwable(new InvalidClientException(failureReason));
+            }
+
+            auditService.report(builder);
+        } catch (Exception e) {
+            log.warn("Failed to report agent authentication audit", e);
+        }
+    }
+
+    private void reportKeyUsed(String kid, String sub, Client blueprint) {
+        var builder = AuditBuilder.builder(AgentAuditBuilder.class)
+                .keyUsed()
+                .blueprintId(blueprint.getClientId())
+                .agentInstanceId(sub)
+                .assertionKid(kid);
+        if (blueprint.getDomain() != null) {
+            builder.reference(Reference.domain(blueprint.getDomain()));
+        }
+        auditService.report(builder);
     }
 
     private boolean isCimdEnabled() {
