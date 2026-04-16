@@ -179,6 +179,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 return;
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
             // get client - first try regular client, then fallback to protected resource
             clientSyncService
                     .findByClientId(decodeURIComponent(clientId))
@@ -192,6 +193,11 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
             clientSyncService
                     .findByClientId(decodedClientId)
 >>>>>>> bd8b66017 (fix: keep decodeURIComponent as standard form-urlencoded, preserve '+' at call site in ClientAuthHandlerImpl)
+=======
+            // get client
+            clientSyncService
+                    .findByClientId(clientId)
+>>>>>>> 8411d6589 (fix: move client_id URL-decoding into parseClientId Basic auth branch only)
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
@@ -225,6 +231,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 } else {
                     clientId = clientAuthentication;
                 }
+                // RFC 6749 §2.3.1: credentials in Basic auth are form-url-encoded.
+                // Percent-decode only, preserving literal '+' (most clients do not
+                // form-encode before Base64-encoding, so '+' is almost always literal).
+                clientId = decodeURIComponent(clientId.replace("+", "%2B"));
             } else if(clientAssertion != null && clientAssertionType != null) {
                 JWT jwt = JWTParser.parse(clientAssertion);
                 clientId = jwt.getJWTClaimsSet().getSubject();
