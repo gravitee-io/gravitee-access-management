@@ -19,10 +19,14 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BlueprintAgentService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.reporter.builder.AgentAuditBuilder;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +46,9 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
     @Autowired
     @Lazy
     private ApplicationService applicationService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Single<Application> addAgentKey(String applicationId, JWK key) {
@@ -77,7 +84,13 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
                     }
 
                     jwks.getKeys().add(key);
-                    return applicationService.update(application);
+                    return applicationService.update(application)
+                            .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
+                                    .keyAdded()
+                                    .reference(Reference.domain(app.getDomain()))
+                                    .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
+                                            ? app.getSettings().getOauth().getClientId() : app.getId())
+                                    .assertionKid(key.getKid())));
                 });
     }
 
@@ -98,7 +111,13 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
                         return Single.error(new InvalidClientMetadataException("Key with kid '" + kid + "' not found"));
                     }
 
-                    return applicationService.update(application);
+                    return applicationService.update(application)
+                            .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
+                                    .keyRemoved()
+                                    .reference(Reference.domain(app.getDomain()))
+                                    .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
+                                            ? app.getSettings().getOauth().getClientId() : app.getId())
+                                    .assertionKid(kid)));
                 });
     }
 
