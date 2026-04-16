@@ -852,7 +852,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
-        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setTemplateId("template-id");
         cimdSettings.setAllowedDomains(List.of("*.com")); // invalid hostname pattern for allowed domains
         Domain domain = buildDomainWithCimdSettings(cimdSettings);
         stubDomainPatch(patchDomain, domain);
@@ -874,7 +874,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
-        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setTemplateId("template-id");
         cimdSettings.setAllowedDomains(List.of("*.gravitee.io"));
         Domain domain = buildDomainWithCimdSettings(cimdSettings);
         stubDomainPatch(patchDomain, domain);
@@ -886,7 +886,7 @@ public class DomainServiceTest {
                 .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
                 .test();
 
-        assertInvalidDomainExceptionMessage(observer, "softwareId must be a valid application id configured as template");
+        assertInvalidDomainExceptionMessage(observer, "templateId must be a valid application id configured as template");
         verify(domainRepository).findById(anyString());
         verify(applicationService).findById(anyString());
         verify(domainRepository, never()).update(any(Domain.class));
@@ -898,7 +898,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
-        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setTemplateId("template-id");
         cimdSettings.setFetchTimeoutMs(invalidFetchTimeoutMs);
         Domain domain = buildDomainWithCimdSettings(cimdSettings);
         stubDomainPatch(patchDomain, domain);
@@ -919,7 +919,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
-        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setTemplateId("template-id");
         cimdSettings.setMaxResponseSizeKb(invalidMaxKb);
         Domain domain = buildDomainWithCimdSettings(cimdSettings);
         stubDomainPatch(patchDomain, domain);
@@ -940,7 +940,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
-        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setTemplateId("template-id");
         cimdSettings.setCacheTtlSeconds(invalidTtlSeconds);
         Domain domain = buildDomainWithCimdSettings(cimdSettings);
         stubDomainPatch(patchDomain, domain);
@@ -961,7 +961,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
-        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setTemplateId("template-id");
         cimdSettings.setCacheMaxEntries(invalidMaxEntries);
         Domain domain = buildDomainWithCimdSettings(cimdSettings);
         stubDomainPatch(patchDomain, domain);

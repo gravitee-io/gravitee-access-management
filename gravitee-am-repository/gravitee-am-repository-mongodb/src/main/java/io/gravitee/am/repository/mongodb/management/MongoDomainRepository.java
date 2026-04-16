@@ -457,7 +457,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedDomains(cimdSettings.getAllowedDomains());
         result.setCacheTtlSeconds(cimdSettings.getCacheTtlSeconds());
         result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
-        result.setSoftwareId(cimdSettings.getSoftwareId());
+        result.setTemplateId(cimdSettings.getTemplateId());
 
         return result;
     }
@@ -476,7 +476,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedDomains(cimdSettings.getAllowedDomains());
         result.setCacheTtlSeconds(cimdSettings.getCacheTtlSeconds());
         result.setCacheMaxEntries(cimdSettings.getCacheMaxEntries());
-        result.setSoftwareId(cimdSettings.getSoftwareId());
+        result.setTemplateId(cimdSettings.getTemplateId());
 
         return result;
     }

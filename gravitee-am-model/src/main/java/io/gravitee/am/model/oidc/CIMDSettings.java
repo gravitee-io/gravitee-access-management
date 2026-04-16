@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.model.oidc;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -82,7 +81,7 @@ public class CIMDSettings {
     /**
      * Template identifier
      */
-    private String softwareId;
+    private String templateId;
 
     public boolean isEnabled() {
         return enabled;
@@ -148,12 +147,12 @@ public class CIMDSettings {
         this.cacheMaxEntries = cacheMaxEntries;
     }
 
-    public String getSoftwareId() {
-        return softwareId;
+    public String getTemplateId() {
+        return templateId;
     }
 
-    public void setSoftwareId(String softwareId) {
-        this.softwareId = softwareId;
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 
     public static CIMDSettings defaultSettings() {
