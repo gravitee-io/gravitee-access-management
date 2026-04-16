@@ -911,13 +911,13 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("CIMD settings are invalid: allowed domains must be a list of valid domains and wildcard is only allowed for first-level subdomain"));
         }
 
-        String softwareId = cimdSettings.getSoftwareId();
-        if (!StringUtils.hasText(softwareId)) {
-            return Completable.error(new InvalidDomainException("softwareId (template identifier) must be provided when Client ID Metadata Document is enabled"));
+        String templateId = cimdSettings.getTemplateId();
+        if (!StringUtils.hasText(templateId)) {
+            return Completable.error(new InvalidDomainException("templateId must be provided when Client ID Metadata Document is enabled"));
         }
 
-        return applicationService.findById(softwareId).filter(Application::isTemplate)
-                .switchIfEmpty(Maybe.error(new InvalidDomainException("softwareId must be a valid application id configured as template"))).ignoreElement();
+        return applicationService.findById(templateId).filter(Application::isTemplate)
+                .switchIfEmpty(Maybe.error(new InvalidDomainException("templateId must be a valid application id configured as template"))).ignoreElement();
     }
 
     private boolean hasInvalidDomain(CIMDSettings cimdSettings) {

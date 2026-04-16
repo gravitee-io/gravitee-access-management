@@ -12782,7 +12782,7 @@ components:
         maxResponseSizeKb:
           type: integer
           format: int32
-        softwareId:
+        templateId:
           type: string
     Certificate:
       type: object
@@ -15356,7 +15356,7 @@ components:
         maxResponseSizeKb:
           type: integer
           format: int32
-        softwareId:
+        templateId:
           type: string
     PatchChallengeSettings:
       type: object

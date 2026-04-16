@@ -85,7 +85,7 @@ export interface PatchCIMDSettings {
    * @type {string}
    * @memberof PatchCIMDSettings
    */
-  softwareId?: string;
+  templateId?: string;
 }
 
 /**
@@ -112,7 +112,7 @@ export function PatchCIMDSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     fetchTimeoutMs: json['fetchTimeoutMs'] == null ? undefined : json['fetchTimeoutMs'],
     maxResponseSizeKb: json['maxResponseSizeKb'] == null ? undefined : json['maxResponseSizeKb'],
-    softwareId: json['softwareId'] == null ? undefined : json['softwareId'],
+    templateId: json['templateId'] == null ? undefined : json['templateId'],
   };
 }
 
@@ -134,6 +134,6 @@ export function PatchCIMDSettingsToJSONTyped(value?: PatchCIMDSettings | null, i
     enabled: value['enabled'],
     fetchTimeoutMs: value['fetchTimeoutMs'],
     maxResponseSizeKb: value['maxResponseSizeKb'],
-    softwareId: value['softwareId'],
+    templateId: value['templateId'],
   };
 }

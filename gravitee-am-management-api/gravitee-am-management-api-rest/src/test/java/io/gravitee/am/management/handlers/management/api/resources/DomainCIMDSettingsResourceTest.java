@@ -119,8 +119,8 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         assertEquals("cacheTtlSeconds must be 7200", Integer.valueOf(7200), capturedCimd.getCacheTtlSeconds().get());
         assertTrue("cacheMaxEntries must be present", capturedCimd.getCacheMaxEntries().isPresent());
         assertEquals("cacheMaxEntries must be 500", Integer.valueOf(500), capturedCimd.getCacheMaxEntries().get());
-        assertTrue("softwareId must be present", capturedCimd.getSoftwareId().isPresent());
-        assertEquals("softwareId must match", "my-software-id", capturedCimd.getSoftwareId().get());
+        assertTrue("templateId must be present", capturedCimd.getTemplateId().isPresent());
+        assertEquals("templateId must match", "my-template-id", capturedCimd.getTemplateId().get());
     }
 
     @Test
@@ -153,7 +153,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         assertEquals("allowedDomains must contain 2 entries", 2, cimd.getAllowedDomains().size());
         assertEquals("cacheTtlSeconds must be 7200", 7200, cimd.getCacheTtlSeconds());
         assertEquals("cacheMaxEntries must be 500", 500, cimd.getCacheMaxEntries());
-        assertEquals("softwareId must match", "my-software-id", cimd.getSoftwareId());
+        assertEquals("templateId must match", "my-template-id", cimd.getTemplateId());
     }
 
     // -------------------------------------------------------------------------
@@ -186,7 +186,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
 
         PatchCIMDSettings capturedCimd = captured.getOidc().get().getCimdSettings().get();
         assertTrue("enabled must be true", capturedCimd.getEnabled().get());
-        assertEquals("softwareId must match", "my-software-id", capturedCimd.getSoftwareId().get());
+        assertEquals("templateId must match", "my-template-id", capturedCimd.getTemplateId().get());
         assertEquals("fetchTimeoutMs must be 3000", Integer.valueOf(3000), capturedCimd.getFetchTimeoutMs().get());
         assertEquals("cacheTtlSeconds must be 7200", Integer.valueOf(7200), capturedCimd.getCacheTtlSeconds().get());
     }
@@ -214,7 +214,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         CIMDSettings cimd = domain.getOidc().getCimdSettings();
         assertNotNull("cimdSettings must be present in response", cimd);
         assertTrue("enabled must be true", cimd.isEnabled());
-        assertEquals("softwareId must match", "my-software-id", cimd.getSoftwareId());
+        assertEquals("templateId must match", "my-template-id", cimd.getTemplateId());
         assertEquals("fetchTimeoutMs must be 3000", 3000, cimd.getFetchTimeoutMs());
         assertEquals("cacheTtlSeconds must be 7200", 7200, cimd.getCacheTtlSeconds());
     }
@@ -279,7 +279,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         cimdSettings.setAllowedDomains(Arrays.asList("example.com", "*.trusted.io"));
         cimdSettings.setCacheTtlSeconds(7200);
         cimdSettings.setCacheMaxEntries(500);
-        cimdSettings.setSoftwareId("my-software-id");
+        cimdSettings.setTemplateId("my-template-id");
 
         OIDCSettings oidcSettings = new OIDCSettings();
         oidcSettings.setCimdSettings(cimdSettings);
@@ -298,7 +298,7 @@ public class DomainCIMDSettingsResourceTest extends JerseySpringTest {
         patchCimd.setAllowedDomains(Optional.of(Arrays.asList("example.com", "*.trusted.io")));
         patchCimd.setCacheTtlSeconds(Optional.of(7200));
         patchCimd.setCacheMaxEntries(Optional.of(500));
-        patchCimd.setSoftwareId(Optional.of("my-software-id"));
+        patchCimd.setTemplateId(Optional.of("my-template-id"));
 
         PatchOIDCSettings patchOidc = new PatchOIDCSettings();
         patchOidc.setCimdSettings(Optional.of(patchCimd));

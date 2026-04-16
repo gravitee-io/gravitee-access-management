@@ -30,7 +30,7 @@ public class CIMDSettingsMongo {
     private List<String> allowedDomains;
     private int cacheTtlSeconds;
     private int cacheMaxEntries;
-    private String softwareId;
+    private String templateId;
 
     public boolean isEnabled() {
         return enabled;
@@ -96,11 +96,11 @@ public class CIMDSettingsMongo {
         this.cacheMaxEntries = cacheMaxEntries;
     }
 
-    public String getSoftwareId() {
-        return softwareId;
+    public String getTemplateId() {
+        return templateId;
     }
 
-    public void setSoftwareId(String softwareId) {
-        this.softwareId = softwareId;
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 }

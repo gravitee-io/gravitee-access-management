@@ -46,7 +46,7 @@ public class PatchCIMDSettings {
     private Optional<Integer> cacheMaxEntries;
 
     // Security Policy
-    private Optional<String> softwareId;
+    private Optional<String> templateId;
 
     public Optional<Boolean> getEnabled() {
         return enabled;
@@ -112,12 +112,12 @@ public class PatchCIMDSettings {
         this.cacheMaxEntries = cacheMaxEntries;
     }
 
-    public Optional<String> getSoftwareId() {
-        return softwareId;
+    public Optional<String> getTemplateId() {
+        return templateId;
     }
 
-    public void setSoftwareId(Optional<String> softwareId) {
-        this.softwareId = softwareId;
+    public void setTemplateId(Optional<String> templateId) {
+        this.templateId = templateId;
     }
 
     public CIMDSettings patch(CIMDSettings toPatch) {
@@ -135,7 +135,7 @@ public class PatchCIMDSettings {
                 .ifPresent(opt -> result.setCacheTtlSeconds(opt.orElse(CIMDSettings.DEFAULT_CACHE_TTL_SECONDS)));
         Optional.ofNullable(getCacheMaxEntries())
                 .ifPresent(opt -> result.setCacheMaxEntries(opt.orElse(CIMDSettings.DEFAULT_CACHE_MAX_ENTRIES)));
-        SetterUtils.safeSet(result::setSoftwareId, this.getSoftwareId(), String.class);
+        SetterUtils.safeSet(result::setTemplateId, this.getTemplateId(), String.class);
 
         return result;
     }
