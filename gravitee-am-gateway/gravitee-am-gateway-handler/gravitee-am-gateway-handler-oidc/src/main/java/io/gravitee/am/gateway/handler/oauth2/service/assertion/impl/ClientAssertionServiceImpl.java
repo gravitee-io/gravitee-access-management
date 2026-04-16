@@ -32,8 +32,12 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDException;
+import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataDocument;
+import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataFetcher;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.impl.SecretService;
@@ -83,6 +87,13 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Autowired
     private Domain domain;
+
+    @Autowired
+    private SecretService appSecretService;
+
+    @Autowired
+    private CIMDMetadataFetcher cimdMetadataFetcher;
+
 
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
@@ -298,10 +309,11 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
-            // Look up blueprint client by iss
-            return this.clientSyncService.findByClientId(iss)
+            // Look up blueprint — via CIMD if iss is a URI, otherwise direct lookup
+            return resolveBlueprint(iss)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
-                    .flatMap(blueprint -> {
+                    .flatMap(result -> {
+                        Client blueprint = result.client();
                         if (!blueprint.isAgentIdentityMode()) {
                             return Maybe.error(new InvalidClientException("Application is not a blueprint agent"));
                         }
@@ -310,20 +322,18 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                             return Maybe.error(new InvalidClientException("Workload-jwt is not supported for agent type: " + agentType));
                         }
 
-                        JWKSet agentJwks = blueprint.getAgentJwks();
+                        // JWKS resolution: CIMD metadata JWKS takes precedence over blueprint JWKS
+                        JWKSet agentJwks = resolveJwks(result);
                         if (agentJwks == null || agentJwks.getKeys() == null || agentJwks.getKeys().isEmpty()) {
-                            return Maybe.error(new InvalidClientException("No agent JWKS configured on blueprint"));
+                            return Maybe.error(new InvalidClientException("No agent JWKS available (checked metadata document and blueprint)"));
                         }
 
                         return jwkService.getKey(agentJwks, signedJWT.getHeader().getKeyID())
-                                .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key in blueprint agent JWKS")))
+                                .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key found for kid: " + signedJWT.getHeader().getKeyID())))
                                 .flatMap(jwk -> {
                                     if (!jwsService.isValidSignature(signedJWT, jwk)) {
                                         return Maybe.error(unableToValidateClientException());
                                     }
-                                    // Clone blueprint — keep clientId as the blueprint's so auth code
-                                    // lookups and other grant validations still match. The agent
-                                    // instance ID is stored separately for token sub override.
                                     Client agentClient = new Client(blueprint);
                                     agentClient.setBlueprintClientId(blueprint.getClientId());
                                     agentClient.setAgentInstanceId(sub);
@@ -334,6 +344,70 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             log.error("Failed to parse workload-jwt assertion: {}", ex.getMessage(), ex);
             return Maybe.error(NOT_VALID);
         }
+    }
+
+    private record BlueprintResult(Client client, CIMDMetadataDocument metadata) {
+        BlueprintResult(Client client) {
+            this(client, null);
+        }
+    }
+
+    /**
+     * Resolve the blueprint application from the issuer claim.
+     * If the issuer is a URI and CIMD is enabled, fetch the metadata document,
+     * resolve the blueprint via software_id, and return both for JWKS resolution.
+     */
+    private Maybe<BlueprintResult> resolveBlueprint(String iss) {
+        if (isUri(iss)) {
+            if (!isCimdEnabled()) {
+                return Maybe.error(new InvalidClientException(
+                        "Issuer is a URI but CIMD is not enabled on this domain"));
+            }
+            CIMDSettings cimdSettings = domain.getOidc().getCimdSettings();
+            return cimdMetadataFetcher.fetch(iss, domain.getId(), cimdSettings)
+                    .flatMapMaybe(metadata -> {
+                        String softwareId = metadata.getSoftwareId();
+                        if (softwareId == null || softwareId.isEmpty()) {
+                            return Maybe.error(new InvalidClientException("CIMD metadata document missing software_id"));
+                        }
+                        return clientSyncService.findByClientId(softwareId)
+                                .map(client -> new BlueprintResult(client, metadata));
+                    })
+                    .onErrorResumeNext(err -> {
+                        if (err instanceof CIMDException) {
+                            log.warn("CIMD resolution failed for iss={}: {}", iss, err.getMessage());
+                        }
+                        return Maybe.error(err instanceof InvalidClientException ? err
+                                : new InvalidClientException("CIMD resolution failed: " + err.getMessage()));
+                    });
+        }
+        return clientSyncService.findByClientId(iss).map(BlueprintResult::new);
+    }
+
+    /**
+     * Resolve JWKS for signature verification.
+     * CIMD metadata JWKS takes precedence over blueprint agent JWKS.
+     */
+    private JWKSet resolveJwks(BlueprintResult result) {
+        // 1. Check CIMD metadata inline JWKS
+        if (result.metadata() != null && result.metadata().getJwks() != null
+                && result.metadata().getJwks().isPresent()) {
+            log.debug("Using JWKS from CIMD metadata document");
+            return result.metadata().getJwks().get();
+        }
+        // 2. Fall back to blueprint's registered agent JWKS
+        log.debug("Using JWKS from blueprint agent registration");
+        return result.client().getAgentJwks();
+    }
+
+    private boolean isCimdEnabled() {
+        return domain.getOidc() != null
+                && domain.getOidc().getCimdSettings() != null
+                && domain.getOidc().getCimdSettings().isEnabled();
+    }
+
+    private static boolean isUri(String value) {
+        return value != null && (value.startsWith("https://") || value.startsWith("http://"));
     }
 
     private Maybe<JWKSet> getClientJwkSet(Client client) {
