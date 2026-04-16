@@ -176,6 +176,12 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
+            // For CIMD: when client_id is a URI (metadata document), skip the DB lookup.
+            // The ClientAssertionAuthProvider will handle resolution via CIMD metadata fetch.
+            if (isUri(clientId)) {
+                handler.handle(Future.succeededFuture());
+                return;
+            }
             // get client - first try regular client, then fallback to protected resource
             clientLookupService
                     .findByClientId(clientId)
@@ -186,6 +192,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                     );
 
         });
+    }
+
+    private static boolean isUri(String value) {
+        return value != null && (value.startsWith("https://") || value.startsWith("http://"));
     }
 
     private void parseClientId(HttpServerRequest request, Handler<AsyncResult<String>> handler) {

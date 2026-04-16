@@ -55,6 +55,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonArray;
@@ -970,14 +971,51 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * additional agent-specific constraints if agent metadata extensions are present.
      */
     private Single<DynamicClientRegistrationRequest> validateAgentConstraints(DynamicClientRegistrationRequest request) {
-        // Agent constraints are validated at the Application level via
-        // ApplicationServiceImpl.validateAgentSettings() when agent identity mode
-        // is enabled through the Management API. DCR operates at the OIDC Client level
-        // and doesn't carry agent-specific metadata directly.
-        //
-        // This placeholder ensures the validation chain is wired for future extensions
-        // when DCR supports agent metadata (e.g., agent_type, agent_settings).
-        return Single.just(request);
+        var cimdSettings = domain.getOidc() != null ? domain.getOidc().getCimdSettings() : null;
+        if (cimdSettings == null || !cimdSettings.isEnabled()) {
+            return Single.just(request);
+        }
+
+        // If CIMD is enabled and software_id is provided, validate against the blueprint
+        Optional<String> softwareId = request.getSoftwareId();
+        if (softwareId == null || softwareId.isEmpty()) {
+            return Single.just(request); // Not an agent registration
+        }
+
+        String requestedSoftwareId = softwareId.get();
+        String domainTemplateId = cimdSettings.getTemplateId();
+
+        // software_id must match the domain's CIMD template
+        if (domainTemplateId != null && !domainTemplateId.equals(requestedSoftwareId)) {
+            return Single.error(new InvalidClientMetadataException(
+                    "software_id does not match domain CIMD blueprint configuration"));
+        }
+
+        return clientService.findById(requestedSoftwareId)
+                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException(
+                        "software_id references an unknown application")))
+                .toSingle()
+                .flatMap(blueprint -> {
+                    if (!blueprint.isAgentIdentityMode()) {
+                        return Single.error(new InvalidClientMetadataException(
+                                "software_id must reference a blueprint agent application"));
+                    }
+
+                    // Validate requested grant types are subset of blueprint's allowed types
+                    List<String> blueprintGrantTypes = blueprint.getAuthorizedGrantTypes();
+                    if (request.getGrantTypes() != null && request.getGrantTypes().isPresent()
+                            && blueprintGrantTypes != null) {
+                        List<String> requestedGrantTypes = request.getGrantTypes().get();
+                        for (String grantType : requestedGrantTypes) {
+                            if (!blueprintGrantTypes.contains(grantType)) {
+                                return Single.error(new InvalidClientMetadataException(
+                                        "Requested grant_type '" + grantType + "' is not allowed by the blueprint agent"));
+                            }
+                        }
+                    }
+
+                    return Single.just(request);
+                });
     }
 
     /**
