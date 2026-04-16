@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.aauth.model.PendingRequestStatus;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentKeyPairFactory;
 import io.gravitee.am.repository.oidc.api.AAuthPendingRequestRepository;
 import io.gravitee.am.repository.oidc.model.AAuthPendingRequest;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
@@ -55,7 +56,7 @@ public class AAuthPendingRequestServiceTest {
 
         var result = service.create("domain-1", "https://agent.example", "aauth:bot@agent.example",
                 "thumbprint", agentKeyPair.getPublic(), "app-1", "https://resource.example",
-                "read write", "I need this", "https://ps.example/aauth", 600)
+                "read write", "I need this", null, null, null, "https://ps.example/aauth", 600)
                 .blockingGet();
 
         assertNotNull(result.getId());
@@ -77,7 +78,7 @@ public class AAuthPendingRequestServiceTest {
         when(repository.create(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
         var result = service.create("domain-1", "agent", "agent", "jkt",
-                agentKeyPair.getPublic(), null, "resource", "read", null,
+                agentKeyPair.getPublic(), null, "resource", "read", null, null, null, null,
                 "https://ps.example/aauth", 600)
                 .blockingGet();
 
@@ -91,7 +92,7 @@ public class AAuthPendingRequestServiceTest {
         when(repository.create(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
         var result = service.create("domain-1", "agent", "agent", "jkt",
-                agentKeyPair.getPublic(), null, "resource", "read", null,
+                agentKeyPair.getPublic(), null, "resource", "read", null, null, null, null,
                 "https://ps.example/aauth", 600)
                 .blockingGet();
 
@@ -112,6 +113,23 @@ public class AAuthPendingRequestServiceTest {
 
         assertEquals(PendingRequestStatus.PENDING.name(), result.getStatus());
         verify(repository).update(any());
+    }
+
+    @Test
+    public void shouldDeleteAndReturnCompleted_onConsumeOnce() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.COMPLETED);
+        pending.setAuthToken("signed.token");
+        pending.setLastAccessAt(new Date(System.currentTimeMillis() - 10_000));
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+        when(repository.delete("pending-1")).thenReturn(Completable.complete());
+
+        var result = service.poll("pending-1", "thumbprint").blockingGet();
+
+        assertEquals(PendingRequestStatus.COMPLETED.name(), result.getStatus());
+        assertEquals("signed.token", result.getAuthToken());
+        verify(repository).delete("pending-1");
+        verify(repository, never()).update(any());
     }
 
     @Test

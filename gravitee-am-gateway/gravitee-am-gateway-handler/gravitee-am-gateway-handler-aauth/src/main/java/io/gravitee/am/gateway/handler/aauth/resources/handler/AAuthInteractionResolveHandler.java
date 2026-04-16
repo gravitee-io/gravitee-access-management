@@ -82,6 +82,9 @@ public class AAuthInteractionResolveHandler implements Handler<RoutingContext> {
                             ctx.request(), ctx.get(CONTEXT_PATH) + "/aauth/interact",
                             io.vertx.core.MultiMap.caseInsensitiveMultiMap().add("code", code), true);
                     ctx.put(ConstantKeys.RETURN_URL_KEY, returnUrl);
+                    if (pending.getLoginHint() != null) {
+                        ctx.put(io.gravitee.am.common.oidc.Parameters.LOGIN_HINT, pending.getLoginHint());
+                    }
                 })
                 .flatMapSingle(this::resolveApplication)
                 .doOnSuccess(client -> {

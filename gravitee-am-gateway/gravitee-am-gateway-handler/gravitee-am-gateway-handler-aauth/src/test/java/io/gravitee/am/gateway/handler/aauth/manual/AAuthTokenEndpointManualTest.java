@@ -112,7 +112,10 @@ public class AAuthTokenEndpointManualTest {
             System.out.println("[3] Resource token issued (agent=" + agentBaseUrl + ", scope=read write)");
 
             // Step 4: POST /aauth/token with jwks_uri scheme
-            String jsonBody = OBJECT_MAPPER.writeValueAsString(Map.of("resource_token", resourceToken));
+            String jsonBody = OBJECT_MAPPER.writeValueAsString(Map.of(
+                    "resource_token", resourceToken,
+                    "justification", "I need to **read** and **write** your calendar entries to schedule meetings on your behalf.\n\n- Read: to check availability\n- Write: to create new events"
+            ));
             byte[] bodyBytes = jsonBody.getBytes(StandardCharsets.UTF_8);
 
             URI tokenUri = URI.create(tokenEndpointUrl);

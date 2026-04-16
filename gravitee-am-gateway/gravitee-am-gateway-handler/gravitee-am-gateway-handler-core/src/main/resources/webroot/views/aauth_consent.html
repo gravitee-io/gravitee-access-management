@@ -27,6 +27,7 @@
             <span>Agent Authorization Request</span>
         </div>
         <div class="header-description">
+            <img th:if="${agentLogoUri != null}" th:src="${agentLogoUri}" alt="" style="max-height: 48px; max-width: 48px; vertical-align: middle; margin-right: 8px;">
             <span class="deep-blue" th:text="${agentName}"></span>
             <span> is requesting access on your behalf</span>
         </div>
@@ -46,10 +47,10 @@
             </div>
 
             <div th:if="${justification != null and !justification.isEmpty()}" style="margin-top: 10px; margin-bottom: 10px;">
-                <span class="header-description start">
+                <div class="header-description start">
                     <strong>Reason: </strong>
-                    <span th:text="${justification}"></span>
-                </span>
+                    <div th:utext="${justification}"></div>
+                </div>
             </div>
 
             <input type="hidden" name="code" th:value="${interactionCode}"/>

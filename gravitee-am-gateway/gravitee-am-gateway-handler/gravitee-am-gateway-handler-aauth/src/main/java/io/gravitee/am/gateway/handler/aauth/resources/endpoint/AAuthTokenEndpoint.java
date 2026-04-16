@@ -99,6 +99,9 @@ public class AAuthTokenEndpoint implements Handler<RoutingContext> {
                 rtClaims.iss(),
                 rtClaims.scope(),
                 tokenRequest.justification(),
+                tokenRequest.loginHint(),
+                tokenRequest.domainHint(),
+                tokenRequest.tenant(),
                 psIssuerUrl,
                 pendingRequestTtl
         ).subscribe(

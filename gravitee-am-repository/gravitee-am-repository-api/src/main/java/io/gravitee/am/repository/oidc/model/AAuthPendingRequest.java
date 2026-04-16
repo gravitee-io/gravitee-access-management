@@ -37,6 +37,9 @@ public class AAuthPendingRequest {
     private String resourceIss;
     private String scope;
     private String justification;
+    private String loginHint;
+    private String domainHint;
+    private String tenant;
     private String interactionCode;
     private String psIssuerUrl;
     private String authToken;
@@ -132,6 +135,30 @@ public class AAuthPendingRequest {
 
     public void setJustification(String justification) {
         this.justification = justification;
+    }
+
+    public String getLoginHint() {
+        return loginHint;
+    }
+
+    public void setLoginHint(String loginHint) {
+        this.loginHint = loginHint;
+    }
+
+    public String getDomainHint() {
+        return domainHint;
+    }
+
+    public void setDomainHint(String domainHint) {
+        this.domainHint = domainHint;
+    }
+
+    public String getTenant() {
+        return tenant;
+    }
+
+    public void setTenant(String tenant) {
+        this.tenant = tenant;
     }
 
     public String getInteractionCode() {

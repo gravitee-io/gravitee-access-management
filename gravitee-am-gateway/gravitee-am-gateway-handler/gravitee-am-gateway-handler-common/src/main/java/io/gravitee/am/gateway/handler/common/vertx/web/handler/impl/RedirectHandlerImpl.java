@@ -79,6 +79,11 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
                 }
             }
 
+            // login_hint can be set via routing context by external protocols (e.g. AAUTH)
+            if (!queryParams.contains(LOGIN_HINT) && context.get(LOGIN_HINT) != null) {
+                queryParams.add(LOGIN_HINT, (String) context.get(LOGIN_HINT));
+            }
+
             // Now redirect the user.
             String uri = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
             context.response()

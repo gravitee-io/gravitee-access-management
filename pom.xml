@@ -98,6 +98,7 @@
         <json-version>20240303</json-version>
         <freemarker.version>2.3.34</freemarker.version>
         <jsoup.version>1.16.1</jsoup.version>
+        <commonmark.version>0.24.0</commonmark.version>
         <snakeyaml.version>2.0</snakeyaml.version>
         <angus-mail.version>2.0.5</angus-mail.version>
         <angus-activation.version>2.0.3</angus-activation.version>
@@ -559,6 +560,11 @@
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
                 <version>${jsoup.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.commonmark</groupId>
+                <artifactId>commonmark</artifactId>
+                <version>${commonmark.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>

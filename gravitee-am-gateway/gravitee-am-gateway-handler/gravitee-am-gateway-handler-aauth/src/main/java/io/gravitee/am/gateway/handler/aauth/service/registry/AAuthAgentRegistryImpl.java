@@ -64,23 +64,25 @@ public class AAuthAgentRegistryImpl implements AAuthAgentRegistry {
 
     private Single<Application> autoCreateApplication(String domainId, String agentMetadataUrl) {
         return Single.fromCallable(() -> {
-            // Fetch agent metadata to get the display name
+            // Fetch agent metadata to get display name and logo
             String agentName = agentMetadataUrl; // fallback
+            String logoUri = null;
             try {
                 AgentMetadata metadata = metadataFetcher.fetchMetadata(agentMetadataUrl);
                 if (metadata.clientName() != null && !metadata.clientName().isBlank()) {
                     agentName = metadata.clientName();
                 }
+                logoUri = metadata.logoUri();
             } catch (Exception e) {
                 log.warn("Could not fetch agent metadata from {}, using URL as name: {}",
                         agentMetadataUrl, e.getMessage());
             }
 
-            return buildApplication(domainId, agentMetadataUrl, agentName);
+            return buildApplication(domainId, agentMetadataUrl, agentName, logoUri);
         }).flatMap(app -> applicationService.create(domain, app));
     }
 
-    private Application buildApplication(String domainId, String agentMetadataUrl, String agentName) {
+    private Application buildApplication(String domainId, String agentMetadataUrl, String agentName, String logoUri) {
         var app = new Application();
         app.setType(ApplicationType.AAUTH_AGENT);
         app.setDomain(domainId);
@@ -90,6 +92,9 @@ public class AAuthAgentRegistryImpl implements AAuthAgentRegistry {
         // Set clientId = agent metadata URL
         var oauthSettings = new ApplicationOAuthSettings();
         oauthSettings.setClientId(agentMetadataUrl);
+        if (logoUri != null) {
+            oauthSettings.setLogoUri(logoUri);
+        }
         var settings = new ApplicationSettings();
         settings.setOauth(oauthSettings);
         app.setSettings(settings);

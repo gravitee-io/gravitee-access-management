@@ -54,6 +54,14 @@ public class AAuthPendingRequestMongo {
     private String scope;
     private String justification;
 
+    @BsonProperty("login_hint")
+    private String loginHint;
+
+    @BsonProperty("domain_hint")
+    private String domainHint;
+
+    private String tenant;
+
     @BsonProperty("interaction_code")
     private String interactionCode;
 
@@ -110,6 +118,15 @@ public class AAuthPendingRequestMongo {
 
     public String getJustification() { return justification; }
     public void setJustification(String justification) { this.justification = justification; }
+
+    public String getLoginHint() { return loginHint; }
+    public void setLoginHint(String loginHint) { this.loginHint = loginHint; }
+
+    public String getDomainHint() { return domainHint; }
+    public void setDomainHint(String domainHint) { this.domainHint = domainHint; }
+
+    public String getTenant() { return tenant; }
+    public void setTenant(String tenant) { this.tenant = tenant; }
 
     public String getInteractionCode() { return interactionCode; }
     public void setInteractionCode(String interactionCode) { this.interactionCode = interactionCode; }

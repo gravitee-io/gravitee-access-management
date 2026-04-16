@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.aauth.service.token.AAuthTokenService;
 import io.gravitee.am.gateway.handler.aauth.service.token.ResourceTokenClaims;
 import io.gravitee.am.gateway.handler.aauth.signing.VerificationResult;
 import io.gravitee.am.gateway.handler.aauth.util.AAuthKeyUtils;
+import io.gravitee.am.gateway.handler.aauth.util.MarkdownSanitizer;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.Application;
@@ -175,9 +176,10 @@ public class AAuthConsentHandler implements Handler<RoutingContext> {
 
         ctx.put(ConstantKeys.SCOPES_CONTEXT_KEY, scopes);
         ctx.put(ConstantKeys.ACTION_KEY, action);
-        ctx.put("justification", pending.getJustification());
+        ctx.put("justification", MarkdownSanitizer.toSafeHtml(pending.getJustification()));
         ctx.put("interactionCode", pending.getInteractionCode());
         ctx.put("agentName", client.getClientName() != null ? client.getClientName() : pending.getAgentId());
+        ctx.put("agentLogoUri", client.getLogoUri());
 
         String templateName = Template.AAUTH_CONSENT.template()
                 + (client.getId() != null ? "|" + client.getId() : "");

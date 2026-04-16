@@ -142,7 +142,7 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
     @Test
     public void shouldReturn500_whenPendingCreationFails() throws Exception {
         stubValidResourceToken();
-        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyInt()))
+        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(Single.error(new RuntimeException("DB error")));
 
         var result = postToken();
@@ -168,7 +168,7 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
         pending.setStatus("PENDING");
         pending.setCreatedAt(new Date());
 
-        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyInt()))
+        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(Single.just(pending));
     }
 

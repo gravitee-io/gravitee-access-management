@@ -51,6 +51,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Markdown rendering (spec Section 3: CommonMark) -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>io.gravitee.am.gateway.handler</groupId>

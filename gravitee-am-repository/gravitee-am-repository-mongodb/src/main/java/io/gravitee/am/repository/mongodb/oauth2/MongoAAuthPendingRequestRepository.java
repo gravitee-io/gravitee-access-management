@@ -128,6 +128,9 @@ public class MongoAAuthPendingRequestRepository extends AbstractOAuth2MongoRepos
         mongo.setResourceIss(req.getResourceIss());
         mongo.setScope(req.getScope());
         mongo.setJustification(req.getJustification());
+        mongo.setLoginHint(req.getLoginHint());
+        mongo.setDomainHint(req.getDomainHint());
+        mongo.setTenant(req.getTenant());
         mongo.setInteractionCode(req.getInteractionCode());
         mongo.setPsIssuerUrl(req.getPsIssuerUrl());
         mongo.setAuthToken(req.getAuthToken());
@@ -154,6 +157,9 @@ public class MongoAAuthPendingRequestRepository extends AbstractOAuth2MongoRepos
         req.setResourceIss(mongo.getResourceIss());
         req.setScope(mongo.getScope());
         req.setJustification(mongo.getJustification());
+        req.setLoginHint(mongo.getLoginHint());
+        req.setDomainHint(mongo.getDomainHint());
+        req.setTenant(mongo.getTenant());
         req.setInteractionCode(mongo.getInteractionCode());
         req.setPsIssuerUrl(mongo.getPsIssuerUrl());
         req.setAuthToken(mongo.getAuthToken());

@@ -52,6 +52,7 @@ public class AAuthPendingRequestService {
                                                 String agentJkt, PublicKey agentPublicKey,
                                                 String applicationId, String resourceIss,
                                                 String scope, String justification,
+                                                String loginHint, String domainHint, String tenant,
                                                 String psIssuerUrl, int ttlSeconds) {
         AAuthPendingRequest request = new AAuthPendingRequest();
         request.setId(UUID.randomUUID().toString());
@@ -65,6 +66,9 @@ public class AAuthPendingRequestService {
         request.setResourceIss(resourceIss);
         request.setScope(scope);
         request.setJustification(justification);
+        request.setLoginHint(loginHint);
+        request.setDomainHint(domainHint);
+        request.setTenant(tenant);
         request.setInteractionCode(generateInteractionCode());
         request.setPsIssuerUrl(psIssuerUrl);
 
@@ -92,6 +96,11 @@ public class AAuthPendingRequestService {
                     long elapsed = System.currentTimeMillis() - request.getLastAccessAt().getTime();
                     if (elapsed < DEFAULT_POLL_INTERVAL_SECONDS * 1000L) {
                         return Maybe.error(new TooFastException());
+                    }
+
+                    // Consume-once: if COMPLETED, delete the record so next poll returns 410
+                    if (PendingRequestStatus.COMPLETED.name().equals(request.getStatus())) {
+                        return repository.delete(id).andThen(Maybe.just(request));
                     }
 
                     request.setLastAccessAt(new Date());

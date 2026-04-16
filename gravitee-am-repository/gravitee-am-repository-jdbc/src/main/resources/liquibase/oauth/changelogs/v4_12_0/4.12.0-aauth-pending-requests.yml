@@ -22,6 +22,9 @@ databaseChangeLog:
               - column: { name: resource_iss, type: nvarchar(512), constraints: { nullable: true } }
               - column: { name: scope, type: nvarchar(1024), constraints: { nullable: true } }
               - column: { name: justification, type: clob, constraints: { nullable: true } }
+              - column: { name: login_hint, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: domain_hint, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: tenant, type: nvarchar(256), constraints: { nullable: true } }
               - column: { name: interaction_code, type: nvarchar(32), constraints: { nullable: false } }
               - column: { name: ps_issuer_url, type: nvarchar(512), constraints: { nullable: false } }
               - column: { name: auth_token, type: clob, constraints: { nullable: true } }
