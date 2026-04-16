@@ -101,6 +101,7 @@ public class ApplicationsResource extends AbstractDomainResource {
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_APPLICATIONS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
+            @QueryParam("agentIdentityMode") Boolean agentIdentityMode,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
@@ -112,6 +113,7 @@ public class ApplicationsResource extends AbstractDomainResource {
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
                                         .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query))))
+                .map(apps -> filterByAgentIdentityMode(apps, agentIdentityMode))
                 .map(apps ->
                         new ApplicationPage(
                                 apps.getData().stream().map(FilteredApplication::of).toList(),
@@ -119,6 +121,21 @@ public class ApplicationsResource extends AbstractDomainResource {
                                 apps.getTotalCount())
                 )
                 .subscribe(response::resume, response::resume);
+    }
+
+    private static Page<Application> filterByAgentIdentityMode(Page<Application> apps, Boolean agentIdentityMode) {
+        if (agentIdentityMode == null) {
+            return apps;
+        }
+        List<Application> filtered = apps.getData().stream()
+                .filter(app -> {
+                    boolean isAgent = app.getSettings() != null
+                            && app.getSettings().getAdvanced() != null
+                            && app.getSettings().getAdvanced().isAgentIdentityMode();
+                    return agentIdentityMode == isAgent;
+                })
+                .toList();
+        return new Page<>(filtered, apps.getCurrentPage(), filtered.size());
     }
 
     private Single<Page<Application>> listApplications(String domain, int page, int size, String query) {
