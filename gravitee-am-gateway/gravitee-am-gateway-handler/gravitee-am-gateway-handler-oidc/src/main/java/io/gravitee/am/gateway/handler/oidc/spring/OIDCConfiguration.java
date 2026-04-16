@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.oidc.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.ciba.spring.CIBAConfiguration;
+import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataFetcher;
+import io.gravitee.am.gateway.handler.oidc.service.cimd.impl.CIMDMetadataFetcherImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.impl.PushedAuthorizationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
@@ -106,5 +108,10 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public PushedAuthorizationRequestService pushedAuthorizationRequestService() {
         return new PushedAuthorizationRequestServiceImpl();
+    }
+
+    @Bean
+    public CIMDMetadataFetcher cimdMetadataFetcher() {
+        return new CIMDMetadataFetcherImpl();
     }
 }
