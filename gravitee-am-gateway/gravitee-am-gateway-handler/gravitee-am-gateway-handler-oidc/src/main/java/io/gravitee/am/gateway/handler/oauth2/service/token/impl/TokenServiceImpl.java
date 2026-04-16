@@ -669,6 +669,7 @@ public class TokenServiceImpl implements TokenService {
                 .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
                 .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
                 .tokenActor(client)
+                .agentIdentity(client)
                 .withParams(() -> buildAuditParams(oAuth2Request, tokenWithCertInfo.certificateInfo))
                 .tokenTarget(endUser)
                 .accessTokenSubject(enhancedToken.getSubject());

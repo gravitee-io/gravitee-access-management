@@ -15,14 +15,22 @@
  */
 package io.gravitee.am.service.reporter.builder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ClientAuthAuditBuilder extends GatewayAuditBuilder<ClientAuthAuditBuilder> {
+
+    private Map<String, Object> agentAttributes;
+
     public ClientAuthAuditBuilder() {
         super();
         type(EventType.CLIENT_AUTHENTICATION);
@@ -38,5 +46,25 @@ public class ClientAuthAuditBuilder extends GatewayAuditBuilder<ClientAuthAuditB
             }
         }
         return this;
+    }
+
+    public ClientAuthAuditBuilder agentContext(Client client) {
+        if (client != null && client.isAgentIdentityMode()) {
+            agentAttributes = new HashMap<>();
+            agentAttributes.put("agentInstanceId", client.getAgentInstanceId());
+            agentAttributes.put("blueprintClientId", client.getBlueprintClientId());
+            if (client.getAgentType() != null) {
+                agentAttributes.put("agentType", client.getAgentType().name());
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Audit build(ObjectMapper mapper) {
+        if (agentAttributes != null && !agentAttributes.isEmpty()) {
+            setNewValue(agentAttributes);
+        }
+        return super.build(mapper);
     }
 }
