@@ -116,6 +116,8 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -815,7 +817,7 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldNoPatch_ResetPasswordMultiFields_InvalidFields() {
+    public void shouldNotPatch_ResetPasswordMultiFields_InvalidFields() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         Domain domain = new Domain();
         domain.setId("my-domain");
@@ -846,86 +848,136 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldNoPatch_CIMD_contains_invalid_domain() {
+    public void shouldNotPatch_CIMD_invalidDomain() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
-        Domain domain = new Domain();
-        domain.setId("my-domain");
-        domain.setHrid("my-domain");
-        domain.setReferenceType(ReferenceType.ENVIRONMENT);
-        domain.setReferenceId(ENVIRONMENT_ID);
-        domain.setName("my-domain");
-        domain.setPath("/test");
-        OIDCSettings oidcSettings = new OIDCSettings();
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
         cimdSettings.setSoftwareId("software-id");
-        cimdSettings.setAllowedDomains(List.of("*.com")); // invalid as wildcard with only root is forbidden
-        oidcSettings.setCimdSettings(cimdSettings);
-        domain.setOidc(oidcSettings);
-        when(patchDomain.patch(any())).thenReturn(domain);
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
-        doReturn(true).when(accountSettingsValidator).validate(any());
-        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(new Domain(domain.getId())));
-        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
-        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
-        when(domainReadService.listAll()).thenReturn(Flowable.empty());
-        when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
-        when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
+        cimdSettings.setAllowedDomains(List.of("*.com")); // invalid hostname pattern for allowed domains
+        Domain domain = buildDomainWithCimdSettings(cimdSettings);
+        stubDomainPatch(patchDomain, domain);
 
-        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
-                .test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertNotComplete()
-                .assertError(InvalidDomainException.class);
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
 
+        assertInvalidDomainExceptionMessage(
+                observer,
+                "CIMD settings are invalid: allowed domains must be a list of valid domains and wildcard is only allowed for first-level subdomain");
         verify(domainRepository).findById(anyString());
         verify(applicationService, never()).findById(anyString());
         verify(domainRepository, never()).update(any(Domain.class));
     }
 
     @Test
-    public void shouldNoPatch_CIMD_reference_classical_app_not_template() {
+    public void shouldNotPatch_CIMD_applicationNotTemplate() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
-        Domain domain = new Domain();
-        domain.setId("my-domain");
-        domain.setHrid("my-domain");
-        domain.setReferenceType(ReferenceType.ENVIRONMENT);
-        domain.setReferenceId(ENVIRONMENT_ID);
-        domain.setName("my-domain");
-        domain.setPath("/test");
-        OIDCSettings oidcSettings = new OIDCSettings();
         CIMDSettings cimdSettings = new CIMDSettings();
         cimdSettings.setEnabled(true);
         cimdSettings.setSoftwareId("software-id");
-        cimdSettings.setAllowedDomains(List.of("*.gravitee.io")); // invalid as wildcard with only root is forbidden
-        oidcSettings.setCimdSettings(cimdSettings);
-        domain.setOidc(oidcSettings);
-        when(patchDomain.patch(any())).thenReturn(domain);
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
-        doReturn(true).when(accountSettingsValidator).validate(any());
-        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(new Domain(domain.getId())));
-        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
-        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
-        when(domainReadService.listAll()).thenReturn(Flowable.empty());
-        when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
-        when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
-        Application template = new Application();
-        template.setTemplate(false);
-        when(applicationService.findById(anyString())).thenReturn(Maybe.just(template));
+        cimdSettings.setAllowedDomains(List.of("*.gravitee.io"));
+        Domain domain = buildDomainWithCimdSettings(cimdSettings);
+        stubDomainPatch(patchDomain, domain);
+        Application application = new Application();
+        application.setTemplate(false);
+        when(applicationService.findById(anyString())).thenReturn(Maybe.just(application));
 
-        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
-                .test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertNotComplete()
-                .assertError(InvalidDomainException.class);
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
 
+        assertInvalidDomainExceptionMessage(observer, "softwareId must be a valid application id configured as template");
         verify(domainRepository).findById(anyString());
         verify(applicationService).findById(anyString());
         verify(domainRepository, never()).update(any(Domain.class));
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    public void shouldNotPatch_CIMD_fetchTimeoutNotPositive(int invalidFetchTimeoutMs) {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setFetchTimeoutMs(invalidFetchTimeoutMs);
+        Domain domain = buildDomainWithCimdSettings(cimdSettings);
+        stubDomainPatch(patchDomain, domain);
+
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
+
+        assertInvalidDomainExceptionMessage(observer, "CIMD settings are invalid: fetch timeout must be higher than 0");
+        verify(domainRepository).findById(anyString());
+        verify(applicationService, never()).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    public void shouldNotPatch_CIMD_maxResponseSizeNotPositive(int invalidMaxKb) {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setMaxResponseSizeKb(invalidMaxKb);
+        Domain domain = buildDomainWithCimdSettings(cimdSettings);
+        stubDomainPatch(patchDomain, domain);
+
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
+
+        assertInvalidDomainExceptionMessage(observer, "CIMD settings are invalid: maximum response size must be higher than 0");
+        verify(domainRepository).findById(anyString());
+        verify(applicationService, never()).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    public void shouldNotPatch_CIMD_cacheTtlNotPositive(int invalidTtlSeconds) {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setCacheTtlSeconds(invalidTtlSeconds);
+        Domain domain = buildDomainWithCimdSettings(cimdSettings);
+        stubDomainPatch(patchDomain, domain);
+
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
+
+        assertInvalidDomainExceptionMessage(observer, "CIMD settings are invalid: cache TTL must be higher than 0");
+        verify(domainRepository).findById(anyString());
+        verify(applicationService, never()).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    public void shouldNotPatch_CIMD_cacheMaxEntriesNotPositive(int invalidMaxEntries) {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        CIMDSettings cimdSettings = new CIMDSettings();
+        cimdSettings.setEnabled(true);
+        cimdSettings.setSoftwareId("software-id");
+        cimdSettings.setCacheMaxEntries(invalidMaxEntries);
+        Domain domain = buildDomainWithCimdSettings(cimdSettings);
+        stubDomainPatch(patchDomain, domain);
+
+        TestObserver<Domain> observer = domainService
+                .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test();
+
+        assertInvalidDomainExceptionMessage(observer, "CIMD settings are invalid: cache maximum entries must be higher than 0");
+        verify(domainRepository).findById(anyString());
+        verify(applicationService, never()).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
     @Test
-    public void shouldPatch_hrid_already_exists() {
+    public void shouldPatch_hridAlreadyExists() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
 
         Domain domain = new Domain();
@@ -1832,6 +1884,39 @@ public class DomainServiceTest {
         verify(certificateService).findById(fallbackCertId);
         verify(domainRepository, never()).update(any());
         verify(auditService, times(1)).report(any());
+    }
+
+    private static Domain buildDomainWithCimdSettings(CIMDSettings cimdSettings) {
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        OIDCSettings oidcSettings = new OIDCSettings();
+        oidcSettings.setCimdSettings(cimdSettings);
+        domain.setOidc(oidcSettings);
+        return domain;
+    }
+
+    private void stubDomainPatch(PatchDomain patchDomain, Domain domain) {
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(new Domain(domain.getId())));
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainValidator.validate(any(), any())).thenReturn(Completable.complete());
+        when(virtualHostValidator.validateDomainVhosts(any(), any())).thenReturn(Completable.complete());
+    }
+
+    private static void assertInvalidDomainExceptionMessage(TestObserver<Domain> observer, String expectedMessage) {
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNotComplete();
+        observer.assertError(
+                error -> error instanceof InvalidDomainException && expectedMessage.equals(error.getMessage()));
     }
 
     private static CorsSettings getCorsSettings(Set<String> allowedOrigins) {

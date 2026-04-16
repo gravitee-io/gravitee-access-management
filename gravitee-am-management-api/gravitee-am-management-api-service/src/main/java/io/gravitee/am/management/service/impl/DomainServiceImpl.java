@@ -890,13 +890,30 @@ public class DomainServiceImpl implements DomainService {
         }
 
         CIMDSettings cimdSettings = optCIMDSettings.get();
+
+        if (cimdSettings.getFetchTimeoutMs() <= 0) {
+            return Completable.error(new InvalidDomainException("CIMD settings are invalid: fetch timeout must be higher than 0"));
+        }
+
+        if (cimdSettings.getMaxResponseSizeKb() <= 0) {
+            return Completable.error(new InvalidDomainException("CIMD settings are invalid: maximum response size must be higher than 0"));
+        }
+
+        if (cimdSettings.getCacheTtlSeconds() <= 0) {
+            return Completable.error(new InvalidDomainException("CIMD settings are invalid: cache TTL must be higher than 0"));
+        }
+
+        if (cimdSettings.getCacheMaxEntries() <= 0) {
+            return Completable.error(new InvalidDomainException("CIMD settings are invalid: cache maximum entries must be higher than 0"));
+        }
+
         if (cimdSettings.getAllowedDomains() != null && !cimdSettings.getAllowedDomains().isEmpty() && hasInvalidDomain(cimdSettings)) {
             return Completable.error(new InvalidDomainException("CIMD settings are invalid: allowed domains must be a list of valid domains and wildcard is only allowed for first-level subdomain"));
         }
 
         String softwareId = cimdSettings.getSoftwareId();
         if (!StringUtils.hasText(softwareId)) {
-            return Completable.error(new InvalidDomainException("softwareId must be provided when Client ID Metadata Document is enabled"));
+            return Completable.error(new InvalidDomainException("softwareId (template identifier) must be provided when Client ID Metadata Document is enabled"));
         }
 
         return applicationService.findById(softwareId).filter(Application::isTemplate)

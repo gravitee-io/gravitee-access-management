@@ -126,11 +126,15 @@ public class PatchCIMDSettings {
         SetterUtils.safeSet(result::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(result::setAllowUnsecuredHttpUri, this.getAllowUnsecuredHttpUri(), boolean.class);
         SetterUtils.safeSet(result::setAllowPrivateIpAddress, this.getAllowPrivateIpAddress(), boolean.class);
-        SetterUtils.safeSet(result::setFetchTimeoutMs, this.getFetchTimeoutMs(), int.class);
-        SetterUtils.safeSet(result::setMaxResponseSizeKb, this.getMaxResponseSizeKb(), int.class);
+        Optional.ofNullable(getFetchTimeoutMs())
+                .ifPresent(opt -> result.setFetchTimeoutMs(opt.orElse(CIMDSettings.DEFAULT_FETCH_TIMEOUT_MS)));
+        Optional.ofNullable(getMaxResponseSizeKb())
+                .ifPresent(opt -> result.setMaxResponseSizeKb(opt.orElse(CIMDSettings.DEFAULT_MAX_RESPONSE_SIZE_KB)));
         SetterUtils.safeSet(result::setAllowedDomains, this.getAllowedDomains());
-        SetterUtils.safeSet(result::setCacheTtlSeconds, this.getCacheTtlSeconds(), int.class);
-        SetterUtils.safeSet(result::setCacheMaxEntries, this.getCacheMaxEntries(), int.class);
+        Optional.ofNullable(getCacheTtlSeconds())
+                .ifPresent(opt -> result.setCacheTtlSeconds(opt.orElse(CIMDSettings.DEFAULT_CACHE_TTL_SECONDS)));
+        Optional.ofNullable(getCacheMaxEntries())
+                .ifPresent(opt -> result.setCacheMaxEntries(opt.orElse(CIMDSettings.DEFAULT_CACHE_MAX_ENTRIES)));
         SetterUtils.safeSet(result::setSoftwareId, this.getSoftwareId(), String.class);
 
         return result;
