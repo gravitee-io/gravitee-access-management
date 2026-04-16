@@ -175,13 +175,9 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
-            // Preserve literal '+' in client_id: the value may come from Base64-decoded
-            // Basic auth (not URL-encoded) or from getParam() (already URL-decoded by Vert.x).
-            // In both cases, '+' is literal and must not be treated as space by URLDecoder.
-            String decodedClientId = decodeURIComponent(clientId.replace("+", "%2B"));
             // get client
             clientSyncService
-                    .findByClientId(decodedClientId)
+                    .findByClientId(clientId)
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
@@ -215,6 +211,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 } else {
                     clientId = clientAuthentication;
                 }
+                // RFC 6749 §2.3.1: credentials in Basic auth are form-url-encoded.
+                // Percent-decode only, preserving literal '+' (most clients do not
+                // form-encode before Base64-encoding, so '+' is almost always literal).
+                clientId = decodeURIComponent(clientId.replace("+", "%2B"));
             } else if(clientAssertion != null && clientAssertionType != null) {
                 JWT jwt = JWTParser.parse(clientAssertion);
                 clientId = jwt.getJWTClaimsSet().getSubject();
