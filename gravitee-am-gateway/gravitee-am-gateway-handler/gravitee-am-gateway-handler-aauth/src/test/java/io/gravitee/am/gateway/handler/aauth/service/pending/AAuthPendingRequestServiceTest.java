@@ -150,6 +150,42 @@ public class AAuthPendingRequestServiceTest {
     }
 
     @Test
+    public void shouldMarkInteracting_andSetUserId() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.PENDING);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        service.markInteracting("pending-1", "user-1")
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        ArgumentCaptor<AAuthPendingRequest> captor = ArgumentCaptor.forClass(AAuthPendingRequest.class);
+        verify(repository).update(captor.capture());
+        assertEquals(PendingRequestStatus.INTERACTING.name(), captor.getValue().getStatus());
+        assertEquals("user-1", captor.getValue().getUserId());
+    }
+
+    @Test
+    public void shouldThrowPendingRequestNotFoundException_whenMarkInteractingWithUnknownId() {
+        when(repository.findById("unknown")).thenReturn(Maybe.empty());
+
+        service.markInteracting("unknown", "user-1")
+                .test()
+                .assertError(PendingRequestNotFoundException.class);
+    }
+
+    @Test
+    public void shouldThrowPendingRequestNotFoundException_whenApproveWithUnknownId() {
+        when(repository.findById("unknown")).thenReturn(Maybe.empty());
+
+        service.approve("unknown", "token", 300, "user-1")
+                .test()
+                .assertError(PendingRequestNotFoundException.class);
+    }
+
+    @Test
     public void shouldApproveAndSetAuthToken() {
         AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.PENDING);
 

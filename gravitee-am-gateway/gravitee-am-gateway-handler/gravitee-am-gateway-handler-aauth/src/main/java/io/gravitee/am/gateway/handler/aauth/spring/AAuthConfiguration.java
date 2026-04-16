@@ -15,13 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.aauth.spring;
 
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
 import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentRedirectHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthInteractionResolveHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthTokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.aauth.service.consent.AAuthConsentService;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.gateway.handler.aauth.service.AgentMetadataFetcher;
 import io.gravitee.am.gateway.handler.aauth.service.registry.AAuthAgentRegistry;
 import io.gravitee.am.gateway.handler.aauth.service.registry.AAuthAgentRegistryImpl;
@@ -37,6 +43,7 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.ApplicationService;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -135,5 +142,40 @@ public class AAuthConfiguration implements ProtocolConfiguration {
                                                   Domain domain) {
         int pendingTtl = domain.getAauth() != null ? domain.getAauth().getPendingRequestTtl() : 600;
         return new AAuthTokenEndpoint(resourceTokenValidator, aAuthTokenService, pendingService, domain.getId(), pendingTtl);
+    }
+
+    @Bean
+    public AAuthInteractionResolveHandler aAuthInteractionResolveHandler(AAuthPendingRequestService pendingService,
+                                                                          ApplicationService applicationService) {
+        return new AAuthInteractionResolveHandler(pendingService, applicationService);
+    }
+
+    @Bean
+    public AAuthConsentService aAuthConsentService(ScopeApprovalService scopeApprovalService,
+                                                    Domain domain) {
+        return new AAuthConsentService(scopeApprovalService, domain);
+    }
+
+    @Bean
+    public AAuthConsentRedirectHandler aAuthConsentRedirectHandler() {
+        return new AAuthConsentRedirectHandler();
+    }
+
+    @Bean
+    public AAuthConsentHandler aAuthConsentHandler(AAuthConsentService consentService,
+                                                                          AAuthPendingRequestService pendingService,
+                                                                          AAuthTokenService tokenService,
+                                                                          ApplicationService applicationService,
+                                                                          ThymeleafTemplateEngine engine,
+                                                                          Domain domain) {
+        return new AAuthConsentHandler(consentService, pendingService, tokenService, applicationService, engine, domain);
+    }
+
+    @Bean
+    public AAuthConsentPostEndpoint aAuthConsentPostEndpoint(AAuthPendingRequestService pendingService,
+                                                                      AAuthTokenService tokenService,
+                                                                      AAuthConsentService consentService,
+                                                                      Domain domain) {
+        return new AAuthConsentPostEndpoint(pendingService, tokenService, consentService, domain);
     }
 }

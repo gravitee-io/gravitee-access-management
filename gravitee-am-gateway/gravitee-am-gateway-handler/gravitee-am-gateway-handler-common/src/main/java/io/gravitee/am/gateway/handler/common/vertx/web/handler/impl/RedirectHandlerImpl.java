@@ -60,8 +60,23 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
             }
 
             // client_id can be added dynamically via external protocol
-            if (!queryParams.contains(CLIENT_ID) && request.params().contains(CLIENT_ID)) {
-                queryParams.add(CLIENT_ID, request.getParam(CLIENT_ID));
+            // Check both request params (e.g. OAuth2 /authorize?client_id=...)
+            // and routing context (e.g. AAUTH resolve handler sets it via ctx.put())
+            if (!queryParams.contains(CLIENT_ID)) {
+                if (request.params().contains(CLIENT_ID)) {
+                    queryParams.add(CLIENT_ID, request.getParam(CLIENT_ID));
+                } else if (context.get(CLIENT_ID) != null) {
+                    queryParams.add(CLIENT_ID, (String) context.get(CLIENT_ID));
+                }
+            }
+
+            // return_url can be set via routing context by external protocols (e.g. AAUTH)
+            if (!queryParams.contains(ConstantKeys.RETURN_URL_KEY)) {
+                if (request.params().contains(ConstantKeys.RETURN_URL_KEY)) {
+                    queryParams.add(ConstantKeys.RETURN_URL_KEY, request.getParam(ConstantKeys.RETURN_URL_KEY));
+                } else if (context.get(ConstantKeys.RETURN_URL_KEY) != null) {
+                    queryParams.add(ConstantKeys.RETURN_URL_KEY, (String) context.get(ConstantKeys.RETURN_URL_KEY));
+                }
             }
 
             // Now redirect the user.

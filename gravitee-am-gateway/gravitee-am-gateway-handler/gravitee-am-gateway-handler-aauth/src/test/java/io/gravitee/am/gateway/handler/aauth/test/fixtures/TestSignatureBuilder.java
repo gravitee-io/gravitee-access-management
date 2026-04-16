@@ -39,7 +39,7 @@ public final class TestSignatureBuilder {
      */
     public static Map<String, String> signGet(String method, String authority, String path,
                                                KeyPair keyPair) throws Exception {
-        return sign(method, authority, path, null, null, keyPair);
+        return sign(method, authority, path, null, null, keyPair, null, null);
     }
 
     /**
@@ -48,18 +48,43 @@ public final class TestSignatureBuilder {
     public static Map<String, String> signPost(String method, String authority, String path,
                                                 String contentType, byte[] body,
                                                 KeyPair keyPair) throws Exception {
-        return sign(method, authority, path, contentType, body, keyPair);
+        return sign(method, authority, path, contentType, body, keyPair, null, null);
+    }
+
+    /**
+     * Build signature headers for a GET request using the JWKS URI scheme.
+     */
+    public static Map<String, String> signGetJwksUri(String method, String authority, String path,
+                                                      KeyPair keyPair, String agentMetadataUrl,
+                                                      String kid) throws Exception {
+        return sign(method, authority, path, null, null, keyPair, agentMetadataUrl, kid);
+    }
+
+    /**
+     * Build signature headers for a POST request using the JWKS URI scheme.
+     */
+    public static Map<String, String> signPostJwksUri(String method, String authority, String path,
+                                                       String contentType, byte[] body,
+                                                       KeyPair keyPair, String agentMetadataUrl,
+                                                       String kid) throws Exception {
+        return sign(method, authority, path, contentType, body, keyPair, agentMetadataUrl, kid);
     }
 
     private static Map<String, String> sign(String method, String authority, String path,
                                              String contentType, byte[] body,
-                                             KeyPair keyPair) throws Exception {
+                                             KeyPair keyPair, String jwksUriMetadataUrl,
+                                             String kid) throws Exception {
         String label = "sig";
         long created = Instant.now().getEpochSecond();
-        String publicKeyX = TestAgentKeyPairFactory.ed25519PublicKeyX();
 
-        // Build Signature-Key header
-        String signatureKey = label + "=hwk;kty=\"OKP\";crv=\"Ed25519\";x=\"" + publicKeyX + "\"";
+        // Build Signature-Key header — HWK or JWKS URI scheme
+        String signatureKey;
+        if (jwksUriMetadataUrl != null) {
+            signatureKey = label + "=jwks_uri;id=\"" + jwksUriMetadataUrl + "\";kid=\"" + kid + "\"";
+        } else {
+            String publicKeyX = TestAgentKeyPairFactory.ed25519PublicKeyX();
+            signatureKey = label + "=hwk;kty=\"OKP\";crv=\"Ed25519\";x=\"" + publicKeyX + "\"";
+        }
 
         // Determine covered components
         List<String> components;

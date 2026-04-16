@@ -79,6 +79,11 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
                             new VerificationResult("hwk", "sig", agentKeyPair.getPublic(), "thumbprint", "https://agent.example"));
                     ctx.put(AAuthTokenRequestParseHandler.AAUTH_TOKEN_REQUEST_CONTEXT_KEY,
                             new AAuthTokenRequest("resource.token.jwt", null, null, null, null, null));
+                    // Set a mock Application so the guard passes
+                    var app = new io.gravitee.am.model.Application();
+                    app.setId("app-1");
+                    app.setName("Test Agent");
+                    ctx.put(io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler.AAUTH_APPLICATION_CONTEXT_KEY, app);
                     ctx.next();
                 })
                 .handler(endpoint);

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.aauth.service.pending;
 import io.gravitee.am.gateway.handler.aauth.model.PendingRequestStatus;
 import io.gravitee.am.repository.oidc.api.AAuthPendingRequestRepository;
 import io.gravitee.am.repository.oidc.model.AAuthPendingRequest;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -83,18 +85,15 @@ public class AAuthPendingRequestService {
     public Maybe<AAuthPendingRequest> poll(String id, String agentJkt) {
         return repository.findById(id)
                 .flatMap(request -> {
-                    // Verify agent key matches
-                    if (!request.getAgentJkt().equals(agentJkt)) {
+                    if (!Objects.equals(request.getAgentJkt(), agentJkt)) {
                         return Maybe.error(new SecurityException("Agent key mismatch"));
                     }
 
-                    // Check poll interval (slow_down)
                     long elapsed = System.currentTimeMillis() - request.getLastAccessAt().getTime();
                     if (elapsed < DEFAULT_POLL_INTERVAL_SECONDS * 1000L) {
                         return Maybe.error(new TooFastException());
                     }
 
-                    // Update last access time
                     request.setLastAccessAt(new Date());
                     return repository.update(request).toMaybe();
                 });
@@ -108,10 +107,25 @@ public class AAuthPendingRequestService {
     }
 
     /**
+     * Mark a pending request as INTERACTING (user has arrived at the interaction endpoint).
+     */
+    public Completable markInteracting(String id, String userId) {
+        return repository.findById(id)
+                .switchIfEmpty(Single.error(() -> new PendingRequestNotFoundException(id)))
+                .flatMap(request -> {
+                    request.setStatus(PendingRequestStatus.INTERACTING.name());
+                    request.setUserId(userId);
+                    return repository.update(request);
+                })
+                .ignoreElement();
+    }
+
+    /**
      * Mark a pending request as completed with the auth token.
      */
     public Single<AAuthPendingRequest> approve(String id, String authToken, long expiresIn, String userId) {
-        return repository.findById(id).toSingle()
+        return repository.findById(id)
+                .switchIfEmpty(Single.error(() -> new PendingRequestNotFoundException(id)))
                 .flatMap(request -> {
                     request.setStatus(PendingRequestStatus.COMPLETED.name());
                     request.setAuthToken(authToken);

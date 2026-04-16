@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.aauth.resources.endpoint;
 import io.gravitee.am.gateway.handler.aauth.model.PendingRequestStatus;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
+import io.gravitee.am.gateway.handler.aauth.service.pending.PendingRequestNotFoundException;
 import io.gravitee.am.gateway.handler.aauth.signing.VerificationResult;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
@@ -55,7 +56,14 @@ public class AAuthPendingEndpoint implements Handler<RoutingContext> {
                 .subscribe(
                         request -> {
                             String status = request.getStatus();
-                            PendingRequestStatus parsed = PendingRequestStatus.valueOf(status);
+                            PendingRequestStatus parsed;
+                            try {
+                                parsed = PendingRequestStatus.valueOf(status);
+                            } catch (IllegalArgumentException e) {
+                                log.error("Invalid pending request status in DB: {}", status);
+                                sendError(ctx, 500, "server_error", "Invalid pending request state");
+                                return;
+                            }
 
                             String pendingUrl = resolvePendingUrl(ctx, pendingId);
 
@@ -101,6 +109,8 @@ public class AAuthPendingEndpoint implements Handler<RoutingContext> {
                                         .putHeader("Retry-After", "5")
                                         .putHeader("Content-Type", "application/json")
                                         .end(new JsonObject().put("error", "slow_down").encode());
+                            } else if (err instanceof PendingRequestNotFoundException) {
+                                sendError(ctx, 410, "invalid_code", "Unknown or consumed pending request");
                             } else if (err instanceof SecurityException) {
                                 sendError(ctx, 403, "forbidden", err.getMessage());
                             } else {

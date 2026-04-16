@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.aauth.manual;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockAgentMetadataServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockResourceServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentKeyPairFactory;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestSignatureBuilder;
@@ -35,10 +36,12 @@ import java.util.regex.Pattern;
 /**
  * Interactive manual test for the AAUTH deferred authorization flow.
  * <p>
- * 1. Sends POST /aauth/token → expects 202 with interaction URL + code
- * 2. Prints the URL for the user to open in their browser
- * 3. Polls GET /aauth/pending/{id} following the spec (Retry-After, timeout)
- * 4. When the user completes consent, prints the auth token
+ * Uses two mock servers:
+ * - Agent server (port 9998): serves agent metadata + JWKS
+ * - Resource server (port 9999): serves resource metadata + JWKS, issues resource tokens
+ * <p>
+ * The agent signs requests with the jwks_uri scheme (identified agent), which triggers
+ * Application auto-creation and enables the full interaction flow.
  * <p>
  * Usage:
  * <pre>
@@ -50,8 +53,10 @@ import java.util.regex.Pattern;
  */
 public class AAuthTokenEndpointManualTest {
 
+    private static final int AGENT_SERVER_PORT = 9998;
     private static final int RESOURCE_SERVER_PORT = 9999;
-    private static final int MAX_POLL_DURATION_SECONDS = 300; // 5 minutes max
+    private static final String AGENT_KID = "agent-key-1";
+    private static final int MAX_POLL_DURATION_SECONDS = 300;
     private static final int DEFAULT_POLL_INTERVAL_SECONDS = 5;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
@@ -65,19 +70,25 @@ public class AAuthTokenEndpointManualTest {
         System.out.println("Domain:  " + domain);
         System.out.println();
 
+        // Step 1: Start mock servers
+        KeyPair agentKeyPair = TestAgentKeyPairFactory.ed25519();
+        String agentX = TestAgentKeyPairFactory.ed25519PublicKeyX();
+        String agentThumbprint = computeJwkThumbprint(agentX);
+
+        MockAgentMetadataServer agentServer = new MockAgentMetadataServer(AGENT_SERVER_PORT);
         MockResourceServer resourceServer = new MockResourceServer(RESOURCE_SERVER_PORT);
+
         try {
-            // Step 1: Start mock resource server
+            agentServer.start();
+            String agentBaseUrl = agentServer.baseUrl();
+            agentServer.stubMetadata(agentBaseUrl, agentBaseUrl + "/jwks.json", "Test AAUTH Agent");
+            agentServer.stubJwksWithEd25519(AGENT_KID, agentX);
+            System.out.println("[1] Agent server running at " + agentBaseUrl);
+
             resourceServer.start();
-            System.out.println("[1] Mock resource server running at " + resourceServer.baseUrl());
+            System.out.println("    Resource server running at " + resourceServer.baseUrl());
 
-            // Step 2: Generate agent keypair
-            KeyPair agentKeyPair = TestAgentKeyPairFactory.ed25519();
-            String agentX = TestAgentKeyPairFactory.ed25519PublicKeyX();
-            String agentThumbprint = computeJwkThumbprint(agentX);
-            System.out.println("[2] Agent keypair ready (thumbprint: " + agentThumbprint.substring(0, 12) + "...)");
-
-            // Step 3: Fetch PS metadata
+            // Step 2: Fetch PS metadata
             String metadataUrl = amUrl + "/" + domain + "/aauth/.well-known/aauth-person.json";
             var metadataResponse = HTTP_CLIENT.send(
                     HttpRequest.newBuilder().uri(URI.create(metadataUrl)).GET().build(),
@@ -93,31 +104,30 @@ public class AAuthTokenEndpointManualTest {
             var metadata = OBJECT_MAPPER.readValue(metadataResponse.body(), Map.class);
             String psIssuerUrl = (String) metadata.get("issuer");
             String tokenEndpointUrl = (String) metadata.get("token_endpoint");
-            System.out.println("[3] PS issuer: " + psIssuerUrl);
+            System.out.println("[2] PS issuer: " + psIssuerUrl);
 
-            // Step 4: Issue resource token
-            String agentIdentity = resourceServer.baseUrl();
+            // Step 3: Issue resource token (agent identity = agent server URL)
             String resourceToken = resourceServer.issueResourceToken(
-                    psIssuerUrl, agentIdentity, agentThumbprint, "read write");
-            System.out.println("[4] Resource token issued (scope: read write)");
+                    psIssuerUrl, agentBaseUrl, agentThumbprint, "read write");
+            System.out.println("[3] Resource token issued (agent=" + agentBaseUrl + ", scope=read write)");
 
-            // Step 5: POST /aauth/token (signed)
+            // Step 4: POST /aauth/token with jwks_uri scheme
             String jsonBody = OBJECT_MAPPER.writeValueAsString(Map.of("resource_token", resourceToken));
             byte[] bodyBytes = jsonBody.getBytes(StandardCharsets.UTF_8);
 
             URI tokenUri = URI.create(tokenEndpointUrl);
             String authority = tokenUri.getHost() + (tokenUri.getPort() > 0 ? ":" + tokenUri.getPort() : "");
             String path = tokenUri.getPath();
-
-            Map<String, String> sigHeaders = TestSignatureBuilder.signPost(
-                    "POST", authority, path, "application/json", bodyBytes, agentKeyPair);
+            Map<String, String> sigHeaders = TestSignatureBuilder.signPostJwksUri(
+                    "POST", authority, path, "application/json", bodyBytes,
+                    agentKeyPair, agentBaseUrl, AGENT_KID);
 
             var requestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(tokenEndpointUrl))
                     .POST(HttpRequest.BodyPublishers.ofByteArray(bodyBytes));
             sigHeaders.forEach(requestBuilder::header);
 
-            System.out.println("[5] Sending POST " + tokenEndpointUrl);
+            System.out.println("[4] Sending POST " + tokenEndpointUrl + " (scheme=jwks_uri)");
             var response = HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 
             System.out.println("    Status: " + response.statusCode());
@@ -137,27 +147,21 @@ public class AAuthTokenEndpointManualTest {
                 return;
             }
 
-            // Parse interaction URL and code from AAuth-Requirement header
             String interactUrl = parseParam(requirement, "url");
             String interactionCode = parseParam(requirement, "code");
 
             System.out.println();
             System.out.println("============================================================");
-            System.out.println("  Interaction URL (Phase 8b — not yet implemented):");
+            System.out.println("  Open this URL in your browser to authorize the agent:");
+            System.out.println();
             if (interactUrl != null && interactionCode != null) {
                 System.out.println("  " + interactUrl + "?code=" + interactionCode);
             }
-            System.out.println();
-            System.out.println("  Pending URL:      " + pendingUrl);
-            System.out.println("  Interaction code: " + interactionCode);
             System.out.println("============================================================");
             System.out.println();
 
-            // Step 6: Poll the pending URL per spec Section 12.4
-            // The interaction endpoint is not yet implemented (Phase 8b), so polling
-            // will keep returning 202/pending until the request expires.
-            System.out.println("[6] Polling " + pendingUrl + " (max " + MAX_POLL_DURATION_SECONDS + "s)...");
-            System.out.println("    (The request will stay 'pending' until Phase 8b adds the interaction endpoint)");
+            // Step 5: Poll the pending URL per spec Section 12.4
+            System.out.println("[5] Polling " + pendingUrl + " (max " + MAX_POLL_DURATION_SECONDS + "s)...");
 
             long startTime = System.currentTimeMillis();
             int pollInterval = DEFAULT_POLL_INTERVAL_SECONDS;
@@ -170,15 +174,14 @@ public class AAuthTokenEndpointManualTest {
                     break;
                 }
 
-                // Wait before polling (respect Retry-After)
                 Thread.sleep(pollInterval * 1000L);
                 pollCount++;
 
-                // Sign the GET request
                 URI pollUri = URI.create(pendingUrl);
                 String pollAuthority = pollUri.getHost() + (pollUri.getPort() > 0 ? ":" + pollUri.getPort() : "");
-                Map<String, String> pollSigHeaders = TestSignatureBuilder.signGet(
-                        "GET", pollAuthority, pollUri.getPath(), agentKeyPair);
+                Map<String, String> pollSigHeaders = TestSignatureBuilder.signGetJwksUri(
+                        "GET", pollAuthority, pollUri.getPath(),
+                        agentKeyPair, agentBaseUrl, AGENT_KID);
 
                 var pollRequestBuilder = HttpRequest.newBuilder().uri(pollUri).GET();
                 pollSigHeaders.forEach(pollRequestBuilder::header);
@@ -186,13 +189,7 @@ public class AAuthTokenEndpointManualTest {
                 var pollResponse = HTTP_CLIENT.send(pollRequestBuilder.build(), HttpResponse.BodyHandlers.ofString());
                 int pollStatus = pollResponse.statusCode();
 
-                // Parse Retry-After if present
-                pollResponse.headers().firstValue("Retry-After").ifPresent(ra -> {
-                    // Could be used to adjust poll interval
-                });
-
                 if (pollStatus == 200) {
-                    // Auth token received
                     System.out.println("    Poll #" + pollCount + " -> 200 OK");
                     System.out.println();
                     System.out.println("=== AUTH TOKEN RECEIVED ===");
@@ -214,12 +211,10 @@ public class AAuthTokenEndpointManualTest {
                     System.out.println("    Poll #" + pollCount + " -> 202 (" + status + ") [" + elapsed + "s elapsed]");
 
                 } else if (pollStatus == 429) {
-                    // Slow down — increase interval per spec Section 12.3
                     pollInterval = Math.min(pollInterval + 5, 30);
                     System.out.println("    Poll #" + pollCount + " -> 429 slow_down (interval now " + pollInterval + "s)");
 
                 } else {
-                    // Terminal response (403, 408, 410, etc.)
                     System.out.println("    Poll #" + pollCount + " -> " + pollStatus + " (terminal)");
                     printJson("Response", pollResponse.body());
                     break;
@@ -228,12 +223,12 @@ public class AAuthTokenEndpointManualTest {
 
         } finally {
             resourceServer.stop();
-            System.out.println("\nMock resource server stopped.");
+            agentServer.stop();
+            System.out.println("\nMock servers stopped.");
         }
     }
 
     private static String parseParam(String header, String paramName) {
-        // Parse paramName="value" from structured header
         Pattern pattern = Pattern.compile(paramName + "=\"([^\"]+)\"");
         Matcher matcher = pattern.matcher(header);
         return matcher.find() ? matcher.group(1) : null;

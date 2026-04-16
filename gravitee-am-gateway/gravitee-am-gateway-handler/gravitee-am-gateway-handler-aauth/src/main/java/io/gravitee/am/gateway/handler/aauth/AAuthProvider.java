@@ -15,20 +15,31 @@
  */
 package io.gravitee.am.gateway.handler.aauth;
 
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPSMetadataEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthAgentResolveHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentRedirectHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthErrorHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthConsentHandler;
+import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthInteractionResolveHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthSignatureHandler;
 import io.gravitee.am.gateway.handler.aauth.resources.handler.AAuthTokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
+import io.vertx.rxjava3.ext.web.handler.CSRFHandler;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
+import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -69,6 +80,30 @@ public class AAuthProvider extends AbstractProtocolProvider {
     @Autowired
     private AAuthPendingEndpoint aAuthPendingEndpoint;
 
+    @Autowired
+    private CookieSessionHandler sessionHandler;
+
+    @Autowired
+    private SSOSessionHandler ssoSessionHandler;
+
+    @Autowired
+    private AuthenticationFlowHandler authenticationFlowHandler;
+
+    @Autowired
+    private AAuthInteractionResolveHandler aAuthInteractionResolveHandler;
+
+    @Autowired
+    private AAuthConsentRedirectHandler aAuthConsentRedirectHandler;
+
+    @Autowired
+    private AAuthConsentHandler aAuthConsentHandler;
+
+    @Autowired
+    private AAuthConsentPostEndpoint aAuthConsentPostEndpoint;
+
+    @Autowired
+    private CSRFHandler csrfHandler;
+
     @Override
     public String path() {
         return "/aauth";
@@ -85,6 +120,9 @@ public class AAuthProvider extends AbstractProtocolProvider {
 
     private void startAAuthProtocol() {
         final Router aAuthRouter = Router.router(vertx);
+
+        // Static assets (CSS, images) for Thymeleaf templates
+        aAuthRouter.route().handler(StaticHandler.create());
 
         // PS metadata endpoint
         aAuthRouter.route(HttpMethod.GET, "/.well-known/aauth-person.json")
@@ -110,6 +148,43 @@ public class AAuthProvider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(aAuthSignatureHandler)
                 .handler(aAuthPendingEndpoint);
+
+        // --- User interaction entry point (like OIDC /authorize) ---
+        // Resolves pending request, runs authentication flow (login, MFA, WebAuthn),
+        // then redirects to /aauth/consent for consent handling.
+        aAuthRouter.route("/interact")
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
+
+        aAuthRouter.route(HttpMethod.GET, "/interact")
+                .handler(aAuthInteractionResolveHandler)
+                .handler(authenticationFlowHandler.create())
+                .handler(aAuthConsentRedirectHandler);
+
+        // --- Consent page (like OIDC /oauth/consent) ---
+        // Separate route so it doesn't re-execute the resolve + auth chain.
+        aAuthRouter.route("/consent")
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
+
+        aAuthRouter.route("/consent").handler(csrfHandler);
+
+        aAuthRouter.route(HttpMethod.GET, "/consent")
+                .handler(aAuthConsentHandler);
+
+        aAuthRouter.route(HttpMethod.POST, "/consent")
+                .handler(BodyHandler.create())
+                .handler(aAuthConsentPostEndpoint);
+
+        // --- Error handlers ---
+        // Browser-facing routes (interact, consent): redirect to /error page
+        // (same pattern as RootProvider's ErrorHandler)
+        aAuthRouter.route("/interact").failureHandler(new AAuthErrorHandler());
+        aAuthRouter.route("/consent").failureHandler(new AAuthErrorHandler());
+
+        // API routes (token, pending, metadata, jwks): JSON error responses
+        // (same pattern as CIBAProvider / OAuth2Provider ExceptionHandler)
+        aAuthRouter.route().failureHandler(new ErrorHandler());
 
         router.route(subRouterPath()).subRouter(aAuthRouter);
     }

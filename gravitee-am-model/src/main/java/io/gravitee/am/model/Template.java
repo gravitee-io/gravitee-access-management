@@ -48,7 +48,8 @@ public enum Template {
     ERROR("error", "/error"),
     CERTIFICATE_EXPIRATION("certificate_expiration", null),
     CLIENT_SECRET_EXPIRATION("client_secret_expiration", null),
-    VERIFY_ATTEMPT("verify_attempt",null);
+    VERIFY_ATTEMPT("verify_attempt",null),
+    AAUTH_CONSENT("aauth_consent", "/aauth/consent");
 
 
     private final String template;

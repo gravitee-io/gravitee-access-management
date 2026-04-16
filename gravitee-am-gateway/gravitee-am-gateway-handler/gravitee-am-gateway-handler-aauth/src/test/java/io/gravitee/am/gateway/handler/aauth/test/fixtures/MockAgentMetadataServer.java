@@ -34,6 +34,10 @@ public class MockAgentMetadataServer {
         this.server = new WireMockServer(wireMockConfig().dynamicPort());
     }
 
+    public MockAgentMetadataServer(int port) {
+        this.server = new WireMockServer(wireMockConfig().port(port));
+    }
+
     public MockAgentMetadataServer start() {
         server.start();
         WireMock.configureFor("localhost", server.port());

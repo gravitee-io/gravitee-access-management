@@ -80,7 +80,14 @@ public class AAuthTokenEndpoint implements Handler<RoutingContext> {
                                     AAuthTokenRequest tokenRequest, ResourceTokenClaims rtClaims,
                                     String psIssuerUrl) {
         Application app = ctx.get(AAuthAgentResolveHandler.AAUTH_APPLICATION_CONTEXT_KEY);
-        String applicationId = app != null ? app.getId() : null;
+        if (app == null) {
+            // Agent identity is required for the deferred flow (spec Section 7.1.3 requires scheme=jwt).
+            // Without an identified agent, the interaction endpoint cannot resolve the Application
+            // for login/consent configuration.
+            sendError(ctx, 400, "invalid_request",
+                    "Agent identity is required. The PS token endpoint requires an identified agent.");
+            return;
+        }
 
         pendingService.create(
                 domainId,
@@ -88,7 +95,7 @@ public class AAuthTokenEndpoint implements Handler<RoutingContext> {
                 rtClaims.agent(),
                 verification.jwkThumbprint(),
                 verification.publicKey(),
-                applicationId,
+                app.getId(),
                 rtClaims.iss(),
                 rtClaims.scope(),
                 tokenRequest.justification(),
