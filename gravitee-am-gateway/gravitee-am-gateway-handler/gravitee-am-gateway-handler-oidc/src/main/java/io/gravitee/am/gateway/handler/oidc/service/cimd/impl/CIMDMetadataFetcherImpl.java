@@ -22,7 +22,11 @@ import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataDocument;
 import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataFetcher;
 import io.gravitee.am.gateway.handler.oidc.service.cimd.SSRFValidator;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.oidc.CIMDSettings;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.CIMDAuditBuilder;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.annotation.PostConstruct;
@@ -53,6 +57,9 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
     @Autowired
     private Domain domain;
 
+    @Autowired
+    private AuditService auditService;
+
     private final SSRFValidator ssrfValidator = new SSRFValidator();
 
     private CIMDMetadataCache cache;
@@ -74,6 +81,7 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
             Optional<CIMDMetadataDocument> cached = cache.get(domainId, clientIdUri);
             if (cached.isPresent()) {
                 LOGGER.debug("CIMD cache hit for domain={}, clientId={}", domainId, clientIdUri);
+                reportFetched(clientIdUri, domainId, cached.get().getSoftwareId(), 0, true);
                 return Single.just(cached.get());
             }
         }
@@ -89,10 +97,12 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
         try {
             ssrfValidator.validate(uri, settings);
         } catch (CIMDException e) {
+            reportRejected(clientIdUri, domainId, e.getMessage(), uri.getHost());
             return Single.error(e);
         }
 
         int maxSizeBytes = settings.getMaxResponseSizeKb() * 1024;
+        long fetchStart = System.currentTimeMillis();
 
         return webClient.getAbs(clientIdUri)
                 .timeout(settings.getFetchTimeoutMs())
@@ -135,6 +145,9 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
                             cache.put(domainId, clientIdUri, document);
                         }
 
+                        reportFetched(clientIdUri, domainId, document.getSoftwareId(),
+                                System.currentTimeMillis() - fetchStart, false);
+
                         return Single.just(document);
                     } catch (Exception e) {
                         return Single.error(new CIMDException("Failed to parse CIMD metadata document from URI: " + clientIdUri, e));
@@ -165,5 +178,32 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
 
     void setCache(CIMDMetadataCache cache) {
         this.cache = cache;
+    }
+
+    private void reportFetched(String metadataUri, String domainId, String softwareId,
+                               long fetchDurationMs, boolean cacheHit) {
+        try {
+            auditService.report(AuditBuilder.builder(CIMDAuditBuilder.class)
+                    .reference(Reference.domain(domainId))
+                    .metadataUri(metadataUri)
+                    .softwareId(softwareId)
+                    .fetchDurationMs(fetchDurationMs)
+                    .cacheHit(cacheHit));
+        } catch (Exception e) {
+            LOGGER.warn("Failed to report CIMD fetch audit", e);
+        }
+    }
+
+    private void reportRejected(String metadataUri, String domainId, String reason, String host) {
+        try {
+            auditService.report(AuditBuilder.builder(CIMDAuditBuilder.class)
+                    .rejected()
+                    .reference(Reference.domain(domainId))
+                    .metadataUri(metadataUri)
+                    .rejectionReason(reason)
+                    .resolvedIp(host));
+        } catch (Exception e) {
+            LOGGER.warn("Failed to report CIMD rejection audit", e);
+        }
     }
 }

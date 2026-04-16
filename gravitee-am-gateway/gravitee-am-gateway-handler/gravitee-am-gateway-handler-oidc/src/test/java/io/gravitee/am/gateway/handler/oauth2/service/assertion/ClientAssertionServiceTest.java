@@ -101,6 +101,9 @@ public class ClientAssertionServiceTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private io.gravitee.am.service.AuditService auditService;
+
     @BeforeEach
     void setUp() {
         lenient().when(clientLookupService.findByClientId(any())).thenReturn(Maybe.empty());
