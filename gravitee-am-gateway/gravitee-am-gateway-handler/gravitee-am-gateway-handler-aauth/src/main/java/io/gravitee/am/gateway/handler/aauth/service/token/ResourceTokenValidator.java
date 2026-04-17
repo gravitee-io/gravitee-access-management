@@ -112,9 +112,13 @@ public class ResourceTokenValidator {
                         "aud does not match this PS: expected " + psIssuerUrl + ", got " + aud);
             }
 
-            // Step 5: Verify agent matches the request signer
+            // Step 5: Verify agent matches the requesting agent's identifier (Section 6.6.2 step 5)
             String agent = claims.getStringClaim("agent");
-            if (agentVerification.agentIdentityUrl() != null && !agentVerification.agentIdentityUrl().equals(agent)) {
+            if (!io.gravitee.am.gateway.handler.aauth.util.AAuthIdentifierValidator.isValidAgentIdentifier(agent)) {
+                throw new ResourceTokenException("invalid_resource_token",
+                        "agent claim is not a valid aauth: identifier: " + agent);
+            }
+            if (agentVerification.agentIdentifier() != null && !agentVerification.agentIdentifier().equals(agent)) {
                 throw new ResourceTokenException("invalid_resource_token",
                         "agent claim does not match request signer");
             }

@@ -25,14 +25,17 @@ import java.security.PublicKey;
  * @param label            the signature label (e.g. "sig")
  * @param publicKey        the verified signer's public key
  * @param jwkThumbprint    RFC 7638 JWK Thumbprint — base64url-encoded SHA-256 hash
- * @param agentIdentityUrl the agent server metadata URL for identified schemes (jwks_uri, jwt),
+ * @param agentServerUrl   the agent server URL for JWKS discovery and Application lookup,
  *                         or {@code null} for pseudonymous (hwk) requests
+ * @param agentIdentifier  the agent identifier in {@code aauth:local@domain} format (jwt scheme, from jwt.sub),
+ *                         or {@code null} when not available
  */
 public record VerificationResult(
         String scheme,
         String label,
         PublicKey publicKey,
         String jwkThumbprint,
-        String agentIdentityUrl
+        String agentServerUrl,
+        String agentIdentifier
 ) {
 }

@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.aauth.signing.schemes;
 
-import com.nimbusds.jose.jwk.Curve;
-import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.OctetKeyPair;
 import io.gravitee.am.gateway.handler.aauth.service.AgentMetadata;
 import io.gravitee.am.gateway.handler.aauth.service.AgentMetadataFetcher;
 import io.gravitee.am.gateway.handler.aauth.service.JWKSDocument;
@@ -26,19 +23,7 @@ import io.gravitee.am.gateway.handler.aauth.signing.SignatureKeyInfo;
 import io.gravitee.am.gateway.handler.aauth.signing.SignatureVerificationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.MessageDigest;
 import java.security.PublicKey;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.EdECPoint;
-import java.security.spec.EdECPublicKeySpec;
-import java.security.spec.NamedParameterSpec;
-import java.util.Base64;
-import java.util.Map;
 
 /**
  * JWKS URI scheme: resolves a public key by fetching the agent's metadata document
@@ -89,7 +74,7 @@ public class JWKSUriScheme implements SignatureScheme {
             }
 
             // 4. Convert JWK to PublicKey using Java native crypto
-            return convertJwkToResolvedKey(jwk);
+            return convertJwkToResolvedKey(jwk, agentId);
         } catch (SignatureVerificationException e) {
             throw e;
         } catch (Exception e) {
@@ -98,52 +83,10 @@ public class JWKSUriScheme implements SignatureScheme {
         }
     }
 
-    private ResolvedKey convertJwkToResolvedKey(JWK jwk) throws Exception {
-        if (jwk instanceof OctetKeyPair okp && Curve.Ed25519.equals(okp.getCurve())) {
-            byte[] rawKey = okp.getDecodedX();
-            PublicKey publicKey = rawBytesToEd25519PublicKey(rawKey);
-            String thumbprint = computeThumbprint(jwk);
-            return new ResolvedKey(publicKey, "Ed25519", thumbprint);
-        } else if (jwk instanceof ECKey ecKey && Curve.P_256.equals(ecKey.getCurve())) {
-            byte[] xBytes = ecKey.getX().decode();
-            byte[] yBytes = ecKey.getY().decode();
-            ECPoint point = new ECPoint(new BigInteger(1, xBytes), new BigInteger(1, yBytes));
-            ECParameterSpec ecSpec = getP256Spec();
-            PublicKey publicKey = KeyFactory.getInstance("EC").generatePublic(new ECPublicKeySpec(point, ecSpec));
-            String thumbprint = computeThumbprint(jwk);
-            return new ResolvedKey(publicKey, "SHA256withECDSA", thumbprint);
-        } else {
-            throw new SignatureVerificationException("unsupported_algorithm",
-                    Map.of("supported_algorithms", "EdDSA, ES256"));
-        }
-    }
-
-    private PublicKey rawBytesToEd25519PublicKey(byte[] raw) throws Exception {
-        if (raw.length != 32) {
-            throw new IllegalArgumentException("Ed25519 public key must be 32 bytes, got " + raw.length);
-        }
-        boolean xOdd = (raw[31] & 0x80) != 0;
-        byte[] yLE = raw.clone();
-        yLE[31] &= 0x7F;
-        byte[] yBE = new byte[yLE.length];
-        for (int i = 0; i < yLE.length; i++) {
-            yBE[i] = yLE[yLE.length - 1 - i];
-        }
-        BigInteger y = new BigInteger(1, yBE);
-        EdECPoint point = new EdECPoint(xOdd, y);
-        return KeyFactory.getInstance("Ed25519").generatePublic(
-                new EdECPublicKeySpec(NamedParameterSpec.ED25519, point));
-    }
-
-    private String computeThumbprint(JWK jwk) throws Exception {
-        // RFC 7638 — use Nimbus for canonical JSON, then SHA-256
-        return jwk.computeThumbprint().toString();
-    }
-
-    private ECParameterSpec getP256Spec() throws Exception {
-        var kpg = java.security.KeyPairGenerator.getInstance("EC");
-        kpg.initialize(new java.security.spec.ECGenParameterSpec("secp256r1"));
-        var tmpKey = (java.security.interfaces.ECPublicKey) kpg.generateKeyPair().getPublic();
-        return tmpKey.getParams();
+    private ResolvedKey convertJwkToResolvedKey(JWK jwk, String agentServerUrl) throws Exception {
+        PublicKey publicKey = JwkKeyConverter.toNativePublicKey(jwk);
+        String algorithm = JwkKeyConverter.algorithmForJwk(jwk);
+        String thumbprint = JwkKeyConverter.computeThumbprint(jwk);
+        return new ResolvedKey(publicKey, algorithm, thumbprint, agentServerUrl, null);
     }
 }

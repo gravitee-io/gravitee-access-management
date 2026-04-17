@@ -46,6 +46,12 @@ public class SignatureVerificationException extends Exception {
         this(errorCode, Collections.emptyMap());
     }
 
+    public SignatureVerificationException(String errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+        this.params = Collections.emptyMap();
+    }
+
     public SignatureVerificationException(String errorCode, Map<String, String> params) {
         super("Signature verification failed: " + errorCode);
         this.errorCode = errorCode;

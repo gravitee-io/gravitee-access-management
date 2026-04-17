@@ -44,7 +44,7 @@ public class AAuthAgentResolveHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext ctx) {
         VerificationResult verification = ctx.get(AAuthSignatureHandler.AAUTH_VERIFICATION_CONTEXT_KEY);
 
-        if (verification == null || verification.agentIdentityUrl() == null) {
+        if (verification == null || verification.agentServerUrl() == null) {
             // No signature or pseudonymous — no Application to resolve
             ctx.next();
             return;

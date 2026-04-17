@@ -63,7 +63,7 @@ public class AAuthPendingEndpointTest extends RxWebTestBase {
         router.route(PENDING_PATH + ":id")
                 .handler(ctx -> {
                     ctx.put(AAuthSignatureHandler.AAUTH_VERIFICATION_CONTEXT_KEY,
-                            new VerificationResult("hwk", "sig", agentKeyPair.getPublic(), agentJkt, null));
+                            new VerificationResult("hwk", "sig", agentKeyPair.getPublic(), agentJkt, null, null));
                     ctx.next();
                 })
                 .handler(new AAuthPendingEndpoint(pendingService));

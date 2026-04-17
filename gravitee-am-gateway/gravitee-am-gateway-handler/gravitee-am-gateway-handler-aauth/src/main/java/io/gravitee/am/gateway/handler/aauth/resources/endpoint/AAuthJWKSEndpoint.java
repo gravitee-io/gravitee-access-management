@@ -68,18 +68,32 @@ public class AAuthJWKSEndpoint implements Handler<RoutingContext> {
      * Returns a map suitable for JSON serialization.
      */
     private static Map<String, Object> toPublicJwk(JWK jwk) {
-        // Use the JWK's own serialization and strip private fields
         var map = new java.util.LinkedHashMap<String, Object>();
+        // Standard JWK fields (RFC 7517)
         if (jwk.getKty() != null) map.put("kty", jwk.getKty());
-        if (jwk.getKid() != null) map.put("kid", jwk.getKid());
         if (jwk.getUse() != null) map.put("use", jwk.getUse());
-        if (jwk.getAlg() != null) map.put("alg", jwk.getAlg());
+
+        // Compute alg from key type/size if not explicitly set (same as OIDC ProviderJWKSetEndpoint)
+        String alg = jwk.getAlg();
+        if (alg == null && jwk instanceof io.gravitee.am.model.jose.RSAKey rsa && rsa.getN() != null) {
+            int keySize = new java.math.BigInteger(rsa.getN().getBytes()).bitLength();
+            if (keySize >= 4096) alg = "RS512";
+            else if (keySize >= 3072) alg = "RS384";
+            else if (keySize >= 2048) alg = "RS256";
+        }
+        if (alg != null) map.put("alg", alg);
+        if (jwk.getKid() != null) map.put("kid", jwk.getKid());
+
+        // Certificate metadata
+        if (jwk.getX5c() != null && !jwk.getX5c().isEmpty()) map.put("x5c", jwk.getX5c());
+        if (jwk.getX5tS256() != null) map.put("x5t#S256", jwk.getX5tS256());
+        if (jwk.getX5t() != null) map.put("x5t", jwk.getX5t());
 
         // Type-specific public components
         switch (jwk) {
             case io.gravitee.am.model.jose.RSAKey rsa -> {
-                if (rsa.getN() != null) map.put("n", rsa.getN());
                 if (rsa.getE() != null) map.put("e", rsa.getE());
+                if (rsa.getN() != null) map.put("n", rsa.getN());
             }
             case io.gravitee.am.model.jose.ECKey ec -> {
                 if (ec.getCrv() != null) map.put("crv", ec.getCrv());
@@ -93,6 +107,7 @@ public class AAuthJWKSEndpoint implements Handler<RoutingContext> {
             default -> {
             }
         }
+
         // Explicitly: no 'd', 'p', 'q', 'dp', 'dq', 'qi' fields
         return map;
     }

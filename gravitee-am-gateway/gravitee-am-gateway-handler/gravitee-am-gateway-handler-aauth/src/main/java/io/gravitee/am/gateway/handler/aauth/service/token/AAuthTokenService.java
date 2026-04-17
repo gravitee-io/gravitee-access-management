@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.aauth.model.AAuthTokenResponse;
 import io.gravitee.am.gateway.handler.aauth.signing.VerificationResult;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,39 +43,41 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AAuthTokenService {
 
+    private static final String AUTH_TOKEN_TYP = "aa-auth+jwt";
     private static final long MAX_AUTH_TOKEN_LIFETIME_SECONDS = 3600; // 1 hour per spec
     private static final long DEFAULT_AUTH_TOKEN_LIFETIME_SECONDS = 300; // 5 minutes
 
-    private final JWTService jwtService;
     private final CertificateManager certificateManager;
     private final int authTokenLifespan;
 
     /**
      * Create and sign an auth token for a machine-to-machine (scope-only) grant.
-     *
-     * @param resourceTokenClaims the validated resource token claims
-     * @param agentVerification   the agent's signature verification result
-     * @return the signed auth token response
      */
     public Single<AAuthTokenResponse> createAuthToken(ResourceTokenClaims resourceTokenClaims,
                                                        VerificationResult agentVerification,
                                                        String psIssuerUrl) {
-        return createAuthToken(resourceTokenClaims, agentVerification, psIssuerUrl, null);
+        return createAuthToken(resourceTokenClaims, agentVerification, psIssuerUrl, null, null);
     }
 
     /**
      * Create and sign an auth token, optionally with a user binding ({@code sub} claim).
-     *
-     * @param rtClaims     the validated resource token claims
-     * @param agentVerif   the agent's signature verification result
-     * @param psIssuerUrl  this PS's issuer URL
-     * @param sub          the user identifier (null for machine-to-machine)
-     * @return the signed auth token response
+     * Uses the client's certificate for signing (same pattern as OIDC ID token).
      */
     public Single<AAuthTokenResponse> createAuthToken(ResourceTokenClaims rtClaims,
                                                        VerificationResult agentVerif,
                                                        String psIssuerUrl,
                                                        String sub) {
+        return createAuthToken(rtClaims, agentVerif, psIssuerUrl, sub, null);
+    }
+
+    /**
+     * Create and sign an auth token with optional user binding and client certificate selection.
+     */
+    public Single<AAuthTokenResponse> createAuthToken(ResourceTokenClaims rtClaims,
+                                                       VerificationResult agentVerif,
+                                                       String psIssuerUrl,
+                                                       String sub,
+                                                       Client client) {
         long now = Instant.now().getEpochSecond();
         long expiresIn = Math.min(
                 authTokenLifespan > 0 ? authTokenLifespan : DEFAULT_AUTH_TOKEN_LIFETIME_SECONDS,
@@ -93,7 +95,6 @@ public class AAuthTokenService {
         jwt.setIat(now);
         jwt.put("exp", exp);
 
-        // At least one of sub or scope MUST be present
         if (sub != null) {
             jwt.setSub(sub);
         }
@@ -101,14 +102,29 @@ public class AAuthTokenService {
             jwt.put("scope", rtClaims.scope());
         }
 
-        // If neither sub nor scope, this is invalid per spec — but for m2m, scope should always come from resource_token
         if (sub == null && (rtClaims.scope() == null || rtClaims.scope().isBlank())) {
             log.warn("Auth token has neither sub nor scope — spec requires at least one");
         }
 
-        var certProvider = certificateManager.defaultCertificateProvider();
-        return jwtService.encode(jwt, certProvider)
-                .map(signedJwt -> new AAuthTokenResponse(signedJwt, expiresIn));
+        // Sign with typ=aa-auth+jwt. Use the same certificate selection as OIDC ID tokens:
+        // 1. If client has a configured certificate → use it
+        // 2. Otherwise findByAlgorithm("RS256") → first asymmetric key in the JWKS
+        // 3. Fall back to default (HMAC) only as last resort
+        var certSingle = client != null
+                ? certificateManager.getClientCertificateProvider(client, false)
+                : certificateManager.findByAlgorithm("RS256")
+                        .switchIfEmpty(certificateManager.findByAlgorithm("ES256"))
+                        .switchIfEmpty(io.reactivex.rxjava3.core.Maybe.defer(() -> {
+                            log.warn("No asymmetric certificate found for AAUTH auth token signing. "
+                                    + "Auth tokens signed with symmetric keys cannot be verified via JWKS.");
+                            return io.reactivex.rxjava3.core.Maybe.just(certificateManager.defaultCertificateProvider());
+                        }))
+                        .toSingle();
+
+        return certSingle.map(certProvider -> {
+            String signedToken = certProvider.getJwtBuilder().sign(jwt, AUTH_TOKEN_TYP);
+            return new AAuthTokenResponse(signedToken, expiresIn);
+        });
     }
 
     /**
@@ -116,34 +132,35 @@ public class AAuthTokenService {
      */
     private Map<String, Object> publicKeyToJwk(PublicKey publicKey) {
         var jwk = new LinkedHashMap<String, Object>();
-
-        if (publicKey instanceof EdECPublicKey edKey) {
+        if (publicKey instanceof EdECPublicKey) {
             jwk.put("kty", "OKP");
             jwk.put("crv", "Ed25519");
-            // Extract raw 32-byte key from the encoded form
-            byte[] encoded = edKey.getEncoded();
-            byte[] raw = new byte[32];
-            System.arraycopy(encoded, encoded.length - 32, raw, 0, 32);
-            jwk.put("x", Base64.getUrlEncoder().withoutPadding().encodeToString(raw));
+            // Extract the raw 32-byte Ed25519 key from the X.509 encoded form
+            byte[] encoded = publicKey.getEncoded();
+            byte[] rawKey = new byte[32];
+            System.arraycopy(encoded, encoded.length - 32, rawKey, 0, 32);
+            jwk.put("x", Base64.getUrlEncoder().withoutPadding().encodeToString(rawKey));
         } else if (publicKey instanceof ECPublicKey ecKey) {
             jwk.put("kty", "EC");
             jwk.put("crv", "P-256");
-            byte[] x = toFixedLength(ecKey.getW().getAffineX().toByteArray(), 32);
-            byte[] y = toFixedLength(ecKey.getW().getAffineY().toByteArray(), 32);
-            jwk.put("x", Base64.getUrlEncoder().withoutPadding().encodeToString(x));
-            jwk.put("y", Base64.getUrlEncoder().withoutPadding().encodeToString(y));
+            byte[] x = ecKey.getW().getAffineX().toByteArray();
+            byte[] y = ecKey.getW().getAffineY().toByteArray();
+            // Ensure 32-byte fixed-length encoding
+            jwk.put("x", Base64.getUrlEncoder().withoutPadding().encodeToString(toFixedLength(x, 32)));
+            jwk.put("y", Base64.getUrlEncoder().withoutPadding().encodeToString(toFixedLength(y, 32)));
+        } else {
+            throw new IllegalArgumentException("Unsupported public key type: " + publicKey.getClass());
         }
-
         return jwk;
     }
 
-    private byte[] toFixedLength(byte[] input, int length) {
-        if (input.length == length) return input;
+    private byte[] toFixedLength(byte[] value, int length) {
+        if (value.length == length) return value;
         byte[] result = new byte[length];
-        if (input.length > length) {
-            System.arraycopy(input, input.length - length, result, 0, length);
+        if (value.length > length) {
+            System.arraycopy(value, value.length - length, result, 0, length);
         } else {
-            System.arraycopy(input, 0, result, length - input.length, input.length);
+            System.arraycopy(value, 0, result, length - value.length, value.length);
         }
         return result;
     }

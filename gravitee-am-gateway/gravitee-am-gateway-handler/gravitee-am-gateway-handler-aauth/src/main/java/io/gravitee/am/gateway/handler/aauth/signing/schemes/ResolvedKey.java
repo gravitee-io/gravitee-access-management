@@ -20,13 +20,25 @@ import java.security.PublicKey;
 /**
  * Result of resolving a public key from a Signature-Key header via a scheme.
  *
- * @param publicKey    the resolved public key
- * @param algorithm    Java algorithm name for signature verification (e.g. "Ed25519", "SHA256withECDSA")
- * @param jwkThumbprint RFC 7638 JWK Thumbprint — base64url-encoded SHA-256 hash of the canonical JWK
+ * @param publicKey       the resolved public key
+ * @param algorithm       Java algorithm name for signature verification (e.g. "Ed25519", "SHA256withECDSA")
+ * @param jwkThumbprint   RFC 7638 JWK Thumbprint — base64url-encoded SHA-256 hash of the canonical JWK
+ * @param agentServerUrl  the agent server URL for JWKS discovery and Application lookup (jwt/jwks_uri schemes),
+ *                        or {@code null} for pseudonymous (hwk)
+ * @param agentIdentifier the agent identifier in {@code aauth:local@domain} format (jwt scheme only, from jwt.sub),
+ *                        or {@code null} when not available
  */
 public record ResolvedKey(
         PublicKey publicKey,
         String algorithm,
-        String jwkThumbprint
+        String jwkThumbprint,
+        String agentServerUrl,
+        String agentIdentifier
 ) {
+    /**
+     * Constructor for schemes that don't resolve agent identity (e.g. hwk).
+     */
+    public ResolvedKey(PublicKey publicKey, String algorithm, String jwkThumbprint) {
+        this(publicKey, algorithm, jwkThumbprint, null, null);
+    }
 }

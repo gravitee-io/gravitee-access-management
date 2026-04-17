@@ -57,16 +57,16 @@ public class ResourceTokenValidatorTest {
     public void shouldValidate_validResourceToken() throws Exception {
         String psUrl = "https://ps.example.com/aauth";
         String resourceToken = resourceServer.issueResourceToken(
-                psUrl, "https://agent.example", agentThumbprint, "read write");
+                psUrl, "aauth:bot@agent.example", agentThumbprint, "read write");
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         ResourceTokenClaims claims = validator.validate(resourceToken, verification, psUrl);
 
         assertEquals(resourceServer.baseUrl(), claims.iss());
         assertEquals(psUrl, claims.aud());
-        assertEquals("https://agent.example", claims.agent());
+        assertEquals("aauth:bot@agent.example", claims.agent());
         assertEquals(agentThumbprint, claims.agentJkt());
         assertEquals("read write", claims.scope());
         assertNotNull(claims.jti());
@@ -80,10 +80,10 @@ public class ResourceTokenValidatorTest {
         long now = java.time.Instant.now().getEpochSecond();
         String token = resourceServer.issueCustomResourceToken(
                 "at+jwt", "aauth-resource.json", resourceServer.baseUrl(), psUrl,
-                "https://agent.example", agentThumbprint, now, now + 300);
+                "aauth:bot@agent.example", agentThumbprint, now, now + 300);
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         try {
             validator.validate(token, verification, psUrl);
@@ -100,10 +100,10 @@ public class ResourceTokenValidatorTest {
         long now = java.time.Instant.now().getEpochSecond();
         String token = resourceServer.issueCustomResourceToken(
                 "aa-resource+jwt", "aauth-agent.json", resourceServer.baseUrl(), psUrl,
-                "https://agent.example", agentThumbprint, now, now + 300);
+                "aauth:bot@agent.example", agentThumbprint, now, now + 300);
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         try {
             validator.validate(token, verification, psUrl);
@@ -120,10 +120,10 @@ public class ResourceTokenValidatorTest {
         long now = java.time.Instant.now().getEpochSecond();
         String token = resourceServer.issueCustomResourceToken(
                 "aa-resource+jwt", "aauth-resource.json", resourceServer.baseUrl(), psUrl,
-                "https://agent.example", agentThumbprint, now - 600, now - 300);
+                "aauth:bot@agent.example", agentThumbprint, now - 600, now - 300);
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         try {
             validator.validate(token, verification, psUrl);
@@ -137,11 +137,11 @@ public class ResourceTokenValidatorTest {
     public void shouldReject_wrongAudience() throws Exception {
         String psUrl = "https://ps.example.com/aauth";
         String resourceToken = resourceServer.issueResourceToken(
-                "https://other-ps.example.com/aauth", "https://agent.example",
+                "https://other-ps.example.com/aauth", "aauth:bot@agent.example",
                 agentThumbprint, "read");
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         try {
             validator.validate(resourceToken, verification, psUrl);
@@ -159,7 +159,7 @@ public class ResourceTokenValidatorTest {
                 psUrl, "https://other-agent.example", agentThumbprint, "read");
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         try {
             validator.validate(resourceToken, verification, psUrl);
@@ -174,10 +174,10 @@ public class ResourceTokenValidatorTest {
     public void shouldReject_agentJktMismatch() throws Exception {
         String psUrl = "https://ps.example.com/aauth";
         String resourceToken = resourceServer.issueResourceToken(
-                psUrl, "https://agent.example", "wrong-thumbprint", "read");
+                psUrl, "aauth:bot@agent.example", "wrong-thumbprint", "read");
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         try {
             validator.validate(resourceToken, verification, psUrl);
@@ -194,10 +194,10 @@ public class ResourceTokenValidatorTest {
         long now = java.time.Instant.now().getEpochSecond();
         String token = resourceServer.issueCustomResourceToken(
                 "aa-resource+jwt", "aauth-resource.json", resourceServer.baseUrl(), psUrl,
-                "https://agent.example", agentThumbprint, now + 600, now + 900);
+                "aauth:bot@agent.example", agentThumbprint, now + 600, now + 900);
 
         VerificationResult verification = new VerificationResult(
-                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example");
+                "hwk", "sig", agentKeyPair.getPublic(), agentThumbprint, "https://agent.example", "aauth:bot@agent.example");
 
         try {
             validator.validate(token, verification, psUrl);

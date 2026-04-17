@@ -147,7 +147,7 @@ public class AAuthConsentHandler implements Handler<RoutingContext> {
         try {
             PublicKey agentKey = AAuthKeyUtils.deserializePublicKey(pending.getAgentPublicKey());
             VerificationResult verification = new VerificationResult(
-                    "jwt", "sig", agentKey, pending.getAgentJkt(), pending.getAgentId());
+                    "jwt", "sig", agentKey, pending.getAgentJkt(), pending.getAgentId(), pending.getAgentSub());
 
             return tokenService.createAuthToken(rtClaims, verification, pending.getPsIssuerUrl(), userId)
                     .flatMap(response -> pendingRequestService.approve(

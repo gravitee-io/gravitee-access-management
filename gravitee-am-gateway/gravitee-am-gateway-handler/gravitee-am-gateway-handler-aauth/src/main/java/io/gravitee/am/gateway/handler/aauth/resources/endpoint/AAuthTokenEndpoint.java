@@ -61,6 +61,13 @@ public class AAuthTokenEndpoint implements Handler<RoutingContext> {
         String psIssuerUrl = resolvePsIssuerUrl(ctx);
 
         try {
+            // Per spec Section 7.1.3: the PS token endpoint requires scheme=jwt
+            if (!"jwt".equals(verification.scheme())) {
+                sendError(ctx, 401, "invalid_request",
+                        "The PS token endpoint requires scheme=jwt (agent token). Received: " + verification.scheme());
+                return;
+            }
+
             // Validate resource token per spec Section 6.6.2
             var rtClaims = resourceTokenValidator.validate(tokenRequest.resourceToken(), verification, psIssuerUrl);
 
@@ -91,7 +98,7 @@ public class AAuthTokenEndpoint implements Handler<RoutingContext> {
 
         pendingService.create(
                 domainId,
-                verification.agentIdentityUrl(),
+                verification.agentServerUrl(),
                 rtClaims.agent(),
                 verification.jwkThumbprint(),
                 verification.publicKey(),

@@ -50,16 +50,16 @@ public class AAuthAgentRegistryImpl implements AAuthAgentRegistry {
 
     @Override
     public Maybe<Application> resolveOrCreate(VerificationResult verification, String domainId) {
-        String agentIdentityUrl = verification.agentIdentityUrl();
+        String agentServerUrl = verification.agentServerUrl();
 
         // Pseudonymous (hwk) → no identity URL → empty
-        if (agentIdentityUrl == null) {
+        if (agentServerUrl == null) {
             return Maybe.empty();
         }
 
-        return applicationService.findByDomainAndClientId(domainId, agentIdentityUrl)
+        return applicationService.findByDomainAndClientId(domainId, agentServerUrl)
                 .switchIfEmpty(Maybe.defer(() ->
-                        autoCreateApplication(domainId, agentIdentityUrl).toMaybe()));
+                        autoCreateApplication(domainId, agentServerUrl).toMaybe()));
     }
 
     private Single<Application> autoCreateApplication(String domainId, String agentMetadataUrl) {

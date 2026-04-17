@@ -76,7 +76,7 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     ctx.put(CONTEXT_PATH, "/testdomain");
                     ctx.put(AAuthSignatureHandler.AAUTH_VERIFICATION_CONTEXT_KEY,
-                            new VerificationResult("hwk", "sig", agentKeyPair.getPublic(), "thumbprint", "https://agent.example"));
+                            new VerificationResult("jwt", "sig", agentKeyPair.getPublic(), "thumbprint", "https://agent.example", "aauth:bot@agent.example"));
                     ctx.put(AAuthTokenRequestParseHandler.AAUTH_TOKEN_REQUEST_CONTEXT_KEY,
                             new AAuthTokenRequest("resource.token.jwt", null, null, null, null, null));
                     // Set a mock Application so the guard passes

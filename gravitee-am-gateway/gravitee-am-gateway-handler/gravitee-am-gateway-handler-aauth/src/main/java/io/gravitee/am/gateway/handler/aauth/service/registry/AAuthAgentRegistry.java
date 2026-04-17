@@ -32,7 +32,7 @@ public interface AAuthAgentRegistry {
     /**
      * Resolve or auto-create the Application for the given verified agent.
      *
-     * @param verification the signature verification result (must include agentIdentityUrl for non-pseudonymous)
+     * @param verification the signature verification result (must include agentServerUrl for non-pseudonymous)
      * @param domainId     the security domain ID
      * @return the Application, or empty for pseudonymous mode
      */

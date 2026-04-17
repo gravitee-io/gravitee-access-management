@@ -133,7 +133,7 @@ public class AAuthAgentRegistryImplTest {
         assertEquals(AGENT_URL, captor.getValue().getName());
     }
 
-    private VerificationResult verificationWith(String scheme, String agentIdentityUrl) {
-        return new VerificationResult(scheme, "sig", null, "thumbprint", agentIdentityUrl);
+    private VerificationResult verificationWith(String scheme, String agentServerUrl) {
+        return new VerificationResult(scheme, "sig", null, "thumbprint", agentServerUrl, null);
     }
 }

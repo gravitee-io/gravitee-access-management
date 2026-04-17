@@ -37,6 +37,7 @@ import io.gravitee.am.repository.oidc.api.AAuthPendingRequestRepository;
 import io.gravitee.am.gateway.handler.aauth.signing.AAuthSignatureVerifier;
 import io.gravitee.am.gateway.handler.aauth.signing.ReplayDetector;
 import io.gravitee.am.gateway.handler.aauth.signing.schemes.JWKSUriScheme;
+import io.gravitee.am.gateway.handler.aauth.signing.schemes.JWTScheme;
 import io.gravitee.am.gateway.handler.aauth.signing.schemes.SignatureSchemeFactory;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -72,9 +73,15 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public SignatureSchemeFactory signatureSchemeFactory(JWKSUriScheme jwksUriScheme) {
+    public JWTScheme jwtScheme(AgentMetadataFetcher fetcher) {
+        return new JWTScheme(fetcher);
+    }
+
+    @Bean
+    public SignatureSchemeFactory signatureSchemeFactory(JWKSUriScheme jwksUriScheme, JWTScheme jwtScheme) {
         var factory = new SignatureSchemeFactory();
         factory.register("jwks_uri", jwksUriScheme);
+        factory.register("jwt", jwtScheme);
         return factory;
     }
 
@@ -113,11 +120,10 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public AAuthTokenService aAuthTokenService(JWTService jwtService,
-                                                CertificateManager certificateManager,
+    public AAuthTokenService aAuthTokenService(CertificateManager certificateManager,
                                                 Domain domain) {
         int lifespan = domain.getAauth() != null ? domain.getAauth().getAuthTokenLifespan() : 300;
-        return new AAuthTokenService(jwtService, certificateManager, lifespan);
+        return new AAuthTokenService(certificateManager, lifespan);
     }
 
     @Bean

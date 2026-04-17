@@ -30,4 +30,14 @@ public interface JWTBuilder {
      */
     String sign(JWT payload);
 
+    /**
+     * Sign and encode JWT payload with a custom JOSE typ header.
+     * @param payload JWT payload
+     * @param typ the JOSE type (e.g. "aa-auth+jwt")
+     * @return signed and encoded token
+     */
+    default String sign(JWT payload, String typ) {
+        return sign(payload);
+    }
+
 }

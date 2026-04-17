@@ -94,11 +94,23 @@ public class DefaultJWTBuilder implements JWTBuilder {
 
     @Override
     public String sign(JWT payload) {
+        return signWithHeader(payload, header);
+    }
+
+    @Override
+    public String sign(JWT payload, String typ) {
+        JWSHeader customHeader = new JWSHeader.Builder(header)
+                .type(new JOSEObjectType(typ))
+                .build();
+        return signWithHeader(payload, customHeader);
+    }
+
+    private String signWithHeader(JWT payload, JWSHeader jwtHeader) {
         try {
             if (issuer != null && !payload.containsKey(Claims.ISS)) {
                 payload.setIss(issuer);
             }
-            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(payload));
+            SignedJWT signedJWT = new SignedJWT(jwtHeader, JWTClaimsSet.parse(payload));
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (ParseException ex) {

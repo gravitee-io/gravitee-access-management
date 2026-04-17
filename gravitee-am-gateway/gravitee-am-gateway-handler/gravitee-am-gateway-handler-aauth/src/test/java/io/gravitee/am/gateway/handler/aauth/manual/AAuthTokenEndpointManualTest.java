@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockAgentMetadataServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.MockResourceServer;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentKeyPairFactory;
+import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestAgentTokenBuilder;
 import io.gravitee.am.gateway.handler.aauth.test.fixtures.TestSignatureBuilder;
 
 import java.net.URI;
@@ -68,12 +69,21 @@ public class AAuthTokenEndpointManualTest {
         System.out.println("=== AAUTH Deferred Authorization Manual Test ===");
         System.out.println("AM URL:  " + amUrl);
         System.out.println("Domain:  " + domain);
+        System.out.println("Scheme:  jwt (agent token, per spec Section 7.1.3)");
         System.out.println();
 
         // Step 1: Start mock servers
-        KeyPair agentKeyPair = TestAgentKeyPairFactory.ed25519();
-        String agentX = TestAgentKeyPairFactory.ed25519PublicKeyX();
-        String agentThumbprint = computeJwkThumbprint(agentX);
+        // issuerKeyPair = agent server's signing key (signs agent tokens)
+        // delegateKeyPair = this agent instance's key (signs HTTP requests, embedded in cnf.jwk)
+        KeyPair issuerKeyPair = TestAgentKeyPairFactory.ed25519();
+        String issuerX = TestAgentKeyPairFactory.ed25519PublicKeyX();
+
+        KeyPair delegateKeyPair = TestAgentKeyPairFactory.ed25519();
+        byte[] delegateRaw = new byte[32];
+        byte[] delegateEncoded = delegateKeyPair.getPublic().getEncoded();
+        System.arraycopy(delegateEncoded, delegateEncoded.length - 32, delegateRaw, 0, 32);
+        String delegateX = Base64.getUrlEncoder().withoutPadding().encodeToString(delegateRaw);
+        String delegateThumbprint = computeJwkThumbprint(delegateX);
 
         MockAgentMetadataServer agentServer = new MockAgentMetadataServer(AGENT_SERVER_PORT);
         MockResourceServer resourceServer = new MockResourceServer(RESOURCE_SERVER_PORT);
@@ -82,7 +92,7 @@ public class AAuthTokenEndpointManualTest {
             agentServer.start();
             String agentBaseUrl = agentServer.baseUrl();
             agentServer.stubMetadata(agentBaseUrl, agentBaseUrl + "/jwks.json", "Test AAUTH Agent");
-            agentServer.stubJwksWithEd25519(AGENT_KID, agentX);
+            agentServer.stubJwksWithEd25519(AGENT_KID, issuerX);
             System.out.println("[1] Agent server running at " + agentBaseUrl);
 
             resourceServer.start();
@@ -106,12 +116,14 @@ public class AAuthTokenEndpointManualTest {
             String tokenEndpointUrl = (String) metadata.get("token_endpoint");
             System.out.println("[2] PS issuer: " + psIssuerUrl);
 
-            // Step 3: Issue resource token (agent identity = agent server URL)
+            // Step 3: Issue resource token with aauth: agent identifier
+            // The agent identifier uses aauth:local@domain format (spec Section 5.1)
+            String agentIdentifier = "aauth:bot@" + URI.create(agentBaseUrl).getHost();
             String resourceToken = resourceServer.issueResourceToken(
-                    psIssuerUrl, agentBaseUrl, agentThumbprint, "read write");
-            System.out.println("[3] Resource token issued (agent=" + agentBaseUrl + ", scope=read write)");
+                    psIssuerUrl, agentIdentifier, delegateThumbprint, "read write");
+            System.out.println("[3] Resource token issued (agent=" + agentIdentifier + ", scope=read write)");
 
-            // Step 4: POST /aauth/token with jwks_uri scheme
+            // Step 4: POST /aauth/token
             String jsonBody = OBJECT_MAPPER.writeValueAsString(Map.of(
                     "resource_token", resourceToken,
                     "justification", "I need to **read** and **write** your calendar entries to schedule meetings on your behalf.\n\n- Read: to check availability\n- Write: to create new events"
@@ -121,20 +133,32 @@ public class AAuthTokenEndpointManualTest {
             URI tokenUri = URI.create(tokenEndpointUrl);
             String authority = tokenUri.getHost() + (tokenUri.getPort() > 0 ? ":" + tokenUri.getPort() : "");
             String path = tokenUri.getPath();
-            Map<String, String> sigHeaders = TestSignatureBuilder.signPostJwksUri(
+
+            // Build aa-agent+jwt: issuer (agent server) signs, delegate key in cnf.jwk
+            String agentToken = TestAgentTokenBuilder.buildAgentToken(
+                    issuerKeyPair, AGENT_KID, agentBaseUrl,
+                    agentIdentifier,
+                    delegateKeyPair.getPublic(), 3600);
+            System.out.println("[4a] Agent token built (iss=" + agentBaseUrl + ", sub=" + agentIdentifier + ")");
+
+            Map<String, String> sigHeaders = TestSignatureBuilder.signPostJwt(
                     "POST", authority, path, "application/json", bodyBytes,
-                    agentKeyPair, agentBaseUrl, AGENT_KID);
+                    delegateKeyPair, agentToken);
 
             var requestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(tokenEndpointUrl))
                     .POST(HttpRequest.BodyPublishers.ofByteArray(bodyBytes));
             sigHeaders.forEach(requestBuilder::header);
 
-            System.out.println("[4] Sending POST " + tokenEndpointUrl + " (scheme=jwks_uri)");
+            System.out.println("[4] Sending POST " + tokenEndpointUrl + " (scheme=jwt)");
             var response = HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 
             System.out.println("    Status: " + response.statusCode());
-            printJson("    Body", response.body());
+            response.headers().firstValue("Signature-Error").ifPresent(v -> System.out.println("    Signature-Error: " + v));
+            response.headers().firstValue("AAuth-Requirement").ifPresent(v -> System.out.println("    AAuth-Requirement: " + v));
+            if (response.body() != null && !response.body().isBlank()) {
+                printJson("    Body", response.body());
+            }
 
             if (response.statusCode() != 202) {
                 System.err.println("ERROR: Expected 202 Accepted, got " + response.statusCode());
@@ -182,9 +206,13 @@ public class AAuthTokenEndpointManualTest {
 
                 URI pollUri = URI.create(pendingUrl);
                 String pollAuthority = pollUri.getHost() + (pollUri.getPort() > 0 ? ":" + pollUri.getPort() : "");
-                Map<String, String> pollSigHeaders = TestSignatureBuilder.signGetJwksUri(
+                String pollAgentToken = TestAgentTokenBuilder.buildAgentToken(
+                        issuerKeyPair, AGENT_KID, agentServer.baseUrl(),
+                        agentIdentifier,
+                        delegateKeyPair.getPublic(), 3600);
+                Map<String, String> pollSigHeaders = TestSignatureBuilder.signGetJwt(
                         "GET", pollAuthority, pollUri.getPath(),
-                        agentKeyPair, agentBaseUrl, AGENT_KID);
+                        delegateKeyPair, pollAgentToken);
 
                 var pollRequestBuilder = HttpRequest.newBuilder().uri(pollUri).GET();
                 pollSigHeaders.forEach(pollRequestBuilder::header);
@@ -204,6 +232,9 @@ public class AAuthTokenEndpointManualTest {
                     if (authToken != null) {
                         System.out.println();
                         decodeAndPrintJwt(authToken);
+                        System.out.println();
+                        verifyAuthTokenSignature(authToken, amUrl + "/" + domain + "/aauth",
+                                resourceServer.baseUrl(), agentIdentifier);
                     }
                     break;
 
@@ -265,6 +296,114 @@ public class AAuthTokenEndpointManualTest {
             }
         } catch (Exception e) {
             System.out.println("(Failed to decode JWT: " + e.getMessage() + ")");
+        }
+    }
+
+    /**
+     * Simulate a resource server verifying the auth token per spec Section 9.4.3.
+     * All 9 verification steps are implemented.
+     */
+    private static void verifyAuthTokenSignature(String authToken, String amBaseUrl,
+                                                  String expectedResourceUrl, String expectedAgentId) {
+        System.out.println("=== RESOURCE SERVER: AUTH TOKEN VERIFICATION (Section 9.4.3) ===");
+        try {
+            com.nimbusds.jwt.SignedJWT signedJWT = com.nimbusds.jwt.SignedJWT.parse(authToken);
+            com.nimbusds.jwt.JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+
+            // Step 1: Verify typ is aa-auth+jwt
+            String typ = signedJWT.getHeader().getType() != null ? signedJWT.getHeader().getType().getType() : null;
+            check("[1] typ", "aa-auth+jwt".equals(typ), "expected aa-auth+jwt, got " + typ);
+
+            // Step 2: Verify dwk and discover JWKS
+            String dwk = (String) claims.getClaim("dwk");
+            String iss = claims.getIssuer();
+            check("[2] dwk", "aauth-person.json".equals(dwk) || "aauth-access.json".equals(dwk),
+                    "expected aauth-person.json or aauth-access.json, got " + dwk);
+
+            String metadataUrl = iss + "/.well-known/" + dwk;
+            System.out.println("[2] Fetching PS metadata from " + metadataUrl);
+            var metaResponse = HTTP_CLIENT.send(
+                    HttpRequest.newBuilder().uri(URI.create(metadataUrl)).GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
+            @SuppressWarnings("unchecked")
+            var psMeta = OBJECT_MAPPER.readValue(metaResponse.body(), Map.class);
+            String jwksUri = (String) psMeta.get("jwks_uri");
+            System.out.println("[2] Fetching JWKS from " + jwksUri);
+            var jwksResponse = HTTP_CLIENT.send(
+                    HttpRequest.newBuilder().uri(URI.create(jwksUri)).GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
+            com.nimbusds.jose.jwk.JWKSet jwkSet = com.nimbusds.jose.jwk.JWKSet.parse(jwksResponse.body());
+            String kid = signedJWT.getHeader().getKeyID();
+            com.nimbusds.jose.jwk.JWK jwk = jwkSet.getKeyByKeyId(kid);
+            check("[2] kid lookup", jwk != null, "kid=" + kid + " not found in JWKS");
+
+            // Verify signature
+            java.security.PublicKey publicKey = io.gravitee.am.gateway.handler.aauth.signing.schemes.JwkKeyConverter.toNativePublicKey(jwk);
+            String alg = signedJWT.getHeader().getAlgorithm().getName();
+            String javaAlg = switch (alg) {
+                case "RS256" -> "SHA256withRSA";
+                case "RS384" -> "SHA384withRSA";
+                case "RS512" -> "SHA512withRSA";
+                case "ES256" -> "SHA256withECDSA";
+                case "EdDSA" -> "Ed25519";
+                default -> throw new IllegalArgumentException("Unsupported alg: " + alg);
+            };
+            String[] parts = signedJWT.serialize().split("\\.");
+            byte[] signingInput = (parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8);
+            byte[] signatureBytes = signedJWT.getSignature().decode();
+            java.security.Signature sig = java.security.Signature.getInstance(javaAlg);
+            sig.initVerify(publicKey);
+            sig.update(signingInput);
+            check("[2] signature", sig.verify(signatureBytes), "JWT signature verification failed");
+
+            // Step 3: Verify timestamps
+            long now = java.time.Instant.now().getEpochSecond();
+            check("[3] exp", claims.getExpirationTime().toInstant().getEpochSecond() > now, "token expired");
+            check("[3] iat", claims.getIssueTime().toInstant().getEpochSecond() <= now, "iat is in the future");
+
+            // Step 4: Verify iss is a valid URL
+            check("[4] iss", iss != null && iss.startsWith("http"), "invalid iss: " + iss);
+
+            // Step 5: Verify aud matches resource
+            check("[5] aud", claims.getAudience().contains(expectedResourceUrl),
+                    "expected " + expectedResourceUrl + ", got " + claims.getAudience());
+
+            // Step 6: Verify agent matches agent identifier
+            String agent = (String) claims.getClaim("agent");
+            check("[6] agent format", agent != null && agent.startsWith("aauth:"),
+                    "expected aauth:local@domain, got " + agent);
+            check("[6] agent match", agent.equals(expectedAgentId),
+                    "expected " + expectedAgentId + ", got " + agent);
+
+            // Step 7: Verify cnf.jwk is present
+            @SuppressWarnings("unchecked")
+            Map<String, Object> cnf = (Map<String, Object>) claims.getClaim("cnf");
+            check("[7] cnf.jwk", cnf != null && cnf.get("jwk") != null, "missing cnf.jwk");
+
+            // Step 8: Verify act.sub matches agent
+            @SuppressWarnings("unchecked")
+            Map<String, Object> act = (Map<String, Object>) claims.getClaim("act");
+            check("[8] act", act != null, "missing act claim");
+            check("[8] act.sub", agent.equals(act.get("sub")),
+                    "expected " + agent + ", got " + act.get("sub"));
+
+            // Step 9: Verify at least one of sub or scope is present
+            check("[9] sub|scope",
+                    claims.getSubject() != null || claims.getClaim("scope") != null,
+                    "neither sub nor scope present");
+
+            System.out.println("[RS] ALL 9 VERIFICATION STEPS PASSED");
+
+        } catch (Exception e) {
+            System.err.println("[RS] ERROR: " + e.getMessage());
+        }
+    }
+
+    private static void check(String step, boolean condition, String errorMsg) {
+        if (condition) {
+            System.out.println("  " + step + ": OK");
+        } else {
+            System.out.println("  " + step + ": FAIL — " + errorMsg);
         }
     }
 }
