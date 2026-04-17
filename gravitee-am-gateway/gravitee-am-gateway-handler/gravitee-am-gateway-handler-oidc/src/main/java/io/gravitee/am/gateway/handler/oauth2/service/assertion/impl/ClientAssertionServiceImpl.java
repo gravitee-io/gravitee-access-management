@@ -75,6 +75,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     private static final InvalidClientException NOT_VALID = new InvalidClientException("assertion is not valid");
+    private static final long WORKLOAD_JWT_CLOCK_SKEW_SECONDS = 60L;
 
     @Autowired
     @Qualifier("complexClientLookupService")
@@ -289,7 +290,9 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     private Maybe<Client> validateWorkloadJWT(String assertion, String basePath) {
         try {
             JWT jwt = JWTParser.parse(assertion);
-            SignedJWT signedJWT = (SignedJWT) jwt;
+            if (!(jwt instanceof SignedJWT signedJWT)) {
+                return Maybe.error(NOT_VALID);
+            }
 
             String iss = jwt.getJWTClaimsSet().getIssuer();
             String sub = jwt.getJWTClaimsSet().getSubject();
@@ -301,7 +304,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
-            if (exp.before(Date.from(Instant.now()))) {
+            if (exp.toInstant().isBefore(Instant.now().minusSeconds(WORKLOAD_JWT_CLOCK_SKEW_SECONDS))) {
                 return Maybe.error(new InvalidClientException("assertion has expired"));
             }
 
@@ -354,8 +357,8 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                                     return Maybe.just(agentClient);
                                 });
                     });
-        } catch (ClassCastException | ParseException ex) {
-            log.error("Failed to parse workload-jwt assertion: {}", ex.getMessage(), ex);
+        } catch (ParseException ex) {
+            log.debug("Failed to parse workload-jwt assertion: {}", ex.getMessage());
             return Maybe.error(NOT_VALID);
         }
     }
