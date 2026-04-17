@@ -145,6 +145,13 @@ public interface Claims {
      */
     String ACT = "act";
 
+    /**
+     * draft-mora-oauth-entity-profiles-00 - Client profile claim used to advertise
+     * the operating profile of the requesting client (e.g. agent profile).
+     * See <a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-00#name-client_profile-claim-2">draft-mora § client_profile</a>
+     */
+    String CLIENT_PROFILE = "client_profile";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF, CLIENT_ID);
