@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResource
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientBasicAuthProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.oidc.Client;
@@ -47,9 +48,14 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+<<<<<<< HEAD
 import static io.gravitee.am.common.web.UriBuilder.decodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.utils.CertificateUtils.extractPeerCertificate;
 import static io.gravitee.am.gateway.handler.common.utils.CertificateUtils.getThumbprint;
+=======
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.extractPeerCertificate;
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
+>>>>>>> 7bec21046 (refactor: share Basic auth urlDecode between client_id parsing and secret check (AM-4872))
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -231,10 +237,11 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 } else {
                     clientId = clientAuthentication;
                 }
-                // RFC 6749 §2.3.1: credentials in Basic auth are form-url-encoded.
-                // Percent-decode only, preserving literal '+' (most clients do not
-                // form-encode before Base64-encoding, so '+' is almost always literal).
-                clientId = decodeURIComponent(clientId.replace("+", "%2B"));
+                // RFC 6749 §2.3.1 expects form-url-encoded credentials inside the Base64
+                // payload. ClientBasicAuthProvider.urlDecode keeps that path consistent with
+                // how the secret is decoded (incl. the '+' preservation and IllegalArgumentException
+                // fallback), so the lookup id matches what the secret comparison sees.
+                clientId = ClientBasicAuthProvider.urlDecode(clientId);
             } else if(clientAssertion != null && clientAssertionType != null) {
                 JWT jwt = JWTParser.parse(clientAssertion);
                 clientId = jwt.getJWTClaimsSet().getSubject();
