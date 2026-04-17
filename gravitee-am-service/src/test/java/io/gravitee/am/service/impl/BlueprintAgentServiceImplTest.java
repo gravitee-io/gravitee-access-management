@@ -115,7 +115,7 @@ class BlueprintAgentServiceImplTest {
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
         given(applicationService.update(application)).willReturn(Single.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -142,7 +142,7 @@ class BlueprintAgentServiceImplTest {
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
         given(applicationService.update(application)).willReturn(Single.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -165,7 +165,7 @@ class BlueprintAgentServiceImplTest {
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
         given(applicationService.update(application)).willReturn(Single.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -183,7 +183,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, keyWithoutKid).test();
+        var testObserver = service.addAgentKey(appId, keyWithoutKid, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "JWK must have a kid".equals(e.getMessage()));
@@ -199,7 +199,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, keyWithBlankKid).test();
+        var testObserver = service.addAgentKey(appId, keyWithBlankKid, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "JWK must have a kid".equals(e.getMessage()));
@@ -219,7 +219,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, duplicateKey).test();
+        var testObserver = service.addAgentKey(appId, duplicateKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "A key with kid 'duplicate-kid' already exists".equals(e.getMessage()));
@@ -241,7 +241,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "Maximum number of public keys (2) reached".equals(e.getMessage()));
@@ -254,7 +254,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.error(new ApplicationNotFoundException(appId)));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(ApplicationNotFoundException.class);
     }
@@ -268,7 +268,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "Application is not in agent identity mode".equals(e.getMessage()));
@@ -283,7 +283,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "Application has no agent settings configured".equals(e.getMessage()));
@@ -298,7 +298,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
     }
@@ -312,7 +312,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.addAgentKey(appId, newKey).test();
+        var testObserver = service.addAgentKey(appId, newKey, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
     }
@@ -332,7 +332,7 @@ class BlueprintAgentServiceImplTest {
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
         given(applicationService.update(application)).willReturn(Single.just(application));
 
-        var testObserver = service.removeAgentKey(appId, "kid-to-remove").test();
+        var testObserver = service.removeAgentKey(appId, "kid-to-remove", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -358,7 +358,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.removeAgentKey(appId, "non-existent-kid").test();
+        var testObserver = service.removeAgentKey(appId, "non-existent-kid", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "Key with kid 'non-existent-kid' not found".equals(e.getMessage()));
@@ -371,7 +371,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.removeAgentKey(appId, "any-kid").test();
+        var testObserver = service.removeAgentKey(appId, "any-kid", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "No keys found on this application".equals(e.getMessage()));
@@ -386,7 +386,7 @@ class BlueprintAgentServiceImplTest {
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
-        var testObserver = service.removeAgentKey(appId, "any-kid").test();
+        var testObserver = service.removeAgentKey(appId, "any-kid", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(e -> "No keys found on this application".equals(e.getMessage()));
@@ -397,7 +397,7 @@ class BlueprintAgentServiceImplTest {
     void testRemoveAgentKeyAppNotFound() {
         given(applicationService.findById(appId)).willReturn(Maybe.error(new ApplicationNotFoundException(appId)));
 
-        var testObserver = service.removeAgentKey(appId, "any-kid").test();
+        var testObserver = service.removeAgentKey(appId, "any-kid", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(ApplicationNotFoundException.class);
     }
