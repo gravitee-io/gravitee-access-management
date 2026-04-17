@@ -39,9 +39,22 @@ public class SSRFValidator {
      * @throws CIMDException if validation fails
      */
     public void validate(URI uri, CIMDSettings settings) {
+        validateAndResolve(uri, settings);
+    }
+
+    /**
+     * Validate a URI and return the resolved {@link InetAddress} so callers can
+     * pin the HTTP connection to the exact IP that was validated. Using the
+     * returned address for the subsequent HTTP fetch prevents DNS rebinding:
+     * without pinning, the HTTP client performs its own resolution that an
+     * attacker with a short-TTL record can flip to a private/internal IP.
+     *
+     * @throws CIMDException if validation fails
+     */
+    public InetAddress validateAndResolve(URI uri, CIMDSettings settings) {
         validateScheme(uri, settings);
         validateDomainWhitelist(uri, settings);
-        validateIpAddress(uri, settings);
+        return validateIpAddress(uri, settings);
     }
 
     private void validateScheme(URI uri, CIMDSettings settings) {
@@ -74,24 +87,25 @@ public class SSRFValidator {
         }
     }
 
-    private void validateIpAddress(URI uri, CIMDSettings settings) {
-        if (settings.isAllowPrivateIpAddress()) {
-            return; // no IP restrictions
-        }
-
+    private InetAddress validateIpAddress(URI uri, CIMDSettings settings) {
         String host = uri.getHost();
         if (host == null) {
-            return;
+            return null;
         }
 
+        InetAddress address;
         try {
-            InetAddress address = InetAddress.getByName(host);
-            if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress() || address.isAnyLocalAddress()) {
-                throw new CIMDException("CIMD metadata URI resolves to a private/loopback address (not allowed by domain policy)");
-            }
+            address = InetAddress.getByName(host);
         } catch (UnknownHostException e) {
             throw new CIMDException("CIMD metadata URI host '" + host + "' could not be resolved");
         }
+
+        if (!settings.isAllowPrivateIpAddress()
+                && (address.isLoopbackAddress() || address.isSiteLocalAddress()
+                || address.isLinkLocalAddress() || address.isAnyLocalAddress())) {
+            throw new CIMDException("CIMD metadata URI resolves to a private/loopback address (not allowed by domain policy)");
+        }
+        return address;
     }
 
     static boolean matchesDomain(String host, String pattern) {

@@ -403,17 +403,15 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     /**
      * Resolve JWKS for signature verification.
-     * CIMD metadata JWKS takes precedence over blueprint agent JWKS.
+     *
+     * Security: signature verification MUST only trust the blueprint's registered JWKS
+     * (the pre-established trust anchor). CIMD metadata is fetched from a URI supplied
+     * by the JWT issuer, which is attacker-controllable. Trusting metadata-supplied
+     * JWKS would allow an attacker to serve their own public key and impersonate the
+     * blueprint by pointing `iss` at their own server and returning the victim's
+     * software_id.
      */
     private JWKSet resolveJwks(BlueprintResult result) {
-        // 1. Check CIMD metadata inline JWKS
-        if (result.metadata() != null && result.metadata().getJwks() != null
-                && result.metadata().getJwks().isPresent()) {
-            log.debug("Using JWKS from CIMD metadata document");
-            return result.metadata().getJwks().get();
-        }
-        // 2. Fall back to blueprint's registered agent JWKS
-        log.debug("Using JWKS from blueprint agent registration");
         return result.client().getAgentJwks();
     }
 
