@@ -127,15 +127,17 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
                         }
                     }
 
-                    String body = response.bodyAsString();
-                    if (body == null || body.isEmpty()) {
+                    io.vertx.core.buffer.Buffer bodyBuffer = response.body();
+                    if (bodyBuffer == null || bodyBuffer.length() == 0) {
                         return Single.error(new CIMDException("CIMD metadata response is empty for URI: " + clientIdUri));
                     }
 
-                    if (body.length() > maxSizeBytes) {
+                    if (bodyBuffer.length() > maxSizeBytes) {
                         return Single.error(new CIMDException(
                                 "CIMD metadata response exceeds maximum size of " + settings.getMaxResponseSizeKb() + "KB for URI: " + clientIdUri));
                     }
+
+                    String body = bodyBuffer.toString(java.nio.charset.StandardCharsets.UTF_8);
 
                     try {
                         CIMDMetadataDocument document = objectMapper.readValue(body, CIMDMetadataDocument.class);
