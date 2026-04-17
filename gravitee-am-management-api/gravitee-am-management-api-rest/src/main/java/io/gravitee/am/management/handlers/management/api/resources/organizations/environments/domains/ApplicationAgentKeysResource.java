@@ -92,9 +92,10 @@ public class ApplicationAgentKeysResource extends AbstractResource {
             java.util.Map<String, Object> rawKey,
             @Suspended final AsyncResponse response) {
 
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_OPENID, Acl.UPDATE)
                 .andThen(Single.fromCallable(() -> AgentJwkMapper.fromRaw(rawKey)))
-                .flatMap(key -> blueprintAgentService.addAgentKey(application, key))
+                .flatMap(key -> blueprintAgentService.addAgentKey(application, key, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -117,8 +118,9 @@ public class ApplicationAgentKeysResource extends AbstractResource {
             @PathParam("kid") String kid,
             @Suspended final AsyncResponse response) {
 
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_OPENID, Acl.UPDATE)
-                .andThen(blueprintAgentService.removeAgentKey(application, kid))
+                .andThen(blueprintAgentService.removeAgentKey(application, kid, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 }
