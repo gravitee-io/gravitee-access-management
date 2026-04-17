@@ -39,7 +39,9 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientBasicAuthProvider.urlDecode;
 import static java.util.List.of;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -271,11 +273,7 @@ public class ClientBasicAuthProviderTest {
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
-    /**
-     * AM-4872: Client IDs containing '+' must authenticate successfully.
-     * The urlDecode method uses URLDecoder.decode which treats '+' as space,
-     * causing authentication to fail when client_id contains literal '+' characters.
-     */
+    // AM-4872: client_id / client_secret containing '+' must authenticate via Basic auth.
     @Test
     public void shouldAuthenticateClient_clientIdWithPlusSign() throws Exception {
         Client client = mock(Client.class);
@@ -308,10 +306,61 @@ public class ClientBasicAuthProviderTest {
         authProvider.handle(client, context, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
-            Assert.assertNotNull("Client with '+' in ID should authenticate successfully", clientAsyncResult.result());
+            Assert.assertTrue("Client with '+' in ID should authenticate successfully", clientAsyncResult.succeeded());
+            assertEquals("my+client-id", clientAsyncResult.result().getClientId());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void shouldFailAuthentication_whenBasicPayloadMissingColon() throws Exception {
+        Client client = mock(Client.class);
+
+        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        // Base64("my-client-id") — no colon separator between id and secret
+        vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlk");
+        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.handle(client, context, asyncResult -> {
+            latch.countDown();
+            Assert.assertTrue(asyncResult.failed());
+            Assert.assertTrue(asyncResult.cause() instanceof InvalidClientException);
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void urlDecode_preservesLiteralPlus() {
+        assertEquals("my+client-id", urlDecode("my+client-id"));
+    }
+
+    @Test
+    public void urlDecode_decodesPercentEncodedPlus() {
+        assertEquals("my+client-id", urlDecode("my%2Bclient-id"));
+    }
+
+    @Test
+    public void urlDecode_decodesPercentEncodedSpace() {
+        assertEquals("my client", urlDecode("my%20client"));
+    }
+
+    @Test
+    public void urlDecode_handlesMixedPlusAndPercentEncoding() {
+        assertEquals("foo+bar baz", urlDecode("foo%2Bbar%20baz"));
+        assertEquals("foo+bar+baz", urlDecode("foo+bar%2Bbaz"));
+    }
+
+    @Test
+    public void urlDecode_fallsBackToRawOnMalformedEncoding() {
+        assertEquals("invalid%", urlDecode("invalid%"));
+        assertEquals("bad%ZZ", urlDecode("bad%ZZ"));
     }
 
     @Test
