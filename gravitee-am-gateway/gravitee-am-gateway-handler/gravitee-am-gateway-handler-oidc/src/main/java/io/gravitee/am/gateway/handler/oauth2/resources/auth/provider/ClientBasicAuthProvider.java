@@ -109,21 +109,17 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
     }
 
     /**
-     * @param value
-     * @return the URL value version of value or the input value if the URLDecode fails
+     * Decode a credential extracted from a Basic auth header.
+     *
+     * <p>RFC 6749 §2.3.1 specifies form-url-encoded credentials inside the Base64 payload, but
+     * AM has historically accepted unencoded credentials. We preserve that compatibility by
+     * escaping any literal '+' to '%2B' before {@link URLDecoder#decode}, so '+' is not
+     * silently turned into a space. Properly encoded credentials still decode correctly.
      */
-    private static String urlDecode(String value) {
+    public static String urlDecode(String value) {
         try {
-            // Preserve literal '+' characters: although RFC 6749 Section 2.3.1 specifies
-            // form-urlencoded rules (where '+' means space), many clients send literal '+'
-            // characters. We escape it to '%2B' before decoding to support them.
             return URLDecoder.decode(value.replace("+", "%2B"), UTF_8);
         } catch (IllegalArgumentException e) {
-            // Introduced to fix https://github.com/gravitee-io/issues/issues/8501.
-            // https://github.com/gravitee-io/issues/issues/7803 introduced a URL decoding
-            // action on the clientSecret/clientId to be compliant to the RFC. To avoid breaking the
-            // behaviour for customer that are using some special characters like '%', we fall back to the
-            // raw value if the URL decode process fails.
             return value;
         }
     }
