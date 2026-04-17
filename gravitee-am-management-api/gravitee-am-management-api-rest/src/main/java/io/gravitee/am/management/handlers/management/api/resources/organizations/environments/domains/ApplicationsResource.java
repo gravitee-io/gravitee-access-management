@@ -109,16 +109,20 @@ public class ApplicationsResource extends AbstractDomainResource {
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
         final Set<ApplicationExpand> expands = convertToApplicationExpands(expandsParam);
+        // When agentIdentityMode filter is set, fetch unpaginated and paginate in memory
+        // to avoid incorrect totals from filtering a single page slice.
+        int repoPage = agentIdentityMode == null ? page : 0;
+        int repoSize = agentIdentityMode == null ? size : Integer.MAX_VALUE;
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
                 .andThen(checkDomainExists(domain).ignoreElement())
                 .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
                         .filter(hasPermission -> hasPermission)
-                        .flatMapSingle(__ -> listApplications(domain, page, size, query))
+                        .flatMapSingle(__ -> listApplications(domain, repoPage, repoSize, query))
                         .switchIfEmpty(
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
-                                        .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query))))
-                .map(apps -> filterByAgentIdentityMode(apps, agentIdentityMode))
+                                        .flatMap(ids -> listApplicationsByIds(domain, ids, repoPage, repoSize, query))))
+                .map(apps -> filterAndPaginate(apps, agentIdentityMode, page, size))
                 .map(apps ->
                         new ApplicationPage(
                                 apps.getData().stream().map(app -> FilteredApplication.of(app, expands)).toList(),
@@ -136,7 +140,7 @@ public class ApplicationsResource extends AbstractDomainResource {
                         .collect(Collectors.toSet());
     }
 
-    private static Page<Application> filterByAgentIdentityMode(Page<Application> apps, Boolean agentIdentityMode) {
+    private static Page<Application> filterAndPaginate(Page<Application> apps, Boolean agentIdentityMode, int page, int size) {
         if (agentIdentityMode == null) {
             return apps;
         }
@@ -148,7 +152,9 @@ public class ApplicationsResource extends AbstractDomainResource {
                     return agentIdentityMode == isAgent;
                 })
                 .toList();
-        return new Page<>(filtered, apps.getCurrentPage(), filtered.size());
+        int from = Math.min(page * size, filtered.size());
+        int to = Math.min(from + size, filtered.size());
+        return new Page<>(filtered.subList(from, to), page, filtered.size());
     }
 
     private Single<Page<Application>> listApplications(String domain, int page, int size, String query) {

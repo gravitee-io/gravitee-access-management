@@ -1025,6 +1025,10 @@ paths:
           type: array
           items:
             type: string
+      - name: agentIdentityMode
+        in: query
+        schema:
+          type: boolean
       responses:
         "200":
           description: List registered applications for a security domain
@@ -1243,6 +1247,136 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Application"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/agent/keys:
+    get:
+      tags:
+      - application
+      - domain
+      summary: List public keys of a blueprint agent application
+      description: "User must have APPLICATION_OPENID[READ] permission on the specified\
+        \ application"
+      operationId: listAgentKeys
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List agent keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JWK"
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - application
+      - domain
+      summary: Add a public key to a blueprint agent application
+      description: "User must have APPLICATION_OPENID[UPDATE] permission on the specified\
+        \ application"
+      operationId: addAgentKey
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: object
+      responses:
+        "200":
+          description: Key added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JWK"
+        "400":
+          description: Invalid key or max keys reached
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/agent/keys/{kid}:
+    delete:
+      tags:
+      - application
+      - domain
+      summary: Remove a public key from a blueprint agent application by kid
+      description: "User must have APPLICATION_OPENID[UPDATE] permission on the specified\
+        \ application"
+      operationId: removeAgentKey
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: kid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Key removed successfully
+        "400":
+          description: Key not found
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/analytics:
@@ -12100,6 +12234,39 @@ components:
           type: string
         type:
           type: string
+    AgentSettings:
+      type: object
+      properties:
+        agentType:
+          type: string
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
+        allowedGrantTypes:
+          type: array
+          items:
+            type: string
+        allowedScopes:
+          type: array
+          items:
+            type: string
+        clientAssertionType:
+          type: string
+        jwks:
+          $ref: "#/components/schemas/JWKSet"
+        maxPublicKeysPerWorkload:
+          type: integer
+          format: int32
+        refreshTokenEnabled:
+          type: boolean
+        requiredClaims:
+          type: object
+          additionalProperties:
+            type: string
+        tokenTtlSeconds:
+          type: integer
+          format: int32
     AlertNotifier:
       type: object
       properties:
@@ -12233,12 +12400,15 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         updatedAt:
           type: string
           format: date-time
     ApplicationAdvancedSettings:
       type: object
       properties:
+        agentIdentityMode:
+          type: boolean
         flowsInherited:
           type: boolean
         skipConsent:
@@ -12528,6 +12698,8 @@ components:
           $ref: "#/components/schemas/AccountSettings"
         advanced:
           $ref: "#/components/schemas/ApplicationAdvancedSettings"
+        agent:
+          $ref: "#/components/schemas/AgentSettings"
         cookieSettings:
           $ref: "#/components/schemas/CookieSettings"
         login:
@@ -13703,6 +13875,8 @@ components:
     FilteredApplication:
       type: object
       properties:
+        agentIdentityMode:
+          type: boolean
         clientId:
           type: string
         description:
@@ -13723,6 +13897,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
         updatedAt:
           type: string
           format: date-time
@@ -14225,6 +14400,10 @@ components:
       - type
       type: object
       properties:
+        agentIdentityMode:
+          type: boolean
+        agentSettings:
+          $ref: "#/components/schemas/AgentSettings"
         clientId:
           type: string
         clientSecret:
@@ -14249,6 +14428,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -15259,6 +15439,8 @@ components:
     PatchApplicationAdvancedSettings:
       type: object
       properties:
+        agentIdentityMode:
+          type: boolean
         flowsInherited:
           type: boolean
         skipConsent:
@@ -15480,6 +15662,8 @@ components:
           $ref: "#/components/schemas/AccountSettings"
         advanced:
           $ref: "#/components/schemas/PatchApplicationAdvancedSettings"
+        agent:
+          $ref: "#/components/schemas/AgentSettings"
         cookieSettings:
           $ref: "#/components/schemas/CookieSettings"
         login:
@@ -15583,6 +15767,7 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
+          - AGENT
     PatchCIBASettings:
       type: object
       properties:
