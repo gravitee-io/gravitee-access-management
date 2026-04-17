@@ -40,6 +40,7 @@ import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -253,6 +254,25 @@ public class IDTokenServiceImpl implements IDTokenService {
 
         // 4. Enhance ID token with custom claims
         enhanceIDToken(idToken, client.getTokenCustomClaims(), executionContext);
+
+        // Token Exchange (RFC 8693) - propagate "act" claim to id_token for delegation
+        if (oAuth2Request.isDelegation() && oAuth2Request.getActClaim() != null) {
+            idToken.put(Claims.ACT, oAuth2Request.getActClaim());
+        }
+
+        // Blueprint agent - inject "act" claim (mirrors access-token logic)
+        if (client.isAgentIdentityMode() && idToken.get(Claims.ACT) == null) {
+            if (client.getAgentType() == AgentType.USER_EMBEDDED) {
+                idToken.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
+            } else if (client.getBlueprintClientId() != null) {
+                idToken.put(Claims.ACT, Map.of(Claims.SUB, client.getBlueprintClientId()));
+            }
+        }
+
+        // Blueprint agent - advertise client_profile per draft-mora-oauth-entity-profiles-00
+        if (client.isAgentIdentityMode() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
+            idToken.put(Claims.CLIENT_PROFILE, client.getAgentType().name().toLowerCase());
+        }
 
         return idToken;
     }
