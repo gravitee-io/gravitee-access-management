@@ -11,6 +11,14 @@
   }
 }
 
+.agent-chip {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  min-height: 20px;
+}
+
 .gv-page-content {
   ngx-datatable {
     .app-header {

@@ -17,12 +17,13 @@
 -->
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Applications</h1>
-  <div *ngIf="!isEmpty" class="applications-search">
+  <div *ngIf="!isEmpty" class="applications-search" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
     <mat-form-field appearance="fill" floatLabel="always">
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Search for applications</mat-label>
       <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
     </mat-form-field>
+    <mat-slide-toggle [checked]="agentsOnly" (change)="onAgentsOnlyToggle($event.checked)">Agents only</mat-slide-toggle>
   </div>
   <div class="gv-page-content" *ngIf="!isEmpty">
     <ngx-datatable
@@ -61,7 +62,19 @@
               <svg width="40" height="40" [identiconHash]="row.name"></svg>
             </div>
             <div class="app-information" fxLayout="column">
-              <a [routerLink]="[row.id]">{{ row.name }}</a>
+              <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+                <a [routerLink]="[row.id]">{{ row.name }}</a>
+                <mat-chip
+                  *ngIf="row.agentIdentityMode"
+                  class="agent-chip"
+                  color="primary"
+                  selected
+                  matTooltip="Blueprint agent application"
+                  disableRipple
+                >
+                  Agent
+                </mat-chip>
+              </div>
               <small>{{ row.type }}</small>
             </div>
           </div>
