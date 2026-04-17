@@ -26,6 +26,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
 import java.util.Base64;
@@ -44,6 +46,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  */
 public class ClientBasicAuthProvider implements ClientAuthProvider {
 
+    private static final Logger logger = LoggerFactory.getLogger(ClientBasicAuthProvider.class);
     private static final String TYPE = "Basic";
 
     private final SecretService appSecretService;
@@ -109,17 +112,15 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
     }
 
     /**
-     * Decode a credential extracted from a Basic auth header.
-     *
-     * <p>RFC 6749 §2.3.1 specifies form-url-encoded credentials inside the Base64 payload, but
-     * AM has historically accepted unencoded credentials. We preserve that compatibility by
-     * escaping any literal '+' to '%2B' before {@link URLDecoder#decode}, so '+' is not
-     * silently turned into a space. Properly encoded credentials still decode correctly.
+     * Form-url-decode a Basic auth credential (RFC 6749 §2.3.1), but preserve literal '+'
+     * (escape to '%2B' first) since {@link URLDecoder} would otherwise map it to space.
+     * Falls back to the raw value on malformed input for backward compatibility.
      */
     public static String urlDecode(String value) {
         try {
             return URLDecoder.decode(value.replace("+", "%2B"), UTF_8);
         } catch (IllegalArgumentException e) {
+            logger.debug("Basic auth credential failed URL decoding, falling back to raw value");
             return value;
         }
     }
