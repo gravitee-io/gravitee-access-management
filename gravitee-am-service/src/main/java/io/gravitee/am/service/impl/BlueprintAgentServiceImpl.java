@@ -54,79 +54,77 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
     public Single<Application> addAgentKey(String applicationId, JWK key) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
-                .flatMap(application -> {
-                    AgentSettings agent = getAgentSettingsOrError(application);
+                .flatMap(application -> resolveAgentSettings(application)
+                        .flatMap(agent -> {
+                            if (key.getKid() == null || key.getKid().isBlank()) {
+                                return Single.error(new InvalidClientMetadataException("JWK must have a kid"));
+                            }
 
-                    if (key.getKid() == null || key.getKid().isBlank()) {
-                        return Single.error(new InvalidClientMetadataException("JWK must have a kid"));
-                    }
+                            JWKSet jwks = agent.getJwks();
+                            if (jwks == null) {
+                                jwks = new JWKSet();
+                                jwks.setKeys(new ArrayList<>());
+                                agent.setJwks(jwks);
+                            }
+                            if (jwks.getKeys() == null) {
+                                jwks.setKeys(new ArrayList<>());
+                            }
 
-                    JWKSet jwks = agent.getJwks();
-                    if (jwks == null) {
-                        jwks = new JWKSet();
-                        jwks.setKeys(new ArrayList<>());
-                        agent.setJwks(jwks);
-                    }
-                    if (jwks.getKeys() == null) {
-                        jwks.setKeys(new ArrayList<>());
-                    }
+                            boolean kidExists = jwks.getKeys().stream()
+                                    .anyMatch(k -> key.getKid().equals(k.getKid()));
+                            if (kidExists) {
+                                return Single.error(new InvalidClientMetadataException("A key with kid '" + key.getKid() + "' already exists"));
+                            }
 
-                    boolean kidExists = jwks.getKeys().stream()
-                            .anyMatch(k -> key.getKid().equals(k.getKid()));
-                    if (kidExists) {
-                        return Single.error(new InvalidClientMetadataException("A key with kid '" + key.getKid() + "' already exists"));
-                    }
+                            int maxKeys = agent.getMaxPublicKeysPerWorkload();
+                            if (jwks.getKeys().size() >= maxKeys) {
+                                return Single.error(new InvalidClientMetadataException(
+                                        "Maximum number of public keys (" + maxKeys + ") reached"));
+                            }
 
-                    int maxKeys = agent.getMaxPublicKeysPerWorkload();
-                    if (jwks.getKeys().size() >= maxKeys) {
-                        return Single.error(new InvalidClientMetadataException(
-                                "Maximum number of public keys (" + maxKeys + ") reached"));
-                    }
-
-                    jwks.getKeys().add(key);
-                    return applicationService.update(application)
-                            .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
-                                    .keyAdded()
-                                    .reference(Reference.domain(app.getDomain()))
-                                    .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
-                                            ? app.getSettings().getOauth().getClientId() : app.getId())
-                                    .assertionKid(key.getKid())));
-                });
+                            jwks.getKeys().add(key);
+                            return applicationService.update(application)
+                                    .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
+                                            .keyAdded()
+                                            .reference(Reference.domain(app.getDomain()))
+                                            .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
+                                                    ? app.getSettings().getOauth().getClientId() : app.getId())
+                                            .assertionKid(key.getKid())));
+                        }));
     }
 
     @Override
     public Single<Application> removeAgentKey(String applicationId, String kid) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
-                .flatMap(application -> {
-                    AgentSettings agent = getAgentSettingsOrError(application);
+                .flatMap(application -> resolveAgentSettings(application)
+                        .flatMap(agent -> {
+                            JWKSet jwks = agent.getJwks();
+                            if (jwks == null || jwks.getKeys() == null) {
+                                return Single.error(new InvalidClientMetadataException("No keys found on this application"));
+                            }
 
-                    JWKSet jwks = agent.getJwks();
-                    if (jwks == null || jwks.getKeys() == null) {
-                        return Single.error(new InvalidClientMetadataException("No keys found on this application"));
-                    }
+                            boolean removed = jwks.getKeys().removeIf(k -> kid.equals(k.getKid()));
+                            if (!removed) {
+                                return Single.error(new InvalidClientMetadataException("Key with kid '" + kid + "' not found"));
+                            }
 
-                    boolean removed = jwks.getKeys().removeIf(k -> kid.equals(k.getKid()));
-                    if (!removed) {
-                        return Single.error(new InvalidClientMetadataException("Key with kid '" + kid + "' not found"));
-                    }
-
-                    return applicationService.update(application)
-                            .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
-                                    .keyRemoved()
-                                    .reference(Reference.domain(app.getDomain()))
-                                    .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
-                                            ? app.getSettings().getOauth().getClientId() : app.getId())
-                                    .assertionKid(kid)));
-                });
+                            return applicationService.update(application)
+                                    .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
+                                            .keyRemoved()
+                                            .reference(Reference.domain(app.getDomain()))
+                                            .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
+                                                    ? app.getSettings().getOauth().getClientId() : app.getId())
+                                            .assertionKid(kid)));
+                        }));
     }
 
     @Override
     public Single<List<JWK>> listAgentKeys(String applicationId) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
-                .map(application -> {
-                    AgentSettings agent = getAgentSettingsOrError(application);
+                .flatMap(this::resolveAgentSettings)
+                .map(agent -> {
                     JWKSet jwks = agent.getJwks();
                     if (jwks == null || jwks.getKeys() == null) {
                         return Collections.emptyList();
@@ -135,16 +133,16 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
                 });
     }
 
-    private AgentSettings getAgentSettingsOrError(Application application) {
+    private Single<AgentSettings> resolveAgentSettings(Application application) {
         if (application.getSettings() == null
                 || application.getSettings().getAdvanced() == null
                 || !application.getSettings().getAdvanced().isAgentIdentityMode()) {
-            throw new InvalidClientMetadataException("Application is not in agent identity mode");
+            return Single.error(new InvalidClientMetadataException("Application is not in agent identity mode"));
         }
         AgentSettings agent = application.getSettings().getAgent();
         if (agent == null) {
-            throw new InvalidClientMetadataException("Application has no agent settings configured");
+            return Single.error(new InvalidClientMetadataException("Application has no agent settings configured"));
         }
-        return agent;
+        return Single.just(agent);
     }
 }

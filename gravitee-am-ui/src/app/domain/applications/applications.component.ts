@@ -29,6 +29,7 @@ import { ApplicationService } from '../../services/application.service';
 export class ApplicationsComponent implements OnInit {
   applications: any[];
   private searchValue: string;
+  agentsOnly = false;
   domainId: string;
   page: any = {};
 
@@ -57,13 +58,19 @@ export class ApplicationsComponent implements OnInit {
 
   loadApps() {
     const findApps = this.searchValue
-      ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*')
-      : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+      ? this.applicationService.search(this.domainId, '*' + this.searchValue + '*', this.agentsOnly)
+      : this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size, this.agentsOnly);
 
     findApps.subscribe((pagedApps) => {
       this.page.totalElements = pagedApps.totalCount;
       this.applications = pagedApps.data;
     });
+  }
+
+  onAgentsOnlyToggle(checked: boolean) {
+    this.agentsOnly = checked;
+    this.page.pageNumber = 0;
+    this.loadApps();
   }
 
   setPage(pageInfo) {

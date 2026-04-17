@@ -22,6 +22,7 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.BlueprintAgentService;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -91,16 +92,9 @@ public class ApplicationAgentKeysResource extends AbstractResource {
             java.util.Map<String, Object> rawKey,
             @Suspended final AsyncResponse response) {
 
-        final JWK key;
-        try {
-            key = AgentJwkMapper.fromRaw(rawKey);
-        } catch (io.gravitee.am.service.exception.InvalidClientMetadataException ex) {
-            response.resume(ex);
-            return;
-        }
-
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_OPENID, Acl.UPDATE)
-                .andThen(blueprintAgentService.addAgentKey(application, key))
+                .andThen(Single.fromCallable(() -> AgentJwkMapper.fromRaw(rawKey)))
+                .flatMap(key -> blueprintAgentService.addAgentKey(application, key))
                 .subscribe(response::resume, response::resume);
     }
 
