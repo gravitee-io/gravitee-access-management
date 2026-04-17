@@ -329,6 +329,7 @@ public class ApplicationResource extends AbstractResource {
                 filteredApplicationSettings.setCookieSettings(settings.getCookieSettings());
                 filteredApplicationSettings.setRiskAssessment(settings.getRiskAssessment());
                 filteredApplicationSettings.setSecretExpirationSettings(settings.getSecretExpirationSettings());
+                filteredApplicationSettings.setAgent(settings.getAgent());
             }
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {

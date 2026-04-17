@@ -88,8 +88,16 @@ public class ApplicationAgentKeysResource extends AbstractResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
-            JWK key,
+            java.util.Map<String, Object> rawKey,
             @Suspended final AsyncResponse response) {
+
+        final JWK key;
+        try {
+            key = AgentJwkMapper.fromRaw(rawKey);
+        } catch (io.gravitee.am.service.exception.InvalidClientMetadataException ex) {
+            response.resume(ex);
+            return;
+        }
 
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_OPENID, Acl.UPDATE)
                 .andThen(blueprintAgentService.addAgentKey(application, key))
