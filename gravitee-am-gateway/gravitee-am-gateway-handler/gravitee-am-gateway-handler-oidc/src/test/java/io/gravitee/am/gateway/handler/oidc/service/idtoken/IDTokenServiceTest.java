@@ -888,4 +888,74 @@ public class IDTokenServiceTest {
         return cert;
 
     }
+
+    @Test
+    public void shouldCreateIDToken_blueprintAgent_userEmbedded_setsActAndClientProfile() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("agent-client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        Client client = new Client();
+        client.setClientId("agent-client-id");
+        client.setCertificate("client-certificate");
+        client.setAgentIdentityMode(true);
+        client.setAgentType(io.gravitee.am.model.application.AgentType.USER_EMBEDDED);
+
+        io.gravitee.am.gateway.certificate.CertificateProvider clientCert = createCert(certificateProvider, "client-certificate");
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(anyString())).thenReturn(Maybe.just(clientCert));
+        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("payload"));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<JWT> captor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encode(captor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        JWT captured = captor.getValue();
+
+        Object act = captured.get(io.gravitee.am.common.jwt.Claims.ACT);
+        assertTrue(act instanceof Map);
+        assertEquals("agent-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
+        assertEquals("user_embedded", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
+    }
+
+    @Test
+    public void shouldCreateIDToken_blueprintAgent_workload_setsActToBlueprintAndClientProfile() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("blueprint-client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        Client client = new Client();
+        client.setClientId("blueprint-client-id");
+        client.setCertificate("client-certificate");
+        client.setAgentIdentityMode(true);
+        client.setAgentType(io.gravitee.am.model.application.AgentType.HOSTED_DELEGATED);
+        client.setBlueprintClientId("blueprint-client-id");
+        client.setAgentInstanceId("agent-instance-001");
+
+        io.gravitee.am.gateway.certificate.CertificateProvider clientCert = createCert(certificateProvider, "client-certificate");
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(anyString())).thenReturn(Maybe.just(clientCert));
+        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("payload"));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<JWT> captor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encode(captor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        JWT captured = captor.getValue();
+
+        Object act = captured.get(io.gravitee.am.common.jwt.Claims.ACT);
+        assertTrue(act instanceof Map);
+        assertEquals("blueprint-client-id", ((Map<?, ?>) act).get(io.gravitee.am.common.jwt.Claims.SUB));
+        assertEquals("hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
+    }
 }

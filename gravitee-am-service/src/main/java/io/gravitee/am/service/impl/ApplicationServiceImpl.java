@@ -384,10 +384,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             if (agentSettings == null) {
                 agentSettings = new AgentSettings();
             }
-            // ensure agentType is set on the settings block
-            if (agentSettings.getAgentType() == null && newApplication.getAgentSettings() != null) {
-                agentSettings.setAgentType(newApplication.getAgentSettings().getAgentType());
-            }
             applyAgentDefaults(agentSettings, oAuthSettings);
             applicationSettings.setAgent(agentSettings);
         }
