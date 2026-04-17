@@ -93,9 +93,11 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
             return Single.error(new CIMDException("Invalid CIMD metadata URI: " + clientIdUri, e));
         }
 
-        // SSRF validation
+        // SSRF validation — resolve host once and pin the IP for the HTTP fetch
+        // to prevent DNS rebinding between validation and connection.
+        final java.net.InetAddress pinnedAddress;
         try {
-            ssrfValidator.validate(uri, settings);
+            pinnedAddress = ssrfValidator.validateAndResolve(uri, settings);
         } catch (CIMDException e) {
             reportRejected(clientIdUri, domainId, e.getMessage(), uri.getHost());
             return Single.error(e);
@@ -104,7 +106,20 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
         int maxSizeBytes = settings.getMaxResponseSizeKb() * 1024;
         long fetchStart = System.currentTimeMillis();
 
-        return webClient.getAbs(clientIdUri)
+        // Rebuild the request against the pinned IP while preserving the original
+        // hostname for the HTTP Host header and TLS SNI (virtualHost).
+        boolean ssl = "https".equalsIgnoreCase(uri.getScheme());
+        int port = uri.getPort() != -1 ? uri.getPort() : (ssl ? 443 : 80);
+        String pathAndQuery = uri.getRawPath() == null || uri.getRawPath().isEmpty() ? "/" : uri.getRawPath();
+        if (uri.getRawQuery() != null) {
+            pathAndQuery = pathAndQuery + "?" + uri.getRawQuery();
+        }
+        String originalHost = uri.getHost();
+
+        return webClient.get(port, pinnedAddress.getHostAddress(), pathAndQuery)
+                .ssl(ssl)
+                .virtualHost(originalHost)
+                .putHeader("Host", uri.getPort() != -1 ? originalHost + ":" + uri.getPort() : originalHost)
                 .timeout(settings.getFetchTimeoutMs())
                 .rxSend()
                 .flatMap(response -> {
