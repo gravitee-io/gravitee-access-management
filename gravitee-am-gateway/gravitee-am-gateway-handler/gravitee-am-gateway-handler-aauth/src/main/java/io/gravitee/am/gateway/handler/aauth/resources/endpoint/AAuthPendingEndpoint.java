@@ -97,9 +97,25 @@ public class AAuthPendingEndpoint implements Handler<RoutingContext> {
                                                 .put("expires_in", request.getAuthTokenExpiresIn())
                                                 .encode());
 
+                                case AWAITING_CLARIFICATION -> {
+                                    var clarBody = new JsonObject()
+                                            .put("status", "pending")
+                                            .put("clarification", request.getClarification());
+                                    ctx.response()
+                                            .setStatusCode(202)
+                                            .putHeader("Location", pendingUrl)
+                                            .putHeader("Retry-After", "0")
+                                            .putHeader("Cache-Control", "no-store")
+                                            .putHeader("AAuth-Requirement", "requirement=clarification")
+                                            .putHeader("Content-Type", "application/json")
+                                            .end(clarBody.encode());
+                                }
+
                                 case DENIED -> sendError(ctx, 403, "denied", "User denied the request");
 
                                 case EXPIRED -> sendError(ctx, 408, "expired", "Pending request expired");
+
+                                case CANCELLED -> sendError(ctx, 410, "cancelled", "Agent cancelled the request");
                             }
                         },
                         err -> {

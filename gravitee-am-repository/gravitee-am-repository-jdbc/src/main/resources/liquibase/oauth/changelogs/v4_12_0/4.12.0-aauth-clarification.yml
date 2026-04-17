@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.12.0-aauth-pending-requests-clarification
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: aauth_pending_requests
+      changes:
+        - addColumn:
+            tableName: aauth_pending_requests
+            columns:
+              - column: { name: clarification, type: clob, constraints: { nullable: true } }
+              - column: { name: clarification_response, type: clob, constraints: { nullable: true } }
+              - column: { name: clarification_supported, type: boolean, defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: clarification_round_count, type: int, defaultValueNumeric: 0, constraints: { nullable: false } }

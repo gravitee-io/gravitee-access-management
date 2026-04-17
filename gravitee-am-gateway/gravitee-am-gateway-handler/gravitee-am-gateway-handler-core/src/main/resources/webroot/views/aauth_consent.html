@@ -7,6 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Agent Authorization</title>
 
+    <!-- Auto-refresh when waiting for agent clarification response -->
+    <meta th:if="${awaitingClarification}" http-equiv="refresh" content="5">
+
     <!-- CSS -->
     <link rel="stylesheet" th:href="@{assets/css/main.css}">
 
@@ -53,14 +56,41 @@
                 </div>
             </div>
 
+            <!-- Agent's clarification response -->
+            <div th:if="${clarificationResponse != null and !clarificationResponse.isEmpty()}" style="margin-top: 10px; margin-bottom: 10px; padding: 10px; background-color: #f5f5f5; border-left: 3px solid #4CAF50;">
+                <strong th:text="${agentName} + ' responded:'"></strong>
+                <div th:utext="${clarificationResponse}" style="margin-top: 5px;"></div>
+            </div>
+
+            <!-- Waiting for agent response -->
+            <div th:if="${awaitingClarification}" style="margin-top: 10px; margin-bottom: 10px; padding: 10px; background-color: #fff3e0; border-left: 3px solid #FF9800;">
+                <strong>Waiting for agent response...</strong>
+                <p class="grey">Your question has been sent to the agent. This page will refresh automatically.</p>
+            </div>
+
             <input type="hidden" name="code" th:value="${interactionCode}"/>
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-            <div>
-                <button type="submit" name="user_oauth_approval" value="true" class="button primary">Approve</button>
+            <!-- Clarification question form (only when supported, under max rounds, and not already waiting) -->
+            <!-- Approve / Deny buttons (always visible unless waiting) -->
+            <div th:unless="${awaitingClarification}">
+                <div>
+                    <button type="submit" name="user_oauth_approval" value="true" class="button primary">Approve</button>
+                </div>
+                <div>
+                    <button type="submit" name="user_oauth_approval" value="false" class="button secondary">Deny</button>
+                </div>
             </div>
-            <div>
-                <button type="submit" name="user_oauth_approval" value="false" class="button secondary">Deny</button>
+
+            <!-- Clarification question form (below approve/deny, only when supported) -->
+            <div th:if="${clarificationSupported and !awaitingClarification and clarificationRoundCount < maxClarificationRounds}"
+                 class="box" style="margin-top: 15px; text-align: left;">
+                <label class="grey" style="display: block; margin-bottom: 5px;">Have a question for the agent?</label>
+                <textarea name="clarification_question" class="input-field" placeholder="e.g. Why do you need write access?"
+                          rows="2" style="height: auto; resize: vertical;"></textarea>
+                <div style="margin-top: 8px;">
+                    <button type="submit" name="action" value="clarify" class="button secondary">Ask Question</button>
+                </div>
             </div>
         </form>
     </div>

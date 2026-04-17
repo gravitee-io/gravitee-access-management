@@ -62,6 +62,17 @@ public class JdbcAAuthPendingRequest {
     private long authTokenExpiresIn;
     @Column("user_id")
     private String userId;
+
+    private String clarification;
+
+    @Column("clarification_response")
+    private String clarificationResponse;
+
+    @Column("clarification_supported")
+    private boolean clarificationSupported;
+
+    @Column("clarification_round_count")
+    private int clarificationRoundCount;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("last_access_at")
@@ -125,6 +136,18 @@ public class JdbcAAuthPendingRequest {
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getClarification() { return clarification; }
+    public void setClarification(String clarification) { this.clarification = clarification; }
+
+    public String getClarificationResponse() { return clarificationResponse; }
+    public void setClarificationResponse(String clarificationResponse) { this.clarificationResponse = clarificationResponse; }
+
+    public boolean isClarificationSupported() { return clarificationSupported; }
+    public void setClarificationSupported(boolean clarificationSupported) { this.clarificationSupported = clarificationSupported; }
+
+    public int getClarificationRoundCount() { return clarificationRoundCount; }
+    public void setClarificationRoundCount(int clarificationRoundCount) { this.clarificationRoundCount = clarificationRoundCount; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

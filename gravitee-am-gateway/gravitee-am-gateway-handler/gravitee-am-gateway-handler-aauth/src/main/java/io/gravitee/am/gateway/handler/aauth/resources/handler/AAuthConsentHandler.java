@@ -91,8 +91,19 @@ public class AAuthConsentHandler implements Handler<RoutingContext> {
                 // Resolve the Application from the pending request
                 .flatMap(pending -> resolveApplication(pending)
                         .map(client -> new ResolvedContext(pending, client)))
-                // Mark as INTERACTING, then check consent cache
-                .flatMap(resolved -> pendingRequestService.markInteracting(resolved.pending.getId(), user.getId())
+                // Handle cancelled/awaiting states before proceeding to consent
+                .flatMap(resolved -> {
+                    String status = resolved.pending.getStatus();
+                    if (io.gravitee.am.gateway.handler.aauth.model.PendingRequestStatus.CANCELLED.name().equals(status)) {
+                        return Single.error(new HttpException(410, "The agent has cancelled this request"));
+                    }
+                    if (io.gravitee.am.gateway.handler.aauth.model.PendingRequestStatus.AWAITING_CLARIFICATION.name().equals(status)) {
+                        // Skip markInteracting — render the waiting page with the current state
+                        Set<String> requestedScopes = parseScopes(resolved.pending.getScope());
+                        return Single.just(new ConsentDecision(false, resolved.pending, resolved.client, requestedScopes));
+                    }
+                    // Normal flow: mark as INTERACTING, then check consent cache
+                    return pendingRequestService.markInteracting(resolved.pending.getId(), user.getId())
                         .andThen(Single.defer(() -> {
                             resolved.pending.setUserId(user.getId());
                             Set<String> requestedScopes = parseScopes(resolved.pending.getScope());
@@ -106,7 +117,8 @@ public class AAuthConsentHandler implements Handler<RoutingContext> {
                                         missing.removeAll(approvedScopes);
                                         return new ConsentDecision(false, resolved.pending, resolved.client, missing);
                                     });
-                        })))
+                        }));
+                })
                 // Produce the HTTP response: approve from cache or render consent page
                 .flatMapCompletable(decision -> processDecision(ctx, decision, user))
                 .subscribe(
@@ -180,6 +192,13 @@ public class AAuthConsentHandler implements Handler<RoutingContext> {
         ctx.put("interactionCode", pending.getInteractionCode());
         ctx.put("agentName", client.getClientName() != null ? client.getClientName() : pending.getAgentId());
         ctx.put("agentLogoUri", client.getLogoUri());
+        ctx.put("clarificationSupported", pending.isClarificationSupported());
+        ctx.put("clarificationResponse", MarkdownSanitizer.toSafeHtml(pending.getClarificationResponse()));
+        ctx.put("clarificationRoundCount", pending.getClarificationRoundCount());
+        ctx.put("maxClarificationRounds", 5);
+        ctx.put("awaitingClarification",
+                io.gravitee.am.gateway.handler.aauth.model.PendingRequestStatus.AWAITING_CLARIFICATION.name()
+                        .equals(pending.getStatus()));
 
         String templateName = Template.AAUTH_CONSENT.template()
                 + (client.getId() != null ? "|" + client.getId() : "");

@@ -89,15 +89,23 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
         }
 
         boolean approved = "true".equalsIgnoreCase(params.get(USER_APPROVAL_PARAM));
+        String clarificationQuestion = params.get("clarification_question");
+        boolean isClarification = clarificationQuestion != null && !clarificationQuestion.isBlank();
 
         // Resolve pending request and Application from DB (not session)
         pendingService.findByInteractionCode(code)
                 .switchIfEmpty(Single.error(() -> new HttpException(410, "Invalid or expired interaction code")))
                 .flatMap(pending -> resolveApplication(pending)
                         .map(client -> new ResolvedContext(pending, client)))
-                .flatMapCompletable(resolved -> approved
-                        ? approveFlow(ctx, resolved.pending, resolved.client, user, params)
-                        : denyFlow(ctx, resolved.pending))
+                .flatMapCompletable(resolved -> {
+                    if (isClarification) {
+                        return clarifyFlow(ctx, resolved.pending, clarificationQuestion, code);
+                    } else if (approved) {
+                        return approveFlow(ctx, resolved.pending, resolved.client, user, params);
+                    } else {
+                        return denyFlow(ctx, resolved.pending);
+                    }
+                })
                 .subscribe(
                         () -> { /* response already sent */ },
                         err -> {
@@ -135,6 +143,31 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
                                 "<p>You have authorized the agent. You can close this window.</p>" +
                                 "</body></html>"))
                 .ignoreElement();
+    }
+
+    private Completable clarifyFlow(RoutingContext ctx, AAuthPendingRequest pending,
+                                     String question, String code) {
+        return pendingService.askClarification(pending.getId(), question)
+                .ignoreElement()
+                .doOnComplete(() -> {
+                    // Redirect back to GET /consent so the page shows "waiting for agent"
+                    String consentUrl = resolveConsentUrl(ctx) + "?code=" + code;
+                    ctx.response()
+                            .putHeader("Location", consentUrl)
+                            .setStatusCode(302)
+                            .end();
+                });
+    }
+
+    private String resolveConsentUrl(RoutingContext ctx) {
+        try {
+            return io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest
+                    .resolveProxyRequest(ctx.request(),
+                            ctx.get(io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH))
+                    + "/aauth/consent";
+        } catch (Exception e) {
+            return "/aauth/consent";
+        }
     }
 
     private Completable denyFlow(RoutingContext ctx, AAuthPendingRequest pending) {

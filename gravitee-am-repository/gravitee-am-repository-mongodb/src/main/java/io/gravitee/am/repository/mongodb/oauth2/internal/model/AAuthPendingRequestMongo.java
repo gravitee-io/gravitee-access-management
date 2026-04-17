@@ -77,6 +77,17 @@ public class AAuthPendingRequestMongo {
     @BsonProperty("user_id")
     private String userId;
 
+    private String clarification;
+
+    @BsonProperty("clarification_response")
+    private String clarificationResponse;
+
+    @BsonProperty("clarification_supported")
+    private boolean clarificationSupported;
+
+    @BsonProperty("clarification_round_count")
+    private int clarificationRoundCount;
+
     @BsonProperty("created_at")
     private Date createdAt;
 
@@ -142,6 +153,18 @@ public class AAuthPendingRequestMongo {
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getClarification() { return clarification; }
+    public void setClarification(String clarification) { this.clarification = clarification; }
+
+    public String getClarificationResponse() { return clarificationResponse; }
+    public void setClarificationResponse(String clarificationResponse) { this.clarificationResponse = clarificationResponse; }
+
+    public boolean isClarificationSupported() { return clarificationSupported; }
+    public void setClarificationSupported(boolean clarificationSupported) { this.clarificationSupported = clarificationSupported; }
+
+    public int getClarificationRoundCount() { return clarificationRoundCount; }
+    public void setClarificationRoundCount(int clarificationRoundCount) { this.clarificationRoundCount = clarificationRoundCount; }
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }

@@ -126,7 +126,7 @@ public class AAuthTokenEndpointManualTest {
             // Step 4: POST /aauth/token
             String jsonBody = OBJECT_MAPPER.writeValueAsString(Map.of(
                     "resource_token", resourceToken,
-                    "justification", "I need to **read** and **write** your calendar entries to schedule meetings on your behalf.\n\n- Read: to check availability\n- Write: to create new events"
+                    "justification", "I need to **read** and **write** your calendar"
             ));
             byte[] bodyBytes = jsonBody.getBytes(StandardCharsets.UTF_8);
 
@@ -147,7 +147,8 @@ public class AAuthTokenEndpointManualTest {
 
             var requestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(tokenEndpointUrl))
-                    .POST(HttpRequest.BodyPublishers.ofByteArray(bodyBytes));
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(bodyBytes))
+                    .header("AAuth-Capabilities", "interaction, clarification");
             sigHeaders.forEach(requestBuilder::header);
 
             System.out.println("[4] Sending POST " + tokenEndpointUrl + " (scheme=jwt)");
@@ -242,7 +243,43 @@ public class AAuthTokenEndpointManualTest {
                     @SuppressWarnings("unchecked")
                     var pollBody = OBJECT_MAPPER.readValue(pollResponse.body(), Map.class);
                     String status = (String) pollBody.get("status");
-                    System.out.println("    Poll #" + pollCount + " -> 202 (" + status + ") [" + elapsed + "s elapsed]");
+                    String clarificationQuestion = (String) pollBody.get("clarification");
+                    String reqHeader = pollResponse.headers().firstValue("AAuth-Requirement").orElse("");
+
+                    if (clarificationQuestion != null && reqHeader.contains("requirement=clarification")) {
+                        // User asked a clarification question — respond automatically
+                        System.out.println("    Poll #" + pollCount + " -> 202 CLARIFICATION RECEIVED [" + elapsed + "s elapsed]");
+                        System.out.println("    User's question: " + clarificationQuestion);
+
+                        // Build a response
+                        String answer = "Thank you for asking! I need **read** access to check your calendar " +
+                                "availability, and **write** access to create meeting invites on your behalf. " +
+                                "I will only access events within the next 7 days.";
+                        System.out.println("    Agent's response: " + answer);
+
+                        // POST clarification_response to the pending URL
+                        String responseJson = OBJECT_MAPPER.writeValueAsString(
+                                Map.of("clarification_response", answer));
+                        byte[] responseBytes = responseJson.getBytes(StandardCharsets.UTF_8);
+
+                        String postAgentToken = TestAgentTokenBuilder.buildAgentToken(
+                                issuerKeyPair, AGENT_KID, agentServer.baseUrl(),
+                                agentIdentifier, delegateKeyPair.getPublic(), 3600);
+                        Map<String, String> postSigHeaders = TestSignatureBuilder.signPostJwt(
+                                "POST", pollAuthority, pollUri.getPath(),
+                                "application/json", responseBytes,
+                                delegateKeyPair, postAgentToken);
+
+                        var postBuilder = HttpRequest.newBuilder()
+                                .uri(pollUri)
+                                .POST(HttpRequest.BodyPublishers.ofByteArray(responseBytes));
+                        postSigHeaders.forEach(postBuilder::header);
+
+                        var postResponse = HTTP_CLIENT.send(postBuilder.build(), HttpResponse.BodyHandlers.ofString());
+                        System.out.println("    Clarification response sent -> " + postResponse.statusCode());
+                    } else {
+                        System.out.println("    Poll #" + pollCount + " -> 202 (" + status + ") [" + elapsed + "s elapsed]");
+                    }
 
                 } else if (pollStatus == 429) {
                     pollInterval = Math.min(pollInterval + 5, 30);

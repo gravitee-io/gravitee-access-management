@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.aauth;
 
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingDeleteEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPSMetadataEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
@@ -79,6 +81,12 @@ public class AAuthProvider extends AbstractProtocolProvider {
 
     @Autowired
     private AAuthPendingEndpoint aAuthPendingEndpoint;
+
+    @Autowired
+    private AAuthPendingPostEndpoint aAuthPendingPostEndpoint;
+
+    @Autowired
+    private AAuthPendingDeleteEndpoint aAuthPendingDeleteEndpoint;
 
     @Autowired
     private CookieSessionHandler sessionHandler;
@@ -148,6 +156,19 @@ public class AAuthProvider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(aAuthSignatureHandler)
                 .handler(aAuthPendingEndpoint);
+
+        // Pending POST — agent responds to clarification (spec Section 7.3.3.1)
+        aAuthRouter.route(HttpMethod.POST, "/pending/:id")
+                .handler(corsHandler)
+                .handler(BodyHandler.create())
+                .handler(aAuthSignatureHandler)
+                .handler(aAuthPendingPostEndpoint);
+
+        // Pending DELETE — agent cancels request (spec Section 7.3.3.3)
+        aAuthRouter.route(HttpMethod.DELETE, "/pending/:id")
+                .handler(corsHandler)
+                .handler(aAuthSignatureHandler)
+                .handler(aAuthPendingDeleteEndpoint);
 
         // --- User interaction entry point (like OIDC /authorize) ---
         // Resolves pending request, runs authentication flow (login, MFA, WebAuthn),

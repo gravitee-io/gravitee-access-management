@@ -155,6 +155,29 @@ public class AAuthPendingEndpointTest extends RxWebTestBase {
         assertEquals(403, json.statusCode);
     }
 
+    @Test
+    public void shouldReturn202WithClarification_whenAwaitingClarification() throws Exception {
+        var pending = createPending(PendingRequestStatus.AWAITING_CLARIFICATION);
+        pending.setClarification("Why do you need write access?");
+        when(pendingService.poll(eq("abc123"), eq(agentJkt))).thenReturn(Maybe.just(pending));
+
+        var json = fetchJson("abc123");
+        assertEquals(202, json.statusCode);
+        var body = new JsonObject(json.body);
+        assertEquals("pending", body.getString("status"));
+        assertEquals("Why do you need write access?", body.getString("clarification"));
+    }
+
+    @Test
+    public void shouldReturn410_whenCancelled() throws Exception {
+        var pending = createPending(PendingRequestStatus.CANCELLED);
+        when(pendingService.poll(eq("abc123"), eq(agentJkt))).thenReturn(Maybe.just(pending));
+
+        var json = fetchJson("abc123");
+        assertEquals(410, json.statusCode);
+        assertEquals("cancelled", new JsonObject(json.body).getString("error"));
+    }
+
     private AAuthPendingRequest createPending(PendingRequestStatus status) {
         var req = new AAuthPendingRequest();
         req.setId("abc123");

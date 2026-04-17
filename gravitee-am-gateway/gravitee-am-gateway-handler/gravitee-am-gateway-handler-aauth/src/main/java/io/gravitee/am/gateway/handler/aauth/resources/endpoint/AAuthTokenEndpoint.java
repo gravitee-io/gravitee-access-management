@@ -109,6 +109,7 @@ public class AAuthTokenEndpoint implements Handler<RoutingContext> {
                 tokenRequest.loginHint(),
                 tokenRequest.domainHint(),
                 tokenRequest.tenant(),
+                parseClarificationSupported(ctx),
                 psIssuerUrl,
                 pendingRequestTtl
         ).subscribe(
@@ -138,6 +139,19 @@ public class AAuthTokenEndpoint implements Handler<RoutingContext> {
      * Resolve the PS issuer URL from the request context, using the same pattern
      * as {@link AAuthPSMetadataEndpoint} to handle proxy headers correctly.
      */
+    /**
+     * Parse the AAuth-Capabilities header to check if the agent supports clarification.
+     * Per spec Section 12.1, the header is a comma-separated list of capability tokens.
+     */
+    private boolean parseClarificationSupported(RoutingContext ctx) {
+        String capabilities = ctx.request().getHeader("AAuth-Capabilities");
+        if (capabilities == null || capabilities.isBlank()) return false;
+        for (String cap : capabilities.split(",")) {
+            if ("clarification".equalsIgnoreCase(cap.trim())) return true;
+        }
+        return false;
+    }
+
     private String resolvePsIssuerUrl(RoutingContext ctx) {
         try {
             String basePath = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH));

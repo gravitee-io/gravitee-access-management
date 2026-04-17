@@ -35,16 +35,19 @@ public class ReplayDetector {
     private final ConcurrentHashMap<String, Long> seen = new ConcurrentHashMap<>();
 
     /**
-     * Check if this (thumbprint, created) pair has been seen before.
+     * Check if this exact signature has been seen before.
+     * Uses (thumbprint, created, signatureBytes) to distinguish different requests
+     * signed with the same key in the same second.
      *
-     * @param jwkThumbprint the JWK Thumbprint of the signing key
-     * @param created       the created timestamp from the signature
+     * @param jwkThumbprint  the JWK Thumbprint of the signing key
+     * @param created        the created timestamp from the signature
+     * @param signatureBytes the raw signature bytes (unique per request)
      * @throws SignatureVerificationException if this is a replay
      */
-    public void check(String jwkThumbprint, long created) throws SignatureVerificationException {
+    public void check(String jwkThumbprint, long created, byte[] signatureBytes) throws SignatureVerificationException {
         evictStale();
 
-        String key = computeKey(jwkThumbprint, created);
+        String key = computeKey(jwkThumbprint, created, signatureBytes);
         Long previous = seen.putIfAbsent(key, Instant.now().getEpochSecond());
 
         if (previous != null) {
@@ -52,16 +55,18 @@ public class ReplayDetector {
         }
     }
 
+
     private void evictStale() {
         long cutoff = Instant.now().getEpochSecond() - WINDOW_SECONDS;
         seen.entrySet().removeIf(entry -> entry.getValue() < cutoff);
     }
 
-    private String computeKey(String thumbprint, long created) {
+    private String computeKey(String thumbprint, long created, byte[] signatureBytes) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(thumbprint.getBytes(StandardCharsets.UTF_8));
             md.update(Long.toString(created).getBytes(StandardCharsets.UTF_8));
+            md.update(signatureBytes);
             return Base64.getUrlEncoder().withoutPadding().encodeToString(md.digest());
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);

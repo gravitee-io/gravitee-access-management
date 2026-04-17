@@ -136,6 +136,10 @@ public class MongoAAuthPendingRequestRepository extends AbstractOAuth2MongoRepos
         mongo.setAuthToken(req.getAuthToken());
         mongo.setAuthTokenExpiresIn(req.getAuthTokenExpiresIn());
         mongo.setUserId(req.getUserId());
+        mongo.setClarification(req.getClarification());
+        mongo.setClarificationResponse(req.getClarificationResponse());
+        mongo.setClarificationSupported(req.isClarificationSupported());
+        mongo.setClarificationRoundCount(req.getClarificationRoundCount());
         mongo.setCreatedAt(req.getCreatedAt());
         mongo.setLastAccessAt(req.getLastAccessAt());
         mongo.setExpireAt(req.getExpireAt());
@@ -165,6 +169,10 @@ public class MongoAAuthPendingRequestRepository extends AbstractOAuth2MongoRepos
         req.setAuthToken(mongo.getAuthToken());
         req.setAuthTokenExpiresIn(mongo.getAuthTokenExpiresIn());
         req.setUserId(mongo.getUserId());
+        req.setClarification(mongo.getClarification());
+        req.setClarificationResponse(mongo.getClarificationResponse());
+        req.setClarificationSupported(mongo.isClarificationSupported());
+        req.setClarificationRoundCount(mongo.getClarificationRoundCount());
         req.setCreatedAt(mongo.getCreatedAt());
         req.setLastAccessAt(mongo.getLastAccessAt());
         req.setExpireAt(mongo.getExpireAt());

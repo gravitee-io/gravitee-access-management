@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.aauth.spring;
 
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthJWKSEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingDeleteEndpoint;
+import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingPostEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthPendingEndpoint;
 import io.gravitee.am.gateway.handler.aauth.resources.endpoint.AAuthTokenEndpoint;
 import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
@@ -139,6 +141,16 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     @Bean
     public AAuthPendingEndpoint aAuthPendingEndpoint(AAuthPendingRequestService pendingService) {
         return new AAuthPendingEndpoint(pendingService);
+    }
+
+    @Bean
+    public AAuthPendingPostEndpoint aAuthPendingPostEndpoint(AAuthPendingRequestService pendingService) {
+        return new AAuthPendingPostEndpoint(pendingService);
+    }
+
+    @Bean
+    public AAuthPendingDeleteEndpoint aAuthPendingDeleteEndpoint(AAuthPendingRequestService pendingService) {
+        return new AAuthPendingDeleteEndpoint(pendingService);
     }
 
     @Bean

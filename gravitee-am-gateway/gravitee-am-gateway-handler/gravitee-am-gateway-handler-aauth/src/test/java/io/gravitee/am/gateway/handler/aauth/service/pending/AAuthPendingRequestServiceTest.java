@@ -56,7 +56,7 @@ public class AAuthPendingRequestServiceTest {
 
         var result = service.create("domain-1", "https://agent.example", "aauth:bot@agent.example",
                 "thumbprint", agentKeyPair.getPublic(), "app-1", "https://resource.example",
-                "read write", "I need this", null, null, null, "https://ps.example/aauth", 600)
+                "read write", "I need this", null, null, null, false, "https://ps.example/aauth", 600)
                 .blockingGet();
 
         assertNotNull(result.getId());
@@ -78,7 +78,7 @@ public class AAuthPendingRequestServiceTest {
         when(repository.create(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
         var result = service.create("domain-1", "agent", "agent", "jkt",
-                agentKeyPair.getPublic(), null, "resource", "read", null, null, null, null,
+                agentKeyPair.getPublic(), null, "resource", "read", null, null, null, null, false,
                 "https://ps.example/aauth", 600)
                 .blockingGet();
 
@@ -92,7 +92,7 @@ public class AAuthPendingRequestServiceTest {
         when(repository.create(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
         var result = service.create("domain-1", "agent", "agent", "jkt",
-                agentKeyPair.getPublic(), null, "resource", "read", null, null, null, null,
+                agentKeyPair.getPublic(), null, "resource", "read", null, null, null, null, false,
                 "https://ps.example/aauth", 600)
                 .blockingGet();
 
@@ -240,6 +240,115 @@ public class AAuthPendingRequestServiceTest {
         assertNotNull(result);
         assertEquals("pending-1", result.getId());
     }
+
+    // --- Clarification tests ---
+
+    @Test
+    public void shouldAskClarification_andTransitionToAwaitingClarification() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.INTERACTING);
+        pending.setClarificationSupported(true);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        var result = service.askClarification("pending-1", "Why do you need write access?").blockingGet();
+
+        assertEquals(PendingRequestStatus.AWAITING_CLARIFICATION.name(), result.getStatus());
+        assertEquals("Why do you need write access?", result.getClarification());
+        assertNull(result.getClarificationResponse());
+        assertEquals(1, result.getClarificationRoundCount());
+    }
+
+    @Test
+    public void shouldRejectClarification_whenNotSupported() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.INTERACTING);
+        pending.setClarificationSupported(false);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+
+        service.askClarification("pending-1", "question")
+                .test()
+                .assertError(AAuthPendingRequestService.ClarificationNotSupportedException.class);
+    }
+
+    @Test
+    public void shouldRejectClarification_whenMaxRoundsExceeded() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.INTERACTING);
+        pending.setClarificationSupported(true);
+        pending.setClarificationRoundCount(5);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+
+        service.askClarification("pending-1", "question")
+                .test()
+                .assertError(AAuthPendingRequestService.MaxClarificationRoundsException.class);
+    }
+
+    @Test
+    public void shouldRespondClarification_andTransitionBackToInteracting() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.AWAITING_CLARIFICATION);
+        pending.setClarification("Why do you need this?");
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        var result = service.respondClarification("pending-1", "thumbprint", "I need it for scheduling.").blockingGet();
+
+        assertEquals(PendingRequestStatus.INTERACTING.name(), result.getStatus());
+        assertEquals("I need it for scheduling.", result.getClarificationResponse());
+    }
+
+    @Test
+    public void shouldRejectClarificationResponse_whenAgentKeyMismatch() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.AWAITING_CLARIFICATION);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+
+        service.respondClarification("pending-1", "wrong-thumbprint", "answer")
+                .test()
+                .assertError(SecurityException.class);
+    }
+
+    @Test
+    public void shouldRejectClarificationResponse_whenNotAwaitingClarification() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.PENDING);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+
+        service.respondClarification("pending-1", "thumbprint", "answer")
+                .test()
+                .assertError(IllegalStateException.class);
+    }
+
+    @Test
+    public void shouldCancelPendingRequest() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.PENDING);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        service.cancel("pending-1", "thumbprint")
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        ArgumentCaptor<AAuthPendingRequest> captor = ArgumentCaptor.forClass(AAuthPendingRequest.class);
+        verify(repository).update(captor.capture());
+        assertEquals(PendingRequestStatus.CANCELLED.name(), captor.getValue().getStatus());
+    }
+
+    @Test
+    public void shouldRejectCancel_whenAgentKeyMismatch() {
+        AAuthPendingRequest pending = createPendingRequest("thumbprint", PendingRequestStatus.PENDING);
+
+        when(repository.findById("pending-1")).thenReturn(Maybe.just(pending));
+
+        service.cancel("pending-1", "wrong-thumbprint")
+                .test()
+                .assertError(SecurityException.class);
+    }
+
+    // --- End clarification tests ---
 
     private AAuthPendingRequest createPendingRequest(String agentJkt, PendingRequestStatus status) {
         AAuthPendingRequest req = new AAuthPendingRequest();

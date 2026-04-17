@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -142,7 +143,7 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
     @Test
     public void shouldReturn500_whenPendingCreationFails() throws Exception {
         stubValidResourceToken();
-        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyInt()))
+        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean(), any(), anyInt()))
                 .thenReturn(Single.error(new RuntimeException("DB error")));
 
         var result = postToken();
@@ -168,7 +169,7 @@ public class AAuthTokenEndpointTest extends RxWebTestBase {
         pending.setStatus("PENDING");
         pending.setCreatedAt(new Date());
 
-        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyInt()))
+        when(pendingService.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean(), any(), anyInt()))
                 .thenReturn(Single.just(pending));
     }
 

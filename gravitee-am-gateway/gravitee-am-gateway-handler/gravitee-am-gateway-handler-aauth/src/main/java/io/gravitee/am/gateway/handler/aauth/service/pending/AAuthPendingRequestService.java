@@ -41,6 +41,7 @@ import java.util.UUID;
 public class AAuthPendingRequestService {
 
     private static final int DEFAULT_POLL_INTERVAL_SECONDS = 5;
+    private static final int MAX_CLARIFICATION_ROUNDS = 5; // per spec Section 7.3.4
     private static final int RETENTION_BUFFER_SECONDS = 900; // 15 min retention after TTL
 
     private final AAuthPendingRequestRepository repository;
@@ -53,6 +54,7 @@ public class AAuthPendingRequestService {
                                                 String applicationId, String resourceIss,
                                                 String scope, String justification,
                                                 String loginHint, String domainHint, String tenant,
+                                                boolean clarificationSupported,
                                                 String psIssuerUrl, int ttlSeconds) {
         AAuthPendingRequest request = new AAuthPendingRequest();
         request.setId(UUID.randomUUID().toString());
@@ -70,6 +72,8 @@ public class AAuthPendingRequestService {
         request.setDomainHint(domainHint);
         request.setTenant(tenant);
         request.setInteractionCode(generateInteractionCode());
+        request.setClarificationSupported(clarificationSupported);
+        request.setClarificationRoundCount(0);
         request.setPsIssuerUrl(psIssuerUrl);
 
         Date now = new Date();
@@ -149,6 +153,80 @@ public class AAuthPendingRequestService {
      */
     public Single<AAuthPendingRequest> deny(String id) {
         return repository.updateStatus(id, PendingRequestStatus.DENIED.name());
+    }
+
+    /**
+     * Store a user's clarification question and transition to AWAITING_CLARIFICATION.
+     * Per spec Section 7.3.4, max 5 rounds.
+     */
+    public Single<AAuthPendingRequest> askClarification(String id, String question) {
+        return repository.findById(id)
+                .switchIfEmpty(Single.error(() -> new PendingRequestNotFoundException(id)))
+                .flatMap(request -> {
+                    if (!request.isClarificationSupported()) {
+                        return Single.error(new ClarificationNotSupportedException());
+                    }
+                    if (request.getClarificationRoundCount() >= MAX_CLARIFICATION_ROUNDS) {
+                        return Single.error(new MaxClarificationRoundsException());
+                    }
+                    request.setStatus(PendingRequestStatus.AWAITING_CLARIFICATION.name());
+                    request.setClarification(question);
+                    request.setClarificationResponse(null);
+                    request.setClarificationRoundCount(request.getClarificationRoundCount() + 1);
+                    return repository.update(request);
+                });
+    }
+
+    /**
+     * Store the agent's clarification response and transition back to INTERACTING.
+     */
+    public Single<AAuthPendingRequest> respondClarification(String id, String agentJkt, String response) {
+        return repository.findById(id)
+                .switchIfEmpty(Single.error(() -> new PendingRequestNotFoundException(id)))
+                .flatMap(request -> {
+                    if (!Objects.equals(request.getAgentJkt(), agentJkt)) {
+                        return Single.error(new SecurityException("Agent key mismatch"));
+                    }
+                    if (!PendingRequestStatus.AWAITING_CLARIFICATION.name().equals(request.getStatus())) {
+                        return Single.error(new IllegalStateException("Not awaiting clarification"));
+                    }
+                    request.setStatus(PendingRequestStatus.INTERACTING.name());
+                    request.setClarificationResponse(response);
+                    return repository.update(request);
+                });
+    }
+
+    /**
+     * Cancel a pending request (agent sends DELETE). Per spec Section 7.3.3.3.
+     */
+    public Completable cancel(String id, String agentJkt) {
+        return repository.findById(id)
+                .switchIfEmpty(Single.error(() -> new PendingRequestNotFoundException(id)))
+                .flatMapCompletable(request -> {
+                    if (!Objects.equals(request.getAgentJkt(), agentJkt)) {
+                        return Completable.error(new SecurityException("Agent key mismatch"));
+                    }
+                    request.setStatus(PendingRequestStatus.CANCELLED.name());
+                    return repository.update(request).ignoreElement();
+                });
+    }
+
+    /**
+     * Thrown when clarification is attempted but the agent didn't declare support.
+     */
+    public static class ClarificationNotSupportedException extends RuntimeException {
+        public ClarificationNotSupportedException() {
+            super("Agent did not declare clarification capability");
+        }
+    }
+
+    /**
+     * Thrown when the maximum number of clarification rounds is exceeded.
+     */
+    public static class MaxClarificationRoundsException extends RuntimeException {
+        public MaxClarificationRoundsException() {
+            super("Maximum clarification rounds (" + MAX_CLARIFICATION_ROUNDS + ") exceeded");
+        }
     }
 
     /**

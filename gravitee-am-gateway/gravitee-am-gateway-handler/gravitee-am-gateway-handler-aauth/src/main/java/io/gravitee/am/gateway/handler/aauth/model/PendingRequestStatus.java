@@ -23,7 +23,9 @@ package io.gravitee.am.gateway.handler.aauth.model;
 public enum PendingRequestStatus {
     PENDING,
     INTERACTING,
+    AWAITING_CLARIFICATION,
     COMPLETED,
     DENIED,
-    EXPIRED
+    EXPIRED,
+    CANCELLED
 }

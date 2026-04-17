@@ -87,9 +87,6 @@ public class AAuthSignatureVerifier {
         // Step 4 + 5: Resolve public key via scheme
         ResolvedKey resolvedKey = schemeFactory.get(keyInfo.scheme()).resolve(keyInfo);
 
-        // Replay detection
-        replayDetector.check(resolvedKey.jwkThumbprint(), inputInfo.created());
-
         // Validate Content-Digest if present
         String contentDigest = request.getHeader("Content-Digest");
         if (contentDigest != null && body != null) {
@@ -104,6 +101,10 @@ public class AAuthSignatureVerifier {
         byte[] signatureBytes = decodeSignature(signatureHeader, inputInfo.label());
 
         verifySignature(resolvedKey, signatureBase, signatureBytes);
+
+        // Replay detection — uses signature bytes to distinguish different requests
+        // signed with the same key in the same second
+        replayDetector.check(resolvedKey.jwkThumbprint(), inputInfo.created(), signatureBytes);
 
         return new VerificationResult(
                 keyInfo.scheme(),

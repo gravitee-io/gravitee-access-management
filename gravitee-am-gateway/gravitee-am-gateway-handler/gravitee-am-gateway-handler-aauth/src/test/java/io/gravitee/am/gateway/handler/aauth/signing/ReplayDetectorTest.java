@@ -24,30 +24,39 @@ public class ReplayDetectorTest {
     @Test
     public void shouldAcceptFirstRequest() throws Exception {
         ReplayDetector detector = new ReplayDetector();
-        detector.check("thumbprint-abc", 1712345678L);
+        detector.check("thumbprint-abc", 1712345678L, new byte[]{1, 2, 3});
         assertEquals(1, detector.size());
     }
 
     @Test(expected = SignatureVerificationException.class)
-    public void shouldRejectDuplicateThumbprintCreatedPair() throws Exception {
+    public void shouldRejectExactReplay() throws Exception {
         ReplayDetector detector = new ReplayDetector();
-        detector.check("thumbprint-abc", 1712345678L);
-        detector.check("thumbprint-abc", 1712345678L); // replay
+        byte[] sig = {1, 2, 3};
+        detector.check("thumbprint-abc", 1712345678L, sig);
+        detector.check("thumbprint-abc", 1712345678L, sig); // exact same signature = replay
+    }
+
+    @Test
+    public void shouldAcceptDifferentSignatures_sameKeyAndTimestamp() throws Exception {
+        ReplayDetector detector = new ReplayDetector();
+        detector.check("thumbprint-abc", 1712345678L, new byte[]{1, 2, 3});
+        detector.check("thumbprint-abc", 1712345678L, new byte[]{4, 5, 6}); // different request
+        assertEquals(2, detector.size());
     }
 
     @Test
     public void shouldAcceptDifferentCreatedTimestamp_sameKey() throws Exception {
         ReplayDetector detector = new ReplayDetector();
-        detector.check("thumbprint-abc", 1712345678L);
-        detector.check("thumbprint-abc", 1712345679L);
+        detector.check("thumbprint-abc", 1712345678L, new byte[]{1, 2, 3});
+        detector.check("thumbprint-abc", 1712345679L, new byte[]{1, 2, 3});
         assertEquals(2, detector.size());
     }
 
     @Test
     public void shouldAcceptSameCreated_differentKey() throws Exception {
         ReplayDetector detector = new ReplayDetector();
-        detector.check("thumbprint-abc", 1712345678L);
-        detector.check("thumbprint-xyz", 1712345678L);
+        detector.check("thumbprint-abc", 1712345678L, new byte[]{1, 2, 3});
+        detector.check("thumbprint-xyz", 1712345678L, new byte[]{1, 2, 3});
         assertEquals(2, detector.size());
     }
 }

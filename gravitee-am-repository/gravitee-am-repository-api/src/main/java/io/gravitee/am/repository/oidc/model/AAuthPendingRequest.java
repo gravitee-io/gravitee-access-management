@@ -45,6 +45,10 @@ public class AAuthPendingRequest {
     private String authToken;
     private long authTokenExpiresIn;
     private String userId;
+    private String clarification;
+    private String clarificationResponse;
+    private boolean clarificationSupported;
+    private int clarificationRoundCount;
     private Date createdAt;
     private Date lastAccessAt;
     private Date expireAt;
@@ -199,6 +203,38 @@ public class AAuthPendingRequest {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getClarification() {
+        return clarification;
+    }
+
+    public void setClarification(String clarification) {
+        this.clarification = clarification;
+    }
+
+    public String getClarificationResponse() {
+        return clarificationResponse;
+    }
+
+    public void setClarificationResponse(String clarificationResponse) {
+        this.clarificationResponse = clarificationResponse;
+    }
+
+    public boolean isClarificationSupported() {
+        return clarificationSupported;
+    }
+
+    public void setClarificationSupported(boolean clarificationSupported) {
+        this.clarificationSupported = clarificationSupported;
+    }
+
+    public int getClarificationRoundCount() {
+        return clarificationRoundCount;
+    }
+
+    public void setClarificationRoundCount(int clarificationRoundCount) {
+        this.clarificationRoundCount = clarificationRoundCount;
     }
 
     public Date getCreatedAt() {
