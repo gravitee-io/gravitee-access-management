@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.jose.JWK;
@@ -51,7 +52,7 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
     private AuditService auditService;
 
     @Override
-    public Single<Application> addAgentKey(String applicationId, JWK key) {
+    public Single<Application> addAgentKey(String applicationId, JWK key, User principal) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
                 .flatMap(application -> resolveAgentSettings(application)
@@ -86,6 +87,7 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
                             return applicationService.update(application)
                                     .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
                                             .keyAdded()
+                                            .principal(principal)
                                             .reference(Reference.domain(app.getDomain()))
                                             .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
                                                     ? app.getSettings().getOauth().getClientId() : app.getId())
@@ -94,7 +96,7 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
     }
 
     @Override
-    public Single<Application> removeAgentKey(String applicationId, String kid) {
+    public Single<Application> removeAgentKey(String applicationId, String kid, User principal) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
                 .flatMap(application -> resolveAgentSettings(application)
@@ -112,6 +114,7 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
                             return applicationService.update(application)
                                     .doOnSuccess(app -> auditService.report(AuditBuilder.builder(AgentAuditBuilder.class)
                                             .keyRemoved()
+                                            .principal(principal)
                                             .reference(Reference.domain(app.getDomain()))
                                             .blueprintId(app.getSettings() != null && app.getSettings().getOauth() != null
                                                     ? app.getSettings().getOauth().getClientId() : app.getId())

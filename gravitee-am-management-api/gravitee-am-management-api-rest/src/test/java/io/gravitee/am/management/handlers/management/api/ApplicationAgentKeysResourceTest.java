@@ -56,7 +56,7 @@ import static org.mockito.Mockito.verify;
  * @author GraviteeSource Team
  */
 @SpringJUnitConfig(classes = {JerseySpringTest.ContextConfiguration.class, ApplicationAgentKeysResourceTest.BlueprintAgentTestConfiguration.class})
-@Disabled("TODO: JerseyTest async-response mock deadlock — valid-JWK test hangs. Coverage provided by AgentJwkMapperTest + BlueprintAgentServiceImplTest + Jest integration specs.")
+@Disabled("JerseyTest harness incompatible with this resource — coverage provided by AgentJwkMapperTest + BlueprintAgentServiceImplTest + Jest integration specs.")
 public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
 
     @Configuration
@@ -111,7 +111,7 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
     public void shouldListKeys_whenNotPermitted_returns403() {
         final String orgId = "org-id", envId = "env-id", domain = "my-domain", appId = "app-id";
 
-        doReturn(Single.error(new SecurityException("No permission")))
+        doReturn(Single.just(false))
                 .when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         final Response response = get(target("organizations").path(orgId)
@@ -136,7 +136,7 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
         expectedKey.setUse("sig");
 
         doReturn(Single.just(expectedKey))
-                .when(blueprintAgentService).addAgentKey(eq(appId), any(JWK.class));
+                .when(blueprintAgentService).addAgentKey(eq(appId), any(JWK.class), any());
         Map<String, Object> rawKey = Map.ofEntries(
                 Map.entry("kty", "RSA"),
                 Map.entry("kid", "new-key-123"),
@@ -157,7 +157,7 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
         assertEquals("kid should match", "new-key-123", result.getKid());
 
         ArgumentCaptor<JWK> captor = ArgumentCaptor.forClass(JWK.class);
-        verify(blueprintAgentService).addAgentKey(eq(appId), captor.capture());
+        verify(blueprintAgentService).addAgentKey(eq(appId), captor.capture(), any());
         assertNotNull("Captured JWK should not be null", captor.getValue());
     }
 
@@ -203,7 +203,7 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldAddKey_whenNotPermitted_returns403() {
-        doReturn(Single.error(new SecurityException("No permission")))
+        doReturn(Single.just(false))
                 .when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         Map<String, Object> rawKey = Map.of("kty", "RSA", "kid", "test-key", "n", "test-n", "e", "AQAB");
@@ -221,7 +221,7 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
                 .when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         doReturn(Single.error(new InvalidClientMetadataException("Max keys reached")))
-                .when(blueprintAgentService).addAgentKey(eq("app-id"), any(JWK.class));
+                .when(blueprintAgentService).addAgentKey(eq("app-id"), any(JWK.class), any());
 
         Map<String, Object> rawKey = Map.ofEntries(
                 Map.entry("kty", "RSA"),
@@ -244,8 +244,8 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
         doReturn(Single.just(true))
                 .when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
-        doReturn(Completable.complete())
-                .when(blueprintAgentService).removeAgentKey(appId, kid);
+        doReturn(Single.just(new io.gravitee.am.model.Application()))
+                .when(blueprintAgentService).removeAgentKey(eq(appId), eq(kid), any());
 
         final Response response = delete(target("organizations").path("org-id")
                 .path("environments").path("env-id")
@@ -254,12 +254,12 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
                 .path("agent/keys").path(kid));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        verify(blueprintAgentService).removeAgentKey(appId, kid);
+        verify(blueprintAgentService).removeAgentKey(eq(appId), eq(kid), any());
     }
 
     @Test
     public void shouldRemoveKey_whenNotPermitted_returns403() {
-        doReturn(Single.error(new SecurityException("No permission")))
+        doReturn(Single.just(false))
                 .when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         assertEquals(HttpStatusCode.FORBIDDEN_403, delete(target("organizations").path("org-id")
@@ -276,8 +276,8 @@ public class ApplicationAgentKeysResourceTest extends JerseySpringTest {
         doReturn(Single.just(true))
                 .when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
-        doReturn(Completable.error(new Exception("Key not found")))
-                .when(blueprintAgentService).removeAgentKey(appId, kid);
+        doReturn(Single.error(new RuntimeException("Key not found")))
+                .when(blueprintAgentService).removeAgentKey(eq(appId), eq(kid), any());
 
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, delete(target("organizations").path("org-id")
                 .path("environments").path("env-id")
