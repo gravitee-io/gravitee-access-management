@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.jose.JWK;
 import io.reactivex.rxjava3.core.Single;
@@ -33,18 +34,20 @@ public interface BlueprintAgentService {
      *
      * @param applicationId the application ID
      * @param key the JWK to add (must have a kid)
+     * @param principal the authenticated user performing the action (for audit attribution)
      * @return the updated application
      */
-    Single<Application> addAgentKey(String applicationId, JWK key);
+    Single<Application> addAgentKey(String applicationId, JWK key, User principal);
 
     /**
      * Remove a public key from the application's agent JWKS by kid.
      *
      * @param applicationId the application ID
      * @param kid the key ID to remove
+     * @param principal the authenticated user performing the action (for audit attribution)
      * @return the updated application
      */
-    Single<Application> removeAgentKey(String applicationId, String kid);
+    Single<Application> removeAgentKey(String applicationId, String kid, User principal);
 
     /**
      * List all public keys in the application's agent JWKS.
