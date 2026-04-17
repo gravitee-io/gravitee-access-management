@@ -451,15 +451,19 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     }
 
     private void reportKeyUsed(String kid, String sub, Client blueprint) {
-        var builder = AuditBuilder.builder(AgentAuditBuilder.class)
-                .keyUsed()
-                .blueprintId(blueprint.getClientId())
-                .agentInstanceId(sub)
-                .assertionKid(kid);
-        if (blueprint.getDomain() != null) {
-            builder.reference(Reference.domain(blueprint.getDomain()));
+        try {
+            var builder = AuditBuilder.builder(AgentAuditBuilder.class)
+                    .keyUsed()
+                    .blueprintId(blueprint.getClientId())
+                    .agentInstanceId(sub)
+                    .assertionKid(kid);
+            if (blueprint.getDomain() != null) {
+                builder.reference(Reference.domain(blueprint.getDomain()));
+            }
+            auditService.report(builder);
+        } catch (Exception e) {
+            log.warn("Failed to report agent key-used audit", e);
         }
-        auditService.report(builder);
     }
 
     private boolean isCimdEnabled() {
