@@ -211,10 +211,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 } else {
                     clientId = clientAuthentication;
                 }
-                // RFC 6749 §2.3.1 expects form-url-encoded credentials inside the Base64
-                // payload. ClientBasicAuthProvider.urlDecode keeps that path consistent with
-                // how the secret is decoded (incl. the '+' preservation and IllegalArgumentException
-                // fallback), so the lookup id matches what the secret comparison sees.
+                // Same decode as the secret path so lookup id and comparison stay symmetric.
                 clientId = ClientBasicAuthProvider.urlDecode(clientId);
             } else if(clientAssertion != null && clientAssertionType != null) {
                 JWT jwt = JWTParser.parse(clientAssertion);

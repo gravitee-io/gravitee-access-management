@@ -147,7 +147,6 @@ public class UriBuilder {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
-
     public static String decodeURIComponent(String s) {
         try {
             return URLDecoder.decode(s, StandardCharsets.UTF_8);
