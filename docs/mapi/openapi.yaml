@@ -17,11 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-<<<<<<< HEAD
   version: 4.12.0-alpha.3-SNAPSHOT
-=======
-  version: 4.11.3-SNAPSHOT
->>>>>>> 92dce3eac (chore: update oas)
 servers:
 - url: /management
 security:
