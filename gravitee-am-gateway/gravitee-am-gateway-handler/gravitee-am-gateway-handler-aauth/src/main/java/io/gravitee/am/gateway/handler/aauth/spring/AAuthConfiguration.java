@@ -181,7 +181,8 @@ public class AAuthConfiguration implements ProtocolConfiguration {
     public AAuthConsentPostEndpoint aAuthConsentPostEndpoint(AAuthPendingRequestService pendingService,
                                                                       AAuthTokenService tokenService,
                                                                       AAuthConsentService consentService,
+                                                                      ApplicationService applicationService,
                                                                       Domain domain) {
-        return new AAuthConsentPostEndpoint(pendingService, tokenService, consentService, domain);
+        return new AAuthConsentPostEndpoint(pendingService, tokenService, consentService, applicationService, domain);
     }
 }

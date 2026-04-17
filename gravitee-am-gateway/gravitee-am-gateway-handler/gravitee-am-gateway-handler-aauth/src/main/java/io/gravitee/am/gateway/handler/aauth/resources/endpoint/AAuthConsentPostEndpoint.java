@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.aauth.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.aauth.service.consent.AAuthConsentService;
 import io.gravitee.am.gateway.handler.aauth.service.pending.AAuthPendingRequestService;
 import io.gravitee.am.gateway.handler.aauth.service.token.AAuthTokenService;
@@ -26,10 +25,12 @@ import io.gravitee.am.gateway.handler.aauth.signing.VerificationResult;
 import io.gravitee.am.gateway.handler.aauth.util.AAuthKeyUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.model.AAuthPendingRequest;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -65,6 +66,7 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
     private final AAuthPendingRequestService pendingService;
     private final AAuthTokenService tokenService;
     private final AAuthConsentService consentService;
+    private final ApplicationService applicationService;
     private final Domain domain;
 
     @Override
@@ -88,11 +90,14 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
 
         boolean approved = "true".equalsIgnoreCase(params.get(USER_APPROVAL_PARAM));
 
+        // Resolve pending request and Application from DB (not session)
         pendingService.findByInteractionCode(code)
                 .switchIfEmpty(Single.error(() -> new HttpException(410, "Invalid or expired interaction code")))
-                .flatMapCompletable(pending -> approved
-                        ? approveFlow(ctx, pending, user, params)
-                        : denyFlow(ctx, pending))
+                .flatMap(pending -> resolveApplication(pending)
+                        .map(client -> new ResolvedContext(pending, client)))
+                .flatMapCompletable(resolved -> approved
+                        ? approveFlow(ctx, resolved.pending, resolved.client, user, params)
+                        : denyFlow(ctx, resolved.pending))
                 .subscribe(
                         () -> { /* response already sent */ },
                         err -> {
@@ -102,13 +107,22 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
                 );
     }
 
+    private Single<Client> resolveApplication(AAuthPendingRequest pending) {
+        if (pending.getApplicationId() == null) {
+            return Single.error(new InvalidRequestException("Agent was not identified"));
+        }
+        return applicationService.findById(pending.getApplicationId())
+                .switchIfEmpty(Single.error(() -> new InvalidRequestException(
+                        "No client found for client_id " + pending.getApplicationId())))
+                .map(Application::toClient);
+    }
+
     private Completable approveFlow(RoutingContext ctx, AAuthPendingRequest pending,
-                                     io.gravitee.am.model.User user, MultiMap params) {
-        Client client = resolveClient(ctx);
+                                     Client client, io.gravitee.am.model.User user, MultiMap params) {
         Set<String> approvedScopes = extractApprovedScopes(params);
         io.gravitee.am.identityprovider.api.User principal = getAuthenticatedUser(ctx, user);
 
-        Single<List<ScopeApproval>> saveConsent = approvedScopes.isEmpty() || client == null
+        Single<List<ScopeApproval>> saveConsent = approvedScopes.isEmpty()
                 ? Single.just(List.of())
                 : consentService.saveConsent(client, user.getFullId(), approvedScopes, principal);
 
@@ -153,14 +167,6 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
         }
     }
 
-    private Client resolveClient(RoutingContext ctx) {
-        Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        if (client == null && ctx.session() != null) {
-            client = ctx.session().get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        }
-        return client;
-    }
-
     private Set<String> extractApprovedScopes(MultiMap params) {
         return params.entries().stream()
                 .filter(e -> e.getKey().startsWith(SCOPE_PREFIX))
@@ -183,4 +189,6 @@ public class AAuthConsentPostEndpoint implements Handler<RoutingContext> {
         authenticatedUser.setAdditionalInformation(additionalInformation);
         return authenticatedUser;
     }
+
+    private record ResolvedContext(AAuthPendingRequest pending, Client client) {}
 }
