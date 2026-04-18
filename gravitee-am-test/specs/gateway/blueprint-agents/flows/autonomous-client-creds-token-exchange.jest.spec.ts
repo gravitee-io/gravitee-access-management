@@ -26,7 +26,7 @@ import jwt from 'jsonwebtoken';
 
 setup(180000);
 
-const WORKLOAD_JWT_TYPE = 'urn:ietf:params:oauth:client-assertion-type:workload-jwt';
+const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
@@ -46,11 +46,11 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
     // Verify defaults: SERVICE type, only client_credentials + token_exchange
     const autonomousDetails = await fixture.getApp(autonomousAgent.id);
-    expect(autonomousDetails.type).toEqual('SERVICE');
-    expect(autonomousDetails.settings.oauth.grantTypes).toContain('client_credentials');
-    expect(autonomousDetails.settings.oauth.grantTypes).toContain(TOKEN_EXCHANGE_GRANT);
-    expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('authorization_code');
-    expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('refresh_token');
+    expect(autonomousDetails.type).toEqual('service');
+    expect(autonomousDetails.settings.agent.allowedGrantTypes).toContain('client_credentials');
+    expect(autonomousDetails.settings.agent.allowedGrantTypes).toContain(TOKEN_EXCHANGE_GRANT);
+    expect(autonomousDetails.settings.agent.allowedGrantTypes).not.toContain('authorization_code');
+    expect(autonomousDetails.settings.agent.allowedGrantTypes).not.toContain('refresh_token');
 
     // Also create a HOSTED_DELEGATED agent to use as subject for token exchange tests
     hostedAgent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com/callback');
@@ -72,6 +72,8 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
     const addKeyResponse = await fixture.addAgentKey(hostedAgent.id, agentJwk);
     expect(addKeyResponse.ok).toEqual(true);
+
+    await fixture.waitForOidc();
   });
 
   afterAll(async () => {
@@ -80,12 +82,16 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
     }
   });
 
+  function basicAuth(clientId: string, clientSecret: string): string {
+    return 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  }
+
   function signWorkloadJwt(clientId: string, instanceId: string, privateKey: crypto.KeyObject, keyId: string): string {
     const now = Math.floor(Date.now() / 1000);
     const payload = {
       iss: clientId,
       sub: instanceId,
-      aud: fixture.domain.oidcConfig?.token_endpoint,
+      aud: fixture.oidc.token_endpoint,
       jti: crypto.randomUUID(),
       iat: now,
       exp: now + 300,
@@ -98,10 +104,13 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
   it('should obtain access token via client_credentials grant', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_id=${autonomousAgent.settings.oauth.clientId}&client_secret=${autonomousAgent.settings.oauth.clientSecret}`,
-      { 'Content-type': 'application/x-www-form-urlencoded' },
+      `grant_type=client_credentials`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: basicAuth(autonomousAgent.settings.oauth.clientId, autonomousAgent.settings.oauth.clientSecret),
+      },
     ).expect(200);
 
     expect(response.body.access_token).toMatch(JWT_FORMAT);
@@ -110,10 +119,13 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
   it('should reject authorization_code flow (not in allowedGrantTypes)', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
-      `grant_type=authorization_code&code=mock-code&client_id=${autonomousAgent.settings.oauth.clientId}&client_secret=${autonomousAgent.settings.oauth.clientSecret}`,
-      { 'Content-type': 'application/x-www-form-urlencoded' },
+      `grant_type=authorization_code&code=mock-code`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: basicAuth(autonomousAgent.settings.oauth.clientId, autonomousAgent.settings.oauth.clientSecret),
+      },
     );
 
     expect([400, 401]).toContain(response.status);
@@ -124,10 +136,13 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
   it('should reject refresh_token grant (not in allowedGrantTypes)', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
-      `grant_type=refresh_token&refresh_token=dummy&client_id=${autonomousAgent.settings.oauth.clientId}&client_secret=${autonomousAgent.settings.oauth.clientSecret}`,
-      { 'Content-type': 'application/x-www-form-urlencoded' },
+      `grant_type=refresh_token&refresh_token=dummy`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: basicAuth(autonomousAgent.settings.oauth.clientId, autonomousAgent.settings.oauth.clientSecret),
+      },
     );
 
     expect([400, 401]).toContain(response.status);
@@ -140,9 +155,9 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
     // Step 1: Get subject token from hosted agent
     const hostedAssertion = signWorkloadJwt(hostedAgent.settings.oauth.clientId, 'hosted-instance', hostedPrivateKey, hostedKid);
     const subjectTokenResponse = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(hostedAssertion)}`,
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(hostedAssertion)}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
     ).expect(200);
 
@@ -151,10 +166,13 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
     // Step 2: Exchange subject token using autonomous agent
     const exchangeResponse = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
-      `grant_type=${encodeURIComponent(TOKEN_EXCHANGE_GRANT)}&subject_token=${encodeURIComponent(subjectToken)}&subject_token_type=${encodeURIComponent(ACCESS_TOKEN_TYPE)}&client_id=${autonomousAgent.settings.oauth.clientId}&client_secret=${autonomousAgent.settings.oauth.clientSecret}`,
-      { 'Content-type': 'application/x-www-form-urlencoded' },
+      `grant_type=${encodeURIComponent(TOKEN_EXCHANGE_GRANT)}&subject_token=${encodeURIComponent(subjectToken)}&subject_token_type=${encodeURIComponent(ACCESS_TOKEN_TYPE)}`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: basicAuth(autonomousAgent.settings.oauth.clientId, autonomousAgent.settings.oauth.clientSecret),
+      },
     );
 
     // Token exchange may succeed or fail depending on domain token exchange settings
@@ -163,7 +181,7 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
   it('should reject token_exchange without client_secret', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=${encodeURIComponent(TOKEN_EXCHANGE_GRANT)}&subject_token=dummy&subject_token_type=${encodeURIComponent(ACCESS_TOKEN_TYPE)}&client_id=${autonomousAgent.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -175,7 +193,7 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
   it('should reject client_credentials without client_secret', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=client_credentials&client_id=${autonomousAgent.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -187,7 +205,7 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
 
   it('should reject wrong client_secret', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=client_credentials&client_id=${autonomousAgent.settings.oauth.clientId}&client_secret=wrong-secret`,
       { 'Content-type': 'application/x-www-form-urlencoded' },

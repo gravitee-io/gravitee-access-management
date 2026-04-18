@@ -1477,9 +1477,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
             }
             case HOSTED_DELEGATED -> {
-                // confidential client with auth code + token exchange
-                // No tokenEndpointAuthMethod — workload-jwt assertion is used instead
-                oAuthSettings.setTokenEndpointAuthMethod(null);
+                // confidential client with auth code + token exchange.
+                // Default to client_secret_basic — admins may switch to private_key_jwt
+                // (for jwt-bearer client assertions) or another method post-creation.
+                if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
+                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+                }
                 if (agentSettings.getAllowedGrantTypes() == null) {
                     agentSettings.setAllowedGrantTypes(List.of(
                             GrantType.AUTHORIZATION_CODE,
@@ -1489,9 +1492,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
             }
             case AUTONOMOUS -> {
-                // confidential client, client_credentials + token exchange, no redirect_uri
-                // No tokenEndpointAuthMethod — workload-jwt assertion is used instead
-                oAuthSettings.setTokenEndpointAuthMethod(null);
+                // confidential client, client_credentials + token exchange, no redirect_uri.
+                // Default to client_secret_basic — admins may switch to private_key_jwt
+                // (for jwt-bearer client assertions) or another method post-creation.
+                if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
+                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+                }
                 oAuthSettings.setRedirectUris(null);
                 if (agentSettings.getAllowedGrantTypes() == null) {
                     agentSettings.setAllowedGrantTypes(List.of(
@@ -1500,6 +1506,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     ));
                 }
             }
+        }
+
+        // Propagate the agent's allowed grant types onto the OAuth settings so the
+        // gateway accepts them at the token endpoint. Without this, the gateway
+        // rejects grants like client_credentials or token-exchange with
+        // "unsupported_grant_type" even though the agent config allows them.
+        if (agentSettings.getAllowedGrantTypes() != null && !agentSettings.getAllowedGrantTypes().isEmpty()) {
+            oAuthSettings.setGrantTypes(new ArrayList<>(agentSettings.getAllowedGrantTypes()));
         }
     }
 }

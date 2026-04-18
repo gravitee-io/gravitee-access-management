@@ -58,8 +58,8 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
 
     @Override
     public boolean canHandle(Client client, RoutingContext context) {
-        // Workload-jwt assertions are handled by ClientAssertionAuthProvider, not here
-        if (ClientAuthenticationMethod.WORKLOAD_JWT.equals(context.request().getParam(Parameters.CLIENT_ASSERTION_TYPE))) {
+        // jwt-bearer assertions are handled by ClientAssertionAuthProvider, not here
+        if (ClientAuthenticationMethod.JWT_BEARER.equals(context.request().getParam(Parameters.CLIENT_ASSERTION_TYPE))) {
             return false;
         }
         if (client != null && ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(client.getTokenEndpointAuthMethod())) {
