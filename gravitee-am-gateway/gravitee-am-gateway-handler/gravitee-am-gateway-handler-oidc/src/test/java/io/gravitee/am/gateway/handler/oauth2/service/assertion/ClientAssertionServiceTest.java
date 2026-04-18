@@ -75,11 +75,11 @@ import static org.mockito.Mockito.when;
 public class ClientAssertionServiceTest {
 
     private static final String JWT_BEARER_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
-    private static final String WORKLOAD_JWT_TYPE = "urn:ietf:params:oauth:client-assertion-type:workload-jwt";
     private static final String CLIENT_ID = "clientIdentifier";
     private static final String BLUEPRINT_CLIENT_ID = "blueprintClientId";
     private static final String AGENT_INSTANCE_ID = "agent-instance-42";
-    private static final String ISSUER = "https://gravitee.io/test/oidc";
+    // RFC 7523 §3 — for private_key_jwt / client_secret_jwt, iss MUST equal client_id.
+    private static final String ISSUER = CLIENT_ID;
     private static final String AUDIENCE = "https://gravitee.io/test/oauth/token";
     private static final String KID = "keyIdentifier";
 
@@ -691,7 +691,7 @@ public class ClientAssertionServiceTest {
         when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
-        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertNoErrors()
                 .assertValue(client -> {
                     // clientId stays as blueprint, agentInstanceId carries the instance
@@ -732,7 +732,7 @@ public class ClientAssertionServiceTest {
         when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(), any())).thenReturn(false);
 
-        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
@@ -754,7 +754,7 @@ public class ClientAssertionServiceTest {
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
         when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(regularClient));
 
-        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
@@ -775,7 +775,7 @@ public class ClientAssertionServiceTest {
         );
         signedJWT.sign(new RSASSASigner(privateKey));
 
-        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, signedJWT.serialize(), "/").test()
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, signedJWT.serialize(), "/").test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
@@ -798,7 +798,7 @@ public class ClientAssertionServiceTest {
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
         when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
 
-        clientAssertionService.assertClient(WORKLOAD_JWT_TYPE, assertion, basePath).test()
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
                 .assertNotComplete();
     }
