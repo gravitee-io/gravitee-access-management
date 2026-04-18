@@ -60,7 +60,6 @@ import java.util.List;
 import io.gravitee.am.model.application.AgentType;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
-import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.WORKLOAD_JWT;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -75,7 +74,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     private static final InvalidClientException NOT_VALID = new InvalidClientException("assertion is not valid");
-    private static final long WORKLOAD_JWT_CLOCK_SKEW_SECONDS = 60L;
+    private static final long AGENT_ASSERTION_CLOCK_SKEW_SECONDS = 60L;
 
     @Autowired
     @Qualifier("complexClientLookupService")
@@ -112,23 +111,46 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         }
 
         if (JWT_BEARER.equals(assertionType)) {
-            return this.validateJWT(assertion, basePath)
-                    .flatMap((Function<JWT, MaybeSource<Client>>) jwt -> {
-                        // Handle client_secret_key client authentication
-                        if (JWSAlgorithm.Family.HMAC_SHA.contains(jwt.getHeader().getAlgorithm())) {
-                            return validateSignatureWithHMAC(jwt);
-                        } else {
-                            // Handle private_key_jwt client authentication
-                            return validateSignatureWithPublicKey(jwt);
-                        }
-                    });
-        }
-
-        if (WORKLOAD_JWT.equals(assertionType)) {
-            return this.validateWorkloadJWT(assertion, basePath);
+            return dispatchJwtBearer(assertion, basePath);
         }
 
         return Maybe.error(unsupportedAssertionType);
+    }
+
+    /**
+     * Dispatch an {@code urn:ietf:params:oauth:client-assertion-type:jwt-bearer}
+     * assertion. Standard RFC 7523 assertions have {@code iss == sub == client_id}
+     * and are handled by the private_key_jwt / client_secret_jwt path. Blueprint
+     * agent instance assertions have a distinct shape — either {@code iss} is a
+     * URI resolvable via CIMD, or {@code iss != sub} (blueprint vs. agent
+     * instance) — and route through the agent assertion path.
+     */
+    private Maybe<Client> dispatchJwtBearer(String assertion, String basePath) {
+        try {
+            JWT parsed = JWTParser.parse(assertion);
+            String iss = parsed.getJWTClaimsSet().getIssuer();
+            String sub = parsed.getJWTClaimsSet().getSubject();
+            if (isAgentAssertionShape(iss, sub)) {
+                return validateAgentAssertion(assertion, basePath);
+            }
+        } catch (ParseException pe) {
+            return Maybe.error(NOT_VALID);
+        }
+
+        return this.validateJWT(assertion, basePath)
+                .flatMap((Function<JWT, MaybeSource<Client>>) jwt -> {
+                    if (JWSAlgorithm.Family.HMAC_SHA.contains(jwt.getHeader().getAlgorithm())) {
+                        return validateSignatureWithHMAC(jwt);
+                    }
+                    return validateSignatureWithPublicKey(jwt);
+                });
+    }
+
+    private static boolean isAgentAssertionShape(String iss, String sub) {
+        if (iss == null || sub == null) {
+            return false;
+        }
+        return isUri(iss) || !iss.equals(sub);
     }
 
     /**
@@ -279,15 +301,17 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     }
 
     /**
-     * Validate a workload-jwt assertion for blueprint agent instances.
+     * Validate a blueprint-agent instance assertion carried as a
+     * {@code jwt-bearer} client assertion.
      * <p>
-     * The JWT {@code iss} identifies the blueprint application (client_id) and
-     * {@code sub} identifies the agent instance. The signature is verified
-     * against the blueprint's agent JWKS. On success, a cloned Client is
-     * returned with the {@code clientId} set to the agent instance ID and
-     * {@code blueprintClientId} set to the original blueprint client_id.
+     * The JWT {@code iss} identifies the blueprint application (client_id, or a
+     * CIMD metadata URI) and {@code sub} identifies the agent instance. The
+     * signature is verified against the blueprint's agent JWKS. On success, a
+     * cloned Client is returned with the {@code clientId} set to the agent
+     * instance ID and {@code blueprintClientId} set to the original blueprint
+     * client_id.
      */
-    private Maybe<Client> validateWorkloadJWT(String assertion, String basePath) {
+    private Maybe<Client> validateAgentAssertion(String assertion, String basePath) {
         try {
             JWT jwt = JWTParser.parse(assertion);
             if (!(jwt instanceof SignedJWT signedJWT)) {
@@ -304,7 +328,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
-            if (exp.toInstant().isBefore(Instant.now().minusSeconds(WORKLOAD_JWT_CLOCK_SKEW_SECONDS))) {
+            if (exp.toInstant().isBefore(Instant.now().minusSeconds(AGENT_ASSERTION_CLOCK_SKEW_SECONDS))) {
                 return Maybe.error(new InvalidClientException("assertion has expired"));
             }
 
@@ -328,7 +352,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                         }
                         AgentType agentType = blueprint.getAgentType();
                         if (agentType != AgentType.AUTONOMOUS && agentType != AgentType.HOSTED_DELEGATED) {
-                            return Maybe.error(new InvalidClientException("Workload-jwt is not supported for agent type: " + agentType));
+                            return Maybe.error(new InvalidClientException("Agent jwt-bearer assertion is not supported for agent type: " + agentType));
                         }
 
                         // JWKS resolution: CIMD metadata JWKS takes precedence over blueprint JWKS
@@ -358,7 +382,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                                 });
                     });
         } catch (ParseException ex) {
-            log.debug("Failed to parse workload-jwt assertion: {}", ex.getMessage());
+            log.debug("Failed to parse agent jwt-bearer assertion: {}", ex.getMessage());
             return Maybe.error(NOT_VALID);
         }
     }
