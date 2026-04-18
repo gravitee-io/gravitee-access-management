@@ -23,7 +23,7 @@ import crypto from 'crypto';
 
 setup(120000);
 
-const WORKLOAD_JWT_TYPE = 'urn:ietf:params:oauth:client-assertion-type:workload-jwt';
+const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('Blueprint Agent — Workload-JWT Assertion', () => {
@@ -67,7 +67,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
     const response = await performPost(
       fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
     ).expect(200);
 
@@ -90,7 +90,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
     await performPost(
       fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
     ).expect(401);
   });
@@ -101,7 +101,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
     await performPost(
       fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
     ).expect(401);
   });
@@ -115,7 +115,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
     await performPost(
       fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
     ).expect(401);
   });
@@ -129,7 +129,7 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
       const response = await performPost(
         fixture.oidc.token_endpoint,
         '',
-        `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
+        `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(assertion)}`,
         { 'Content-type': 'application/x-www-form-urlencoded' },
       ).expect(200);
 
