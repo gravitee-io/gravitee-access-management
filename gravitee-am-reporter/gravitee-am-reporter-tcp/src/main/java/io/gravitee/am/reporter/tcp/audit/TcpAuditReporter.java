@@ -160,6 +160,12 @@ public class TcpAuditReporter extends AbstractService<Reporter> implements Audit
     private final AtomicBoolean hasFallback = new AtomicBoolean(false);
     private final AtomicBoolean draining   = new AtomicBoolean(false);
 
+    // Serializes fallback writes to prevent lost-write races when two writers open
+    // the same file with setAppend(true) concurrently — both see the same EOF and
+    // one overwrites the other.
+    private io.vertx.core.Future<Void> fallbackChain = io.vertx.core.Future.succeededFuture();
+    private final Object fallbackChainLock = new Object();
+
     private final Handler<Void> onReconnectHandler = v -> onReconnect();
 
     // -------------------------------------------------------------------------
@@ -389,35 +395,51 @@ public class TcpAuditReporter extends AbstractService<Reporter> implements Audit
         log.warn("Writing audit to fallback file: {}", fallbackFile);
 
         long maxSizeInBytes = environment.getProperty(PROP_FALLBACK_MAX_SIZE_IN_MB, Integer.class, DEFAULT_FALLBACK_MAX_SIZE_IN_MB) * 1024 * 1024;
+
+        // Chain onto any in-flight fallback write so writes are serialized end-to-end
+        // (size check + rotate + append). Without this, concurrent writers race and
+        // lose lines even with setAppend(true), because Vert.x AsyncFile tracks its
+        // own write position established at open time.
+        synchronized (fallbackChainLock) {
+            fallbackChain = fallbackChain.eventually(() -> performFallbackWrite(line, maxSizeInBytes));
+        }
+    }
+
+    private io.vertx.core.Future<Void> performFallbackWrite(String line, long maxSizeInBytes) {
+        io.vertx.core.Promise<Void> promise = io.vertx.core.Promise.promise();
         vertx.fileSystem().exists(fallbackFile)
                 .onSuccess(exists -> {
                     if (!exists) {
-                        appendToFallback(line);
+                        appendToFallback(line, promise);
                         return;
                     }
                     vertx.fileSystem().props(fallbackFile)
                             .onSuccess(props -> {
                                 if (props.size() >= maxSizeInBytes) {
-                                    rotateFallbackFile(() -> appendToFallback(line));
+                                    rotateFallbackFile(() -> appendToFallback(line, promise));
                                 } else {
-                                    appendToFallback(line);
+                                    appendToFallback(line, promise);
                                 }
                             })
                             .onFailure(err -> {
                                 log.warn("Could not check fallback file size ({}), appending anyway: {}",
                                         fallbackFile, err.getMessage());
-                                appendToFallback(line);
+                                appendToFallback(line, promise);
                             });
                 })
-                .onFailure(err -> appendToFallback(line));
+                .onFailure(err -> appendToFallback(line, promise));
+        return promise.future();
     }
 
-    private void appendToFallback(String line) {
+    private void appendToFallback(String line, io.vertx.core.Promise<Void> promise) {
         vertx.fileSystem()
                 .open(fallbackFile, new OpenOptions().setAppend(true).setCreate(true))
                 .onSuccess(asyncFile -> asyncFile.write(Buffer.buffer(line))
-                        .onComplete(v -> asyncFile.close()))
-                .onFailure(err -> log.error("Failed to write audit to fallback file {}", fallbackFile, err));
+                        .onComplete(v -> asyncFile.close().onComplete(c -> promise.complete())))
+                .onFailure(err -> {
+                    log.error("Failed to write audit to fallback file {}", fallbackFile, err);
+                    promise.complete(); // don't break the chain for subsequent writes
+                });
     }
 
     // -------------------------------------------------------------------------
