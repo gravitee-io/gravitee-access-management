@@ -897,7 +897,7 @@ public class DomainServiceTest {
                 .patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
                 .test();
 
-        assertInvalidDomainExceptionMessage(observer, "templateId must be a valid application id configured as template");
+        assertInvalidDomainExceptionMessage(observer, "templateId must be a valid application id configured as template or blueprint agent");
         verify(domainRepository).findById(anyString());
         verify(applicationService).findById(anyString());
         verify(domainRepository, never()).update(any(Domain.class));
