@@ -34,25 +34,25 @@ describe('Blueprint Application — Creation & Type Inference', () => {
   it('should create USER_EMBEDDED agent and infer NATIVE type', async () => {
     const app = await fixture.createBlueprintApp('USER_EMBEDDED');
 
-    expect(app.type).toEqual('NATIVE');
+    expect(app.type).toEqual('native');
     expect(app.settings.advanced.agentIdentityMode).toBe(true);
-    expect(app.settings.agent.agentType).toEqual('USER_EMBEDDED');
+    expect(app.settings.agent.agentType).toEqual('user_embedded');
   });
 
   it('should create HOSTED_DELEGATED agent and infer WEB type', async () => {
     const app = await fixture.createBlueprintApp('HOSTED_DELEGATED');
 
-    expect(app.type).toEqual('WEB');
+    expect(app.type).toEqual('web');
     expect(app.settings.advanced.agentIdentityMode).toBe(true);
-    expect(app.settings.agent.agentType).toEqual('HOSTED_DELEGATED');
+    expect(app.settings.agent.agentType).toEqual('hosted_delegated');
   });
 
   it('should create AUTONOMOUS agent and infer SERVICE type', async () => {
     const app = await fixture.createBlueprintApp('AUTONOMOUS');
 
-    expect(app.type).toEqual('SERVICE');
+    expect(app.type).toEqual('service');
     expect(app.settings.advanced.agentIdentityMode).toBe(true);
-    expect(app.settings.agent.agentType).toEqual('AUTONOMOUS');
+    expect(app.settings.agent.agentType).toEqual('autonomous');
   });
 
   it('should apply PKCE defaults for USER_EMBEDDED', async () => {
@@ -66,7 +66,7 @@ describe('Blueprint Application — Creation & Type Inference', () => {
   it('should not require redirect URI for AUTONOMOUS', async () => {
     const app = await fixture.createBlueprintApp('AUTONOMOUS');
 
-    expect(app.settings.oauth.redirectUris).toBeNull();
+    expect(app.settings.oauth.redirectUris).toBeUndefined();
   });
 
   it('should include token_exchange in default grant types for HOSTED_DELEGATED', async () => {
