@@ -33,6 +33,17 @@ public class SSRFValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SSRFValidator.class);
 
+    @FunctionalInterface
+    public interface HostResolver {
+        InetAddress resolve(String host) throws UnknownHostException;
+    }
+
+    private HostResolver hostResolver = InetAddress::getByName;
+
+    public void setHostResolver(HostResolver hostResolver) {
+        this.hostResolver = hostResolver;
+    }
+
     /**
      * Validate a URI against the CIMD SSRF protection settings.
      *
@@ -95,7 +106,7 @@ public class SSRFValidator {
 
         InetAddress address;
         try {
-            address = InetAddress.getByName(host);
+            address = hostResolver.resolve(host);
         } catch (UnknownHostException e) {
             throw new CIMDException("CIMD metadata URI host '" + host + "' could not be resolved");
         }

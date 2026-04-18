@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDException;
 import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataCache;
 import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataDocument;
+import io.gravitee.am.gateway.handler.oidc.service.cimd.SSRFValidator;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Single;
@@ -33,7 +34,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -46,6 +50,7 @@ import static org.mockito.Mockito.*;
  * Tests HTTP fetch flow, caching, SSRF validation, error handling, and audit reporting.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CIMDMetadataFetcherImplTest {
 
     private CIMDMetadataFetcherImpl fetcher;
@@ -74,6 +79,19 @@ class CIMDMetadataFetcherImplTest {
         fetcher.setWebClient(webClient);
         fetcher.setObjectMapper(objectMapper);
         org.springframework.test.util.ReflectionTestUtils.setField(fetcher, "auditService", auditService);
+
+        // Inject a SSRFValidator whose host resolver bypasses real DNS and returns loopback,
+        // so tests can exercise the fetch flow without requiring network or DNS.
+        SSRFValidator ssrfValidator = new SSRFValidator();
+        ssrfValidator.setHostResolver(host -> InetAddress.getLoopbackAddress());
+        org.springframework.test.util.ReflectionTestUtils.setField(fetcher, "ssrfValidator", ssrfValidator);
+
+        // Stub the fluent HttpRequest chain used by the pinned-IP fetch path.
+        when(webClient.get(anyInt(), anyString(), anyString())).thenReturn(httpRequest);
+        when(httpRequest.ssl(anyBoolean())).thenReturn(httpRequest);
+        when(httpRequest.virtualHost(anyString())).thenReturn(httpRequest);
+        when(httpRequest.putHeader(anyString(), anyString())).thenReturn(httpRequest);
+        when(httpRequest.timeout(anyLong())).thenReturn(httpRequest);
     }
 
     private io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataCache readCache() {
@@ -112,7 +130,7 @@ class CIMDMetadataFetcherImplTest {
 
         assertEquals("cached-blueprint-123", result.getSoftwareId());
         // Verify no HTTP call was made
-        verify(webClient, never()).getAbs(anyString());
+        verify(webClient, never()).get(anyInt(), anyString(), anyString());
         // Verify audit reported cache hit
         verify(auditService).report(argThat(builder ->
                 builder.getClass().getSimpleName().contains("CIMDAuditBuilder")));
@@ -147,7 +165,7 @@ class CIMDMetadataFetcherImplTest {
         assertEquals("fetched-blueprint-456", cache.get(domainId, clientIdUri).get().getSoftwareId());
 
         // Verify HTTP call was made
-        verify(webClient).getAbs(clientIdUri);
+        verify(webClient).get(anyInt(), anyString(), anyString());
         verify(httpRequest).timeout(5000L);
         verify(httpRequest).rxSend();
 
@@ -177,7 +195,7 @@ class CIMDMetadataFetcherImplTest {
                 .blockingGet();
 
         assertEquals("no-cache-123", result.getSoftwareId());
-        verify(webClient).getAbs(clientIdUri);
+        verify(webClient).get(anyInt(), anyString(), anyString());
     }
 
     // ========== initCache Tests ==========
@@ -458,7 +476,7 @@ class CIMDMetadataFetcherImplTest {
                    exception.getMessage().contains("SSRF"));
 
         // Verify HTTP call was NOT made
-        verify(webClient, never()).getAbs(anyString());
+        verify(webClient, never()).get(anyInt(), anyString(), anyString());
 
         // Verify rejection was audited
         verify(auditService).report(argThat(builder ->
@@ -486,7 +504,7 @@ class CIMDMetadataFetcherImplTest {
                 .blockingGet();
 
         assertEquals("trusted-123", result.getSoftwareId());
-        verify(webClient).getAbs(trustedUri);
+        verify(webClient).get(anyInt(), anyString(), anyString());
     }
 
     @Test
@@ -500,7 +518,7 @@ class CIMDMetadataFetcherImplTest {
                 fetcher.fetch(invalidUri, domainId, settings).blockingGet());
 
         assertTrue(exception.getMessage().contains("Invalid"));
-        verify(webClient, never()).getAbs(anyString());
+        verify(webClient, never()).get(anyInt(), anyString(), anyString());
     }
 
     // ========== Timeout Tests ==========
