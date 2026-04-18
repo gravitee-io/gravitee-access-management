@@ -307,16 +307,16 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     private JWKSet agentJwks;
 
     /**
-     * Transient field set during workload-jwt authentication to track
-     * the original blueprint client_id for act claim injection.
-     * Not persisted.
+     * Transient field set during agent jwt-bearer client assertion
+     * authentication to track the original blueprint client_id for
+     * act claim injection. Not persisted.
      */
     private transient String blueprintClientId;
 
     /**
-     * Transient field carrying the agent instance ID from the workload-jwt
-     * assertion's {@code sub} claim. Used as the token {@code sub} for
-     * client_credentials flows. Not persisted.
+     * Transient field carrying the agent instance ID from the agent
+     * jwt-bearer assertion's {@code sub} claim. Used as the token
+     * {@code sub} for client_credentials flows. Not persisted.
      */
     private transient String agentInstanceId;
 
