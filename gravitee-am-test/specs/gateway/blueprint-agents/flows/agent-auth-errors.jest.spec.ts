@@ -25,7 +25,7 @@ import jwt from 'jsonwebtoken';
 
 setup(180000);
 
-const WORKLOAD_JWT_TYPE = 'urn:ietf:params:oauth:client-assertion-type:workload-jwt';
+const JWT_BEARER_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
 
@@ -40,6 +40,8 @@ describe('Agent auth flows — cross-agent error handling', () => {
     userEmbedded = await fixture.createBlueprintApp('USER_EMBEDDED', undefined, 'https://user-embedded.example.com');
     hostedDelegated = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com');
     autonomous = await fixture.createBlueprintApp('AUTONOMOUS');
+
+    await fixture.waitForOidc();
   });
 
   afterAll(async () => {
@@ -50,7 +52,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
 
   it('should reject user-embedded agent attempting client_credentials flow', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=client_credentials&client_id=${userEmbedded.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -62,7 +64,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
 
   it('should reject user-embedded agent attempting token_exchange flow', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=${encodeURIComponent(TOKEN_EXCHANGE_GRANT)}&subject_token=dummy&subject_token_type=${encodeURIComponent(ACCESS_TOKEN_TYPE)}&client_id=${userEmbedded.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -76,7 +78,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
 
   it('should reject hosted-delegated agent using wrong secret in client_credentials', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=client_credentials&client_id=${hostedDelegated.settings.oauth.clientId}&client_secret=wrong-secret`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -88,7 +90,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
 
   it('should reject autonomous agent without client credentials', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=client_credentials&client_id=${autonomous.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -122,7 +124,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
       {
         iss: autonomous.settings.oauth.clientId, // Wrong issuer!
         sub: 'instance-123',
-        aud: fixture.domain.oidcConfig?.token_endpoint,
+        aud: fixture.oidc.token_endpoint,
         jti: crypto.randomUUID(),
         iat: now,
         exp: now + 300,
@@ -132,9 +134,9 @@ describe('Agent auth flows — cross-agent error handling', () => {
     );
 
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(wrongIssuerAssertion)}&client_id=${hostedDelegated.settings.oauth.clientId}`,
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(wrongIssuerAssertion)}&client_id=${hostedDelegated.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
@@ -166,7 +168,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
       {
         iss: hostedAgent2.settings.oauth.clientId,
         sub: 'instance-456',
-        aud: fixture.domain.oidcConfig?.token_endpoint,
+        aud: fixture.oidc.token_endpoint,
         jti: crypto.randomUUID(),
         iat: now,
         exp: now + 300,
@@ -177,9 +179,9 @@ describe('Agent auth flows — cross-agent error handling', () => {
 
     // Try to use it on hosted2 (which doesn't have autonomous agent's key)
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
-      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(WORKLOAD_JWT_TYPE)}&client_assertion=${encodeURIComponent(crossSignedAssertion)}&client_id=${hostedAgent2.settings.oauth.clientId}`,
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(crossSignedAssertion)}&client_id=${hostedAgent2.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
@@ -190,7 +192,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
   it('should reject token_exchange with mismatched subject_token_type', async () => {
     // Attempt token exchange with wrong subject_token_type
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=${encodeURIComponent(TOKEN_EXCHANGE_GRANT)}&subject_token=dummy-jwt&subject_token_type=urn:ietf:params:oauth:token-type:jwt&client_id=${autonomous.settings.oauth.clientId}&client_secret=${autonomous.settings.oauth.clientSecret}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -203,7 +205,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
   it('should reject client_credentials from user-embedded (public app trying to authenticate)', async () => {
     // USER_EMBEDDED apps have no client_secret and only support authorization_code
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=client_credentials&client_id=${userEmbedded.settings.oauth.clientId}&client_secret=some-secret`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
