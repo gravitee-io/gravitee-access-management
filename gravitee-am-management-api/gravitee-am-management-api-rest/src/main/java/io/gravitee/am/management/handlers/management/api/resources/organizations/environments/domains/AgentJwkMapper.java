@@ -29,7 +29,7 @@ import java.util.Map;
  * Parses a raw JWK map posted by the console/API into a validated internal JWK subtype.
  * <p>
  * Rejects private-key material and symmetric (oct) keys — only public asymmetric keys
- * are acceptable for verifying agent workload-jwt signatures.
+ * are acceptable for verifying agent jwt-bearer client-assertion signatures.
  */
 final class AgentJwkMapper {
 

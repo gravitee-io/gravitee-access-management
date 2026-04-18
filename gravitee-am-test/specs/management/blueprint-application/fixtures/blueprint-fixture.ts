@@ -15,7 +15,13 @@
  */
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  DomainOidcConfig,
+  safeDeleteDomain,
+  startDomain,
+  waitForDomainStart,
+} from '@management-commands/domain-management-commands';
 import { Domain } from '@management-models/Domain';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
@@ -26,7 +32,11 @@ const ENV_ID = process.env.AM_DEF_ENV_ID;
 export interface BlueprintFixture extends Fixture {
   accessToken: string;
   domain: Domain;
+  /** Populated after {@link BlueprintFixture.waitForOidc} resolves. */
+  oidc?: DomainOidcConfig;
   cleanUp: () => Promise<void>;
+  /** Await domain start + OIDC well-known discovery; sets {@link oidc}. */
+  waitForOidc: () => Promise<DomainOidcConfig>;
   createBlueprintApp: (agentType: string, name?: string, redirectUri?: string) => Promise<any>;
   createRawApp: (body: any) => Promise<Response>;
   getApp: (appId: string) => Promise<any>;
@@ -46,8 +56,11 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
   const accessToken = await requestAdminAccessToken();
 
   try {
-    const domainResult = await setupDomainForTest(uniqueName('blueprint', true), { accessToken });
-    domain = domainResult.domain;
+    // Create the domain without starting it so tests can create blueprint apps
+    // first — that way the initial sync on startDomain picks them up, avoiding
+    // post-start app-sync races. Tests that hit the gateway call
+    // fixture.waitForOidc() after creating apps to start + wait for sync.
+    domain = await createDomain(accessToken, uniqueName('blueprint', true), 'blueprint fixture domain');
 
     const createRawApp = async (body: any): Promise<Response> => {
       return fetch(managementUrl(`/domains/${domain.id}/applications`), {
@@ -133,7 +146,7 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       }
     };
 
-    return {
+    const fixture: BlueprintFixture = {
       accessToken,
       domain,
       cleanUp,
@@ -144,7 +157,17 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       addAgentKey,
       removeAgentKey,
       listAgentKeys,
+      waitForOidc: async () => {
+        if (fixture.oidc) {
+          return fixture.oidc;
+        }
+        await startDomain(domain.id, accessToken);
+        const started = await waitForDomainStart(domain);
+        fixture.oidc = started.oidcConfig;
+        return started.oidcConfig;
+      },
     };
+    return fixture;
   } catch (error) {
     if (domain?.id) {
       try {

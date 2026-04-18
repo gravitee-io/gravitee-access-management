@@ -69,16 +69,15 @@ public interface ClientAuthenticationMethod {
     String SELF_SIGNED_TLS_CLIENT_AUTH = "self_signed_tls_client_auth";
 
     /**
-     * URN to identify the ClientAssertion using JWT token
+     * URN to identify the ClientAssertion using JWT token (RFC 7523).
+     * <p>
+     * Also used for blueprint agent instance assertions, where the JWT
+     * {@code iss} identifies the blueprint application and {@code sub}
+     * identifies the agent instance. Standard RFC 7523 assertions have
+     * {@code iss == sub == client_id}; the agent shape is detected at
+     * dispatch time.
      */
     String JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
-
-    /**
-     * URN for workload-jwt assertions used by blueprint agent instances.
-     * The assertion's {@code iss} identifies the blueprint application and
-     * {@code sub} identifies the agent instance.
-     */
-    String WORKLOAD_JWT = "urn:ietf:params:oauth:client-assertion-type:workload-jwt";
 
     static List<String> supportedValues() {
         return Arrays.asList(
