@@ -60,7 +60,12 @@ public class CIMDMetadataFetcherImpl implements CIMDMetadataFetcher {
     @Autowired
     private AuditService auditService;
 
-    private final SSRFValidator ssrfValidator = new SSRFValidator();
+    private SSRFValidator ssrfValidator = new SSRFValidator();
+
+    // Visible for testing
+    void setSsrfValidator(SSRFValidator ssrfValidator) {
+        this.ssrfValidator = ssrfValidator;
+    }
 
     private CIMDMetadataCache cache;
 

@@ -19,6 +19,7 @@ import io.gravitee.am.model.oidc.CIMDSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.util.List;
 
@@ -31,6 +32,15 @@ class SSRFValidatorTest {
     @BeforeEach
     void setUp() {
         validator = new SSRFValidator();
+        // Stub DNS so tests don't depend on real DNS. Localhost resolves to loopback;
+        // any other hostname resolves to a public TEST-NET-3 address so the private-IP
+        // checks behave as they would for a normal public host.
+        validator.setHostResolver(host -> {
+            if ("localhost".equalsIgnoreCase(host)) {
+                return InetAddress.getByName("127.0.0.1");
+            }
+            return InetAddress.getByName("203.0.113.1");
+        });
     }
 
     @Test
