@@ -35,11 +35,13 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
 
     // Verify agent defaults: NATIVE type, public, PKCE forced, S256 forced, no secret
     const appDetails = await fixture.getApp(agent.id);
-    expect(appDetails.type).toEqual('NATIVE');
+    expect(appDetails.type).toEqual('native');
     expect(appDetails.settings.oauth.clientSecret).toBeUndefined();
     expect(appDetails.settings.oauth.grantTypes).toContain('authorization_code');
     expect(appDetails.settings.oauth.forcePKCE).toEqual(true);
     expect(appDetails.settings.oauth.forceS256CodeChallengeMethod).toEqual(true);
+
+    await fixture.waitForOidc();
   });
 
   afterAll(async () => {
@@ -58,7 +60,7 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
       state: 'test-state',
     });
 
-    const authUrl = `${fixture.domain.oidcConfig?.authorization_endpoint}?${authParams.toString()}`;
+    const authUrl = `${fixture.oidc.authorization_endpoint}?${authParams.toString()}`;
 
     const response = await performGet(authUrl);
 
@@ -81,7 +83,7 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
       state: 'test-state',
     });
 
-    const authUrl = `${fixture.domain.oidcConfig?.authorization_endpoint}?${authParams.toString()}`;
+    const authUrl = `${fixture.oidc.authorization_endpoint}?${authParams.toString()}`;
 
     const response = await performGet(authUrl);
 
@@ -94,7 +96,7 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
 
   it('should reject token request without code_verifier', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=authorization_code&code=mock-code&redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${agent.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -109,7 +111,7 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
     const wrongVerifier = 'wrongVerifierThatDoesNotMatchChallenge';
 
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=authorization_code&code=mock-code&code_verifier=${encodeURIComponent(wrongVerifier)}&redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${agent.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -122,7 +124,7 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
   it('should reject client_credentials grant (not in allowedGrantTypes)', async () => {
     // USER_EMBEDDED apps only allow authorization_code, no client secret
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=client_credentials&client_id=${agent.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },
@@ -133,7 +135,7 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
 
   it('should reject token_exchange grant (not in allowedGrantTypes)', async () => {
     const response = await performPost(
-      fixture.domain.oidcConfig?.token_endpoint,
+      fixture.oidc.token_endpoint,
       '',
       `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=dummy&subject_token_type=urn:ietf:params:oauth:token-type:access_token&client_id=${agent.settings.oauth.clientId}`,
       { 'Content-type': 'application/x-www-form-urlencoded' },

@@ -227,12 +227,16 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 clientId = ClientBasicAuthProvider.urlDecode(clientId);
             } else if(clientAssertion != null && clientAssertionType != null) {
                 JWT jwt = JWTParser.parse(clientAssertion);
-                // For workload-jwt assertions, the blueprint client_id is in "iss" (not "sub")
-                // because "sub" contains the agent instance ID which is not a registered client.
-                if (ClientAuthenticationMethod.WORKLOAD_JWT.equals(clientAssertionType)) {
-                    clientId = jwt.getJWTClaimsSet().getIssuer();
+                String iss = jwt.getJWTClaimsSet().getIssuer();
+                String sub = jwt.getJWTClaimsSet().getSubject();
+                // For blueprint-agent jwt-bearer assertions the blueprint client_id is in
+                // "iss" (not "sub") because "sub" carries the agent instance ID which is
+                // not a registered client. Detected by shape: iss is a URI (CIMD) or
+                // iss != sub. Standard RFC 7523 assertions have iss == sub == client_id.
+                if (iss != null && (isUri(iss) || (sub != null && !iss.equals(sub)))) {
+                    clientId = iss;
                 } else {
-                    clientId = jwt.getJWTClaimsSet().getSubject();
+                    clientId = sub;
                 }
             } else {
                 // if no authorization header found, check client_id via the query parameter
