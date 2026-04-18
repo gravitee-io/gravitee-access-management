@@ -482,7 +482,7 @@ public class TokenServiceImpl implements TokenService {
                 // Type A: the agent itself is the actor
                 jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getClientId()));
             } else if (client.getBlueprintClientId() != null) {
-                // Type B/C (workload-jwt): blueprint is the actor, sub is the agent instance
+                // Type B/C (agent jwt-bearer assertion): blueprint is the actor, sub is the agent instance
                 jwt.put(Claims.ACT, Map.of(Claims.SUB, client.getBlueprintClientId()));
             }
         }
@@ -532,7 +532,7 @@ public class TokenServiceImpl implements TokenService {
         JWT jwt = new JWT();
         jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
         if (oAuth2Request.isClientOnly()) {
-            // For workload-jwt agents in client_credentials flow, use the agent instance ID as sub
+            // For blueprint-agent jwt-bearer assertions in client_credentials flow, use the agent instance ID as sub
             String sub = client.getAgentInstanceId() != null ? client.getAgentInstanceId() : client.getClientId();
             jwt.setSub(sub);
         } else {
