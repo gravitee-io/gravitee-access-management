@@ -46,9 +46,9 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
     // Verify defaults: WEB type, client_credentials + authorization_code + token_exchange allowed
     const appDetails = await fixture.getApp(agent.id);
     expect(appDetails.type).toEqual('web');
-    expect(appDetails.settings.agent.allowedGrantTypes).toContain('authorization_code');
-    expect(appDetails.settings.agent.allowedGrantTypes).toContain('client_credentials');
-    expect(appDetails.settings.agent.allowedGrantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
+    expect(appDetails.settings.oauth.grantTypes).toContain('authorization_code');
+    expect(appDetails.settings.oauth.grantTypes).toContain('client_credentials');
+    expect(appDetails.settings.oauth.grantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
 
     // Generate RSA keypair
     const { publicKey, privateKey: pk } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
