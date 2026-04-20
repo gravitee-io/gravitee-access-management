@@ -811,14 +811,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         AgentSettings agentSettings = new AgentSettings();
         agentSettings.setAgentType(AgentType.orNull(other.getAgentType()));
-        agentSettings.setAllowedGrantTypes(other.getAllowedGrantTypes());
-        agentSettings.setTokenTtlSeconds(other.getTokenTtlSeconds());
-        agentSettings.setRefreshTokenEnabled(other.isRefreshTokenEnabled());
-        agentSettings.setAllowedScopes(other.getAllowedScopes());
         agentSettings.setMaxPublicKeysPerWorkload(other.getMaxPublicKeysPerWorkload());
         agentSettings.setRequiredClaims(other.getRequiredClaims());
-        agentSettings.setClientAssertionType(other.getClientAssertionType());
-        agentSettings.setJwks(convert(other.getJwks()));
         return agentSettings;
     }
 
@@ -829,14 +823,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         AgentSettingsMongo agentSettingsMongo = new AgentSettingsMongo();
         agentSettingsMongo.setAgentType(other.getAgentType() != null ? other.getAgentType().name() : null);
-        agentSettingsMongo.setAllowedGrantTypes(other.getAllowedGrantTypes());
-        agentSettingsMongo.setTokenTtlSeconds(other.getTokenTtlSeconds());
-        agentSettingsMongo.setRefreshTokenEnabled(other.isRefreshTokenEnabled());
-        agentSettingsMongo.setAllowedScopes(other.getAllowedScopes());
         agentSettingsMongo.setMaxPublicKeysPerWorkload(other.getMaxPublicKeysPerWorkload());
         agentSettingsMongo.setRequiredClaims(other.getRequiredClaims());
-        agentSettingsMongo.setClientAssertionType(other.getClientAssertionType());
-        agentSettingsMongo.setJwks(convert(other.getJwks()));
         return agentSettingsMongo;
     }
 
