@@ -1405,30 +1405,24 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.error(new InvalidClientMetadataException("Agent type is required when agent identity mode is enabled"));
         }
 
-        // validate grant types by agent type
-        if (agent.getAllowedGrantTypes() != null) {
+        // validate grant types by agent type — read from the OAuth settings,
+        // which is the sole source of truth since the AgentSettings duplication
+        // was collapsed.
+        ApplicationOAuthSettings oauth = application.getSettings().getOauth();
+        List<String> grantTypes = oauth != null ? oauth.getGrantTypes() : null;
+        if (grantTypes != null) {
             switch (agent.getAgentType()) {
                 case USER_EMBEDDED -> {
-                    if (agent.getAllowedGrantTypes().stream().anyMatch(g -> GrantType.CLIENT_CREDENTIALS.equals(g))) {
+                    if (grantTypes.stream().anyMatch(GrantType.CLIENT_CREDENTIALS::equals)) {
                         return Single.error(new InvalidClientMetadataException("USER_EMBEDDED agents cannot use client_credentials grant"));
                     }
                 }
                 case AUTONOMOUS -> {
-                    if (agent.getAllowedGrantTypes().stream().anyMatch(g -> GrantType.AUTHORIZATION_CODE.equals(g))) {
+                    if (grantTypes.stream().anyMatch(GrantType.AUTHORIZATION_CODE::equals)) {
                         return Single.error(new InvalidClientMetadataException("AUTONOMOUS agents cannot use authorization_code grant"));
                     }
                 }
                 default -> { }
-            }
-        }
-
-        // validate token TTL
-        if (agent.getTokenTtlSeconds() != null) {
-            if (agent.getTokenTtlSeconds() < 60) {
-                return Single.error(new InvalidClientMetadataException("Token TTL must be at least 60 seconds"));
-            }
-            if (agent.getTokenTtlSeconds() > 86400) {
-                return Single.error(new InvalidClientMetadataException("Token TTL must not exceed 86400 seconds (24 hours)"));
             }
         }
 
@@ -1459,7 +1453,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     /**
-     * Apply agent-type-specific defaults to OAuth settings.
+     * Apply agent-persona defaults directly onto the OAuth settings. Grant
+     * types, auth method, PKCE and client-type all live on the standard
+     * {@link ApplicationOAuthSettings} — the agent persona only seeds sensible
+     * starting values. Admins edit them in-place via the normal OAuth2
+     * settings UI post-creation.
      */
     private void applyAgentDefaults(AgentSettings agentSettings, ApplicationOAuthSettings oAuthSettings) {
         if (agentSettings.getAgentType() == null) {
@@ -1472,8 +1470,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                 oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
                 oAuthSettings.setForcePKCE(true);
                 oAuthSettings.setForceS256CodeChallengeMethod(true);
-                if (agentSettings.getAllowedGrantTypes() == null) {
-                    agentSettings.setAllowedGrantTypes(List.of(GrantType.AUTHORIZATION_CODE));
+                if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+                    oAuthSettings.setGrantTypes(new ArrayList<>(List.of(GrantType.AUTHORIZATION_CODE)));
                 }
             }
             case HOSTED_DELEGATED -> {
@@ -1483,12 +1481,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
                     oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
                 }
-                if (agentSettings.getAllowedGrantTypes() == null) {
-                    agentSettings.setAllowedGrantTypes(List.of(
+                if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+                    oAuthSettings.setGrantTypes(new ArrayList<>(List.of(
                             GrantType.AUTHORIZATION_CODE,
                             GrantType.CLIENT_CREDENTIALS,
                             GrantType.TOKEN_EXCHANGE
-                    ));
+                    )));
                 }
             }
             case AUTONOMOUS -> {
@@ -1499,21 +1497,13 @@ public class ApplicationServiceImpl implements ApplicationService {
                     oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
                 }
                 oAuthSettings.setRedirectUris(null);
-                if (agentSettings.getAllowedGrantTypes() == null) {
-                    agentSettings.setAllowedGrantTypes(List.of(
+                if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+                    oAuthSettings.setGrantTypes(new ArrayList<>(List.of(
                             GrantType.CLIENT_CREDENTIALS,
                             GrantType.TOKEN_EXCHANGE
-                    ));
+                    )));
                 }
             }
-        }
-
-        // Propagate the agent's allowed grant types onto the OAuth settings so the
-        // gateway accepts them at the token endpoint. Without this, the gateway
-        // rejects grants like client_credentials or token-exchange with
-        // "unsupported_grant_type" even though the agent config allows them.
-        if (agentSettings.getAllowedGrantTypes() != null && !agentSettings.getAllowedGrantTypes().isEmpty()) {
-            oAuthSettings.setGrantTypes(new ArrayList<>(agentSettings.getAllowedGrantTypes()));
         }
     }
 }
