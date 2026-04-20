@@ -72,16 +72,16 @@ describe('Blueprint Application — Creation & Type Inference', () => {
   it('should include token_exchange in default grant types for HOSTED_DELEGATED', async () => {
     const app = await fixture.createBlueprintApp('HOSTED_DELEGATED');
 
-    expect(app.settings.agent.allowedGrantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
-    expect(app.settings.agent.allowedGrantTypes).toContain('authorization_code');
-    expect(app.settings.agent.allowedGrantTypes).toContain('client_credentials');
+    expect(app.settings.oauth.grantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
+    expect(app.settings.oauth.grantTypes).toContain('authorization_code');
+    expect(app.settings.oauth.grantTypes).toContain('client_credentials');
   });
 
   it('should include token_exchange in default grant types for AUTONOMOUS', async () => {
     const app = await fixture.createBlueprintApp('AUTONOMOUS');
 
-    expect(app.settings.agent.allowedGrantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
-    expect(app.settings.agent.allowedGrantTypes).toContain('client_credentials');
+    expect(app.settings.oauth.grantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
+    expect(app.settings.oauth.grantTypes).toContain('client_credentials');
   });
 });
 

@@ -22,9 +22,6 @@ import { AuthService } from '../../../../../services/auth.service';
 
 interface AgentFormState {
   agentType: string;
-  allowedGrantTypes: string[];
-  tokenTtlSeconds: number | null;
-  refreshTokenEnabled: boolean;
   maxPublicKeysPerWorkload: number | null;
 }
 
@@ -41,22 +38,12 @@ const AGENT_TYPE_LABELS: Record<string, string> = {
   standalone: false,
 })
 export class ApplicationAgentComponent implements OnInit {
-  readonly grantTypeOptions = [
-    'authorization_code',
-    'refresh_token',
-    'client_credentials',
-    'urn:ietf:params:oauth:grant-type:token-exchange',
-  ];
-
   application: any;
   domainId: string;
   editMode = false;
   agentTypeLabel = '';
   form: AgentFormState = {
     agentType: '',
-    allowedGrantTypes: [],
-    tokenTtlSeconds: null,
-    refreshTokenEnabled: false,
     maxPublicKeysPerWorkload: null,
   };
   dirty = false;
@@ -76,9 +63,6 @@ export class ApplicationAgentComponent implements OnInit {
     const agent = this.application.settings?.agent ?? {};
     this.form = {
       agentType: agent.agentType ?? '',
-      allowedGrantTypes: agent.allowedGrantTypes ?? [],
-      tokenTtlSeconds: agent.tokenTtlSeconds ?? null,
-      refreshTokenEnabled: !!agent.refreshTokenEnabled,
       maxPublicKeysPerWorkload: agent.maxPublicKeysPerWorkload ?? null,
     };
     this.agentTypeLabel = AGENT_TYPE_LABELS[this.form.agentType] ?? this.form.agentType;
@@ -93,9 +77,6 @@ export class ApplicationAgentComponent implements OnInit {
       settings: {
         agent: {
           agentType: this.form.agentType || null,
-          allowedGrantTypes: this.form.allowedGrantTypes,
-          tokenTtlSeconds: this.form.tokenTtlSeconds,
-          refreshTokenEnabled: this.form.refreshTokenEnabled,
           maxPublicKeysPerWorkload: this.form.maxPublicKeysPerWorkload,
         },
       },

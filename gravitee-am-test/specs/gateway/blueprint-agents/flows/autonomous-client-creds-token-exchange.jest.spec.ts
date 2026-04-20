@@ -47,10 +47,10 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
     // Verify defaults: SERVICE type, only client_credentials + token_exchange
     const autonomousDetails = await fixture.getApp(autonomousAgent.id);
     expect(autonomousDetails.type).toEqual('service');
-    expect(autonomousDetails.settings.agent.allowedGrantTypes).toContain('client_credentials');
-    expect(autonomousDetails.settings.agent.allowedGrantTypes).toContain(TOKEN_EXCHANGE_GRANT);
-    expect(autonomousDetails.settings.agent.allowedGrantTypes).not.toContain('authorization_code');
-    expect(autonomousDetails.settings.agent.allowedGrantTypes).not.toContain('refresh_token');
+    expect(autonomousDetails.settings.oauth.grantTypes).toContain('client_credentials');
+    expect(autonomousDetails.settings.oauth.grantTypes).toContain(TOKEN_EXCHANGE_GRANT);
+    expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('authorization_code');
+    expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('refresh_token');
 
     // Also create a HOSTED_DELEGATED agent to use as subject for token exchange tests
     hostedAgent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com/callback');
