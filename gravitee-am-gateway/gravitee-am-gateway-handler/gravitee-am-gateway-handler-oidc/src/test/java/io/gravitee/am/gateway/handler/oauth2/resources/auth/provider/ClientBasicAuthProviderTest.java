@@ -293,10 +293,10 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecrets()).thenReturn(of(clientSecret));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         // Base64("my+client-id:my+client-secret") - literal '+' not percent-encoded
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXkrY2xpZW50LWlkOm15K2NsaWVudC1zZWNyZXQ=");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
@@ -317,10 +317,10 @@ public class ClientBasicAuthProviderTest {
         Client client = mock(Client.class);
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
+        MultiMap vertxHttpHeaders = MultiMap.caseInsensitiveMultiMap();
         // Base64("my-client-id") — no colon separator between id and secret
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlk");
-        when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
+        when(httpServerRequest.headers()).thenReturn(vertxHttpHeaders);
 
         RoutingContext context = mock(RoutingContext.class);
         when(context.request()).thenReturn(httpServerRequest);
