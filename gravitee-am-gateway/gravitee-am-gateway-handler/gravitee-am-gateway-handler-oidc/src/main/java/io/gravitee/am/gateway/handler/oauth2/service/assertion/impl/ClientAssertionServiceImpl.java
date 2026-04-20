@@ -436,7 +436,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
      * software_id.
      */
     private JWKSet resolveJwks(BlueprintResult result) {
-        return result.client().getAgentJwks();
+        return result.client().getJwks();
     }
 
     private void reportAgentAuth(String iss, String sub, String kid, JWT jwt,
