@@ -54,7 +54,7 @@ export class ApplicationFlowsComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
-    this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
+    this.flowSchema = this.filterFlowSchema(this.route.snapshot.data['flowSettingsForm']);
     const flows = this.route.snapshot.data['flows'] || [];
     this.definition.flows = this.filterAllowedFlows(flows);
     this.initPolicies();
@@ -66,6 +66,33 @@ export class ApplicationFlowsComponent implements OnInit {
 
   private filterAllowedFlows(flows: any[]): any[] {
     return this.isServiceApp() ? flows.filter((f) => ApplicationFlowsComponent.SERVICE_APP_FLOW_TYPES.includes(f.type)) : flows;
+  }
+
+  private filterFlowSchema(schema: any): any {
+    if (!this.isServiceApp() || !schema) {
+      return schema;
+    }
+    const isStringSchema = typeof schema === 'string';
+    const parsed = isStringSchema ? JSON.parse(schema) : structuredClone(schema);
+    const allowedTypes = ApplicationFlowsComponent.SERVICE_APP_FLOW_TYPES;
+    if (parsed.properties?.type) {
+      if (Array.isArray(parsed.properties.type.enum)) {
+        parsed.properties.type.enum = parsed.properties.type.enum.filter((t: string) => allowedTypes.includes(t));
+      }
+      if (parsed.properties.type.default && !allowedTypes.includes(parsed.properties.type.default)) {
+        parsed.properties.type.default = allowedTypes[0];
+      }
+      if (parsed.properties.type['x-schema-form']?.titleMap) {
+        const filteredTitleMap = {};
+        for (const key of allowedTypes) {
+          if (parsed.properties.type['x-schema-form'].titleMap[key]) {
+            filteredTitleMap[key] = parsed.properties.type['x-schema-form'].titleMap[key];
+          }
+        }
+        parsed.properties.type['x-schema-form'].titleMap = filteredTitleMap;
+      }
+    }
+    return isStringSchema ? JSON.stringify(parsed) : parsed;
   }
 
   @HostListener(':gv-design:fetch-documentation', ['$event.detail'])
@@ -105,7 +132,7 @@ export class ApplicationFlowsComponent implements OnInit {
   onReset() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
-    this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
+    this.flowSchema = this.filterFlowSchema(this.route.snapshot.data['flowSettingsForm']);
     const flows = structuredClone(this.route.snapshot.data['flows'] || []);
     this.definition = {
       flows: this.filterAllowedFlows(flows),
