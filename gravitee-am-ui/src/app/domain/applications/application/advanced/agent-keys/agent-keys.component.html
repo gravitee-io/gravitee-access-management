@@ -21,8 +21,8 @@
       <div fxFlex="70">
         <h5>Agent Keys</h5>
         <small>
-          Public keys (JWKS) trusted for authenticating agent instances of this blueprint application. Keys here are used to verify
-          <code>workload-jwt</code> client assertions.
+          Public keys (JWKS) trusted for authenticating agent instances of this blueprint application. Keys here are used to verify agent
+          <code>jwt-bearer</code> client assertions (RFC 7523).
         </small>
       </div>
       <button mat-raised-button color="primary" *ngIf="editMode" (click)="openAddDialog()"><mat-icon>add</mat-icon> Add key</button>
