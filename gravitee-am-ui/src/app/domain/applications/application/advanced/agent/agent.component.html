@@ -18,7 +18,11 @@
 <div class="gv-form-section">
   <div class="gv-form-section-title">
     <h5>Agent Identity Settings</h5>
-    <small>Blueprint agent configuration. Agent type is set at creation time and cannot be changed.</small>
+    <small>
+      Blueprint agent configuration. Agent type is set at creation time and cannot be changed. Grant types, token TTLs, scopes and client
+      authentication method live on the standard <strong>Settings &rarr; OAuth2 / OIDC</strong>
+      tabs for this application.
+    </small>
   </div>
 
   <form #agentForm="ngForm" (ngSubmit)="save()" fxLayout="column" fxLayoutGap="16px">
@@ -27,36 +31,6 @@
       <input matInput [value]="agentTypeLabel" readonly />
       <mat-hint>Immutable after creation</mat-hint>
     </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Allowed grant types</mat-label>
-      <mat-select
-        multiple
-        [(ngModel)]="form.allowedGrantTypes"
-        name="allowedGrantTypes"
-        [disabled]="!editMode"
-        (selectionChange)="markDirty()"
-      >
-        <mat-option *ngFor="let g of grantTypeOptions" [value]="g">{{ g }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Access token TTL (seconds)</mat-label>
-      <input
-        matInput
-        type="number"
-        min="1"
-        [(ngModel)]="form.tokenTtlSeconds"
-        name="tokenTtlSeconds"
-        [disabled]="!editMode"
-        (input)="markDirty()"
-      />
-    </mat-form-field>
-
-    <mat-slide-toggle [(ngModel)]="form.refreshTokenEnabled" name="refreshTokenEnabled" [disabled]="!editMode" (change)="markDirty()">
-      Refresh tokens enabled
-    </mat-slide-toggle>
 
     <mat-form-field appearance="outline">
       <mat-label>Max public keys per workload</mat-label>
@@ -69,6 +43,7 @@
         [disabled]="!editMode"
         (input)="markDirty()"
       />
+      <mat-hint>Upper bound for entries in the agent JWKS (1–100).</mat-hint>
     </mat-form-field>
 
     <div>

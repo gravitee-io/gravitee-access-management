@@ -20,6 +20,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.AgentSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
@@ -72,6 +73,7 @@ class BlueprintAgentServiceImplTest {
     private ApplicationSettings appSettings;
     private ApplicationAdvancedSettings advancedSettings;
     private AgentSettings agentSettings;
+    private ApplicationOAuthSettings oauthSettings;
 
     @BeforeEach
     void setUp() {
@@ -90,9 +92,13 @@ class BlueprintAgentServiceImplTest {
         agentSettings = new AgentSettings();
         agentSettings.setMaxPublicKeysPerWorkload(10);
 
+        // JWKS lives on the standard OAuth settings (shared with private_key_jwt).
+        oauthSettings = new ApplicationOAuthSettings();
+
         appSettings = new ApplicationSettings();
         appSettings.setAdvanced(advancedSettings);
         appSettings.setAgent(agentSettings);
+        appSettings.setOauth(oauthSettings);
 
         application.setSettings(appSettings);
     }
@@ -108,7 +114,7 @@ class BlueprintAgentServiceImplTest {
         JWK existingKey = buildTestJWK("existing-kid");
         keys.add(existingKey);
         jwks.setKeys(keys);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         JWK newKey = buildTestJWK("new-kid");
 
@@ -122,8 +128,8 @@ class BlueprintAgentServiceImplTest {
         testObserver.assertValue(application);
 
         // Verify the key was added to JWKS
-        assertEquals(2, agentSettings.getJwks().getKeys().size());
-        assertTrue(agentSettings.getJwks().getKeys().stream()
+        assertEquals(2, oauthSettings.getJwks().getKeys().size());
+        assertTrue(oauthSettings.getJwks().getKeys().stream()
                 .anyMatch(k -> "new-kid".equals(k.getKid())));
 
         // Verify audit was called
@@ -135,7 +141,7 @@ class BlueprintAgentServiceImplTest {
     @Test
     @DisplayName("Should initialize null JWKS when adding first key")
     void testAddAgentKeyInitializesNullJwks() {
-        agentSettings.setJwks(null);
+        oauthSettings.setJwks(null);
 
         JWK newKey = buildTestJWK("first-kid");
 
@@ -148,9 +154,9 @@ class BlueprintAgentServiceImplTest {
         testObserver.assertNoErrors();
 
         // Verify JWKS was initialized
-        assertNotNull(agentSettings.getJwks());
-        assertEquals(1, agentSettings.getJwks().getKeys().size());
-        assertEquals("first-kid", agentSettings.getJwks().getKeys().get(0).getKid());
+        assertNotNull(oauthSettings.getJwks());
+        assertEquals(1, oauthSettings.getJwks().getKeys().size());
+        assertEquals("first-kid", oauthSettings.getJwks().getKeys().get(0).getKid());
     }
 
     @Test
@@ -158,7 +164,7 @@ class BlueprintAgentServiceImplTest {
     void testAddAgentKeyInitializesNullKeysList() {
         JWKSet jwks = new JWKSet();
         jwks.setKeys(null);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         JWK newKey = buildTestJWK("test-kid");
 
@@ -170,14 +176,14 @@ class BlueprintAgentServiceImplTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        assertEquals(1, agentSettings.getJwks().getKeys().size());
+        assertEquals(1, oauthSettings.getJwks().getKeys().size());
     }
 
     @Test
     @DisplayName("Should reject null kid")
     void testAddAgentKeyRejectsNullKid() {
-        agentSettings.setJwks(new JWKSet());
-        agentSettings.getJwks().setKeys(new ArrayList<>());
+        oauthSettings.setJwks(new JWKSet());
+        oauthSettings.getJwks().setKeys(new ArrayList<>());
 
         JWK keyWithoutKid = buildTestJWK(null);
 
@@ -192,8 +198,8 @@ class BlueprintAgentServiceImplTest {
     @Test
     @DisplayName("Should reject blank kid")
     void testAddAgentKeyRejectsBlankKid() {
-        agentSettings.setJwks(new JWKSet());
-        agentSettings.getJwks().setKeys(new ArrayList<>());
+        oauthSettings.setJwks(new JWKSet());
+        oauthSettings.getJwks().setKeys(new ArrayList<>());
 
         JWK keyWithBlankKid = buildTestJWK("  ");
 
@@ -213,7 +219,7 @@ class BlueprintAgentServiceImplTest {
         JWK existingKey = buildTestJWK("duplicate-kid");
         keys.add(existingKey);
         jwks.setKeys(keys);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         JWK duplicateKey = buildTestJWK("duplicate-kid");
 
@@ -235,7 +241,7 @@ class BlueprintAgentServiceImplTest {
         keys.add(buildTestJWK("kid1"));
         keys.add(buildTestJWK("kid2"));
         jwks.setKeys(keys);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         JWK newKey = buildTestJWK("kid3");
 
@@ -327,7 +333,7 @@ class BlueprintAgentServiceImplTest {
         keys.add(buildTestJWK("kid-to-remove"));
         keys.add(buildTestJWK("kid-to-keep"));
         jwks.setKeys(keys);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
         given(applicationService.update(application)).willReturn(Single.just(application));
@@ -339,8 +345,8 @@ class BlueprintAgentServiceImplTest {
         testObserver.assertValue(application);
 
         // Verify key was removed
-        assertEquals(1, agentSettings.getJwks().getKeys().size());
-        assertEquals("kid-to-keep", agentSettings.getJwks().getKeys().get(0).getKid());
+        assertEquals(1, oauthSettings.getJwks().getKeys().size());
+        assertEquals("kid-to-keep", oauthSettings.getJwks().getKeys().get(0).getKid());
 
         // Verify audit was called
         verify(auditService).report(isA(AuditBuilder.class));
@@ -354,7 +360,7 @@ class BlueprintAgentServiceImplTest {
         List<JWK> keys = new ArrayList<>();
         keys.add(buildTestJWK("existing-kid"));
         jwks.setKeys(keys);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
@@ -367,7 +373,7 @@ class BlueprintAgentServiceImplTest {
     @Test
     @DisplayName("Should error when JWKS has no keys")
     void testRemoveAgentKeyNoKeysFound() {
-        agentSettings.setJwks(null);
+        oauthSettings.setJwks(null);
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
@@ -382,7 +388,7 @@ class BlueprintAgentServiceImplTest {
     void testRemoveAgentKeyKeysListNull() {
         JWKSet jwks = new JWKSet();
         jwks.setKeys(null);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
@@ -407,7 +413,7 @@ class BlueprintAgentServiceImplTest {
     @Test
     @DisplayName("Should return empty list when JWKS is null")
     void testListAgentKeysNullJwks() {
-        agentSettings.setJwks(null);
+        oauthSettings.setJwks(null);
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
@@ -423,7 +429,7 @@ class BlueprintAgentServiceImplTest {
     void testListAgentKeysNullKeysList() {
         JWKSet jwks = new JWKSet();
         jwks.setKeys(null);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 
@@ -443,7 +449,7 @@ class BlueprintAgentServiceImplTest {
         keys.add(buildTestJWK("kid2"));
         keys.add(buildTestJWK("kid3"));
         jwks.setKeys(keys);
-        agentSettings.setJwks(jwks);
+        oauthSettings.setJwks(jwks);
 
         given(applicationService.findById(appId)).willReturn(Maybe.just(application));
 

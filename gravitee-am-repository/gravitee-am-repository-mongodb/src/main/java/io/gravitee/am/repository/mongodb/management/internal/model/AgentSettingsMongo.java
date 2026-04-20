@@ -18,7 +18,6 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -26,12 +25,6 @@ import java.util.Map;
 public class AgentSettingsMongo {
 
     private String agentType;
-    private List<String> allowedGrantTypes;
-    private Integer tokenTtlSeconds;
-    private boolean refreshTokenEnabled;
-    private List<String> allowedScopes;
     private int maxPublicKeysPerWorkload = 10;
     private Map<String, String> requiredClaims;
-    private String clientAssertionType;
-    private List<JWKMongo> jwks;
 }
