@@ -304,8 +304,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private AgentType agentType;
 
-    private JWKSet agentJwks;
-
     /**
      * Transient field set during agent jwt-bearer client assertion
      * authentication to track the original blueprint client_id for
@@ -419,7 +417,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentIdentityMode = other.agentIdentityMode;
         this.agentType = other.agentType;
-        this.agentJwks = other.agentJwks;
         this.blueprintClientId = other.blueprintClientId;
         this.agentInstanceId = other.agentInstanceId;
     }
@@ -1280,14 +1277,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setAgentType(AgentType agentType) {
         this.agentType = agentType;
-    }
-
-    public JWKSet getAgentJwks() {
-        return agentJwks;
-    }
-
-    public void setAgentJwks(JWKSet agentJwks) {
-        this.agentJwks = agentJwks;
     }
 
     public String getBlueprintClientId() {

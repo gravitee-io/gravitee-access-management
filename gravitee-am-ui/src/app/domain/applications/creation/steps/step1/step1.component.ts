@@ -64,7 +64,7 @@ export class ApplicationCreationStep1Component implements OnInit {
     },
     {
       name: 'Agent',
-      icon: 'smart_toy',
+      icon: 'assistant',
       type: 'AGENT',
       description: 'AI agent with managed identity',
       subDescription: 'e.g : LLM agents, autonomous services',

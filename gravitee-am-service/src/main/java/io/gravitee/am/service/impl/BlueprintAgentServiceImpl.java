@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.AgentSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.Reference;
@@ -39,6 +40,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Manages the public key(s) used to verify agent jwt-bearer client assertions
+ * for a blueprint application. Keys are stored on the application's existing
+ * {@link ApplicationOAuthSettings#getJwks()} (the same surface used by
+ * {@code private_key_jwt} client authentication); agent-specific bounds
+ * (e.g. {@code maxPublicKeysPerWorkload}) are read from {@link AgentSettings}.
+ */
 @Component
 public class BlueprintAgentServiceImpl implements BlueprintAgentService {
 
@@ -55,17 +63,17 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
     public Single<Application> addAgentKey(String applicationId, JWK key, User principal) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
-                .flatMap(application -> resolveAgentSettings(application)
-                        .flatMap(agent -> {
+                .flatMap(application -> requireAgent(application)
+                        .flatMap(ctx -> {
                             if (key.getKid() == null || key.getKid().isBlank()) {
                                 return Single.error(new InvalidClientMetadataException("JWK must have a kid"));
                             }
 
-                            JWKSet jwks = agent.getJwks();
+                            JWKSet jwks = ctx.oauth().getJwks();
                             if (jwks == null) {
                                 jwks = new JWKSet();
                                 jwks.setKeys(new ArrayList<>());
-                                agent.setJwks(jwks);
+                                ctx.oauth().setJwks(jwks);
                             }
                             if (jwks.getKeys() == null) {
                                 jwks.setKeys(new ArrayList<>());
@@ -77,7 +85,7 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
                                 return Single.error(new InvalidClientMetadataException("A key with kid '" + key.getKid() + "' already exists"));
                             }
 
-                            int maxKeys = agent.getMaxPublicKeysPerWorkload();
+                            int maxKeys = ctx.agent().getMaxPublicKeysPerWorkload();
                             if (jwks.getKeys().size() >= maxKeys) {
                                 return Single.error(new InvalidClientMetadataException(
                                         "Maximum number of public keys (" + maxKeys + ") reached"));
@@ -99,9 +107,9 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
     public Single<Application> removeAgentKey(String applicationId, String kid, User principal) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
-                .flatMap(application -> resolveAgentSettings(application)
-                        .flatMap(agent -> {
-                            JWKSet jwks = agent.getJwks();
+                .flatMap(application -> requireAgent(application)
+                        .flatMap(ctx -> {
+                            JWKSet jwks = ctx.oauth().getJwks();
                             if (jwks == null || jwks.getKeys() == null) {
                                 return Single.error(new InvalidClientMetadataException("No keys found on this application"));
                             }
@@ -126,17 +134,19 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
     public Single<List<JWK>> listAgentKeys(String applicationId) {
         return applicationService.findById(applicationId)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(applicationId)))
-                .flatMap(this::resolveAgentSettings)
-                .map(agent -> {
-                    JWKSet jwks = agent.getJwks();
+                .flatMap(this::requireAgent)
+                .map(ctx -> {
+                    JWKSet jwks = ctx.oauth().getJwks();
                     if (jwks == null || jwks.getKeys() == null) {
-                        return Collections.emptyList();
+                        return Collections.<JWK>emptyList();
                     }
                     return jwks.getKeys();
                 });
     }
 
-    private Single<AgentSettings> resolveAgentSettings(Application application) {
+    private record AgentContext(AgentSettings agent, ApplicationOAuthSettings oauth) {}
+
+    private Single<AgentContext> requireAgent(Application application) {
         if (application.getSettings() == null
                 || application.getSettings().getAdvanced() == null
                 || !application.getSettings().getAdvanced().isAgentIdentityMode()) {
@@ -146,6 +156,11 @@ public class BlueprintAgentServiceImpl implements BlueprintAgentService {
         if (agent == null) {
             return Single.error(new InvalidClientMetadataException("Application has no agent settings configured"));
         }
-        return Single.just(agent);
+        ApplicationOAuthSettings oauth = application.getSettings().getOauth();
+        if (oauth == null) {
+            oauth = new ApplicationOAuthSettings();
+            application.getSettings().setOauth(oauth);
+        }
+        return Single.just(new AgentContext(agent, oauth));
     }
 }

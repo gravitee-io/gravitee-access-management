@@ -679,7 +679,7 @@ public class ClientAssertionServiceTest {
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         JWKSet agentJwks = new JWKSet();
         agentJwks.setKeys(List.of(key));
-        blueprint.setAgentJwks(agentJwks);
+        blueprint.setJwks(agentJwks);
 
         String assertion = generateWorkloadJWT(privateKey, BLUEPRINT_CLIENT_ID, AGENT_INSTANCE_ID);
         OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
@@ -720,7 +720,7 @@ public class ClientAssertionServiceTest {
         blueprint.setAgentType(AgentType.AUTONOMOUS);
         JWKSet agentJwks = new JWKSet();
         agentJwks.setKeys(List.of(key));
-        blueprint.setAgentJwks(agentJwks);
+        blueprint.setJwks(agentJwks);
 
         String assertion = generateWorkloadJWT(privateKey, BLUEPRINT_CLIENT_ID, AGENT_INSTANCE_ID);
         OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
