@@ -21,6 +21,8 @@ services:
       args:
         - GRAVITEEAM_VERSION=${AM_VERSION}
       dockerfile: ../../../gateway/Dockerfile-dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:18092/_node/health?probes=jetty-http-server", "-u", "admin:adminadmin" ]
       interval: 5s
@@ -55,6 +57,8 @@ services:
       args:
         - GRAVITEEAM_VERSION=${AM_VERSION}
       dockerfile: ../../../management-api/Dockerfile-dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "http://localhost:18093/_node/health?probes=jetty-http-server", "-u", "admin:adminadmin"]
       interval: 5s

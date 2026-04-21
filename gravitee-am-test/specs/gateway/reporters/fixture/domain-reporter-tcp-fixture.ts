@@ -32,7 +32,8 @@ export interface DomainReporterTcpFixture extends Fixture {
   application: Application;
   user: any & { password: string };
   openIdConfiguration: DomainOidcConfig;
-  addReporter(host: string, port: number, output?: string): Promise<Reporter>;
+  addReporter(port: number, output?: string): Promise<Reporter>;
+  cleanUpReporters(): Promise<void>;
   cleanUp(): Promise<void>;
 }
 
@@ -83,7 +84,8 @@ export const setupDomainReporterTcpFixture = async (): Promise<DomainReporterTcp
 
   const reporterIds: string[] = [];
 
-  const addReporter = async (host: string, port: number, output: string = 'ELASTICSEARCH'): Promise<Reporter> => {
+  const addReporter = async (port: number, output: string = 'ELASTICSEARCH'): Promise<Reporter> => {
+    const host = process.env.TCP_REPORTER_HOST ?? 'localhost';
     const reporter = await waitForSyncAfter(domain.id, () =>
       createDomainReporter(domain.id, accessToken, {
         type: 'reporter-am-tcp',
@@ -96,14 +98,19 @@ export const setupDomainReporterTcpFixture = async (): Promise<DomainReporterTcp
     return reporter;
   };
 
-  const cleanUp = async (): Promise<void> => {
-    for (const id of reporterIds) {
+  const cleanUpReporters = async (): Promise<void> => {
+    const ids = reporterIds.splice(0);
+    for (const id of ids) {
       try {
         await deleteDomainReporter(domain.id, accessToken, id);
       } catch {
         // ignore
       }
     }
+  };
+
+  const cleanUp = async (): Promise<void> => {
+    await cleanUpReporters();
     await safeDeleteDomain(domain.id, accessToken);
   };
 
@@ -114,6 +121,7 @@ export const setupDomainReporterTcpFixture = async (): Promise<DomainReporterTcp
     user,
     openIdConfiguration: oidcConfig,
     addReporter,
+    cleanUpReporters,
     cleanUp,
   };
 };
