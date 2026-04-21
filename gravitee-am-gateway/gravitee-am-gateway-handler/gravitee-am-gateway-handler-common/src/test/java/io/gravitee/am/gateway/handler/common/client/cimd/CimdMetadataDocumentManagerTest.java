@@ -32,10 +32,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -82,6 +85,20 @@ public class CimdMetadataDocumentManagerTest {
 
         Optional<CimdMetadataDocument> result = manager.get(CLIENT_URL);
         assertTrue(result.isPresent());
+    }
+
+    @Test
+    public void shouldReturnDocumentAfterPutRaw() {
+        final String rawMetadata = "{\"client_id\":\"" + CLIENT_URL + "\",\"redirect_uris\":[\"https://cb.example.com\"]}";
+        manager.put(CLIENT_URL, rawMetadata, Duration.ofHours(1));
+
+        Optional<CimdMetadataDocument> result = manager.get(CLIENT_URL);
+        assertTrue(result.isPresent());
+        assertEquals(CLIENT_URL, result.get().getClientId());
+        assertEquals(DOMAIN_ID, result.get().getDomainId());
+        assertEquals(rawMetadata, result.get().getMetadata());
+        assertNotNull(result.get().getExpiresAt());
+        assertTrue(result.get().getExpiresAt().after(new Date()));
     }
 
     @Test

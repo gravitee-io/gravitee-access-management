@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -123,5 +124,12 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
      */
     public void put(String clientId, CimdMetadataDocument doc) {
         localCache.put(clientId, doc);
+    }
+
+    /**
+     * Constructs and stores a document in the local cache for the given effective TTL.
+     */
+    public void put(String clientId, String rawMetadata, Duration ttl) {
+        put(clientId, CimdMetadataDocument.of(domain.getId(), clientId, rawMetadata, ttl));
     }
 }

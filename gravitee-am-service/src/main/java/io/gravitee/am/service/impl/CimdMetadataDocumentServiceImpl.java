@@ -86,17 +86,8 @@ public class CimdMetadataDocumentServiceImpl implements CimdMetadataDocumentServ
                     return repository.update(existing)
                             .flatMap(saved -> publishEvent(saved, domain, Action.UPDATE));
                 })
-                .switchIfEmpty(Single.defer(() -> {
-                    CimdMetadataDocument doc = new CimdMetadataDocument();
-                    doc.setDomainId(domain.getId());
-                    doc.setClientId(clientId);
-                    doc.setMetadata(metadataJson);
-                    doc.setFetchedAt(now);
-                    doc.setExpiresAt(expiresAt);
-                    doc.setUpdatedAt(now);
-                    return repository.create(doc)
-                            .flatMap(saved -> publishEvent(saved, domain, Action.CREATE));
-                }))
+                .switchIfEmpty(Single.defer(() -> repository.create(CimdMetadataDocument.of(domain.getId(), clientId, metadataJson, ttl))
+                        .flatMap(saved -> publishEvent(saved, domain, Action.CREATE))))
                 .onErrorResumeNext(ex -> {
                     logger.error("Error upserting CIMD document for domain {} clientId {}", domain.getId(), clientId, ex);
                     return Single.error(ex);

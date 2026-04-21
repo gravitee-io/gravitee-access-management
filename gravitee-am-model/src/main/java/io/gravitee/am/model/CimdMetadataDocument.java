@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import java.time.Duration;
 import java.util.Date;
 
 /**
@@ -59,5 +60,17 @@ public class CimdMetadataDocument {
 
     public boolean isExpired() {
         return expiresAt != null && expiresAt.before(new Date());
+    }
+
+    public static CimdMetadataDocument of(String domainId, String clientId, String metadata, Duration ttl) {
+        final Date now = new Date();
+        final CimdMetadataDocument doc = new CimdMetadataDocument();
+        doc.setDomainId(domainId);
+        doc.setClientId(clientId);
+        doc.setMetadata(metadata);
+        doc.setFetchedAt(now);
+        doc.setUpdatedAt(now);
+        doc.setExpiresAt(new Date(now.getTime() + ttl.toMillis()));
+        return doc;
     }
 }

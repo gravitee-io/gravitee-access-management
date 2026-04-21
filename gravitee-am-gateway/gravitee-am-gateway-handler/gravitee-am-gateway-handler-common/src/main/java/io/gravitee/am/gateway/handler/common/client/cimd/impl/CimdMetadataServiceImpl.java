@@ -114,7 +114,9 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                     .flatMap(fetchResult -> {
                                         final FetchResult.CacheRequirements cache = fetchResult.cacheRequirements();
                                         if (!cache.noCache()) {
-                                            // [4] Persist to DB
+                                            // Populate local cache immediately
+                                            cimdMetadataDocumentManager.put(clientId, fetchResult.json().encode(), cache.ttl());
+                                            // [4] Persist to DB asynchronously; update local cache with DB-assigned entry when done
                                             cimdMetadataDocumentService
                                                     .upsert(domain, clientId, fetchResult.json().encode(), cache.ttl())
                                                     .subscribe(
