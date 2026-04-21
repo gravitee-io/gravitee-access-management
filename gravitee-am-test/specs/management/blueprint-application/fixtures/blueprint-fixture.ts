@@ -41,9 +41,8 @@ export interface BlueprintFixture extends Fixture {
   createRawApp: (body: any) => Promise<Response>;
   getApp: (appId: string) => Promise<any>;
   deleteApp: (appId: string) => Promise<void>;
-  addAgentKey: (appId: string, jwk: any) => Promise<Response>;
-  removeAgentKey: (appId: string, kid: string) => Promise<Response>;
-  listAgentKeys: (appId: string) => Promise<any>;
+  /** Registers a single JWK on the app's OAuth `jwks` field; used by tests that need to verify client assertions. */
+  registerJwk: (appId: string, jwk: any) => Promise<Response>;
 }
 
 function managementUrl(path: string): string {
@@ -108,29 +107,19 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       });
     };
 
-    const addAgentKey = async (appId: string, jwk: any): Promise<Response> => {
-      return fetch(managementUrl(`/domains/${domain.id}/applications/${appId}/agent/keys`), {
-        method: 'POST',
+    const registerJwk = async (appId: string, jwk: any): Promise<Response> => {
+      return fetch(managementUrl(`/domains/${domain.id}/applications/${appId}`), {
+        method: 'PATCH',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(jwk),
+        body: JSON.stringify({
+          settings: {
+            oauth: { jwks: JSON.stringify({ keys: [jwk] }) },
+          },
+        }),
       });
-    };
-
-    const removeAgentKey = async (appId: string, kid: string): Promise<Response> => {
-      return fetch(managementUrl(`/domains/${domain.id}/applications/${appId}/agent/keys/${kid}`), {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-    };
-
-    const listAgentKeys = async (appId: string): Promise<any> => {
-      const response = await fetch(managementUrl(`/domains/${domain.id}/applications/${appId}/agent/keys`), {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      return response.json();
     };
 
     const cleanUp = async () => {
@@ -154,9 +143,7 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       createRawApp,
       getApp,
       deleteApp,
-      addAgentKey,
-      removeAgentKey,
-      listAgentKeys,
+      registerJwk,
       waitForOidc: async () => {
         if (fixture.oidc) {
           return fixture.oidc;

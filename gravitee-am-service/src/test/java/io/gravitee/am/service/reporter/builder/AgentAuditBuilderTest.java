@@ -19,8 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static io.gravitee.am.common.audit.EventType.AGENT_AUTHENTICATED;
-import static io.gravitee.am.common.audit.EventType.AGENT_KEY_ADDED;
-import static io.gravitee.am.common.audit.EventType.AGENT_KEY_REMOVED;
 import static io.gravitee.am.common.audit.EventType.AGENT_KEY_USED;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
@@ -60,18 +58,6 @@ class AgentAuditBuilderTest {
     void shouldSwitchToKeyUsedEventType() {
         var audit = AuditBuilder.builder(AgentAuditBuilder.class).keyUsed().build(objectMapper);
         assertEquals(AGENT_KEY_USED, audit.getType());
-    }
-
-    @Test
-    void shouldSwitchToKeyAddedEventType() {
-        var audit = AuditBuilder.builder(AgentAuditBuilder.class).keyAdded().build(objectMapper);
-        assertEquals(AGENT_KEY_ADDED, audit.getType());
-    }
-
-    @Test
-    void shouldSwitchToKeyRemovedEventType() {
-        var audit = AuditBuilder.builder(AgentAuditBuilder.class).keyRemoved().build(objectMapper);
-        assertEquals(AGENT_KEY_REMOVED, audit.getType());
     }
 
     @Test
