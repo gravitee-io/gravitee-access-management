@@ -60,7 +60,8 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
       },
       body: JSON.stringify({
         name: uniqueName('agent-autonomous', true),
-        type: 'AGENT',
+        type: 'SERVICE',
+        agentIdentityMode: true,
         agentSettings: { agentType: 'AUTONOMOUS' },
       }),
     });

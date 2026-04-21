@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Audit builder for agent identity events (AGENT_AUTHENTICATED, AGENT_KEY_USED).
+ * Audit builder for agent identity events (AGENT_AUTHENTICATED).
  *
  * @author GraviteeSource Team
  */
@@ -69,26 +69,6 @@ public class AgentAuditBuilder extends GatewayAuditBuilder<AgentAuditBuilder> {
 
     public AgentAuditBuilder assertionJti(String jti) {
         if (jti != null) agentData.put("assertionJti", jti);
-        return this;
-    }
-
-    public AgentAuditBuilder resolutionMethod(String method) {
-        if (method != null) agentData.put("resolutionMethod", method);
-        return this;
-    }
-
-    public AgentAuditBuilder cimdMetadataUri(String uri) {
-        if (uri != null) agentData.put("cimdMetadataUri", uri);
-        return this;
-    }
-
-    public AgentAuditBuilder cimdSoftwareId(String softwareId) {
-        if (softwareId != null) agentData.put("cimdSoftwareId", softwareId);
-        return this;
-    }
-
-    public AgentAuditBuilder keyUsed() {
-        type(EventType.AGENT_KEY_USED);
         return this;
     }
 

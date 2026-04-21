@@ -27,13 +27,9 @@ public record FilteredApplication(
         ApplicationType type,
         boolean enabled,
         boolean template,
-        boolean agentIdentityMode,
         Date updatedAt) {
 
     public static FilteredApplication of(Application application) {
-        boolean agentMode = application.getSettings() != null
-                && application.getSettings().getAdvanced() != null
-                && application.getSettings().getAdvanced().isAgentIdentityMode();
         return new FilteredApplication(
                 application.getId(),
                 application.getName(),
@@ -41,7 +37,6 @@ public record FilteredApplication(
                 application.getType(),
                 application.isEnabled(),
                 application.isTemplate(),
-                agentMode,
                 application.getUpdatedAt()
         );
     }
