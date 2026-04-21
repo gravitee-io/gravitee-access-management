@@ -151,7 +151,7 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
         },
         body: JSON.stringify({
           settings: {
-            oauth: { jwks: JSON.stringify({ keys: [jwk] }) },
+            oauth: { jwks: { keys: [jwk] } },
           },
         }),
       });
