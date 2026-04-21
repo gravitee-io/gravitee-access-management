@@ -63,25 +63,25 @@ export interface PatchApplicationSAMLSettings {
    * @type {string}
    * @memberof PatchApplicationSAMLSettings
    */
-  entityId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationSAMLSettings
-   */
-  nameIdMapping?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PatchApplicationSAMLSettings
-   */
   dataEncryptionAlgorithm?: string;
   /**
    *
    * @type {string}
    * @memberof PatchApplicationSAMLSettings
    */
+  entityId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationSAMLSettings
+   */
   keyTransportEncryptionAlgorithm?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchApplicationSAMLSettings
+   */
+  nameIdMapping?: string;
   /**
    *
    * @type {string}
@@ -99,13 +99,13 @@ export interface PatchApplicationSAMLSettings {
    * @type {boolean}
    * @memberof PatchApplicationSAMLSettings
    */
-  wantAssertionsSigned?: boolean;
+  wantAssertionsEncrypted?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchApplicationSAMLSettings
    */
-  wantAssertionsEncrypted?: boolean;
+  wantAssertionsSigned?: boolean;
   /**
    *
    * @type {boolean}
@@ -134,16 +134,14 @@ export function PatchApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscr
       json['assertionAttributes'] == null ? undefined : (json['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeFromJSON),
     attributeConsumeServiceUrl: json['attributeConsumeServiceUrl'] == null ? undefined : json['attributeConsumeServiceUrl'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
+    dataEncryptionAlgorithm: json['dataEncryptionAlgorithm'] == null ? undefined : json['dataEncryptionAlgorithm'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
+    keyTransportEncryptionAlgorithm: json['keyTransportEncryptionAlgorithm'] == null ? undefined : json['keyTransportEncryptionAlgorithm'],
     nameIdMapping: json['nameIdMapping'] == null ? undefined : json['nameIdMapping'],
-    dataEncryptionAlgorithm:
-      json['dataEncryptionAlgorithm'] == null ? undefined : json['dataEncryptionAlgorithm'],
-    keyTransportEncryptionAlgorithm:
-      json['keyTransportEncryptionAlgorithm'] == null ? undefined : json['keyTransportEncryptionAlgorithm'],
     responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
     singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
-    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
     wantAssertionsEncrypted: json['wantAssertionsEncrypted'] == null ? undefined : json['wantAssertionsEncrypted'],
+    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
     wantResponseSigned: json['wantResponseSigned'] == null ? undefined : json['wantResponseSigned'],
   };
 }
@@ -165,14 +163,14 @@ export function PatchApplicationSAMLSettingsToJSONTyped(
       value['assertionAttributes'] == null ? undefined : (value['assertionAttributes'] as Array<any>).map(SAMLAssertionAttributeToJSON),
     attributeConsumeServiceUrl: value['attributeConsumeServiceUrl'],
     certificate: value['certificate'],
-    entityId: value['entityId'],
-    nameIdMapping: value['nameIdMapping'],
     dataEncryptionAlgorithm: value['dataEncryptionAlgorithm'],
+    entityId: value['entityId'],
     keyTransportEncryptionAlgorithm: value['keyTransportEncryptionAlgorithm'],
+    nameIdMapping: value['nameIdMapping'],
     responseBinding: value['responseBinding'],
     singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
-    wantAssertionsSigned: value['wantAssertionsSigned'],
     wantAssertionsEncrypted: value['wantAssertionsEncrypted'],
+    wantAssertionsSigned: value['wantAssertionsSigned'],
     wantResponseSigned: value['wantResponseSigned'],
   };
 }

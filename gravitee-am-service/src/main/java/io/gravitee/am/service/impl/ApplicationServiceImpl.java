@@ -380,19 +380,14 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        // apply agent identity mode if requested
         if (newApplication.isAgentIdentityMode()) {
-            ApplicationAdvancedSettings advancedSettings = applicationSettings.getAdvanced();
-            if (advancedSettings == null) {
-                advancedSettings = new ApplicationAdvancedSettings();
-            }
+            ApplicationAdvancedSettings advancedSettings = Optional.ofNullable(applicationSettings.getAdvanced())
+                    .orElseGet(ApplicationAdvancedSettings::new);
             advancedSettings.setAgentIdentityMode(true);
             applicationSettings.setAdvanced(advancedSettings);
 
-            AgentSettings agentSettings = newApplication.getAgentSettings();
-            if (agentSettings == null) {
-                agentSettings = new AgentSettings();
-            }
+            AgentSettings agentSettings = Optional.ofNullable(newApplication.getAgentSettings())
+                    .orElseGet(AgentSettings::new);
             applyAgentDefaults(agentSettings, oAuthSettings);
             applicationSettings.setAgent(agentSettings);
         }
@@ -1309,10 +1304,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> validateAgentSettings(Application application) {
-        if (application.getSettings() == null || application.getSettings().getAdvanced() == null) {
-            return Single.just(application);
-        }
-        if (!application.getSettings().getAdvanced().isAgentIdentityMode()) {
+        if (!application.isAgentIdentityMode()) {
             return Single.just(application);
         }
 
@@ -1324,82 +1316,56 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.error(new InvalidClientMetadataException("Agent type is required when agent identity mode is enabled"));
         }
 
-        // validate grant types by agent type — read from the OAuth settings,
-        // which is the sole source of truth since the AgentSettings duplication
-        // was collapsed.
         ApplicationOAuthSettings oauth = application.getSettings().getOauth();
         List<String> grantTypes = oauth != null ? oauth.getGrantTypes() : null;
         if (grantTypes != null) {
-            switch (agent.getAgentType()) {
-                case USER_EMBEDDED -> {
-                    if (grantTypes.stream().anyMatch(GrantType.CLIENT_CREDENTIALS::equals)) {
-                        return Single.error(new InvalidClientMetadataException("USER_EMBEDDED agents cannot use client_credentials grant"));
-                    }
-                }
-                case AUTONOMOUS -> {
-                    if (grantTypes.stream().anyMatch(GrantType.AUTHORIZATION_CODE::equals)) {
-                        return Single.error(new InvalidClientMetadataException("AUTONOMOUS agents cannot use authorization_code grant"));
-                    }
-                }
-                default -> { }
+            String forbidden = switch (agent.getAgentType()) {
+                case USER_EMBEDDED -> grantTypes.contains(GrantType.CLIENT_CREDENTIALS)
+                        ? "USER_EMBEDDED agents cannot use client_credentials grant" : null;
+                case AUTONOMOUS -> grantTypes.contains(GrantType.AUTHORIZATION_CODE)
+                        ? "AUTONOMOUS agents cannot use authorization_code grant" : null;
+                case HOSTED_DELEGATED -> null;
+            };
+            if (forbidden != null) {
+                return Single.error(new InvalidClientMetadataException(forbidden));
             }
         }
 
         return Single.just(application);
     }
 
-    /**
-     * Apply agent-persona defaults directly onto the OAuth settings. Grant
-     * types, auth method, PKCE and client-type all live on the standard
-     * {@link ApplicationOAuthSettings} — the agent persona only seeds sensible
-     * starting values. Admins edit them in-place via the normal OAuth2
-     * settings UI post-creation.
-     */
     private void applyAgentDefaults(AgentSettings agentSettings, ApplicationOAuthSettings oAuthSettings) {
         if (agentSettings.getAgentType() == null) {
             return;
         }
         switch (agentSettings.getAgentType()) {
             case USER_EMBEDDED -> {
-                // public client, PKCE required
                 oAuthSettings.setClientType("public");
                 oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
                 oAuthSettings.setForcePKCE(true);
                 oAuthSettings.setForceS256CodeChallengeMethod(true);
-                if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
-                    oAuthSettings.setGrantTypes(new ArrayList<>(List.of(GrantType.AUTHORIZATION_CODE)));
-                }
+                defaultGrantTypes(oAuthSettings, GrantType.AUTHORIZATION_CODE);
             }
             case HOSTED_DELEGATED -> {
-                // Confidential client authenticating via jwt-bearer workload assertions
-                // (RFC 7523). Default to private_key_jwt so the gateway only accepts
-                // assertion-based auth; admins may switch method post-creation.
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
                     oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
                 }
-                if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
-                    oAuthSettings.setGrantTypes(new ArrayList<>(List.of(
-                            GrantType.AUTHORIZATION_CODE,
-                            GrantType.CLIENT_CREDENTIALS,
-                            GrantType.TOKEN_EXCHANGE
-                    )));
-                }
+                defaultGrantTypes(oAuthSettings,
+                        GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
             }
             case AUTONOMOUS -> {
-                // Confidential client authenticating via jwt-bearer workload assertions
-                // (RFC 7523). No redirect_uri. Default to private_key_jwt so the gateway
-                // only accepts assertion-based auth; admins may switch method post-creation.
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
                     oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
                 }
                 oAuthSettings.setRedirectUris(null);
-                if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
-                    oAuthSettings.setGrantTypes(new ArrayList<>(List.of(
-                            GrantType.CLIENT_CREDENTIALS,
-                            GrantType.TOKEN_EXCHANGE
-                    )));
-                }
+                defaultGrantTypes(oAuthSettings, GrantType.CLIENT_CREDENTIALS, GrantType.TOKEN_EXCHANGE);
             }
+        }
+    }
+
+    private static void defaultGrantTypes(ApplicationOAuthSettings oAuthSettings, String... grantTypes) {
+        if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+            oAuthSettings.setGrantTypes(new ArrayList<>(List.of(grantTypes)));
         }
     }
 }

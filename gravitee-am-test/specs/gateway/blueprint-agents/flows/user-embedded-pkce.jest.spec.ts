@@ -25,7 +25,7 @@ setup(180000);
 
 describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
   let fixture: BlueprintFixture;
-  let agent: any; // USER_EMBEDDED app
+  let agent: any;
   let redirectUri: string;
 
   beforeAll(async () => {
@@ -33,7 +33,6 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
     redirectUri = 'https://agent.example.com/callback';
     agent = await fixture.createBlueprintApp('USER_EMBEDDED', undefined, redirectUri);
 
-    // Verify agent defaults: NATIVE type, public, PKCE forced, S256 forced, no secret
     const appDetails = await fixture.getApp(agent.id);
     expect(appDetails.type).toEqual('native');
     expect(appDetails.settings.oauth.clientSecret).toBeUndefined();
@@ -51,7 +50,6 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
   });
 
   it('should require PKCE code_challenge in authorization request', async () => {
-    // Authorization request without code_challenge should fail
     const authParams = new URLSearchParams({
       response_type: 'code',
       client_id: agent.settings.oauth.clientId,
@@ -64,7 +62,6 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
 
     const response = await performGet(authUrl);
 
-    // Should redirect with error because PKCE is forced
     expect([302, 400]).toContain(response.status);
     if (response.status === 302) {
       expect(response.headers['location']).toContain('error=');
@@ -87,7 +84,6 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
 
     const response = await performGet(authUrl);
 
-    // Should redirect with error because plain method is not allowed
     expect([302, 400]).toContain(response.status);
     if (response.status === 302) {
       expect(response.headers['location']).toContain('error=');
@@ -102,12 +98,10 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Should reject — PKCE is forced
     expect([400, 401]).toContain(response.status);
   });
 
   it('should reject S256 mismatch in code_verifier', async () => {
-    // Send mismatched code_verifier (doesn't hash to the challenge)
     const wrongVerifier = 'wrongVerifierThatDoesNotMatchChallenge';
 
     const response = await performPost(
@@ -117,12 +111,10 @@ describe('USER_EMBEDDED agent — PKCE + authorization_code', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // S256 validation will fail
     expect([400, 401]).toContain(response.status);
   });
 
   it('should reject client_credentials grant (not in allowedGrantTypes)', async () => {
-    // USER_EMBEDDED apps only allow authorization_code, no client secret
     const response = await performPost(
       fixture.oidc.token_endpoint,
       '',

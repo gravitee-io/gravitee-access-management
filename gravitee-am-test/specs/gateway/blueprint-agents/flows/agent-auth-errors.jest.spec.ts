@@ -34,9 +34,6 @@ describe('Agent auth flows — cross-agent error handling', () => {
   let userEmbedded: any;
   let hostedDelegated: any;
   let autonomous: any;
-  // Agent whose tokenEndpointAuthMethod is forced back to client_secret_basic —
-  // used to prove the gateway rejects jwt-bearer assertions when the admin's
-  // configured auth method is not an assertion-based one.
   let basicAuthAutonomous: any;
   let basicAuthPrivateKey: crypto.KeyObject;
   let basicAuthKid: string;
@@ -79,7 +76,6 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // USER_EMBEDDED app only allows authorization_code
     expect([400, 401]).toContain(response.status);
   });
 
@@ -105,7 +101,6 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Hosted agents require proper auth
     expect([401, 400]).toContain(response.status);
   });
 
@@ -117,12 +112,10 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Must include client_secret
     expect([401, 400]).toContain(response.status);
   });
 
   it('should reject workload-jwt assertion with wrong issuer', async () => {
-    // Setup a key for hostedDelegated
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
     const kid = `key-${Date.now()}`;
 
@@ -139,11 +132,10 @@ describe('Agent auth flows — cross-agent error handling', () => {
     const addKeyResponse = await fixture.registerJwk(hostedDelegated.id, agentJwk);
     expect(addKeyResponse.ok).toEqual(true);
 
-    // Sign assertion with WRONG issuer (autonomous agent's client_id, not hostedDelegated's)
     const now = Math.floor(Date.now() / 1000);
     const wrongIssuerAssertion = jwt.sign(
       {
-        iss: autonomous.settings.oauth.clientId, // Wrong issuer!
+        iss: autonomous.settings.oauth.clientId,
         sub: 'instance-123',
         aud: fixture.oidc.token_endpoint,
         jti: crypto.randomUUID(),
@@ -161,12 +153,10 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Should reject — issuer doesn't match client_id
     expect([400, 401]).toContain(response.status);
   });
 
   it('should reject workload-jwt assertion signed with key from different agent', async () => {
-    // Setup a key on autonomous agent
     const { publicKey: autoKey, privateKey: autoPrivateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
     const autoKid = `auto-key-${Date.now()}`;
 
@@ -180,10 +170,8 @@ describe('Agent auth flows — cross-agent error handling', () => {
       alg: 'RS256',
     };
 
-    // Create a separate hosted agent to receive the cross-signed assertion
     const hostedAgent2 = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted2.example.com');
 
-    // Sign assertion from autonomous agent's private key, targeting hosted agent
     const now = Math.floor(Date.now() / 1000);
     const crossSignedAssertion = jwt.sign(
       {
@@ -195,10 +183,9 @@ describe('Agent auth flows — cross-agent error handling', () => {
         exp: now + 300,
       },
       autoPrivateKey.export({ format: 'pem', type: 'pkcs8' }),
-      { algorithm: 'RS256', keyid: autoKid }, // Using autonomous agent's key ID
+      { algorithm: 'RS256', keyid: autoKid },
     );
 
-    // Try to use it on hosted2 (which doesn't have autonomous agent's key)
     const response = await performPost(
       fixture.oidc.token_endpoint,
       '',
@@ -206,12 +193,10 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Should reject — key ID not found in agent's JWKS
     expect([400, 401]).toContain(response.status);
   });
 
   it('should reject token_exchange with mismatched subject_token_type', async () => {
-    // Attempt token exchange with wrong subject_token_type
     const response = await performPost(
       fixture.oidc.token_endpoint,
       '',
@@ -219,12 +204,10 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Should fail during token validation
     expect([400, 401]).toContain(response.status);
   });
 
   it('should reject client_credentials from user-embedded (public app trying to authenticate)', async () => {
-    // USER_EMBEDDED apps have no client_secret and only support authorization_code
     const response = await performPost(
       fixture.oidc.token_endpoint,
       '',
@@ -257,7 +240,6 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Admin configured client_secret_basic — jwt-bearer must not be accepted.
     expect([400, 401]).toContain(response.status);
   });
 });
