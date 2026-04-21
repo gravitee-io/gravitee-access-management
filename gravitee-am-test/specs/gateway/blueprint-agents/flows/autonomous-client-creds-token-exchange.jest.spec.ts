@@ -41,12 +41,8 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
   beforeAll(async () => {
     fixture = await setupBlueprintFixture();
 
-    // Create AUTONOMOUS agent (SERVICE type, no redirect needed).
-    // This spec exercises the secret-based client_credentials flow, so override
-    // the assertion-default auth method to client_secret_basic.
     autonomousAgent = await fixture.createBlueprintApp('AUTONOMOUS', undefined, undefined, 'client_secret_basic');
 
-    // Verify defaults: SERVICE type, only client_credentials + token_exchange
     const autonomousDetails = await fixture.getApp(autonomousAgent.id);
     expect(autonomousDetails.type).toEqual('service');
     expect(autonomousDetails.settings.oauth.grantTypes).toContain('client_credentials');
@@ -54,10 +50,8 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
     expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('authorization_code');
     expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('refresh_token');
 
-    // Also create a HOSTED_DELEGATED agent to use as subject for token exchange tests
     hostedAgent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com/callback', 'private_key_jwt');
 
-    // Setup keypair for hosted agent
     const { publicKey, privateKey: pk } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
     hostedPrivateKey = pk;
     hostedKid = `hosted-key-${Date.now()}`;
@@ -154,7 +148,6 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
   });
 
   it('should exchange subject_token with token_exchange grant', async () => {
-    // Step 1: Get subject token from hosted agent
     const hostedAssertion = signWorkloadJwt(hostedAgent.settings.oauth.clientId, 'hosted-instance', hostedPrivateKey, hostedKid);
     const subjectTokenResponse = await performPost(
       fixture.oidc.token_endpoint,
@@ -166,7 +159,6 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
     const subjectToken = subjectTokenResponse.body.access_token;
     expect(subjectToken).toMatch(JWT_FORMAT);
 
-    // Step 2: Exchange subject token using autonomous agent
     const exchangeResponse = await performPost(
       fixture.oidc.token_endpoint,
       '',
@@ -177,7 +169,6 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
       },
     );
 
-    // Token exchange may succeed or fail depending on domain token exchange settings
     expect([200, 400, 401]).toContain(exchangeResponse.status);
   });
 
@@ -189,7 +180,6 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Must include client_secret for SERVICE apps
     expect([401, 400]).toContain(response.status);
   });
 
@@ -201,7 +191,6 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Must include client_secret for SERVICE apps
     expect([401, 400]).toContain(response.status);
   });
 

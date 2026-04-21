@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.application;
 
+import java.util.Arrays;
+
 /**
  * Agent types for Blueprint applications.
  *
@@ -33,10 +35,9 @@ public enum AgentType {
         if (type == null) {
             return null;
         }
-        try {
-            return AgentType.valueOf(type);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return Arrays.stream(values())
+                .filter(v -> v.name().equals(type))
+                .findFirst()
+                .orElse(null);
     }
 }
