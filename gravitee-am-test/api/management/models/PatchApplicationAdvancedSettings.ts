@@ -37,6 +37,12 @@ export interface PatchApplicationAdvancedSettings {
    * @type {boolean}
    * @memberof PatchApplicationAdvancedSettings
    */
+  agentIdentityMode?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchApplicationAdvancedSettings
+   */
   flowsInherited?: boolean;
   /**
    *
@@ -62,6 +68,7 @@ export function PatchApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreD
     return json;
   }
   return {
+    agentIdentityMode: json['agentIdentityMode'] == null ? undefined : json['agentIdentityMode'],
     flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
     skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
   };
@@ -80,6 +87,7 @@ export function PatchApplicationAdvancedSettingsToJSONTyped(
   }
 
   return {
+    agentIdentityMode: value['agentIdentityMode'],
     flowsInherited: value['flowsInherited'],
     skipConsent: value['skipConsent'],
   };

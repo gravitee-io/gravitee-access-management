@@ -65,6 +65,12 @@ import {
 export interface Application {
   /**
    *
+   * @type {boolean}
+   * @memberof Application
+   */
+  agentIdentityMode?: boolean;
+  /**
+   *
    * @type {string}
    * @memberof Application
    */
@@ -195,6 +201,7 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
+    agentIdentityMode: json['agentIdentityMode'] == null ? undefined : json['agentIdentityMode'],
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
     description: json['description'] == null ? undefined : json['description'],
@@ -229,6 +236,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
   }
 
   return {
+    agentIdentityMode: value['agentIdentityMode'],
     certificate: value['certificate'],
     createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
     description: value['description'],

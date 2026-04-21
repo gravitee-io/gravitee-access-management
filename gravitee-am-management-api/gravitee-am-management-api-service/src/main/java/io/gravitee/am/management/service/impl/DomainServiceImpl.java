@@ -30,7 +30,6 @@ import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
@@ -916,14 +915,8 @@ public class DomainServiceImpl implements DomainService {
             return Completable.error(new InvalidDomainException("templateId must be provided when Client ID Metadata Document is enabled"));
         }
 
-        return applicationService.findById(templateId).filter(app -> app.isTemplate() || isAgentIdentityMode(app))
+        return applicationService.findById(templateId).filter(app -> app.isTemplate() || app.isAgentIdentityMode())
                 .switchIfEmpty(Maybe.error(new InvalidDomainException("templateId must be a valid application id configured as template or blueprint agent"))).ignoreElement();
-    }
-
-    private static boolean isAgentIdentityMode(Application app) {
-        return app.getSettings() != null
-                && app.getSettings().getAdvanced() != null
-                && app.getSettings().getAdvanced().isAgentIdentityMode();
     }
 
     private boolean hasInvalidDomain(CIMDSettings cimdSettings) {
