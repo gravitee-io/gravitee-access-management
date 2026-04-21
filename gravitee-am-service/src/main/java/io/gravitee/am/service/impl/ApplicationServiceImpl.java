@@ -419,12 +419,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Single<Application> create(Domain domain, NewApplication newApplication, User principal) {
         LOGGER.debug("Create a new application {} for domain {}", newApplication, domain);
 
-        // when type is AGENT, infer the real underlying type from agent settings
-        if (ApplicationType.AGENT == newApplication.getType()) {
-            newApplication.setAgentIdentityMode(true);
-            newApplication.setType(inferApplicationTypeFromAgent(newApplication));
-        }
-
         Application application = new Application();
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
@@ -714,10 +708,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public Single<Application> updateType(String domain, String id, ApplicationType type, User principal) {
         LOGGER.debug("Update application {} type to {} for domain {}", id, type, domain);
-
-        if (ApplicationType.AGENT == type) {
-            return Single.error(new InvalidClientMetadataException("Cannot change application type to AGENT. Use agent identity mode on application settings instead."));
-        }
 
         return applicationRepository.findById(id)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
@@ -1430,24 +1420,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     /**
-     * Infer the underlying ApplicationType from the agent type.
-     * USER_EMBEDDED → NATIVE (PKCE + public client, runs in user's device)
-     * HOSTED_DELEGATED → WEB (confidential client, server-side)
-     * AUTONOMOUS → SERVICE (client_credentials, no user involvement)
-     */
-    private ApplicationType inferApplicationTypeFromAgent(NewApplication newApplication) {
-        AgentSettings agentSettings = newApplication.getAgentSettings();
-        if (agentSettings == null || agentSettings.getAgentType() == null) {
-            return ApplicationType.WEB;
-        }
-        return switch (agentSettings.getAgentType()) {
-            case USER_EMBEDDED -> ApplicationType.NATIVE;
-            case HOSTED_DELEGATED -> ApplicationType.WEB;
-            case AUTONOMOUS -> ApplicationType.SERVICE;
-        };
-    }
-
-    /**
      * Apply agent-persona defaults directly onto the OAuth settings. Grant
      * types, auth method, PKCE and client-type all live on the standard
      * {@link ApplicationOAuthSettings} — the agent persona only seeds sensible
@@ -1470,11 +1442,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
             }
             case HOSTED_DELEGATED -> {
-                // confidential client with auth code + token exchange.
-                // Default to client_secret_basic — admins may switch to private_key_jwt
-                // (for jwt-bearer client assertions) or another method post-creation.
+                // Confidential client authenticating via jwt-bearer workload assertions
+                // (RFC 7523). Default to private_key_jwt so the gateway only accepts
+                // assertion-based auth; admins may switch method post-creation.
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
-                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
                 }
                 if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
                     oAuthSettings.setGrantTypes(new ArrayList<>(List.of(
@@ -1485,11 +1457,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 }
             }
             case AUTONOMOUS -> {
-                // confidential client, client_credentials + token exchange, no redirect_uri.
-                // Default to client_secret_basic — admins may switch to private_key_jwt
-                // (for jwt-bearer client assertions) or another method post-creation.
+                // Confidential client authenticating via jwt-bearer workload assertions
+                // (RFC 7523). No redirect_uri. Default to private_key_jwt so the gateway
+                // only accepts assertion-based auth; admins may switch method post-creation.
                 if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
-                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+                    oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
                 }
                 oAuthSettings.setRedirectUris(null);
                 if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
