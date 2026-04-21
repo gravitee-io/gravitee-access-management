@@ -19,36 +19,14 @@
   <div class="gv-form-section-title">
     <h5>Agent Identity Settings</h5>
     <small>
-      Blueprint agent configuration. Agent type is set at creation time and cannot be changed. Grant types, token TTLs, scopes and client
-      authentication method live on the standard <strong>Settings &rarr; OAuth2 / OIDC</strong>
-      tabs for this application.
+      Blueprint agent configuration. Agent type is set at creation time and cannot be changed. Grant types, token TTLs, scopes, client
+      authentication method and JWKS live on the standard <strong>Settings &rarr; OAuth2 / OIDC</strong> tabs for this application.
     </small>
   </div>
 
-  <form #agentForm="ngForm" (ngSubmit)="save()" fxLayout="column" fxLayoutGap="16px">
-    <mat-form-field appearance="outline">
-      <mat-label>Agent type</mat-label>
-      <input matInput [value]="agentTypeLabel" readonly />
-      <mat-hint>Immutable after creation</mat-hint>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Max public keys per workload</mat-label>
-      <input
-        matInput
-        type="number"
-        min="1"
-        [(ngModel)]="form.maxPublicKeysPerWorkload"
-        name="maxPublicKeysPerWorkload"
-        [disabled]="!editMode"
-        (input)="markDirty()"
-      />
-      <mat-hint>Upper bound for entries in the agent JWKS (1–100).</mat-hint>
-    </mat-form-field>
-
-    <div>
-      <button mat-raised-button color="primary" type="submit" [disabled]="!editMode || !dirty">Save</button>
-      <a mat-stroked-button [routerLink]="['..', 'agent-keys']">Manage agent keys</a>
-    </div>
-  </form>
+  <mat-form-field appearance="outline">
+    <mat-label>Agent type</mat-label>
+    <input matInput [value]="agentTypeLabel" readonly />
+    <mat-hint>Immutable after creation</mat-hint>
+  </mat-form-field>
 </div>

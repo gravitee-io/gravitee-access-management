@@ -92,16 +92,6 @@ public class AgentAuditBuilder extends GatewayAuditBuilder<AgentAuditBuilder> {
         return this;
     }
 
-    public AgentAuditBuilder keyAdded() {
-        type(EventType.AGENT_KEY_ADDED);
-        return this;
-    }
-
-    public AgentAuditBuilder keyRemoved() {
-        type(EventType.AGENT_KEY_REMOVED);
-        return this;
-    }
-
     @Override
     public Audit build(ObjectMapper mapper) {
         if (!agentData.isEmpty()) {

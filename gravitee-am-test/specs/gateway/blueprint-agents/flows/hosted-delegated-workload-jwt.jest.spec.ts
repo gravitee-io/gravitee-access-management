@@ -66,7 +66,7 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
       alg: 'RS256',
     };
 
-    const addKeyResponse = await fixture.addAgentKey(agent.id, agentJwk);
+    const addKeyResponse = await fixture.registerJwk(agent.id, agentJwk);
     expect(addKeyResponse.ok).toEqual(true);
 
     await fixture.waitForOidc();
