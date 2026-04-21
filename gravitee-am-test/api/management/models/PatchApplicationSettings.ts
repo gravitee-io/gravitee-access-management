@@ -86,6 +86,8 @@ import {
   PatchApplicationSAMLSettingsToJSON,
   PatchApplicationSAMLSettingsToJSONTyped,
 } from './PatchApplicationSAMLSettings';
+import type { AgentSettings } from './AgentSettings';
+import { AgentSettingsFromJSON, AgentSettingsFromJSONTyped, AgentSettingsToJSON, AgentSettingsToJSONTyped } from './AgentSettings';
 
 /**
  *
@@ -105,6 +107,12 @@ export interface PatchApplicationSettings {
    * @memberof PatchApplicationSettings
    */
   advanced?: PatchApplicationAdvancedSettings;
+  /**
+   *
+   * @type {AgentSettings}
+   * @memberof PatchApplicationSettings
+   */
+  agent?: AgentSettings;
   /**
    *
    * @type {CookieSettings}
@@ -255,6 +263,7 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
   return {
     account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
     advanced: json['advanced'] == null ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
+    agent: json['agent'] == null ? undefined : AgentSettingsFromJSON(json['agent']),
     cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
     login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
     mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
@@ -280,6 +289,7 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
   return {
     account: AccountSettingsToJSON(value['account']),
     advanced: PatchApplicationAdvancedSettingsToJSON(value['advanced']),
+    agent: AgentSettingsToJSON(value['agent']),
     cookieSettings: CookieSettingsToJSON(value['cookieSettings']),
     login: LoginSettingsToJSON(value['login']),
     mfa: PatchMFASettingsToJSON(value['mfa']),

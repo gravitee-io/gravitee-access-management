@@ -55,7 +55,6 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonArray;
@@ -987,30 +986,28 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
         // software_id must match the domain's CIMD template
         if (domainTemplateId != null && !domainTemplateId.equals(requestedSoftwareId)) {
-            return Single.error(new InvalidClientMetadataException(
+            return Single.error(() -> new InvalidClientMetadataException(
                     "software_id does not match domain CIMD blueprint configuration"));
         }
 
         return clientService.findById(requestedSoftwareId)
-                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException(
+                .switchIfEmpty(Single.error(() -> new InvalidClientMetadataException(
                         "software_id references an unknown application")))
-                .toSingle()
                 .flatMap(blueprint -> {
                     if (!blueprint.isAgentIdentityMode()) {
-                        return Single.error(new InvalidClientMetadataException(
+                        return Single.error(() -> new InvalidClientMetadataException(
                                 "software_id must reference a blueprint agent application"));
                     }
 
-                    // Validate requested grant types are subset of blueprint's allowed types
                     List<String> blueprintGrantTypes = blueprint.getAuthorizedGrantTypes();
                     if (request.getGrantTypes() != null && request.getGrantTypes().isPresent()
                             && blueprintGrantTypes != null) {
-                        List<String> requestedGrantTypes = request.getGrantTypes().get();
-                        for (String grantType : requestedGrantTypes) {
-                            if (!blueprintGrantTypes.contains(grantType)) {
-                                return Single.error(new InvalidClientMetadataException(
-                                        "Requested grant_type '" + grantType + "' is not allowed by the blueprint agent"));
-                            }
+                        Optional<String> disallowed = request.getGrantTypes().get().stream()
+                                .filter(gt -> !blueprintGrantTypes.contains(gt))
+                                .findFirst();
+                        if (disallowed.isPresent()) {
+                            return Single.error(() -> new InvalidClientMetadataException(
+                                    "Requested grant_type '" + disallowed.get() + "' is not allowed by the blueprint agent"));
                         }
                     }
 
