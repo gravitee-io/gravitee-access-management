@@ -25,6 +25,5 @@ import java.util.Map;
 public class AgentSettingsMongo {
 
     private String agentType;
-    private int maxPublicKeysPerWorkload = 10;
     private Map<String, String> requiredClaims;
 }

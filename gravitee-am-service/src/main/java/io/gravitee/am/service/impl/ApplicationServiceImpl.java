@@ -1355,11 +1355,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        // validate max public keys
-        if (agent.getMaxPublicKeysPerWorkload() < 1 || agent.getMaxPublicKeysPerWorkload() > 100) {
-            return Single.error(new InvalidClientMetadataException("Max public keys per workload must be between 1 and 100"));
-        }
-
         return Single.just(application);
     }
 

@@ -70,7 +70,7 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
       alg: 'RS256',
     };
 
-    const addKeyResponse = await fixture.addAgentKey(hostedAgent.id, agentJwk);
+    const addKeyResponse = await fixture.registerJwk(hostedAgent.id, agentJwk);
     expect(addKeyResponse.ok).toEqual(true);
 
     await fixture.waitForOidc();

@@ -811,7 +811,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         AgentSettings agentSettings = new AgentSettings();
         agentSettings.setAgentType(AgentType.orNull(other.getAgentType()));
-        agentSettings.setMaxPublicKeysPerWorkload(other.getMaxPublicKeysPerWorkload());
         agentSettings.setRequiredClaims(other.getRequiredClaims());
         return agentSettings;
     }
@@ -823,7 +822,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         AgentSettingsMongo agentSettingsMongo = new AgentSettingsMongo();
         agentSettingsMongo.setAgentType(other.getAgentType() != null ? other.getAgentType().name() : null);
-        agentSettingsMongo.setMaxPublicKeysPerWorkload(other.getMaxPublicKeysPerWorkload());
         agentSettingsMongo.setRequiredClaims(other.getRequiredClaims());
         return agentSettingsMongo;
     }
