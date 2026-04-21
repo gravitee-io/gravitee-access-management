@@ -75,13 +75,11 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
             return true;
         }
 
-        // jwt-bearer assertion for blueprint agent instances (shape-dispatched
-        // in ClientAssertionServiceImpl: iss is a URI or iss != sub).
-        if (client != null && client.isAgentIdentityMode()
-                && ClientAuthenticationMethod.JWT_BEARER.equals(getClientAssertionType(context.request()))
-                && getClientAssertion(context.request()) != null) {
-            return true;
-        }
+        // Blueprint agent jwt-bearer assertions (iss is a URI or iss != sub,
+        // shape-dispatched in ClientAssertionServiceImpl) flow through the
+        // branch above because blueprint clients are seeded with PRIVATE_KEY_JWT
+        // by ApplicationServiceImpl.applyAgentDefaults — that keeps the admin's
+        // configured auth method as the single gate.
 
         if ((client == null || client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty())
                 && getClientAssertion(context.request()) != null && getClientAssertionType(context.request()) != null) {

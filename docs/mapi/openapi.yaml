@@ -12027,10 +12027,6 @@ components:
           - USER_EMBEDDED
           - HOSTED_DELEGATED
           - AUTONOMOUS
-        requiredClaims:
-          type: object
-          additionalProperties:
-            type: string
     AlertNotifier:
       type: object
       properties:
