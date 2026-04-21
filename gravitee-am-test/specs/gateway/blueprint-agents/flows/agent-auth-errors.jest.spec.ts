@@ -34,12 +34,33 @@ describe('Agent auth flows — cross-agent error handling', () => {
   let userEmbedded: any;
   let hostedDelegated: any;
   let autonomous: any;
+  // Agent whose tokenEndpointAuthMethod is forced back to client_secret_basic —
+  // used to prove the gateway rejects jwt-bearer assertions when the admin's
+  // configured auth method is not an assertion-based one.
+  let basicAuthAutonomous: any;
+  let basicAuthPrivateKey: crypto.KeyObject;
+  let basicAuthKid: string;
 
   beforeAll(async () => {
     fixture = await setupBlueprintFixture();
     userEmbedded = await fixture.createBlueprintApp('USER_EMBEDDED', undefined, 'https://user-embedded.example.com');
     hostedDelegated = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com');
     autonomous = await fixture.createBlueprintApp('AUTONOMOUS');
+
+    basicAuthAutonomous = await fixture.createBlueprintApp('AUTONOMOUS', undefined, undefined, 'client_secret_basic');
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+    basicAuthPrivateKey = privateKey;
+    basicAuthKid = `basic-auth-key-${Date.now()}`;
+    const basicJwk = publicKey.export({ format: 'jwk' });
+    const jwkRes = await fixture.registerJwk(basicAuthAutonomous.id, {
+      kty: basicJwk.kty,
+      n: basicJwk.n,
+      e: basicJwk.e,
+      kid: basicAuthKid,
+      use: 'sig',
+      alg: 'RS256',
+    });
+    expect(jwkRes.ok).toEqual(true);
 
     await fixture.waitForOidc();
   });
@@ -211,6 +232,32 @@ describe('Agent auth flows — cross-agent error handling', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
+    expect([400, 401]).toContain(response.status);
+  });
+
+  it('should reject workload-jwt assertion when blueprint auth method is client_secret_basic', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const assertion = jwt.sign(
+      {
+        iss: basicAuthAutonomous.settings.oauth.clientId,
+        sub: 'basic-auth-instance-1',
+        aud: fixture.oidc.token_endpoint,
+        jti: crypto.randomUUID(),
+        iat: now,
+        exp: now + 300,
+      },
+      basicAuthPrivateKey.export({ format: 'pem', type: 'pkcs8' }),
+      { algorithm: 'RS256', keyid: basicAuthKid },
+    );
+
+    const response = await performPost(
+      fixture.oidc.token_endpoint,
+      '',
+      `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER_TYPE)}&client_assertion=${encodeURIComponent(assertion)}&client_id=${basicAuthAutonomous.settings.oauth.clientId}`,
+      { 'Content-type': 'application/x-www-form-urlencoded' },
+    );
+
+    // Admin configured client_secret_basic — jwt-bearer must not be accepted.
     expect([400, 401]).toContain(response.status);
   });
 });

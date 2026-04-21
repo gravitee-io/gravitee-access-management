@@ -24,6 +24,9 @@ import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.AgentSettings;
+import io.gravitee.am.model.application.AgentType;
+import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -406,6 +409,48 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                 && a.getSettings().getSaml().getAssertionAttributes().size() == 1);
         reloaded.assertValue(a -> "uid".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).name())
                 && "{#context.attributes['user'].username}".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).value()));
+    }
+
+    @Test
+    public void testAgentSettingsRoundTrip() {
+        String domain = "domainAgentRt" + UUID.randomUUID();
+        Application app = new Application();
+        app.setName("agentRtApp");
+        app.setDomain(domain);
+        app.setType(ApplicationType.SERVICE);
+
+        ApplicationAdvancedSettings advanced = new ApplicationAdvancedSettings();
+        advanced.setAgentIdentityMode(true);
+
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.AUTONOMOUS);
+
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setAdvanced(advanced);
+        settings.setAgent(agent);
+        app.setSettings(settings);
+
+        Application created = applicationRepository.create(app).blockingGet();
+
+        TestObserver<Application> afterCreate = applicationRepository.findById(created.getId()).test();
+        afterCreate.awaitDone(10, TimeUnit.SECONDS);
+        afterCreate.assertComplete();
+        afterCreate.assertNoErrors();
+        afterCreate.assertValue(a -> a.getSettings() != null
+                && a.getSettings().getAdvanced() != null
+                && a.getSettings().getAdvanced().isAgentIdentityMode());
+        afterCreate.assertValue(a -> a.getSettings().getAgent() != null
+                && AgentType.AUTONOMOUS.equals(a.getSettings().getAgent().getAgentType()));
+
+        Application loaded = applicationRepository.findById(created.getId()).blockingGet();
+        loaded.getSettings().getAgent().setAgentType(AgentType.USER_EMBEDDED);
+        applicationRepository.update(loaded).blockingGet();
+
+        TestObserver<Application> reloaded = applicationRepository.findById(created.getId()).test();
+        reloaded.awaitDone(10, TimeUnit.SECONDS);
+        reloaded.assertComplete();
+        reloaded.assertValue(a -> AgentType.USER_EMBEDDED.equals(a.getSettings().getAgent().getAgentType()));
+        reloaded.assertValue(a -> a.getSettings().getAdvanced().isAgentIdentityMode());
     }
 
     @Test

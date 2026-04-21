@@ -29,6 +29,12 @@ import { Fixture } from '../../../test-fixture';
 const ORG_ID = process.env.AM_DEF_ORG_ID;
 const ENV_ID = process.env.AM_DEF_ENV_ID;
 
+const AGENT_TYPE_TO_APPLICATION_TYPE: Record<string, string> = {
+  USER_EMBEDDED: 'NATIVE',
+  HOSTED_DELEGATED: 'WEB',
+  AUTONOMOUS: 'SERVICE',
+};
+
 export interface BlueprintFixture extends Fixture {
   accessToken: string;
   domain: Domain;
@@ -37,7 +43,12 @@ export interface BlueprintFixture extends Fixture {
   cleanUp: () => Promise<void>;
   /** Await domain start + OIDC well-known discovery; sets {@link oidc}. */
   waitForOidc: () => Promise<DomainOidcConfig>;
-  createBlueprintApp: (agentType: string, name?: string, redirectUri?: string) => Promise<any>;
+  createBlueprintApp: (
+    agentType: string,
+    name?: string,
+    redirectUri?: string,
+    tokenEndpointAuthMethod?: string,
+  ) => Promise<any>;
   createRawApp: (body: any) => Promise<Response>;
   getApp: (appId: string) => Promise<any>;
   deleteApp: (appId: string) => Promise<void>;
@@ -72,11 +83,17 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       });
     };
 
-    const createBlueprintApp = async (agentType: string, name?: string, redirectUri?: string): Promise<any> => {
+    const createBlueprintApp = async (
+      agentType: string,
+      name?: string,
+      redirectUri?: string,
+      tokenEndpointAuthMethod?: string,
+    ): Promise<any> => {
       const appName = name || uniqueName(`agent-${agentType.toLowerCase()}`, true);
       const body: any = {
         name: appName,
-        type: 'AGENT',
+        type: AGENT_TYPE_TO_APPLICATION_TYPE[agentType],
+        agentIdentityMode: true,
         agentSettings: { agentType },
       };
       if (redirectUri || agentType !== 'AUTONOMOUS') {
@@ -88,8 +105,26 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
         const error = await response.text();
         throw new Error(`Failed to create blueprint app: ${response.status} ${error}`);
       }
-      const app = await response.json();
+      let app = await response.json();
       createdAppIds.push(app.id);
+
+      // Override the assertion-default auth method when a test exercises a
+      // secret-based flow (e.g. basic auth against an AUTONOMOUS agent).
+      if (tokenEndpointAuthMethod && tokenEndpointAuthMethod !== app.settings?.oauth?.tokenEndpointAuthMethod) {
+        const patchResponse = await fetch(managementUrl(`/domains/${domain.id}/applications/${app.id}`), {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ settings: { oauth: { tokenEndpointAuthMethod } } }),
+        });
+        if (!patchResponse.ok) {
+          const error = await patchResponse.text();
+          throw new Error(`Failed to patch tokenEndpointAuthMethod: ${patchResponse.status} ${error}`);
+        }
+        app = await patchResponse.json();
+      }
       return app;
     };
 

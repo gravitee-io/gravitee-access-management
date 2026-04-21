@@ -1055,7 +1055,7 @@ export const routes: Routes = [
                                     only: ['application_form_list', 'application_form_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                                   },
                                 },
                                 children: [
@@ -1094,7 +1094,7 @@ export const routes: Routes = [
                                     only: ['application_email_template_list', 'application_email_template_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
                                   },
                                 },
                                 children: [
