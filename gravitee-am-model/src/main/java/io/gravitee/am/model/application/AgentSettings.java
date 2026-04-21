@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.model.application;
 
-import java.util.Map;
-
 /**
  * Configuration block for Blueprint (agent identity) applications.
  * Stored on {@link ApplicationSettings} when {@code agentIdentityMode} is true.
@@ -29,14 +27,12 @@ import java.util.Map;
 public class AgentSettings {
 
     private AgentType agentType;
-    private Map<String, String> requiredClaims;
 
     public AgentSettings() {
     }
 
     public AgentSettings(AgentSettings other) {
         this.agentType = other.agentType;
-        this.requiredClaims = other.requiredClaims != null ? Map.copyOf(other.requiredClaims) : null;
     }
 
     public AgentType getAgentType() {
@@ -45,13 +41,5 @@ public class AgentSettings {
 
     public void setAgentType(AgentType agentType) {
         this.agentType = agentType;
-    }
-
-    public Map<String, String> getRequiredClaims() {
-        return requiredClaims;
-    }
-
-    public void setRequiredClaims(Map<String, String> requiredClaims) {
-        this.requiredClaims = requiredClaims;
     }
 }

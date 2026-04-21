@@ -32,13 +32,9 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
-import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDException;
-import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataDocument;
-import io.gravitee.am.gateway.handler.oidc.service.cimd.CIMDMetadataFetcher;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.application.ClientSecret;
-import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.AuditService;
@@ -96,9 +92,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     private SecretService appSecretService;
 
     @Autowired
-    private CIMDMetadataFetcher cimdMetadataFetcher;
-
-    @Autowired
     private AuditService auditService;
 
     @Override
@@ -151,6 +144,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             return false;
         }
         return isUri(iss) || !iss.equals(sub);
+    }
+
+    private static boolean isUri(String value) {
+        return value != null && (value.startsWith("https://") || value.startsWith("http://"));
     }
 
     /**
@@ -305,11 +302,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
      * {@code jwt-bearer} client assertion.
      * <p>
      * The JWT {@code iss} identifies the blueprint application (client_id, or a
-     * CIMD metadata URI) and {@code sub} identifies the agent instance. The
-     * signature is verified against the blueprint's agent JWKS. On success, a
-     * cloned Client is returned with the {@code clientId} set to the agent
-     * instance ID and {@code blueprintClientId} set to the original blueprint
-     * client_id.
+     * URL-shaped client_id that resolves via master's CIMD-aware client lookup)
+     * and {@code sub} identifies the agent instance. The signature is verified
+     * against the blueprint's JWKS. On success, a cloned Client is returned with
+     * {@code blueprintClientId} set to the original blueprint client_id.
      */
     private Maybe<Client> validateAgentAssertion(String assertion, String basePath) {
         try {
@@ -342,11 +338,11 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
-            // Look up blueprint — via CIMD if iss is a URI, otherwise direct lookup
-            return resolveBlueprint(iss)
+            // Look up blueprint. For URL-shaped iss the CIMD-aware lookup service
+            // resolves the synthesized client via the domain's CIMD metadata flow.
+            return clientLookupService.findByClientId(iss)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
-                    .flatMap(result -> {
-                        Client blueprint = result.client();
+                    .flatMap(blueprint -> {
                         if (!blueprint.isAgentIdentityMode()) {
                             return Maybe.error(new InvalidClientException("Application is not a blueprint agent"));
                         }
@@ -354,11 +350,16 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                         if (agentType != AgentType.AUTONOMOUS && agentType != AgentType.HOSTED_DELEGATED) {
                             return Maybe.error(new InvalidClientException("Agent jwt-bearer assertion is not supported for agent type: " + agentType));
                         }
+                        String authMethod = blueprint.getTokenEndpointAuthMethod();
+                        if (!ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(authMethod)
+                                && !ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(authMethod)) {
+                            return Maybe.error(new InvalidClientException(
+                                    "Blueprint is not configured for jwt-bearer client assertions"));
+                        }
 
-                        // JWKS resolution: CIMD metadata JWKS takes precedence over blueprint JWKS
-                        JWKSet agentJwks = resolveJwks(result);
+                        JWKSet agentJwks = blueprint.getJwks();
                         if (agentJwks == null || agentJwks.getKeys() == null || agentJwks.getKeys().isEmpty()) {
-                            return Maybe.error(new InvalidClientException("No agent JWKS available (checked metadata document and blueprint)"));
+                            return Maybe.error(new InvalidClientException("No agent JWKS available on blueprint"));
                         }
 
                         return jwkService.getKey(agentJwks, signedJWT.getHeader().getKeyID())
@@ -366,17 +367,15 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                                 .flatMap(jwk -> {
                                     if (!jwsService.isValidSignature(signedJWT, jwk)) {
                                         reportAgentAuth(iss, sub, signedJWT.getHeader().getKeyID(),
-                                                jwt, blueprint, result, "INVALID_SIGNATURE");
+                                                jwt, blueprint, "INVALID_SIGNATURE");
                                         return Maybe.error(unableToValidateClientException());
                                     }
                                     Client agentClient = new Client(blueprint);
                                     agentClient.setBlueprintClientId(blueprint.getClientId());
                                     agentClient.setAgentInstanceId(sub);
 
-                                    // Audit: agent authenticated + key used
                                     reportAgentAuth(iss, sub, signedJWT.getHeader().getKeyID(),
-                                            jwt, blueprint, result, null);
-                                    reportKeyUsed(signedJWT.getHeader().getKeyID(), sub, blueprint);
+                                            jwt, blueprint, null);
 
                                     return Maybe.just(agentClient);
                                 });
@@ -387,62 +386,9 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         }
     }
 
-    private record BlueprintResult(Client client, CIMDMetadataDocument metadata) {
-        BlueprintResult(Client client) {
-            this(client, null);
-        }
-    }
-
-    /**
-     * Resolve the blueprint application from the issuer claim.
-     * If the issuer is a URI and CIMD is enabled, fetch the metadata document,
-     * resolve the blueprint via software_id, and return both for JWKS resolution.
-     */
-    private Maybe<BlueprintResult> resolveBlueprint(String iss) {
-        if (isUri(iss)) {
-            if (!isCimdEnabled()) {
-                return Maybe.error(new InvalidClientException(
-                        "Issuer is a URI but CIMD is not enabled on this domain"));
-            }
-            CIMDSettings cimdSettings = domain.getOidc().getCimdSettings();
-            return cimdMetadataFetcher.fetch(iss, domain.getId(), cimdSettings)
-                    .flatMapMaybe(metadata -> {
-                        String softwareId = metadata.getSoftwareId();
-                        if (softwareId == null || softwareId.isEmpty()) {
-                            return Maybe.error(new InvalidClientException("CIMD metadata document missing software_id"));
-                        }
-                        return clientSyncService.findByClientId(softwareId)
-                                .map(client -> new BlueprintResult(client, metadata));
-                    })
-                    .onErrorResumeNext(err -> {
-                        if (err instanceof CIMDException) {
-                            log.warn("CIMD resolution failed for iss={}: {}", iss, err.getMessage());
-                        }
-                        return Maybe.error(err instanceof InvalidClientException ? err
-                                : new InvalidClientException("CIMD resolution failed: " + err.getMessage()));
-                    });
-        }
-        return clientSyncService.findByClientId(iss).map(BlueprintResult::new);
-    }
-
-    /**
-     * Resolve JWKS for signature verification.
-     *
-     * Security: signature verification MUST only trust the blueprint's registered JWKS
-     * (the pre-established trust anchor). CIMD metadata is fetched from a URI supplied
-     * by the JWT issuer, which is attacker-controllable. Trusting metadata-supplied
-     * JWKS would allow an attacker to serve their own public key and impersonate the
-     * blueprint by pointing `iss` at their own server and returning the victim's
-     * software_id.
-     */
-    private JWKSet resolveJwks(BlueprintResult result) {
-        return result.client().getJwks();
-    }
-
     private void reportAgentAuth(String iss, String sub, String kid, JWT jwt,
-                                    Client blueprint, BlueprintResult result, String failureReason) {
+                                    Client blueprint, String failureReason) {
         try {
-            boolean isCimd = result.metadata() != null;
             var builder = AuditBuilder.builder(AgentAuditBuilder.class);
             if (blueprint.getDomain() != null) {
                 builder.reference(Reference.domain(blueprint.getDomain()));
@@ -454,13 +400,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                     .agentType(blueprint.getAgentType() != null ? blueprint.getAgentType().name() : null)
                     .assertionKid(kid)
                     .assertionIss(iss)
-                    .assertionJti(jwt.getJWTClaimsSet().getJWTID())
-                    .resolutionMethod(isCimd ? "CIMD" : "DIRECT");
-
-            if (isCimd) {
-                builder.cimdMetadataUri(iss)
-                       .cimdSoftwareId(result.metadata().getSoftwareId());
-            }
+                    .assertionJti(jwt.getJWTClaimsSet().getJWTID());
 
             if (failureReason != null) {
                 builder.throwable(new InvalidClientException(failureReason));
@@ -470,32 +410,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         } catch (Exception e) {
             log.warn("Failed to report agent authentication audit", e);
         }
-    }
-
-    private void reportKeyUsed(String kid, String sub, Client blueprint) {
-        try {
-            var builder = AuditBuilder.builder(AgentAuditBuilder.class)
-                    .keyUsed()
-                    .blueprintId(blueprint.getClientId())
-                    .agentInstanceId(sub)
-                    .assertionKid(kid);
-            if (blueprint.getDomain() != null) {
-                builder.reference(Reference.domain(blueprint.getDomain()));
-            }
-            auditService.report(builder);
-        } catch (Exception e) {
-            log.warn("Failed to report agent key-used audit", e);
-        }
-    }
-
-    private boolean isCimdEnabled() {
-        return domain.getOidc() != null
-                && domain.getOidc().getCimdSettings() != null
-                && domain.getOidc().getCimdSettings().isEnabled();
-    }
-
-    private static boolean isUri(String value) {
-        return value != null && (value.startsWith("https://") || value.startsWith("http://"));
     }
 
     private Maybe<JWKSet> getClientJwkSet(Client client) {

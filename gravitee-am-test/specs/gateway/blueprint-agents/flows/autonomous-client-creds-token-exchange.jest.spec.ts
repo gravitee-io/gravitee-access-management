@@ -41,8 +41,10 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
   beforeAll(async () => {
     fixture = await setupBlueprintFixture();
 
-    // Create AUTONOMOUS agent (SERVICE type, no redirect needed)
-    autonomousAgent = await fixture.createBlueprintApp('AUTONOMOUS');
+    // Create AUTONOMOUS agent (SERVICE type, no redirect needed).
+    // This spec exercises the secret-based client_credentials flow, so override
+    // the assertion-default auth method to client_secret_basic.
+    autonomousAgent = await fixture.createBlueprintApp('AUTONOMOUS', undefined, undefined, 'client_secret_basic');
 
     // Verify defaults: SERVICE type, only client_credentials + token_exchange
     const autonomousDetails = await fixture.getApp(autonomousAgent.id);
