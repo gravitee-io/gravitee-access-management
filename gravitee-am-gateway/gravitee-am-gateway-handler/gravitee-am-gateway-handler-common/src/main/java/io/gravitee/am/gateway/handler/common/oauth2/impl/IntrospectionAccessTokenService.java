@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.rxjava3.core.Maybe;
@@ -32,12 +31,11 @@ public class IntrospectionAccessTokenService extends BaseIntrospectionTokenServi
     private final TokenRepository tokenRepository;
 
     public IntrospectionAccessTokenService(JWTService jwtService,
-                                           ClientSyncService clientService,
+                                           ClientLookupService clientLookupService,
                                            ProtectedResourceManager protectedResourceManager,
-                                           ProtectedResourceSyncService protectedResourceSyncService,
                                            Environment environment,
                                            TokenRepository tokenRepository) {
-        super(ACCESS_TOKEN, jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment);
+        super(ACCESS_TOKEN, jwtService, clientLookupService, protectedResourceManager, environment);
         this.tokenRepository = tokenRepository;
     }
 

@@ -18,10 +18,9 @@ package io.gravitee.am.gateway.handler.common.oauth2.impl;
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
@@ -58,13 +57,10 @@ public class IntrospectionRefreshTokenServiceTest {
     private JWTService jwtService;
 
     @Mock
-    private ClientSyncService clientService;
+    private ClientLookupService clientLookupService;
 
     @Mock
     private ProtectedResourceManager protectedResourceManager;
-
-    @Mock
-    private ProtectedResourceSyncService protectedResourceSyncService;
 
     @Mock
     private Environment environment;
@@ -78,7 +74,7 @@ public class IntrospectionRefreshTokenServiceTest {
     public void setUp() throws Exception {
         when(environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(false);
         when(environment.getProperty(OFFLINE_VERIFICATION_TIMER_SECONDS_KEY, Integer.class, 10)).thenReturn(10);
-        introspectionTokenService = new IntrospectionRefreshTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
+        introspectionTokenService = new IntrospectionRefreshTokenService(jwtService, clientLookupService, protectedResourceManager, environment, tokenRepository);
     }
 
     @Test
@@ -93,8 +89,7 @@ public class IntrospectionRefreshTokenServiceTest {
         client.setCertificate("cert-id");
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(REFRESH_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
@@ -118,8 +113,7 @@ public class IntrospectionRefreshTokenServiceTest {
         accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()));
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(REFRESH_TOKEN))).thenReturn(Single.just(jwt));
         when(tokenRepository.findRefreshTokenByJti(jwt.getJti())).thenReturn(Maybe.just(accessToken));
 
@@ -142,8 +136,7 @@ public class IntrospectionRefreshTokenServiceTest {
         client.setCertificate("cert-id");
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(REFRESH_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
@@ -166,8 +159,7 @@ public class IntrospectionRefreshTokenServiceTest {
         client.setCertificate("cert-id");
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(REFRESH_TOKEN))).thenReturn(Single.error(new JWTException("invalid token")));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, false).test();
@@ -188,8 +180,7 @@ public class IntrospectionRefreshTokenServiceTest {
         client.setCertificate("cert-id");
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(REFRESH_TOKEN))).thenReturn(Single.just(jwt));
         when(tokenRepository.findRefreshTokenByJti(jwt.getJti())).thenReturn(Maybe.empty());
 
@@ -213,8 +204,7 @@ public class IntrospectionRefreshTokenServiceTest {
         refreshToken.setExpireAt(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(REFRESH_TOKEN))).thenReturn(Single.just(jwt));
         when(tokenRepository.findRefreshTokenByJti(jwt.getJti())).thenReturn(Maybe.just(refreshToken));
 
@@ -234,14 +224,13 @@ public class IntrospectionRefreshTokenServiceTest {
         client.setCertificate("cert-id");
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Supplier<String>>any(), eq(REFRESH_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(clientService).findByDomainAndClientId("domain", "client");
+        verify(clientLookupService).findByDomainAndClientId("domain", "client");
     }
 
     @Test
@@ -253,14 +242,13 @@ public class IntrospectionRefreshTokenServiceTest {
         jwt.setAud("client");
 
         when(jwtService.decode(token, REFRESH_TOKEN)).thenReturn(Single.just(jwt));
-        when(clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = introspectionTokenService.introspect(token, true).test();
         testObserver.assertError(throwable -> throwable instanceof InvalidTokenException e
                 && "The token is invalid".equals(e.getMessage())
                 && "Token audience values [client] do not match any client or protected resource identifiers in domain [domain]".equals(e.getDetails()));
-        verify(clientService).findByDomainAndClientId("domain", "client");
+        verify(clientLookupService).findByDomainAndClientId("domain", "client");
         verify(tokenRepository, never()).findRefreshTokenByJti(anyString());
     }
 

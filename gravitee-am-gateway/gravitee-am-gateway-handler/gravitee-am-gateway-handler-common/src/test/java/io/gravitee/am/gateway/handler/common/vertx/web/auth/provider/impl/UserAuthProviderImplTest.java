@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
@@ -46,7 +46,7 @@ public class UserAuthProviderImplTest {
     @Mock
     private UserAuthenticationManager userAuthenticationManager;
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
     @Mock
     private Domain domain;
     @Mock(answer = org.mockito.Answers.RETURNS_DEEP_STUBS)
@@ -91,7 +91,7 @@ public class UserAuthProviderImplTest {
         when(domain.getId()).thenReturn(domainId);
         when(domain.getName()).thenReturn(domainName);
         when(domain.getPath()).thenReturn(domainPath);
-        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(clientId)).thenReturn(Maybe.just(client));
         setupHttpRequestMocks();
         when(userAuthenticationManager.authenticate(any(Client.class), any(Authentication.class)))
                 .thenReturn(Single.just(new io.gravitee.am.model.User()));

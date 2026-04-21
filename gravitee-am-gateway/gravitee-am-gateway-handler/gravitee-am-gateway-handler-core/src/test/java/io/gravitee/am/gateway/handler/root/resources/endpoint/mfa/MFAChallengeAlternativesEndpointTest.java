@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
@@ -59,7 +59,7 @@ import static org.mockito.Mockito.when;
 public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
 
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
 
     @Mock
     private TemplateEngine templateEngine;
@@ -71,14 +71,14 @@ public class MFAChallengeAlternativesEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
+        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientLookupService);
         clientRequestParseHandler.setRequired(true);
 
         domain = new Domain();
         domain.setId(UUID.randomUUID().toString());
         domain.setPath("/");
 
-        when(clientSyncService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
+        when(clientLookupService.findByClientId(anyString())).thenReturn(Maybe.just(new Client()));
 
         router.route(HttpMethod.GET, "/mfa/challenge/alternatives")
                 .handler(clientRequestParseHandler)

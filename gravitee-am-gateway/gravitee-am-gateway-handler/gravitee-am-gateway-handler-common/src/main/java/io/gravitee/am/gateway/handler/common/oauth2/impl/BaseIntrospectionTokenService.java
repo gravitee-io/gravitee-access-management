@@ -19,11 +19,10 @@ import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Completable;
@@ -54,24 +53,21 @@ abstract class BaseIntrospectionTokenService {
     static final String OFFLINE_VERIFICATION_TIMER_SECONDS_KEY = "handlers.oauth2.introspect.offlineVerificationTimerSeconds";
 
     private final JWTService jwtService;
-    private final ClientSyncService clientService;
+    private final ClientLookupService clientLookupService;
     private final ProtectedResourceManager protectedResourceManager;
-    private final ProtectedResourceSyncService protectedResourceSyncService;
     private final TokenType tokenType;
     private final boolean isLegacyRfc8707Enabled;
     private final int offlineVerificationTimerSeconds;
     
     BaseIntrospectionTokenService(TokenType tokenType,
                                   JWTService jwtService,
-                                  ClientSyncService clientService,
+                                  ClientLookupService clientLookupService,
                                   ProtectedResourceManager protectedResourceManager,
-                                  ProtectedResourceSyncService protectedResourceSyncService,
                                   Environment environment) {
         this.tokenType = tokenType;
         this.jwtService = jwtService;
-        this.clientService = clientService;
+        this.clientLookupService = clientLookupService;
         this.protectedResourceManager = protectedResourceManager;
-        this.protectedResourceSyncService = protectedResourceSyncService;
         this.isLegacyRfc8707Enabled = environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true);
         this.offlineVerificationTimerSeconds = environment.getProperty(OFFLINE_VERIFICATION_TIMER_SECONDS_KEY, Integer.class, 10);
     }
@@ -139,8 +135,7 @@ abstract class BaseIntrospectionTokenService {
         // If not found as a clientId, fall back to resource identifier validation (RFC 8707)
         if (audiences.size() == 1) {
             String audience = audiences.getFirst();
-            return clientService.findByDomainAndClientId(jwt.getDomain(), audience)
-                    .switchIfEmpty(protectedResourceSyncService.findByDomainAndClientId(jwt.getDomain(), audience))
+            return clientLookupService.findByDomainAndClientId(jwt.getDomain(), audience)
                     .flatMapSingle(client -> Single.just(getCertificateIdFromClient(client)))
                     .switchIfEmpty(Single.defer(() -> validateProtectedResourcesAndGetCertificateId(jwt, callerClientId)));
         }

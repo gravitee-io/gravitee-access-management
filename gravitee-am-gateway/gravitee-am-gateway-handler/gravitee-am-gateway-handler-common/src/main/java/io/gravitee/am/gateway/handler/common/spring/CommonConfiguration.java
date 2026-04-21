@@ -33,9 +33,14 @@ import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationSe
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
+import io.gravitee.am.gateway.handler.common.client.cimd.impl.CimdMetadataServiceImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
+import io.gravitee.am.gateway.handler.common.client.impl.CimdAwareClientLookupServiceImpl;
+import io.gravitee.am.gateway.handler.common.client.impl.DefaultClientLookupServiceImpl;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.email.EmailStagingService;
@@ -110,6 +115,7 @@ import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
@@ -119,7 +125,6 @@ import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivity
 import io.gravitee.am.service.http.PoolOptionsBuilder;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.node.api.cache.CacheManager;
-import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -239,6 +244,43 @@ public class CommonConfiguration {
     }
 
     @Bean
+    public CimdMetadataService cimdMetadataService(Domain domain,
+                                                   @Qualifier("oidcWebClient") WebClient webClient) {
+        return new CimdMetadataServiceImpl(domain, webClient);
+    }
+
+    @Bean
+    @Qualifier("complexClientLookupService")
+    public ClientLookupService clientAndProtectedResourceLookupService(Domain domain,
+                                                                       ClientSyncService clientSyncService,
+                                                                       ProtectedResourceSyncService protectedResourceSyncService,
+                                                                       CimdMetadataService cimdMetadataService) {
+        final var delegate = new DefaultClientLookupServiceImpl(clientSyncService, protectedResourceSyncService);
+        final var cimdSettings = getCimdSettings(domain);
+        if (cimdSettings != null && cimdSettings.isEnabled() && cimdSettings.getTemplateId() != null) {
+            return new CimdAwareClientLookupServiceImpl(clientSyncService, protectedResourceSyncService, cimdMetadataService, cimdSettings.getTemplateId());
+        }
+        return delegate;
+    }
+
+    @Bean
+    @Qualifier("regularClientLookupService")
+    public ClientLookupService clientLookupService(Domain domain,
+                                                   ClientSyncService clientSyncService,
+                                                   CimdMetadataService cimdMetadataService) {
+        final var delegate = new DefaultClientLookupServiceImpl(clientSyncService);
+        final var cimdSettings = getCimdSettings(domain);
+        if (cimdSettings != null && cimdSettings.isEnabled() && cimdSettings.getTemplateId() != null) {
+            return new CimdAwareClientLookupServiceImpl(clientSyncService, cimdMetadataService, cimdSettings.getTemplateId());
+        }
+        return delegate;
+    }
+
+    private static CIMDSettings getCimdSettings(Domain domain) {
+        return domain.getOidc() != null ? domain.getOidc().getCimdSettings() : null;
+    }
+
+    @Bean
     public UserAuthProvider userAuthProvider() {
         return new UserAuthProviderImpl();
     }
@@ -300,21 +342,19 @@ public class CommonConfiguration {
     @Bean
     @Qualifier("AccessTokenIntrospection")
     public IntrospectionTokenService introspectionAccessTokenService(JWTService jwtService,
-                                                                     ClientSyncService clientSyncService,
+                                                                     @Qualifier("complexClientLookupService") ClientLookupService clientLookupService,
                                                                      ProtectedResourceManager protectedResourceManager,
-                                                                     ProtectedResourceSyncService protectedResourceSyncService,
                                                                      BackwardCompatibleTokenRepository tokenRepository) {
-        return new IntrospectionAccessTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
+        return new IntrospectionAccessTokenService(jwtService, clientLookupService, protectedResourceManager, environment, tokenRepository);
     }
 
     @Bean
     @Qualifier("RefreshTokenIntrospection")
     public IntrospectionTokenService introspectionRefreshTokenService(JWTService jwtService,
-                                                                      ClientSyncService clientSyncService,
+                                                                      @Qualifier("complexClientLookupService") ClientLookupService clientLookupService,
                                                                       ProtectedResourceManager protectedResourceManager,
-                                                                      ProtectedResourceSyncService protectedResourceSyncService,
                                                                       BackwardCompatibleTokenRepository tokenRepository) {
-        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, protectedResourceManager, protectedResourceSyncService, environment, tokenRepository);
+        return new IntrospectionRefreshTokenService(jwtService, clientLookupService, protectedResourceManager, environment, tokenRepository);
     }
 
     @Bean

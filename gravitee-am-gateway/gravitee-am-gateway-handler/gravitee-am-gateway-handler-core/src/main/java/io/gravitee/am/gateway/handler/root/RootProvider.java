@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -218,6 +219,10 @@ public class RootProvider extends AbstractProtocolProvider {
     private ClientSyncService clientSyncService;
 
     @Autowired
+    @Qualifier("regularClientLookupService")
+    private ClientLookupService clientLookupService;
+
+    @Autowired
     private CookieSessionHandler sessionHandler;
 
     @Autowired
@@ -364,9 +369,9 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
-        Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
-        Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> clientRequestParseHandlerContinueOnError = new ClientRequestParseHandler(clientSyncService).setRequired(false).setContinueOnError(true);
+        Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientLookupService).setRequired(true);
+        Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientLookupService);
+        Handler<RoutingContext> clientRequestParseHandlerContinueOnError = new ClientRequestParseHandler(clientLookupService).setRequired(false).setContinueOnError(true);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
@@ -386,7 +391,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 // but if the client_id is unknown or invalid (not only missing) the rootRouter will throw an error that will prevent to propagate the call to the right route
                 // for instance, the OAuthProvider will not execute the /oauth/authorize and there will have 500 ERROR instead of "missing client_id" OAuth 2.0 error
                 // See https://github.com/gravitee-io/issues/issues/5035
-                .handler(new ClientRequestParseHandler(clientSyncService).setContinueOnError(true))
+                .handler(new ClientRequestParseHandler(clientLookupService).setContinueOnError(true))
                 .handler(dataConsentHandler)
                 .handler(geoIpHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
@@ -443,7 +448,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
-                .handler(new ClientRequestParseHandler(clientSyncService).setRequired(false).setContinueOnError(true))
+                .handler(new ClientRequestParseHandler(clientLookupService).setRequired(false).setContinueOnError(true))
                 .handler(new UserRememberMeResponseHandler(rememberMeCookieName))
                 .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
         rootRouter.route(PATH_LOGOUT_CALLBACK)

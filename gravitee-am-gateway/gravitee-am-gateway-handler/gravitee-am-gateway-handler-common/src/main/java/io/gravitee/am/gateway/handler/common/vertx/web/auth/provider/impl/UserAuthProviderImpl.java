@@ -22,7 +22,7 @@ import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
@@ -38,6 +38,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 
@@ -55,7 +56,8 @@ public class UserAuthProviderImpl implements UserAuthProvider {
     private UserAuthenticationManager userAuthenticationManager;
 
     @Autowired
-    private ClientSyncService clientSyncService;
+    @Qualifier("regularClientLookupService")
+    private ClientLookupService clientLookupService;
 
     @Autowired
     private Domain domain;
@@ -101,7 +103,7 @@ public class UserAuthProviderImpl implements UserAuthProvider {
     private void parseClient(String clientId, Handler<AsyncResult<Client>> authHandler) {
         logger.debug("Attempt authentication with client " + clientId);
 
-        clientSyncService
+        clientLookupService
                 .findByClientId(clientId)
                 .subscribe(
                         client -> authHandler.handle(Future.succeededFuture(client)),

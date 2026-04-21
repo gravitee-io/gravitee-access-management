@@ -921,7 +921,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     private boolean hasInvalidDomain(CIMDSettings cimdSettings) {
-        return cimdSettings.getAllowedDomains().stream().filter(host -> !isValid(host)).findFirst().isPresent();
+        return cimdSettings.getAllowedDomains().stream().anyMatch(host -> !isValid(host));
     }
 
     public boolean isValid(String hostname) {

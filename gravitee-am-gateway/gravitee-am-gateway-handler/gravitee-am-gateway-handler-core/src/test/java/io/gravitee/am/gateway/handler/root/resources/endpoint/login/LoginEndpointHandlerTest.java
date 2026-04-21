@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
@@ -96,7 +96,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     private UserActivityGatewayService userActivityService;
 
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
     private Client appClient;
     private LoginEndpoint loginEndpoint;
 
@@ -104,7 +104,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
+        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientLookupService);
         clientRequestParseHandler.setRequired(true);
 
         final LoginSettings loginSettings = new LoginSettings();
@@ -141,7 +141,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         router.route(HttpMethod.GET, "/login")
                 .handler(loginSelectionRuleHandler)
                 .handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, false));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 HttpStatusCode.OK_200, "OK");
@@ -162,7 +162,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                 .handler(new LoginHideFormHandler(domain))
                 .handler(loginSelectionRuleHandler)
                 .handler(get302AssertMockRoutingContextHandler(loginEndpoint, true, false));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 HttpStatusCode.FOUND_302, "Found");
@@ -190,7 +190,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                 .handler(new LoginHideFormHandler(domain))
                 .handler(loginSelectionRuleHandler)
                 .handler(get302AssertMockRoutingContextHandler(loginEndpoint, true, false));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 null,
@@ -213,7 +213,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
             routingContext.next();
         }).handler(loginSelectionRuleHandler)
                 .handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, false));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 HttpStatusCode.OK_200, "OK");
@@ -235,7 +235,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                 .handler(new LoginHideFormHandler(domain))
                 .handler(loginSelectionRuleHandler)
                 .handler(get200AssertMockRoutingContextHandler(loginEndpoint, true, false));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 HttpStatusCode.OK_200, "OK");
@@ -251,7 +251,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
             context.next();
         });
 
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com&username=",
                 HttpStatusCode.FOUND_302, "Found");
@@ -266,7 +266,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
             loginEndpoint.handle(context);
             context.next();
         });
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 HttpStatusCode.FOUND_302, "Found");
@@ -281,7 +281,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeLoginEndpoint_noClient() throws Exception {
-        when(clientSyncService.findByClientId("test")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId("test")).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.GET, "/login?client_id=test",

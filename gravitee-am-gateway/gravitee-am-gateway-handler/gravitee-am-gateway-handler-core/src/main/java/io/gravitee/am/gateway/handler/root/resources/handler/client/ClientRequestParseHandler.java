@@ -16,9 +16,12 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.client;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.impl.DefaultClientLookupServiceImpl;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -35,12 +38,17 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  */
 public class ClientRequestParseHandler implements Handler<RoutingContext> {
 
-    private final ClientSyncService clientSyncService;
+    private final ClientLookupService clientLookupService;
     private boolean required;
     private boolean continueOnError;
 
+    public ClientRequestParseHandler(ClientLookupService clientLookupService) {
+        this.clientLookupService = clientLookupService;
+    }
+
     public ClientRequestParseHandler(ClientSyncService clientSyncService) {
-        this.clientSyncService = clientSyncService;
+        // needed for CBA
+        this.clientLookupService = new DefaultClientLookupServiceImpl(clientSyncService);
     }
 
     @Override
@@ -82,11 +90,11 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
     }
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
-        clientSyncService
+        clientLookupService
                 .findByClientId(clientId)
                 .subscribe(
                         client -> authHandler.handle(Future.succeededFuture(client)),
-                        error -> authHandler.handle(Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
+                        error -> authHandler.handle(Future.failedFuture(error instanceof OAuth2Exception ? error : new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
                         () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
                 );
     }

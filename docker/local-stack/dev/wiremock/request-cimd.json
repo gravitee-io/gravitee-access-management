@@ -1,0 +1,333 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/valid-none"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/valid-none",
+          "client_name": "CIMD Valid Client",
+          "client_uri": "https://example.com/enabled-base",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/client-id-mismatch"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/valid-none",
+          "client_name": "CIMD Mismatch Client",
+          "client_uri": "https://example.com/mismatch",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/missing-redirect-uris"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/missing-redirect-uris",
+          "client_name": "CIMD Missing Redirect URIs",
+          "client_uri": "https://example.com/missing-redirect-uris",
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/redirect-uri-mismatch"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/redirect-uri-mismatch",
+          "client_name": "CIMD Redirect URI Mismatch",
+          "client_uri": "https://example.com/redirect-uri-mismatch",
+          "redirect_uris": [
+            "https://client.example.com/another-callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/secret-basic"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/secret-basic",
+          "client_name": "CIMD Secret Basic",
+          "client_uri": "https://example.com/secret-basic",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "client_secret_basic"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/secret-post"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/secret-post",
+          "client_name": "CIMD Secret Post",
+          "client_uri": "https://example.com/secret-post",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "client_secret_post"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/secret-jwt"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/secret-jwt",
+          "client_name": "CIMD Secret JWT",
+          "client_uri": "https://example.com/secret-jwt",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "client_secret_jwt"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/missing-token-auth-method"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/missing-token-auth-method",
+          "client_name": "CIMD Missing Token Auth Method",
+          "client_uri": "https://example.com/missing-token-auth-method",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/has-client-secret"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/has-client-secret",
+          "client_name": "CIMD Has Client Secret",
+          "client_uri": "https://example.com/has-client-secret",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "client_secret": "super-secret"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/has-client-secret-expires-at"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/has-client-secret-expires-at",
+          "client_name": "CIMD Has Client Secret Expires At",
+          "client_uri": "https://example.com/has-client-secret-expires-at",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "client_secret_expires_at": 1893456000
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/private-key-jwt-missing-jwks"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/private-key-jwt-missing-jwks",
+          "client_name": "CIMD PKJWT Missing Keys",
+          "client_uri": "https://example.com/private-key-jwt-missing-jwks",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "private_key_jwt"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/invalid-json"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"client_id\":\"http://wiremock:8080/cimd/ENABLED_BASE/invalid-json\",\"redirect_uris\":[\"https://client.example.com/callback\"],\"token_endpoint_auth_method\":\"none\""
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/http-404"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "message": "Not found"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/http-302"
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Location": "http://wiremock:8080/cimd/ENABLED_BASE/valid-none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_TIMEOUT/slow-response"
+      },
+      "response": {
+        "status": 200,
+        "fixedDelayMilliseconds": 1500,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_TIMEOUT/slow-response",
+          "client_name": "CIMD Slow Response",
+          "client_uri": "https://example.com/slow-response",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_MAXSIZE/oversize"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/DISABLED_BASE/valid-none"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/DISABLED_BASE/valid-none",
+          "client_name": "CIMD Disabled Base",
+          "client_uri": "https://example.com/disabled-base",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    }
+  ],
+  "importOptions": {
+    "duplicatePolicy": "OVERWRITE",
+    "deleteAllNotInImport": false
+  }
+}

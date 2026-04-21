@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst;
 
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
@@ -67,7 +67,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
     public final LoginSelectionRuleHandler loginSelectionRuleHandler = new LoginSelectionRuleHandler(true);
 
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
 
     @Mock
     private TemplateEngine templateEngine;
@@ -83,7 +83,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
+        clientRequestParseHandler = new ClientRequestParseHandler(clientLookupService);
         clientRequestParseHandler.setRequired(true);
 
         final LoginSettings loginSettings = new LoginSettings();
@@ -98,7 +98,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
         domain.setLoginSettings(loginSettings);
 
         appClient.setDomain(domain.getId());
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
 
         identifierFirstLoginEndpoint = new IdentifierFirstLoginEndpoint(templateEngine, domain, botDetectionManager);
 
@@ -124,7 +124,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
 
     @Test
     public void mustNotInvokeIdentifierFirstLoginEndpoint_wrongClientId() throws Exception {
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(appClient.getClientId())).thenReturn(Maybe.empty());
         testRequest(
                 HttpMethod.GET, "/login/identifier?client_id=" + appClient.getClientId(),
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request");

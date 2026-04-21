@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.service.utils.jwk.converter.JWKSetDeserializer;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;

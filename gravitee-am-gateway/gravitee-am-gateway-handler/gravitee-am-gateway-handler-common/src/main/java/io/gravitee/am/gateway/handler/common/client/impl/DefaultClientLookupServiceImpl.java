@@ -1,0 +1,58 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.gateway.handler.common.client.impl;
+
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
+import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
+
+public class DefaultClientLookupServiceImpl implements ClientLookupService {
+
+    private final ClientSyncService clientSyncService;
+    private final ProtectedResourceSyncService protectedResourceSyncService;
+
+    public DefaultClientLookupServiceImpl(ClientSyncService clientSyncService, ProtectedResourceSyncService protectedResourceSyncService) {
+        this.clientSyncService = clientSyncService;
+        this.protectedResourceSyncService = protectedResourceSyncService;
+    }
+
+    public DefaultClientLookupServiceImpl(ClientSyncService clientSyncService) {
+        this.clientSyncService = clientSyncService;
+        this.protectedResourceSyncService = null;
+    }
+
+    @Override
+    public Maybe<Client> findByClientId(String clientId) {
+        if (protectedResourceSyncService == null) {
+            return clientSyncService.findByClientId(clientId);
+        }
+
+        return clientSyncService.findByClientId(clientId)
+                .switchIfEmpty(Maybe.defer(() -> protectedResourceSyncService.findByClientId(clientId)));
+    }
+
+    @Override
+    public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
+        if (protectedResourceSyncService == null) {
+            return clientSyncService.findByDomainAndClientId(domain, clientId);
+        }
+
+        return clientSyncService.findByDomainAndClientId(domain, clientId)
+                .switchIfEmpty(Maybe.defer(() -> protectedResourceSyncService.findByDomainAndClientId(domain, clientId)));
+    }
+}

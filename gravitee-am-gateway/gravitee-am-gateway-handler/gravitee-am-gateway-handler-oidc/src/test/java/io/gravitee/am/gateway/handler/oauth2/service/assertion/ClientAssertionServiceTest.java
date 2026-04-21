@@ -25,8 +25,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
@@ -81,10 +80,7 @@ public class ClientAssertionServiceTest {
     private static final String KID = "keyIdentifier";
 
     @Mock
-    private ClientSyncService clientSyncService;
-
-    @Mock
-    private ProtectedResourceSyncService protectedResourceSyncService;
+    private ClientLookupService clientLookupService;
 
     @Mock
     private JWKService jwkService;
@@ -103,8 +99,7 @@ public class ClientAssertionServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Default mock for protectedResourceSyncService to avoid NPE in switchIfEmpty
-        lenient().when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.empty());
+        lenient().when(clientLookupService.findByClientId(any())).thenReturn(Maybe.empty());
     }
 
     @Test
@@ -259,7 +254,7 @@ public class ClientAssertionServiceTest {
         signedJWT.sign(new RSASSASigner(privateKey));
         String assertion = signedJWT.serialize();
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
         when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
@@ -289,7 +284,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -317,7 +312,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
         when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
@@ -366,7 +361,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -398,7 +393,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
         when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(jwkSet));
@@ -429,7 +424,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -482,7 +477,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -514,7 +509,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath="/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -542,8 +537,7 @@ public class ClientAssertionServiceTest {
         String basePath="/";
 
         // Regular client not found, but protected resource found
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
         when(jwkService.getKey(any(),any())).thenReturn(Maybe.just(key));
@@ -573,8 +567,7 @@ public class ClientAssertionServiceTest {
         String basePath = "/";
 
         // Regular client not found, but protected resource found
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -596,7 +589,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath = "/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.empty());
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -624,7 +617,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath = "/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 
@@ -650,7 +643,7 @@ public class ClientAssertionServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
         String basePath = "/";
 
-        when(clientSyncService.findByClientId(any())).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId(any())).thenReturn(Maybe.just(client));
         when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
 

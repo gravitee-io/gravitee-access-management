@@ -18,10 +18,9 @@ package io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTCache;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
@@ -54,10 +53,7 @@ public class OAuth2AuthProviderImplTest {
     private IntrospectionTokenService introspectionTokenService;
 
     @Mock
-    private ClientSyncService clientSyncService;
-
-    @Mock
-    private ProtectedResourceSyncService protectedResourceSyncService;
+    private ClientLookupService clientLookupService;
 
     @Mock
     private JWTCache jtiCache;
@@ -68,10 +64,7 @@ public class OAuth2AuthProviderImplTest {
     @Before
     public void setUp() {
         // Reset mocks before each test
-        reset(introspectionTokenService, clientSyncService, protectedResourceSyncService, jtiCache);
-        // Default: protectedResourceSyncService returns empty (for existing tests)
-        when(protectedResourceSyncService.findByDomainAndClientId(anyString(), anyString()))
-                .thenReturn(Maybe.empty());
+        reset(introspectionTokenService, clientLookupService, jtiCache);
         when(jtiCache.isPresent(anyString())).thenReturn(Single.just(false));
     }
 
@@ -89,7 +82,7 @@ public class OAuth2AuthProviderImplTest {
 
         when(introspectionTokenService.introspect(TOKEN, false))
                 .thenReturn(Maybe.just(jwt));
-        when(clientSyncService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
                 .thenReturn(Maybe.just(client));
 
         jwt.setExp(123L);
@@ -114,7 +107,7 @@ public class OAuth2AuthProviderImplTest {
         verify(jtiCache).isPresent(TOKEN);
         verify(jtiCache).put(TOKEN, 123L);
         verify(introspectionTokenService).introspect(TOKEN, false);
-        verify(clientSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
     }
 
     @Test
@@ -128,7 +121,7 @@ public class OAuth2AuthProviderImplTest {
 
         when(introspectionTokenService.introspect(TOKEN, false))
                 .thenReturn(Maybe.just(jwt));
-        when(clientSyncService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
                 .thenReturn(Maybe.empty());
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -156,8 +149,7 @@ public class OAuth2AuthProviderImplTest {
         verify(jtiCache).isPresent(TOKEN);
         verify(jtiCache, never()).put(anyString(), anyLong());
         verify(introspectionTokenService).introspect(TOKEN, false);
-        verify(clientSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
-        verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
     }
 
     @Test
@@ -187,7 +179,7 @@ public class OAuth2AuthProviderImplTest {
         verify(jtiCache).isPresent(TOKEN);
         verify(jtiCache, never()).put(anyString(), anyLong());
         verify(introspectionTokenService).introspect(TOKEN, true);
-        verify(clientSyncService, never()).findByDomainAndClientId(anyString(), anyString());
+        verify(clientLookupService, never()).findByDomainAndClientId(anyString(), anyString());
     }
 
     @Test
@@ -206,10 +198,8 @@ public class OAuth2AuthProviderImplTest {
 
         when(introspectionTokenService.introspect(TOKEN, false))
                 .thenReturn(Maybe.just(jwt));
-        when(clientSyncService.findByDomainAndClientId(DOMAIN, protectedResourceClientId))
-                .thenReturn(Maybe.empty()); // Not found in ClientManager (Applications only)
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, protectedResourceClientId))
-                .thenReturn(Maybe.just(protectedResourceClient)); // Found in ProtectedResourceManager
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, protectedResourceClientId))
+                .thenReturn(Maybe.just(protectedResourceClient));
 
         CountDownLatch latch = new CountDownLatch(1);
         @SuppressWarnings("unchecked")
@@ -229,8 +219,7 @@ public class OAuth2AuthProviderImplTest {
 
         verify(jtiCache).isPresent(TOKEN);
         verify(jtiCache).put(TOKEN, 0L);
-        verify(clientSyncService).findByDomainAndClientId(DOMAIN, protectedResourceClientId);
-        verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, protectedResourceClientId);
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, protectedResourceClientId);
     }
 
     @Test
@@ -249,7 +238,7 @@ public class OAuth2AuthProviderImplTest {
         when(jtiCache.isPresent(TOKEN)).thenReturn(Single.just(true));
         when(introspectionTokenService.introspect(TOKEN, true))
                 .thenReturn(Maybe.just(jwt));
-        when(clientSyncService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, CLIENT_ID))
                 .thenReturn(Maybe.just(client));
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -270,6 +259,6 @@ public class OAuth2AuthProviderImplTest {
         verify(jtiCache).isPresent(TOKEN);
         verify(jtiCache).put(TOKEN, 456L);
         verify(introspectionTokenService).introspect(TOKEN, true);
-        verify(clientSyncService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
     }
 }
