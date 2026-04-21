@@ -94,7 +94,10 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
       },
       body: JSON.stringify({
         settings: {
-          oauth: { jwks: JSON.stringify({ keys: [agentJwk] }) },
+          oauth: {
+            jwks: { keys: [agentJwk] },
+            tokenEndpointAuthMethod: 'private_key_jwt',
+          },
         },
       }),
     });
