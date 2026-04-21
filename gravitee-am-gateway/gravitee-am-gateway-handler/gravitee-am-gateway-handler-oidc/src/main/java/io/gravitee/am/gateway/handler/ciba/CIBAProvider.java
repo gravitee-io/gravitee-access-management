@@ -22,11 +22,10 @@ import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationReque
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParametersHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -47,6 +46,7 @@ import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 
 /**
@@ -70,10 +70,8 @@ public class CIBAProvider extends AbstractProtocolProvider {
     private Vertx vertx;
 
     @Autowired
-    private ClientSyncService clientSyncService;
-
-    @Autowired
-    private ProtectedResourceSyncService protectedResourceSyncService;
+    @Qualifier("regularClientLookupService")
+    private ClientLookupService clientLookupService;
 
     @Autowired
     private ClientAssertionService clientAssertionService;
@@ -138,7 +136,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
         final Router cibaRouter = Router.router(vertx);
 
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService, protectedResourceSyncService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientLookupService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
 
         cibaRouter.route(HttpMethod.OPTIONS, AUTHENTICATION_ENDPOINT)
                 .handler(corsHandler);

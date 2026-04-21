@@ -24,8 +24,7 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
@@ -43,6 +42,7 @@ import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.functions.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -66,10 +66,8 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     private static final InvalidClientException NOT_VALID = new InvalidClientException("assertion is not valid");
 
     @Autowired
-    private ClientSyncService clientSyncService;
-
-    @Autowired
-    private ProtectedResourceSyncService protectedResourceSyncService;
+    @Qualifier("complexClientLookupService")
+    private ClientLookupService clientLookupService;
 
     @Autowired
     private JWKService jwkService;
@@ -166,8 +164,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             String clientId = jwt.getJWTClaimsSet().getSubject();
             SignedJWT signedJWT = (SignedJWT) jwt;
 
-            return this.clientSyncService.findByClientId(clientId)
-                    .switchIfEmpty(Maybe.defer(() -> protectedResourceSyncService.findByClientId(clientId)))
+            return this.clientLookupService.findByClientId(clientId)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
                         if (client.getTokenEndpointAuthMethod() == null ||
@@ -211,8 +208,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             SignedJWT signedJWT = (SignedJWT) jwt;
 
 
-            return this.clientSyncService.findByClientId(clientId)
-                    .switchIfEmpty(Maybe.defer(() -> protectedResourceSyncService.findByClientId(clientId)))
+            return this.clientLookupService.findByClientId(clientId)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
                         try {

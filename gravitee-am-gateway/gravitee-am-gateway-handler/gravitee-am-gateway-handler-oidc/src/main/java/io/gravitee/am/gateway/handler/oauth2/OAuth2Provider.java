@@ -19,10 +19,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
@@ -121,7 +121,12 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private ClientSyncService clientSyncService;
 
     @Autowired
-    private ProtectedResourceSyncService protectedResourceSyncService;
+    @Qualifier("regularClientLookupService")
+    private ClientLookupService regularClientLookupService;
+
+    @Autowired
+    @Qualifier("complexClientLookupService")
+    private ClientLookupService complexClientLookupService;
 
     @Autowired
     private ResourceValidationService resourceValidationService;
@@ -257,7 +262,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService, protectedResourceSyncService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(complexClientLookupService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
 
         // static handler
         staticHandler(oauth2Router);
@@ -291,7 +296,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
-                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
@@ -310,7 +315,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler();
         oauth2Router.route(HttpMethod.GET, "/consent")
-                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
@@ -322,7 +327,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
         oauth2Router.route(HttpMethod.POST, "/consent")
-                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))

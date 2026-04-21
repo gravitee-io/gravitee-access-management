@@ -19,10 +19,10 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
@@ -60,6 +60,7 @@ import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 
@@ -92,7 +93,8 @@ public class OIDCProvider extends AbstractProtocolProvider {
     private ClientSyncService clientSyncService;
 
     @Autowired
-    private ProtectedResourceSyncService protectedResourceSyncService;
+    @Qualifier("regularClientLookupService")
+    private ClientLookupService clientLookupService;
 
     @Autowired
     private ClientAssertionService clientAssertionService;
@@ -290,7 +292,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService, protectedResourceSyncService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientLookupService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
 
         // Request object registration
         oidcRouter

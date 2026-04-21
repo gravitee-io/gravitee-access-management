@@ -18,9 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
@@ -58,20 +57,18 @@ import static io.gravitee.am.gateway.handler.common.utils.CertificateUtils.getTh
 public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
     private static final String INVALID_CLIENT_MESSAGE = "Invalid client: missing or unsupported authentication method";
     private static final String CERTIFICATE_ERROR = "Missing or invalid peer certificate";
-    private final ClientSyncService clientSyncService;
+    private final ClientLookupService clientLookupService;
     private final List<ClientAuthProvider> clientAuthProviders;
     private final Domain domain;
     private final String certificateHeader;
     private final AuditService auditService;
-    private final ProtectedResourceSyncService protectedResourceSyncService;
 
-    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain, String certificateHeader, AuditService auditService, ProtectedResourceSyncService protectedResourceSyncService) {
-        this.clientSyncService = clientSyncService;
+    public ClientAuthHandlerImpl(ClientLookupService clientLookupService, List<ClientAuthProvider> clientAuthProviders, Domain domain, String certificateHeader, AuditService auditService) {
+        this.clientLookupService = clientLookupService;
         this.clientAuthProviders = clientAuthProviders;
         this.domain = domain;
         this.certificateHeader = certificateHeader;
         this.auditService = auditService;
-        this.protectedResourceSyncService = protectedResourceSyncService;
     }
 
     @Override
@@ -179,9 +176,8 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 return;
             }
             // get client - first try regular client, then fallback to protected resource
-            clientSyncService
+            clientLookupService
                     .findByClientId(clientId)
-                    .switchIfEmpty(protectedResourceSyncService.findByClientId(clientId))
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),

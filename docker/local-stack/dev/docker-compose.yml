@@ -105,8 +105,18 @@ services:
       wiremock:
         condition: service_healthy
     volumes:
-      - ./wiremock/request.json:/tmp/request.json
-    command: "curl -X POST http://wiremock:8080/__admin/mappings -d @/tmp/request.json -H 'Content-Type: application/json'"
+      - ./wiremock/request-sfr.json:/tmp/request-sfr.json
+      - ./wiremock/request-cimd.json:/tmp/request-cimd.json
+    command:
+      - sh
+      - -ec
+      - |
+        curl -fsS -X POST http://wiremock:8080/__admin/mappings/import \
+          -d @/tmp/request-sfr.json \
+          -H "Content-Type: application/json"
+        curl -fsS -X POST http://wiremock:8080/__admin/mappings/import \
+          -d @/tmp/request-cimd.json \
+          -H "Content-Type: application/json"
 
   ciba:
     image: gravitee-am-ciba-delegated-service

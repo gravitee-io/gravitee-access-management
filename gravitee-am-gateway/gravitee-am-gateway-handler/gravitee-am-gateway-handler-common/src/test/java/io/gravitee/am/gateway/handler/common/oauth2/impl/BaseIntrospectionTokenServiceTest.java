@@ -17,11 +17,10 @@ package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
@@ -56,11 +55,9 @@ public class BaseIntrospectionTokenServiceTest {
     @Mock
     private JWTService jwtService;
     @Mock
-    private ClientSyncService clientService;
+    private ClientLookupService clientLookupService;
     @Mock
     private ProtectedResourceManager protectedResourceManager;
-    @Mock
-    private ProtectedResourceSyncService protectedResourceSyncService;
     @Mock
     private Environment environment;
 
@@ -78,8 +75,7 @@ public class BaseIntrospectionTokenServiceTest {
         client.setCertificate("certificate-id");
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
@@ -95,8 +91,7 @@ public class BaseIntrospectionTokenServiceTest {
         // certificate is intentionally left null to simulate HMAC-signed JWT
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "client-id")).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
@@ -112,8 +107,7 @@ public class BaseIntrospectionTokenServiceTest {
         ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, backendClient.getClientId());
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
@@ -137,7 +131,7 @@ public class BaseIntrospectionTokenServiceTest {
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
         observer.assertResult(jwt);
-        verify(clientService, never()).findByDomainAndClientId(DOMAIN, "resource-one");
+        verify(clientLookupService, never()).findByDomainAndClientId(DOMAIN, "resource-one");
     }
 
     @Test
@@ -158,8 +152,7 @@ public class BaseIntrospectionTokenServiceTest {
         JWT jwt = buildJwtWithAudiences(List.of("unknown-resource"));
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "unknown-resource")).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "unknown-resource")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "unknown-resource")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("unknown-resource")).thenReturn(Set.of());
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
@@ -167,7 +160,7 @@ public class BaseIntrospectionTokenServiceTest {
         observer.assertError(throwable -> throwable instanceof InvalidTokenException e
                 && e.getMessage().equals("The token is invalid")
                 && e.getDetails().equals("Token audience values [unknown-resource] do not match any client or protected resource identifiers in domain [" + DOMAIN + "]"));
-        verify(clientService, never()).findByDomainAndClientId(DOMAIN, "backend-client");
+        verify(clientLookupService, never()).findByDomainAndClientId(DOMAIN, "backend-client");
     }
 
     @Test
@@ -176,8 +169,7 @@ public class BaseIntrospectionTokenServiceTest {
         ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, "backend-client");
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, "caller-client").test();
@@ -185,7 +177,7 @@ public class BaseIntrospectionTokenServiceTest {
         observer.assertError(throwable -> throwable instanceof InvalidTokenException e
                 && e.getMessage().equals("The token is invalid")
                 && e.getDetails().equals("Protected resources matched by token audience have client IDs [backend-client] that do not match the introspecting client ID [caller-client]"));
-        verify(clientService, never()).findByDomainAndClientId(DOMAIN, "backend-client");
+        verify(clientLookupService, never()).findByDomainAndClientId(DOMAIN, "backend-client");
     }
 
     @Test
@@ -197,8 +189,7 @@ public class BaseIntrospectionTokenServiceTest {
         ProtectedResource resource = buildProtectedResource("resource-id", DOMAIN, backendClient.getClientId());
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "resource-id")).thenReturn(Maybe.empty());
         when(protectedResourceManager.getByIdentifier("resource-id")).thenReturn(Set.of(resource));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
@@ -214,14 +205,13 @@ public class BaseIntrospectionTokenServiceTest {
         Client client = resource.toClient();
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
         observer.assertResult(jwt);
-        verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, "protected-resource-client-id");
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, "protected-resource-client-id");
         verify(protectedResourceManager, never()).getByIdentifier(anyString());
     }
 
@@ -233,14 +223,13 @@ public class BaseIntrospectionTokenServiceTest {
         Client client = resource.toClient();
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
         observer.assertResult(jwt);
-        verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, "protected-resource-client-id");
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, "protected-resource-client-id");
         verify(jwtService).decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN));
         verify(protectedResourceManager, never()).getByIdentifier(anyString());
     }
@@ -253,14 +242,13 @@ public class BaseIntrospectionTokenServiceTest {
         Client client = resource.toClient();
 
         mockDecode(jwt);
-        when(clientService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.empty());
-        when(protectedResourceSyncService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, "protected-resource-client-id")).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
 
         TestObserver<JWT> observer = introspectionTokenService.introspect(TOKEN, true, null).test();
 
         observer.assertResult(jwt);
-        verify(protectedResourceSyncService).findByDomainAndClientId(DOMAIN, "protected-resource-client-id");
+        verify(clientLookupService).findByDomainAndClientId(DOMAIN, "protected-resource-client-id");
         verify(jwtService).decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Supplier<String>>any(), eq(ACCESS_TOKEN));
         verify(protectedResourceManager, never()).getByIdentifier(anyString());
     }
@@ -268,7 +256,7 @@ public class BaseIntrospectionTokenServiceTest {
     private void initService(boolean legacyFlagEnabled) {
         when(environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(legacyFlagEnabled);
         when(environment.getProperty(OFFLINE_VERIFICATION_TIMER_SECONDS_KEY, Integer.class, 10)).thenReturn(10);
-        introspectionTokenService = new TestIntrospectionTokenService(jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment);
+        introspectionTokenService = new TestIntrospectionTokenService(jwtService, clientLookupService, protectedResourceManager, environment);
     }
 
     private void mockDecode(JWT jwt) {
@@ -314,11 +302,10 @@ public class BaseIntrospectionTokenServiceTest {
     private static class TestIntrospectionTokenService extends BaseIntrospectionTokenService {
 
         TestIntrospectionTokenService(JWTService jwtService,
-                                      ClientSyncService clientService,
+                                      ClientLookupService clientLookupService,
                                       ProtectedResourceManager protectedResourceManager,
-                                      ProtectedResourceSyncService protectedResourceSyncService,
                                       Environment environment) {
-            super(ACCESS_TOKEN, jwtService, clientService, protectedResourceManager, protectedResourceSyncService, environment);
+            super(ACCESS_TOKEN, jwtService, clientLookupService, protectedResourceManager, environment);
         }
 
         @Override
@@ -331,4 +318,3 @@ public class BaseIntrospectionTokenServiceTest {
         }
     }
 }
-
