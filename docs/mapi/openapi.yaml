@@ -1019,10 +1019,6 @@ paths:
         in: query
         schema:
           type: string
-      - name: agentIdentityMode
-        in: query
-        schema:
-          type: boolean
       responses:
         "200":
           description: List registered applications for a security domain
@@ -12109,6 +12105,8 @@ components:
     Application:
       type: object
       properties:
+        agentIdentityMode:
+          type: boolean
         certificate:
           type: string
         createdAt:
@@ -12160,7 +12158,6 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
         updatedAt:
           type: string
           format: date-time
@@ -13514,8 +13511,6 @@ components:
     FilteredApplication:
       type: object
       properties:
-        agentIdentityMode:
-          type: boolean
         description:
           type: string
         enabled:
@@ -13534,7 +13529,6 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
         updatedAt:
           type: string
           format: date-time
@@ -14058,7 +14052,6 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
     NewAuthenticationDeviceNotifier:
       required:
       - configuration
@@ -15355,7 +15348,6 @@ components:
           - BROWSER
           - SERVICE
           - RESOURCE_SERVER
-          - AGENT
     PatchCIBASettings:
       type: object
       properties:

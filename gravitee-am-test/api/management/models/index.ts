@@ -30,6 +30,7 @@ export * from './AccessPolicyListItem';
 export * from './AccountAccessToken';
 export * from './AccountSettings';
 export * from './Address';
+export * from './AgentSettings';
 export * from './AlertNotifier';
 export * from './AlertServiceStatusEntity';
 export * from './AlertTrigger';

@@ -21,6 +21,7 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
@@ -34,6 +35,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -42,8 +44,6 @@ import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.reporter.builder.AgentAuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.MaybeSource;
-import io.reactivex.rxjava3.functions.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -52,8 +52,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-
-import io.gravitee.am.model.application.AgentType;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
@@ -96,18 +94,25 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
-
-        InvalidClientException unsupportedAssertionType = new InvalidClientException("Unknown or unsupported assertion_type");
-
         if (assertionType == null || assertionType.isEmpty()) {
-            return Maybe.error(unsupportedAssertionType);
+            return Maybe.error(unsupportedAssertionType());
+        }
+        if (!JWT_BEARER.equals(assertionType)) {
+            return Maybe.error(unsupportedAssertionType());
         }
 
-        if (JWT_BEARER.equals(assertionType)) {
-            return dispatchJwtBearer(assertion, basePath);
-        }
+        return parseJwt(assertion)
+                .flatMap(jwt -> dispatchJwtBearer(jwt, basePath));
+    }
 
-        return Maybe.error(unsupportedAssertionType);
+    private static Maybe<JWT> parseJwt(String assertion) {
+        return Maybe.defer(() -> {
+            try {
+                return Maybe.just(JWTParser.parse(assertion));
+            } catch (ParseException pe) {
+                return Maybe.error(NOT_VALID);
+            }
+        });
     }
 
     /**
@@ -118,25 +123,24 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
      * URI resolvable via CIMD, or {@code iss != sub} (blueprint vs. agent
      * instance) — and route through the agent assertion path.
      */
-    private Maybe<Client> dispatchJwtBearer(String assertion, String basePath) {
-        try {
-            JWT parsed = JWTParser.parse(assertion);
-            String iss = parsed.getJWTClaimsSet().getIssuer();
-            String sub = parsed.getJWTClaimsSet().getSubject();
-            if (isAgentAssertionShape(iss, sub)) {
-                return validateAgentAssertion(assertion, basePath);
-            }
-        } catch (ParseException pe) {
-            return Maybe.error(NOT_VALID);
-        }
+    private Maybe<Client> dispatchJwtBearer(JWT jwt, String basePath) {
+        return Maybe.defer(() -> {
+            JWTClaimsSet claims = jwt.getJWTClaimsSet();
+            String iss = claims.getIssuer();
+            String sub = claims.getSubject();
 
-        return this.validateJWT(assertion, basePath)
-                .flatMap((Function<JWT, MaybeSource<Client>>) jwt -> {
-                    if (JWSAlgorithm.Family.HMAC_SHA.contains(jwt.getHeader().getAlgorithm())) {
-                        return validateSignatureWithHMAC(jwt);
-                    }
-                    return validateSignatureWithPublicKey(jwt);
-                });
+            if (isAgentAssertionShape(iss, sub)) {
+                return validateAgentAssertion(jwt, basePath);
+            }
+
+            return validateJWT(jwt, basePath)
+                    .flatMap(validated -> {
+                        if (JWSAlgorithm.Family.HMAC_SHA.contains(validated.getHeader().getAlgorithm())) {
+                            return validateSignatureWithHMAC(validated);
+                        }
+                        return validateSignatureWithPublicKey(validated);
+                    });
+        });
     }
 
     private static boolean isAgentAssertionShape(String iss, String sub) {
@@ -151,19 +155,16 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     }
 
     /**
-     * This method will parse the JWT bearer then ensure that all requested claims are set as required
-     * <a href="https://tools.ietf.org/html/rfc7523#section-3">here</a>
-     * @param assertion jwt as string value.
-     * @return
+     * Ensures that all claims required by RFC 7523 are present and valid.
+     * See <a href="https://tools.ietf.org/html/rfc7523#section-3">RFC 7523 §3</a>.
      */
-    private Maybe<JWT> validateJWT(String assertion, String basePath) {
-        try {
-            JWT jwt = JWTParser.parse(assertion);
-
-            String iss = jwt.getJWTClaimsSet().getIssuer();
-            String sub = jwt.getJWTClaimsSet().getSubject();
-            List<String> aud = jwt.getJWTClaimsSet().getAudience();
-            Date exp = jwt.getJWTClaimsSet().getExpirationTime();
+    private Maybe<JWT> validateJWT(JWT jwt, String basePath) {
+        return Maybe.defer(() -> {
+            JWTClaimsSet claims = jwt.getJWTClaimsSet();
+            String iss = claims.getIssuer();
+            String sub = claims.getSubject();
+            List<String> aud = claims.getAudience();
+            Date exp = claims.getExpirationTime();
 
             if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty() || aud == null || aud.isEmpty() || exp == null) {
                 return Maybe.error(NOT_VALID);
@@ -173,7 +174,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(new InvalidClientException("assertion has expired"));
             }
 
-            //Check audience, here we expect to have absolute token endpoint path.
             OpenIDProviderMetadata discovery = openIDDiscoveryService.getConfiguration(basePath);
             if (discovery == null || discovery.getTokenEndpoint() == null) {
                 return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
@@ -183,10 +183,12 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             // https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication
             // BUT the PAR specification specify the usage of the Issuer value, Token endpoint or PAR endpoint.
             // https://tools.ietf.org/id/draft-lodderstedt-oauth-par-00.html#pushed-authorization-request-endpoint
-            if (aud.stream().filter(discovery.getTokenEndpoint()::equals).count() == 0 &&
-                    (discovery.getIssuer() != null && aud.stream().filter(discovery.getIssuer()::equals).count() == 0) &&
-                    (discovery.getParEndpoint() != null && aud.stream().filter(discovery.getParEndpoint()::equals).count() == 0) &&
-                    (discovery.getBackchannelAuthenticationEndpoint() != null && aud.stream().filter(discovery.getBackchannelAuthenticationEndpoint()::equals).count() == 0)) {
+            boolean audMatches = aud.stream().anyMatch(discovery.getTokenEndpoint()::equals)
+                    || (discovery.getIssuer() != null && aud.stream().anyMatch(discovery.getIssuer()::equals))
+                    || (discovery.getParEndpoint() != null && aud.stream().anyMatch(discovery.getParEndpoint()::equals))
+                    || (discovery.getBackchannelAuthenticationEndpoint() != null
+                            && aud.stream().anyMatch(discovery.getBackchannelAuthenticationEndpoint()::equals));
+            if (!audMatches) {
                 return Maybe.error(NOT_VALID);
             }
 
@@ -195,87 +197,86 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             }
 
             return Maybe.just(jwt);
-        } catch (ParseException pe) {
-            return Maybe.error(NOT_VALID);
-        }
+        });
     }
 
     private Maybe<Client> validateSignatureWithPublicKey(JWT jwt) {
-        try {
-            String clientId = jwt.getJWTClaimsSet().getSubject();
-            SignedJWT signedJWT = (SignedJWT) jwt;
+        return Maybe.defer(() -> {
+            final SignedJWT signedJWT;
+            final String clientId;
+            try {
+                signedJWT = (SignedJWT) jwt;
+                clientId = jwt.getJWTClaimsSet().getSubject();
+            } catch (ClassCastException | ParseException ex) {
+                log.error(ex.getMessage(), ex);
+                return Maybe.error(NOT_VALID);
+            } catch (IllegalArgumentException ex) {
+                return Maybe.error(new InvalidClientException(ex.getMessage()));
+            }
 
-            return this.clientLookupService.findByClientId(clientId)
+            return clientLookupService.findByClientId(clientId)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
-                        if (client.getTokenEndpointAuthMethod() == null ||
-                                ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
-                            return this.getClientJwkSet(client)
-                                    .switchIfEmpty(Maybe.error(new InvalidClientException("No jwk keys available on client")))
-                                    .flatMap(jwkSet -> jwkService.getKey(jwkSet, signedJWT.getHeader().getKeyID()))
-                                    .switchIfEmpty(Maybe.error(new InvalidClientException("Unable to validate client, no matching key.")))
-                                    .flatMap(jwk -> {
-                                        if (jwsService.isValidSignature(signedJWT, jwk)) {
-                                            return Maybe.just(client);
-                                        }
-                                        return Maybe.error(unableToValidateClientException());
-                                    });
-                        } else {
+                        if (client.getTokenEndpointAuthMethod() != null &&
+                                !ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
                             return Maybe.error(new InvalidClientException("Invalid client: missing or unsupported authentication method"));
                         }
+                        return getClientJwkSet(client)
+                                .switchIfEmpty(Maybe.error(new InvalidClientException("No jwk keys available on client")))
+                                .flatMap(jwkSet -> jwkService.getKey(jwkSet, signedJWT.getHeader().getKeyID()))
+                                .switchIfEmpty(Maybe.error(new InvalidClientException("Unable to validate client, no matching key.")))
+                                .flatMap(jwk -> {
+                                    if (jwsService.isValidSignature(signedJWT, jwk)) {
+                                        return Maybe.just(client);
+                                    }
+                                    return Maybe.error(unableToValidateClientException());
+                                });
                     });
-        } catch (ClassCastException | ParseException ex) {
-            log.error(ex.getMessage(), ex);
-            return Maybe.error(NOT_VALID);
-        } catch (IllegalArgumentException ex) {
-            return Maybe.error(new InvalidClientException(ex.getMessage()));
-        }
+        });
     }
 
     private Maybe<Client> validateSignatureWithHMAC(JWT jwt) {
-        try {
+        return Maybe.defer(() -> {
             Algorithm algorithm = jwt.getHeader().getAlgorithm();
-
-            if (algorithm instanceof JWSAlgorithm) {
-                JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(jwt.getHeader().getAlgorithm().getName());
-                if (jwsAlgorithm != JWSAlgorithm.HS256 && jwsAlgorithm != JWSAlgorithm.HS384 && jwsAlgorithm != JWSAlgorithm.HS512) {
-                    return Maybe.error(unableToValidateClientException());
-                }
-            } else {
+            if (!(algorithm instanceof JWSAlgorithm)) {
+                return Maybe.error(unableToValidateClientException());
+            }
+            JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(algorithm.getName());
+            if (jwsAlgorithm != JWSAlgorithm.HS256 && jwsAlgorithm != JWSAlgorithm.HS384 && jwsAlgorithm != JWSAlgorithm.HS512) {
                 return Maybe.error(unableToValidateClientException());
             }
 
-            String clientId = jwt.getJWTClaimsSet().getSubject();
-            SignedJWT signedJWT = (SignedJWT) jwt;
+            final SignedJWT signedJWT;
+            final String clientId;
+            try {
+                signedJWT = (SignedJWT) jwt;
+                clientId = jwt.getJWTClaimsSet().getSubject();
+            } catch (ClassCastException | ParseException ex) {
+                log.error(ex.getMessage(), ex);
+                return Maybe.error(NOT_VALID);
+            } catch (IllegalArgumentException ex) {
+                return Maybe.error(new InvalidClientException(ex.getMessage()));
+            }
 
-
-            return this.clientLookupService.findByClientId(clientId)
+            return clientLookupService.findByClientId(clientId)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
                     .flatMap(client -> {
+                        // Ensure to validate JWT using client_secret_key only if client is authorized to use this auth method
+                        if (client.getTokenEndpointAuthMethod() != null &&
+                                !ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
+                            return Maybe.error(new InvalidClientException("Invalid client: missing or unsupported authentication method"));
+                        }
                         try {
-                            // Ensure to validate JWT using client_secret_key only if client is authorized to use this auth method
-                            if (client.getTokenEndpointAuthMethod() == null ||
-                                    ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
-
-                                if (verifyJws(client, signedJWT)) {
-                                    return Maybe.just(client);
-                                } else {
-                                    return Maybe.error(new InvalidClientException("Invalid client: JWT signature verification failed"));
-                                }
-                            } else {
-                                return Maybe.error(new InvalidClientException("Invalid client: missing or unsupported authentication method"));
+                            if (verifyJws(client, signedJWT)) {
+                                return Maybe.just(client);
                             }
+                            return Maybe.error(new InvalidClientException("Invalid client: JWT signature verification failed"));
                         } catch (JOSEException josee) {
                             log.error("Error validating signature: {}", josee.getMessage(), josee);
                             return Maybe.error(new InvalidClientException("Error validating client JWT signature", josee));
                         }
                     });
-        } catch (ClassCastException | ParseException ex) {
-            log.error(ex.getMessage(), ex);
-            return Maybe.error(NOT_VALID);
-        } catch (IllegalArgumentException ex) {
-            return Maybe.error(new InvalidClientException(ex.getMessage()));
-        }
+        });
     }
 
     private static boolean verifyJws(Client client, SignedJWT signedJWT) throws JOSEException {
@@ -288,13 +289,11 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                     return true;
                 }
             }
-            // If none of the secrets verify the JWT, return false.
             return false;
-        } else {
-            // Prior to 4.2, the client secret was not hashed and directly stored in the clientSecret attribute.
-            JWSVerifier verifier = new MACVerifier(client.getClientSecret());
-            return signedJWT.verify(verifier);
         }
+        // Prior to 4.2, the client secret was not hashed and directly stored in the clientSecret attribute.
+        JWSVerifier verifier = new MACVerifier(client.getClientSecret());
+        return signedJWT.verify(verifier);
     }
 
     /**
@@ -307,17 +306,24 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
      * against the blueprint's JWKS. On success, a cloned Client is returned with
      * {@code blueprintClientId} set to the original blueprint client_id.
      */
-    private Maybe<Client> validateAgentAssertion(String assertion, String basePath) {
-        try {
-            JWT jwt = JWTParser.parse(assertion);
+    private Maybe<Client> validateAgentAssertion(JWT jwt, String basePath) {
+        return Maybe.defer(() -> {
             if (!(jwt instanceof SignedJWT signedJWT)) {
                 return Maybe.error(NOT_VALID);
             }
 
-            String iss = jwt.getJWTClaimsSet().getIssuer();
-            String sub = jwt.getJWTClaimsSet().getSubject();
-            List<String> aud = jwt.getJWTClaimsSet().getAudience();
-            Date exp = jwt.getJWTClaimsSet().getExpirationTime();
+            final JWTClaimsSet claims;
+            try {
+                claims = jwt.getJWTClaimsSet();
+            } catch (ParseException ex) {
+                log.debug("Failed to parse agent jwt-bearer assertion claims: {}", ex.getMessage());
+                return Maybe.error(NOT_VALID);
+            }
+
+            String iss = claims.getIssuer();
+            String sub = claims.getSubject();
+            List<String> aud = claims.getAudience();
+            Date exp = claims.getExpirationTime();
 
             if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty()
                     || aud == null || aud.isEmpty() || exp == null) {
@@ -328,7 +334,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(new InvalidClientException("assertion has expired"));
             }
 
-            // Validate audience
             OpenIDProviderMetadata discovery = openIDDiscoveryService.getConfiguration(basePath);
             if (discovery == null || discovery.getTokenEndpoint() == null) {
                 return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
@@ -338,56 +343,65 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
+            String kid = signedJWT.getHeader().getKeyID();
+            String jti = claims.getJWTID();
+
             // Look up blueprint. For URL-shaped iss the CIMD-aware lookup service
             // resolves the synthesized client via the domain's CIMD metadata flow.
             return clientLookupService.findByClientId(iss)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Unknown blueprint application")))
-                    .flatMap(blueprint -> {
-                        if (!blueprint.isAgentIdentityMode()) {
-                            return Maybe.error(new InvalidClientException("Application is not a blueprint agent"));
-                        }
-                        AgentType agentType = blueprint.getAgentType();
-                        if (agentType != AgentType.AUTONOMOUS && agentType != AgentType.HOSTED_DELEGATED) {
-                            return Maybe.error(new InvalidClientException("Agent jwt-bearer assertion is not supported for agent type: " + agentType));
-                        }
-                        String authMethod = blueprint.getTokenEndpointAuthMethod();
-                        if (!ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(authMethod)
-                                && !ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(authMethod)) {
-                            return Maybe.error(new InvalidClientException(
-                                    "Blueprint is not configured for jwt-bearer client assertions"));
-                        }
-
-                        JWKSet agentJwks = blueprint.getJwks();
-                        if (agentJwks == null || agentJwks.getKeys() == null || agentJwks.getKeys().isEmpty()) {
-                            return Maybe.error(new InvalidClientException("No agent JWKS available on blueprint"));
-                        }
-
-                        return jwkService.getKey(agentJwks, signedJWT.getHeader().getKeyID())
-                                .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key found for kid: " + signedJWT.getHeader().getKeyID())))
-                                .flatMap(jwk -> {
-                                    if (!jwsService.isValidSignature(signedJWT, jwk)) {
-                                        reportAgentAuth(iss, sub, signedJWT.getHeader().getKeyID(),
-                                                jwt, blueprint, "INVALID_SIGNATURE");
-                                        return Maybe.error(unableToValidateClientException());
-                                    }
-                                    Client agentClient = new Client(blueprint);
-                                    agentClient.setBlueprintClientId(blueprint.getClientId());
-                                    agentClient.setAgentInstanceId(sub);
-
-                                    reportAgentAuth(iss, sub, signedJWT.getHeader().getKeyID(),
-                                            jwt, blueprint, null);
-
-                                    return Maybe.just(agentClient);
-                                });
-                    });
-        } catch (ParseException ex) {
-            log.debug("Failed to parse agent jwt-bearer assertion: {}", ex.getMessage());
-            return Maybe.error(NOT_VALID);
-        }
+                    .flatMap(blueprint -> verifyAgentBlueprint(blueprint, signedJWT, kid)
+                            .doOnError(err -> {
+                                if (err instanceof InvalidClientException
+                                        && err.getMessage() != null
+                                        && err.getMessage().startsWith("Unable to validate client")) {
+                                    reportAgentAuth(iss, sub, kid, jti, blueprint, "INVALID_SIGNATURE");
+                                }
+                            }))
+                    .map(blueprint -> buildAgentClient(blueprint, sub))
+                    .doOnSuccess(agentClient -> reportAgentAuth(iss, sub, kid, jti, agentClient, null));
+        });
     }
 
-    private void reportAgentAuth(String iss, String sub, String kid, JWT jwt,
-                                    Client blueprint, String failureReason) {
+    private Maybe<Client> verifyAgentBlueprint(Client blueprint, SignedJWT signedJWT, String kid) {
+        if (!blueprint.isAgentIdentityMode()) {
+            return Maybe.error(new InvalidClientException("Application is not a blueprint agent"));
+        }
+        AgentType agentType = blueprint.getAgentType();
+        if (agentType != AgentType.AUTONOMOUS && agentType != AgentType.HOSTED_DELEGATED) {
+            return Maybe.error(new InvalidClientException("Agent jwt-bearer assertion is not supported for agent type: " + agentType));
+        }
+        String authMethod = blueprint.getTokenEndpointAuthMethod();
+        if (!ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(authMethod)
+                && !ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(authMethod)) {
+            return Maybe.error(new InvalidClientException(
+                    "Blueprint is not configured for jwt-bearer client assertions"));
+        }
+
+        JWKSet agentJwks = blueprint.getJwks();
+        if (agentJwks == null || agentJwks.getKeys() == null || agentJwks.getKeys().isEmpty()) {
+            return Maybe.error(new InvalidClientException("No agent JWKS available on blueprint"));
+        }
+
+        return jwkService.getKey(agentJwks, kid)
+                .switchIfEmpty(Maybe.error(new InvalidClientException("No matching key found for kid: " + kid)))
+                .flatMap(jwk -> {
+                    if (!jwsService.isValidSignature(signedJWT, jwk)) {
+                        return Maybe.error(unableToValidateClientException());
+                    }
+                    return Maybe.just(blueprint);
+                });
+    }
+
+    private static Client buildAgentClient(Client blueprint, String agentInstanceId) {
+        Client agentClient = new Client(blueprint);
+        agentClient.setBlueprintClientId(blueprint.getClientId());
+        agentClient.setAgentInstanceId(agentInstanceId);
+        return agentClient;
+    }
+
+    private void reportAgentAuth(String iss, String sub, String kid, String jti,
+                                 Client blueprint, String failureReason) {
         try {
             var builder = AuditBuilder.builder(AgentAuditBuilder.class);
             if (blueprint.getDomain() != null) {
@@ -400,7 +414,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                     .agentType(blueprint.getAgentType() != null ? blueprint.getAgentType().name() : null)
                     .assertionKid(kid)
                     .assertionIss(iss)
-                    .assertionJti(jwt.getJWTClaimsSet().getJWTID());
+                    .assertionJti(jti);
 
             if (failureReason != null) {
                 builder.throwable(new InvalidClientException(failureReason));
@@ -419,6 +433,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             return Maybe.just(client.getJwks());
         }
         return Maybe.empty();
+    }
+
+    private static InvalidClientException unsupportedAssertionType() {
+        return new InvalidClientException("Unknown or unsupported assertion_type");
     }
 
     private InvalidClientException unableToValidateClientException() {

@@ -26,12 +26,27 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { AgentSettings } from './AgentSettings';
+import { AgentSettingsFromJSON, AgentSettingsFromJSONTyped, AgentSettingsToJSON, AgentSettingsToJSONTyped } from './AgentSettings';
+
 /**
  *
  * @export
  * @interface NewApplication
  */
 export interface NewApplication {
+  /**
+   *
+   * @type {boolean}
+   * @memberof NewApplication
+   */
+  agentIdentityMode?: boolean;
+  /**
+   *
+   * @type {AgentSettings}
+   * @memberof NewApplication
+   */
+  agentSettings?: AgentSettings;
   /**
    *
    * @type {string}
@@ -106,6 +121,8 @@ export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
+    agentIdentityMode: json['agentIdentityMode'] == null ? undefined : json['agentIdentityMode'],
+    agentSettings: json['agentSettings'] == null ? undefined : AgentSettingsFromJSON(json['agentSettings']),
     clientId: json['clientId'] == null ? undefined : json['clientId'],
     clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
     description: json['description'] == null ? undefined : json['description'],
@@ -126,6 +143,8 @@ export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreD
   }
 
   return {
+    agentIdentityMode: value['agentIdentityMode'],
+    agentSettings: AgentSettingsToJSON(value['agentSettings']),
     clientId: value['clientId'],
     clientSecret: value['clientSecret'],
     description: value['description'],
