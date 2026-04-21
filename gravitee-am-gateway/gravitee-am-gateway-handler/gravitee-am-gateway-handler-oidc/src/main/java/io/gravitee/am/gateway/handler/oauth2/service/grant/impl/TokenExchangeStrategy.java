@@ -15,17 +15,21 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Strategy for RFC 8693 OAuth 2.0 Token Exchange.
@@ -39,11 +43,9 @@ public class TokenExchangeStrategy implements GrantStrategy {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenExchangeStrategy.class);
 
     private final TokenExchangeService tokenExchangeService;
-    private final UserGatewayService userGatewayService;
 
-    public TokenExchangeStrategy(TokenExchangeService tokenExchangeService, UserGatewayService userGatewayService) {
+    public TokenExchangeStrategy(TokenExchangeService tokenExchangeService) {
         this.tokenExchangeService = tokenExchangeService;
-        this.userGatewayService = userGatewayService;
     }
 
     @Override
@@ -69,7 +71,7 @@ public class TokenExchangeStrategy implements GrantStrategy {
     public Single<TokenCreationRequest> process(TokenRequest request, Client client, Domain domain) {
         LOGGER.debug("Processing token exchange request for client: {}", client.getClientId());
 
-        return tokenExchangeService.exchange(request, client, domain, userGatewayService)
+        return tokenExchangeService.exchange(request, client, domain)
                 .doOnSuccess(result -> LOGGER.debug("Token exchange successful for subject: {}", result.user().getId()))
                 .map(result -> TokenCreationRequest.forTokenExchange(
                         request,
@@ -81,7 +83,9 @@ public class TokenExchangeStrategy implements GrantStrategy {
                         result.actorTokenId(),
                         result.actorTokenType(),
                         result.actorInfo(),
-                        result.jtisOfParents()
+                        result.jtisOfParents(),
+                        result.actorInfo() == null ? Map.of() : result.actorInfo().buildTokenExchangeExecutionContext()
                 ));
     }
+
 }

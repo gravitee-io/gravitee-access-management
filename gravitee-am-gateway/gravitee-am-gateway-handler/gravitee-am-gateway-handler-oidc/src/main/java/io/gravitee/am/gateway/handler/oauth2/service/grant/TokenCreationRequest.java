@@ -73,17 +73,6 @@ public record TokenCreationRequest(
     }
 
     /**
-     * Create a new request with updated execution context.
-     */
-    public TokenCreationRequest withExecutionContext(Map<String, Object> newContext) {
-        return new TokenCreationRequest(
-                clientId, grantType, scopes, resourceOwner, grantData,
-                supportRefreshToken, resources, originalAuthorizationResources, httpInfo,
-                additionalParameters, context, newContext
-        );
-    }
-
-    /**
      * Check if this is a client-only request (no user).
      */
     public boolean isClientOnly() {
@@ -115,7 +104,8 @@ public record TokenCreationRequest(
             String actorTokenId,
             String actorTokenType,
             ActorTokenInfo actorInfo,
-            Set<String> allParentJtis) {
+            Set<String> allParentJtis,
+            Map<String, Object> tokenExchangeExecutionContext) {
 
         return new TokenCreationRequest(
                 original.getClientId(),
@@ -129,7 +119,7 @@ public record TokenCreationRequest(
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
-                Map.of()
+                tokenExchangeExecutionContext == null ? Map.of() : tokenExchangeExecutionContext
         );
     }
 

@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -38,6 +39,7 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class IntrospectionServiceImpl implements IntrospectionService {
 
     @Autowired
@@ -66,6 +68,7 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                                         // GIS claims maybe missing form the access_token
                                         // so in this case we can ignore the error and
                                         // continue the introspect process
+                                        log.error(err.getMessage());
                                         return Maybe.empty();
                                     }
                                     return Maybe.error(err);
