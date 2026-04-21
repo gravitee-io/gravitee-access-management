@@ -49,6 +49,8 @@ const PROFILE_SETTINGS: Record<CimdAuthorizeProfile, PatchCIMDSettings> = {
     allowedDomains: [],
     fetchTimeoutMs: 1500,
     maxResponseSizeKb: 10,
+    cacheTtlSeconds: 3600,
+    cacheMaxEntries: 500,
   },
   ENABLED_TIMEOUT: {
     enabled: true,
@@ -57,6 +59,8 @@ const PROFILE_SETTINGS: Record<CimdAuthorizeProfile, PatchCIMDSettings> = {
     allowedDomains: [],
     fetchTimeoutMs: 1,
     maxResponseSizeKb: 10,
+    cacheTtlSeconds: 3600,
+    cacheMaxEntries: 500,
   },
   ENABLED_MAXSIZE: {
     enabled: true,
@@ -65,6 +69,8 @@ const PROFILE_SETTINGS: Record<CimdAuthorizeProfile, PatchCIMDSettings> = {
     allowedDomains: [],
     fetchTimeoutMs: 1500,
     maxResponseSizeKb: 1,
+    cacheTtlSeconds: 3600,
+    cacheMaxEntries: 500,
   },
   DISABLED_BASE: {
     enabled: false,

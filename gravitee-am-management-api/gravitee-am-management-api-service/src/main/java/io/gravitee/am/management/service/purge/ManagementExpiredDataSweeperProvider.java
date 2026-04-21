@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.purge;
 
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
+import io.gravitee.am.repository.management.api.CimdMetadataDocumentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +34,16 @@ public class ManagementExpiredDataSweeperProvider implements ExpiredDataSweeperP
     @Autowired
     protected ReporterAuditSweeper reporterAuditSweeper;
 
+    @Lazy
+    @Autowired
+    protected CimdMetadataDocumentRepository cimdMetadataDocumentRepository;
+
     @Override
     public ExpiredDataSweeper getExpiredDataSweeper(ExpiredDataSweeper.Target target){
         return switch (target) {
             case events -> eventRepository;
             case audits -> reporterAuditSweeper;
+            case cimd_metadata_documents -> cimdMetadataDocumentRepository;
             default -> {
                 log.warn("Target {} is not supported by Management provider", target);
                 yield null;

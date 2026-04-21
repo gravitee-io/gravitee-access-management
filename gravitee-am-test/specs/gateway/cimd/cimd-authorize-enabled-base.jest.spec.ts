@@ -20,6 +20,32 @@ import { CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd
 
 setup(200000);
 
+const wiremockAdminBase = (): string => process.env.SFR_URL ?? 'http://localhost:8181';
+
+async function clearWiremockRequestJournal(): Promise<void> {
+  try {
+    await fetch(`${wiremockAdminBase()}/__admin/requests`, { method: 'DELETE' });
+  } catch {
+    // Best-effort: tests should not depend on journal cleanup when WireMock is unavailable locally.
+  }
+}
+
+async function fetchWiremockJournal(): Promise<any> {
+  const res = await fetch(`${wiremockAdminBase()}/__admin/requests`);
+  expect(res.ok).toBe(true);
+  return res.json();
+}
+
+function countGetRequestsForPathSubstring(journal: any, pathSubstring: string): number {
+  const entries = journal?.requests ?? [];
+  return entries.filter((entry: any) => {
+    const req = entry?.request ?? entry;
+    const method = String(req?.method ?? '').toUpperCase();
+    const url = String(req?.url ?? req?.absoluteUrl ?? req?.path ?? '');
+    return method === 'GET' && url.includes(pathSubstring);
+  }).length;
+}
+
 let fixture: CimdAuthorizeFixture;
 
 beforeAll(async () => {
@@ -36,6 +62,27 @@ describe('CIMD authorize - ENABLED_BASE', () => {
   it('should continue authorization with URL client_id when CIMD metadata is valid', async () => {
     const response = await fixture.authorize(fixture.buildClientId('valid-none'));
     fixture.expectLoginRedirect(response);
+  });
+
+  it('should continue authorization on a second request with the same URL client_id', async () => {
+    const clientId = fixture.buildClientId('valid-none');
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+  });
+
+  it('should fetch CIMD metadata from source server only once for two consecutive authorizations', async () => {
+    await clearWiremockRequestJournal();
+    const pathMarker = '/cimd/ENABLED_BASE/cache-twice';
+    const journalBefore = await fetchWiremockJournal();
+    const baseline = countGetRequestsForPathSubstring(journalBefore, pathMarker);
+
+    const clientId = fixture.buildClientId('cache-twice');
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+    fixture.expectLoginRedirect(await fixture.authorize(clientId));
+
+    const journalAfter = await fetchWiremockJournal();
+    const after = countGetRequestsForPathSubstring(journalAfter, pathMarker);
+    expect(after - baseline).toBe(1);
   });
 
   it('should prioritize pre-registered URL client over CIMD lookup for the same URL client_id', async () => {

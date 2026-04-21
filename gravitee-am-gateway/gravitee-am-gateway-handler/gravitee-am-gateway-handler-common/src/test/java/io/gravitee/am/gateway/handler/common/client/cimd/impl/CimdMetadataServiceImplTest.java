@@ -15,14 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.common.client.cimd.impl;
 
+import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
+import io.gravitee.am.model.CimdMetadataDocument;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.buffer.Buffer;
@@ -37,8 +41,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -64,6 +71,12 @@ public class CimdMetadataServiceImplTest {
     @Mock
     private HttpResponse<Buffer> response;
 
+    @Mock
+    private CimdMetadataDocumentService cimdMetadataDocumentService;
+
+    @Mock
+    private CimdMetadataDocumentManager cimdMetadataDocumentManager;
+
     private CimdMetadataService cimdMetadataService;
     private CIMDSettings cimdSettings;
 
@@ -71,6 +84,7 @@ public class CimdMetadataServiceImplTest {
     public void setUp() {
         Domain domain = new Domain();
         domain.setId("domain-id");
+        domain.setName("test-domain");
 
         OIDCSettings oidcSettings = new OIDCSettings();
         cimdSettings = new CIMDSettings();
@@ -78,7 +92,13 @@ public class CimdMetadataServiceImplTest {
         oidcSettings.setCimdSettings(cimdSettings);
         domain.setOidc(oidcSettings);
 
-        cimdMetadataService = new CimdMetadataServiceImpl(domain, webClient);
+        // Default: local cache miss, DB miss — falls through to HTTP fetch
+        when(cimdMetadataDocumentManager.get(anyString())).thenReturn(Optional.empty());
+        when(cimdMetadataDocumentService.findByDomainAndClientId(anyString(), anyString())).thenReturn(Maybe.empty());
+        when(cimdMetadataDocumentService.upsert(any(), anyString(), anyString(), any(Duration.class)))
+                .thenReturn(Single.just(new CimdMetadataDocument()));
+
+        cimdMetadataService = new CimdMetadataServiceImpl(domain, webClient, cimdMetadataDocumentService, cimdMetadataDocumentManager);
     }
 
     @Test
@@ -407,6 +427,162 @@ public class CimdMetadataServiceImplTest {
                 .put("token_endpoint_auth_method", "private_key_jwt")
                 .put("jwks_uri", "https://localhost/jwks")
                 .encode();
+    }
+
+    // --- Two-tier cache tests ---
+
+    @Test
+    public void shouldReturnFromLocalCacheWithoutHttpOrDbCall() {
+        CimdMetadataDocument cached = cachedDocument(false);
+        when(cimdMetadataDocumentManager.get(CLIENT_URL)).thenReturn(Optional.of(cached));
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValueCount(1);
+        verifyNoInteractions(webClient);
+        verify(cimdMetadataDocumentService, never()).findByDomainAndClientId(anyString(), anyString());
+    }
+
+    @Test
+    public void shouldReturnFromDbCacheWithoutHttpCall() {
+        CimdMetadataDocument dbDoc = cachedDocument(false);
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValueCount(1);
+        verifyNoInteractions(webClient);
+        verify(cimdMetadataDocumentManager).put(CLIENT_URL, dbDoc);
+    }
+
+    @Test
+    public void shouldFetchFromOriginWhenDbDocumentIsExpired() {
+        CimdMetadataDocument expiredDoc = cachedDocument(true);
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(expiredDoc));
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValueCount(1);
+        verify(request).as(any());
+        verify(cimdMetadataDocumentService).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldFetchFromOriginAndPersistWhenNoCacheHit() {
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValueCount(1);
+        verify(request).as(any());
+        verify(cimdMetadataDocumentService).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldRespectCacheControlMaxAgeUpToCacheTtl() {
+        cimdSettings.setCacheTtlSeconds(3600);
+        // Server says max-age=300, which is less than configuredTtl — should use 300s
+        mockFetchSuccessWithCacheControl(metadataPayload(CLIENT_URL), "max-age=300");
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        verify(cimdMetadataDocumentService).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldCapCacheControlMaxAgeAtConfiguredTtl() {
+        cimdSettings.setCacheTtlSeconds(600);
+        // Server says max-age=99999, should be capped at 600s
+        mockFetchSuccessWithCacheControl(metadataPayload(CLIENT_URL), "max-age=99999");
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        verify(cimdMetadataDocumentService).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldNotPersistOrWarmLocalCacheWhenCacheControlNoStore() {
+        mockFetchSuccessWithCacheControl(metadataPayload(CLIENT_URL), "no-store");
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValueCount(1);
+        verify(cimdMetadataDocumentService, never()).upsert(any(), anyString(), anyString(), any(Duration.class));
+        verify(cimdMetadataDocumentManager, never()).put(anyString(), any());
+    }
+
+    @Test
+    public void shouldNotPersistWhenNoStoreWithMaxAge() {
+        mockFetchSuccessWithCacheControl(metadataPayload(CLIENT_URL), "max-age=300, no-store");
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        verify(cimdMetadataDocumentService, never()).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldRefetchFromOriginOnSecondRequestWhenNoStore() {
+        mockFetchSuccessWithCacheControl(metadataPayload(CLIENT_URL), "no-store");
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(webClient, times(2)).getAbs(CLIENT_URL);
+        verify(cimdMetadataDocumentService, never()).upsert(any(), anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    public void shouldSucceedEvenWhenPersistFails() {
+        when(cimdMetadataDocumentService.upsert(any(), anyString(), anyString(), any(Duration.class)))
+                .thenReturn(Single.error(new RuntimeException("DB down")));
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        // Upsert failure is fire-and-forget — request must still succeed
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValueCount(1);
+    }
+
+    // --- helpers ---
+
+    private CimdMetadataDocument cachedDocument(boolean expired) {
+        CimdMetadataDocument doc = new CimdMetadataDocument();
+        doc.setDomainId("domain-id");
+        doc.setClientId(CLIENT_URL);
+        doc.setMetadata(metadataPayload(CLIENT_URL));
+        doc.setFetchedAt(new Date());
+        doc.setExpiresAt(expired ? new Date(System.currentTimeMillis() - 1000) : new Date(System.currentTimeMillis() + 86400_000));
+        doc.setUpdatedAt(new Date());
+        return doc;
+    }
+
+    private void mockFetchSuccessWithCacheControl(String payload, String cacheControlHeader) {
+        mockRequest();
+        when(request.rxSend()).thenReturn(Single.just(response));
+        when(response.statusCode()).thenReturn(200);
+        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(payload));
+        when(response.getHeader("Cache-Control")).thenReturn(cacheControlHeader);
     }
 
     private Client templateClient() {
