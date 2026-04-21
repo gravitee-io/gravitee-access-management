@@ -18,12 +18,9 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Map;
-
 @Getter
 @Setter
 public class AgentSettingsMongo {
 
     private String agentType;
-    private Map<String, String> requiredClaims;
 }
