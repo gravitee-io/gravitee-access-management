@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,7 +66,7 @@ public class VertxHttpServerRequest implements Request {
         this.timestamp = System.currentTimeMillis();
         this.id = UUID.toString(UUID.random());
         this.transactionId = UUID.toString(UUID.random());
-        this.contextPath = httpServerRequest.path() != null ? httpServerRequest.path().split("/")[0] : null;
+        this.contextPath = extractContextPath(httpServerRequest);
         this.headers = new VertxHttpHeaders(httpServerRequest.headers());
         this.metrics = Metrics.on(timestamp).build();
         this.metrics.setRequestId(id());
@@ -75,6 +76,16 @@ public class VertxHttpServerRequest implements Request {
         this.metrics.setHost(httpServerRequest.host());
         this.metrics.setUri(uri());
         this.metrics.setUserAgent(httpServerRequest.getHeader(io.vertx.core.http.HttpHeaders.USER_AGENT));
+    }
+
+    private static String extractContextPath(HttpServerRequest httpServerRequest) {
+        if(httpServerRequest.path() == null) {
+            return null;
+        } else {
+            return Stream.of(httpServerRequest.path().split("/"))
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     /**
