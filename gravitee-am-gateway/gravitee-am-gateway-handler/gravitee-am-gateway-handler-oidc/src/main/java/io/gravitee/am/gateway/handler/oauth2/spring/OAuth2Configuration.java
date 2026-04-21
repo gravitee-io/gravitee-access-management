@@ -60,7 +60,6 @@ import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import java.util.List;
 
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
-import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -84,16 +83,18 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TokenExchangeUserResolver tokenExchangeUserResolver() {
-        return new TokenExchangeUserResolverImpl();
+    public TokenExchangeUserResolver tokenExchangeUserResolver(SubjectManager subjectManager,
+                                                               UserGatewayService userGatewayService) {
+        TrustedIssuerUserResolver trustedIssuerUserResolver = new TrustedIssuerUserResolver(userGatewayService);
+        TokenUserResolver tokenUserResolver = new TokenUserResolver(subjectManager, userGatewayService);
+        return new TokenExchangeUserResolverFacade(tokenUserResolver, trustedIssuerUserResolver);
     }
 
     @Bean
     public TokenExchangeService tokenExchangeService(List<TokenValidator> validators,
-                                                     SubjectManager subjectManager,
                                                      ProtectedResourceManager protectedResourceManager,
                                                      TokenExchangeUserResolver tokenExchangeUserResolver) {
-        return new TokenExchangeServiceImpl(validators, subjectManager, protectedResourceManager, tokenExchangeUserResolver);
+        return new TokenExchangeServiceImpl(validators, protectedResourceManager, tokenExchangeUserResolver);
     }
 
     @Bean

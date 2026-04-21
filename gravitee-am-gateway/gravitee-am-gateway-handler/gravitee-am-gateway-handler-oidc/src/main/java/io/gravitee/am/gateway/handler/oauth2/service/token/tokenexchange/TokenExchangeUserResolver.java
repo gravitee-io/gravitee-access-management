@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.User;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.Optional;
@@ -37,11 +38,7 @@ public interface TokenExchangeUserResolver {
      * Builds EL context with token claims, evaluates each criterion expression, and looks up users by criteria.
      *
      * @param subjectToken the validated subject token (external JWT)
-     * @param trustedIssuer the trusted issuer config that validated the token (may have user binding criteria)
-     * @param userGatewayService the user service for the domain (already domain-scoped by the caller)
      * @return empty if user binding is disabled or no criteria; otherwise 0 users -> error, 1 user -> Optional.of(user), >1 -> error
      */
-    Single<Optional<User>> resolve(ValidatedToken subjectToken,
-                                   TrustedIssuer trustedIssuer,
-                                   UserGatewayService userGatewayService);
+    Maybe<User> resolve(ValidatedToken subjectToken);
 }

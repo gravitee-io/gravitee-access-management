@@ -31,7 +31,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,20 +38,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class TokenExchangeUserResolverImplTest {
+class TrustedIssuerUserResolverTest {
 
     @Mock
     private UserGatewayService userGatewayService;
 
-    private TokenExchangeUserResolverImpl resolver;
-    private ValidatedToken subjectToken;
+    private TrustedIssuerUserResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new TokenExchangeUserResolverImpl();
-        subjectToken = ValidatedToken.builder()
+        resolver = new TrustedIssuerUserResolver(userGatewayService);
+    }
+
+    private ValidatedToken subjectTokenWith(TrustedIssuer trusted) {
+        return ValidatedToken.builder()
                 .subject("sub-1")
                 .claims(Map.of("email", "user@example.com", "preferred_username", "joe"))
+                .trustedIssuer(trusted)
                 .build();
     }
 
@@ -61,16 +63,16 @@ class TokenExchangeUserResolverImplTest {
         TrustedIssuer trusted = new TrustedIssuer();
         trusted.setUserBindingEnabled(false);
 
-        Optional<User> result = resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet();
+        User result = resolver.resolve(subjectTokenWith(trusted)).blockingGet();
 
-        assertThat(result).isEmpty();
+        assertThat(result).isNull();
     }
 
     @Test
     void resolve_returnsEmptyWhenTrustedIssuerNull() {
-        Optional<User> result = resolver.resolve(subjectToken, null, userGatewayService).blockingGet();
+        User result = resolver.resolve(subjectTokenWith(null)).blockingGet();
 
-        assertThat(result).isEmpty();
+        assertThat(result).isNull();
     }
 
     @Test
@@ -79,9 +81,9 @@ class TokenExchangeUserResolverImplTest {
         trusted.setUserBindingEnabled(true);
         trusted.setUserBindingCriteria(Collections.emptyList());
 
-        Optional<User> result = resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet();
+        User result = resolver.resolve(subjectTokenWith(trusted)).blockingGet();
 
-        assertThat(result).isEmpty();
+        assertThat(result).isNull();
     }
 
     @Test
@@ -95,7 +97,7 @@ class TokenExchangeUserResolverImplTest {
 
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of()));
 
-        assertThatThrownBy(() -> resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet())
+        assertThatThrownBy(() -> resolver.resolve(subjectTokenWith(trusted)).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("No domain user found for token binding");
     }
@@ -113,10 +115,10 @@ class TokenExchangeUserResolverImplTest {
         domainUser.setId("domain-user-id");
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
 
-        Optional<User> result = resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet();
+        User result = resolver.resolve(subjectTokenWith(trusted)).blockingGet();
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo("domain-user-id");
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("domain-user-id");
     }
 
     @Test
@@ -132,7 +134,7 @@ class TokenExchangeUserResolverImplTest {
         User u2 = new User();
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(u1, u2)));
 
-        assertThatThrownBy(() -> resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet())
+        assertThatThrownBy(() -> resolver.resolve(subjectTokenWith(trusted)).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Multiple domain users match token binding");
     }
@@ -140,11 +142,6 @@ class TokenExchangeUserResolverImplTest {
     @Test
     void resolve_throwsWhenNullClaims() {
         // T3: ValidatedToken with null claims should produce InvalidRequestException
-        ValidatedToken noClaims = ValidatedToken.builder()
-                .subject("sub-1")
-                .claims(null)
-                .build();
-
         TrustedIssuer trusted = new TrustedIssuer();
         trusted.setUserBindingEnabled(true);
         UserBindingCriterion c = new UserBindingCriterion();
@@ -152,7 +149,13 @@ class TokenExchangeUserResolverImplTest {
         c.setExpression("{#token['email']}");
         trusted.setUserBindingCriteria(List.of(c));
 
-        assertThatThrownBy(() -> resolver.resolve(noClaims, trusted, userGatewayService).blockingGet())
+        ValidatedToken noClaims = ValidatedToken.builder()
+                .subject("sub-1")
+                .claims(null)
+                .trustedIssuer(trusted)
+                .build();
+
+        assertThatThrownBy(() -> resolver.resolve(noClaims).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("no claims available");
     }
@@ -160,11 +163,6 @@ class TokenExchangeUserResolverImplTest {
     @Test
     void resolve_throwsWhenExpressionEvaluatesToWhitespace() {
         // T4: EL expression evaluating to whitespace should produce InvalidRequestException
-        ValidatedToken whitespaceToken = ValidatedToken.builder()
-                .subject("sub-1")
-                .claims(Map.of("email", "   "))
-                .build();
-
         TrustedIssuer trusted = new TrustedIssuer();
         trusted.setUserBindingEnabled(true);
         UserBindingCriterion c = new UserBindingCriterion();
@@ -172,7 +170,13 @@ class TokenExchangeUserResolverImplTest {
         c.setExpression("{#token['email']}");
         trusted.setUserBindingCriteria(List.of(c));
 
-        assertThatThrownBy(() -> resolver.resolve(whitespaceToken, trusted, userGatewayService).blockingGet())
+        ValidatedToken whitespaceToken = ValidatedToken.builder()
+                .subject("sub-1")
+                .claims(Map.of("email", "   "))
+                .trustedIssuer(trusted)
+                .build();
+
+        assertThatThrownBy(() -> resolver.resolve(whitespaceToken).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("evaluated to empty value");
     }
@@ -186,7 +190,7 @@ class TokenExchangeUserResolverImplTest {
         c.setExpression("{#token['nonexistent']}");
         trusted.setUserBindingCriteria(List.of(c));
 
-        assertThatThrownBy(() -> resolver.resolve(subjectToken, trusted, userGatewayService).blockingGet())
+        assertThatThrownBy(() -> resolver.resolve(subjectTokenWith(trusted)).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("evaluated to null");
     }
