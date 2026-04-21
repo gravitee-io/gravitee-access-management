@@ -20,7 +20,7 @@ package io.gravitee.am.model.application;
  * @author GraviteeSource Team
  */
 public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER, AGENT;
+    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER;
 
     public static ApplicationType orNull(String type) {
         if (type == null) {

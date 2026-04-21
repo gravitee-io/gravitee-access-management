@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.model.oidc.Client;
@@ -128,5 +129,25 @@ public class ClientAssertionAuthProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void canHandle_privateKeyJwt_handlesBlueprintOrRegularClient() {
+        Client client = mock(Client.class);
+        when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
+
+        RoutingContext context = mock(RoutingContext.class);
+
+        Assert.assertTrue(authProvider.canHandle(client, context));
+    }
+
+    @Test
+    public void canHandle_agentBlueprint_rejectsAssertion_whenConfiguredForClientSecretBasic() {
+        Client client = mock(Client.class);
+        when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+
+        RoutingContext context = mock(RoutingContext.class);
+
+        Assert.assertFalse(authProvider.canHandle(client, context));
     }
 }
