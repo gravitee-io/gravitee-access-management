@@ -89,7 +89,7 @@ export async function startTcpServer(): Promise<TcpServer> {
   });
 
   await new Promise<void>((resolve, reject) => {
-    server.listen(0, '127.0.0.1', () => resolve());
+    server.listen(0, '0.0.0.0', () => resolve());
     server.on('error', reject);
   });
 

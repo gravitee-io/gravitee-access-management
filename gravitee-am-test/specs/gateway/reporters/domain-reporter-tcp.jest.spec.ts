@@ -42,6 +42,9 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  if (fixture) {
+    await fixture.cleanUpReporters();
+  }
   try {
     await tcpServer.close();
   } catch {
@@ -52,7 +55,7 @@ afterEach(async () => {
 describe('TCP Reporter - Domain Level Gateway', () => {
   describe('Enabled', () => {
     it('should receive USER_LOGIN event over TCP in ELASTICSEARCH format', async () => {
-      await fixture.addReporter('localhost', tcpServer.port);
+      await fixture.addReporter(tcpServer.port);
 
       const received = await tcpServer.waitForMessage(
         { predicate: (msg) => msg.event_type === 'USER_LOGIN' },
@@ -76,7 +79,7 @@ describe('TCP Reporter - Domain Level Gateway', () => {
 
   describe('Disabled', () => {
     it('should not receive USER_LOGIN event over TCP when reporter is disabled', async () => {
-      const reporter = await fixture.addReporter('localhost', tcpServer.port);
+      const reporter = await fixture.addReporter(tcpServer.port);
 
       await updateDomainReporter(fixture.domain.id, fixture.accessToken, reporter.id, {
         type: reporter.type,

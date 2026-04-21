@@ -36,3 +36,4 @@ process.env.SFR_URL = 'http://localhost:8181';
 process.env.INTERNAL_SFR_URL = 'http://wiremock:8080';
 process.env.AM_GATEWAY_SYNC_GRACE_PERIOD = '5000';
 process.env.KAFKA_BOOTSTRAP_URL = 'localhost:9092';
+process.env.TCP_REPORTER_HOST = 'localhost';
