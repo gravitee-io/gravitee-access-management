@@ -16,15 +16,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { SnackbarService } from '../../../../../services/snackbar.service';
-import { ApplicationService } from '../../../../../services/application.service';
-import { AuthService } from '../../../../../services/auth.service';
-
-interface AgentFormState {
-  agentType: string;
-  maxPublicKeysPerWorkload: number | null;
-}
-
 const AGENT_TYPE_LABELS: Record<string, string> = {
   user_embedded: 'User-embedded',
   autonomous: 'Autonomous',
@@ -39,59 +30,14 @@ const AGENT_TYPE_LABELS: Record<string, string> = {
 })
 export class ApplicationAgentComponent implements OnInit {
   application: any;
-  domainId: string;
-  editMode = false;
+  agentType = '';
   agentTypeLabel = '';
-  form: AgentFormState = {
-    agentType: '',
-    maxPublicKeysPerWorkload: null,
-  };
-  dirty = false;
 
-  constructor(
-    private route: ActivatedRoute,
-    private snackbarService: SnackbarService,
-    private applicationService: ApplicationService,
-    private authService: AuthService,
-  ) {}
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.application = this.route.snapshot.data['application'];
-    this.domainId = this.route.snapshot.data['domain']?.id ?? this.application.domain;
-    this.editMode = this.authService.hasPermissions(['application_settings_update']);
-
-    const agent = this.application.settings?.agent ?? {};
-    this.form = {
-      agentType: agent.agentType ?? '',
-      maxPublicKeysPerWorkload: agent.maxPublicKeysPerWorkload ?? null,
-    };
-    this.agentTypeLabel = AGENT_TYPE_LABELS[this.form.agentType] ?? this.form.agentType;
-  }
-
-  markDirty(): void {
-    this.dirty = true;
-  }
-
-  save(): void {
-    const patch = {
-      settings: {
-        agent: {
-          agentType: this.form.agentType || null,
-          maxPublicKeysPerWorkload: this.form.maxPublicKeysPerWorkload,
-        },
-      },
-    };
-    this.applicationService.patch(this.domainId, this.application.id, patch).subscribe({
-      next: (updated) => {
-        this.application = updated;
-        this.route.snapshot.data['application'] = updated;
-        this.dirty = false;
-        this.snackbarService.open('Agent settings updated');
-      },
-      error: (err: unknown) => {
-        const maybe = err as { error?: { message?: string } } | undefined;
-        this.snackbarService.open(maybe?.error?.message ?? 'Failed to update agent settings');
-      },
-    });
+    this.agentType = this.application.settings?.agent?.agentType ?? '';
+    this.agentTypeLabel = AGENT_TYPE_LABELS[this.agentType] ?? this.agentType;
   }
 }

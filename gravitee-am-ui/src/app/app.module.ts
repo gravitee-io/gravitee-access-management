@@ -291,8 +291,6 @@ import { ApplicationAccountSettingsComponent } from './domain/applications/appli
 import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/component/oauth2-settings.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
-import { ApplicationAgentKeysComponent } from './domain/applications/application/advanced/agent-keys/agent-keys.component';
-import { AgentKeyAddDialogComponent } from './domain/applications/application/advanced/agent-keys/add-dialog/agent-key-add-dialog.component';
 import { ApplicationAgentComponent } from './domain/applications/application/advanced/agent/agent.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
@@ -687,8 +685,6 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ApplicationSaml2Component,
     AddScopeComponent,
     ApplicationSecretsCertificatesComponent,
-    ApplicationAgentKeysComponent,
-    AgentKeyAddDialogComponent,
     ApplicationAgentComponent,
 
     ApplicationMetadataComponent,

@@ -260,11 +260,6 @@ public class ApplicationResource extends AbstractResource {
         return resourceContext.getResource(ApplicationFlowsResource.class);
     }
 
-    @Path("agent/keys")
-    public ApplicationAgentKeysResource getAgentKeysResource() {
-        return resourceContext.getResource(ApplicationAgentKeysResource.class);
-    }
-
     public Maybe<Application> updateInternal(String organizationId, String environmentId, String domainId, String application, PatchApplication patchApplication, User principal) {
 
         final User authenticatedUser = getAuthenticatedUser();
