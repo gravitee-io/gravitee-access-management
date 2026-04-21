@@ -677,6 +677,7 @@ public class ClientAssertionServiceTest {
         blueprint.setClientId(BLUEPRINT_CLIENT_ID);
         blueprint.setAgentIdentityMode(true);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
+        blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
         JWKSet agentJwks = new JWKSet();
         agentJwks.setKeys(List.of(key));
         blueprint.setJwks(agentJwks);
@@ -687,7 +688,7 @@ public class ClientAssertionServiceTest {
 
         when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
-        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+        when(clientLookupService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
         when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(), any())).thenReturn(true);
 
@@ -700,6 +701,40 @@ public class ClientAssertionServiceTest {
                             && BLUEPRINT_CLIENT_ID.equals(client.getBlueprintClientId())
                             && client.isAgentIdentityMode();
                 });
+    }
+
+    @Test
+    public void testWorkloadJwt_rejectedWhenBlueprintNotConfiguredForAssertion() throws Exception {
+        KeyPair rsaKey = generateRsaKeyPair();
+        RSAPublicKey publicKey = (RSAPublicKey) rsaKey.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        RSAKey key = new RSAKey();
+        key.setKty("RSA");
+        key.setKid(KID);
+        key.setE(Base64.getUrlEncoder().encodeToString(publicKey.getPublicExponent().toByteArray()));
+        key.setN(Base64.getUrlEncoder().encodeToString(publicKey.getModulus().toByteArray()));
+
+        Client blueprint = new Client();
+        blueprint.setClientId(BLUEPRINT_CLIENT_ID);
+        blueprint.setAgentIdentityMode(true);
+        blueprint.setAgentType(AgentType.AUTONOMOUS);
+        blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        JWKSet agentJwks = new JWKSet();
+        agentJwks.setKeys(List.of(key));
+        blueprint.setJwks(agentJwks);
+
+        String assertion = generateWorkloadJWT(privateKey, BLUEPRINT_CLIENT_ID, AGENT_INSTANCE_ID);
+        OpenIDProviderMetadata metadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath = "/";
+
+        when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
+        when(clientLookupService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+
+        clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
+                .assertError(InvalidClientException.class)
+                .assertNotComplete();
     }
 
     @Test
@@ -718,6 +753,7 @@ public class ClientAssertionServiceTest {
         blueprint.setClientId(BLUEPRINT_CLIENT_ID);
         blueprint.setAgentIdentityMode(true);
         blueprint.setAgentType(AgentType.AUTONOMOUS);
+        blueprint.setTokenEndpointAuthMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT);
         JWKSet agentJwks = new JWKSet();
         agentJwks.setKeys(List.of(key));
         blueprint.setJwks(agentJwks);
@@ -728,7 +764,7 @@ public class ClientAssertionServiceTest {
 
         when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
-        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+        when(clientLookupService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
         when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(key));
         when(jwsService.isValidSignature(any(), any())).thenReturn(false);
 
@@ -752,7 +788,7 @@ public class ClientAssertionServiceTest {
 
         when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
-        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(regularClient));
+        when(clientLookupService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(regularClient));
 
         clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)
@@ -796,7 +832,7 @@ public class ClientAssertionServiceTest {
 
         when(metadata.getTokenEndpoint()).thenReturn(AUDIENCE);
         when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(metadata);
-        when(clientSyncService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
+        when(clientLookupService.findByClientId(BLUEPRINT_CLIENT_ID)).thenReturn(Maybe.just(blueprint));
 
         clientAssertionService.assertClient(JWT_BEARER_TYPE, assertion, basePath).test()
                 .assertError(InvalidClientException.class)

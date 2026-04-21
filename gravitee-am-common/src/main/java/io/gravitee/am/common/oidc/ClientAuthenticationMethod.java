@@ -70,12 +70,6 @@ public interface ClientAuthenticationMethod {
 
     /**
      * URN to identify the ClientAssertion using JWT token (RFC 7523).
-     * <p>
-     * Also used for blueprint agent instance assertions, where the JWT
-     * {@code iss} identifies the blueprint application and {@code sub}
-     * identifies the agent instance. Standard RFC 7523 assertions have
-     * {@code iss == sub == client_id}; the agent shape is detected at
-     * dispatch time.
      */
     String JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
 

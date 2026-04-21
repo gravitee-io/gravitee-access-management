@@ -378,9 +378,6 @@ public interface EventType {
 
     // Agent identity events
     String AGENT_AUTHENTICATED = "AGENT_AUTHENTICATED";
-    String AGENT_KEY_USED = "AGENT_KEY_USED";
-    String CIMD_METADATA_FETCHED = "CIMD_METADATA_FETCHED";
-    String CIMD_METADATA_REJECTED = "CIMD_METADATA_REJECTED";
 
     static Collection<String> types() {
         return new TreeSet<>(Arrays.asList(
@@ -419,8 +416,7 @@ public interface EventType {
                 PASSWORD_POLICY_CREATED, PASSWORD_POLICY_UPDATED, PASSWORD_POLICY_DELETED,
                 PROTECTED_RESOURCE_CREATED, PROTECTED_RESOURCE_UPDATED, PROTECTED_RESOURCE_DELETED,
                 PERMISSION_EVALUATED,
-                AGENT_AUTHENTICATED, AGENT_KEY_USED,
-                CIMD_METADATA_FETCHED, CIMD_METADATA_REJECTED
+                AGENT_AUTHENTICATED
         ));
     }
     static List<String> loginTypes(){

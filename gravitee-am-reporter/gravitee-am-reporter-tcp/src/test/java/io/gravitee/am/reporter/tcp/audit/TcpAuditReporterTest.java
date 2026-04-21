@@ -453,38 +453,20 @@ class TcpAuditReporterTest {
         Path fallbackDir = tempDir.resolve(context.getOrganizationId())
                 .resolve(context.getEnvironmentId())
                 .resolve(context.getDomainId());
-
-        // Fallback writes are async; poll until the expected line count appears or timeout.
-        final long deadline = System.currentTimeMillis() + 5_000;
-        long lineCount = 0;
-        while (System.currentTimeMillis() < deadline) {
-            if (Files.exists(fallbackDir)) {
-                try (var stream = Files.list(fallbackDir)) {
-                    lineCount = stream
-                            .filter(p -> p.toString().endsWith(".b64"))
-                            .findFirst()
-                            .map(p -> {
-                                try {
-                                    return Files.lines(p).filter(l -> !l.isBlank()).count();
-                                } catch (IOException e) {
-                                    return 0L;
-                                }
-                            })
-                            .orElse(0L);
-                }
-                if (lineCount >= expectedCount) {
-                    break;
-                }
-            }
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
         assertThat(fallbackDir).exists();
+
+        long lineCount = Files.list(fallbackDir)
+                .filter(p -> p.toString().endsWith(".b64"))
+                .findFirst()
+                .map(p -> {
+                    try {
+                        return Files.lines(p).filter(l -> !l.isBlank()).count();
+                    } catch (IOException e) {
+                        return 0L;
+                    }
+                })
+                .orElse(0L);
+
         assertThat(lineCount).isEqualTo(expectedCount);
     }
 
