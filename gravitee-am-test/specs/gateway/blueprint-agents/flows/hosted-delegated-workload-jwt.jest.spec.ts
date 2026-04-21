@@ -41,7 +41,7 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
     redirectUri = 'https://agent.example.com/callback';
 
     // Create HOSTED_DELEGATED agent
-    agent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, redirectUri);
+    agent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, redirectUri, 'private_key_jwt');
 
     // Verify defaults: WEB type, client_credentials + authorization_code + token_exchange allowed
     const appDetails = await fixture.getApp(agent.id);
