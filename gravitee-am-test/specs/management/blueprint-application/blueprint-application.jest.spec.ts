@@ -83,12 +83,12 @@ describe('Blueprint Application — Creation & Type Inference', () => {
     expect(app.settings.oauth.grantTypes).toContain('client_credentials');
   });
 
-  it('should default tokenEndpointAuthMethod to private_key_jwt for AUTONOMOUS and HOSTED_DELEGATED', async () => {
+  it('should default tokenEndpointAuthMethod to client_secret_basic for AUTONOMOUS and HOSTED_DELEGATED', async () => {
     const autonomous = await fixture.createBlueprintApp('AUTONOMOUS');
     const hosted = await fixture.createBlueprintApp('HOSTED_DELEGATED');
 
-    expect(autonomous.settings.oauth.tokenEndpointAuthMethod).toEqual('private_key_jwt');
-    expect(hosted.settings.oauth.tokenEndpointAuthMethod).toEqual('private_key_jwt');
+    expect(autonomous.settings.oauth.tokenEndpointAuthMethod).toEqual('client_secret_basic');
+    expect(hosted.settings.oauth.tokenEndpointAuthMethod).toEqual('client_secret_basic');
   });
 });
 
