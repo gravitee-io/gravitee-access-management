@@ -20,7 +20,6 @@
     "referenceType":"${audit.getReferenceType()?j_string}",
   </#if>
   "referenceId":"${audit.getReferenceId()}"
-  <#if audit.getStatus()??>,"status":"${audit.getStatus()}"</#if>
   <#if audit.getOutcome()??>
     ,"outcome": {
       <#if audit.getOutcome().getStatus()??>"status":"${audit.getOutcome().getStatus()}"<#if audit.getOutcome().getMessage()??>,</#if></#if>
