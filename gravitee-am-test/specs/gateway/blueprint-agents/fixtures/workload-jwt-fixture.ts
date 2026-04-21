@@ -85,16 +85,20 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
       alg: 'RS256',
     };
 
-    const addKeyResponse = await fetch(managementUrl(`/domains/${domain.id}/applications/${blueprintApp.id}/agent/keys`), {
-      method: 'POST',
+    const addKeyResponse = await fetch(managementUrl(`/domains/${domain.id}/applications/${blueprintApp.id}`), {
+      method: 'PATCH',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(agentJwk),
+      body: JSON.stringify({
+        settings: {
+          oauth: { jwks: JSON.stringify({ keys: [agentJwk] }) },
+        },
+      }),
     });
     if (!addKeyResponse.ok) {
-      throw new Error(`Failed to add agent key: ${addKeyResponse.status} ${await addKeyResponse.text()}`);
+      throw new Error(`Failed to register agent JWKS: ${addKeyResponse.status} ${await addKeyResponse.text()}`);
     }
 
     // Start domain

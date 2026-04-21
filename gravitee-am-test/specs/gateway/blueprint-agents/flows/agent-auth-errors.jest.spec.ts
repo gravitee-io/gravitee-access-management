@@ -115,7 +115,7 @@ describe('Agent auth flows — cross-agent error handling', () => {
       alg: 'RS256',
     };
 
-    const addKeyResponse = await fixture.addAgentKey(hostedDelegated.id, agentJwk);
+    const addKeyResponse = await fixture.registerJwk(hostedDelegated.id, agentJwk);
     expect(addKeyResponse.ok).toEqual(true);
 
     // Sign assertion with WRONG issuer (autonomous agent's client_id, not hostedDelegated's)
