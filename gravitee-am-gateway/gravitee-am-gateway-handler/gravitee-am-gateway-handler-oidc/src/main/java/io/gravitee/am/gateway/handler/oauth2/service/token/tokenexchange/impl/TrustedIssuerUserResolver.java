@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
@@ -26,7 +27,9 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.el.exceptions.ExpressionEvaluationException;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Resolves an external JWT subject to a domain user using trusted issuer user binding criteria.
@@ -42,33 +44,35 @@ import java.util.Optional;
  *
  * @author GraviteeSource Team
  */
-public class TokenExchangeUserResolverImpl implements TokenExchangeUserResolver {
+@RequiredArgsConstructor
+public class TrustedIssuerUserResolver implements TokenExchangeUserResolver {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenExchangeUserResolverImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TrustedIssuerUserResolver.class);
     private static final String TOKEN_VARIABLE = "token";
 
+    private final UserGatewayService userGatewayService;
+
     @Override
-    public Single<Optional<User>> resolve(ValidatedToken subjectToken,
-                                          TrustedIssuer trustedIssuer,
-                                          UserGatewayService userGatewayService) {
+    public Maybe<User> resolve(ValidatedToken subjectToken) {
+        TrustedIssuer trustedIssuer = subjectToken.getTrustedIssuer();
         if (trustedIssuer == null || !trustedIssuer.isUserBindingEnabled()) {
-            return Single.just(Optional.empty());
+            return Maybe.empty();
         }
         List<UserBindingCriterion> criteria = trustedIssuer.getUserBindingCriteria();
         if (criteria == null || criteria.isEmpty()) {
-            return Single.just(Optional.empty());
+            return Maybe.empty();
         }
 
         return Single.fromCallable(() -> buildCriteria(subjectToken, criteria))
-                .flatMap(filterCriteria -> userGatewayService.findByCriteria(filterCriteria)
-                        .map(users -> {
+                .flatMapMaybe(filterCriteria -> userGatewayService.findByCriteria(filterCriteria)
+                        .flatMapMaybe(users -> {
                             if (users.isEmpty()) {
-                                throw new InvalidRequestException("No domain user found for token binding");
+                                return Maybe.error(new InvalidRequestException("No domain user found for token binding"));
                             }
                             if (users.size() > 1) {
-                                throw new InvalidRequestException("Multiple domain users match token binding");
+                                return Maybe.error(new InvalidRequestException("Multiple domain users match token binding"));
                             }
-                            return Optional.of(users.getFirst());
+                            return Maybe.just(users.getFirst());
                         }));
     }
 

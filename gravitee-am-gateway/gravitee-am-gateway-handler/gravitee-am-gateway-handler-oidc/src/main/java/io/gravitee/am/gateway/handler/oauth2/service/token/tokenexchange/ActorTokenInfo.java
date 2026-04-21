@@ -15,9 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
+import io.gravitee.am.common.jwt.Claims;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Information extracted from the validated actor token for delegation scenarios.
- * Used to build the "act" claim in the issued token per RFC 8693 Section 4.1.
+ * Used to build the "act" claim in the issued token per RFC 8693 Section 4.1
+ * and to expose the actor token payload to EL custom token claims.
  *
  * @param subject the "sub" claim from the actor token (required per RFC 8693)
  * @param gis the "gis" (Gravitee Internal Subject) claim from the actor token.
@@ -31,6 +37,8 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
  *                            the actor's own delegation chain for complete audit traceability.
  *                            Stored as "actor_act" in the issued token's "act" claim.
  * @param delegationDepth the current delegation depth (number of nested "act" claims + 1)
+ * @param claims the full claims map of the validated actor token. Exposed to EL custom token
+ *               claims via {@code #context.attributes['token_exchange']['actor']['actor_token_claims']['<name>']}.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-4.1">RFC 8693 Section 4.1</a>
  * @author GraviteeSource Team
@@ -40,7 +48,8 @@ public record ActorTokenInfo(
         String gis,
         Object subjectTokenActClaim,
         Object actorTokenActClaim,
-        int delegationDepth
+        int delegationDepth,
+        Map<String, Object> claims
 ) {
     /**
      * Check if the subject token has an existing "act" claim (part of a prior delegation chain).
@@ -61,5 +70,37 @@ public record ActorTokenInfo(
      */
     public boolean hasActorTokenActClaim() {
         return actorTokenActClaim != null;
+    }
+
+    /**
+     * Check if the actor token carries any claims (used to decide whether to publish them
+     * to the EL execution context).
+     */
+    public boolean hasClaims() {
+        return claims != null && !claims.isEmpty();
+    }
+
+    public Map<String, Object> buildTokenExchangeExecutionContext( ) {
+        Map<String, Object> actorContext = new HashMap<>();
+        actorContext.put(Claims.SUB, subject());
+        actorContext.put("delegation_depth", delegationDepth());
+
+        if (hasGis()) {
+            actorContext.put(Claims.GIO_INTERNAL_SUB, gis());
+        }
+
+        if (hasSubjectTokenActClaim()) {
+            actorContext.put("subject_token_act", subjectTokenActClaim());
+        }
+
+        if (hasActorTokenActClaim()) {
+            actorContext.put("actor_token_act", actorTokenActClaim());
+        }
+
+        if (hasClaims()) {
+            actorContext.put("actor_token_claims", claims());
+        }
+
+        return Map.of("token_exchange", Map.of("actor", actorContext));
     }
 }

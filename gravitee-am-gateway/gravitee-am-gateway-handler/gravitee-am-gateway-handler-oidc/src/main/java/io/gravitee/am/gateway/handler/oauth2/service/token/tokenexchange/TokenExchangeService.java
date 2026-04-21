@@ -44,8 +44,7 @@ public interface TokenExchangeService {
      * @param tokenRequest the token request containing exchange parameters (will be modified with scopes)
      * @param client the client performing the exchange
      * @param domain the domain context
-     * @param userGatewayService the user service for the domain (for user binding resolution)
      * @return exchange result with user and token metadata
      */
-    Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain, UserGatewayService userGatewayService);
+    Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain);
 }

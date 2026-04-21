@@ -129,9 +129,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private TokenExchangeService tokenExchangeService;
 
     @Autowired
-    private UserGatewayService userGatewayService;
-
-    @Autowired
     private ExecutionContextFactory executionContextFactory;
 
     @Override
@@ -202,7 +199,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         ));
 
         // Register Token Exchange strategy
-        registerStrategy(GrantType.TOKEN_EXCHANGE, new TokenExchangeStrategy(tokenExchangeService, userGatewayService));
+        registerStrategy(GrantType.TOKEN_EXCHANGE, new TokenExchangeStrategy(tokenExchangeService));
 
         // Register CIBA strategy
         registerStrategy(GrantType.CIBA_GRANT_TYPE, new CibaStrategy(

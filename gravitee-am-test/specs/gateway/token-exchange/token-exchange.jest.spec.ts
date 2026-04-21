@@ -33,6 +33,8 @@ let impersonationOnlyFixture: TokenExchangeFixture;
 let limitedDepthFixture: TokenExchangeFixture;
 let accessTokenOnlyFixture: TokenExchangeFixture;
 let noScopeFixture: TokenExchangeFixture;
+let customClaimsFixture: TokenExchangeFixture;
+let delegationCustomClaimsFixture: TokenExchangeFixture;
 
 beforeAll(async () => {
   // Setup default fixture with all token types allowed (impersonation only by default)
@@ -102,6 +104,41 @@ beforeAll(async () => {
     grantTypes: ['password', 'urn:ietf:params:oauth:grant-type:token-exchange'],
     scopes: [],
   });
+
+  customClaimsFixture = await setupTokenExchangeFixture({
+    domainNamePrefix: 'token-exchange-custom-claims',
+    domainDescription: 'Token exchange with custom claims',
+    clientName: 'token-exchange-custom-claims-client',
+    tokenCustomClaims: [
+      {
+        claimName: 'am_tx_user_email',
+        claimValue: "{#context.attributes['user'].email}",
+        tokenType: 'ACCESS_TOKEN',
+      },
+    ],
+  });
+
+  delegationCustomClaimsFixture = await setupTokenExchangeFixture({
+    domainNamePrefix: 'token-exchange-delegation-custom-claims',
+    domainDescription: 'Token exchange delegation with custom claims referencing actor_token',
+    clientName: 'token-exchange-delegation-custom-claims-client',
+    allowImpersonation: true,
+    allowDelegation: true,
+    allowedActorTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_ACTOR_TOKEN_TYPES,
+    maxDelegationDepth: 3,
+    tokenCustomClaims: [
+      {
+        claimName: 'tx_actor_jti',
+        claimValue: "{#context.attributes['token_exchange']['actor']['actor_token_claims']['jti']}",
+        tokenType: 'ACCESS_TOKEN',
+      },
+      {
+        claimName: 'tx_actor_sub',
+        claimValue: "{#context.attributes['token_exchange']['actor']['actor_token_claims']['sub']}",
+        tokenType: 'ACCESS_TOKEN',
+      },
+    ],
+  });
 });
 
 afterAll(async () => {
@@ -125,6 +162,12 @@ afterAll(async () => {
   }
   if (noScopeFixture) {
     await noScopeFixture.cleanup();
+  }
+  if (customClaimsFixture) {
+    await customClaimsFixture.cleanup();
+  }
+  if (delegationCustomClaimsFixture) {
+    await delegationCustomClaimsFixture.cleanup();
   }
 });
 
@@ -202,6 +245,25 @@ describe('Token Exchange grant', () => {
 
     const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
     expect(exchangedDecoded.payload['gis']).toBe(subjectGis);
+  });
+
+  it('should expose full user profile in context during local token exchange', async () => {
+    const { oidc, basicAuth, obtainSubjectToken, user } = customClaimsFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
+    expect(exchangedDecoded.payload['am_tx_user_email']).toBe(user.email);
   });
 
   it('should exchange refresh token when allowed', async () => {
@@ -1229,5 +1291,72 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     expect(actorAct).toBeDefined();
     expect(actorAct['sub']).toBe(firstActorSub);
     expect(actorAct['gis']).toBe(firstActorGis);
+  });
+});
+
+describe('Token Exchange Delegation custom claims (actor_token EL exposure)', () => {
+  it('should expose actor_token claims to EL custom token claims during delegation', async () => {
+    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationCustomClaimsFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+    const { accessToken: actorAccessToken } = await obtainActorToken();
+
+    const subjectDecoded = parseJwt(subjectAccessToken);
+    const actorDecoded = parseJwt(actorAccessToken);
+    const actorJti = actorDecoded.payload['jti'] as string;
+    const actorSub = actorDecoded.payload['sub'] as string;
+    expect(actorJti).toBeDefined();
+    expect(actorSub).toBeDefined();
+    expect(actorJti).not.toBe(subjectDecoded.payload['jti']);
+
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+      `&subject_token=${subjectAccessToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
+      `&actor_token=${actorAccessToken}` +
+      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
+
+    // The custom claim must equal the actor token's jti (proves the EL read from actor_token.claims)
+    expect(exchangedDecoded.payload['tx_actor_jti']).toBe(actorJti);
+    // ...and must not be the issued token's own jti (proves it's not aliased to the new token)
+    expect(exchangedDecoded.payload['tx_actor_jti']).not.toBe(exchangedDecoded.payload['jti']);
+    // ...and must not be the subject token's jti (proves we did not pull from the subject token)
+    expect(exchangedDecoded.payload['tx_actor_jti']).not.toBe(subjectDecoded.payload['jti']);
+
+    // sub mapping is also exposed and resolves to the actor's sub
+    expect(exchangedDecoded.payload['tx_actor_sub']).toBe(actorSub);
+  });
+
+  it('should omit actor_token EL custom claims for impersonation (no actor token)', async () => {
+    const { oidc, basicAuth, obtainSubjectToken } = delegationCustomClaimsFixture;
+
+    const { accessToken: subjectAccessToken } = await obtainSubjectToken();
+
+    const exchangeResponse = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+      `&subject_token=${subjectAccessToken}` +
+      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
+
+    // Without an actor_token the EL evaluates to null and enhanceJWT skips the claim.
+    expect(exchangedDecoded.payload['tx_actor_jti']).toBeUndefined();
+    expect(exchangedDecoded.payload['tx_actor_sub']).toBeUndefined();
   });
 });
