@@ -33,6 +33,7 @@ import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
+import { TokenClaim } from '@management-models/TokenClaim';
 import { User } from '@management-models/User';
 import request from 'supertest';
 
@@ -194,6 +195,7 @@ export interface TokenExchangeFixtureConfig {
   clientName?: string;
   grantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
+  tokenCustomClaims?: TokenClaim[];
   allowedSubjectTokenTypes?: string[];
   // Delegation settings
   allowImpersonation?: boolean;
@@ -220,6 +222,7 @@ export const setupTokenExchangeFixture = async (
       clientName = TOKEN_EXCHANGE_TEST.CLIENT_NAME,
       grantTypes = TOKEN_EXCHANGE_TEST.DEFAULT_GRANT_TYPES,
       scopes = TOKEN_EXCHANGE_TEST.DEFAULT_SCOPES,
+      tokenCustomClaims,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
       allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
       allowImpersonation = true,
@@ -260,6 +263,7 @@ export const setupTokenExchangeFixture = async (
           redirectUris: [TOKEN_EXCHANGE_TEST.REDIRECT_URI],
           grantTypes,
           scopeSettings: scopes,
+          tokenCustomClaims,
         },
       },
       identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),

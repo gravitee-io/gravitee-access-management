@@ -76,8 +76,7 @@ public class SubjectManagerV2 implements SubjectManager {
     @Override
     public Maybe<User> findUserBySub(JWT token) {
         if (!hasValidInternalSub(token)) {
-            log.error("malformed internal sub value '{}'", token);
-            return Maybe.error(new InvalidGISException("Required internal sub value is missing"));
+            return Maybe.error(new InvalidGISException(String.format("Required internal sub value is missing or invalid [%s]", token.getInternalSub())));
         }
 
         final var internalSub = token.getInternalSub();
