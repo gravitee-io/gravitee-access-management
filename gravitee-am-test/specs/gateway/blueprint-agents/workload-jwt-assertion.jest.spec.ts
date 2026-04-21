@@ -74,7 +74,6 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
     expect(response.body.access_token).toMatch(JWT_FORMAT);
     expect(response.body.token_type).toEqual('bearer');
 
-    // Decode and verify token claims
     const decoded = decodeJwt(response.body.access_token);
     expect(decoded.sub).toEqual(agentInstanceId);
     expect(decoded.act).toBeDefined();
@@ -82,7 +81,6 @@ describe('Blueprint Agent — Workload-JWT Assertion', () => {
   });
 
   it('should reject workload-jwt with invalid signature', async () => {
-    // Generate a different keypair — signature won't match blueprint JWKS
     const { privateKey: wrongKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 
     const assertion = signWorkloadJwt('agent-instance-bad-sig', {}, { privateKey: wrongKey, kid: fixture.kid });

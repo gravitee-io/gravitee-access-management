@@ -31,7 +31,7 @@ const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
   let fixture: BlueprintFixture;
-  let agent: any; // HOSTED_DELEGATED app
+  let agent: any;
   let privateKey: crypto.KeyObject;
   let kid: string;
   let redirectUri: string;
@@ -40,22 +40,18 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
     fixture = await setupBlueprintFixture();
     redirectUri = 'https://agent.example.com/callback';
 
-    // Create HOSTED_DELEGATED agent
     agent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, redirectUri, 'private_key_jwt');
 
-    // Verify defaults: WEB type, client_credentials + authorization_code + token_exchange allowed
     const appDetails = await fixture.getApp(agent.id);
     expect(appDetails.type).toEqual('web');
     expect(appDetails.settings.oauth.grantTypes).toContain('authorization_code');
     expect(appDetails.settings.oauth.grantTypes).toContain('client_credentials');
     expect(appDetails.settings.oauth.grantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
 
-    // Generate RSA keypair
     const { publicKey, privateKey: pk } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
     privateKey = pk;
     kid = `agent-key-${Date.now()}`;
 
-    // Export public key as JWK and add to agent
     const publicJwk = publicKey.export({ format: 'jwk' });
     const agentJwk = {
       kty: publicJwk.kty,
@@ -109,7 +105,6 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
     expect(response.body.access_token).toMatch(JWT_FORMAT);
     expect(response.body.token_type).toEqual('bearer');
 
-    // Verify act claim points to blueprint app
     const decoded = decodeJwt(response.body.access_token);
     expect(decoded.sub).toEqual(agentInstanceId);
     expect((decoded.act as any)?.sub).toEqual(agent.settings.oauth.clientId);
@@ -196,7 +191,6 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
   });
 
   it('should allow refresh_token flow with fresh workload-jwt assertion', async () => {
-    // First get initial token with workload-jwt and offline_access scope
     const instanceId = 'refresh-test-instance';
     const assertion = signWorkloadJwt(instanceId);
 
@@ -207,8 +201,6 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // offline_access scope / refresh_token grant may not be enabled by default on the
-    // agent — accept either an issued refresh_token or a rejection.
     expect([200, 400, 401]).toContain(initialResponse.status);
     if (initialResponse.status !== 200 || !initialResponse.body.refresh_token) {
       return;
@@ -228,7 +220,6 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
 
   it('should reject workload-jwt with wrong issuer (client_id mismatch)', async () => {
     const now = Math.floor(Date.now() / 1000);
-    // Sign with wrong issuer
     const wrongIssuerAssertion = jwt.sign(
       {
         iss: 'wrong-client-id',
@@ -249,7 +240,6 @@ describe('HOSTED_DELEGATED agent — workload-jwt assertion + grants', () => {
       { 'Content-type': 'application/x-www-form-urlencoded' },
     );
 
-    // Should reject — issuer doesn't match client_id
     expect([400, 401]).toContain(response.status);
   });
 });
