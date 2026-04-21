@@ -51,7 +51,6 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
   try {
     domain = await createDomain(accessToken, uniqueName('workload-jwt', true), 'Workload-JWT assertion test');
 
-    // Create AUTONOMOUS blueprint application
     const createResponse = await fetch(managementUrl(`/domains/${domain.id}/applications`), {
       method: 'POST',
       headers: {
@@ -71,11 +70,9 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
     const blueprintApp = await createResponse.json();
     const blueprintClientId = blueprintApp.settings.oauth.clientId;
 
-    // Generate RSA keypair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
     const kid = uniqueName('agent-key', false);
 
-    // Export public key as JWK and add to blueprint's agent JWKS
     const publicJwk = publicKey.export({ format: 'jwk' });
     const agentJwk = {
       kty: publicJwk.kty,
@@ -105,7 +102,6 @@ export const setupWorkloadJwtFixture = async (): Promise<WorkloadJwtFixture> => 
       throw new Error(`Failed to register agent JWKS: ${addKeyResponse.status} ${await addKeyResponse.text()}`);
     }
 
-    // Start domain
     const startedDomain = await startDomain(domain.id, accessToken);
     const started = await waitForDomainStart(startedDomain);
 

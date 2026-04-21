@@ -38,10 +38,8 @@ const AGENT_TYPE_TO_APPLICATION_TYPE: Record<string, string> = {
 export interface BlueprintFixture extends Fixture {
   accessToken: string;
   domain: Domain;
-  /** Populated after {@link BlueprintFixture.waitForOidc} resolves. */
   oidc?: DomainOidcConfig;
   cleanUp: () => Promise<void>;
-  /** Await domain start + OIDC well-known discovery; sets {@link oidc}. */
   waitForOidc: () => Promise<DomainOidcConfig>;
   createBlueprintApp: (
     agentType: string,
@@ -52,7 +50,6 @@ export interface BlueprintFixture extends Fixture {
   createRawApp: (body: any) => Promise<Response>;
   getApp: (appId: string) => Promise<any>;
   deleteApp: (appId: string) => Promise<void>;
-  /** Registers a single JWK on the app's OAuth `jwks` field; used by tests that need to verify client assertions. */
   registerJwk: (appId: string, jwk: any) => Promise<Response>;
 }
 
@@ -66,10 +63,7 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
   const accessToken = await requestAdminAccessToken();
 
   try {
-    // Create the domain without starting it so tests can create blueprint apps
-    // first — that way the initial sync on startDomain picks them up, avoiding
-    // post-start app-sync races. Tests that hit the gateway call
-    // fixture.waitForOidc() after creating apps to start + wait for sync.
+    // Create domain without starting it so initial sync on startDomain picks up blueprint apps created by tests.
     domain = await createDomain(accessToken, uniqueName('blueprint', true), 'blueprint fixture domain');
 
     const createRawApp = async (body: any): Promise<Response> => {
@@ -108,8 +102,6 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
       let app = await response.json();
       createdAppIds.push(app.id);
 
-      // Override the assertion-default auth method when a test exercises a
-      // secret-based flow (e.g. basic auth against an AUTONOMOUS agent).
       if (tokenEndpointAuthMethod && tokenEndpointAuthMethod !== app.settings?.oauth?.tokenEndpointAuthMethod) {
         const patchResponse = await fetch(managementUrl(`/domains/${domain.id}/applications/${app.id}`), {
           method: 'PATCH',
@@ -162,7 +154,7 @@ export const setupBlueprintFixture = async (): Promise<BlueprintFixture> => {
         try {
           await deleteApp(appId);
         } catch (e) {
-          // best effort
+          /* best effort */
         }
       }
       if (domain?.id) {
