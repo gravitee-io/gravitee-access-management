@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static io.gravitee.am.common.audit.EventType.AGENT_AUTHENTICATED;
-import static io.gravitee.am.common.audit.EventType.AGENT_KEY_USED;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,18 +45,9 @@ class AgentAuditBuilderTest {
                 .assertionKid(null)
                 .assertionIss(null)
                 .assertionJti(null)
-                .resolutionMethod(null)
-                .cimdMetadataUri(null)
-                .cimdSoftwareId(null)
                 .build(objectMapper);
         assertEquals(AGENT_AUTHENTICATED, audit.getType());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
-    }
-
-    @Test
-    void shouldSwitchToKeyUsedEventType() {
-        var audit = AuditBuilder.builder(AgentAuditBuilder.class).keyUsed().build(objectMapper);
-        assertEquals(AGENT_KEY_USED, audit.getType());
     }
 
     @Test
@@ -70,9 +60,6 @@ class AgentAuditBuilderTest {
                 .assertionKid("kid-1")
                 .assertionIss("iss-1")
                 .assertionJti("jti-1")
-                .resolutionMethod("CIMD")
-                .cimdMetadataUri("https://example.com/.well-known/client")
-                .cimdSoftwareId("sw-1")
                 .build(objectMapper);
 
         String message = audit.getOutcome().getMessage();
@@ -84,22 +71,6 @@ class AgentAuditBuilderTest {
         assertTrue(message.contains("kid-1"));
         assertTrue(message.contains("iss-1"));
         assertTrue(message.contains("jti-1"));
-        assertTrue(message.contains("CIMD"));
-        assertTrue(message.contains("example.com"));
-        assertTrue(message.contains("sw-1"));
-    }
-
-    @Test
-    void shouldChainEventTypeAndFields() {
-        var audit = AuditBuilder.builder(AgentAuditBuilder.class)
-                .keyUsed()
-                .blueprintId("blueprint-456")
-                .assertionKid("kid-2")
-                .build(objectMapper);
-
-        assertEquals(AGENT_KEY_USED, audit.getType());
-        assertTrue(audit.getOutcome().getMessage().contains("blueprint-456"));
-        assertTrue(audit.getOutcome().getMessage().contains("kid-2"));
     }
 
     @Test

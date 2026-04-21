@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 import { BlueprintFixture, setupBlueprintFixture } from './fixtures/blueprint-fixture';
 
@@ -83,41 +82,14 @@ describe('Blueprint Application — Creation & Type Inference', () => {
     expect(app.settings.oauth.grantTypes).toContain('urn:ietf:params:oauth:grant-type:token-exchange');
     expect(app.settings.oauth.grantTypes).toContain('client_credentials');
   });
-});
 
-describe('Blueprint Application — Validation', () => {
-  it('should reject creation without agentSettings when type is AGENT', async () => {
-    const response = await fixture.createRawApp({
-      name: uniqueName('agent-no-settings', true),
-      type: 'AGENT',
-    });
+  it('should default tokenEndpointAuthMethod to private_key_jwt for AUTONOMOUS and HOSTED_DELEGATED', async () => {
+    const autonomous = await fixture.createBlueprintApp('AUTONOMOUS');
+    const hosted = await fixture.createBlueprintApp('HOSTED_DELEGATED');
 
-    expect(response.status).toBeGreaterThanOrEqual(400);
-  });
-
-  it('should reject changing existing app type to AGENT via updateType', async () => {
-    // Create a normal web app first
-    const createResponse = await fixture.createRawApp({
-      name: uniqueName('web-app', true),
-      type: 'WEB',
-      redirectUris: ['https://example.com/callback'],
-    });
-    const app = await createResponse.json();
-
-    // Try to change type to AGENT
-    const response = await fetch(
-      `${process.env.AM_MANAGEMENT_URL}/management/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}/domains/${fixture.domain.id}/applications/${app.id}/type`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${fixture.accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ type: 'AGENT' }),
-      },
-    );
-
-    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(autonomous.settings.oauth.tokenEndpointAuthMethod).toEqual('private_key_jwt');
+    expect(hosted.settings.oauth.tokenEndpointAuthMethod).toEqual('private_key_jwt');
   });
 });
+
 

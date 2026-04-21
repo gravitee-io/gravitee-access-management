@@ -26,6 +26,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.CIBASettings;
+import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -222,6 +223,34 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);
         testObserver.assertValue(d -> d.getCertificateSettings() != null);
         testObserver.assertValue(d -> "fallback-cert-id".equals(d.getCertificateSettings().getFallbackCertificate()));
+    }
+
+    @Test
+    public void testCimdTemplateIdRoundTrip() {
+        Domain domain = initDomain();
+        CIMDSettings cimd = new CIMDSettings();
+        cimd.setEnabled(true);
+        cimd.setTemplateId("template-abc-123");
+        domain.getOidc().setCimdSettings(cimd);
+
+        Domain created = domainRepository.create(domain).blockingGet();
+
+        TestObserver<Domain> afterCreate = domainRepository.findById(created.getId()).test();
+        afterCreate.awaitDone(10, TimeUnit.SECONDS);
+        afterCreate.assertComplete();
+        afterCreate.assertNoErrors();
+        afterCreate.assertValue(d -> d.getOidc() != null && d.getOidc().getCimdSettings() != null);
+        afterCreate.assertValue(d -> d.getOidc().getCimdSettings().isEnabled());
+        afterCreate.assertValue(d -> "template-abc-123".equals(d.getOidc().getCimdSettings().getTemplateId()));
+
+        Domain loaded = domainRepository.findById(created.getId()).blockingGet();
+        loaded.getOidc().getCimdSettings().setTemplateId("template-xyz-999");
+        domainRepository.update(loaded).blockingGet();
+
+        TestObserver<Domain> reloaded = domainRepository.findById(created.getId()).test();
+        reloaded.awaitDone(10, TimeUnit.SECONDS);
+        reloaded.assertComplete();
+        reloaded.assertValue(d -> "template-xyz-999".equals(d.getOidc().getCimdSettings().getTemplateId()));
     }
 
     @Test
