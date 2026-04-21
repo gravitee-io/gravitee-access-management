@@ -140,7 +140,6 @@ import { ApplicationAccountSettingsComponent } from './domain/applications/appli
 import { OAuth2SettingsComponent } from './domain/components/oauth2-settings/component/oauth2-settings.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
-import { ApplicationAgentKeysComponent } from './domain/applications/application/advanced/agent-keys/agent-keys.component';
 import { ApplicationAgentComponent } from './domain/applications/application/advanced/agent/agent.component';
 import { DomainMcpServerClientSecretsComponent } from './domain/mcp-servers/mcp-server/advanced/client-secrets/domain-mcp-server-client-secrets.component';
 import { DomainMcpServerMembershipsComponent } from './domain/mcp-servers/mcp-server/advanced/memberships/memberships.component';
@@ -1226,23 +1225,6 @@ export const routes: Routes = [
                                   requiresAgentIdentity: true,
                                 },
                               },
-                              {
-                                path: 'agent-keys',
-                                component: ApplicationAgentKeysComponent,
-                                canActivate: [AuthGuard],
-                                data: {
-                                  menu: {
-                                    label: 'Agent Keys',
-                                    section: 'Security',
-                                    level: 'level3',
-                                  },
-                                  perms: {
-                                    only: ['application_openid_read'],
-                                  },
-                                  requiresAgentIdentity: true,
-                                },
-                              },
-
                               {
                                 path: 'metadata',
                                 component: ApplicationMetadataComponent,
