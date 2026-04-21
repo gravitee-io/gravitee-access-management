@@ -55,7 +55,7 @@ describe('AUTONOMOUS agent — client_credentials + token_exchange', () => {
     expect(autonomousDetails.settings.oauth.grantTypes).not.toContain('refresh_token');
 
     // Also create a HOSTED_DELEGATED agent to use as subject for token exchange tests
-    hostedAgent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com/callback');
+    hostedAgent = await fixture.createBlueprintApp('HOSTED_DELEGATED', undefined, 'https://hosted.example.com/callback', 'private_key_jwt');
 
     // Setup keypair for hosted agent
     const { publicKey, privateKey: pk } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
