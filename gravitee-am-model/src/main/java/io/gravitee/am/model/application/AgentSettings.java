@@ -29,7 +29,6 @@ import java.util.Map;
 public class AgentSettings {
 
     private AgentType agentType;
-    private int maxPublicKeysPerWorkload = 10;
     private Map<String, String> requiredClaims;
 
     public AgentSettings() {
@@ -37,7 +36,6 @@ public class AgentSettings {
 
     public AgentSettings(AgentSettings other) {
         this.agentType = other.agentType;
-        this.maxPublicKeysPerWorkload = other.maxPublicKeysPerWorkload;
         this.requiredClaims = other.requiredClaims != null ? Map.copyOf(other.requiredClaims) : null;
     }
 
@@ -47,14 +45,6 @@ public class AgentSettings {
 
     public void setAgentType(AgentType agentType) {
         this.agentType = agentType;
-    }
-
-    public int getMaxPublicKeysPerWorkload() {
-        return maxPublicKeysPerWorkload;
-    }
-
-    public void setMaxPublicKeysPerWorkload(int maxPublicKeysPerWorkload) {
-        this.maxPublicKeysPerWorkload = maxPublicKeysPerWorkload;
     }
 
     public Map<String, String> getRequiredClaims() {
