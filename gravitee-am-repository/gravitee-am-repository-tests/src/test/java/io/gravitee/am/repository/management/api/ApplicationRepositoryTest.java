@@ -442,6 +442,148 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindAgentsByDomain_returnsOnlyAgents() {
+        String domain = "domainAgentsOnly" + UUID.randomUUID();
+
+        Application agentApp = new Application();
+        agentApp.setName("agent-app");
+        agentApp.setDomain(domain);
+        agentApp.setType(ApplicationType.SERVICE);
+        ApplicationAdvancedSettings agentAdvanced = new ApplicationAdvancedSettings();
+        agentAdvanced.setAgentIdentityMode(true);
+        AgentSettings agentSettings = new AgentSettings();
+        agentSettings.setAgentType(AgentType.AUTONOMOUS);
+        ApplicationSettings agentAppSettings = new ApplicationSettings();
+        agentAppSettings.setAdvanced(agentAdvanced);
+        agentAppSettings.setAgent(agentSettings);
+        agentApp.setSettings(agentAppSettings);
+        applicationRepository.create(agentApp).blockingGet();
+
+        Application regularApp = new Application();
+        regularApp.setName("regular-app");
+        regularApp.setDomain(domain);
+        regularApp.setType(ApplicationType.SERVICE);
+        applicationRepository.create(regularApp).blockingGet();
+
+        TestObserver<Page<Application>> observer = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(p -> p.getData().size() == 1);
+        observer.assertValue(p -> p.getData().iterator().next().getName().equals("agent-app"));
+        observer.assertValue(p -> p.getTotalCount() == 1L);
+    }
+
+    @Test
+    public void testFindAgentsByDomain_noAgents() {
+        String domain = "domainNoAgents" + UUID.randomUUID();
+
+        Application regularApp = new Application();
+        regularApp.setName("regular-app");
+        regularApp.setDomain(domain);
+        regularApp.setType(ApplicationType.SERVICE);
+        applicationRepository.create(regularApp).blockingGet();
+
+        TestObserver<Page<Application>> observer = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertValue(p -> p.getData().isEmpty());
+        observer.assertValue(p -> p.getTotalCount() == 0L);
+    }
+
+    @Test
+    public void testFindAgentsByDomain_reactsToFlagToggle() {
+        String domain = "domainAgentToggle" + UUID.randomUUID();
+
+        Application app = new Application();
+        app.setName("toggled-app");
+        app.setDomain(domain);
+        app.setType(ApplicationType.SERVICE);
+        Application created = applicationRepository.create(app).blockingGet();
+
+        TestObserver<Page<Application>> beforeToggle = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        beforeToggle.awaitDone(10, TimeUnit.SECONDS);
+        beforeToggle.assertValue(p -> p.getData().isEmpty());
+
+        ApplicationAdvancedSettings advanced = new ApplicationAdvancedSettings();
+        advanced.setAgentIdentityMode(true);
+        AgentSettings agent = new AgentSettings();
+        agent.setAgentType(AgentType.USER_EMBEDDED);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setAdvanced(advanced);
+        settings.setAgent(agent);
+        created.setSettings(settings);
+        applicationRepository.update(created).blockingGet();
+
+        TestObserver<Page<Application>> afterToggle = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        afterToggle.awaitDone(10, TimeUnit.SECONDS);
+        afterToggle.assertValue(p -> p.getData().size() == 1);
+    }
+
+    @Test
+    public void testSearchAgents_filtersByNameAndAgentFlag() {
+        String domain = "domainSearchAgents" + UUID.randomUUID();
+
+        Application matchingAgent = new Application();
+        matchingAgent.setName("alpha-agent");
+        matchingAgent.setDomain(domain);
+        matchingAgent.setType(ApplicationType.SERVICE);
+        ApplicationAdvancedSettings matchingAdvanced = new ApplicationAdvancedSettings();
+        matchingAdvanced.setAgentIdentityMode(true);
+        AgentSettings matchingAgentSettings = new AgentSettings();
+        matchingAgentSettings.setAgentType(AgentType.AUTONOMOUS);
+        ApplicationSettings matchingSettings = new ApplicationSettings();
+        matchingSettings.setAdvanced(matchingAdvanced);
+        matchingSettings.setAgent(matchingAgentSettings);
+        matchingAgent.setSettings(matchingSettings);
+        applicationRepository.create(matchingAgent).blockingGet();
+
+        Application otherAgent = new Application();
+        otherAgent.setName("beta-agent");
+        otherAgent.setDomain(domain);
+        otherAgent.setType(ApplicationType.SERVICE);
+        ApplicationAdvancedSettings otherAdvanced = new ApplicationAdvancedSettings();
+        otherAdvanced.setAgentIdentityMode(true);
+        ApplicationSettings otherSettings = new ApplicationSettings();
+        otherSettings.setAdvanced(otherAdvanced);
+        otherAgent.setSettings(otherSettings);
+        applicationRepository.create(otherAgent).blockingGet();
+
+        Application matchingRegular = new Application();
+        matchingRegular.setName("alpha-regular");
+        matchingRegular.setDomain(domain);
+        matchingRegular.setType(ApplicationType.SERVICE);
+        applicationRepository.create(matchingRegular).blockingGet();
+
+        TestObserver<Page<Application>> observer = applicationRepository.searchAgents(domain, "alpha*", 0, 20).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertValue(p -> p.getData().size() == 1);
+        observer.assertValue(p -> "alpha-agent".equals(p.getData().iterator().next().getName()));
+    }
+
+    @Test
+    public void testDeleteApplication_removesAgentRow() {
+        String domain = "domainAgentDelete" + UUID.randomUUID();
+        Application app = new Application();
+        app.setName("to-delete");
+        app.setDomain(domain);
+        app.setType(ApplicationType.SERVICE);
+        ApplicationAdvancedSettings advanced = new ApplicationAdvancedSettings();
+        advanced.setAgentIdentityMode(true);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setAdvanced(advanced);
+        app.setSettings(settings);
+        Application created = applicationRepository.create(app).blockingGet();
+
+        applicationRepository.delete(created.getId()).blockingAwait();
+
+        TestObserver<Page<Application>> observer = applicationRepository.findAgentsByDomain(domain, 0, 20).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(p -> p.getData().isEmpty());
+    }
+
+    @Test
     public void testCreate() {
         Application application = new Application();
         application.setName("testClientId");
