@@ -26,7 +26,7 @@ import org.springframework.data.repository.reactive.RxJava3CrudRepository;
  */
 public interface SpringCimdMetadataDocumentRepository extends RxJava3CrudRepository<JdbcCimdMetadataDocument, String> {
 
-    @Query("SELECT * FROM cimd_metadata_documents WHERE domain_id = :domainId AND client_id = :clientId LIMIT 1")
+    @Query("SELECT * FROM cimd_metadata_documents WHERE domain_id = :domainId AND client_id = :clientId")
     Maybe<JdbcCimdMetadataDocument> findByDomainAndClientId(
             @Param("domainId") String domainId,
             @Param("clientId") String clientId);
