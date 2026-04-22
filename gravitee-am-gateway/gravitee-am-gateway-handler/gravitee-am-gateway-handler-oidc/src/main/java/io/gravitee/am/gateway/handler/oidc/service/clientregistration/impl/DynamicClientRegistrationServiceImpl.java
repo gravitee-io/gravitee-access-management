@@ -55,6 +55,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonArray;
@@ -963,56 +964,31 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     /**
-     * When the DCR request includes grant types that don't require redirect_uri
-     * (e.g., client_credentials only for autonomous agents), ensure we don't
-     * reject the request for missing redirect_uri. The redirect_uri validation
-     * in validateRedirectUri already handles this — this method validates
-     * additional agent-specific constraints if agent metadata extensions are present.
+     * Agent identity applications (blueprints) must not be registered via DCR.
+     * Blueprints are the trust anchor for agent instances and carry sensitive
+     * governance (JWKS, grant policy, CIMD settings) — they must be created
+     * deliberately through the Management API, not by self-service clients.
+     * <p>
+     * This check rejects DCR requests whose {@code software_id} resolves to an
+     * application with agent identity mode enabled. DCR has no request field
+     * that directly sets agent identity mode, so {@code software_id} (template
+     * / blueprint reference) is the only way to reach that state.
      */
     private Single<DynamicClientRegistrationRequest> validateAgentConstraints(DynamicClientRegistrationRequest request) {
-        var cimdSettings = domain.getOidc() != null ? domain.getOidc().getCimdSettings() : null;
-        if (cimdSettings == null || !cimdSettings.isEnabled()) {
+        Optional<String> softwareId = request.getSoftwareId();
+        if (softwareId == null || softwareId.isEmpty()) {
             return Single.just(request);
         }
 
-        // If CIMD is enabled and software_id is provided, validate against the blueprint
-        Optional<String> softwareId = request.getSoftwareId();
-        if (softwareId == null || softwareId.isEmpty()) {
-            return Single.just(request); // Not an agent registration
-        }
-
-        String requestedSoftwareId = softwareId.get();
-        String domainTemplateId = cimdSettings.getTemplateId();
-
-        // software_id must match the domain's CIMD template
-        if (domainTemplateId != null && !domainTemplateId.equals(requestedSoftwareId)) {
-            return Single.error(() -> new InvalidClientMetadataException(
-                    "software_id does not match domain CIMD blueprint configuration"));
-        }
-
-        return clientService.findById(requestedSoftwareId)
-                .switchIfEmpty(Single.error(() -> new InvalidClientMetadataException(
-                        "software_id references an unknown application")))
-                .flatMap(blueprint -> {
-                    if (!blueprint.isAgentIdentityMode()) {
-                        return Single.error(() -> new InvalidClientMetadataException(
-                                "software_id must reference a blueprint agent application"));
+        return clientService.findById(softwareId.get())
+                .flatMap(referenced -> {
+                    if (referenced.isAgentIdentityMode()) {
+                        return Maybe.<DynamicClientRegistrationRequest>error(() -> new InvalidClientMetadataException(
+                                "Agent identity applications cannot be registered via dynamic client registration"));
                     }
-
-                    List<String> blueprintGrantTypes = blueprint.getAuthorizedGrantTypes();
-                    if (request.getGrantTypes() != null && request.getGrantTypes().isPresent()
-                            && blueprintGrantTypes != null) {
-                        Optional<String> disallowed = request.getGrantTypes().get().stream()
-                                .filter(gt -> !blueprintGrantTypes.contains(gt))
-                                .findFirst();
-                        if (disallowed.isPresent()) {
-                            return Single.error(() -> new InvalidClientMetadataException(
-                                    "Requested grant_type '" + disallowed.get() + "' is not allowed by the blueprint agent"));
-                        }
-                    }
-
-                    return Single.just(request);
-                });
+                    return Maybe.just(request);
+                })
+                .defaultIfEmpty(request);
     }
 
     /**

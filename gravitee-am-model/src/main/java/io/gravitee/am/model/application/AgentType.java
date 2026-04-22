@@ -18,7 +18,18 @@ package io.gravitee.am.model.application;
 import java.util.Arrays;
 
 /**
- * Agent types for Blueprint applications.
+ * Persona carried on a Blueprint application ({@code Application.type = AGENT}).
+ * <p>
+ * A Blueprint application is a normal persisted {@code Application} that acts
+ * as the trust anchor for one or more ephemeral agent instances. Instances are
+ * not persisted — they authenticate with {@code jwt-bearer} client assertions
+ * signed by a key registered in the blueprint's JWKS, with the instance id
+ * carried in the {@code sub} claim.
+ * <p>
+ * Blueprints are <b>not</b> template applications. Templates are factories used
+ * at creation time to seed new applications; blueprints are live OAuth clients
+ * that authenticate N agent instances at runtime. The two concepts share
+ * "protected / do not casually delete" semantics but are otherwise unrelated.
  *
  * <ul>
  *   <li>{@link #USER_EMBEDDED} (Type A) — PKCE + public client + act claim injection</li>
