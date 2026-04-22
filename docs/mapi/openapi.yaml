@@ -974,61 +974,6 @@ paths:
           description: Analytics successfully fetched
         "500":
           description: Internal server error
-  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/agents:
-    get:
-      tags:
-      - application
-      - domain
-      summary: List applications flagged as agent identities for a security domain
-      description: "User must have the APPLICATION[LIST] permission on the specified\
-        \ domain, environment or organization AND either APPLICATION[READ] permission\
-        \ on each domain's application or APPLICATION[READ] permission on the specified\
-        \ domain, environment or organization. Returns only applications with settings.advanced.agentIdentityMode\
-        \ set to true."
-      operationId: listAgentApplications
-      parameters:
-      - name: organizationId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: environmentId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: domain
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: page
-        in: query
-        schema:
-          type: integer
-          format: int32
-          default: 0
-      - name: size
-        in: query
-        description: Maximum number of items per page. Values above 100 are clamped to 100.
-        schema:
-          type: integer
-          format: int32
-          default: 50
-          maximum: 100
-      - name: q
-        in: query
-        schema:
-          type: string
-      responses:
-        "200":
-          description: List agent applications for a security domain
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentApplicationPage"
-        "500":
-          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications:
     get:
       tags:
@@ -1121,6 +1066,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Application"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/agents:
+    get:
+      tags:
+      - application
+      - domain
+      summary: List applications flagged as agent identities for a security domain
+      description: "User must have the APPLICATION[LIST] permission on the specified\
+        \ domain, environment or organization AND either APPLICATION[READ] permission\
+        \ on each domain's application or APPLICATION[READ] permission on the specified\
+        \ domain, environment or organization. Returns only applications with settings.advanced.agentIdentityMode\
+        \ = true."
+      operationId: listAgentApplications
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: q
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List agent applications for a security domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentApplicationPage"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}:
@@ -12069,45 +12067,6 @@ components:
           type: string
         type:
           type: string
-    AgentApplication:
-      type: object
-      description: Read-only projection of an Application flagged as an agent identity.
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        type:
-          type: string
-          enum:
-          - WEB
-          - NATIVE
-          - BROWSER
-          - SERVICE
-          - RESOURCE_SERVER
-        enabled:
-          type: boolean
-        updatedAt:
-          type: string
-          format: date-time
-        settings:
-          $ref: "#/components/schemas/AgentApplicationSettings"
-    AgentApplicationAdvanced:
-      type: object
-      properties:
-        agentIdentityMode:
-          type: boolean
-    AgentApplicationOAuth:
-      type: object
-      properties:
-        clientId:
-          type: string
-        redirectUris:
-          type: array
-          items:
-            type: string
     AgentApplicationPage:
       type: object
       properties:
@@ -12117,19 +12076,10 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/AgentApplication"
+            $ref: "#/components/schemas/Application"
         totalCount:
           type: integer
           format: int64
-    AgentApplicationSettings:
-      type: object
-      properties:
-        oauth:
-          $ref: "#/components/schemas/AgentApplicationOAuth"
-        advanced:
-          $ref: "#/components/schemas/AgentApplicationAdvanced"
-        agent:
-          $ref: "#/components/schemas/AgentSettings"
     AgentSettings:
       type: object
       properties:
