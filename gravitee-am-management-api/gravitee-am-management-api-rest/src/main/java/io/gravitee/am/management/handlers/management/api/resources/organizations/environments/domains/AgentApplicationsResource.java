@@ -16,8 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.resources.model.AgentApplication;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
@@ -89,10 +87,6 @@ public class AgentApplicationsResource extends AbstractDomainResource {
                                 getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
                                         .toList()
                                         .flatMap(ids -> listAgentsFilteredByPermittedIds(domain, ids, page, clampedSize, query))))
-                .map(apps -> new AgentApplicationPage(
-                        apps.getData().stream().map(AgentApplication::of).toList(),
-                        apps.getCurrentPage(),
-                        apps.getTotalCount()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -117,8 +111,8 @@ public class AgentApplicationsResource extends AbstractDomainResource {
         return new Page<>(filtered, currentPage, filtered.size());
     }
 
-    public static final class AgentApplicationPage extends Page<AgentApplication> {
-        public AgentApplicationPage(Collection<AgentApplication> data, int currentPage, long totalCount) {
+    public static final class AgentApplicationPage extends Page<Application> {
+        public AgentApplicationPage(Collection<Application> data, int currentPage, long totalCount) {
             super(data, currentPage, totalCount);
         }
     }
