@@ -57,6 +57,10 @@ public interface ApplicationService {
 
     Single<Page<Application>> search(String domain, String organizationId, ApplicationFilter filter, String query, int page, int size);
 
+    Single<Page<Application>> findAgentsByDomain(String domain, int page, int size);
+
+    Single<Page<Application>> searchAgents(String domain, String query, int page, int size);
+
     Flowable<Application> findByCertificate(String certificate);
 
     Flowable<Application> findByIdentityProvider(String identityProvider);
