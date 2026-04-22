@@ -129,6 +129,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
+    private static final String FIELD_AGENT_IDENTITY_MODE = "settings.advanced.agentIdentityMode";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
     @PostConstruct
@@ -145,6 +146,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         indexes.put(new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
         indexes.put(new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_AGENT_IDENTITY_MODE, 1), new IndexOptions().name("d1aim1"));
 
         // Case-insensitive indexes for search functionality
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), indexOptionsWithCollation("d1soc1_ci"));
@@ -204,6 +206,20 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 .map(MongoApplicationRepository::convert)
                 .collect(ArrayList::new, List::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
+    }
+
+    @Override
+    public Single<Page<Application>> findAgentsByDomain(String domain, int page, int size) {
+        Bson query = and(eq(FIELD_DOMAIN, domain), eq(FIELD_AGENT_IDENTITY_MODE, true));
+        return queryApplications(query, page, size).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<Application>> searchAgents(String domain, String query, int page, int size) {
+        Bson baseQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
+        Bson mongoQuery = and(baseQuery, eq(FIELD_AGENT_IDENTITY_MODE, true));
+        boolean useCollation = !isWildcardQuery(query);
+        return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
     }
 
     @Override
