@@ -365,4 +365,28 @@ public class JdbcApplication {
             this.scopeApproval = scopeApproval;
         }
     }
+
+    @Table("agent_applications")
+    public static class Agent {
+        @Column("application_id")
+        private String applicationId;
+        @Column("agent_type")
+        private String agentType;
+
+        public String getApplicationId() {
+            return applicationId;
+        }
+
+        public void setApplicationId(String applicationId) {
+            this.applicationId = applicationId;
+        }
+
+        public String getAgentType() {
+            return agentType;
+        }
+
+        public void setAgentType(String agentType) {
+            this.agentType = agentType;
+        }
+    }
 }
