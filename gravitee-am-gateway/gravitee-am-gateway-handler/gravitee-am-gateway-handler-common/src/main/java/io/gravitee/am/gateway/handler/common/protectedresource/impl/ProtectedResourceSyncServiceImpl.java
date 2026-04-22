@@ -16,6 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.protectedresource.impl;
 
+import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.model.Domain;
@@ -41,7 +42,8 @@ public class ProtectedResourceSyncServiceImpl implements ProtectedResourceSyncSe
     @Override
     public Maybe<Client> findByDomainAndClientId(String domainId, String clientId) {
         return fromIterable(protectedResourceManager.entities())
-                .filter(protectedResource -> protectedResource.getClientId().equals(clientId) && protectedResource.getDomainId().equals(domainId))
+                .filter(protectedResource -> ClientIds.sameForLookup(protectedResource.getClientId(), clientId)
+                        && protectedResource.getDomainId().equals(domainId))
                 .map(protectedResource -> protectedResource.toClient())
                 .firstElement();
     }

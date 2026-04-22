@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.client.impl;
 
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.cimd.ClientIds;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
@@ -57,7 +58,7 @@ public class ClientSyncServiceImpl implements ClientSyncService {
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
         return fromIterable(clientManager.entities())
                 .filter(client -> !client.isTemplate())
-                .filter(client -> client.getClientId().equals(clientId) && client.getDomain().equals(domain))
+                .filter(client -> ClientIds.sameForLookup(client.getClientId(), clientId) && client.getDomain().equals(domain))
                 .firstElement();
     }
 

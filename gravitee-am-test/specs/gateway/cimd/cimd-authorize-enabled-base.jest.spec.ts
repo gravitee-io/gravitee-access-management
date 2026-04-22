@@ -17,34 +17,13 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd-authorize-fixture';
+import {
+  clearWireMockRequestJournal,
+  countGetRequestsForPathSubstring,
+  fetchWireMockRequestJournal,
+} from './fixtures/cimd-wiremock-helpers';
 
 setup(200000);
-
-const wiremockAdminBase = (): string => process.env.SFR_URL ?? 'http://localhost:8181';
-
-async function clearWiremockRequestJournal(): Promise<void> {
-  try {
-    await fetch(`${wiremockAdminBase()}/__admin/requests`, { method: 'DELETE' });
-  } catch {
-    // Best-effort: tests should not depend on journal cleanup when WireMock is unavailable locally.
-  }
-}
-
-async function fetchWiremockJournal(): Promise<any> {
-  const res = await fetch(`${wiremockAdminBase()}/__admin/requests`);
-  expect(res.ok).toBe(true);
-  return res.json();
-}
-
-function countGetRequestsForPathSubstring(journal: any, pathSubstring: string): number {
-  const entries = journal?.requests ?? [];
-  return entries.filter((entry: any) => {
-    const req = entry?.request ?? entry;
-    const method = String(req?.method ?? '').toUpperCase();
-    const url = String(req?.url ?? req?.absoluteUrl ?? req?.path ?? '');
-    return method === 'GET' && url.includes(pathSubstring);
-  }).length;
-}
 
 let fixture: CimdAuthorizeFixture;
 
@@ -71,16 +50,16 @@ describe('CIMD authorize - ENABLED_BASE', () => {
   });
 
   it('should fetch CIMD metadata from source server only once for two consecutive authorizations', async () => {
-    await clearWiremockRequestJournal();
+    await clearWireMockRequestJournal();
     const pathMarker = '/cimd/ENABLED_BASE/cache-twice';
-    const journalBefore = await fetchWiremockJournal();
+    const journalBefore = await fetchWireMockRequestJournal();
     const baseline = countGetRequestsForPathSubstring(journalBefore, pathMarker);
 
     const clientId = fixture.buildClientId('cache-twice');
     fixture.expectLoginRedirect(await fixture.authorize(clientId));
     fixture.expectLoginRedirect(await fixture.authorize(clientId));
 
-    const journalAfter = await fetchWiremockJournal();
+    const journalAfter = await fetchWireMockRequestJournal();
     const after = countGetRequestsForPathSubstring(journalAfter, pathMarker);
     expect(after - baseline).toBe(1);
   });

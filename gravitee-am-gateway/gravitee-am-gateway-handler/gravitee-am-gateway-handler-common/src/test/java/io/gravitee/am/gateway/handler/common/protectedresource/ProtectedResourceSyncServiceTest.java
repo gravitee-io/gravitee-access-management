@@ -78,10 +78,17 @@ public class ProtectedResourceSyncServiceTest {
         domainBResourceB.setClientId("domainBClientB");
         domainBResourceB.setName("Protected Resource B-B");
 
+        ProtectedResource domainAUrlResource = new ProtectedResource();
+        domainAUrlResource.setId("urlRes");
+        domainAUrlResource.setDomainId("domainA");
+        domainAUrlResource.setClientId("https://prereg.resource.example.com/oidc");
+        domainAUrlResource.setName("URL-shaped protected resource");
+
         protectedResourceSet.add(domainAResourceA);
         protectedResourceSet.add(domainAResourceB);
         protectedResourceSet.add(domainBResourceA);
         protectedResourceSet.add(domainBResourceB);
+        protectedResourceSet.add(domainAUrlResource);
     }
 
     @Before
@@ -97,6 +104,16 @@ public class ProtectedResourceSyncServiceTest {
         test.assertValue(client -> client.getClientId().equals("domainAClientA"));
         test.assertValue(client -> client.getClientName().equals("Protected Resource A"));
         test.assertValue(client -> client.getDomain().equals("domainA"));
+    }
+
+    @Test
+    public void findByClientId_urlShaped_matchesCanonicalForm() {
+        TestObserver<Client> test = protectedResourceSyncService
+                .findByClientId("HTTPS://PREREG.RESOURCE.EXAMPLE.COM/oidc")
+                .test();
+        test.assertComplete().assertNoErrors();
+        test.assertValue(client -> client.getClientId().equals("https://prereg.resource.example.com/oidc"));
+        test.assertValue(client -> client.getClientName().equals("URL-shaped protected resource"));
     }
 
     @Test

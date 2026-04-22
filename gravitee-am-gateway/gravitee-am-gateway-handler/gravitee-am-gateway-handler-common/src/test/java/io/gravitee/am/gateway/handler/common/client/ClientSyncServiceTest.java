@@ -91,12 +91,19 @@ public class ClientSyncServiceTest {
         domainBClientC.setClientId("domainBClientC");
         domainBClientC.setTemplate(true);
 
+        Client domainAUrlClient = new Client();
+        domainAUrlClient.setId("urlCimd");
+        domainAUrlClient.setDomain("domainA");
+        domainAUrlClient.setClientId("https://prereg.client.example.com/oauth");
+        domainAUrlClient.setTemplate(false);
+
         clientSet.add(domainAClientA);
         clientSet.add(domainAClientB);
         clientSet.add(domainAClientC);
         clientSet.add(domainBClientA);
         clientSet.add(domainBClientB);
         clientSet.add(domainBClientC);
+        clientSet.add(domainAUrlClient);
     }
 
     @Before
@@ -124,6 +131,15 @@ public class ClientSyncServiceTest {
         TestObserver<Client> test = clientSyncService.findByClientId("domainAClientA").test();
         test.assertComplete().assertNoErrors();
         test.assertValue(client -> client.getClientId().equals("domainAClientA"));
+    }
+
+    @Test
+    public void findByClientId_urlShaped_matchesCanonicalForm() {
+        TestObserver<Client> test = clientSyncService
+                .findByClientId("HTTPS://PREREG.CLIENT.EXAMPLE.COM/oauth")
+                .test();
+        test.assertComplete().assertNoErrors();
+        test.assertValue(client -> client.getClientId().equals("https://prereg.client.example.com/oauth"));
     }
 
     @Test

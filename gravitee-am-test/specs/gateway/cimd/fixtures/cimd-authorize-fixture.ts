@@ -100,6 +100,7 @@ export interface CimdAuthorizeFixture extends Fixture {
   buildClientId: (clientId: string) => string;
   buildAuthorizeUrl: (clientId: string, redirectUri?: string) => string;
   authorize: (clientId: string, redirectUri?: string) => Promise<any>;
+  fetchCimdLogo: (clientId?: string) => ReturnType<typeof performGet>;
   readOAuthError: (response: any) => OAuthAuthorizeError;
   expectInvalidClientMetadata: (response: any, messagePart: string) => void;
   expectInvalidRequest: (response: any, messagePart: string) => void;
@@ -202,6 +203,12 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
     const authorize = async (clientId: string, redirectUri = CIMD_REDIRECT_URI) =>
       performGet(buildAuthorizeUrl(startedDomain.oidcConfig.authorization_endpoint, clientId, redirectUri)).expect(302);
 
+    const fetchCimdLogo = (clientId?: string) => {
+      const base = `${process.env.AM_GATEWAY_URL}/${startedDomain.domain.hrid}/cimd/logo`;
+      const query = clientId != null ? `?clientId=${encodeURIComponent(clientId)}` : '';
+      return performGet(base, query);
+    };
+
     const expectInvalidClientMetadata = (response: any, messagePart: string): void => {
       const error = readOAuthError(response);
       expect(error.error).toBe('invalid_client_metadata');
@@ -234,6 +241,7 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
       buildAuthorizeUrl: (clientId: string, redirectUri = CIMD_REDIRECT_URI) =>
         buildAuthorizeUrl(startedDomain.oidcConfig.authorization_endpoint, clientId, redirectUri),
       authorize,
+      fetchCimdLogo,
       readOAuthError,
       expectInvalidClientMetadata,
       expectInvalidRequest,

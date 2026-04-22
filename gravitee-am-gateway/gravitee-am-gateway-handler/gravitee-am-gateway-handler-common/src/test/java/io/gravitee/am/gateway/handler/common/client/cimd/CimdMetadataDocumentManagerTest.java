@@ -90,7 +90,7 @@ public class CimdMetadataDocumentManagerTest {
     @Test
     public void shouldReturnDocumentAfterPutRaw() {
         final String rawMetadata = "{\"client_id\":\"" + CLIENT_URL + "\",\"redirect_uris\":[\"https://cb.example.com\"]}";
-        manager.put(CLIENT_URL, rawMetadata, Duration.ofHours(1));
+        manager.put(CLIENT_URL, new io.vertx.core.json.JsonObject(rawMetadata), Duration.ofHours(1));
 
         Optional<CimdMetadataDocument> result = manager.get(CLIENT_URL);
         assertTrue(result.isPresent());
@@ -159,6 +159,62 @@ public class CimdMetadataDocumentManagerTest {
         assertFalse(manager.get(CLIENT_URL).isPresent());
     }
 
+    // --- logo cache tests ---
+
+    @Test
+    public void shouldReturnEmptyLogoWhenNotCached() {
+        assertFalse(manager.getLogo("https://example.com/logo.png").isPresent());
+    }
+
+    @Test
+    public void shouldReturnLogoAfterPutLogo() {
+        byte[] bytes = {(byte) 0x89, 0x50, 0x4E, 0x47};
+        manager.putLogo("https://example.com/logo.png", new CachedLogo(bytes, "image/png", 3600L));
+
+        assertTrue(manager.getLogo("https://example.com/logo.png").isPresent());
+        assertEquals("image/png", manager.getLogo("https://example.com/logo.png").get().contentType());
+        assertEquals(3600L, manager.getLogo("https://example.com/logo.png").get().maxAgeSeconds());
+    }
+
+    @Test
+    public void shouldEvictLogoOnUpdateEventWhenLogoUriMapped() {
+        String logoUri = "https://example.com/logo.png";
+        manager.putLogo(logoUri, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
+        manager.recordLogoUri(CLIENT_URL, logoUri);
+        manager.put(CLIENT_URL, validDocument());
+
+        manager.onEvent(new SimpleEvent<>(CimdMetadataEvent.UPDATE, payload(CLIENT_URL)));
+
+        assertFalse(manager.get(CLIENT_URL).isPresent());
+        assertFalse(manager.getLogo(logoUri).isPresent());
+    }
+
+    @Test
+    public void shouldEvictLogoOnUndeployEventWhenLogoUriMapped() {
+        String logoUri = "https://example.com/logo.png";
+        manager.putLogo(logoUri, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
+        manager.recordLogoUri(CLIENT_URL, logoUri);
+
+        manager.onEvent(new SimpleEvent<>(CimdMetadataEvent.UNDEPLOY, payload(CLIENT_URL)));
+
+        assertFalse(manager.getLogo(logoUri).isPresent());
+    }
+
+    @Test
+    public void shouldAutoRecordLogoUriWhenDocumentContainsLogoUri() {
+        String logoUri = "https://example.com/logo.png";
+        CimdMetadataDocument doc = validDocument();
+        doc.setMetadata("{\"client_id\":\"" + CLIENT_URL + "\",\"redirect_uris\":[\"https://cb.example.com\"],\"logo_uri\":\"" + logoUri + "\"}");
+        manager.put(CLIENT_URL, doc);
+
+        manager.putLogo(logoUri, new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L));
+
+        // Trigger eviction — logo should also be evicted since mapping was auto-recorded
+        manager.onEvent(new SimpleEvent<>(CimdMetadataEvent.UPDATE, payload(CLIENT_URL)));
+
+        assertFalse(manager.getLogo(logoUri).isPresent());
+    }
+
     private CimdMetadataDocument validDocument() {
         CimdMetadataDocument doc = new CimdMetadataDocument();
         doc.setClientId(CLIENT_URL);
@@ -177,5 +233,60 @@ public class CimdMetadataDocumentManagerTest {
 
     private Payload payload(String clientId) {
         return new Payload(clientId, ReferenceType.DOMAIN, DOMAIN_ID, io.gravitee.am.common.event.Action.UPDATE);
+    }
+
+    // --- detectMimeType ---
+
+    @Test
+    public void detectMimeType_shouldReturnPngWhenMagicMatches() {
+        byte[] png = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+        assertEquals("image/png", CimdMetadataDocumentManager.detectMimeType(png));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnJpegWhenMagicMatches() {
+        byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0};
+        assertEquals("image/jpeg", CimdMetadataDocumentManager.detectMimeType(jpeg));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnGifWhenMagicMatches() {
+        byte[] gif = {0x47, 0x49, 0x46, 0x38, 0x39, 0x61};
+        assertEquals("image/gif", CimdMetadataDocumentManager.detectMimeType(gif));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnWebpWhenRiffWebpHeaderPresent() {
+        // RIFF + 4-byte size + "WEBP"
+        byte[] webp = {
+                0x52, 0x49, 0x46, 0x46,
+                0x00, 0x00, 0x00, 0x00,
+                0x57, 0x45, 0x42, 0x50
+        };
+        assertEquals("image/webp", CimdMetadataDocumentManager.detectMimeType(webp));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnJpegForMinimumTwoByteSignature() {
+        byte[] jpeg = {(byte) 0xFF, (byte) 0xD8};
+        assertEquals("image/jpeg", CimdMetadataDocumentManager.detectMimeType(jpeg));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamForEmptyBuffer() {
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType(new byte[0]));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamForUnknownContent() {
+        byte[] random = {0x00, 0x01, 0x02, 0x03, 0x04};
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType(random));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamWhenWebpBufferTooShort() {
+        // RIFF prefix but fewer than 12 bytes — no format matches
+        byte[] tooShort = {0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42};
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType(tooShort));
     }
 }

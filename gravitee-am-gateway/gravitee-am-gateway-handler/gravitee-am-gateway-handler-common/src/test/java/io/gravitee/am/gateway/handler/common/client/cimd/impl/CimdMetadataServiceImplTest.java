@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.client.cimd.impl;
 
+import io.gravitee.am.gateway.handler.common.client.cimd.CachedLogo;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataDocumentManager;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.model.CimdMetadataDocument;
@@ -38,6 +39,7 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -48,9 +50,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -94,6 +98,7 @@ public class CimdMetadataServiceImplTest {
 
         // Default: local cache miss, DB miss — falls through to HTTP fetch
         when(cimdMetadataDocumentManager.get(anyString())).thenReturn(Optional.empty());
+        when(cimdMetadataDocumentManager.getLogo(anyString())).thenReturn(Optional.empty());
         when(cimdMetadataDocumentService.findByDomainAndClientId(anyString(), anyString())).thenReturn(Maybe.empty());
         when(cimdMetadataDocumentService.upsert(any(), anyString(), anyString(), any(Duration.class)))
                 .thenReturn(Single.just(new CimdMetadataDocument()));
@@ -564,6 +569,260 @@ public class CimdMetadataServiceImplTest {
         obs.assertValueCount(1);
     }
 
+    // --- logoUri synthesis tests ---
+
+    @Test
+    public void shouldPopulateLogoUriOnSynthesizedClientWhenPresentInMetadata() {
+        mockFetchSuccess(metadataPayloadWithLogo(CLIENT_URL, "https://localhost/logo.png"));
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(client -> "https://localhost/logo.png".equals(client.getLogoUri()));
+    }
+
+    @Test
+    public void shouldNotSetLogoUriWhenAbsentFromMetadata() {
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        TestObserver<Client> obs = cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(client -> client.getLogoUri() == null);
+    }
+
+    @Test
+    public void shouldTriggerLogoPrefetchAndRecordMappingOnFreshFetch() {
+        mockFetchSuccess(metadataPayloadWithLogo(CLIENT_URL, "https://localhost/logo.png"));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager).recordLogoUri(CLIENT_URL, "https://localhost/logo.png");
+        verify(cimdMetadataDocumentManager).putLogo(eq("https://localhost/logo.png"), any(CachedLogo.class));
+    }
+
+    @Test
+    public void shouldNotTriggerLogoPrefetchWhenNoStoreAndNoLogoInMetadata() {
+        mockFetchSuccessWithCacheControl(metadataPayload(CLIENT_URL), "no-store");
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).recordLogoUri(anyString(), anyString());
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void shouldTriggerLogoPrefetchOnDbHitWhenLogoNotYetCached() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        when(cimdMetadataDocumentManager.getLogo("https://localhost/logo.png")).thenReturn(Optional.empty());
+        mockLogoFetch();
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager).recordLogoUri(CLIENT_URL, "https://localhost/logo.png");
+        verify(cimdMetadataDocumentManager).putLogo(eq("https://localhost/logo.png"), any(CachedLogo.class));
+    }
+
+    @Test
+    public void shouldSkipLogoPrefetchOnDbHitWhenLogoAlreadyCached() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        when(cimdMetadataDocumentManager.getLogo("https://localhost/logo.png"))
+                .thenReturn(Optional.of(new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L)));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(cimdMetadataDocumentManager, never()).recordLogoUri(anyString(), anyString());
+    }
+
+    // --- logo_uri validation and edge cases ---
+
+    @Test
+    public void shouldNotPrefetchLogoWhenLogoUriIsNull() {
+        CimdMetadataDocument dbDoc = cachedDocument(false);
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).recordLogoUri(anyString(), anyString());
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verifyNoInteractions(webClient);
+    }
+
+    @Test
+    public void shouldNotPrefetchLogoWhenLogoUriIsBlank() {
+        mockFetchSuccess(metadataPayloadWithBlankLogo(CLIENT_URL));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).recordLogoUri(anyString(), anyString());
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void shouldNotRecordOrFetchLogoWhenLogoUriIsInvalid() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "not-a-url");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).recordLogoUri(anyString(), anyString());
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verifyNoInteractions(webClient);
+    }
+
+    @Test
+    public void shouldNotRecordOrFetchLogoWhenLogoUriIsUntrusted() {
+        cimdSettings.setAllowUnsecuredHttpUri(false);
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "http://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).recordLogoUri(anyString(), anyString());
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verifyNoInteractions(webClient);
+    }
+
+    @Test
+    public void shouldSkipLogoPrefetchOnFreshFetchWhenLogoAlreadyCached() {
+        when(cimdMetadataDocumentManager.getLogo("https://localhost/logo.png"))
+                .thenReturn(Optional.of(new CachedLogo(new byte[]{1, 2, 3}, "image/png", 3600L)));
+        mockFetchSuccess(metadataPayloadWithLogo(CLIENT_URL, "https://localhost/logo.png"));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(cimdMetadataDocumentManager, never()).recordLogoUri(anyString(), anyString());
+    }
+
+    @Test
+    public void shouldNotCacheLogoWhenResponseIsNotOk() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.statusCode()).thenReturn(404);
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+        verify(cimdMetadataDocumentManager).recordLogoUri(CLIENT_URL, "https://localhost/logo.png");
+    }
+
+    @Test
+    public void shouldNotCacheLogoWhenBodyIsEmpty() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer());
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void shouldNotCacheLogoWhenBodyExceedsMaxSize() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[256 * 1024 + 1]));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void shouldUseContentTypeHeaderWhenPresentForLogo() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.getHeader("Content-Type")).thenReturn("image/jpeg");
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
+        verify(cimdMetadataDocumentManager).putLogo(eq("https://localhost/logo.png"), captor.capture());
+        assertEquals("image/jpeg", captor.getValue().contentType());
+    }
+
+    @Test
+    public void shouldDetectMimeTypeFromMagicBytesWhenContentTypeHeaderAbsent() {
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.getHeader("Content-Type")).thenReturn(null);
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
+        verify(cimdMetadataDocumentManager).putLogo(eq("https://localhost/logo.png"), captor.capture());
+        assertEquals("image/png", captor.getValue().contentType());
+    }
+
+    @Test
+    public void shouldRespectLogoMaxAgeFromCacheControl() {
+        cimdSettings.setCacheTtlSeconds(3600);
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.getHeader("Cache-Control")).thenReturn("max-age=300");
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
+        verify(cimdMetadataDocumentManager).putLogo(eq("https://localhost/logo.png"), captor.capture());
+        assertEquals(300L, captor.getValue().maxAgeSeconds());
+    }
+
+    @Test
+    public void shouldCapLogoMaxAgeAtConfiguredTtl() {
+        cimdSettings.setCacheTtlSeconds(600);
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.getHeader("Cache-Control")).thenReturn("max-age=99999");
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
+        verify(cimdMetadataDocumentManager).putLogo(eq("https://localhost/logo.png"), captor.capture());
+        assertEquals(600L, captor.getValue().maxAgeSeconds());
+    }
+
+    @Test
+    public void shouldUseConfiguredTtlWhenNoCacheControlOnLogoResponse() {
+        cimdSettings.setCacheTtlSeconds(1800);
+        CimdMetadataDocument dbDoc = cachedDocumentWithLogo(false, "https://localhost/logo.png");
+        when(cimdMetadataDocumentService.findByDomainAndClientId("domain-id", CLIENT_URL))
+                .thenReturn(Maybe.just(dbDoc));
+        mockLogoFetch();
+        when(response.getHeader("Cache-Control")).thenReturn(null);
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test().assertComplete();
+
+        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
+        verify(cimdMetadataDocumentManager).putLogo(eq("https://localhost/logo.png"), captor.capture());
+        assertEquals(1800L, captor.getValue().maxAgeSeconds());
+    }
+
     // --- helpers ---
 
     private CimdMetadataDocument cachedDocument(boolean expired) {
@@ -577,12 +836,50 @@ public class CimdMetadataServiceImplTest {
         return doc;
     }
 
+    private void mockLogoFetch() {
+        when(webClient.getAbs(anyString())).thenReturn(request);
+        when(request.timeout(anyLong())).thenReturn(request);
+        when(request.followRedirects(false)).thenReturn(request);
+        when(request.as(any())).thenReturn((HttpRequest) request);
+        when(request.rxSend()).thenReturn(Single.just(response));
+        when(response.statusCode()).thenReturn(200);
+        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}));
+        when(response.getHeader("Content-Type")).thenReturn("image/png");
+        when(response.getHeader("Cache-Control")).thenReturn(null);
+    }
+
     private void mockFetchSuccessWithCacheControl(String payload, String cacheControlHeader) {
         mockRequest();
         when(request.rxSend()).thenReturn(Single.just(response));
         when(response.statusCode()).thenReturn(200);
         when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(payload));
         when(response.getHeader("Cache-Control")).thenReturn(cacheControlHeader);
+    }
+
+    private String metadataPayloadWithLogo(String clientId, String logoUri) {
+        return new JsonObject()
+                .put("client_id", clientId)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "https://localhost/jwks")
+                .put("logo_uri", logoUri)
+                .encode();
+    }
+
+    private CimdMetadataDocument cachedDocumentWithLogo(boolean expired, String logoUri) {
+        CimdMetadataDocument doc = cachedDocument(expired);
+        doc.setMetadata(metadataPayloadWithLogo(CLIENT_URL, logoUri));
+        return doc;
+    }
+
+    private String metadataPayloadWithBlankLogo(String clientId) {
+        return new JsonObject()
+                .put("client_id", clientId)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "private_key_jwt")
+                .put("jwks_uri", "https://localhost/jwks")
+                .put("logo_uri", "")
+                .encode();
     }
 
     private Client templateClient() {
