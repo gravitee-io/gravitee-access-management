@@ -31,8 +31,8 @@ public class OrganizationResource {
     @Context
     private ResourceContext resourceContext;
 
-    @Path("/environments")
-    public EnvironmentsResource getEnvironmentsResource() {
-        return resourceContext.getResource(EnvironmentsResource.class);
+    @Path("/environments/{envId}/domains")
+    public DomainsResource getDomainsResource() {
+        return resourceContext.getResource(DomainsResource.class);
     }
 }

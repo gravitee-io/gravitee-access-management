@@ -16,8 +16,9 @@
 
 openapi: 3.0.1
 info:
-  title: Gravitee.io - Access Management API
-  version: 4.12.0-SNAPSHOT
+  title: Gravitee.io AM - Automation API
+  description: "Declarative, GitOps-style management of Access Management resources."
+  version: "4.12.0-SNAPSHOT (build: ${env.BUILD_ID}) revision#${env.GIT_COMMIT}"
 servers:
 - url: /management
 security:
@@ -25,108 +26,15 @@ security:
 - BasicAuth: []
 tags:
 - name: Domains
-- name: Environments
 - name: Identity Providers
 paths:
-  /organizations/{orgId}/environments:
-    get:
-      tags:
-      - Environments
-      summary: List all environments
-      description: Returns all environments within the specified organization.
-      operationId: listEnvironments
-      parameters:
-      - name: orgId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: List of environments
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Environment"
-    put:
-      tags:
-      - Environments
-      summary: Create or update an environment
-      description: Idempotent create-or-update. Uses the hrid field in the body to
-        identify the environment.
-      operationId: createOrUpdateEnvironment
-      parameters:
-      - name: orgId
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AutomationEnvironmentDefinition"
-        required: true
-      responses:
-        "200":
-          description: The created or updated environment
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Environment"
-  /organizations/{orgId}/environments/{envId}:
-    get:
-      tags:
-      - Environments
-      summary: Get an environment
-      operationId: getEnvironment
-      parameters:
-      - name: orgId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: envId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: The environment
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Environment"
-    delete:
-      tags:
-      - Environments
-      summary: Delete an environment
-      operationId: deleteEnvironment
-      parameters:
-      - name: orgId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: envId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: Environment deleted
   /organizations/{orgId}/environments/{envId}/domains:
     get:
       tags:
       - Domains
-      - Environments
       summary: List all domains
       description: Returns all security domains within the specified environment.
-      operationId: listDomains
+      operationId: automationListDomains
       parameters:
       - name: orgId
         in: path
@@ -150,11 +58,10 @@ paths:
     put:
       tags:
       - Domains
-      - Environments
       summary: Create or update a domain
       description: Idempotent create-or-update. Uses the hrid field in the body to
         identify the domain.
-      operationId: createOrUpdateDomain
+      operationId: automationCreateOrUpdateDomain
       parameters:
       - name: orgId
         in: path
@@ -183,10 +90,9 @@ paths:
     get:
       tags:
       - Domains
-      - Environments
       summary: Get a domain
       description: Retrieves a single security domain by its HRID.
-      operationId: getDomain
+      operationId: automationGetDomain_1
       parameters:
       - name: orgId
         in: path
@@ -213,9 +119,8 @@ paths:
     delete:
       tags:
       - Domains
-      - Environments
       summary: Delete a domain
-      operationId: deleteDomain_3
+      operationId: automationDeleteDomain_1
       parameters:
       - name: orgId
         in: path
@@ -240,10 +145,9 @@ paths:
       tags:
       - Identity Providers
       - Domains
-      - Environments
       summary: List all identity providers
       description: Returns all identity providers within the specified domain.
-      operationId: listIdentityProviders_4
+      operationId: automationListIdentityProviders_2
       parameters:
       - name: orgId
         in: path
@@ -273,11 +177,10 @@ paths:
       tags:
       - Identity Providers
       - Domains
-      - Environments
       summary: Create or update an identity provider
       description: Idempotent create-or-update. Uses the hrid field in the body to
         identify the identity provider.
-      operationId: createOrUpdateIdentityProvider_4
+      operationId: automationCreateOrUpdateIdentityProvider_2
       parameters:
       - name: orgId
         in: path
@@ -312,9 +215,8 @@ paths:
       tags:
       - Identity Providers
       - Domains
-      - Environments
       summary: Get an identity provider
-      operationId: getIdentityProvider_5
+      operationId: automationGetIdentityProvider_3
       parameters:
       - name: orgId
         in: path
@@ -347,9 +249,8 @@ paths:
       tags:
       - Identity Providers
       - Domains
-      - Environments
       summary: Delete an identity provider
-      operationId: deleteIdentityProvider_5
+      operationId: automationDeleteIdentityProvider_3
       parameters:
       - name: orgId
         in: path
@@ -454,11 +355,11 @@ components:
         enabled:
           type: boolean
         hrid:
-          maxLength: 2147483647
+          maxLength: 255
           minLength: 1
           type: string
         name:
-          maxLength: 2147483647
+          maxLength: 255
           minLength: 1
           type: string
         path:
@@ -468,27 +369,6 @@ components:
           type: array
           items:
             type: string
-    AutomationEnvironmentDefinition:
-      required:
-      - name
-      type: object
-      properties:
-        description:
-          type: string
-        domainRestrictions:
-          type: array
-          items:
-            type: string
-        hrid:
-          type: string
-        hrids:
-          type: array
-          items:
-            type: string
-        name:
-          maxLength: 2147483647
-          minLength: 1
-          type: string
     AutomationIdentityProviderDefinition:
       required:
       - hrid
@@ -509,7 +389,7 @@ components:
             items:
               type: string
         hrid:
-          maxLength: 2147483647
+          maxLength: 255
           minLength: 1
           type: string
         mappers:
@@ -517,7 +397,7 @@ components:
           additionalProperties:
             type: string
         name:
-          maxLength: 2147483647
+          maxLength: 255
           minLength: 1
           type: string
         roleMapper:
@@ -716,31 +596,6 @@ components:
             $ref: "#/components/schemas/VirtualHost"
         webAuthnSettings:
           $ref: "#/components/schemas/WebAuthnSettings"
-    Environment:
-      type: object
-      properties:
-        createdAt:
-          type: string
-          format: date-time
-        description:
-          type: string
-        domainRestrictions:
-          type: array
-          items:
-            type: string
-        hrids:
-          type: array
-          items:
-            type: string
-        id:
-          type: string
-        name:
-          type: string
-        organizationId:
-          type: string
-        updatedAt:
-          type: string
-          format: date-time
     FormField:
       type: object
       properties:
@@ -1073,10 +928,10 @@ components:
           - PREFERRED
           - DISCOURAGED
   securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-    BasicAuth:
-      type: http
-      scheme: basic

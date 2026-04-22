@@ -52,7 +52,7 @@ public class AutomationApiDefinition implements ReaderListener {
     public static final String BEARER_AUTH_SCHEME = "BearerAuth";
     public static final String BASIC_AUTH_SCHEME = "BasicAuth";
 
-    private static final Set<String> AUTOMATION_TAGS = Set.of("Environments", "Domains", "Identity Providers");
+    private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers");
 
     @Override
     public void beforeScan(OpenApiReader openApiReader, OpenAPI openAPI) {

@@ -17,8 +17,6 @@ package io.gravitee.am.management.handlers.automation;
 
 import io.gravitee.am.management.handlers.automation.resource.DomainResource;
 import io.gravitee.am.management.handlers.automation.resource.DomainsResource;
-import io.gravitee.am.management.handlers.automation.resource.EnvironmentResource;
-import io.gravitee.am.management.handlers.automation.resource.EnvironmentsResource;
 import io.gravitee.am.management.handlers.automation.resource.IdentityProviderResource;
 import io.gravitee.am.management.handlers.automation.resource.IdentityProvidersResource;
 import io.gravitee.am.management.handlers.automation.resource.OrganizationResource;
@@ -43,8 +41,6 @@ public class AutomationApplication extends ResourceConfig {
 
     public AutomationApplication() {
         register(OrganizationResource.class);
-        register(EnvironmentsResource.class);
-        register(EnvironmentResource.class);
         register(DomainsResource.class);
         register(DomainResource.class);
         register(IdentityProvidersResource.class);

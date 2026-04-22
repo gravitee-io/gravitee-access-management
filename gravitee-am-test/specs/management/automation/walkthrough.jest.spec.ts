@@ -17,14 +17,12 @@
 /**
  * End-to-end walkthrough test for the Automation API.
  *
- * Simulates a realistic provisioning workflow:
- *   1. Create dev + staging environments
- *   2. Create a "customer-auth" domain in each
- *   3. Add an inline IDP to the dev domain
- *   4. Add an LDAP IDP to both domains
- *   5. Update the dev domain description
- *   6. Verify idempotency (re-PUT everything)
- *   7. Tear down in reverse order
+ * Simulates a realistic provisioning workflow against the default environment:
+ *   1. Create a "customer-auth" domain
+ *   2. Add inline + corporate IDPs to the domain
+ *   3. Update the domain description
+ *   4. Verify idempotency (re-PUT everything)
+ *   5. Tear down in reverse order
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -36,7 +34,8 @@ setup(120000);
 
 const BASE = () => `${process.env.AM_MANAGEMENT_URL}/management/automation`;
 const ORG = () => process.env.AM_DEF_ORG_ID;
-const orgPath = () => `/organizations/${ORG()}`;
+const ENV = () => process.env.AM_DEF_ENV_ID;
+const envPath = () => `/organizations/${ORG()}/environments/${ENV()}`;
 
 let accessToken: string;
 const cleanupDomainIds: string[] = [];
@@ -67,76 +66,42 @@ afterAll(async () => {
   }
 });
 
-describe('Walkthrough - Step 1: Provision Environments', () => {
-  it('should create a dev environment', async () => {
+describe('Walkthrough - Step 1: Create Domain', () => {
+  it('should create customer-auth domain', async () => {
     const res = await performPut(
       BASE(),
-      `${orgPath()}/environments`,
-      { hrid: 'wt-dev', name: 'Walkthrough Dev', description: 'Dev environment for walkthrough test' },
+      `${envPath()}/domains`,
+      {
+        hrid: 'customer-auth',
+        name: 'Customer Authentication',
+        description: 'Customer auth domain',
+        path: '/default/customer-auth',
+        enabled: true,
+        dataPlaneId: process.env.AM_DOMAIN_DATA_PLANE_ID || 'default',
+      },
       auth(),
     );
-    expect(res.status).toBe(200);
-    expect(res.body.name).toEqual('Walkthrough Dev');
-  });
-
-  it('should create a staging environment', async () => {
-    const res = await performPut(
-      BASE(),
-      `${orgPath()}/environments`,
-      { hrid: 'wt-staging', name: 'Walkthrough Staging', description: 'Staging environment for walkthrough test' },
-      auth(),
-    );
-    expect(res.status).toBe(200);
-    expect(res.body.name).toEqual('Walkthrough Staging');
-  });
-
-  it('should list both new environments', async () => {
-    const res = await performGet(BASE(), `${orgPath()}/environments`, auth());
-    expect(res.status).toBe(200);
-    const names = res.body.map((e: any) => e.name);
-    expect(names).toContain('Walkthrough Dev');
-    expect(names).toContain('Walkthrough Staging');
-  });
-});
-
-describe('Walkthrough - Step 2: Create Domains', () => {
-  for (const env of ['wt-dev', 'wt-staging']) {
-    it(`should create customer-auth domain in ${env}`, async () => {
-      const res = await performPut(
-        BASE(),
-        `${orgPath()}/environments/${env}/domains`,
-        {
-          hrid: 'customer-auth',
-          name: 'Customer Authentication',
-          description: `Customer auth for ${env}`,
-          path: `/${env}/customer-auth`,
-          enabled: true,
-          dataPlaneId: process.env.AM_DOMAIN_DATA_PLANE_ID || 'default',
-        },
-        auth(),
-      );
-      expect(res.status).toBe(200);
-      expect(res.body.hrid).toEqual('customer-auth');
-      cleanupDomainIds.push(res.body.id);
-    });
-  }
-
-  it('should retrieve dev customer-auth domain by HRID', async () => {
-    const res = await performGet(BASE(), `${orgPath()}/environments/wt-dev/domains/customer-auth`, auth());
     expect(res.status).toBe(200);
     expect(res.body.hrid).toEqual('customer-auth');
-    expect(res.body.description).toEqual('Customer auth for wt-dev');
+    cleanupDomainIds.push(res.body.id);
+  });
+
+  it('should retrieve customer-auth domain by HRID', async () => {
+    const res = await performGet(BASE(), `${envPath()}/domains/customer-auth`, auth());
+    expect(res.status).toBe(200);
+    expect(res.body.hrid).toEqual('customer-auth');
+    expect(res.body.description).toEqual('Customer auth domain');
   });
 });
 
-describe('Walkthrough - Step 3: Add Identity Providers', () => {
-  it('should add an inline test-users IDP to dev domain', async () => {
+describe('Walkthrough - Step 2: Add Identity Providers', () => {
+  it('should add an inline test-users IDP', async () => {
     const res = await performPut(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains/customer-auth/identity-providers`,
+      `${envPath()}/domains/customer-auth/identity-providers`,
       {
         hrid: 'test-users',
-        name: 'Dev Test Users',
+        name: 'Test Users',
         type: 'inline-am-idp',
         configuration: inlineConfig([
           { username: 'alice', password: 'P@ssword1' },
@@ -146,14 +111,14 @@ describe('Walkthrough - Step 3: Add Identity Providers', () => {
       auth(),
     );
     expect(res.status).toBe(200);
-    expect(res.body.name).toEqual('Dev Test Users');
+    expect(res.body.name).toEqual('Test Users');
     expect(res.body.type).toEqual('inline-am-idp');
   });
 
-  it('should add corporate IDP to dev', async () => {
+  it('should add corporate IDP', async () => {
     const res = await performPut(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains/customer-auth/identity-providers`,
+      `${envPath()}/domains/customer-auth/identity-providers`,
       {
         hrid: 'corporate-idp',
         name: 'Corporate Directory',
@@ -166,40 +131,24 @@ describe('Walkthrough - Step 3: Add Identity Providers', () => {
     expect(res.body.name).toEqual('Corporate Directory');
   });
 
-  it('should add corporate IDP to staging', async () => {
-    const res = await performPut(
-      BASE(),
-      `${orgPath()}/environments/wt-staging/domains/customer-auth/identity-providers`,
-      {
-        hrid: 'corporate-idp',
-        name: 'Corporate Directory',
-        type: 'inline-am-idp',
-        configuration: inlineConfig([{ username: 'admin', password: 'Admin123!' }]),
-      },
-      auth(),
-    );
-    expect(res.status).toBe(200);
-    expect(res.body.name).toEqual('Corporate Directory');
-  });
-
-  it('should list IDPs for dev domain', async () => {
+  it('should list IDPs for the domain', async () => {
     const res = await performGet(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains/customer-auth/identity-providers`,
+      `${envPath()}/domains/customer-auth/identity-providers`,
       auth(),
     );
     expect(res.status).toBe(200);
     const names = res.body.map((idp: any) => idp.name);
-    expect(names).toContain('Dev Test Users');
+    expect(names).toContain('Test Users');
     expect(names).toContain('Corporate Directory');
   });
 });
 
-describe('Walkthrough - Step 4: Update a Domain', () => {
-  it('should update the dev domain description via PUT', async () => {
+describe('Walkthrough - Step 3: Update the Domain', () => {
+  it('should update the domain description via PUT', async () => {
     const res = await performPut(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains`,
+      `${envPath()}/domains`,
       {
         hrid: 'customer-auth',
         name: 'Customer Authentication',
@@ -214,11 +163,11 @@ describe('Walkthrough - Step 4: Update a Domain', () => {
   });
 });
 
-describe('Walkthrough - Step 5: Verify Idempotency', () => {
-  it('should re-PUT dev domain and get same ID', async () => {
+describe('Walkthrough - Step 4: Verify Idempotency', () => {
+  it('should re-PUT domain and get same ID', async () => {
     const first = await performPut(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains`,
+      `${envPath()}/domains`,
       {
         hrid: 'customer-auth',
         name: 'Customer Authentication',
@@ -229,7 +178,7 @@ describe('Walkthrough - Step 5: Verify Idempotency', () => {
     );
     const second = await performPut(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains`,
+      `${envPath()}/domains`,
       {
         hrid: 'customer-auth',
         name: 'Customer Authentication',
@@ -245,10 +194,10 @@ describe('Walkthrough - Step 5: Verify Idempotency', () => {
   it('should re-PUT IDP and get same result', async () => {
     const first = await performPut(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains/customer-auth/identity-providers`,
+      `${envPath()}/domains/customer-auth/identity-providers`,
       {
         hrid: 'test-users',
-        name: 'Dev Test Users',
+        name: 'Test Users',
         type: 'inline-am-idp',
         configuration: inlineConfig([{ username: 'alice', password: 'P@ssword1' }]),
       },
@@ -256,10 +205,10 @@ describe('Walkthrough - Step 5: Verify Idempotency', () => {
     );
     const second = await performPut(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains/customer-auth/identity-providers`,
+      `${envPath()}/domains/customer-auth/identity-providers`,
       {
         hrid: 'test-users',
-        name: 'Dev Test Users',
+        name: 'Test Users',
         type: 'inline-am-idp',
         configuration: inlineConfig([{ username: 'alice', password: 'P@ssword1' }]),
       },
@@ -269,46 +218,32 @@ describe('Walkthrough - Step 5: Verify Idempotency', () => {
   });
 });
 
-describe('Walkthrough - Step 6: Tear Down', () => {
-  it('should delete the test-users IDP from dev', async () => {
+describe('Walkthrough - Step 5: Tear Down', () => {
+  it('should delete the test-users IDP', async () => {
     const res = await performDelete(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains/customer-auth/identity-providers/test-users`,
+      `${envPath()}/domains/customer-auth/identity-providers/test-users`,
       auth(),
     );
     expect(res.status).toBe(204);
   });
 
-  it('should delete the corporate IDP from dev', async () => {
+  it('should delete the corporate IDP', async () => {
     const res = await performDelete(
       BASE(),
-      `${orgPath()}/environments/wt-dev/domains/customer-auth/identity-providers/corporate-idp`,
+      `${envPath()}/domains/customer-auth/identity-providers/corporate-idp`,
       auth(),
     );
     expect(res.status).toBe(204);
   });
 
-  it('should delete the corporate IDP from staging', async () => {
-    const res = await performDelete(
-      BASE(),
-      `${orgPath()}/environments/wt-staging/domains/customer-auth/identity-providers/corporate-idp`,
-      auth(),
-    );
+  it('should delete the customer-auth domain', async () => {
+    const res = await performDelete(BASE(), `${envPath()}/domains/customer-auth`, auth());
     expect(res.status).toBe(204);
   });
 
-  it('should delete the staging customer-auth domain', async () => {
-    const res = await performDelete(BASE(), `${orgPath()}/environments/wt-staging/domains/customer-auth`, auth());
-    expect(res.status).toBe(204);
-  });
-
-  it('should delete the dev customer-auth domain', async () => {
-    const res = await performDelete(BASE(), `${orgPath()}/environments/wt-dev/domains/customer-auth`, auth());
-    expect(res.status).toBe(204);
-  });
-
-  it('should verify dev domain is gone', async () => {
-    const res = await performGet(BASE(), `${orgPath()}/environments/wt-dev/domains/customer-auth`, auth());
+  it('should verify the domain is gone', async () => {
+    const res = await performGet(BASE(), `${envPath()}/domains/customer-auth`, auth());
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 });
