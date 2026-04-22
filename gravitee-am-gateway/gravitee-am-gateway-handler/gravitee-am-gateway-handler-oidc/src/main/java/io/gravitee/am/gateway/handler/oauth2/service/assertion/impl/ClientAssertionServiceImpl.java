@@ -68,7 +68,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     private static final InvalidClientException NOT_VALID = new InvalidClientException("assertion is not valid");
-    private static final long AGENT_ASSERTION_CLOCK_SKEW_SECONDS = 60L;
 
     @Autowired
     @Qualifier("complexClientLookupService")
@@ -330,16 +329,16 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
-            if (exp.toInstant().isBefore(Instant.now().minusSeconds(AGENT_ASSERTION_CLOCK_SKEW_SECONDS))) {
+            if (exp.toInstant().isBefore(Instant.now())) {
                 return Maybe.error(new InvalidClientException("assertion has expired"));
             }
 
-            OpenIDProviderMetadata discovery = openIDDiscoveryService.getConfiguration(basePath);
-            if (discovery == null || discovery.getTokenEndpoint() == null) {
-                return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
-            }
-            if (aud.stream().noneMatch(discovery.getTokenEndpoint()::equals)
-                    && (discovery.getIssuer() == null || aud.stream().noneMatch(discovery.getIssuer()::equals))) {
+            // Per the Agent Identity proposal, the audience for a workload jwt-bearer
+            // assertion MUST be the AM token endpoint — not the base issuer or PAR
+            // endpoint. Discovery + token endpoint are always available (derived from
+            // basePath), so no null guard is required.
+            String tokenEndpoint = openIDDiscoveryService.getConfiguration(basePath).getTokenEndpoint();
+            if (aud.stream().noneMatch(tokenEndpoint::equals)) {
                 return Maybe.error(NOT_VALID);
             }
 
