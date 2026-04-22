@@ -19,7 +19,7 @@ import { loginUserNameAndPassword, initiateLoginFlow, login, getHeaderLocation }
 import { performGet, performPost, logoutUser, requestToken } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { patchDomain } from '@management-commands/domain-management-commands';
+import { patchDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { createUser, deleteUser, lockUser, updateUserStatus } from '@management-commands/user-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { LoginFlowInlineFixture, INLINE_USER, REDIRECT_URI, setupInlineFixture } from './fixture/login-flow-inline-fixture';
@@ -323,6 +323,7 @@ describe('Account Disabled', () => {
     await waitForSyncAfter(fixture.domain.id, () =>
       updateUserStatus(fixture.domain.id, fixture.accessToken, userId, false),
     );
+    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
 
     const clientId = fixture.appAccountTests.settings.oauth.clientId;
     const postLogin = await attemptLogin(clientId, testUsername, testPassword);
@@ -358,6 +359,18 @@ describe('Account Locked - Login Attempt', () => {
         },
       }),
     );
+    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+  });
+
+  afterAll(async () => {
+    try {
+      await patchDomain(fixture.domain.id, fixture.accessToken, {
+        accountSettings: { inherited: false, loginAttemptsDetectionEnabled: false },
+      });
+      await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
+    } catch (e) {
+      console.warn('Failed to reset account settings after locked-attempt tests:', e);
+    }
   });
 
   afterAll(async () => {
@@ -411,6 +424,7 @@ describe('Account Locked - REST API', () => {
     await waitForSyncAfter(fixture.domain.id, () =>
       lockUser(fixture.domain.id, fixture.accessToken, userId),
     );
+    await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
   });
 
   afterAll(async () => {

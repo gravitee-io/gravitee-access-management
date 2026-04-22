@@ -107,6 +107,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -124,6 +125,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
@@ -401,6 +403,9 @@ public class ManagementUserServiceTest {
         when(userRepository.create(any())).thenReturn(Single.just(preRegisteredUser));
         when(userRepository.findById(any(), any())).thenReturn(Maybe.just(preRegisteredUser));
 
+        CountDownLatch emailLatch = new CountDownLatch(1);
+        doAnswer(invocation -> { emailLatch.countDown(); return null; }).when(emailService).send(any(Domain.class), eq(null), eq(Template.REGISTRATION_CONFIRMATION), any(User.class));
+
         userService.create(domain, newUser, null)
                 .test()
                 .assertComplete()
@@ -409,8 +414,7 @@ public class ManagementUserServiceTest {
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
         verify(userRepository).create(argument.capture());
 
-        // Wait few ms to let time to background thread to be executed.
-        Thread.sleep(500);
+        assertTrue(emailLatch.await(5, TimeUnit.SECONDS));
         verify(emailService).send(any(Domain.class), eq(null), eq(Template.REGISTRATION_CONFIRMATION), any(User.class));
 
         Assert.assertNull(argument.getValue().getRegistrationUserUri());
@@ -1794,5 +1798,107 @@ public class ManagementUserServiceTest {
         accountSettings.setSendVerifyRegistrationAccountEmail(sendVerifyRegistrationAccountEmail);
 
         return accountSettings;
+    }
+
+    @Test
+    void shouldUpdateDisplayName_whenGeneratedFromFirstAndLastName() {
+        Domain domain = new Domain(DOMAIN_ID);
+
+        User existingUser = new User();
+        existingUser.setId("user-id");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setReferenceId(DOMAIN_ID);
+        existingUser.setSource("default-idp");
+        existingUser.setFirstName("John");
+        existingUser.setLastName("Doe");
+        existingUser.setDisplayName("John Doe"); // generated display name
+        existingUser.setInternal(true);
+
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setFirstName("Johanna");
+        updateUser.setLastName("Smith");
+        updateUser.setDisplayName("John Doe"); // same as old → should regenerate
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<User> testObserver = userService.update(domain, "user-id", updateUser, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).update(userCaptor.capture(), any());
+        assertEquals("Johanna Smith", userCaptor.getValue().getDisplayName());
+    }
+
+    @Test
+    void shouldNotUpdateDisplayName_whenCustomValueSet() {
+        Domain domain = new Domain(DOMAIN_ID);
+
+        User existingUser = new User();
+        existingUser.setId("user-id");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setReferenceId(DOMAIN_ID);
+        existingUser.setSource("default-idp");
+        existingUser.setFirstName("John");
+        existingUser.setLastName("Doe");
+        existingUser.setDisplayName("Custom Display"); // NOT generated (custom)
+        existingUser.setInternal(true);
+
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setFirstName("Johanna");
+        updateUser.setLastName("Smith");
+        updateUser.setDisplayName("My Custom Name"); // custom value → should keep
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<User> testObserver = userService.update(domain, "user-id", updateUser, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).update(userCaptor.capture(), any());
+        assertEquals("My Custom Name", userCaptor.getValue().getDisplayName());
+    }
+
+    @Test
+    void shouldPreserveCustomDisplayName_whenNameChangedButDisplayNameUnchanged() {
+        Domain domain = new Domain(DOMAIN_ID);
+
+        User existingUser = new User();
+        existingUser.setId("user-id");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setReferenceId(DOMAIN_ID);
+        existingUser.setSource("default-idp");
+        existingUser.setFirstName("John");
+        existingUser.setLastName("Doe");
+        existingUser.setDisplayName("Dr. John Doe"); // custom display name
+        existingUser.setInternal(true);
+
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setFirstName("Johanna");
+        updateUser.setLastName("Smith");
+        updateUser.setDisplayName("Dr. John Doe"); // same as old custom → should keep
+
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<User> testObserver = userService.update(domain, "user-id", updateUser, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).update(userCaptor.capture(), any());
+        assertEquals("Dr. John Doe", userCaptor.getValue().getDisplayName());
     }
 }

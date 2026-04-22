@@ -20,6 +20,7 @@ import {
   safeDeleteDomain,
   startDomain,
   waitForDomainStart,
+  waitForOidcReady,
   patchDomain,
 } from '@management-commands/domain-management-commands';
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
@@ -32,6 +33,8 @@ import { expect } from '@jest/globals';
 import { initiateLoginFlow, login } from '@gateway-commands/login-commands';
 import { getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { BasicResponse, followRedirect, followRedirectTag } from '@utils-commands/misc';
+import { waitForDomainReady, waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { withRetry } from '@utils-commands/retry';
 import cheerio from 'cheerio';
 import faker from 'faker';
 
@@ -65,6 +68,118 @@ export interface SamlFixture {
   login: (username: string, password: string) => Promise<BasicResponse>;
   expectRedirectToClient: (response: BasicResponse) => Promise<string>;
   cleanup: () => Promise<void>;
+}
+
+export interface SamlProviderDomain {
+  domain: Domain;
+  accessToken: string;
+  inlineIdp: any;
+  certificatePem: string;
+}
+
+/**
+ * Create and start a single shared SAML provider domain.
+ * This domain can be reused by multiple client domains, avoiding the cost of
+ * creating a separate provider per test variant.
+ */
+export async function setupSamlProviderDomain(domainSuffix: string): Promise<SamlProviderDomain> {
+  const accessToken = await requestAdminAccessToken();
+  expect(accessToken).toBeDefined();
+
+  // Create provider domain
+  const providerDomain = await createDomain(accessToken, `saml-provider-${domainSuffix}`, 'Shared SAML Provider Domain for testing').then((domain) =>
+    allowHttpLocalhostRedirects(domain, accessToken),
+  );
+  expect(providerDomain).toBeDefined();
+  expect(providerDomain.id).toBeDefined();
+
+  // Replace default IDP with inline IDP
+  const inlineIdp = await replaceDefaultIdpWithInline(providerDomain, accessToken, domainSuffix);
+
+  // Create certificate for SAML signing
+  const certificate = await createCertificate(providerDomain.id, accessToken, {
+    name: `saml-certificate-${domainSuffix}`,
+    type: 'javakeystore-am-certificate',
+    configuration: SAML_JKS_CERTIFICATE_CONFIG,
+  });
+
+  // Enable SAML 2.0 IdP support
+  await patchDomain(providerDomain.id, accessToken, {
+    saml: {
+      enabled: true,
+      entityId: `saml-provider-${domainSuffix}`,
+      certificate: certificate.id,
+    },
+  });
+
+  // Start provider domain and wait for SAML metadata to be ready
+  const started = await doStartDomain(providerDomain, accessToken);
+  await waitForSamlMetadataReady(started.domain);
+
+  // Fetch certificate PEM
+  const certificatePem = await fetchCertificatePem(started.domain.id, accessToken, certificate.id);
+
+  return {
+    domain: started.domain,
+    accessToken,
+    inlineIdp,
+    certificatePem,
+  };
+}
+
+/**
+ * Add a client domain that uses the provider domain.
+ * Creates the client domain, SAML IdP, provider app on provider, and client app.
+ * Waits for the provider to sync the new app before starting the client domain.
+ */
+export async function addClientDomain(
+  provider: SamlProviderDomain,
+  createIdpFn: IdpCreatorFn,
+  domainSuffix: string,
+): Promise<SamlTestDomains> {
+  const { domain: providerDomain, accessToken, inlineIdp, certificatePem } = provider;
+
+  // Create client domain
+  const clientDomain = await createDomain(accessToken, `saml-client-${domainSuffix}`, 'SAML Client Domain for testing');
+  expect(clientDomain).toBeDefined();
+  expect(clientDomain.id).toBeDefined();
+
+  // Create SAML identity provider in client domain
+  const samlIdp = await createIdpFn(clientDomain, providerDomain, accessToken, domainSuffix, certificatePem);
+
+  // Create provider application with client ID matching SAML entity ID
+  const samlEntityId = JSON.parse(samlIdp.configuration).entityId;
+
+  // Use waitForSyncAfter to ensure the provider domain picks up the new app
+  const providerApplication = await waitForSyncAfter(
+    providerDomain.id,
+    () =>
+      createProviderApp(
+        providerDomain,
+        clientDomain,
+        accessToken,
+        inlineIdp.id,
+        samlEntityId,
+        true,
+        certificatePem,
+      ),
+    { timeoutMillis: 60000, intervalMillis: 500 },
+  );
+
+  // Create client application
+  const clientApplication = await createClientApp(clientDomain, accessToken, samlIdp.id);
+
+  // Start client domain
+  const startedClient = await doStartDomain(clientDomain, accessToken);
+
+  return {
+    providerDomain,
+    clientDomain: startedClient.domain,
+    providerApplication,
+    clientApplication,
+    inlineIdp,
+    samlIdp,
+  };
 }
 
 type IdpCreatorFn = (clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, providerCertificatePem: string) => Promise<any>;
@@ -140,8 +255,11 @@ async function setupSamlTestDomainsWithIdpCreator(
   // Create client application
   const clientApplication = await createClientApp(clientDomain, accessToken, samlIdp.id);
 
-  // Start both domains
+  // Start both domains.
+  // Provider must be fully ready (including SAML metadata endpoint) before client starts,
+  // because METADATA_URL-configured IdPs fetch metadata at deploy time.
   const startedProviderDomain = await doStartDomain(providerDomain, accessToken);
+  await waitForSamlMetadataReady(providerDomain);
   const startedClientDomain = await doStartDomain(clientDomain, accessToken);
 
   return {
@@ -190,7 +308,7 @@ async function fetchCertificatePem(domainId: string, accessToken: string, certif
   return pem;
 }
 
-async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, providerCertificatePem: string) {
+export async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, accessToken: string, domainSuffix: string, providerCertificatePem: string) {
   const samlIdpConfig = {
     entityId: `saml-idp-${domainSuffix}`,
     signInUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/SSO`,
@@ -359,20 +477,28 @@ async function ensureDefaultIdpIsDeleted(domain: Domain, accessToken: string) {
 }
 
 async function doStartDomain(domain: Domain, accessToken: string) {
-  const started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
-  expect(started).toBeDefined();
-  expect(started.domain.id).toEqual(domain.id);
-  return started;
+  const enabledDomain = await startDomain(domain.id, accessToken);
+  await waitForDomainReady(enabledDomain.id, { timeoutMillis: 120000, intervalMillis: 500 });
+  const oidcResponse = await waitForOidcReady(enabledDomain.hrid, { timeoutMs: 120000, intervalMs: 500 });
+  console.log(`domain "${enabledDomain.hrid}" ready (SAML setup)`);
+  return { domain: enabledDomain, oidcConfig: oidcResponse.body };
 }
 
 export async function setupSamlProviderTest(
   domainSuffix: string,
   setupFn: (suffix: string) => Promise<SamlTestDomains> = setupSamlTestDomains,
+  provider?: SamlProviderDomain,
+  createIdpFn: IdpCreatorFn = createSamlProvider,
 ): Promise<SamlFixture> {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const domains = await setupFn(domainSuffix);
+  let domains: SamlTestDomains;
+  if (provider) {
+    domains = await addClientDomain(provider, createIdpFn, domainSuffix);
+  } else {
+    domains = await setupFn(domainSuffix);
+  }
 
   // Wait for domains to be fully ready and get OIDC configuration
   let clientOpenIdConfiguration: any;
@@ -385,17 +511,29 @@ export async function setupSamlProviderTest(
   expect(clientOpenIdConfiguration).toBeDefined();
   expect(clientOpenIdConfiguration.authorization_endpoint).toBeDefined();
 
+  const findSamlProviderLink = (html: string): string | undefined => {
+    const dom = cheerio.load(html);
+    return (
+      dom('.btn-saml2-generic-am-idp').attr('href') ||
+      dom(`a[href*="saml2"]`).attr('href') ||
+      dom(`a[href*="${domains.samlIdp.id}"]`).attr('href')
+    );
+  };
+
   const navigateToSamlProviderLogin = async (response: BasicResponse) => {
     const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
     const loginPageUrl = response.headers['location'];
-    const result = await performGet(loginPageUrl, '', headers).expect(200);
-    const dom = cheerio.load(result.text);
 
-    // Find the SAML IDP login button/link
-    const samlProviderLoginUrl =
-      dom('.btn-saml2-generic-am-idp').attr('href') ||
-      dom(`a[href*="saml2"]`).attr('href') ||
-      dom(`a[href*="${domains.samlIdp.id}"]`).attr('href');
+    let samlProviderLoginUrl: string | undefined;
+    const maxAttempts = 30;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const result = await performGet(loginPageUrl, '', headers).expect(200);
+      samlProviderLoginUrl = findSamlProviderLink(result.text);
+      if (samlProviderLoginUrl) break;
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
 
     expect(samlProviderLoginUrl).toBeDefined();
     return await performGet(samlProviderLoginUrl, '', headers).expect(302);
@@ -433,20 +571,35 @@ export async function setupSamlProviderTest(
     },
     expectRedirectToClient,
     cleanup: async () => {
-      return Promise.all([
-        safeDeleteDomain(domains.clientDomain.id, accessToken),
-        safeDeleteDomain(domains.providerDomain.id, accessToken),
-      ]).then(() => {});
+      if (provider) {
+        // Only delete the client domain — provider is managed externally
+        await safeDeleteDomain(domains.clientDomain.id, accessToken);
+      } else {
+        await Promise.all([
+          safeDeleteDomain(domains.clientDomain.id, accessToken),
+          safeDeleteDomain(domains.providerDomain.id, accessToken),
+        ]);
+      }
     },
   };
 }
 
-export function setupSamlProviderTestViaMetadataUrl(domainSuffix: string): Promise<SamlFixture> {
-  return setupSamlProviderTest(domainSuffix, setupSamlTestDomainsViaMetadataUrl);
+export function setupSamlProviderTestViaMetadataUrl(domainSuffix: string, provider?: SamlProviderDomain): Promise<SamlFixture> {
+  return setupSamlProviderTest(domainSuffix, setupSamlTestDomainsViaMetadataUrl, provider, createSamlProviderViaMetadataUrl);
 }
 
-export function setupSamlProviderTestViaMetadataFile(domainSuffix: string): Promise<SamlFixture> {
-  return setupSamlProviderTest(domainSuffix, setupSamlTestDomainsViaMetadataFile);
+export function setupSamlProviderTestViaMetadataFile(domainSuffix: string, provider?: SamlProviderDomain): Promise<SamlFixture> {
+  return setupSamlProviderTest(domainSuffix, setupSamlTestDomainsViaMetadataFile, provider, createSamlProviderViaMetadataFile);
+}
+
+/**
+ * Poll the SAML metadata endpoint until it returns 200.
+ * After domain start, the SAML IdP handler may take additional time to initialize
+ * even though OIDC routes are already serving.
+ */
+async function waitForSamlMetadataReady(providerDomain: Domain): Promise<void> {
+  const metadataUrl = getProviderMetadataUrl(providerDomain);
+  await withRetry(() => performGet(metadataUrl, '').expect(200), 60, 500);
 }
 
 export async function cleanupSamlTestDomains(accessToken: string, domains: SamlTestDomains): Promise<void> {
