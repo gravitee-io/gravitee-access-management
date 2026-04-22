@@ -313,6 +313,54 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void shouldFindAgentsByDomain() {
+        Page<Application> page = new Page<>(Collections.singleton(new Application()), 0, 1);
+        when(applicationRepository.findAgentsByDomain(DOMAIN.getId(), 0, 10)).thenReturn(Single.just(page));
+
+        TestObserver<Page<Application>> testObserver = applicationService.findAgentsByDomain(DOMAIN.getId(), 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(agents -> agents.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldFindAgentsByDomain_technicalException() {
+        when(applicationRepository.findAgentsByDomain(DOMAIN.getId(), 0, 10)).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver<Page<Application>> testObserver = new TestObserver<>();
+        applicationService.findAgentsByDomain(DOMAIN.getId(), 0, 10).subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldSearchAgents() {
+        Page<Application> page = new Page<>(Collections.singleton(new Application()), 0, 1);
+        when(applicationRepository.searchAgents(DOMAIN.getId(), "agent*", 0, 10)).thenReturn(Single.just(page));
+
+        TestObserver<Page<Application>> testObserver = applicationService.searchAgents(DOMAIN.getId(), "agent*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(agents -> agents.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldSearchAgents_technicalException() {
+        when(applicationRepository.searchAgents(DOMAIN.getId(), "q", 0, 10)).thenReturn(Single.error(TechnicalException::new));
+
+        TestObserver<Page<Application>> testObserver = new TestObserver<>();
+        applicationService.searchAgents(DOMAIN.getId(), "q", 0, 10).subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
     public void shouldFindByDomainPagination_technicalException() {
         when(applicationRepository.findByDomain(DOMAIN.getId(), 1, 1)).thenReturn(Single.error(TechnicalException::new));
 
