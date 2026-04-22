@@ -34,6 +34,9 @@ import {
   AccessPolicyListItem,
   AccessPolicyListItemFromJSON,
   AccessPolicyListItemToJSON,
+  AgentApplicationPage,
+  AgentApplicationPageFromJSON,
+  AgentApplicationPageToJSON,
   AlertNotifier,
   AlertNotifierFromJSON,
   AlertNotifierToJSON,
@@ -1238,6 +1241,15 @@ export interface GetUserCredentialRequest {
   domain: string;
   user: string;
   credential: string;
+}
+
+export interface ListAgentApplicationsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  page?: number;
+  size?: number;
+  q?: string;
 }
 
 export interface ListAlertNotifiersRequest {
@@ -11178,6 +11190,87 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Credential> {
     const response = await this.getUserCredentialRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the APPLICATION[LIST] permission on the specified domain, environment or organization AND either APPLICATION[READ] permission on each domain\'s application or APPLICATION[READ] permission on the specified domain, environment or organization. Returns only applications with settings.advanced.agentIdentityMode = true.
+   * List applications flagged as agent identities for a security domain
+   */
+  async listAgentApplicationsRaw(
+    requestParameters: ListAgentApplicationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<AgentApplicationPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listAgentApplications.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listAgentApplications.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listAgentApplications.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.size !== undefined) {
+      queryParameters['size'] = requestParameters.size;
+    }
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/agents`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => AgentApplicationPageFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the APPLICATION[LIST] permission on the specified domain, environment or organization AND either APPLICATION[READ] permission on each domain\'s application or APPLICATION[READ] permission on the specified domain, environment or organization. Returns only applications with settings.advanced.agentIdentityMode = true.
+   * List applications flagged as agent identities for a security domain
+   */
+  async listAgentApplications(
+    requestParameters: ListAgentApplicationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<AgentApplicationPage> {
+    const response = await this.listAgentApplicationsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
