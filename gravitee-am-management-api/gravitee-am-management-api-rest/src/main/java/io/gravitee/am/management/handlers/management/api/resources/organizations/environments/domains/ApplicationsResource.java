@@ -171,6 +171,11 @@ public class ApplicationsResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    @Path("agents")
+    public AgentApplicationsResource getAgentApplicationsResource() {
+        return resourceContext.getResource(AgentApplicationsResource.class);
+    }
+
     @Path("{application}")
     public ApplicationResource getApplicationResource() {
         return resourceContext.getResource(ApplicationResource.class);
