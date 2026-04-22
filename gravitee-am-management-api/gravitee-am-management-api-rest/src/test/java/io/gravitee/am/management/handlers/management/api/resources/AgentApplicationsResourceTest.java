@@ -92,7 +92,7 @@ public class AgentApplicationsResourceTest extends JerseySpringTest {
 
         @SuppressWarnings("unchecked")
         final Map<String, Object> agentBlock = (Map<String, Object>) settings.get("agent");
-        assertEquals(AgentType.AUTONOMOUS.name(), agentBlock.get("agentType"));
+        assertEquals(AgentType.AUTONOMOUS.name().toLowerCase(), agentBlock.get("agentType"));
     }
 
     @Test
