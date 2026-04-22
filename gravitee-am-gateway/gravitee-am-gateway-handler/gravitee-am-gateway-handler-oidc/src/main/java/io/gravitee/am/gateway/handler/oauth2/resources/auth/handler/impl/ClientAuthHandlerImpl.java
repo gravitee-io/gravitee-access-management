@@ -177,19 +177,22 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
-            // For CIMD: when client_id is a URI (metadata document), skip the DB lookup.
-            // The ClientAssertionAuthProvider will handle resolution via CIMD metadata fetch.
-            if (isUri(clientId)) {
-                handler.handle(Future.succeededFuture());
-                return;
-            }
-            // get client - first try regular client, then fallback to protected resource
+            // Always attempt direct lookup first — CIMD permits pre-registering a
+            // blueprint client whose client_id is itself a canonical URL. Only when
+            // no registered client matches do we hand off to the assertion provider
+            // for CIMD metadata resolution (signalled by passing a null client).
             clientLookupService
                     .findByClientId(clientId)
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
-                            () -> handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)))
+                            () -> {
+                                if (isUri(clientId)) {
+                                    handler.handle(Future.succeededFuture());
+                                } else {
+                                    handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)));
+                                }
+                            }
                     );
 
         });
