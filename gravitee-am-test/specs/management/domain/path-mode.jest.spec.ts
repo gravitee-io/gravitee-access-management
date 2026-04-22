@@ -23,6 +23,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
 import type { Domain } from '@management-models/Domain';
 import { setup } from '../../test-fixture';
@@ -85,7 +86,13 @@ describe('domain context-path mode - path validation', () => {
 
 describe('domain context-path mode - OIDC endpoint URLs after path change', () => {
   it('should expose OIDC discovery endpoints relative to the updated context path', async () => {
-    const res = await performGet(process.env.AM_GATEWAY_URL, `${newPath}/oidc/.well-known/openid-configuration`);
+    // The gateway router may need a moment to register the new context path even after
+    // waitForSyncAfter reports the domain in sync; poll the discovery endpoint until 200.
+    const res = await retryUntil(
+      () => performGet(process.env.AM_GATEWAY_URL, `${newPath}/oidc/.well-known/openid-configuration`),
+      (r) => r.status === 200,
+      { timeoutMillis: 30000, intervalMillis: 500 },
+    );
     expect(res.status).toBe(200);
     const body = res.body;
     expect(body.issuer).toContain(newPath);

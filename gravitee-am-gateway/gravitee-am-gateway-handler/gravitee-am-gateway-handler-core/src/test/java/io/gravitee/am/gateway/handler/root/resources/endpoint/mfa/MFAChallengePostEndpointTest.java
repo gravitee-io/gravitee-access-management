@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -50,12 +52,15 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
+import io.gravitee.am.service.reporter.builder.MFAAuditBuilder;
 import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
@@ -64,6 +69,7 @@ import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -312,17 +318,15 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
 
         mfaChallengeEndpoint.handle(spyRoutingContext);
 
-        int attempt = 20;
+        int attempt = 200;
         while (attempt > 0) {
-            try {
-                assertFalse(spyRoutingContext.session().data().containsKey(MFAChallengePostEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+            if (!spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY)) {
                 break;
-            } catch (Exception e) {
-                Thread.sleep(1000);
-                --attempt;
             }
-
+            Thread.sleep(100);
+            --attempt;
         }
+        assertFalse(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
     }
 
     @Test

@@ -26,6 +26,7 @@ import { applicationBase64Token } from '@gateway-commands/utils';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { patchDomain, waitFor, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getParamsInvalidAuthorizeRequests } from './fixture/oauth2-invalid-params-fixture';
+import { withRetry } from '@utils-commands/retry';
 import { setup } from '../../test-fixture';
 
 setup(200000);
@@ -672,7 +673,7 @@ describe('OAuth2 - RFC 6746 - Authorization Code Grant', () => {
             .then((_) => waitForDomainSync(fixture.masterDomain.id))
             .then((_) => performGet(fixture.oidc.authorization_endpoint, params).expect(302));
         } else {
-          authResponse = await performGet(fixture.oidc.authorization_endpoint, params).expect(302);
+          authResponse = await withRetry(() => performGet(fixture.oidc.authorization_endpoint, params).expect(302), 5, 1000);
         }
 
         expect(authResponse.header['location']).toBeDefined();

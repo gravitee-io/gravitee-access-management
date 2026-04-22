@@ -91,9 +91,24 @@ public abstract class FileAuditReporterTest {
             auditReporter.report(reportable);
         }
 
-        waitBulkLoadFlush();
-
-        checkAuditLogs(reportables, loop);
+        // Vert.x async file writes may take longer on CI under load.
+        // Retry checkAuditLogs with additional flush waits if the initial check fails.
+        // Catches both AssertionError (failed assertion) and Exception (e.g. IndexOutOfBounds
+        // from lines.get(i) when the file hasn't been fully flushed yet).
+        Throwable lastError = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            waitBulkLoadFlush();
+            try {
+                checkAuditLogs(reportables, loop);
+                return;
+            } catch (Exception | AssertionError e) {
+                lastError = e;
+            }
+        }
+        if (lastError instanceof Exception ex) {
+            throw ex;
+        }
+        throw (AssertionError) lastError;
     }
 
     protected abstract void checkAuditLogs(List<Audit> reportables, int loop) throws IOException;
@@ -159,8 +174,9 @@ public abstract class FileAuditReporterTest {
 
     protected void waitBulkLoadFlush() {
         try {
-            Thread.sleep(1000); // bulk load set to
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

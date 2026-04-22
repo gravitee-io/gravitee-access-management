@@ -32,9 +32,12 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -43,7 +46,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -68,11 +74,12 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     private OAuth2AuthProvider oAuth2AuthProvider;
 
     private final UserConsentsEndpointHandler userConsentsEndpointHandler = new UserConsentsEndpointHandler(userService, clientService, domain, subjectManager);
-    private final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
+    private OAuth2AuthHandler oAuth2AuthHandler;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
     }
 
     @Test
@@ -88,10 +95,14 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
     }
 
-    // TODO : need to mock Async Handler of the oauth2AuthHandler
     @Test
-    @Ignore
     public void shouldNotListConsents_invalid_token() throws Exception {
+        doAnswer(invocation -> {
+            Handler<AsyncResult<io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse>> handler = invocation.getArgument(2);
+            handler.handle(Future.failedFuture(new InvalidTokenException("Invalid access token")));
+            return null;
+        }).when(oAuth2AuthProvider).decodeToken(anyString(), anyBoolean(), any());
+
         router.route("/users/:userId/consents")
                 .handler(oAuth2AuthHandler)
                 .handler(userConsentsEndpointHandler::list)

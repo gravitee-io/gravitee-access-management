@@ -92,6 +92,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -743,13 +744,10 @@ public class UserServiceTest {
                 client,
                 mock(io.gravitee.am.identityprovider.api.User.class)).test();
 
-        // wait for the email service execution
-        Thread.sleep(1000);
-
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         verify(tokenService, never()).deleteByUser(any());
-        verify(emailService).send(any(), any(), any());
+        verify(emailService, timeout(5000)).send(any(), any(), any());
         verify(auditService).report(argThat(builder -> {
             final Audit audit = builder.build(new ObjectMapper());
             return audit.getType().equals(EventType.FORGOT_PASSWORD_REQUESTED) && audit.getOutcome().getStatus().equals(Status.SUCCESS);
@@ -775,9 +773,6 @@ public class UserServiceTest {
                 new ForgotPasswordParameters(user.getEmail(), true, true),
                 client,
                 mock(io.gravitee.am.identityprovider.api.User.class)).test();
-
-        // wait for the email service execution
-        Thread.sleep(1000);
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(EnforceUserIdentityException.class);

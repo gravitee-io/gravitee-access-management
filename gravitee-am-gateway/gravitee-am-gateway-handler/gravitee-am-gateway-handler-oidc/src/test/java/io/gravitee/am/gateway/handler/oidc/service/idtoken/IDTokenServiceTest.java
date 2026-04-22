@@ -840,9 +840,10 @@ public class IDTokenServiceTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContextFactory.create(any())).thenReturn(executionContext);
 
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.defaultCertificateProvider()).thenReturn(createCert(defaultCertificateProvider, "default-certificate"));
-        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("test"));
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("test"));
         ((IDTokenServiceImpl) idTokenService).setObjectMapper(objectMapper);
 
         TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, user).test();
@@ -850,7 +851,18 @@ public class IDTokenServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(jwtService, times(1)).encode(eq(expectedJwt), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        verify(jwtService, times(1)).encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        // Use field-level assertions instead of eq(expectedJwt) — eq compares iat/exp which
+        // are set from System.currentTimeMillis() in both test and production and may differ
+        // by a second when a clock tick falls between the two reads.
+        JWT jwt = jwtCaptor.getValue();
+        assertNotNull(jwt);
+        assertEquals(expectedJwt.getSub(), jwt.get("sub"));
+        assertEquals(expectedJwt.getAud(), jwt.get("aud"));
+        assertEquals(expectedJwt.get(StandardClaims.EMAIL), jwt.get(StandardClaims.EMAIL));
+        assertEquals(expectedJwt.get(StandardClaims.ADDRESS), jwt.get(StandardClaims.ADDRESS));
+        assertEquals(expectedJwt.get(StandardClaims.NAME), jwt.get(StandardClaims.NAME));
+        assertEquals(expectedJwt.get(StandardClaims.EMAIL_VERIFIED), jwt.get(StandardClaims.EMAIL_VERIFIED));
     }
 
     private User createUser() {

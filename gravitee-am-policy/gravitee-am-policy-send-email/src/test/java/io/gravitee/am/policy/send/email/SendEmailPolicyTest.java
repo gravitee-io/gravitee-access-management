@@ -21,12 +21,13 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyChain;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -39,9 +40,8 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-// TODO : unnecessary stubs from the external build but not from the IDE
-@Ignore
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SendEmailPolicyTest {
 
     @Mock
@@ -62,7 +62,7 @@ public class SendEmailPolicyTest {
     @Mock
     private SendEmailPolicyConfiguration configuration;
 
-    @Before
+    @BeforeEach
     public void init() {
         when(executionContext.getComponent(EmailService.class)).thenReturn(emailService);
         when(configuration.getTemplate()).thenReturn("template");
